@@ -72,7 +72,7 @@ validate a candidate. Dismiss needs a reason why further verification is not use
 not test evidence. Neither certifies semantic coverage. Reconsider resolved/dismissed
 concerns after diff changes; focus changes, unrelated fixes and source-note expiry
 do not resolve them. Use [] for no concern change. Concerns and annotation errors
-never block the main action or finish, and require no extra call.
+do not mechanically gate actions or finish; no extra call is required.
 
 A mutation requires hypothesis, expected_behavior, and one exact old_text/new_text
 replacement in an allowed existing file. State the expected observable effect of
@@ -103,15 +103,15 @@ uncertainty. Use public input variations, as described by the tool. Its observat
 separates execution from behavior: behavior_verdict=not_assessed is not a PASS.
 Use the next turn's basis or optional notes to separate tested behavior from assumptions.
 Failure may be in the experiment itself.
-Base conclusions on actual check inputs and results. mutation_expectation records
-the intended effect of the checked edit, not coverage. recent_checks.evidence_review
-locates public check definitions and observed source; it does not certify execution
-of every case. Keep conclusions limited to what the evidence supports.
-After required checks pass, review the public requirements, current patch, evidence
-and remaining uncertainties. Call finish_task only if you judge the task complete;
-its assessment must explain why the repair is ready and any verification limits.
-If more work is needed, continue. After an edit, require fresh checks and reassess.
-This judgment needs no separate call or mandatory experiment.
+Judge public requirements against current-patch evidence; regression PASS alone does
+not prove the reported problem is fixed. Revisit unfinished planned checks and
+unsupported requirements. Skipped/rejected verification remains unperformed.
+If a material gap and an available action could change completion, continue.
+Otherwise explain what evidence meets the planned check's purpose or why the gap
+does not affect completion; listing a limitation is insufficient.
+Call finish_task only if you judge it complete. Its assessment must connect requirements
+to evidence and account for unfinished verification. Edits require fresh checks and
+reassessment. This judgment needs no separate call or mandatory experiment.
 stop_task abandons as AGENT_STOPPED, without submission or
 evaluation; it is not completion. Use it when no available action supports progress,
 not merely when no edit is needed. Keep decisions and findings concise; never emit

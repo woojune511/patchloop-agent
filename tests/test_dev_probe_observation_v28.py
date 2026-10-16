@@ -202,7 +202,7 @@ def test_submission_requires_judgment_without_a_separate_probe_or_review_action(
     policy = SimpleNamespace(workflow_gate="ready_to_submit", allowed_tools=allowed)
     guidance = runner._completion_guidance(snapshot, policy)
     assert guidance["submission_ready"] and guidance["next_action"] is None
-    assert "before deciding whether the task is complete" in guidance["message"]
+    assert "before deciding whether the task is complete" in guidance["message"].lower()
     assert "finish_task with your assessment" in guidance["message"]
     assert ("run_probe" in guidance["message"]) is probe_available
     assert len(canonical_json(guidance)) < 650

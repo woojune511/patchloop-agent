@@ -26,9 +26,9 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 ## Active decision
 
 [Assessment](history/2026-10-16-submission-assessment-results.md): A 0/8, B 0/8;
-16 public PASS; USD 4.29112755. [Exit audit](history/2026-10-16-assessment-exit-analysis.md):
-seven B runs judged existing evidence sufficient; tools/budgets allowed more checks.
-No measured quality gain or new run. Judgment stays required; edits need fresh checks.
+USD 4.29112755; closed. [Exit audit](history/2026-10-16-assessment-exit-analysis.md)
+led to guidance on evidence for requirements and unfinished verification.
+No forced probe; edits need fresh checks. Local-only; live effects unmeasured.
 
 [Host A/B](history/2026-10-16-host-plan-stop.md): runtime drift; NOT_RUN / USD 0.
 [I4](history/2026-10-16-isort-requirement-audit.md): inferred type_item;

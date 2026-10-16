@@ -71,13 +71,13 @@ or model-selected mutation evidence IDs. Exact reads/previews use literal Git pa
 decode quoted/NUL-delimited Git paths without changing diff bytes.
 Retired requirement/case annotations remain for exact legacy recovery, not fresh requests.
 
-Submission requires a nonempty tracked diff and all required checks passing on it.
-`finish_task.assessment` (1-1,500 nonblank characters) records the agent's judgment
-after reviewing public requirements, patch, evidence and remaining uncertainties.
-Submit only when judged complete. This unverified public conclusion binds to the
-patch hash; it is not a reasoning transcript. No extra call is required. Edits
-invalidate prior checks and require fresh checks and reassessment. Optional tests/
-probes supply no required-check credit. Preserve pre-state,
+Submit a nonempty tracked diff only after all required checks pass on it.
+`finish_task.assessment` (1-1,500 nonblank characters) links requirements to evidence
+and accounts for unfinished verification. Regression PASS alone does not prove a fix.
+Explain evidence meeting a planned check's purpose or why its gap does not affect
+completion; otherwise continue useful work. This unverified judgment binds to the
+patch hash. No extra call. Edits need fresh checks and reassessment.
+Optional tests/probes give no required-check credit. Preserve pre-state,
 submitted-candidate and incremental patch identities; replay retains action-time identities.
 Visible-check IDs must be unique at task admission.
 Advisory line feedback decodes those paths and binds script filenames at launch,

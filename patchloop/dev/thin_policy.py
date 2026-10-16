@@ -35,11 +35,15 @@ non-null update in a batch is processed before the actions. Cite already observe
 evidence, never pending results. Current source currency does not validate a
 note's interpretation. Annotation errors do not block the main action.
 
-After required checks pass, review the public requirements, current patch, evidence
-and remaining uncertainties. Call finish_task only if you judge the task complete;
-its assessment must explain why the repair is ready and any verification limits.
-If more work is needed, continue. After an edit, require fresh checks and reassess.
-This judgment needs no separate call or mandatory experiment.
+Judge public requirements against current-patch evidence; regression PASS alone does
+not prove the reported problem is fixed. Revisit unfinished planned checks and
+unsupported requirements. Skipped/rejected verification remains unperformed.
+If a material gap and an available action could change completion, continue.
+Otherwise explain what evidence meets the planned check's purpose or why the gap
+does not affect completion; listing a limitation is insufficient.
+Call finish_task only if you judge it complete. Its assessment must connect requirements
+to evidence and account for unfinished verification. Edits require fresh checks and
+reassessment. This judgment needs no separate call or mandatory experiment.
 finish_task submits the current candidate. stop_task abandons without submission.
 Keep any public statements concise. Never emit raw chain-of-thought. Private
 tests, reference patches and evaluator details are unavailable.

@@ -67,7 +67,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     ),
     (
         ("finish_task", "read_file", "replace_text", "run_probe", "search_files", "stop_task"),
-        "1d902114b9f5eb3f6ea4d1e07ab9aa9664cbcdcc17d918e61a98c156cf589957",
+        "178e33bb44726810a3e0e082769a038b0436a39afa5a7fef014ba3c674e985ab",
     ),
     (
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task"),
@@ -76,10 +76,11 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     (
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task",
          "finish_task"),
-        "53624f06a9eed4ccc65fef8fb9fdef48233f2c349da635c4098221d76e2b5cf5",
+        "ea6438c5c8fb9411632fe1ccc5947788b244901f7c566282ca4407316b2d9669",
     ),
 ])
 def test_descriptions_outside_memory_and_schema_order_are_unchanged(names, expected):
+    # Finish prose now ties requirements and unfinished verification to evidence; wire stays fixed.
     tools = dev_tool_schemas(finish_enabled="finish_task" in names, allowed_tools=names)
     tools = _legacy_compression_surface(tools)
     for tool in tools:
@@ -92,7 +93,7 @@ def test_descriptions_outside_memory_and_schema_order_are_unchanged(names, expec
 def test_surrounding_action_guidance_identity():
     prefix, _, suffix = _memory_block()
     assert hashlib.sha256(canonical_json([prefix, suffix]).encode()).hexdigest() == (
-        "0b1a142034109eead5d7332fa7bc54c7035728aac2dafd08740b4689e4b2491a"
+        "91613bf4cc94b24e08e0b076d0f52b3f9af1f0a52304fcfa0ec4887bc74380b6"
     )
 
 
@@ -127,7 +128,7 @@ def test_compact_guidance_keeps_optional_evidence_lifecycle_and_concern_boundari
         "already observed successful current-diff check/probe", "evidence_action_id",
         "Baseline evidence cannot\nvalidate a candidate", "Dismiss needs a reason",
         "Neither certifies semantic coverage", "after diff changes", "source-note expiry",
-        "Use [] for no concern change", "never block the main action or finish",
+        "Use [] for no concern change", "do not mechanically gate actions or finish",
     ):
         assert instruction in memory
 

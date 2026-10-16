@@ -87,7 +87,7 @@ def test_default_serialization_and_schema_identities_remain_exact():
         allowed_tools=list(MODES),
     )
     assert sha256_json(schemas) == (
-        "sha256:9cd6ed9d382abfc47a91a51b9333b59424f9e64f1dde24416ba061e4b937ede2"
+        "sha256:f1b235fcd18ee4d4b8d75545e4d0a878f7e8b68afbd233507fcd413c4b338984"
     )
     request = DevRunRequest(provider="mock", task=Path("public.yaml"), model="mock-dev")
     assert "agent_policy" not in request.model_dump(mode="json")

@@ -219,8 +219,13 @@ The coding agent receives registered public tools, never unrestricted shell acce
 passing on that exact diff, no non-ignored untracked files, and a nonblank agent
 `assessment` of up to 1,500 characters. After PASS, the agent reviews the public
 requirements, patch, evidence and remaining uncertainties before deciding to submit.
-The assessment records why the repair is ready and any verification limits; it does
-not certify hidden-test success. Further edits require fresh checks and reassessment.
+The assessment connects public requirements to observed evidence and accounts for
+unfinished verification plans, including skipped/rejected checks. It explains what
+evidence addresses their purpose or why a remaining gap does not affect completion;
+listing a limitation alone is insufficient. A material gap that an available action
+could resolve calls for continued work. Regression PASS alone does not prove the
+reported problem is fixed. This is agent judgment, not a new semantic gate or hidden
+success guarantee. Further edits require fresh checks and reassessment.
 No separate review call or mandatory probe is added. Historical PASS,
 probe execution and notes do not provide current check credit. A diagnostic probe
 does not replace a registered check. `stop_task` ends without submission/evaluation.

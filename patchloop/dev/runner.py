@@ -586,16 +586,16 @@ def _completion_guidance(
     if snapshot.ready_to_submit and "finish_task" in allowed:
         stage = "ready_to_submit"
         message = (
-            "All required visible checks pass on the current diff. Review the public "
-            "requirements, patch, evidence and remaining uncertainties before deciding "
-            "whether the task is complete. If ready, call finish_task with your assessment; "
-            "otherwise continue the repair or verification. Any edit requires passing "
-            "the required checks again and a new assessment of that diff. "
+            "Current required checks pass; this establishes eligibility, not correctness. "
+            "Before deciding whether the task is complete, revisit unfinished verification "
+            "plans and unsupported public requirements. Continue if an available action "
+            "could resolve a material gap. Only if you judge complete, call finish_task with "
+            "your assessment explaining why evidence suffices and remaining gaps do not "
+            "affect completion. Edits require fresh checks and reassessment. "
         )
         if "run_probe" in allowed:
             message += (
-                "Use run_probe if a concrete remaining public uncertainty could change "
-                "the decision. No extra experiment is required."
+                "Use run_probe when it could change this judgment."
             )
     elif needs_mutation:
         if "replace_text" in allowed:
@@ -1275,8 +1275,9 @@ def _protocol_correction(
         )
     if "finish_task" in allowed:
         actions.append(
-            "Review the current checked diff against the public task; use finish_task "
-            "with an assessment only if you judge the task complete."
+            "Before finish_task, judge the current evidence against public requirements "
+            "and unfinished verification plans; justify remaining gaps in the assessment. "
+            "Submit only if you judge the task complete."
         )
     if "run_probe" in allowed:
         actions.append(
@@ -4515,9 +4516,10 @@ def _run_one_active(
                     schema["description"] = (
                         "Return the current patch and public verification records after all "
                         "required visible checks pass on this diff and you review the public "
-                        "requirements, patch, evidence and remaining uncertainties. Call only "
-                        "if you judge the task complete, with your assessment. Independent "
-                        "acceptance is NOT_RUN; public checks do not establish untested behavior."
+                        "requirements against observed evidence, including unfinished "
+                        "verification plans. Call only if you judge the task complete; justify "
+                        "remaining gaps in your assessment. Independent acceptance is NOT_RUN; "
+                        "regression PASS alone does not prove the reported problem is fixed."
                     )
         turn_payload = {
             "turn_id": turn_id,

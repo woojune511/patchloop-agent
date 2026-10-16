@@ -348,8 +348,9 @@ def dev_tool_schemas(
                     "After all required visible checks pass on the current diff, review the "
                     "public requirements, patch, evidence and remaining uncertainties. Submit "
                     "only if you judge the task complete, with a concise public assessment "
-                    "of why the repair is ready and any verification limits. PASS alone is "
-                    "not that judgment. This completes submission for independent evaluation."
+                    "connecting requirements to observed evidence and explaining why unfinished "
+                    "verification does not block completion. Regression PASS alone does not "
+                    "prove the reported problem is fixed. This submits for independent evaluation."
                 ),
                 "strict": True,
                 "parameters": {
@@ -359,9 +360,12 @@ def dev_tool_schemas(
                             "type": "string", "minLength": 1, "maxLength": 1_500,
                             "description": (
                                 "Your conclusion after reviewing the current checked patch: "
-                                "why it satisfies the public task, what the evidence establishes "
-                                "and any remaining uncertainty. A concise public summary, "
-                                "not a reasoning transcript or a claim about hidden tests."
+                                "connect public requirements to observed evidence; account for "
+                                "unfinished or rejected planned checks and unsupported behavior. "
+                                "Explain what evidence addresses their purpose or why remaining "
+                                "gaps do not affect completion, not just list limits. "
+                                "Public summary, not a reasoning transcript or a claim "
+                                "about hidden tests."
                             ),
                         },
                     },

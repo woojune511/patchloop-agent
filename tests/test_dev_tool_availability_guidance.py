@@ -1,4 +1,4 @@
-"""Temporary source prerequisites reach real inputs without changing tool admission."""
+"""Public completion guidance reaches real inputs without changing tool admission."""
 
 from __future__ import annotations
 
@@ -40,6 +40,17 @@ def test_actual_inputs_explain_source_edit_check_submit_transitions(
     tmp_path, monkeypatch, context_policy,
 ):
     captured = []
+    unfinished_plan = (
+        "Required behavior: keep a quoted newline inside one CSV field. "
+        "Optional duplicate verification, still unperformed: rerun the registered check. "
+        "Purpose: observe multiline field preservation and existing parser behavior. "
+        "Before submission, decide whether the current check already serves that purpose."
+    )
+    assessment = (
+        "The parser uses one reader for the input, and required public checks pass on this "
+        "unchanged patch. Repeating the same check would add no evidence for the optional "
+        "plan's purpose, so it remains unperformed. Other inputs remain unverified."
+    )
 
     class CapturingMock(MockDevAdapter):
         def next_turn(self, context, tools):
@@ -53,7 +64,15 @@ def test_actual_inputs_explain_source_edit_check_submit_transitions(
                 assert guidance["next_action"]["tool"] in names
             assert set(state["available_tool_names"]) == names
             captured.append(guidance)
-            return super().next_turn(context, tools)
+            turn = super().next_turn(context, tools)
+            for call in turn.tool_calls:
+                # Scripted public statements exercise transport, not model judgment quality.
+                call.turn_decision.plan_update = (
+                    unfinished_plan if call.name == "run_check" else None
+                )
+                if call.name == "finish_task":
+                    call.arguments["assessment"] = assessment
+            return turn
 
     monkeypatch.setattr(runner, "MockDevAdapter", CapturingMock)
     state_root = tmp_path / context_policy
@@ -94,6 +113,25 @@ def test_actual_inputs_explain_source_edit_check_submit_transitions(
     assert states[3]["visible_check_status"][0]["status"] == "PASS"
     assert "finish_task" not in states[2]["available_tool_names"]
     assert "finish_task" in states[3]["available_tool_names"]
+    final = states[-1]
+    assert final["working_plan"]["plan"]["text"] == unfinished_plan
+    assert final["working_plan"]["plan"]["diff_currency"] == "current"
+    assert final["working_plan"]["interpretation_status"] == "model_authored_unverified"
+    assert "check_result" in final["working_plan"]["review_request"]["reasons"]
+    assert "unfinished verification" in final["completion_guidance"]["message"]
+    system = inputs[-1][0]["content"]
+    assert "Skipped/rejected verification remains unperformed." in system
+    assert "listing a limitation is insufficient" in system
+    assert "Keep unfinished verification" in system
+    assert "This judgment needs no separate call or mandatory experiment." in system
+    results = [e["payload"]["result"] for e in journal.events()
+               if e["event_type"] == "action_finished"]
+    assert {result["tool"] for result in results[:2]} == {"search_files", "read_file"}
+    assert [result["tool"] for result in results[2:]] == [
+        "replace_text", "run_check", "finish_task",
+    ]
+    assert results[-1]["output"]["assessment"] == assessment
+    assert results[-2]["workspace_diff_hash"] == results[-1]["output"]["patch_hash"]
 
 
 def test_edit_stays_rejected_until_current_editable_source_is_observed(tmp_path):

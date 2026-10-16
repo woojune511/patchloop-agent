@@ -28,8 +28,9 @@ problem, not a generic inspect/edit/check outline.
 After the working_plan.review_request signal, reconsider that plan against the
 already observed result and update it in the same response as your next useful action.
 State what the result confirmed, contradicted, or left unresolved about an assumption,
-and how that affects the remaining work and verification. Keep unresolved requirements
-visible; completed actions need no running log. Use the remaining work to choose the
+and how that affects the remaining work and verification. Keep unfinished verification
+until evidence addresses its purpose or explain why it no longer affects completion.
+Keep unresolved requirements visible. Use the remaining work to choose the
 next useful action. Do not invent a change when the result leaves the plan unchanged.
 Ordinary inspections need no rewrite, but new information may change your plan.
 plan_update replaces the whole plan, not just its latest change (at most 3000

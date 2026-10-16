@@ -181,8 +181,9 @@ def fixture_plan(source, tmp_path_factory):
     state = reconstruct_state(bundle["request"]["input"], context_policy="segmented-v1")
     prefix = [e for e in events if e["sequence"] < cut["sequence"]]
     a = bundle["request"]["input"][0]["content"]
+    # Vary current synthetic plan guidance; no historical comparison bytes are rewritten.
     b = a.replace(
-        "Keep unresolved requirements\nvisible; completed actions need no running log.",
+        "Keep unresolved requirements visible.",
         "When replacing the plan, compare it with the original public_task.issue.\n"
         "Carry forward each explicit requirement unless already observed public evidence\n"
         "supports treating it as satisfied or inapplicable; briefly cite that evidence.\n"
