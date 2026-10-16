@@ -30,8 +30,8 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 [Gap comparison](history/2026-10-16-assessment-gap-comparison-results.md): B 0/8, C 0/8;
 post-PASS verification 0/8 versus 1/8, no edits; USD 4.346523, closed.
-Guidance reached C; unfinished plans persist. No quality gain or paid follow-up.
-[Exit audit](history/2026-10-16-assessment-exit-analysis.md) explains the mechanism.
+[C exit audit](history/2026-10-16-assessment-gap-exit-analysis.md): two scoped plans
+fulfilled; five checks dropped or dismissed. No quality gain or paid follow-up.
 
 [Host A/B](history/2026-10-16-host-plan-stop.md): runtime drift; NOT_RUN / USD 0.
 [I4](history/2026-10-16-isort-requirement-audit.md): inferred type_item;
