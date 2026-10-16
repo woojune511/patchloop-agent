@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import importlib
 import json
 import subprocess
 import sys
@@ -190,24 +191,28 @@ def test_metadata_setup_supports_older_image_python(monkeypatch, missing):
     class DistributionNotFound(Exception):
         pass
 
-    def distribution(name):
-        assert name == "pydicom"
-        if missing:
-            raise DistributionNotFound()
-
+    load = Mock(side_effect=[DistributionNotFound(), None] if missing else [None])
+    monkeypatch.setattr(importlib, "import_module", load)
     monkeypatch.setitem(sys.modules, "importlib.metadata", None)
-    monkeypatch.setitem(
-        sys.modules,
-        "pkg_resources",
-        SimpleNamespace(get_distribution=distribution, DistributionNotFound=DistributionNotFound),
-    )
     run = Mock()
     monkeypatch.setattr(subprocess, "run", run)
     exec(runtime.metadata_setup("pydicom"), {})
+    assert all(call.args == ("pydicom",) for call in load.call_args_list)
     if missing:
         run.assert_called_once_with([sys.executable, "setup.py", "egg_info"], check=True)
+        assert load.call_count == 2
     else:
         run.assert_not_called()
+        assert load.call_count == 1
+
+
+def test_metadata_setup_preserves_other_import_failures(monkeypatch):
+    monkeypatch.setattr(importlib, "import_module", Mock(side_effect=ImportError("dependency")))
+    run = Mock()
+    monkeypatch.setattr(subprocess, "run", run)
+    with pytest.raises(ImportError, match="dependency"):
+        exec(runtime.metadata_setup("example"), {})
+    run.assert_not_called()
 
 
 def test_container_has_no_host_mount_and_cleans_exact_identity(monkeypatch, tmp_path):

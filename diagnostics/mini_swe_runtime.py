@@ -74,18 +74,16 @@ def flatten_messages(messages):
 
 
 def metadata_setup(public_module):
-    """Use the image's existing metadata API, including its Python 3.7 fallback."""
+    """Restore editable metadata only when the public import actually needs it."""
     return (
-        "import subprocess, sys\n"
+        "import importlib, subprocess, sys\n"
         "try:\n"
-        "    from importlib.metadata import distribution, PackageNotFoundError\n"
-        "except ImportError:\n"
-        "    from pkg_resources import get_distribution as distribution\n"
-        "    from pkg_resources import DistributionNotFound as PackageNotFoundError\n"
-        "try:\n"
-        f"    distribution({public_module!r})\n"
-        "except PackageNotFoundError:\n"
+        f"    importlib.import_module({public_module!r})\n"
+        "except Exception as exc:\n"
+        "    if type(exc).__name__ not in ('PackageNotFoundError', 'DistributionNotFound'):\n"
+        "        raise\n"
         "    subprocess.run([sys.executable, 'setup.py', 'egg_info'], check=True)\n"
+        f"    importlib.import_module({public_module!r})\n"
     )
 
 

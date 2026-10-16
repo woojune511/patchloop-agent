@@ -51,9 +51,9 @@ Use only existing digest-pinned local images, with `--pull=never`, network disab
 read-only root, dropped capabilities, no new privileges, CPU/memory/PID bounds, and
 no host mounts. Mask `/testbed` with a fresh tmpfs populated solely by a verified
 base-commit source archive. Create a synthetic one-commit Git repository without
-remotes. If masking the original checkout removes editable package metadata,
-regenerate that metadata with public `setup.py egg_info`, without installing
-dependencies or changing tracked source. The agent sees no host credential file,
+remotes. If the public module import fails because masking the original checkout
+removed editable metadata, regenerate it with public `setup.py egg_info`, without
+installing dependencies or changing tracked source. The agent sees no host credential file,
 PatchLoop task package, historical
 run, private specification, or evaluator payload. Destroy its container before
 private grading. Record actions and accounting in external hash-chained dev-run-v1
@@ -103,8 +103,8 @@ the frozen runtime. The interpreter comes from the existing project environment.
 ```powershell
 Set-Location C:/Users/geonj/.codex/worktrees/mini-swe-dev20/PatchLoop
 $miniPython = 'C:/Users/geonj/Documents/PatchLoop/.venv/Scripts/python.exe'
-& $miniPython -m diagnostics.mini_swe_dev20 prepare --root C:/pt/mini20prep03 --live-root C:/pt/mini20live01 --env-file C:/Users/geonj/Documents/PatchLoop/.env
-& $miniPython -m diagnostics.mini_swe_dev20 preflight --root C:/pt/mini20prep03 --packet-hash <hash>
+& $miniPython -m diagnostics.mini_swe_dev20 prepare --root C:/pt/mini20prep04 --live-root C:/pt/mini20live01 --env-file C:/Users/geonj/Documents/PatchLoop/.env
+& $miniPython -m diagnostics.mini_swe_dev20 preflight --root C:/pt/mini20prep04 --packet-hash <hash>
 # Only after exact human approval, including the isolated bash exception:
-& $miniPython -m diagnostics.mini_swe_dev20 run --root C:/pt/mini20prep03 --packet-hash <hash>
+& $miniPython -m diagnostics.mini_swe_dev20 run --root C:/pt/mini20prep04 --packet-hash <hash>
 ```

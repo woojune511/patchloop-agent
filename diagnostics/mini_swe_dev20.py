@@ -48,6 +48,12 @@ def file_hash(path):
 
 def bindings(root):
     paths = {name: repository_root() / name for name in FILES}
+    paths.update(
+        {
+            p.relative_to(repository_root()).as_posix(): p
+            for p in (repository_root() / "diagnostics").glob("*.py")
+        }
+    )
     for directory in ("upstream/src", "python-libs"):
         paths.update(
             {
