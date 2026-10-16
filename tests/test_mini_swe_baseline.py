@@ -304,24 +304,17 @@ def test_public_projection_contains_issue_and_scope_only():
         assert forbidden not in text
 
 
-@pytest.mark.parametrize("missing", [False, True])
-def test_metadata_setup_supports_older_image_python(monkeypatch, missing):
-    class DistributionNotFound(Exception):
-        pass
-
-    load = Mock(side_effect=[DistributionNotFound(), None] if missing else [None])
+def test_metadata_setup_restores_entrypoints_before_import_even_when_import_would_work(monkeypatch):
+    events = []
+    load = Mock(side_effect=lambda name: events.append("import"))
     monkeypatch.setattr(importlib, "import_module", load)
     monkeypatch.setitem(sys.modules, "importlib.metadata", None)
-    run = Mock()
+    run = Mock(side_effect=lambda *a, **kw: events.append("metadata"))
     monkeypatch.setattr(subprocess, "run", run)
     exec(runtime.metadata_setup("pydicom"), {})
     assert all(call.args == ("pydicom",) for call in load.call_args_list)
-    if missing:
-        run.assert_called_once_with([sys.executable, "setup.py", "egg_info"], check=True)
-        assert load.call_count == 2
-    else:
-        run.assert_not_called()
-        assert load.call_count == 1
+    run.assert_called_once_with([sys.executable, "setup.py", "egg_info"], check=True)
+    assert events == ["metadata", "import"]
 
 
 def test_metadata_setup_preserves_other_import_failures(monkeypatch):
@@ -330,7 +323,7 @@ def test_metadata_setup_preserves_other_import_failures(monkeypatch):
     monkeypatch.setattr(subprocess, "run", run)
     with pytest.raises(ImportError, match="dependency"):
         exec(runtime.metadata_setup("example"), {})
-    run.assert_not_called()
+    run.assert_called_once_with([sys.executable, "setup.py", "egg_info"], check=True)
 
 
 @pytest.mark.parametrize("limits, lifetime", [({}, "1800"),

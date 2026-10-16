@@ -88,16 +88,11 @@ def provider_error_metadata(exc):
 
 
 def metadata_setup(public_module):
-    """Restore editable metadata only when the public import actually needs it."""
+    """Restore public package metadata, including silently missing entrypoints."""
     return (
         "import importlib, subprocess, sys\n"
-        "try:\n"
-        f"    importlib.import_module({public_module!r})\n"
-        "except Exception as exc:\n"
-        "    if type(exc).__name__ not in ('PackageNotFoundError', 'DistributionNotFound'):\n"
-        "        raise\n"
-        "    subprocess.run([sys.executable, 'setup.py', 'egg_info'], check=True)\n"
-        f"    importlib.import_module({public_module!r})\n"
+        "subprocess.run([sys.executable, 'setup.py', 'egg_info'], check=True)\n"
+        f"importlib.import_module({public_module!r})\n"
     )
 
 
@@ -310,8 +305,8 @@ class PublicContainer:
                 "git commit -qm base"
             )
             self.operator_command(setup, timeout=60)
-            # Some native images have editable metadata inside their original /testbed.
-            # Recreate only missing metadata from public setup.py after masking that tree.
+            # Masking /testbed also removes editable package metadata. A successful
+            # import alone does not establish plugin entrypoint/config availability.
             self.operator_command(
                 "python -c " + shlex.quote(metadata_setup(row["public_module"])), timeout=60
             )

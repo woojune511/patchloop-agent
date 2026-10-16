@@ -177,19 +177,20 @@ def collect_working_diff(env, folder):
     return patch
 
 
-def execute_row(client, config, row, folder, Agent):
+def execute_row(client, config, row, folder, Agent, *, cap_usd=ROW_CAP,
+                max_calls=MAX_CALLS, max_actions=MAX_ACTIONS, solver_seconds=SOLVER_SECONDS):
     start = time.monotonic()
-    deadline = ExecutionDeadline.from_remaining(SOLVER_SECONDS)
+    deadline = ExecutionDeadline.from_remaining(solver_seconds)
     model = CountedModel(client, config["model"], folder, deadline,
-                         cap_usd=ROW_CAP, max_calls=MAX_CALLS, max_input_tokens=MAX_INPUT_TOKENS)
+                         cap_usd=cap_usd, max_calls=max_calls, max_input_tokens=MAX_INPUT_TOKENS)
     env = None
     result = {"index": row["index"], "instance_id": row["instance_id"],
               "native": "NOT_RUN", "scope": "NOT_RUN", "registered": "NOT_RUN",
               "submitted": False, "candidate_available": False, "candidate_origin": "NONE",
               "stop_panel": False}
     try:
-        env = PublicContainer(row, folder, deadline, max_actions=MAX_ACTIONS,
-                              lifetime_seconds=SOLVER_SECONDS + 330)
+        env = PublicContainer(row, folder, deadline, max_actions=max_actions,
+                              lifetime_seconds=solver_seconds + 330)
         agent = Agent(model, env, **config["agent"])
         answer = {}
         try:
