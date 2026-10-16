@@ -1,6 +1,6 @@
 # Current status
 
-Updated: 2026-10-16. Current decisions; runtime source owns behavior.
+Updated: 2026-10-17. Current decisions; runtime source owns behavior.
 Historical reports are evidence, not an active queue.
 
 ## Product and working baseline
@@ -54,21 +54,21 @@ admission. Matching 18 tasks moved from 8 to 11 successes; no all-20 accuracy cl
 
 [Search fix and supplement](history/2026-10-06-search-once-supplement.md): rows 18/20
 submitted and failed; searches took under 0.74s. Original NOT_RUN stays unchanged.
-[Trace comparison](history/2026-10-06-agent-trace-comparison.md) and
-[verification follow-up](history/2026-10-06-verification-closure-results.md) closed:
-A 1/4 versus B 0/4; saved-case mechanism NOT_EXERCISED.
-[Diagnosis](history/2026-10-06-verification-context-budget-diagnosis.md) found
-untested submission, recency source loss and recheck reservation;
-[accounting review](history/2026-10-06-resource-budget-context-review.md) fixed the
-model/tool mismatch. [48k](history/2026-10-06-source-retention-results.md) tied at 2/4;
-both [continuations](history/2026-10-06-cost-cap-continuation-results.md) failed.
-[Public diagnosis](history/2026-10-07-public-verification-failure-diagnosis.md) found
-an L003/L039 cycle and regression PASS mistaken for bug verification despite retained
-notes and available probes. Keep 24k; no paid run queued.
+[Trace](history/2026-10-06-agent-trace-comparison.md)/[verification](history/2026-10-06-verification-closure-results.md):
+A 1/4, B 0/4; saved-case NOT_EXERCISED.
+[Diagnosis](history/2026-10-06-verification-context-budget-diagnosis.md): untested
+submission, source loss, reservation;
+[accounting](history/2026-10-06-resource-budget-context-review.md) fixed model/tool
+mismatch. [48k](history/2026-10-06-source-retention-results.md): 2/4 tie;
+[continuations](history/2026-10-06-cost-cap-continuation-results.md): both FAIL.
+[Public diagnosis](history/2026-10-07-public-verification-failure-diagnosis.md):
+L003/L039 cycle, regression PASS overinterpreted despite retained notes/tools.
+[Counterexample](history/2026-10-07-counterexample-results.md): both FAIL despite
+B's retained current failure; USD 0.04019910. Keep 24k; no adoption or paid follow-up.
 
-[Counterexample A/B](history/2026-10-07-counterexample-results.md) closed: both FAIL,
-unchanged after regression PASS; B retained the actual current failure in both inputs.
-USD 0.04019910. No adoption or paid follow-up; preserve baseline.
+[Segment audit](history/2026-10-16-segment-boundary-audit.md): 20 runs, 75 handoffs;
+source loss/reacquisition and unsupported plan carryover. Quality effect unresolved;
+retain boundary policy, no paid follow-up.
 
 See [panel contract](../.agent/current-dev20.md) and
 [priority fixes](history/2026-10-06-agent-priority-fixes.md). Prior panels closed.
