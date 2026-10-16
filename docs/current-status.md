@@ -25,8 +25,8 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Mini rerun](../.agent/mini-swe-baseline.md): authorized; 20 fresh tasks, isolated bash,
-USD 24 including the prior USD 0.002403. Corrected transport; no new result yet.
+[Mini dev20](history/2026-10-16-mini-swe-dev20-results.md): closed; 10 PASS,
+5 FAIL, 5 unsubmitted at 40 calls; USD 3.2171004 including prior cost. Keep baseline.
 
 [Gap comparison](history/2026-10-16-assessment-gap-comparison-results.md): B 0/8, C 0/8;
 post-PASS verification 0/8 versus 1/8, no edits; USD 4.346523, closed.
@@ -178,7 +178,7 @@ from 24 reviewed runs. No patch-quality gain established or paid rerun queued.
 
 ## Execution and claim boundaries
 
-Prior allocations are closed. Only the explicitly authorized mini rerun is active.
+All executed allocations are closed; no paid follow-up is queued.
 An [older interrupted call](history/2026-09-28-expectation-review-results.md)
 retains unknown billing separately from later settled allocations; closed allocation
 does not mean that earlier uncertainty was resolved.

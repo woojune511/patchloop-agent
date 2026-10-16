@@ -21,7 +21,15 @@ Direct OpenAI transport replaces LiteLLM retry/post-spend accounting with existi
 exact input counting, pre-dispatch reservation, zero retries and usage settlement.
 All response items are replayed in linear history, including encrypted reasoning.
 
-## Authorized fresh rerun scope
+## Closed fresh rerun scope
+
+The [fresh panel](../docs/history/2026-10-16-mini-swe-dev20-results.md) completed all
+20 attempts: 10 native PASS, 5 native FAIL, 5 unsubmitted at the 40-call limit.
+Fifteen submitted patches passed scope checks. Cumulative recorded cost including
+the first stopped attempt was USD 3.2171004; allocation CLOSED. The exact packet
+and outcomes remain frozen in `C:/pt/mini20prep05` and `C:/pt/mini20live02`;
+`C:/pt/mini20rerun01` contains the audit and historical comparison. No further
+live invocation is authorized by this closed scope.
 
 - Same immutable 20-instance roster as `portfolio_dev20.baseline()`, using the
   public issues and current packages under `tasks/dev-train/current-dev20/1..20`.
@@ -84,7 +92,10 @@ history, while retaining raw responses and every non-null item field. Saved-requ
 schema replay and an upstream/SDK mock passed. A count-only check of the saved
 corrected request may verify transport before starting the fresh solves; it must
 not generate a response or supply previous history to a fresh solver. Stop on
-another count failure. A usable mini performance baseline remains unmeasured.
+another count failure. The corrected count-only check and fresh 20-task panel
+completed without count/transport/billing uncertainty. The saved-request check
+made zero generations; the fresh panel made 524, all settled. This validates the
+adapter on the recorded run, not a general agent-quality improvement.
 
 ## Reporting and stop rules
 
@@ -104,7 +115,7 @@ differences; this alone does not identify a causal mechanism. If both fail, insp
 shared difficulties before adding PatchLoop complexity; it does not prove a model
 ceiling. If PatchLoop wins, preserve that descriptive result without a general claim.
 
-## Commands
+## Recorded commands
 
 Keep the pinned upstream checkout in `<prep>/upstream`; isolated support packages
 in `<prep>/python-libs` are Jinja2 3.1.6, MarkupSafe 3.0.4, python-dotenv 1.2.1 and
