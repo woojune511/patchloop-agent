@@ -2,13 +2,14 @@
 
 [Status](../current-status.md).
 
-- [Mini dev20](2026-10-16-mini-swe-dev20-results.md).
-- [Mini completion](2026-10-16-mini-swe-completion-results.md).
+- [Dev20](2026-10-16-mini-swe-dev20-results.md).
+- [Completion](2026-10-16-mini-swe-completion-results.md).
 - [Gap](2026-10-16-assessment-gap-comparison-results.md), [exit audit](2026-10-16-assessment-gap-exit-analysis.md).
 - [Plan grounds](2026-10-16-plan-grounds.md).
+- [Astroid](2026-10-16-astroid-plan-closure.md).
 - [Host stop](2026-10-16-host-plan-stop.md).
 - [Probe](2026-10-15-pre-edit-probe.md).
-- [Uptake review](2026-10-15-uptake-grade.md).
+- [Uptake](2026-10-15-uptake-grade.md).
 - [isort I4](2026-10-16-isort-requirement-audit.md).
 - [Hypotheses](2026-10-15-hypothesis-comparison.md).
 - [Navigation](2026-10-08-failure-navigation.md).
@@ -27,15 +28,15 @@
 - [SQLFluff](2026-10-03-sqlfluff-trajectory-review.md).
 - [Predicate](2026-10-03-public-predicate-result.md).
 - [Audit](2026-10-02-lite-final-verification-audit.md).
-- [SQLFluff results](2026-10-02-lite-sql3-probe-results.md).
-- [Probe support](2026-10-02-lite-probe-support.md).
+- [Results](2026-10-02-lite-sql3-probe-results.md).
+- [Probes](2026-10-02-lite-probe-support.md).
 - Lite dev20: [results](2026-10-02-lite-dev20-results.md), [diagnosis](2026-10-02-lite-dev20-failure-diagnosis.md).
 - [Registration](2026-10-02-lite-dev20-registration.md).
 - [Checks](2026-10-02-lite-public-regressions.md).
 - [Validation](2026-10-02-lite-environment-validation.md).
 - [Environments](2026-10-02-swebench-lite-environment-preparation.md).
-- [Lite calibration](2026-10-02-swebench-lite-dev20-calibration.md).
-- [Lite inventory](2026-10-02-swebench-lite-dev20-inventory.md).
+- [Calibration](2026-10-02-swebench-lite-dev20-calibration.md).
+- [Inventory](2026-10-02-swebench-lite-dev20-inventory.md).
 - [Mini](2026-10-02-swebench-lite-mini-pilot.md).
 - [Lite preflight](2026-10-02-swebench-lite-preflight.md).
 - [Public checks](2026-10-02-swebench-lite-public-checks.md).
