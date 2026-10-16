@@ -227,6 +227,7 @@ def project_observed_sources(
     priorities: list[tuple[str, int, int, int]],
     editable_paths: set[str],
     max_chars: int = RETAINED_SOURCE_CHARS,
+    focus_references: list[dict[str, Any]] | None = None,
 ) -> SourceProjection:
     """Merge equal source lines, select pinned ranges, then use remaining recency."""
 
@@ -303,6 +304,26 @@ def project_observed_sources(
                 selected[key] = observed[key]
                 selected_keys.add(key)
             used += cost
+    # Optional focus is atomic for priority admission, but a rejected large range
+    # must not suppress source the ordinary selector would otherwise retain.
+    for ref in focus_references or []:
+        if ref.get("kind") != "source" or ref.get("unavailable_reason"):
+            continue
+        keys = {(ref["path"], ref["file_hash"], n)
+                for n in range(ref["start_line"], ref["end_line"] + 1)}
+        if not keys <= observed_keys or keys & blocked:
+            continue
+        additions = sorted(keys - native_lines - selected_keys)
+        proposed_keys, cost = set(selected_keys), 0
+        for key in additions:
+            cost += incremental_cost(key, proposed_keys)
+            proposed_keys.add(key)
+        if used + cost > max_chars:
+            continue
+        for key in additions:
+            selected[key] = observed[key]
+            selected_keys.add(key)
+        used += cost
     for group in groups:
         for key, value in group:
             if key in selected or key in blocked:

@@ -183,7 +183,7 @@ Choosing a baseline or reading a diagnostic never authorizes a live run or chang
 Read optional implementation notes only when changing that feature. They contain
 experimental context and historical plans; current source/status take precedence:
 
-- Context: [segmented context](plans/segmented-context.md), [native window](plans/native-context-window.md).
+- Context: [handoffs](plans/evidence-preserving-handoff.md), [native window](plans/native-context-window.md).
 - Planning and probes: [planning](planning-experiment.md), [probe replay/cases](probe-cases.md),
   [saved-program recheck](probe-recheck.md),
   [setup](probe-setup.md), [dependencies](prepared-probe-dependencies.md), [threads](probe-threads.md).

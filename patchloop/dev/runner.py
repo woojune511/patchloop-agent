@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 import os
 import uuid
@@ -27,7 +28,14 @@ from patchloop.agent.usage_diagnostics import usage_failure_message
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import Artifact, ModelConfig, RunManifest, VerdictState
 from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
-from patchloop.dev import native_compaction, probe_recheck, segments, thin_policy, working_plan
+from patchloop.dev import (
+    evidence_focus,
+    native_compaction,
+    probe_recheck,
+    segments,
+    thin_policy,
+    working_plan,
+)
 from patchloop.dev.check_feedback import output_tail
 from patchloop.dev.compaction import CompactionAdapter
 from patchloop.dev.completion_budget import (
@@ -2078,7 +2086,15 @@ def _build_segmented_model_input(
     )
     reason = force_reason or segments.boundary_reason(journal, binding)
     prompt = thin_policy.system_prompt(agent_policy, planning_policy)
-    if reason and not segments.is_fresh(journal, binding):
+    replace_pending = force_reason == "omit_optional_evidence"
+    if replace_pending:
+        if not binding or not segments.is_fresh(journal, binding):
+            raise RecoveryError("optional evidence fallback requires a fresh candidate")
+        committed, _ = segments.active(journal, store, committed_only=True)
+        if binding == committed:
+            raise RecoveryError("cannot trim a committed segment")
+        reason = binding["reason"]
+    if reason and (not segments.is_fresh(journal, binding) or replace_pending):
         state = json.loads(context)
         # Canonical gateway records are quoted data, not top-level provider
         # output items. Include the matching real arguments for source/intent refs.
@@ -2086,11 +2102,28 @@ def _build_segmented_model_input(
         calls = [c for e in events if e["event_type"] == "turn_decision_recorded"
                  for c in e["payload"].get("tool_calls", []) if c["action_id"] in ids]
         base = _segment_public_base(prompt, state, latest_results, calls, agent_policy)
+        optional = [] if replace_pending else evidence_focus.optional_exchanges(
+            state.get("working_notes", {}).get("open_question"), events, ids,
+        )
+        if optional:
+            base.append(SEGMENT_RULES.archive(exchanges=optional))
+        manifest_view = _segment_current_view(copy.deepcopy(state), base[3:], latest_results,
+                                              agent_policy)
+        manifest = {
+            "question": manifest_view.get("working_notes", {}).get("open_question"),
+            "notes": [{"note_id": n["note_id"], "evidence": n.get("evidence", [])}
+                      for n in manifest_view.get("working_notes", {}).get("findings", [])],
+            "source_projection": state.get("context_projection"),
+            "optional_action_ids": [i["call_id"] for i in optional
+                                    if i["type"] == "function_call_output"],
+            "optional_bodies_omitted": replace_pending,
+        }
         binding = segments.start(
             journal, store, base=base, state=state, reason=reason,
             parent_input_artifact=parent["model_input_artifact"] if parent else None,
             boundary_policy=boundary_policy,
-            agent_policy=agent_policy,
+            agent_policy=agent_policy, prepare=True, replace_pending=replace_pending,
+            evidence_manifest=manifest,
         )
         handoff = segments.load_binding(binding, store)
     if binding is None or handoff is None:
@@ -2855,11 +2888,14 @@ def _terminal(
         if completion_horizon is not None:
             payload["completion_horizon"] = completion_horizon
         segment_events = [e for e in journal.events() if e["event_type"] == segments.EVENT]
-        if segment_events:
+        preparations = [e for e in journal.events() if e["event_type"] == segments.PREPARED_EVENT]
+        if segment_events or preparations:
+            first_segment = (segment_events or preparations)[0]["payload"]
             payload["context_management"] = {
                 "policy": segments.POLICY, "segment_count": len(segment_events),
-                **({"boundary_policy": segment_events[0]["payload"]["boundary_policy"]}
-                   if "boundary_policy" in segment_events[0]["payload"] else {}),
+                "prepared_candidate_count": len(preparations),
+                **({"boundary_policy": first_segment["boundary_policy"]}
+                   if "boundary_policy" in first_segment else {}),
                 "transition_reasons": [e["payload"]["reason"] for e in segment_events],
                 "limit": next((e["payload"] for e in reversed(journal.events())
                                if e["event_type"] == "context_limit_reached"), None),
@@ -4597,6 +4633,18 @@ def _run_one_active(
                 if reasons:
                     binding, _ = segments.active(journal, artifact_store)
                     if segments.is_fresh(journal, binding):
+                        handoff = segments.load_binding(binding, artifact_store)
+                        if handoff.get("evidence_manifest", {}).get("optional_action_ids"):
+                            _build_model_input(
+                                journal=journal, artifact_store=artifact_store, context=context,
+                                latest_tool_results=latest_tool_results,
+                                context_policy=segments.POLICY,
+                                planning_policy=request.planning_policy,
+                                agent_policy=request.agent_policy,
+                                segment_boundary_policy=request.segment_boundary_policy,
+                                force_segment_reason="omit_optional_evidence",
+                            )
+                            continue
                         segments.record_limit(journal, sizes=sizes)
                         terminal_code = DevTerminal.LIMIT_REACHED
                         terminal_message = "fresh public state exceeds segment request size limit"
@@ -4646,6 +4694,18 @@ def _run_one_active(
                         and prepared_count[1] > segments.MAX_INPUT_TOKENS):
                     binding, _ = segments.active(journal, artifact_store)
                     if segments.is_fresh(journal, binding):
+                        handoff = segments.load_binding(binding, artifact_store)
+                        if handoff.get("evidence_manifest", {}).get("optional_action_ids"):
+                            _build_model_input(
+                                journal=journal, artifact_store=artifact_store, context=context,
+                                latest_tool_results=latest_tool_results,
+                                context_policy=segments.POLICY,
+                                planning_policy=request.planning_policy,
+                                agent_policy=request.agent_policy,
+                                segment_boundary_policy=request.segment_boundary_policy,
+                                force_segment_reason="omit_optional_evidence",
+                            )
+                            continue
                         segments.record_limit(journal, input_tokens=prepared_count[1])
                         terminal_code = DevTerminal.LIMIT_REACHED
                         terminal_message = "fresh public state exceeds segment input token limit"
@@ -4712,6 +4772,8 @@ def _run_one_active(
                 terminal_message = "prepared input or compacted window is unavailable or invalid"
                 stop_remaining = True
                 break
+        if request.context_policy == segments.POLICY:
+            segments.commit(journal, artifact_store)
         journal.append("turn_started", turn_payload)
         if policy_transition is not None:
             journal.append(

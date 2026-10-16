@@ -183,7 +183,7 @@ def test_real_gateway_mock_provider_reaches_handoff_and_submission(
     assert len(inputs) == len(counted) == 4
     assert inputs == counted
     assert result["context_management"]["transition_reasons"] == [
-        "initial", "major_result_reviewed"]
+        "initial", "major_result_followup_completed"]
     # Last input starts a fresh segment: current check result is quoted, not a pending call.
     assert not any(i.get("type") in {"reasoning", "function_call", "function_call_output"}
                    for i in inputs[-1])
@@ -332,9 +332,13 @@ def test_no_reset_after_unknown_provider_dispatch(tmp_path, monkeypatch):
     assert not inputs and len(counted) == 1
 
 
-def test_corrupt_handoff_fails_before_provider_or_pending_tools(tmp_path, monkeypatch):
+@pytest.mark.parametrize("event,counted_before_commit", [(segments.PREPARED_EVENT, 0),
+                                                         (segments.EVENT, 1)])
+def test_corrupt_handoff_fails_before_provider_or_pending_tools(
+    tmp_path, monkeypatch, event, counted_before_commit,
+):
     request, inputs, counted, _ = configured(monkeypatch, tmp_path)
-    _crash_journal_once(monkeypatch, event_type=segments.EVENT, when="after")
+    _crash_journal_once(monkeypatch, event_type=event, when="after")
     with pytest.raises(_SimulatedCrash):
         runner.run_dev(request)
     journal, store = records(request)
@@ -343,7 +347,7 @@ def test_corrupt_handoff_fails_before_provider_or_pending_tools(tmp_path, monkey
     Path(artifact.path).write_bytes(b"corrupt")
     result = runner.run_dev(request.model_copy(update={"resume_run_id": journal.run_id}))["runs"][0]
     assert result["terminal"] == "PROVIDER_CONTINUATION_ERROR"
-    assert not inputs and not counted
+    assert not inputs and len(counted) == counted_before_commit
 
 
 @pytest.mark.parametrize("tool", ["replace_text", "run_check", "run_probe"])
@@ -368,7 +372,7 @@ def test_major_result_waits_for_next_normal_decision_and_completed_batch(tool, s
     add("turn_decision_recorded", turn_id="t3")
     assert segments.boundary_reason(journal, binding) is None
     add("tool_batch_finished", turn_id="t3")
-    assert segments.boundary_reason(journal, binding) == "major_result_reviewed"
+    assert segments.boundary_reason(journal, binding) == "major_result_followup_completed"
     # This decision's own major result remains pending, not falsely reviewed.
     binding.update(cursor=segments.cursor(events), reviewed_through_sequence=7)
     assert segments.boundary_reason(journal, binding) is None
@@ -378,9 +382,9 @@ def test_notes_are_rebound_or_expired_not_resurrected_in_new_segment(tmp_path, m
     request, _, _, views = configured(monkeypatch, tmp_path, with_notes=True)
     assert_submitted(runner.run_dev(request)["runs"][0])
     notes = views[-1]["working_notes"]
-    assert [n["statement"] for n in notes["findings"]] == ["The module imports csv."]
+    assert [n["model_interpretation"] for n in notes["findings"]] == ["The module imports csv."]
     assert notes["interpretation_status"] == "model_authored_unverified"
-    assert notes["findings"][0]["status"] == "current"
+    assert notes["findings"][0]["evidence_currency"] == "current"
     assert "quoted newlines" in str(notes["open_question"])
 
 
@@ -442,5 +446,6 @@ def test_unknown_count_does_not_reseed_or_redispatch(tmp_path, monkeypatch):
     journal, _ = records(request)
     result = runner.run_dev(request.model_copy(update={"resume_run_id": journal.run_id}))["runs"][0]
     assert result["terminal"] == "COUNT_TIMEOUT_OR_UNKNOWN"
-    assert result["context_management"]["segment_count"] == 1
+    assert result["context_management"]["segment_count"] == 0
+    assert result["context_management"]["prepared_candidate_count"] == 1
     assert not inputs and not counted

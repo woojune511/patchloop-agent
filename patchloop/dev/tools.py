@@ -16,7 +16,13 @@ from pydantic import ValidationError
 
 from patchloop.contracts import PublicTask, RegisteredCheck
 from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
-from patchloop.dev import behavior_cases, probe_cases, probe_replay, requirement_reference
+from patchloop.dev import (
+    behavior_cases,
+    evidence_focus,
+    probe_cases,
+    probe_replay,
+    requirement_reference,
+)
 from patchloop.dev.check_feedback import check_failure_diagnostics, output_tail
 from patchloop.dev.context import (
     RETAINED_SOURCE_CHARS,
@@ -648,7 +654,8 @@ class DevToolGateway:
         self._working_findings: list[dict[str, Any]] = []
         self._working_note_source_bodies: dict[str, list[str | None]] = {}
         self._working_notes_lifecycle: dict[str, Any] | None = None
-        self._working_open_question: str | None = None
+        self._working_open_question: str | dict[str, Any] | None = None
+        self._working_question_bodies: list[str | None] = []
         self._verification_state = empty_verification_state()
         self._working_notes_turns: dict[str, dict[str, Any]] = {}
         self._next_working_note_id = 1
@@ -1531,13 +1538,32 @@ class DevToolGateway:
                     ))
         return priorities
 
+    def focus_source_references(self) -> list[dict[str, Any]]:
+        results = {e["payload"]["result"]["action_id"]: e["payload"]["result"]
+                   for e in self.journal.events() if e["event_type"] == "action_finished"}
+        return evidence_focus.source_references(self._working_open_question, results)
+
+    def _question_source_spans(self) -> list[dict[str, Any]]:
+        question = self._working_open_question
+        if not isinstance(question, dict):
+            return []
+        spans = []
+        for index, ref in enumerate(question["evidence"]):
+            body = self._working_question_bodies[index] if index < len(
+                self._working_question_bodies) else None
+            if ref["kind"] == "source" and body and not ref.get("unavailable_reason"):
+                spans.append({**ref, "content": body,
+                              "span_id": "focus_" + sha256_json(ref).split(":")[1],
+                              "last_observed_seq": 0})
+        return spans
+
     def prepare_context_projection(
         self, latest_results: Sequence[DevToolResult] = ()
     ) -> SourceProjection:
         """Select bounded retained source; native latest results already carry their text."""
 
         self._refresh_working_source_notes()
-        valid = self._validated_source_spans()
+        valid = [*self._validated_source_spans(), *self._question_source_spans()]
         valid_by_id = {span["span_id"]: span for span in valid}
         native: list[dict[str, Any]] = []
         seen_native: set[str] = set()
@@ -1561,6 +1587,7 @@ class DevToolGateway:
             priorities=self._source_projection_priorities(),
             editable_paths={span["path"] for span in valid if self._path_allowed(span["path"])},
             max_chars=self.retained_source_chars,
+            focus_references=self.focus_source_references(),
         )
 
     def _restore_working_notes(self, payload: dict[str, Any]) -> None:
@@ -1614,8 +1641,12 @@ class DevToolGateway:
             self._working_findings = [
                 finding for finding in self._working_findings if finding["note_id"] in retained
             ]
-        if payload.get("update_valid") is True:
-            self._working_open_question = payload.get("open_question")
+        if payload.get("update_valid") is True and payload.get("question_applied", True):
+            self._working_open_question = copy.deepcopy(payload.get("open_question"))
+            self._working_question_bodies = copy.deepcopy(payload.get("question_bodies", []))
+        if "question_state" in payload:
+            self._working_open_question = copy.deepcopy(payload["question_state"])
+            self._working_question_bodies = copy.deepcopy(payload.get("question_state_bodies", []))
         retained_ids = {finding["note_id"] for finding in self._working_findings}
         self._working_note_source_bodies = {
             note_id: bodies for note_id, bodies in self._working_note_source_bodies.items()
@@ -1738,19 +1769,36 @@ class DevToolGateway:
             diagnose("invalid_memory_update_shape")
         else:
             payload["update_valid"] = True
-            payload["open_question"] = update.open_question
-            receipt["open_question_applied"] = True
-            question_changed = update.open_question != self._working_open_question
+            question_changed = False
             existing_ids = {finding["note_id"] for finding in self._working_findings}
             updated_ids: set[str] = set()
             next_note_number = self._next_working_note_id
             all_findings_valid = True
-            spans = self._validated_source_spans()
+            spans = [*self._validated_source_spans(), *self._question_source_spans()]
             prior_results = {
                 event["payload"]["result"]["action_id"]: event["payload"]["result"]
                 for event in self.journal.events()
                 if event["event_type"] == "action_finished"
             }
+            question, question_error = evidence_focus.bind_question(
+                update.open_question, spans, prior_results,
+            )
+            payload["question_applied"] = question_error is None
+            if question_error:
+                payload["diagnostics"].append(question_error)
+                receipt["diagnostics"].append({
+                    "code": question_error,
+                    "message": "Question unchanged. Use text and up to two already observed "
+                    "source/result references, or null to clear only the focus.",
+                })
+            else:
+                payload["open_question"] = question
+                payload["question_bodies"] = (
+                    self._capture_working_note_source_bodies(question["evidence"], spans) or []
+                    if isinstance(question, dict) else []
+                )
+                receipt["open_question_applied"] = True
+                question_changed = question != self._working_open_question
             for index, finding in enumerate(update.findings):
                 entry: dict[str, Any] = {
                     "finding_index": index,
@@ -1895,6 +1943,13 @@ class DevToolGateway:
         # At most two findings, six removals, and batch/shape diagnostics. Never
         # include rejected prose or unknown path/result strings in this receipt.
         receipt["diagnostics"] = receipt["diagnostics"][:10]
+        applied_question = payload.get("update_valid") and payload.get("question_applied", False)
+        payload["question_state"] = copy.deepcopy(
+            payload["open_question"] if applied_question else self._working_open_question)
+        payload["question_state_bodies"] = copy.deepcopy(
+            payload.get("question_bodies", [])
+            if applied_question else self._working_question_bodies
+        )
         self.journal.append("working_notes_updated", payload)
         self._restore_working_notes(payload)
         return copy.deepcopy(payload)
@@ -1965,6 +2020,23 @@ class DevToolGateway:
                     rebound.append(note_id)
             else:
                 expired.append({"note_id": note_id, "reason": reason})
+        def question_source(path):
+            if path not in current_sources:
+                try:
+                    _, selected = self._tracked_path(path, deadline=deadline)
+                    raw = selected.read_bytes()
+                    current_sources[path] = (
+                        normalize_source_text(raw.decode("utf-8")), sha256_bytes(raw),
+                    )
+                except (ExecutionDeadlineExceeded, GitExecutionUncertain):
+                    raise
+                except (PatchLoopError, OSError, UnicodeDecodeError):
+                    current_sources[path] = None
+            return current_sources[path]
+
+        question = evidence_focus.refresh_question(
+            self._working_open_question, self._working_question_bodies, question_source,
+        )
         lifecycle = copy.deepcopy(self._working_notes_lifecycle)
         if rebound or expired:
             lifecycle = {
@@ -1974,6 +2046,8 @@ class DevToolGateway:
             }
         return {
             "findings": retained,
+            "open_question": question,
+            "question_bodies": copy.deepcopy(self._working_question_bodies),
             "source_bodies_by_note_id": {
                 finding["note_id"]: copy.deepcopy(
                     self._working_note_source_bodies[finding["note_id"]]
@@ -1988,6 +2062,9 @@ class DevToolGateway:
         self._working_findings = copy.deepcopy(state["findings"])
         self._working_note_source_bodies = copy.deepcopy(state["source_bodies_by_note_id"])
         self._working_notes_lifecycle = copy.deepcopy(state.get("lifecycle"))
+        if "open_question" in state:
+            self._working_open_question = copy.deepcopy(state["open_question"])
+            self._working_question_bodies = copy.deepcopy(state.get("question_bodies", []))
 
     def working_notes_lifecycle_receipt(self) -> dict[str, Any] | None:
         """Public lifecycle decisions exclude independently retained source bodies."""
@@ -2040,7 +2117,7 @@ class DevToolGateway:
         return {
             "findings": findings,
             "available_note_ids": [finding["note_id"] for finding in findings],
-            "open_question": self._working_open_question,
+            "open_question": copy.deepcopy(self._working_open_question),
             "verification": self.verification_concerns(diff_hash=current_hash),
             "last_update_diagnostics": (
                 list(self._working_notes_turns.values())[-1].get("diagnostics", [])[:3]
@@ -2064,7 +2141,8 @@ class DevToolGateway:
 
     def context_spans(self, *, exclude: set[str] | None = None) -> list[dict[str, Any]]:
         excluded = exclude or set()
-        candidates = self._validated_source_spans()
+        self._refresh_working_source_notes()
+        candidates = [*self._validated_source_spans(), *self._question_source_spans()]
         return list(project_observed_sources(
             candidates,
             native_spans=[span for span in candidates if span["span_id"] in excluded],
@@ -2073,6 +2151,7 @@ class DevToolGateway:
                 span["path"] for span in candidates if self._path_allowed(span["path"])
             },
             max_chars=self.retained_source_chars,
+            focus_references=self.focus_source_references(),
         ).source_spans)
 
     def evidence_ledger(self, *, diff_hash: str | None = None) -> dict[str, Any]:

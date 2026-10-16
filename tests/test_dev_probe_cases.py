@@ -116,13 +116,13 @@ def test_case_policy_extends_current_probe_schema_without_changing_prompt():
     before = dev_tool_schemas(**options)
     # Current ordinary schema includes explicit action-ID replay in every probe policy.
     assert sha256_json(before) == (
-        "sha256:31a198865be7a3df0d16958b6d1b9cebd050dbc58532e4fe4e41b6e6ce9fbf00"
+        "sha256:962bfc8a0b3ac7f878742ad266ff4dd6da64b0bf6ea66bd13da32dc9bed0b55e"
     )
     assert dev_tool_surface_hash() == (
-        "sha256:c1dddeac2c94f30a29543fc9e3e5a2c0cef913203906cace717a552a55815383"
+        "sha256:ae525f65f230951f3dd6cc559085b276ddc3731f9df608db4b4127916e9e3fcc"
     )
     assert sha256_bytes(DEV_SYSTEM_PROMPT.encode()) == (
-        "sha256:32cc00da2be705be71a550f85a7ccfde99676b06b71ac18df9bd3022677620ae"
+        "sha256:76e1aafdb9be3b1461b07a7dd94d3db9c86be0c96072201375f6d3726dbb0bce"
     )
     after = dev_tool_schemas(**options, probe_policy=cases.POLICY)
     assert [t for t in before if t["name"] != "run_probe"] == [

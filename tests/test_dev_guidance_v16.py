@@ -74,11 +74,11 @@ def test_guidance_preserves_exact_edit_and_optional_note_wire_contracts():
     statement = notes["properties"]["findings"]["items"]["properties"]["statement"]
     assert "behavior-bearing" in statement["description"]
     assert statement["maxLength"] == 400
-    assert "Resolve an answered question" in notes["properties"]["open_question"]["description"]
+    assert "Null clears this focus only" in notes["properties"]["open_question"]["description"]
     for instruction in (
-        "smallest sufficient unique exact anchor", "status=current only means",
-        "interpretation remains unverified", "post-image", "public input",
-        "No update or three-part plan is required each turn",
+        "smallest sufficient unique exact anchor", "evidence_currency=current",
+        "never certify", "Source changes can expire notes", "public input",
+        "Updates are optional",
         "Use concern_id=null for a distinct concern",
     ):
         assert instruction in DEV_SYSTEM_PROMPT

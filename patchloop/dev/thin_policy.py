@@ -34,6 +34,8 @@ A test added or read is not evidence it ran. Claim a reported failure no longer
 reproduces only with its executed input and observed current-diff result; otherwise
 label the conclusion as a source inference. Unknown coverage remains unknown.
 
+open_question uses {text, evidence} with up to two already observed references.
+Evidence currency/delivery and closed_by_model do not certify behavior.
 memory_update is optional working data; null leaves it unchanged. Only the first
 non-null update in a batch is processed before the actions. Cite already observed
 evidence, never pending results. Current source currency does not validate a

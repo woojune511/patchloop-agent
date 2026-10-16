@@ -21,7 +21,10 @@ POLICIES = frozenset({POLICY, EVIDENCE_POLICY, ASSUMPTION_POLICY, AFTER_SOURCE_P
 MAX_PLAN_CHARS = 3_000
 MAX_REASON_CHARS = 800
 EVENT = "working_plan_updated"
-INSTRUCTIONS = """Brief planning is enabled. In the first tool response, use plan_update
+INSTRUCTIONS = """The plan proposes remaining work and ordering. Keep material unresolved
+verification purposes in existing concerns; changing the plan does not resolve them.
+Observations and model interpretations belong in working notes, not a verified-plan summary.
+Brief planning is enabled. In the first tool response, use plan_update
 to draft a short public work plan from public_task. State the required behavior and
 concrete unfinished work, including current hypotheses or untested assumptions and
 the observation or public check that could settle them. Make it specific to this
@@ -173,7 +176,8 @@ def project(
     if review_enabled and plan is None:
         reasons.append("initial_plan")
     if review_enabled and any(
-        e["event_type"] == "context_segment_started" and e["sequence"] > boundary for e in events
+        e["event_type"] in {"context_segment_started", "context_segment_prepared"}
+        and e["sequence"] > boundary for e in events
     ):
         reasons.append("context_handoff")
     relevant = []

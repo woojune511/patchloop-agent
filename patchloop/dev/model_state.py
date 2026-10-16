@@ -11,6 +11,7 @@ import json
 from typing import Any
 
 from patchloop.dev.check_review import link_check_evidence
+from patchloop.dev.evidence_focus import project_interpretations
 from patchloop.dev.native_sources import public_exchanges
 from patchloop.dev.path_policy import mutation_path_allowed
 
@@ -267,4 +268,5 @@ def compact_model_state(
                 )),
                 "action_id": result["action_id"], "delivery": "preceding_function_call_output",
             }
+    project_interpretations(view, history, archive_kind=archive_kind)
     return view

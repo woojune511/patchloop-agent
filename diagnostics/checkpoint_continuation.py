@@ -148,10 +148,14 @@ def restore(
     )
     if backend is not checkpoint:
         # Retain the already prepared native segment identity, but never the old
-        # count/dispatch. Recreating it generates a different artifact-bound ID.
+        # count/dispatch. A segment commit now follows count admission, so it
+        # cannot serve as the pre-count cutoff. Legacy starts still precede it.
+        count_sequence = min(e["sequence"] for e in events
+                             if e["event_type"] == "input_count_started"
+                             and e["payload"]["turn_id"] == start["payload"]["turn_id"])
         cutoff = max([cutoff] + [e["sequence"] for e in events
-                     if e["event_type"] == "context_segment_started"
-                     and cutoff < e["sequence"] < start["sequence"]])
+                     if e["event_type"] in {"context_segment_prepared", "context_segment_started"}
+                     and cutoff < e["sequence"] < count_sequence])
     prefix = [e for e in events if e["sequence"] <= cutoff]
     if review_fork:
         prefix = events[:packet["checkpoint"]["cutoff_sequence"]]

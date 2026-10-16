@@ -80,14 +80,14 @@ def test_default_serialization_and_schema_identities_remain_exact():
     )
     assert "memory_update" not in RequestedTool(name="read_file", action_id="x").model_dump()
     assert dev_tool_surface_hash() == (
-        "sha256:c1dddeac2c94f30a29543fc9e3e5a2c0cef913203906cace717a552a55815383"
+        "sha256:ae525f65f230951f3dd6cc559085b276ddc3731f9df608db4b4127916e9e3fcc"
     )
     schemas = dev_tool_schemas(
         finish_enabled=True, check_ids=["public-check"], test_suite_ids=["public-tests"],
         allowed_tools=list(MODES),
     )
     assert sha256_json(schemas) == (
-        "sha256:f1b235fcd18ee4d4b8d75545e4d0a878f7e8b68afbd233507fcd413c4b338984"
+        "sha256:fddb2bea7d3b07153d9c20eb6d70330a3d31aa430335303b11ed54ab4ee3c865"
     )
     request = DevRunRequest(provider="mock", task=Path("public.yaml"), model="mock-dev")
     assert "agent_policy" not in request.model_dump(mode="json")

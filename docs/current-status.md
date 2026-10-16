@@ -66,8 +66,8 @@ L003/L039 cycle, regression PASS overinterpreted despite retained notes/tools.
 [Counterexample](history/2026-10-07-counterexample-results.md): both FAIL despite
 B's retained current failure; USD 0.04019910. Keep 24k; no adoption or paid follow-up.
 
-[Segment audit](history/2026-10-16-segment-boundary-audit.md): source loss and unverified carryover.
-[Design](../.agent/plans/evidence-preserving-handoff.md): proposed; runtime unchanged.
+[Handoffs](history/2026-10-17-evidence-handoff-implementation.md): implemented; timing/limits fixed.
+75 saved boundaries: +61 cited lines, -68 other lines; model uptake/quality untested.
 No paid follow-up.
 
 See [panel contract](../.agent/current-dev20.md) and

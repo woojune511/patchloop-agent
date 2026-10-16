@@ -35,12 +35,20 @@ class PublicFinding(_NoteModel):
     ] = Field(min_length=1, max_length=2)
 
 
+class OpenQuestion(_NoteModel):
+    text: str = Field(min_length=1, max_length=500)
+    evidence: list[
+        Annotated[SourceNoteEvidence | ToolNoteEvidence, Field(discriminator="kind")]
+    ] = Field(max_length=2)
+
+
 class WorkingNotesUpdate(_NoteModel):
     findings: list[PublicFinding] = Field(max_length=2)
     remove_note_ids: list[
         Annotated[str, Field(pattern=r"^n[1-9][0-9]*$", max_length=30)]
     ] = Field(default_factory=list, max_length=6)
-    open_question: str | None = Field(max_length=500)
+    # Validate independently so a bad question cannot discard valid note updates.
+    open_question: Any
     # Independently validated annotations must not reject valid source findings
     # or the focus question. Old durable/synthetic updates omit this field.
     verification_updates: Any = Field(default_factory=list)
@@ -247,7 +255,7 @@ def memory_update_schema() -> dict[str, Any]:
     return {
         "type": ["object", "null"],
         "description": (
-            "Optional public facts/assumptions; null preserves notes and open_question. "
+            "Optional public model interpretations; null preserves notes and open_question. "
             "Only the first non-null update is applied before the batch; cite already "
             "observed public source/results, never pending/current-batch results. "
             "memory_update_result is before-tool-batch; note_ids_after_update is historical. "
@@ -264,8 +272,8 @@ def memory_update_schema() -> dict[str, Any]:
                             "type": ["string", "null"], "pattern": r"^n[1-9][0-9]*$",
                             "maxLength": 30,
                             "description": (
-                                "note_id=null creates a distinct fact; an existing ID refines "
-                                "the same fact even if citations change."
+                                "note_id=null creates a distinct interpretation; an existing ID "
+                                "refines the same interpretation even if citations change."
                             ),
                         },
                         "statement": {
@@ -292,10 +300,17 @@ def memory_update_schema() -> dict[str, Any]:
                 "description": "Remove existing IDs to consolidate duplicates; [] preserves.",
             },
             "open_question": {
-                "type": ["string", "null"], "maxLength": 500,
+                "type": ["object", "null"],
+                "properties": {
+                    "text": {"type": "string", "minLength": 1, "maxLength": 500},
+                    "evidence": {"type": "array", "maxItems": 2,
+                                 "items": {"anyOf": [source, result]}},
+                },
+                "required": ["text", "evidence"], "additionalProperties": False,
                 "description": (
-                    "Resolve an answered question with null; otherwise name the next "
-                    "uncertainty that could change an edit/experiment. Does not resolve concerns."
+                    "Name the next uncertainty and up to two already observed ranges/results "
+                    "to prioritize across handoffs. [] permits an unanswered question. "
+                    "Null clears this focus only, not verification concerns."
                 ),
             },
             "verification_updates": verification_updates_schema(),

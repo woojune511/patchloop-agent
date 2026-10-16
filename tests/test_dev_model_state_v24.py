@@ -122,7 +122,13 @@ def test_complete_view_keeps_failure_notes_scope_correction_and_check_currency()
                           "available_note_ids": ["n1"], "open_question": "Untested behavior?"},
     }
     view = compact_model_state(exact, [])
-    assert view == exact
+    assert {k: v for k, v in view.items() if k != "working_notes"} == {
+        k: v for k, v in exact.items() if k != "working_notes"}
+    note = view["working_notes"]["findings"][0]
+    assert note["model_interpretation"] == "Public interpretation"
+    assert note["evidence_currency"] == "historical"
+    assert note["evidence_delivery"] == "incomplete"
+    assert exact["working_notes"]["findings"][0]["statement"] == "Public interpretation"
     initial = assemble_model_input(system_prompt="fixed", state=view, history=[])
     del view["protocol_correction"]
     view["working_notes"].update(findings=[], available_note_ids=[], open_question=None)

@@ -63,7 +63,7 @@ def test_working_notes_are_nonblocking_in_actual_model_input(
     assert bool(contexts[2]["working_notes"]["findings"]) is valid_note
     if valid_note:
         finding = contexts[2]["working_notes"]["findings"][0]
-        assert finding["status"] == "historical"
+        assert finding["evidence_currency"] == "historical"
         assert finding["model_authored"] is True
     # Once the native batch changes, the retained accepted edit becomes self-contained again.
     assert "hypothesis" in contexts[3]["last_successful_mutation"]

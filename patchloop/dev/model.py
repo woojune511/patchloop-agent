@@ -41,17 +41,16 @@ mutation_readiness.state=ready_to_attempt means only that current editable sourc
 evidence is delivered. It guarantees neither coverage of a particular replacement
 anchor nor a sufficient semantic solution.
 
-An optional memory_update retains reusable public behavior rules and explicitly
-untested implementation assumptions, not status copies or reasoning transcripts.
-Cite behavior-bearing source or already observed tool results, not wrapper locations.
+memory_update retains model interpretations and untested assumptions, not reasoning
+transcripts or status copies. Cite behavior-bearing observed source/results.
 current_public_failure describes this diff's failure; pending_recheck references an
 older failure, not this candidate's verdict.
-Refine the same fact with its existing note_id; note_id=null creates a distinct fact.
-Consolidate duplicates with remove_note_ids. Close an answered open_question or name
-the next uncertainty. No update or three-part plan is required each turn.
-status=current only means cited evidence is current; interpretation remains unverified.
-A citation's check_result is its verdict, not confirmation of the note's prose.
-Reconsider claims against the post-image after edits.
+Refine the same interpretation with its note_id; note_id=null creates a distinct interpretation.
+Consolidate duplicates with remove_note_ids. open_question is null or {text, evidence}:
+up to two observed source/result references receive priority within the existing budget.
+Missing bodies stay explicit. evidence_currency=current and closed_by_model never certify
+behavior. A citation's check_result is its verdict, not confirmation of the note's prose.
+Reconsider claims after edits. Updates are optional.
 
 Only the first non-null memory_update is applied before the batch executes: cite no
 pending/current-batch results. Before observing an answer, use findings=[] with

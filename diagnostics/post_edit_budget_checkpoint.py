@@ -72,9 +72,13 @@ def load(source: Source):
                  and e["sequence"] > accepted["sequence"])
     cutoff = max(e["sequence"] for e in events if e["event_type"] == "tool_batch_finished"
                  and e["sequence"] < start["sequence"])
+    count_sequence = min(e["sequence"] for e in events
+                         if e["event_type"] == "input_count_started"
+                         and e["payload"]["turn_id"] == start["payload"]["turn_id"])
     cutoff = max([cutoff] + [e["sequence"] for e in events
-                            if e["event_type"] == "context_segment_started"
-                            and cutoff < e["sequence"] < start["sequence"]])
+                            if e["event_type"] in {
+                                "context_segment_prepared", "context_segment_started"}
+                            and cutoff < e["sequence"] < count_sequence])
     prefix = [e for e in events if e["sequence"] <= cutoff]
     mutations = [e for e in prefix if e["event_type"] == "action_started"
                  and e["payload"]["tool"] == "replace_text"]

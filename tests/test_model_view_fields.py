@@ -47,8 +47,8 @@ def public_state():
 
 
 @pytest.mark.parametrize("reverse,expected_hash", [
-    (False, "410b7f0901b8b7cd6dbfcce7b67616b81ad674fbfb1d1df8d30b4049d47396bc"),
-    (True, "1a5fae24aaa568dda32a37cf9eac03964c4ff74159950c34172ac4bf42d955a7"),
+    (False, "c300616ff43a1e1d7f6de320264bba67dfbe3d6d62d84fb89e7312b75fb4a467"),
+    (True, "64a2244379fc2910b47666878473cbe44060207bf049246bdac98d0b9b7bb860"),
 ])
 def test_current_public_fields_keep_ordered_wire_and_independent_values(reverse, expected_hash):
     state = public_state()

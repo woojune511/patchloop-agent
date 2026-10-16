@@ -1,8 +1,9 @@
 # Evidence-preserving handoff and unverified interpretations
 
-Date: 2026-10-17. Status: proposed design, not implemented or adopted.
-Baseline: `e9966142e1a24f5c3a78d2261013cbf8542723d2`.
-No new solver execution, provider/count call, or evaluation is part of this design.
+Date: 2026-10-17. Status: implemented in dev-head; live quality untested.
+Design baseline: `e9966142e1a24f5c3a78d2261013cbf8542723d2`; design commit: `ffe11a0`.
+See [implementation and offline evidence](../../docs/history/2026-10-17-evidence-handoff-implementation.md).
+Only provider-free validation is authorized; no paid comparison is scheduled.
 
 ## Problem and intended change
 
@@ -29,7 +30,7 @@ Keep the current completed-batch rule and all hard limits: 60,000 counted input
 tokens, 1,048,576 request bytes and 262,144 bytes per encrypted item. Keep 24,000
 retained source characters and existing run-wide resource/cost limits.
 
-In a future fresh contract, describe `major_result_reviewed` as
+Fresh contracts describe `major_result_reviewed` as
 `major_result_followup_completed`: the result was followed by a normal response
 and its completed tool batch. This is a naming clarification, not a new timing rule
 or proof of understanding. Preserve old events and their meanings on old runs.
@@ -163,8 +164,9 @@ Candidates/count receipts are immutable prepared records, separate from committe
 segment state. Recovery reuses a known completed count only for its identical payload
 and finalizes the same chosen candidate once. An unknown count/transport/billing
 outcome stops immediately; it never authorizes the fallback or a retry. This requires
-explicit runner finalization before `segments.start`, not mutation of an existing
-binding. After fallback, a source reference formerly satisfied by a removed tool
+runner preparation through `segments.start(prepare=True)` and finalization through
+`segments.commit`, never mutation of a committed binding. After fallback, a source reference
+formerly satisfied by a removed tool
 body must resolve to budgeted inline/other delivered source or become incomplete.
 
 ## 4. Evidence, model interpretation and proposed work stay separate
@@ -255,12 +257,12 @@ retroactively assign it that knowledge or claim it would have avoided the reread
 
 ## 6. Implementation seams and bounded validation
 
-| Seam | Proposed responsibility |
+| Seam | Responsibility |
 | --- | --- |
 | `working_notes.py`, `tools.py` | Question-reference schema/admission, persistence/rebind, atomic priority tier and bounded feedback. |
 | `context.py` | Reuse atomic selection and omission accounting with version-bound owners. |
-| `model_state.py`, `native_sources.py`, `public_history.py` | Evidence-first public projection and delivery completeness across inline, native and quoted forms. |
-| `verification_concerns.py`, `working_plan.py` | Model-disposition wording, original purpose continuity and plan role; no new correctness gate. |
+| `evidence_focus.py`, `model_state.py`, existing native/public-history resolvers | Bound references, evidence-versus-interpretation projection and actual inline/native/quoted delivery. |
+| `evidence_focus.py`, `working_plan.py`, existing concern lifecycle | Model-disposition wording, original purpose continuity and plan role; no new correctness gate. |
 | `runner.py`, `segments.py`, `contracts.py` | Compose/bind handoff manifest, hard admission, recovery and fresh contract identity. |
 
 Do not reinterpret legacy open-question strings or serialized statuses while
@@ -273,7 +275,7 @@ evidence-versus-interpretation projection. Keep timing fixed throughout. Introdu
 no extra review model, summary call, automatic tool action, mandatory probe, or new
 finish gate. Do not create another family of planning variants for this design.
 
-Provider-free acceptance cases for a future implementation:
+Provider-free acceptance cases:
 
 - Complete declared ranges retained when they fit after mutation anchors; equality
   and one-character overflow, overlapping references, a large first range and small
@@ -311,7 +313,7 @@ Stop this candidate if it silently loses declared evidence, displaces mandatory
 mutation state, changes admission/finish behavior, or cannot stay within budgets.
 Even successful delivery tests do not justify baseline adoption on quality grounds.
 
-For implementation, run focused success/failure/recovery tests under two minutes,
-then Ruff, the fast suite and isolated mock smoke as relevant. At design time only
-documentation/link validation is applicable. Runtime behavior and live quality
-remain unimplemented and untested.
+Validation includes focused success/failure/recovery cases, Ruff, the fast suite
+and isolated mock smoke; results and limitations live in the implementation record.
+Keep focused groups under two minutes. Runtime delivery is locally testable;
+model uptake, reread reduction and repair-quality effects remain untested.

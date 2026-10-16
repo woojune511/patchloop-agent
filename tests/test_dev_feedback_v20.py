@@ -84,7 +84,7 @@ def test_row27_cross_diff_false_summary_keeps_each_cited_failure_beside_the_note
     items = _input(gateway, results, tmp_path)
     public = input_context(items)
     finding = public["working_notes"]["findings"][0]
-    assert finding["statement"] == "The visible failure has moved to an assertion."
+    assert finding["model_interpretation"] == "The visible failure has moved to an assertion."
     assert [ref["check_result"] for ref in finding["evidence"]] == [
         {"check_id": "traversal", "passed": False, "exception_type": "AssertionError",
          "currency": "historical"},
@@ -201,10 +201,10 @@ def test_probe_description_exposes_existing_capability_without_changing_wire_sha
             return [structure(item) for item in value]
         return value
 
-    # Finish now requires an assessment; probe properties/limits and tool order stay fixed.
+    # Open questions now bind evidence; probe properties/limits and tool order stay fixed.
     encoded = json.dumps(structure(schemas), separators=(",", ":"), ensure_ascii=False).encode()
     assert hashlib.sha256(encoded).hexdigest() == (
-        "e4d24d077ddb3b0e848e8540c8e595c1863eb80800ef6f9f3bb4849ec0a3cf32"
+        "b57c0766ae0086580b18635aa6a6d3083e2567e0ad7881d5629fe671a4b8886f"
     )
     assert dev_tool_surface_hash() != (
         "sha256:d69d9d4f71a4ed6517e0ae077d2df1fe934f6498abcacf104eed0b9b0fc717a8"
@@ -222,9 +222,9 @@ def test_guidance_prioritizes_reusable_facts_without_growing_the_system_prompt()
     assert "Recheck a repair before assuming it persists" in DEV_SYSTEM_PROMPT
     assert "another edit can use independent current evidence" in DEV_SYSTEM_PROMPT
     assert "headers do not establish behavior of unread return paths" in DEV_SYSTEM_PROMPT
-    assert "note_id=null creates a distinct fact" in DEV_SYSTEM_PROMPT
+    assert "note_id=null creates a distinct interpretation" in DEV_SYSTEM_PROMPT
     assert "experiment on the current candidate" in DEV_SYSTEM_PROMPT
     assert "not confirmation of the note's prose" in DEV_SYSTEM_PROMPT
     note_id = memory_update_schema()["properties"]["findings"]["items"]["properties"]["note_id"]
-    assert "refines the same fact even if citations change" in note_id["description"]
-    assert "note_id=null creates a distinct fact" in note_id["description"]
+    assert "refines the same interpretation even if citations change" in note_id["description"]
+    assert "note_id=null creates a distinct interpretation" in note_id["description"]

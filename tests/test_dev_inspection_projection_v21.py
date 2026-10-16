@@ -250,7 +250,7 @@ def test_projection_preserves_current_ordered_tool_inputs_and_limits():
     # The current ordered inputs include the required finish assessment.
     encoded = json.dumps(structure(schemas), separators=(",", ":"), ensure_ascii=False).encode()
     assert hashlib.sha256(encoded).hexdigest() == (
-        "e4d24d077ddb3b0e848e8540c8e595c1863eb80800ef6f9f3bb4849ec0a3cf32"
+        "b57c0766ae0086580b18635aa6a6d3083e2567e0ad7881d5629fe671a4b8886f"
     )
     assert dev_tool_surface_hash() != (
         "sha256:90dc9a92b61cfd61f61572af504a66424f3e703ab8e29f114de29c22cf97a684"

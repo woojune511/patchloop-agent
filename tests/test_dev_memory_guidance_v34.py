@@ -24,7 +24,7 @@ def _without_descriptions(value):
 
 
 def _memory_block():
-    start = DEV_SYSTEM_PROMPT.index("An optional memory_update")
+    start = DEV_SYSTEM_PROMPT.index("memory_update retains")
     end = DEV_SYSTEM_PROMPT.index("A mutation requires")
     return DEV_SYSTEM_PROMPT[:start], DEV_SYSTEM_PROMPT[start:end], DEV_SYSTEM_PROMPT[end:]
 
@@ -52,7 +52,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     tools = _legacy_compression_surface(tools)
     encoded = json.dumps(_without_descriptions(tools), ensure_ascii=False, separators=(",", ":"))
     assert hashlib.sha256(encoded.encode()).hexdigest() == (
-        "e01845a768104f3eab7f9917cde3f9d1120462cb1d38736b4cd6d64fcf7bce71"
+        "544e1abd442ae4f0028b86482b3261b02b57ce1c9c18c44412901a8b431a5871"
     )
     for tool in tools:
         assert tool["strict"] is True
@@ -63,20 +63,20 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
 @pytest.mark.parametrize(("names", "expected"), [
     (
         ("read_file", "run_check", "run_probe", "search_files", "stop_task"),
-        "5ea1338cf03c2fd4cb9d009c87b721f158d20765d0f057ede0001ad27fdc4bc0",
+        "4b82afb0f1eb03d4906454b3f4ea309c503f5451228bda146e55b0b88c53d701",
     ),
     (
         ("finish_task", "read_file", "replace_text", "run_probe", "search_files", "stop_task"),
-        "178e33bb44726810a3e0e082769a038b0436a39afa5a7fef014ba3c674e985ab",
+        "4c418c65844ec8da8f7d55eddbac9cb935f450558378dabc8d0abd19211c8db3",
     ),
     (
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task"),
-        "f07933d13990fcd005b3f94c615d10b8d2950be490083dbcd12f584af1deadbf",
+        "6ee112e163630ae01e6beba1820a8473c1189104fddc80c3a510601abd85a916",
     ),
     (
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task",
          "finish_task"),
-        "ea6438c5c8fb9411632fe1ccc5947788b244901f7c566282ca4407316b2d9669",
+        "469a86145eec75fc0091760f61e8657d145cb6b8c2fdbc415ca5f606bf90639c",
     ),
 ])
 def test_descriptions_outside_memory_and_schema_order_are_unchanged(names, expected):
@@ -103,22 +103,24 @@ def test_guidance_is_bounded_in_characters_and_canonical_bytes_not_claimed_token
     assert len(memory) <= 2400
     # Simplification stays within the original bounded prompt contract.
     assert len(DEV_SYSTEM_PROMPT) <= 8007
-    assert len(canonical_json(memory_update_schema()).encode()) <= 3200
+    # The two-reference question object adds wire structure; final request limits stay fixed.
+    assert len(canonical_json(memory_update_schema()).encode()) <= 4000
     assert hashlib.sha256(canonical_json(_without_descriptions(memory_update_schema()))
                           .encode()).hexdigest() == (
-        "0ff2c97a785a0c27146dc4f3675de195ecffc863a1b842cf35512e2da48e96b2"
+        "aa73f3a9a86abd5788feedbfe718ec299aeef2c78e648a80e65bfa6d5521d92c"
     )
 
 
 def test_compact_guidance_keeps_optional_evidence_lifecycle_and_concern_boundaries():
     _, memory, _ = _memory_block()
     for instruction in (
-        "reusable public behavior rules", "explicitly\nuntested implementation assumptions",
-        "behavior-bearing source", "not status copies or reasoning transcripts",
-        "note_id=null creates a distinct fact", "remove_note_ids",
-        "No update or three-part plan is required each turn",
-        "interpretation remains unverified", "not confirmation of the note's prose",
-        "post-image", "first non-null", "before the batch executes",
+        "model interpretations and untested assumptions",
+        "not reasoning\ntranscripts or status copies",
+        "behavior-bearing observed source/results",
+        "note_id=null creates a distinct interpretation", "remove_note_ids",
+        "Updates are optional", "closed_by_model never certify\nbehavior",
+        "not confirmation of the note's prose", "Reconsider claims after edits",
+        "first non-null", "before the batch executes",
         "pending/current-batch results", "findings=[]", "memory_update=null",
         "Null preserves notes and the question", "clears only the question",
         "working_notes.available_note_ids", "pre-batch\nreceipt, not current availability",
@@ -137,7 +139,7 @@ def test_guidance_identity_changes_without_changing_run_schema_or_limits():
     # Common action/probe guidance changes the overall surface identity;
     # argument and description identities remain independently pinned above.
     assert dev_tool_surface_hash() == (
-        "sha256:c1dddeac2c94f30a29543fc9e3e5a2c0cef913203906cace717a552a55815383"
+        "sha256:ae525f65f230951f3dd6cc559085b276ddc3731f9df608db4b4127916e9e3fcc"
     )
     assert DEV_RUN_SCHEMA == "dev-run-v1"
     limits = DevLimits()
