@@ -4,18 +4,18 @@
 
 ## Records
 
-- [Assessment](2026-10-16-submission-assessment-results.md).
+- [Assessment](2026-10-16-submission-assessment-results.md), [exits](2026-10-16-assessment-exit-analysis.md).
 - [Host stop](2026-10-16-host-plan-stop.md).
 - [Probe](2026-10-15-pre-edit-probe.md).
 - [Uptake review](2026-10-15-uptake-grade.md).
 - [isort I4](2026-10-16-isort-requirement-audit.md).
 - [Hypotheses](2026-10-15-hypothesis-comparison.md).
 - [Navigation](2026-10-08-failure-navigation.md).
-- Retention: [comparison](2026-10-06-source-retention-results.md), [continuation](2026-10-06-cost-cap-continuation-results.md).
+- [Retention](2026-10-06-source-retention-results.md), [cap](2026-10-06-cost-cap-continuation-results.md).
 - [Diagnosis](2026-10-07-public-verification-failure-diagnosis.md).
 - [Closure](2026-10-06-verification-closure-results.md).
 - [Dev20](2026-10-06-current-dev20-results.md).
-- Portfolio: [prep](2026-10-05-portfolio-preparation.md), [results](2026-10-06-portfolio-dev20-results.md).
+- [Prep](2026-10-05-portfolio-preparation.md), [results](2026-10-06-portfolio-dev20-results.md).
 - [Corrections](2026-10-05-click-feedback-results.md), [review](2026-10-05-original-patch-review.md).
 - [Three uses](2026-10-05-three-public-repair-uses.md).
 - [Verification](2026-10-05-repair-verification.md).
