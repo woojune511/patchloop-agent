@@ -1,14 +1,15 @@
-# Verification purpose comparison proposal
+# Verification purpose comparison
 
-Date: 2026-10-16. Proposed allocation; execution is not authorized. Every run would
-be official=false and claim_eligible=false. Historical approvals and unused budgets
-do not carry forward.
+Date: 2026-10-16. The user approved the immediately preceding proposal with
+"그럼 실험해볼까": the exact D/E revisions, four tasks, sixteen solves and USD 19.20
+ceiling below. Dispatch remains conditional on manifest and environment validation.
+Every run is official=false and claim_eligible=false. Historical allocations remain closed.
 
 ## Repetitions and cost ceiling
 
 Compare previous D with the purpose-preserving guidance, labeled E in this report:
 four tasks, two fresh solves per task per arm, sixteen solves total and eight per arm.
-Propose USD 1.20 per solve and an invocation-wide ceiling of USD 19.20, including
+The allocation is USD 1.20 per solve and an invocation-wide ceiling of USD 19.20, including
 all provider usage. No budget transfers, extra repetitions or paid judges. These are
 ceilings, not a spending target; reservations and settled charges remain separate.
 
@@ -179,8 +180,8 @@ default configuration, ANSI/Jinja Linter, and parse/lint of `SELECT 1`. Import a
 is insufficient. Preserve any failed preparation and do not turn diagnostics into
 solver-visible task hints. Existing C/D preflight results do not certify this panel.
 
-This proposal does not claim a frozen manifest or environment PASS. Paid dispatch
-requires explicit approval of the exact scope and successful preparation. Count
+Approval binds the proposed scope; it does not establish environment PASS. Paid
+dispatch requires a frozen manifest and successful preparation. Count
 immediately before dispatch, reserve conservatively and use zero SDK retries. Stop
 pending admissions on count/transport/billing/cleanup uncertainty, identity drift or
 unexplained completed grader disagreement. Preserve already-admitted usage; a known

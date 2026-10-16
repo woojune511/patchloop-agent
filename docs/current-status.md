@@ -33,8 +33,8 @@ mixed 12/20 is not uniform accuracy. Mini's SQL metadata mismatch limits compari
 Allocations closed; no paid follow-up or quality gain established.
 
 [C/D](history/2026-10-16-plan-grounds.md): closed, 0/8 each; USD 5.74993635.
-[Purpose comparison](../.agent/verification-purpose-comparison.md): D vs 5fbce0c;
-16 solves, USD 19.20; unapproved, NOT_RUN.
+[Purpose](../.agent/verification-purpose-comparison.md): D vs 5fbce0c;
+16 solves, USD 19.20; approved, preflight pending.
 
 [Host A/B](history/2026-10-16-host-plan-stop.md): runtime drift; NOT_RUN / USD 0.
 [I4](history/2026-10-16-isort-requirement-audit.md): inferred type_item;
