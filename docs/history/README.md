@@ -4,6 +4,7 @@
 
 ## Records
 
+- [Assessment](2026-10-16-submission-assessment-results.md).
 - [Host stop](2026-10-16-host-plan-stop.md).
 - [Probe](2026-10-15-pre-edit-probe.md).
 - [Uptake review](2026-10-15-uptake-grade.md).
@@ -71,26 +72,26 @@
 - [Checkpoint results](2026-09-27-checkpoint-live-results.md).
 - [Live checkpoint](2026-09-27-checkpoint-live-preparation.md).
 - [Offline continuation](2026-09-27-checkpoint-continuation.md).
-- [Mutation advice checkpoint](2026-09-27-mutation-advice-checkpoint.md).
+- [Mutation checkpoint](2026-09-27-mutation-advice-checkpoint.md).
 - [AnyIO fresh solves](2026-09-27-anyio-fresh-solve.md).
 - [AnyIO B1 branch deletion](2026-09-27-anyio-b1-branch-deletion.md).
 - [AnyIO evidence/action links](2026-09-27-anyio-evidence-action-link.md).
 - [AnyIO final probe scope](2026-09-27-anyio-final-probe-scope.md).
 - [AnyIO process audit](2026-09-27-anyio-observation-process-audit.md).
-- [AnyIO observation repair comparison](2026-09-27-anyio-observation-repair-comparison.md).
+- [AnyIO repair comparison](2026-09-27-anyio-observation-repair-comparison.md).
 - [AnyIO failure observation](2026-09-27-anyio-failure-observation.md).
 - [AnyIO probe readiness](2026-09-27-anyio-probe-readiness.md).
-- [planning OFF regression](2026-09-27-planning-off-regression.md).
+- [Planning OFF](2026-09-27-planning-off-regression.md).
 - [First-plan timing](2026-09-27-after-source-planning-comparison.md).
 - [First plan after source](2026-09-26-after-source-planning.md).
 - [Planning ON/OFF](2026-09-26-planning-off-comparison.md).
 - [Declaration](2026-09-26-declaration-checkpoint-comparison.md).
 - [Decision](2026-09-26-declaration-checkpoint-sampler.md).
-- [declaration-context diagnostic](2026-09-26-declaration-context-diagnostic.md).
+- [Declaration context](2026-09-26-declaration-context-diagnostic.md).
 - [Interpretation](2026-09-26-first-interpretation-audit.md).
 - [Candidates](2026-09-26-independent-candidate-comparison.md).
-- [Diagnostic verification](2026-09-26-diagnostic-claims-verification.md).
+- [Diagnostic](2026-09-26-diagnostic-claims-verification.md).
 - [Completion](2026-09-26-completion-status-comparison.md).
 - [First input](2026-09-26-completion-status-diagnostic.md).
 - [Verification scope audit](2026-09-26-verification-scope-audit.md).
-- [Paired-reference comparison](2026-09-26-paired-reference-comparison.md).
+- [Paired reference](2026-09-26-paired-reference-comparison.md).

@@ -26,9 +26,9 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 ## Active decision
 
 [Submission judgment](operations.md) requires review and a finish assessment after PASS.
-Edits require fresh checks. [Comparison](../.agent/submission-assessment-comparison.md):
-4 exposed failures x 2 arms x 2 repeats, proposed USD 19.20. NOT_RUN; unapproved.
-Quality effect is unmeasured; frozen manifests need runtime revalidation.
+[Comparison](history/2026-10-16-submission-assessment-results.md): A 0/8, B 0/8;
+16 public PASS. B added one post-PASS probe, no edits. USD 4.29112755; closed.
+No measured quality gain on this four-task exposed panel. Edits require fresh checks.
 
 [Host A/B](history/2026-10-16-host-plan-stop.md): runtime drift; NOT_RUN / USD 0.
 [I4](history/2026-10-16-isort-requirement-audit.md): inferred type_item;
