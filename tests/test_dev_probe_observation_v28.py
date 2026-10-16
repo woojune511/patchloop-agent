@@ -184,14 +184,16 @@ def test_actual_native_projection_restart_and_historical_probe_keep_evidence(tmp
     assert view["recent_probes"][0]["observation"]["behavior_verdict"] == "not_assessed"
     assert view["public_execution_summary"]["files"] == []
     finish = _batch(gateway, RequestedTool(
-        name="finish_task", action_id="finish", arguments={},
+        name="finish_task", action_id="finish", arguments={
+            "assessment": "Reviewed the public patch and remaining uncertainty.",
+        },
         turn_decision=PublicTurnDecision(mode="finish", basis="Submit the eligible candidate."),
     ), tmp_path)
     assert finish.output["patch_hash"] == gateway.current_diff_hash
 
 
 @pytest.mark.parametrize("probe_available", [True, False])
-def test_submission_remains_available_without_required_probe_or_review(probe_available):
+def test_submission_requires_judgment_without_a_separate_probe_or_review_action(probe_available):
     allowed = {"finish_task", "stop_task"} | ({"run_probe"} if probe_available else set())
     snapshot = SimpleNamespace(
         diff=SimpleNamespace(patch_hash="current"), ready_to_submit=True,
@@ -199,8 +201,9 @@ def test_submission_remains_available_without_required_probe_or_review(probe_ava
     )
     policy = SimpleNamespace(workflow_gate="ready_to_submit", allowed_tools=allowed)
     guidance = runner._completion_guidance(snapshot, policy)
-    assert guidance["submission_ready"] and guidance["next_action"] == {"tool": "finish_task"}
-    assert "not proof of untested behavior" in guidance["message"]
+    assert guidance["submission_ready"] and guidance["next_action"] is None
+    assert "before deciding whether the task is complete" in guidance["message"]
+    assert "finish_task with your assessment" in guidance["message"]
     assert ("run_probe" in guidance["message"]) is probe_available
     assert len(canonical_json(guidance)) < 650
 
@@ -213,7 +216,7 @@ def test_experiment_guidance_is_generic_optional_and_uses_existing_inputs():
     assert set(schema["parameters"]["properties"]) == {
         "question", "python_source", "replay_action_id", "turn_decision",
     }
-    assert "No extra review call, annotation or experiment is required" in DEV_SYSTEM_PROMPT
+    assert "This judgment needs no separate call or mandatory experiment" in DEV_SYSTEM_PROMPT
     assert len(DEV_SYSTEM_PROMPT) <= 8007
     for task_specific in ("pyfakefs", "makedirs", "0o700", "ENOTDIR"):
         assert task_specific not in schema["description"] + DEV_SYSTEM_PROMPT

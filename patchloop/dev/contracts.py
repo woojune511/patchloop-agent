@@ -53,7 +53,8 @@ def dev_tool_surface_hash(
         })
     base = sha256_json(
         {
-            "schema_version": "dev-tool-surface-v47",
+            "schema_version": "dev-tool-surface-v48",
+            "submission_assessment": "required-nonblank-public-conclusion-current-diff-v1",
             "selected_public_tests": "registered-pytest-tracked-targets-optional-v1",
             "segmented_context": segments.contract(),
             "native_context_policy": "opt-in-full-compaction-seed-public-reentry-prepared-count-v2",
@@ -143,7 +144,7 @@ def dev_tool_surface_hash(
             ],
             "behavior_verification": "current-diff-intent-and-public-results-v3",
             "verification_concern_limit": 3,
-            "submission_guidance": "current-check-finish-versus-unsuccessful-voluntary-stop-v2",
+            "submission_guidance": "current-check-review-before-finish-v3",
             "working_note_source_body_chars": 24_000,
             "public_probe": "optional-clean-python-diagnostic-protected-budget-v1",
             "public_probe_replay": "explicit-completed-action-program-current-diff-v1",
@@ -235,6 +236,18 @@ class TextReplacementIntent(StrictModel):
     def replacement_changes_source(self) -> TextReplacementIntent:
         if self.old_text == self.new_text:
             raise ValueError("old_text and new_text must differ")
+        return self
+
+
+class FinishIntent(StrictModel):
+    """The agent's public submission judgment, bound to the diff by the gateway."""
+
+    assessment: str = Field(min_length=1, max_length=1_500)
+
+    @model_validator(mode="after")
+    def assessment_is_nonblank(self) -> FinishIntent:
+        if not self.assessment.strip():
+            raise ValueError("finish_task requires a nonblank submission assessment")
         return self
 
 

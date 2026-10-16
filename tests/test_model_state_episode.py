@@ -103,6 +103,8 @@ def run_step(episodes, ledger, calls, **kwargs):
 
 
 def call(name, label, **args):
+    if name == "finish_task":
+        args.setdefault("assessment", "Reviewed the public patch and remaining uncertainty.")
     return RequestedTool(name=name, action_id=label, arguments=args,
                          turn_decision=PublicTurnDecision(
                              mode="verify" if name == "run_check" else "finish",

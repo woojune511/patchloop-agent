@@ -149,7 +149,9 @@ def test_admission_is_not_semantic_review_and_feedback_repairs_need_no_reread(
         "verified-repair", failed_line=None,
         output=["case:simple", "case:multiline", "case:done"],
     )
-    finish = execute("finish_task", "finish", {}, "finish")
+    finish = execute("finish_task", "finish", {
+        "assessment": "Reviewed the public patch and remaining uncertainty.",
+    }, "finish")
     assert finish.output["patch_hash"] == passed.output["diff_hash"]
     assert gateway.accepted_mutations == 3
     assert gateway.working_notes()["verification"]["unresolved_ids"] == []

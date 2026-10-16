@@ -250,6 +250,7 @@ def test_source_citations_and_failure_concerns_keep_currency_across_edit(tmp_pat
     assert gateway.ready_to_submit()
     restarted = restart(gateway, policy)
     assert restarted.working_notes() == gateway.working_notes()
-    finish = call(policy, "finish_task", "finish")
-    finish.arguments = {}
+    finish = call(policy, "finish_task", "finish", {
+        "assessment": "Reviewed the current patch; the unresolved concern is acknowledged.",
+    })
     assert restarted.execute_batch([finish])[0].status == "succeeded"

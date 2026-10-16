@@ -184,7 +184,9 @@ def test_probe_mutation_check_finish_does_not_credit_private_evaluation(branch):
     calls = [probe_call(), mutation_call(branch.gateway), RequestedTool(
         name="run_check", action_id="check-new", arguments={"check_id": "existing-unit-tests"},
         turn_decision=PublicTurnDecision(mode="verify", basis="Check public repair")),
-        RequestedTool(name="finish_task", action_id="finish-new", arguments={},
+        RequestedTool(name="finish_task", action_id="finish-new", arguments={
+            "assessment": "Reviewed the public patch and remaining uncertainty.",
+        },
                       turn_decision=PublicTurnDecision(mode="finish", basis="Checks pass"))]
     requests = [dispatch(branch, [call], cost=cost) for call in calls]
     assert [r["tool_choice"] for r in requests] == [rollout.view.FORCED_PROBE] + ["required"] * 3

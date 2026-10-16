@@ -584,7 +584,9 @@ def test_parallel_read_mutation_check_and_finish(gateway_factory) -> None:
     )
     assert check.output["passed"] is True
     assert gateway.visible_checks_pass() is True
-    finish = gateway.execute(RequestedTool(name="finish_task", action_id="finish", arguments={}))
+    finish = gateway.execute(RequestedTool(name="finish_task", action_id="finish", arguments={
+        "assessment": "Reviewed the public patch and remaining uncertainty.",
+    }))
     assert finish.status == "succeeded"
     assert finish.output["patch_hash"] == gateway.current_diff_hash
 
@@ -1123,7 +1125,9 @@ def test_new_files_and_untracked_submission_fail_closed(gateway_factory) -> None
     assert check.output["passed"] is True
     (workspace / "unexpected.txt").write_text("not submitted\n", encoding="utf-8")
     finish = gateway.execute(
-        RequestedTool(name="finish_task", action_id="untracked-finish", arguments={})
+        RequestedTool(name="finish_task", action_id="untracked-finish", arguments={
+            "assessment": "Reviewed the public patch and remaining uncertainty.",
+        })
     )
     assert finish.status == "failed"
     assert "untracked files" in finish.message

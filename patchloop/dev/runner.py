@@ -585,18 +585,18 @@ def _completion_guidance(
     )
     if snapshot.ready_to_submit and "finish_task" in allowed:
         stage = "ready_to_submit"
-        next_action = {"tool": "finish_task"}
         message = (
-            "All required visible checks pass on the current diff; submission is eligible, "
-            "not proof of untested behavior. "
+            "All required visible checks pass on the current diff. Review the public "
+            "requirements, patch, evidence and remaining uncertainties before deciding "
+            "whether the task is complete. If ready, call finish_task with your assessment; "
+            "otherwise continue the repair or verification. Any edit requires passing "
+            "the required checks again and a new assessment of that diff. "
         )
         if "run_probe" in allowed:
             message += (
-                "Use run_probe if a concrete remaining public uncertainty could change the edit; "
-                "otherwise use finish_task to submit. No extra experiment is required."
+                "Use run_probe if a concrete remaining public uncertainty could change "
+                "the decision. No extra experiment is required."
             )
-        else:
-            message += "Use finish_task to submit; keep any remaining uncertainty explicit."
     elif needs_mutation:
         if "replace_text" in allowed:
             stage = "needs_mutation"
@@ -1274,7 +1274,10 @@ def _protocol_correction(
             "diff satisfy completion; a check on an empty diff is diagnostic."
         )
     if "finish_task" in allowed:
-        actions.append("Use finish_task to submit the current visibly checked diff.")
+        actions.append(
+            "Review the current checked diff against the public task; use finish_task "
+            "with an assessment only if you judge the task complete."
+        )
     if "run_probe" in allowed:
         actions.append(
             "Use run_probe for a small public behavior experiment when useful; it is "
@@ -4511,8 +4514,10 @@ def _run_one_active(
                 if schema["name"] == "finish_task":
                     schema["description"] = (
                         "Return the current patch and public verification records after all "
-                        "required visible checks pass on this diff. Independent acceptance "
-                        "is NOT_RUN; public checks do not establish untested behavior."
+                        "required visible checks pass on this diff and you review the public "
+                        "requirements, patch, evidence and remaining uncertainties. Call only "
+                        "if you judge the task complete, with your assessment. Independent "
+                        "acceptance is NOT_RUN; public checks do not establish untested behavior."
                     )
         turn_payload = {
             "turn_id": turn_id,

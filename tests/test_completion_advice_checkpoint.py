@@ -6,9 +6,26 @@ from types import SimpleNamespace
 import pytest
 
 from diagnostics import completion_advice_checkpoint as advice
+from patchloop.dev import runner
 from patchloop.dev.runner import _completion_guidance
 from patchloop.errors import ContractError
 from patchloop.util import canonical_json
+
+
+def pin_historical_ready_guidance(monkeypatch):
+    """Generate the frozen diagnostic's old advice in its synthetic episodes only."""
+    current_guidance = runner._completion_guidance
+
+    def historical_guidance(snapshot, policy):
+        guidance = current_guidance(snapshot, policy)
+        if guidance["stage"] == "ready_to_submit":
+            guidance["next_action"] = {"tool": "finish_task"}
+            guidance["message"] = advice.READY_FACT + (
+                advice.READY_ADVICE if "run_probe" in policy.allowed_tools else
+                " Use finish_task to submit; keep any remaining uncertainty explicit.")
+        return guidance
+
+    monkeypatch.setattr(runner, "_completion_guidance", historical_guidance)
 
 
 @pytest.mark.parametrize("ready", [False, True])
@@ -67,6 +84,13 @@ def test_all_runtime_guidance_shapes(tools, gate, ready, status):
     guidance = _completion_guidance(snapshot, policy)
     request = {"tools": [{"name": t} for t in tools], "input": [
         {"content": canonical_json({"state": {"completion_guidance": guidance}})}]}
+    if ready:
+        # The frozen diagnostic expects the old direct-finish recommendation.
+        # Current runtime requires the agent's assessment instead.
+        assert guidance["next_action"] is None
+        with pytest.raises(ContractError, match="ready guidance is inconsistent"):
+            advice.project(request)
+        return
     selected = advice.project(request)
     after = json.loads(selected["input"][-1]["content"])["state"]["completion_guidance"]
     assert after["next_action"] is None

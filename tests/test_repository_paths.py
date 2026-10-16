@@ -69,7 +69,9 @@ def test_allowed_path_survives_mutation_submission_and_patch_parsing(
         journal=gateway.journal,
     )
     assert restored.execute(mutation).replayed
-    finished = restored.execute(RequestedTool(name="finish_task", action_id="finish", arguments={}))
+    finished = restored.execute(RequestedTool(name="finish_task", action_id="finish", arguments={
+        "assessment": "Reviewed the public patch and remaining uncertainty.",
+    }))
     assert finished.status == "succeeded", finished.message
     assert target.read_bytes() == b"value = 2\n"
     if other_path is not None:

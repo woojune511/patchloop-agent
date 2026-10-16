@@ -56,8 +56,10 @@ repair, and verification actions. The model has no unrestricted shell access.
 The runtime derives `needs_mutation`, `needs_visible_checks`, or `ready_to_submit`
 from the current workspace and durable public check evidence. It does not require
 a separate planning phase. Submission requires a non-empty diff, no non-ignored
-untracked files, and all registered required checks passing against that exact diff.
-A passed check on an earlier diff does not validate a later edit.
+untracked files, all required checks passing against that exact diff, and the agent's
+explicit submission assessment. After PASS, the agent reviews the public requirements,
+patch, evidence and remaining uncertainties before judging the task complete.
+Further edits require fresh checks and reassessment; no extra review call is required.
 
 Mutation performs an exact text replacement in an allowed existing tracked file.
 The gateway validates the anchor against observed current source and enforces the

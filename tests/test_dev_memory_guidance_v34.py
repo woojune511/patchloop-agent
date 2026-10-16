@@ -48,11 +48,11 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
                        "run_probe", "finish_task", "stop_task"),
     )
     # Preserve object, tool, enum and required-field order, nullability and defaults.
-    # Refreshed after annotation retirement and for explicit explanation bounds.
+    # Refreshed for annotation retirement, explanation bounds and finish assessment.
     tools = _legacy_compression_surface(tools)
     encoded = json.dumps(_without_descriptions(tools), ensure_ascii=False, separators=(",", ":"))
     assert hashlib.sha256(encoded.encode()).hexdigest() == (
-        "715b6352925c092ed80836dfe3ba3f44572964a6ef134029398d18225554af55"
+        "e01845a768104f3eab7f9917cde3f9d1120462cb1d38736b4cd6d64fcf7bce71"
     )
     for tool in tools:
         assert tool["strict"] is True
@@ -67,7 +67,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     ),
     (
         ("finish_task", "read_file", "replace_text", "run_probe", "search_files", "stop_task"),
-        "9f1c5231c255d14d6b3239efc09351ee7d3c893d7eb13d166f02cefa60d44eb9",
+        "1d902114b9f5eb3f6ea4d1e07ab9aa9664cbcdcc17d918e61a98c156cf589957",
     ),
     (
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task"),
@@ -76,7 +76,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     (
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task",
          "finish_task"),
-        "1c990264a43f2a254729e290f92363413a40a8a3af331a7f4c07b1d17a229fa1",
+        "53624f06a9eed4ccc65fef8fb9fdef48233f2c349da635c4098221d76e2b5cf5",
     ),
 ])
 def test_descriptions_outside_memory_and_schema_order_are_unchanged(names, expected):
@@ -92,7 +92,7 @@ def test_descriptions_outside_memory_and_schema_order_are_unchanged(names, expec
 def test_surrounding_action_guidance_identity():
     prefix, _, suffix = _memory_block()
     assert hashlib.sha256(canonical_json([prefix, suffix]).encode()).hexdigest() == (
-        "dd5ade200fa8979ee1c967871fbb86769a4b6ed49a79100ccba1836100f8dc33"
+        "0b1a142034109eead5d7332fa7bc54c7035728aac2dafd08740b4689e4b2491a"
     )
 
 
@@ -136,7 +136,7 @@ def test_guidance_identity_changes_without_changing_run_schema_or_limits():
     # Common action/probe guidance changes the overall surface identity;
     # argument and description identities remain independently pinned above.
     assert dev_tool_surface_hash() == (
-        "sha256:4b348a1f432b742686bbfc1c08ef29b6084ee5f647f85bbf2300e1562b6ec430"
+        "sha256:0aa0a3d072bdb62fa4ceeeee50c3a3421eb1dc215f512b2fd121bc30ca947559"
     )
     assert DEV_RUN_SCHEMA == "dev-run-v1"
     limits = DevLimits()

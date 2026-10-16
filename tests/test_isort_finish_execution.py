@@ -11,6 +11,7 @@ import pytest
 import test_isort_table_execution as table
 import test_isort_uptake_execution as inherited
 from test_checkpoint_continuation import stop_steps
+from test_completion_advice_checkpoint import pin_historical_ready_guidance
 from test_isort_table_execution import parent_source as parent_source  # noqa: F401
 from test_isort_table_execution import source as source  # noqa: F401
 
@@ -20,6 +21,13 @@ from diagnostics.checkpoint_continuation import ScriptedClient
 from patchloop.dev import runner
 from patchloop.dev.state import DevJournal
 from patchloop.util import canonical_json, sha256_json
+
+
+@pytest.fixture(scope="module", autouse=True)
+def historical_ready_guidance():
+    with pytest.MonkeyPatch.context() as scoped:
+        pin_historical_ready_guidance(scoped)
+        yield
 
 
 def prepared(source, tmp_path):

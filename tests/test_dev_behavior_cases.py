@@ -251,7 +251,7 @@ def test_legacy_case_receipts_remain_readable_without_repeated_review_instructio
     assert "finish_task" in final["available_tool_names"]
     guidance = final["completion_guidance"]
     assert guidance["submission_ready"]
-    assert guidance["next_action"] == {"tool": "finish_task"}
+    assert guidance["next_action"] is None
     assert "verification_choice" not in guidance
 
 

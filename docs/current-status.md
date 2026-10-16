@@ -25,6 +25,10 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
+[Submission judgment](operations.md): submission after public PASS requires review and a
+`finish_task` assessment. Edits require fresh checks and reassessment; no extra call.
+Quality effect is unmeasured. Frozen manifests need runtime revalidation.
+
 [Host A/B](history/2026-10-16-host-plan-stop.md): runtime drift; NOT_RUN / USD 0.
 [I4](history/2026-10-16-isort-requirement-audit.md): inferred type_item;
 frozen grades unchanged.
@@ -109,12 +113,9 @@ locates Darts' defect in inverse column reconstruction. The
 verification gaps from environment/resource failures.
 
 The [guidance comparison](history/2026-10-01-verification-selection-comparison.md)
-closed at USD 1.125171 of USD 6. Both Darts patches retained the same frozen gaps;
-B's probes corrected a test expectation, not a candidate defect. Correctness was
-INCONCLUSIVE. The [baseline decision](history/2026-10-01-verification-guidance-baseline.md)
-restored previous guidance: no adoption evidence, not general ineffectiveness.
-Preserve original records; the [comparison note](../.agent/verification-selection-comparison.md)
-is closed and grants no further execution.
+closed at USD 1.125171: both Darts patches retained the frozen gaps; correctness was
+INCONCLUSIVE. Its [baseline decision](history/2026-10-01-verification-guidance-baseline.md)
+and [closed comparison](../.agent/verification-selection-comparison.md) remain historical evidence.
 
 The [PDM observation](history/2026-10-01-pdm-repair-observation.md) passed 24 public
 bug cases, 36 regressions, acceptance and safety in one edit. USD 0.3550415;

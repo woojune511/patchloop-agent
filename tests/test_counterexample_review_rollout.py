@@ -91,6 +91,8 @@ def dispatch(branch, calls, *, adapter=None, cost=None, checkpoint=lambda _: Non
 
 
 def action(name, label, **arguments):
+    if name == "finish_task":
+        arguments.setdefault("assessment", "Reviewed the public patch and remaining uncertainty.")
     if name == "stop_task":
         arguments.setdefault("reason_code", "insufficient_public_evidence")
     return RequestedTool(name=name, action_id=label, arguments=arguments,

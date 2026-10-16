@@ -96,7 +96,12 @@ def script(*, edits=2, stop=False):
         text = new
     steps += [
         [call("run_check", {"check_id": "base-regression"}, "verify", "mock_check")],
-        [call("finish_task", {}, "finish", "mock_finish")],
+        [call("finish_task", {
+            "assessment": (
+                "Synthetic connector review: the scripted edit and check are complete. "
+                "These fake receipts do not establish target repair correctness."
+            ),
+        }, "finish", "mock_finish")],
     ]
     return steps
 

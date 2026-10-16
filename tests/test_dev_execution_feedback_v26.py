@@ -330,7 +330,9 @@ def test_feedback_is_durable_native_and_advisory_without_source_admission(tmp_pa
     assert output["files"][0]["not_observed_changed_ranges"] == [[53, 53]]
     assert gateway.spans == {} and gateway._coverage_by_diff == before_coverage
     assert gateway.visible_checks_pass()
-    assert gateway._finish_task({})["patch_hash"] == gateway.current_diff_hash
+    assert gateway._finish_task({
+        "assessment": "Reviewed the public patch and remaining uncertainty.",
+    })["patch_hash"] == gateway.current_diff_hash
     items = _input(gateway, results, tmp_path)
     assert _outputs(items)["check"]["output"]["public_execution"] == output
     summary = input_context(items)["public_execution_summary"]

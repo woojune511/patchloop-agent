@@ -139,11 +139,13 @@ def test_guidance_tracks_recheck_then_submission_without_rewriting_history(tmp_p
     assert after[:len(before)] == before
     view = input_context(after)
     assert view["completion_guidance"]["submission_ready"]
-    assert view["completion_guidance"]["next_action"] == {"tool": "finish_task"}
+    assert view["completion_guidance"]["next_action"] is None
     assert view["remaining_visible_check_ids"] == []
     assert all(row["status"] == "PASS" for row in view["visible_check_status"])
     finish = _batch(gateway, RequestedTool(
-        name="finish_task", action_id="submitted", arguments={},
+        name="finish_task", action_id="submitted", arguments={
+            "assessment": "Reviewed the public patch and remaining uncertainty.",
+        },
         turn_decision=PublicTurnDecision(mode="finish", basis="Submit the checked public diff."),
     ), tmp_path)
     assert finish.output["patch_hash"] == result.output["diff_hash"]
@@ -159,7 +161,7 @@ def test_guidance_tracks_recheck_then_submission_without_rewriting_history(tmp_p
     ("needs_visible_checks", ["FAIL"], {"read_file", "stop_task"}, {"tool": "read_file"}),
     ("needs_visible_checks", ["NOT_RUN"], {"run_check", "stop_task"},
      {"tool": "run_check", "check_id": "contract"}),
-    ("ready_to_submit", ["PASS"], {"finish_task", "stop_task"}, {"tool": "finish_task"}),
+    ("ready_to_submit", ["PASS"], {"finish_task", "stop_task"}, None),
     ("needs_visible_checks", ["NOT_RUN"], {"stop_task"}, None),
 ])
 def test_guidance_is_advisory_and_recommends_only_an_offered_action(
@@ -214,7 +216,7 @@ def test_completion_descriptions_preserve_tool_order_and_current_input_shapes():
         return value
 
     assert sha256_json(without_descriptions(schemas)) == (
-        "sha256:07b872ab101b4e4f20d7c916c6b31b910a635b07b98c01c55539d87231628134"
+        "sha256:04c1236ce2fe2e37c34c7365a8481552ef79375f1f792b1019cea8cb919f9107"
     )
     assert [schema["name"] for schema in schemas] == [
         "search_files", "read_file", "run_check", "replace_text", "stop_task", "finish_task",
@@ -223,7 +225,8 @@ def test_completion_descriptions_preserve_tool_order_and_current_input_shapes():
     descriptions = {schema["name"]: schema["description"] for schema in schemas}
     assert "without submission or evaluation" in descriptions["stop_task"]
     assert "not successful completion" in descriptions["stop_task"]
-    assert "same diff" in descriptions["finish_task"]
+    assert "checks pass on the current diff" in descriptions["finish_task"]
+    assert "assessment" in descriptions["finish_task"]
     assert "latest completion_guidance and visible_check_status" in DEV_SYSTEM_PROMPT
     assert "historical PASS does not" in DEV_SYSTEM_PROMPT
     assert "not merely when no edit is needed" in DEV_SYSTEM_PROMPT

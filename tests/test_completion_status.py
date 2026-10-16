@@ -43,8 +43,10 @@ def test_only_completion_advice_changes(stage, allowed, failed):
     projected = completion_status.project(guidance)
     assert guidance == before and guidance["stage"] == stage
     if stage in {"needs_visible_checks", "ready_to_submit"}:
-        assert {key for key in before if before[key] != projected[key]} == {
-            "next_action", "message"}
+        expected_changes = {"message"}
+        if stage == "needs_visible_checks":
+            expected_changes.add("next_action")
+        assert {key for key in before if before[key] != projected[key]} == expected_changes
         assert projected["next_action"] is None
         assert "Use " not in projected["message"]
         assert {k: v for k, v in projected.items() if k not in {"next_action", "message"}} == {
@@ -187,7 +189,9 @@ def test_failed_check_repair_submit_and_native_input_delivery(
             else:
                 assert self.step == 4
                 call = RequestedTool(
-                    name="finish_task", action_id="submit", arguments={},
+                    name="finish_task", action_id="submit", arguments={
+                        "assessment": "Reviewed the public patch and remaining uncertainty.",
+                    },
                     turn_decision=PublicTurnDecision(mode="finish", basis="Current check passed."),
                 )
             return DevModelTurn(tool_calls=[call])

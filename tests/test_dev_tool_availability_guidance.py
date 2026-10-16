@@ -46,7 +46,11 @@ def test_actual_inputs_explain_source_edit_check_submit_transitions(
             state = json.loads(context)
             guidance = state["completion_guidance"]
             names = {tool["name"] for tool in tools}
-            assert guidance["next_action"]["tool"] in names
+            if guidance["stage"] == "ready_to_submit":
+                assert guidance["next_action"] is None
+                assert "assessment" in guidance["message"]
+            else:
+                assert guidance["next_action"]["tool"] in names
             assert set(state["available_tool_names"]) == names
             captured.append(guidance)
             return super().next_turn(context, tools)

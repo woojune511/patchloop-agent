@@ -34,6 +34,7 @@ from patchloop.dev.contracts import (
     DEV_SINGLE_ACTION_TOOLS,
     DevLimits,
     DevToolResult,
+    FinishIntent,
     RequestedTool,
     StopIntent,
     TextReplacementIntent,
@@ -344,15 +345,27 @@ def dev_tool_schemas(
                 "type": "function",
                 "name": "finish_task",
                 "description": (
-                    "Submit the current diff for evaluation after all required visible checks "
-                    "pass on that same diff. This completes the agent's submission; stopping "
-                    "without submission does not. Eligibility is not proof of untested behavior."
+                    "After all required visible checks pass on the current diff, review the "
+                    "public requirements, patch, evidence and remaining uncertainties. Submit "
+                    "only if you judge the task complete, with a concise public assessment "
+                    "of why the repair is ready and any verification limits. PASS alone is "
+                    "not that judgment. This completes submission for independent evaluation."
                 ),
                 "strict": True,
                 "parameters": {
                     "type": "object",
-                    "properties": {},
-                    "required": [],
+                    "properties": {
+                        "assessment": {
+                            "type": "string", "minLength": 1, "maxLength": 1_500,
+                            "description": (
+                                "Your conclusion after reviewing the current checked patch: "
+                                "why it satisfies the public task, what the evidence establishes "
+                                "and any remaining uncertainty. A concise public summary, "
+                                "not a reasoning transcript or a claim about hidden tests."
+                            ),
+                        },
+                    },
+                    "required": ["assessment"],
                     "additionalProperties": False,
                 },
             }
@@ -3589,8 +3602,7 @@ class DevToolGateway:
                 self.requires_alternative = True
 
     def _finish_task(self, arguments: dict[str, Any]) -> dict[str, Any]:
-        if arguments:
-            raise ContractError("finish_task accepts no arguments")
+        intent = FinishIntent.model_validate(arguments)
         summary = self.current_diff
         if not summary.patch:
             raise ContractError("cannot submit an empty diff")
@@ -3598,9 +3610,10 @@ class DevToolGateway:
             raise ContractError(
                 "cannot submit with untracked files: " + ", ".join(summary.untracked_files)
             )
-        if not self.visible_checks_pass():
+        if not self.visible_checks_pass(diff_hash=summary.patch_hash):
             raise ContractError("all visible checks must pass against the current diff")
         return {
+            "assessment": intent.assessment,
             "patch": summary.patch,
             "patch_hash": summary.patch_hash,
             "changed_files": summary.changed_files,

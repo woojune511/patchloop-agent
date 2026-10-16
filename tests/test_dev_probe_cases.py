@@ -116,13 +116,13 @@ def test_case_policy_extends_current_probe_schema_without_changing_prompt():
     before = dev_tool_schemas(**options)
     # Current ordinary schema includes explicit action-ID replay in every probe policy.
     assert sha256_json(before) == (
-        "sha256:7597d481ed9f2853bad2dda2facc1900ddd8daf2986b1002323dcd041465d93c"
+        "sha256:6af20f95c03dc1e67ed56e69100dc70e38709230a93e4d472e616ae506dd88cd"
     )
     assert dev_tool_surface_hash() == (
-        "sha256:4b348a1f432b742686bbfc1c08ef29b6084ee5f647f85bbf2300e1562b6ec430"
+        "sha256:0aa0a3d072bdb62fa4ceeeee50c3a3421eb1dc215f512b2fd121bc30ca947559"
     )
     assert sha256_bytes(DEV_SYSTEM_PROMPT.encode()) == (
-        "sha256:babc2a164aa06be7916a788f8d85bff1be0752acae4b9fefe1c3cffad11b199a"
+        "sha256:91a0786ada6704c38a1ec1dd0423f1a62e359ef46162b7f50e34cf6e4e72a3e7"
     )
     after = dev_tool_schemas(**options, probe_policy=cases.POLICY)
     assert [t for t in before if t["name"] != "run_probe"] == [
@@ -208,8 +208,10 @@ def test_case_mismatch_replay_after_edit_and_gateway_restart(gateway_factory, sm
     for check in smoke_package.public.visible_checks:
         restored.execute(RequestedTool(name="run_check", action_id=check.id,
                                        arguments={"check_id": check.id}))
-    assert restored.execute(RequestedTool(name="finish_task", action_id="finish",
-                                          arguments={})).status == "succeeded"
+    assert restored.execute(RequestedTool(
+        name="finish_task", action_id="finish",
+        arguments={"assessment": "Reviewed the public patch and remaining uncertainty."},
+    )).status == "succeeded"
 
 
 @pytest.mark.parametrize("fault", ["unknown", "bad_json", "check", "pending", "oversize",

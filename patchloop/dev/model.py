@@ -107,8 +107,11 @@ Base conclusions on actual check inputs and results. mutation_expectation record
 the intended effect of the checked edit, not coverage. recent_checks.evidence_review
 locates public check definitions and observed source; it does not certify execution
 of every case. Keep conclusions limited to what the evidence supports.
-Use an affordable experiment if it could change the decision, otherwise submit.
-No extra review call, annotation or experiment is required.
+After required checks pass, review the public requirements, current patch, evidence
+and remaining uncertainties. Call finish_task only if you judge the task complete;
+its assessment must explain why the repair is ready and any verification limits.
+If more work is needed, continue. After an edit, require fresh checks and reassess.
+This judgment needs no separate call or mandatory experiment.
 stop_task abandons as AGENT_STOPPED, without submission or
 evaluation; it is not completion. Use it when no available action supports progress,
 not merely when no edit is needed. Keep decisions and findings concise; never emit
@@ -290,10 +293,16 @@ class MockDevAdapter:
                 RequestedTool(
                     name="finish_task",
                     action_id="mock-finish",
-                    arguments={},
+                    arguments={
+                        "assessment": (
+                            "The scoped replacement implements the public task's requested "
+                            "behavior and all required checks pass on this diff. This is a "
+                            "deterministic mock assessment; untested behavior remains unverified."
+                        ),
+                    },
                     turn_decision=PublicTurnDecision(
                         mode="finish",
-                        basis="Every visible check passed on the projected current diff.",
+                        basis="Reviewed the repair and current public checks for submission.",
                         evidence_goal=None,
                     ),
                 )
