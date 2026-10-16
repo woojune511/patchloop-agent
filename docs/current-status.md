@@ -25,9 +25,10 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Submission judgment](operations.md): submission after public PASS requires review and a
-`finish_task` assessment. Edits require fresh checks and reassessment; no extra call.
-Quality effect is unmeasured. Frozen manifests need runtime revalidation.
+[Submission judgment](operations.md) requires review and a finish assessment after PASS.
+Edits require fresh checks. [Comparison](../.agent/submission-assessment-comparison.md):
+4 exposed failures x 2 arms x 2 repeats, proposed USD 19.20. NOT_RUN; unapproved.
+Quality effect is unmeasured; frozen manifests need runtime revalidation.
 
 [Host A/B](history/2026-10-16-host-plan-stop.md): runtime drift; NOT_RUN / USD 0.
 [I4](history/2026-10-16-isort-requirement-audit.md): inferred type_item;
