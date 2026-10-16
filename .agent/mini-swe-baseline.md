@@ -21,7 +21,7 @@ Direct OpenAI transport replaces LiteLLM retry/post-spend accounting with existi
 exact input counting, pre-dispatch reservation, zero retries and usage settlement.
 All response items are replayed in linear history, including encrypted reasoning.
 
-## Closed approved scope
+## Authorized fresh rerun scope
 
 - Same immutable 20-instance roster as `portfolio_dev20.baseline()`, using the
   public issues and current packages under `tasks/dev-train/current-dev20/1..20`.
@@ -29,7 +29,11 @@ All response items are replayed in linear history, including encrypted reasoning
   standard/default service tier, global endpoint; credential file repository `.env`.
 - One fresh attempt per task, one worker, at most 40 generations and 100 bash
   actions each. No resume, transport retry, replacement, repetition or cap transfer.
-- USD 1.20 per task, USD 24 total in model-token costs. No new paid PatchLoop run,
+- The user reauthorized all 20 fresh attempts, the isolated bash exception and a
+  cumulative USD 24 cap after the first attempt's count failure. Its settled
+  generation cost, USD 0.002403, remains included. The new cap is USD 23.997597,
+  divided equally into USD 1.19987985 per task; no transfer. The prior audit and
+  original evidence hashes are validated before dispatch. No new paid PatchLoop run,
   SWE-agent run, test300 evaluation, or automatic follow-up.
 - Solver preparation/counting/generation/actions share 1,470 seconds. Native
   evaluation has a 330-second process allowance, with a 300-second test timeout.
@@ -66,8 +70,10 @@ explicitly approved this benchmark-only exception and the USD 24 packet on
 2026-10-16; `C:/pt/mini20prep04/authorization.json` records that approval. The
 [attempt stopped](../docs/history/2026-10-16-mini-swe-count-stop.md) on its second
 input-count request after one settled generation. All 20 native verdicts are
-NOT_RUN. Preserve the closed packet and live evidence; do not resume or reuse the
-allocation automatically. Fresh execution needs a new exact packet and approval.
+NOT_RUN. Preserve that closed packet and live evidence. The user's subsequent
+explicit approval authorizes one fresh corrected panel, including prior cost in
+the same USD 24 ceiling. Record it in the new packet's authorization receipt;
+the old approval and failed attempt are never rewritten.
 
 Before live execution, save the human approval against the exact packet hash with
 `live_authorized=true` and `isolated_bash_exception=true`. A JSON authorization
@@ -75,8 +81,10 @@ file records human approval; it is never a substitute for receiving it.
 
 The corrected operator adapter omits null optional SDK item fields when replaying
 history, while retaining raw responses and every non-null item field. Saved-request
-schema replay and an upstream/SDK mock passed. Provider acceptance of the correction
-and a usable mini performance baseline remain NOT_RUN.
+schema replay and an upstream/SDK mock passed. A count-only check of the saved
+corrected request may verify transport before starting the fresh solves; it must
+not generate a response or supply previous history to a fresh solver. Stop on
+another count failure. A usable mini performance baseline remains unmeasured.
 
 ## Reporting and stop rules
 
@@ -110,8 +118,8 @@ the frozen runtime. The interpreter comes from the existing project environment.
 ```powershell
 Set-Location C:/Users/geonj/.codex/worktrees/mini-swe-dev20/PatchLoop
 $miniPython = 'C:/Users/geonj/Documents/PatchLoop/.venv/Scripts/python.exe'
-& $miniPython -m diagnostics.mini_swe_dev20 prepare --root C:/pt/mini20prep04 --live-root C:/pt/mini20live01 --env-file C:/Users/geonj/Documents/PatchLoop/.env
-& $miniPython -m diagnostics.mini_swe_dev20 preflight --root C:/pt/mini20prep04 --packet-hash <hash>
+& $miniPython -m diagnostics.mini_swe_dev20 prepare --root C:/pt/mini20prep05 --live-root C:/pt/mini20live02 --env-file C:/Users/geonj/Documents/PatchLoop/.env
+& $miniPython -m diagnostics.mini_swe_dev20 preflight --root C:/pt/mini20prep05 --packet-hash <hash>
 # Only after exact human approval, including the isolated bash exception:
-& $miniPython -m diagnostics.mini_swe_dev20 run --root C:/pt/mini20prep04 --packet-hash <hash>
+& $miniPython -m diagnostics.mini_swe_dev20 run --root C:/pt/mini20prep05 --packet-hash <hash>
 ```

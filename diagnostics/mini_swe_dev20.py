@@ -13,6 +13,7 @@ import yaml
 from diagnostics import current_dev20, portfolio_dev20
 from diagnostics.mini_swe_runtime import (
     MODEL,
+    PRIOR_COST_NANOS,
     ROW_CAP,
     SOLVER_SECONDS,
     UPSTREAM_REVISION,
@@ -40,10 +41,26 @@ FILES = (
     ".agent/mini-swe-baseline.md",
 )
 JOURNAL = "run_dev_minidev20"
+PRIOR_COST_RECEIPT = Path("C:/pt/mini20stop01/audit.json")
+PRIOR_COST_RECEIPT_HASH = "sha256:397ad2b181cbffbdd0b1fc176a3e50bc1edf990eb412a42839ae5954fcd4b9c9"
 
 
 def file_hash(path):
     return sha256_bytes(Path(path).read_bytes())
+
+
+def prior_cost_evidence():
+    require(file_hash(PRIOR_COST_RECEIPT) == PRIOR_COST_RECEIPT_HASH, "prior cost receipt drift")
+    receipt = json.loads(PRIOR_COST_RECEIPT.read_bytes())
+    require(
+        receipt["recorded_generation_cost_nanos"] == PRIOR_COST_NANOS
+        and receipt["unmatched_generation_dispatches"] == 0,
+        "prior generation accounting is not settled",
+    )
+    # Bind the original journals/response as well as the derived audit.
+    for path, digest in receipt["input_hashes"].items():
+        require(file_hash(path) == digest, "prior evidence drift")
+    return {"path": str(PRIOR_COST_RECEIPT), "hash": PRIOR_COST_RECEIPT_HASH}
 
 
 def bindings(root):
@@ -97,6 +114,7 @@ def prepare(root: Path, live: Path, env_file: Path | None = None):
         "separate external preparation/live roots required",
     )
     load_upstream(root)
+    prior_cost = prior_cost_evidence()
     config = yaml.safe_load(
         (root / "upstream/src/minisweagent/config/benchmarks/swebench.yaml").read_text(
             encoding="utf-8"
@@ -104,7 +122,8 @@ def prepare(root: Path, live: Path, env_file: Path | None = None):
     )
     # Keep both prompt templates and observation/error templates byte-for-byte.
     config["agent"].update(
-        step_limit=40, cost_limit=1.20, wall_time_limit_seconds=SOLVER_SECONDS, output_path=None
+        step_limit=40, cost_limit=float(ROW_CAP),
+        wall_time_limit_seconds=SOLVER_SECONDS, output_path=None
     )
     config["model"].update(model_name=MODEL, model_kwargs={"reasoning_effort": "xhigh"})
     save(root, "config.json", config)
@@ -175,6 +194,9 @@ def prepare(root: Path, live: Path, env_file: Path | None = None):
         "workers": 1,
         "row_cap_usd": str(ROW_CAP),
         "total_cap_usd": "24.00",
+        "prior_cost_nanos": PRIOR_COST_NANOS,
+        "prior_cost_receipt": prior_cost,
+        "new_run_cap_usd": str(ROW_CAP * 20),
         "max_model_calls": 40,
         "max_shell_actions": 100,
         "solver_seconds": SOLVER_SECONDS,
@@ -216,6 +238,14 @@ def validate(root, digest):
     require(packet["runtime_hash"] == runtime_content_hash(), "PatchLoop runtime drift")
     require(packet["native_identity"] == portfolio_dev20.native_identity(), "native harness drift")
     require(packet["pricing"] == portfolio_dev20.price(), "pricing drift")
+    require(packet["prior_cost_receipt"] == prior_cost_evidence(), "prior cost evidence drift")
+    require(
+        packet["prior_cost_nanos"] == PRIOR_COST_NANOS
+        and packet["row_cap_usd"] == str(ROW_CAP)
+        and packet["new_run_cap_usd"] == str(ROW_CAP * 20)
+        and int(ROW_CAP * 10**9) * 20 + PRIOR_COST_NANOS == 24 * 10**9,
+        "cumulative budget mismatch",
+    )
     for row in packet["rows"]:
         require(
             load_task_package(Path(row["task"]).parent).task_content_hash
@@ -454,6 +484,10 @@ def run(root, digest):
         "resolved": sum(r["native"] == "PASS" for r in rows),
         "planned": 20,
         "recorded_cost_nanos": sum(r.get("cost_nanos") or 0 for r in rows),
+        "prior_cost_nanos": PRIOR_COST_NANOS,
+        "cumulative_recorded_cost_nanos": (
+            PRIOR_COST_NANOS + sum(r.get("cost_nanos") or 0 for r in rows)
+        ),
         "billing_known": all(r.get("billing_known", True) for r in rows),
         "automatic_followup": False,
     }

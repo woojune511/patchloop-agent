@@ -22,7 +22,9 @@ from patchloop.util import sha256_json
 
 MODEL = "gpt-5.4-mini-2026-03-17"
 UPSTREAM_REVISION = "a83fcae82d2a08f0ee0c688f9d137b3566c097f8"
-ROW_CAP = Decimal("1.20")
+# The explicitly authorized rerun shares USD 24 with the stopped first attempt.
+PRIOR_COST_NANOS = 2403000
+ROW_CAP = (Decimal("24") - Decimal(PRIOR_COST_NANOS) / Decimal(10**9)) / 20
 SOLVER_SECONDS = 1470
 
 

@@ -121,6 +121,21 @@ def test_insufficient_budget_never_dispatches(mini_protocol, tmp_path):
     assert adapter.calls == 0
 
 
+def test_rerun_row_reservations_leave_room_for_the_prior_attempt(mini_protocol, tmp_path):
+    # Each of twenty independent rows may exhaust its full allocation.
+    adapter = model(tmp_path)
+    assert adapter.ledger.cap_nanos * 20 + runtime.PRIOR_COST_NANOS == 24_000_000_000
+    adapter.ledger.spent_nanos = adapter.ledger.cap_nanos - 20_000_000
+    adapter.query([])
+    dispatched = adapter.client.responses.create.call_args.kwargs
+    assert dispatched["max_output_tokens"] < 25000
+    reservation = next(
+        e["payload"]["reservation_nanos"] for e in adapter.journal.events()
+        if e["event_type"] == "external_dispatch_started"
+    )
+    assert reservation <= 20_000_000
+
+
 @pytest.mark.parametrize("where", ["count", "transport", "missing_usage", "mismatch"])
 def test_uncertainty_prevents_any_further_provider_work(mini_protocol, tmp_path, where):
     adapter = model(tmp_path)

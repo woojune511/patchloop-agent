@@ -25,8 +25,8 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Mini baseline](history/2026-10-16-mini-swe-count-stop.md): count failure after one
-generation; USD 0.002403 recorded, 20 NOT_RUN. Replay fix tested offline; no rerun.
+[Mini rerun](../.agent/mini-swe-baseline.md): authorized; 20 fresh tasks, isolated bash,
+USD 24 including the prior USD 0.002403. Corrected transport; no new result yet.
 
 [Assessment](history/2026-10-16-submission-assessment-results.md): A 0/8, B 0/8;
 USD 4.29112755; closed. [Exit audit](history/2026-10-16-assessment-exit-analysis.md)
@@ -178,7 +178,7 @@ from 24 reviewed runs. No patch-quality gain established or paid rerun queued.
 
 ## Execution and claim boundaries
 
-Paid allocations, including the Lite pilot, are closed. No further run is authorized.
+Prior allocations are closed. Only the explicitly authorized mini rerun is active.
 An [older interrupted call](history/2026-09-28-expectation-review-results.md)
 retains unknown billing separately from later settled allocations; closed allocation
 does not mean that earlier uncertainty was resolved.
