@@ -145,6 +145,25 @@ def test_format_error_keeps_billed_usage(mini_protocol, tmp_path):
     assert not adapter.uncertain
 
 
+def test_failure_to_persist_response_is_uncertain(mini_protocol, tmp_path):
+    adapter = model(tmp_path)
+    adapter.client.responses.create.return_value.model_dump = Mock(side_effect=OSError())
+    with pytest.raises(OSError):
+        adapter.query([])
+    assert adapter.uncertain and adapter.calls == 1
+    with pytest.raises(runtime.OperationalStop):
+        adapter.query([])
+    assert adapter.client.responses.create.call_count == 1
+
+
+def test_call_limit_stops_before_counting(mini_protocol, tmp_path):
+    adapter = model(tmp_path)
+    adapter.calls = 40
+    with pytest.raises(Flow):
+        adapter.query([])
+    adapter.client.responses.input_tokens.count.assert_not_called()
+
+
 def test_replay_keeps_reasoning_and_tool_outputs():
     encrypted = {"type": "reasoning", "encrypted_content": "opaque"}
     tool = {"type": "function_call", "call_id": "one", "extra": "local"}

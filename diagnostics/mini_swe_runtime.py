@@ -160,6 +160,8 @@ class CountedModel:
                 "call": self.calls,
             },
         )
+        # Any failure between dispatch and durable settlement leaves billing uncertain.
+        self.uncertain = True
         try:
             response = self.client.responses.create(
                 **request,
@@ -189,6 +191,7 @@ class CountedModel:
         ):
             self.uncertain = True
             raise OperationalStop("provider identity or reservation mismatch")
+        self.uncertain = False
         extra = {"cost": cost / 1e9, "timestamp": time.time()}
         try:
             actions = parse_toolcall_actions_response(
