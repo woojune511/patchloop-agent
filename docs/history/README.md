@@ -1,5 +1,6 @@
 # History
 
+- [E/J](2026-10-17-repair-mechanism-isolation.md).
 - [Dev20](2026-10-16-mini-swe-dev20-results.md).
 - [Completion](2026-10-16-mini-swe-completion-results.md).
 - [PatchLoop](2026-10-16-patchloop-mini-dev20-results.md).
@@ -79,20 +80,20 @@
 - [AnyIO links](2026-09-27-anyio-evidence-action-link.md).
 - [Final probe scope](2026-09-27-anyio-final-probe-scope.md).
 - [Process audit](2026-09-27-anyio-observation-process-audit.md).
-- [Repair comparison](2026-09-27-anyio-observation-repair-comparison.md).
-- [Failure observation](2026-09-27-anyio-failure-observation.md).
+- [Comparison](2026-09-27-anyio-observation-repair-comparison.md).
+- [Observation](2026-09-27-anyio-failure-observation.md).
 - [Probe readiness](2026-09-27-anyio-probe-readiness.md).
 - [Planning OFF](2026-09-27-planning-off-regression.md).
-- [First-plan timing](2026-09-27-after-source-planning-comparison.md).
+- [Timing](2026-09-27-after-source-planning-comparison.md).
 - [After source](2026-09-26-after-source-planning.md).
-- [Planning ON/OFF](2026-09-26-planning-off-comparison.md).
+- [ON/OFF](2026-09-26-planning-off-comparison.md).
 - [Declaration](2026-09-26-declaration-checkpoint-comparison.md).
 - [Decision](2026-09-26-declaration-checkpoint-sampler.md).
-- [Declaration context](2026-09-26-declaration-context-diagnostic.md).
+- [Context](2026-09-26-declaration-context-diagnostic.md).
 - [Interpretation](2026-09-26-first-interpretation-audit.md).
 - [Candidates](2026-09-26-independent-candidate-comparison.md).
 - [Diagnostic](2026-09-26-diagnostic-claims-verification.md).
 - [Completion](2026-09-26-completion-status-comparison.md).
 - [First input](2026-09-26-completion-status-diagnostic.md).
 - [Scope](2026-09-26-verification-scope-audit.md).
-- [Paired reference](2026-09-26-paired-reference-comparison.md).
+- [Paired](2026-09-26-paired-reference-comparison.md).

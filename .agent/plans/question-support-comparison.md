@@ -2,8 +2,9 @@
 
 Date: 2026-10-17. Revised proposal; paid execution is **NOT_AUTHORIZED**.
 This replaces the unexecuted call-support A/B design, not any closed allocation.
-Experiment-only ablations are implemented; arm validation is in progress and the live
-execution manifest remains **NOT_READY**. No old approval or unused allowance transfers.
+Experiment-only ablations passed all four full suites and offline factor-isolation replay;
+see the [validation record](../../docs/history/2026-10-17-repair-mechanism-isolation.md). The live execution manifest remains
+**NOT_READY**. No old approval or unused allowance transfers.
 
 ## Question, evidence and scope
 
@@ -299,7 +300,7 @@ bind all 12 resolved requests, descriptors/images, common schemas, transition/li
 hashes, registered prices, native harness, rubric and protocol hash. Hash private
 assets opaquely. Check actual effective fields, not just CLI arguments.
 
-Provider-free gates for later arm preparation:
+Provider-free gates and remaining live prerequisites:
 
 - Same-state public fixtures must prove E/J isolation, E1J1/base parity, unchanged
   transition algorithm/thresholds, two-reference bounds and every admission limit.
@@ -313,10 +314,13 @@ Provider-free gates for later arm preparation:
   required. Missing prerequisites are NOT_RUN/BLOCKED, never PASS.
 - The base's exact-commit 5,215-pass / 19-skip receipt at
   `C:/pt/analyses/batch-stop-fix-20261017-v1` establishes the common fix only; it does
-  not validate unbuilt ablations. This docs revision needs layout/link validation.
+  not substitute for arm validation. All four committed arms now have separate
+  5,225-pass / 19-skip receipts; the 10 added tests cover isolation and fixed caps.
 
-Arm validation and replay isolation are in progress; fresh environment canaries and
-a resolved execution manifest remain NOT_RUN. No repair-quality experiment has run.
+Arm validation and replay isolation passed in
+`C:/pt/analyses/repair-mechanisms-20261017-v1`; final arm identities, complete
+displacement inventories and size interactions are recorded there. Fresh environment
+canaries and a resolved execution manifest remain NOT_RUN. No repair-quality experiment ran.
 Preparation provides no dispatch entry point. A later execution request must approve
 the exact new packet, tasks, model, credential, repeats and USD 10.56 cap; no
 availability/count/model call is allowed before that authorization.

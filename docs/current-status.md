@@ -1,6 +1,6 @@
 # Current status
 
-Updated: 2026-10-17. Current decisions; runtime source owns behavior.
+Updated: 2026-10-18. Current decisions; runtime source owns behavior.
 Historical reports are evidence, not an active queue.
 
 ## Product and working baseline
@@ -40,8 +40,8 @@ Batch stop fixed; no paid rerun.
 [I4](history/2026-10-16-isort-requirement-audit.md): inferred type_item;
 frozen grades unchanged.
 
-[Retention/judgment](../.agent/plans/question-support-comparison.md): 3 tasks x 4 arms
-x 1 repeat; USD 10.56. Ablations built; validation pending, paid work unauthorized.
+[E/J arms](history/2026-10-17-repair-mechanism-isolation.md): four full suites and
+offline replay pass; default unchanged. 3 x 4 x 1 / USD 10.56 remains unauthorized.
 [Timeout fix](history/2026-10-17-capture-timeout-validation.md): validated fixture.
 
 [Navigation](history/2026-10-08-failure-navigation.md) found no current tool defect;
