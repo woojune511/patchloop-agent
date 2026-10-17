@@ -35,6 +35,11 @@ reproduces only with its executed input and observed current-diff result; otherw
 label the conclusion as a source inference. Unknown coverage remains unknown.
 
 open_question uses {text, evidence} with up to two already observed references.
+Use at most one primary and one countercheck: the smallest unit answering the current
+question and a competing branch or precondition, not a whole note/function. Use source
+ranges rather than whole read/search results; do not invent counterchecks. Current
+counterchecks precede primary refs after mutation anchors. After a diff change, priority
+is needs_refresh; refresh in an ordinary useful response if relevant, with no extra call.
 Evidence currency/delivery and closed_by_model do not certify behavior.
 memory_update is optional working data; null leaves it unchanged. Only the first
 non-null update in a batch is processed before the actions. Cite already observed

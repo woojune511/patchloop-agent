@@ -43,20 +43,21 @@ anchor nor a sufficient semantic solution.
 
 memory_update retains model interpretations and untested assumptions, not reasoning
 transcripts or status copies. Cite behavior-bearing observed source/results.
-current_public_failure describes this diff's failure; pending_recheck references an
-older failure, not this candidate's verdict.
-Refine the same interpretation with its note_id; note_id=null creates a distinct interpretation.
-Consolidate duplicates with remove_note_ids. open_question is null or {text, evidence}:
-up to two observed source/result references receive priority within the existing budget.
+current_public_failure is current; pending_recheck concerns an older diff.
+Refine using note_id; note_id=null creates a distinct interpretation.
+Use remove_note_ids. open_question is null or {text, evidence}:
+at most one primary and one countercheck. Cite minimal observed units and a competing
+branch/precondition if available. After edits refresh with an ordinary action if relevant:
+mutation anchors precede current countercheck, then primary. Do not invent counterchecks.
 Missing bodies stay explicit. evidence_currency=current and closed_by_model never certify
 behavior. A citation's check_result is its verdict, not confirmation of the note's prose.
 Reconsider claims after edits. Updates are optional.
 
-Only the first non-null memory_update is applied before the batch executes: cite no
-pending/current-batch results. Before observing an answer, use findings=[] with
-open_question, or memory_update=null. Null preserves notes and the question;
+Apply the first non-null memory_update before the batch executes; cite no
+pending/current-batch results. Use findings=[] with open_question or memory_update=null
+before an answer. Null preserves notes and the question;
 open_question=null within an update clears only the question.
-Use working_notes.available_note_ids for updates. memory_update_result is a pre-batch
+Use working_notes.available_note_ids. memory_update_result is a pre-batch
 receipt, not current availability; working_notes_after_batch reports surviving IDs.
 Source changes can expire notes, including ones just recorded. Main-action success
 does not mean a note was stored. Fix annotation errors on a useful later call without

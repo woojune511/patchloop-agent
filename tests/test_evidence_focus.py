@@ -171,7 +171,8 @@ def test_source_bearing_tool_reference_cannot_bypass_source_budget():
                   {"action_id": "read", "name": "read_file", "arguments": {"path": "x.py"}},
               ]}}]
     assert optional_exchanges(question, events) == []
-    refs = source_references(question, {"read": result})
+    refs = source_references(question)
+    assert refs == []  # Unscoped legacy declarations receive no extra priority.
     selected = select(result["output"]["spans"], refs, limit=5)
     assert selected.source_spans == ()
     view = {"working_notes": {"open_question": question}}

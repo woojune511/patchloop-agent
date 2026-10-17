@@ -74,7 +74,7 @@ def test_guidance_preserves_exact_edit_and_optional_note_wire_contracts():
     statement = notes["properties"]["findings"]["items"]["properties"]["statement"]
     assert "behavior-bearing" in statement["description"]
     assert statement["maxLength"] == 400
-    assert "Null clears this focus only" in notes["properties"]["open_question"]["description"]
+    assert "null clears only focus" in notes["properties"]["open_question"]["description"]
     for instruction in (
         "smallest sufficient unique exact anchor", "evidence_currency=current",
         "never certify", "Source changes can expire notes", "public input",

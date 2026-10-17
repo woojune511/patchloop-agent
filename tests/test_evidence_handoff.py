@@ -40,7 +40,8 @@ class FocusAdapter(MockDevAdapter):
                            "evidence_goal": "Does this check address the changed behavior?",
                            "memory_update": {"findings": [], "open_question": {
                                "text": "What does this check actually cover?", "evidence": [
-                                   {"kind": "tool_result", "action_id": action_id},
+                                   {"kind": "tool_result", "action_id": action_id,
+                                    "role": "primary"},
                                ]}}},
         )])
 

@@ -1,8 +1,11 @@
 # Evidence-preserving handoff and unverified interpretations
 
-Date: 2026-10-17. Status: implemented in dev-head; live quality untested.
+Date: 2026-10-17. Status: diff-scoped primary/countercheck refs implemented; live quality untested.
 Design baseline: `e9966142e1a24f5c3a78d2261013cbf8542723d2`; design commit: `ffe11a0`.
 See [implementation and offline evidence](../../docs/history/2026-10-17-evidence-handoff-implementation.md).
+The [displacement audit](../../docs/history/2026-10-17-handoff-counterevidence.md)
+motivates the current reference-scope refinement below.
+See its [implementation and displacement results](../../docs/history/2026-10-17-question-evidence-priority.md).
 Only provider-free validation is authorized; no paid comparison is scheduled.
 
 ## Problem and intended change
@@ -66,28 +69,37 @@ with planning disabled and does not create a separate claim/task registry:
   "open_question": {
     "text": "Which observed branch opens the missing __init__.py?",
     "evidence": [
-      {"kind": "source", "path": "astroid/builder.py", "start_line": 110, "end_line": 170}
+      {"kind": "source", "role": "primary", "path": "astroid/builder.py",
+       "start_line": 115, "end_line": 128},
+      {"kind": "source", "role": "countercheck", "path": "astroid/manager.py",
+       "start_line": 199, "end_line": 211}
     ]
   }
 }
 ```
 
-This is an illustrative declaration, not a field present in the original astroid
-run. Keep the existing 500-character question bound. Allow zero to two evidence
-references, using existing source-range or tool-result reference shapes. Zero allows
-an unanswered question with no evidence yet; it must not imply observation.
+This is an operator-authored illustration, not a field present in the original run.
+Keep the 500-character question and two-reference bounds. Each reference declares
+`role=primary` (the smallest observed unit answering the current question) or
+`role=countercheck` (a competing branch or precondition that could challenge its
+explanation), at most one of each. Zero allows an unanswered question; a second
+reference is optional and must not be invented. Roles and minimality are model
+judgments, not semantic facts certified by the runtime. No arbitrary line cap or
+task-specific branch heuristic determines what counts as minimal.
 
 Reuse source-note admission: an entire source range must already have been observed
 and be current or validly rebound; a tool result must have completed before this
-response. Pending actions and the current batch cannot serve as observed evidence.
+response. Fresh tool references accept verification results only; source-bearing
+reads/searches/mutations require an explicit source range instead of promoting the
+entire result. Pending actions and the current batch cannot serve as observed evidence.
 The runtime binds file/body hash, action/input/diff identity and origin receipt;
 the model supplies none of those hashes. A tool reference retains its actual scope
 and may be historical, explicitly labelled as such.
 
 This direct-reference shape avoids extra focus lists, same-response note-ID aliases,
-and copies of a focus state inside the plan. It also permits a wider already-observed
-control-flow range than a short note citation. It adds no automatic surrounding-line
-or function expansion. Repeated or overlapping references share one delivered body.
+and copies of focus in the plan. Do not copy a whole note/function when a smaller
+observed unit addresses the question. There is no automatic surrounding-line or
+function expansion. Overlapping references share one delivered body.
 
 Update semantics:
 
@@ -95,6 +107,15 @@ Update semantics:
 - `open_question=null` clears the active question and its priority references;
   it does not resolve any verification concern or delete notes.
 - A valid object replaces the previous question and references atomically.
+- The runtime binds `declared_diff_hash` at the before-tool-batch update; the model
+  cannot supply it. A changed diff leaves the question visible with
+  `priority_status=needs_refresh`, even when source bytes remain current. A normal
+  later response may refresh the declaration if it is still relevant. Null does
+  not refresh it, and a generic PASS does not refresh it automatically.
+- `eligible` means the declaration is scoped to this diff, not that its role,
+  minimality, or delivery is validated. Unscoped legacy objects stay readable with
+  `priority_status=unscoped` but receive no extra source/result priority. Legacy
+  strings stay strings; no old note is automatically promoted to an active focus.
 - An invalid reference rejects that question update and preserves the prior question;
   report bounded feedback. Independently valid note/concern updates and the main
   action continue under their existing contracts.
@@ -108,14 +129,14 @@ at three. An inactive note is not promoted merely because it exists or is repeat
 
 Current `tools._source_projection_priorities` gives note citations rank 3, while
 editable source has default rank 2. The selector takes the minimum; therefore a
-note citation does not improve priority inside an editable file. Only ranks 0/1
-currently receive atomic retention. Extend this existing mechanism, not a second
-source store.
+note citation does not improve priority inside an editable file. Ranks 0/1 retain
+mutation precedence; question ranges use the subsequent optional atomic tier.
+This is one selector and one source budget, not a second source store.
 
 Within the same retained-source budget, use this order:
 
 1. Existing mutation anchors/postimages and their current priorities.
-2. The active question's valid source references, in declared order.
+2. The active question's eligible countercheck source range, then primary range.
 3. Existing ordinary source selection with its current priorities and recency.
 
 The new atomic reference identity includes path, file hash, complete line range,
@@ -129,7 +150,9 @@ Its lines may still participate in ordinary selection at their original prioriti
 a bad oversized focus must not suppress useful baseline source. Atomicity governs
 priority admission, not a prohibition on partial ordinary context. After selection,
 mark completeness from the actual delivered union and list exact missing lines.
-A large first reference must not prevent a later small reference from fitting.
+A large primary reference must not consume a declared countercheck's priority space.
+An oversized countercheck still permits a smaller primary to fit; neither blocks
+ordinary selection. No additional source quota or reservation is introduced.
 Existing mutation-anchor omission rules are unchanged.
 
 Do not pin all six notes or automatically treat the model's favored hypothesis as
@@ -144,9 +167,9 @@ unbounded logs or reinterpret stdout. If an original output was truncated, it st
 truncated. Numeric values/false assertions printed by a healthy probe remain exact
 observations; execution success is not a behavior verdict.
 
-An additional old read/search result must not bypass the source budget by putting
-its source in a quoted tool body: route its registered source spans through the
-same retained-source selection. Keep the already-existing latest-batch/native
+An additional old read/search result cannot bypass the source budget by putting
+its source in a quoted tool body or expanding all its spans into fresh focus.
+Explicit ranges use the same retained-source selection. Keep latest-batch/native
 delivery bounds unchanged; 24k is the retained-source budget, not a claim that all
 source in the full request totals 24k. Source and result references must deduplicate
 against all actual delivery routes.
@@ -249,11 +272,11 @@ test supports an arbitrary claim. A stronger guarantee would require a separatel
 defined behavioral predicate and its coverage assumptions; that is not introduced
 as a universal gate here.
 
-Astroid makes this limit concrete: the original note cites 122-126, but the next
-read requests 110-170. Preserving five cited lines cannot be reported as preserving
-the whole needed branch. A declared 110-170 range can be preserved if it was already
-observed and fits. The historical model never made this new declaration; do not
-retroactively assign it that knowledge or claim it would have avoided the reread.
+Astroid makes this limit concrete: preserving old builder 110-170 displaced eight
+route-discriminating manager lines, while 37 newly retained neighboring lines had
+lower direct relevance. A narrower paired declaration fits but also loses useful
+name-derivation ordering. The historical model never selected either new declaration;
+do not assign it that knowledge or claim it would have avoided a reread or bad repair.
 
 ## 6. Implementation seams and bounded validation
 
@@ -280,6 +303,9 @@ Provider-free acceptance cases:
 - Complete declared ranges retained when they fit after mutation anchors; equality
   and one-character overflow, overlapping references, a large first range and small
   second range, duplicate native delivery, unseen gaps and stale versions.
+- Countercheck-before-primary ordering, duplicate/mixed-role rejection, no fabricated
+  roles for legacy objects, and unchanged question/source bytes losing only priority
+  after a diff change. Explicit refresh and crash/recovery retain exact scope.
 - An old source-bearing result reference cannot bypass retained-source selection;
   existing latest-batch delivery retains its original bounded semantics.
 - Invalid question updates preserve the previous question; null update/clear have

@@ -21,7 +21,7 @@ def execution_flags(result):
     ) if k in result.get("output", {})}
 
 
-def bind_question(raw, spans, results):
+def bind_question(raw, spans, results, *, diff_hash=None):
     """Return an independently validated question; no current-batch evidence."""
     if raw is None:
         return None, None
@@ -43,20 +43,33 @@ def bind_question(raw, spans, results):
             rows = {s["start_line"] + i: line for s in matches
                     for i, line in enumerate(s["content"].split("\n"))}
             body = "\n".join(rows[n] for n in range(ref.start_line, ref.end_line + 1))
-            bound.append({**ref.model_dump(), "file_hash": matches[0]["file_hash"],
+            bound.append({**ref.model_dump(exclude_none=True), "file_hash": matches[0]["file_hash"],
                           "content_hash": sha256_bytes(body.encode())})
         else:
             result = results.get(ref.action_id)
             if result is None:
                 return None, "question_result_not_observed"
-            bound.append({**ref.model_dump(), "tool": result["tool"],
+            if ref.role and result["tool"] not in {"run_check", "run_tests", "run_probe"}:
+                return None, "question_source_requires_range"
+            bound.append({**ref.model_dump(exclude_none=True), "tool": result["tool"],
                           "input_hash": result["input_hash"],
                           "execution": execution_flags(result),
                           "diff_hash": (result.get("output", {}).get("worktree_diff_hash")
                                         or result.get("output", {}).get("diff_hash")
                                         or result.get("workspace_diff_hash"))})
-    return {"text": question.text, "evidence": bound,
-            "revision_hash": sha256_json({"text": question.text, "evidence": bound})}, None
+    declaration = {"text": question.text, "evidence": bound}
+    if diff_hash is not None and all(ref.role for ref in question.evidence):
+        declaration["declared_diff_hash"] = diff_hash
+    return {**declaration, "revision_hash": sha256_json(declaration)}, None
+
+
+def priority_status(question, diff_hash):
+    """Diff scope only; eligibility never certifies relevance or minimality."""
+    if not isinstance(question, dict) or question.get("declared_diff_hash") is None:
+        return "unscoped"
+    if diff_hash is None or question["declared_diff_hash"] != diff_hash:
+        return "needs_refresh"
+    return "eligible"
 
 
 def refresh_question(question, bodies, read_source):
@@ -87,27 +100,19 @@ def refresh_question(question, bodies, read_source):
     return question
 
 
-def source_references(question, results):
-    """Source-bearing tool refs use the same source selector, never extra quoted code."""
-    refs = []
-    for ref in question.get("evidence", []) if isinstance(question, dict) else []:
-        if ref["kind"] == "source":
-            refs.append(ref)
-        else:
-            result = results.get(ref["action_id"], {})
-            if result.get("tool") in {"read_file", "search_files", "replace_text"}:
-                out = result.get("output", {})
-                refs.extend({"kind": "source", **s} for s in [
-                    *out.get("spans", []), out.get("mutation_evidence"),
-                    *out.get("revalidated_spans", []),
-                ] if isinstance(s, dict))
-    return refs
+def source_references(question, *, diff_hash=None):
+    """Only current declarations with explicit source ranges receive extra priority."""
+    if priority_status(question, diff_hash) != "eligible":
+        return []
+    return [ref for ref in question["evidence"] if ref["kind"] == "source"]
 
 
-def optional_exchanges(question, events, excluded_ids=()):
+def optional_exchanges(question, events, excluded_ids=(), *, diff_hash=None):
     """Return original bounded public verification calls/results only."""
     from patchloop.dev.probe_observation import project_probe_result
 
+    if priority_status(question, diff_hash) != "eligible":
+        return []
     wanted = {r["action_id"] for r in question.get("evidence", [])
               if r["kind"] == "tool_result"} if isinstance(question, dict) else set()
     wanted -= set(excluded_ids)
@@ -195,6 +200,7 @@ def project_interpretations(view, history, *, archive_kind=None):
         note["evidence_currency"] = note.pop("status", note.get("evidence_currency", "unknown"))
         note["model_interpretation"] = note.pop("statement", note.get("model_interpretation", ""))
     if isinstance(question, dict):
+        question["priority_status"] = priority_status(question, diff)
         question["evidence"] = [evidence(r) for r in question["evidence"]]
         question["evidence_delivery"] = delivery(question["evidence"])
     for concern in notes.get("verification", {}).get("items", []):

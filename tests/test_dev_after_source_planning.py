@@ -53,12 +53,12 @@ def result(journal, tool="read_file", *, status="succeeded", spans=()):
 
 def test_timing_only_identity_and_schema_contrast(tmp_path, monkeypatch):
     old_hashes = {
-        "none": "sha256:ae525f65f230951f3dd6cc559085b276ddc3731f9df608db4b4127916e9e3fcc",
-        plans.POLICY: "sha256:a1a468438d36c8e8f2f18f4fc86b3142717cb078bd874873ab03f87ca7b36aea",
+        "none": "sha256:eb84e143153fc510c7ec56212f70d9b5d56e3f6042a5f2ecb96f0ff4780577df",
+        plans.POLICY: "sha256:8d12311785b09b2fe26037d522069e6c076300e9dedc417688761cd8c3661ea2",
         plans.EVIDENCE_POLICY:
-            "sha256:898c24fd7eea43af45d967a61cfbe6976800d8f2edc778620270eae850d85ee0",
+            "sha256:0a6ba2709ffdcb37f61c42e664bcd376ce07173b125f0aaf12f491040a0dca0a",
         plans.ASSUMPTION_POLICY:
-            "sha256:5e62511d88296ad806550ac84e802697c000777c62ae8ae30c0a5e4b06f9a84f",
+            "sha256:4b0dbcf809550761c325cfe688f5c14192f229308071813b993d75246a7ef53c",
     }
     assert {p: dev_tool_surface_hash(planning_policy=p) for p in old_hashes} == old_hashes
     old, new = plans.instructions(), plans.instructions(POLICY)

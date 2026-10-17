@@ -201,7 +201,7 @@ def test_feedback_changes_preserve_wire_limits_and_bounded_prompt():
     # Include concern guidance, mutation bounds and evidence-based finish assessment prose.
     assert sha256_json(dev_tool_schemas(
         finish_enabled=True, allowed_tools=ALL_DEV_TOOLS, check_ids=["first", "second"],
-    )) == "sha256:1e649af3a73960890d3577f76baf84e4bdb58a118d672a581b36ae10341721d9"
+    )) == "sha256:8b024770ed22b31b84e2e5b8890080e1aaad9f15ba9843f5c3ea3f1c12ee0fe0"
     assert dev_tool_surface_hash() != (
         "sha256:3a114a877f58c774aca0f555b106d7361df7b3087b4c04aa2903cbb9a49853cc"
     )

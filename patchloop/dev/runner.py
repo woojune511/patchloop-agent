@@ -2104,6 +2104,7 @@ def _build_segmented_model_input(
         base = _segment_public_base(prompt, state, latest_results, calls, agent_policy)
         optional = [] if replace_pending else evidence_focus.optional_exchanges(
             state.get("working_notes", {}).get("open_question"), events, ids,
+            diff_hash=state["current_diff"]["patch_hash"],
         )
         if optional:
             base.append(SEGMENT_RULES.archive(exchanges=optional))

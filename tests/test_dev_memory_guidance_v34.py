@@ -48,11 +48,11 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
                        "run_probe", "finish_task", "stop_task"),
     )
     # Preserve object, tool, enum and required-field order, nullability and defaults.
-    # Refreshed for annotation retirement, explanation bounds and finish assessment.
+    # Refreshed for explicit primary/countercheck roles; other ordered inputs stay pinned.
     tools = _legacy_compression_surface(tools)
     encoded = json.dumps(_without_descriptions(tools), ensure_ascii=False, separators=(",", ":"))
     assert hashlib.sha256(encoded.encode()).hexdigest() == (
-        "544e1abd442ae4f0028b86482b3261b02b57ce1c9c18c44412901a8b431a5871"
+        "e02c7ceb93201640950920b260422b0ae35fce974e3728b79e63345fb4bcf0e5"
     )
     for tool in tools:
         assert tool["strict"] is True
@@ -63,20 +63,20 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
 @pytest.mark.parametrize(("names", "expected"), [
     (
         ("read_file", "run_check", "run_probe", "search_files", "stop_task"),
-        "4b82afb0f1eb03d4906454b3f4ea309c503f5451228bda146e55b0b88c53d701",
+        "544c19f4d8e63f8a8810efe1dd4cd0adf3dee51cdb0145a4509de554027739c2",
     ),
     (
         ("finish_task", "read_file", "replace_text", "run_probe", "search_files", "stop_task"),
-        "4c418c65844ec8da8f7d55eddbac9cb935f450558378dabc8d0abd19211c8db3",
+        "b817201c9d1aa8432575b0c1b55015dc01bc08a2b002e3e2cc09ab13bfa229c6",
     ),
     (
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task"),
-        "6ee112e163630ae01e6beba1820a8473c1189104fddc80c3a510601abd85a916",
+        "310f8ec3dd129c93fb10c2a0589decf38eb09ce60e395ef906ac814e399e5139",
     ),
     (
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task",
          "finish_task"),
-        "469a86145eec75fc0091760f61e8657d145cb6b8c2fdbc415ca5f606bf90639c",
+        "6302bc9d248be03d6e1430f0102a0e5c00ecb7883c25d453945f979f21fd3af7",
     ),
 ])
 def test_descriptions_outside_memory_and_schema_order_are_unchanged(names, expected):
@@ -107,7 +107,7 @@ def test_guidance_is_bounded_in_characters_and_canonical_bytes_not_claimed_token
     assert len(canonical_json(memory_update_schema()).encode()) <= 4000
     assert hashlib.sha256(canonical_json(_without_descriptions(memory_update_schema()))
                           .encode()).hexdigest() == (
-        "aa73f3a9a86abd5788feedbfe718ec299aeef2c78e648a80e65bfa6d5521d92c"
+        "2b2939d1a9bb49ef05cf62e0274625cda8dfba88ef54e99f850b310945899780"
     )
 
 
@@ -139,7 +139,7 @@ def test_guidance_identity_changes_without_changing_run_schema_or_limits():
     # Common action/probe guidance changes the overall surface identity;
     # argument and description identities remain independently pinned above.
     assert dev_tool_surface_hash() == (
-        "sha256:ae525f65f230951f3dd6cc559085b276ddc3731f9df608db4b4127916e9e3fcc"
+        "sha256:eb84e143153fc510c7ec56212f70d9b5d56e3f6042a5f2ecb96f0ff4780577df"
     )
     assert DEV_RUN_SCHEMA == "dev-run-v1"
     limits = DevLimits()

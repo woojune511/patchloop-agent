@@ -306,7 +306,9 @@ def project_observed_sources(
             used += cost
     # Optional focus is atomic for priority admission, but a rejected large range
     # must not suppress source the ordinary selector would otherwise retain.
-    for ref in focus_references or []:
+    # A large primary citation cannot crowd out an explicitly declared countercheck.
+    # Roles describe the model's intent, not a runtime judgment of the source.
+    for ref in sorted(focus_references or [], key=lambda ref: ref.get("role") != "countercheck"):
         if ref.get("kind") != "source" or ref.get("unavailable_reason"):
             continue
         keys = {(ref["path"], ref["file_hash"], n)

@@ -204,7 +204,7 @@ def test_probe_description_exposes_existing_capability_without_changing_wire_sha
     # Open questions now bind evidence; probe properties/limits and tool order stay fixed.
     encoded = json.dumps(structure(schemas), separators=(",", ":"), ensure_ascii=False).encode()
     assert hashlib.sha256(encoded).hexdigest() == (
-        "b57c0766ae0086580b18635aa6a6d3083e2567e0ad7881d5629fe671a4b8886f"
+        "acdcc28623f92006faaa95a0c58015095e28b851093d0eb983e8d59bcd303222"
     )
     assert dev_tool_surface_hash() != (
         "sha256:d69d9d4f71a4ed6517e0ae077d2df1fe934f6498abcacf104eed0b9b0fc717a8"
@@ -217,8 +217,8 @@ def test_probe_description_exposes_existing_capability_without_changing_wire_sha
 
 def test_guidance_prioritizes_reusable_facts_without_growing_the_system_prompt():
     assert len(DEV_SYSTEM_PROMPT) <= 8007  # v19 length; replace guidance, do not stack warnings.
-    assert "current_public_failure describes this diff's failure" in DEV_SYSTEM_PROMPT
-    assert "pending_recheck references an" in DEV_SYSTEM_PROMPT
+    assert "current_public_failure is current" in DEV_SYSTEM_PROMPT
+    assert "pending_recheck concerns an older diff" in DEV_SYSTEM_PROMPT
     assert "Recheck a repair before assuming it persists" in DEV_SYSTEM_PROMPT
     assert "another edit can use independent current evidence" in DEV_SYSTEM_PROMPT
     assert "headers do not establish behavior of unread return paths" in DEV_SYSTEM_PROMPT

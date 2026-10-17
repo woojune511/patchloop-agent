@@ -1539,9 +1539,12 @@ class DevToolGateway:
         return priorities
 
     def focus_source_references(self) -> list[dict[str, Any]]:
-        results = {e["payload"]["result"]["action_id"]: e["payload"]["result"]
-                   for e in self.journal.events() if e["event_type"] == "action_finished"}
-        return evidence_focus.source_references(self._working_open_question, results)
+        question = self._working_open_question
+        if not isinstance(question, dict) or question.get("declared_diff_hash") is None:
+            return []
+        return evidence_focus.source_references(
+            question, diff_hash=self.current_diff_hash,
+        )
 
     def _question_source_spans(self) -> list[dict[str, Any]]:
         question = self._working_open_question
@@ -1781,15 +1784,16 @@ class DevToolGateway:
                 if event["event_type"] == "action_finished"
             }
             question, question_error = evidence_focus.bind_question(
-                update.open_question, spans, prior_results,
+                update.open_question, spans, prior_results, diff_hash=diff_hash_at_update,
             )
             payload["question_applied"] = question_error is None
             if question_error:
                 payload["diagnostics"].append(question_error)
                 receipt["diagnostics"].append({
                     "code": question_error,
-                    "message": "Question unchanged. Use text and up to two already observed "
-                    "source/result references, or null to clear only the focus.",
+                    "message": "Question unchanged. Use text and at most one primary and one "
+                    "countercheck reference to already observed source ranges/check results, "
+                    "or null to clear only the focus.",
                 })
             else:
                 payload["open_question"] = question
@@ -2114,10 +2118,13 @@ class DevToolGateway:
                         )
             finding["status"] = "current" if current else "historical"
             finding["interpretation_status"] = "model_authored_unverified"
+        question = copy.deepcopy(self._working_open_question)
+        if isinstance(question, dict):
+            question["priority_status"] = evidence_focus.priority_status(question, current_hash)
         return {
             "findings": findings,
             "available_note_ids": [finding["note_id"] for finding in findings],
-            "open_question": copy.deepcopy(self._working_open_question),
+            "open_question": question,
             "verification": self.verification_concerns(diff_hash=current_hash),
             "last_update_diagnostics": (
                 list(self._working_notes_turns.values())[-1].get("diagnostics", [])[:3]
