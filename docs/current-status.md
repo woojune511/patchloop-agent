@@ -41,8 +41,8 @@ USD 1.47315645; batch stop too broad; effect unmeasured.
 frozen grades unchanged.
 
 [Call support](../.agent/plans/question-support-comparison.md): 3 tasks, A/B, 2 repeats;
-USD 10.56 proposed. [Checks](history/2026-10-17-question-support-experiment-preparation.md):
-timing failure, coverage complete; paid execution unauthorized.
+USD 10.56 proposed. [Timeout fix](history/2026-10-17-capture-timeout-validation.md):
+synchronized fixture; final-commit validation receipt; paid execution unauthorized.
 
 [Navigation](history/2026-10-08-failure-navigation.md) found no current tool defect;
 keep baseline. [Rule ownership](history/2026-10-08-rule-ownership.md) is an operator

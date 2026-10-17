@@ -6,6 +6,7 @@ import subprocess
 import sys
 import threading
 import time
+from types import SimpleNamespace
 
 import pytest
 
@@ -145,19 +146,47 @@ def test_real_local_large_output_retains_exit_verdict_and_exact_observed_bytes(t
     assert result.truncated and not result.timed_out
 
 
-def test_real_local_timeout_retains_partial_output_and_leaves_no_readers(tmp_path):
+def test_real_local_timeout_retains_partial_output_and_leaves_no_readers(tmp_path, monkeypatch):
     before = {thread.ident for thread in threading.enumerate()}
     started = time.monotonic()
-    result = capture_process(
-        [sys.executable, "-c", "import time; print('partial',flush=True); time.sleep(30)"],
-        cwd=tmp_path, timeout=0.3, output_limit_bytes=128,
-        deadline=ExecutionDeadline.from_remaining(3),
+    deadline = ExecutionDeadline.from_remaining(3)
+    ready = tmp_path / "output-written"
+    command = [sys.executable, "-c", (
+        "import os,sys,time\n"
+        "os.write(1,b'partial\\n'); os.write(2,b'error\\n')\n"
+        "open(sys.argv[1],'xb').close()\n"
+        "time.sleep(30)\n"
+    ), str(ready)]
+    # Establish actual pipe writes before testing retention; interpreter startup
+    # has no guaranteed 0.3s bound. The separate startup test keeps that time charged.
+    process = subprocess.Popen(
+        command, cwd=tmp_path, stdout=subprocess.PIPE, stderr=subprocess.PIPE, bufsize=0,
     )
-    assert result.timed_out and result.exit_code is None
-    assert result.stdout.splitlines() == ["partial"] and not result.cleanup_failed
-    assert time.monotonic() - started < 3
-    assert not [thread for thread in threading.enumerate()
-                if thread.ident not in before and thread.name.startswith("check-")]
+    try:
+        while not ready.exists():
+            assert process.poll() is None, "child exited before emitting its output"
+            deadline.check()
+            time.sleep(0.01)
+        monkeypatch.setattr(capture_module.subprocess, "Popen", lambda *args, **kwargs: process)
+        result = capture_process(
+            command, cwd=tmp_path, timeout=0.3, output_limit_bytes=128, deadline=deadline,
+        )
+        assert result.timed_out and result.exit_code is None
+        assert result.stdout == "partial\n" and result.stderr == "error\n"
+        assert result.original_output_bytes == 14 and not result.truncated
+        assert not result.cleanup_failed and process.poll() is not None
+        assert process.stdout.closed and process.stderr.closed
+        assert time.monotonic() - started < 3
+        assert not [thread for thread in threading.enumerate()
+                    if thread.ident not in before and thread.name.startswith("check-")]
+    finally:
+        # Do not let a failed fixture/assertion leave its real child behind. Check
+        # capture's own reaping and reader cleanup above, before this fallback runs.
+        if process.poll() is None:
+            process.kill()
+        process.wait(timeout=3)
+        process.stdout.close()
+        process.stderr.close()
 
 
 class FakeProcess:
@@ -181,6 +210,39 @@ class FakeProcess:
     def kill(self):
         self.killed = True
         self.returncode = -9
+
+
+@pytest.mark.parametrize("startup_seconds", [0.1, 0.4])
+def test_process_startup_consumes_timeout_before_waiting(monkeypatch, startup_seconds):
+    clock = [0.0]
+
+    class RunningProcess(FakeProcess):
+        def wait(self, timeout):
+            if not self.killed:
+                clock[0] += timeout
+            return super().wait(timeout)
+
+    process = RunningProcess(
+        error=subprocess.TimeoutExpired(["synthetic"], 0.3), stdout=io.BytesIO(),
+    )
+
+    def launch(*args, **kwargs):
+        clock[0] += startup_seconds
+        return process
+
+    monkeypatch.setattr(capture_module.subprocess, "Popen", launch)
+    monkeypatch.setattr(capture_module, "time", SimpleNamespace(monotonic=lambda: clock[0]))
+    result = capture_process(
+        ["synthetic"], timeout=0.3, output_limit_bytes=128,
+        deadline=ExecutionDeadline.from_remaining(3, clock=lambda: clock[0]),
+    )
+    assert result.timed_out and result.exit_code is None and process.killed
+    assert result.stdout == result.stderr == "" and result.original_output_bytes == 0
+    assert not result.cleanup_failed and not result.truncated
+    assert clock[0] == pytest.approx(max(0.3, startup_seconds))
+    assert sum(process.waits[:-1]) == pytest.approx(max(0, 0.3 - startup_seconds))
+    assert process.waits[-1] == pytest.approx(3 - max(0.3, startup_seconds))
+    assert process.stdout.closed and process.stderr.closed
 
 
 @pytest.mark.parametrize("error_type", [OSError, RuntimeError, KeyboardInterrupt])
