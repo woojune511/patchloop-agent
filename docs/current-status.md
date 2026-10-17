@@ -66,9 +66,9 @@ L003/L039 cycle, regression PASS overinterpreted despite retained notes/tools.
 [Counterexample](history/2026-10-07-counterexample-results.md): both FAIL despite
 B's retained current failure; USD 0.04019910. Keep 24k; no adoption or paid follow-up.
 
-[Handoffs](history/2026-10-17-question-evidence-priority.md): scoped primary/countercheck refs; 24k/timing fixed.
-476 replay: 8 route lines kept, 48 others displaced; model selection/quality untested.
-No paid follow-up.
+[Handoffs](history/2026-10-17-question-priority-relevance.md): 24k/timing fixed.
+476: route priority sound; caller + 7 exclusion lines fit 23,878 chars manually.
+Automatic selection/quality untested; no paid follow-up.
 
 See [panel contract](../.agent/current-dev20.md) and
 [priority fixes](history/2026-10-06-agent-priority-fixes.md). Prior panels closed.
