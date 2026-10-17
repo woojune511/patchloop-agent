@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ast
+import copy
 from pathlib import Path
 
 import pytest
@@ -12,11 +13,13 @@ from test_dev_notes_v14 import note_call
 from diagnostics import repair_mechanisms as ablation
 from patchloop.dev import segments
 from patchloop.dev.contracts import DevLimits
+from patchloop.dev.evidence_focus import project_interpretations
 from patchloop.dev.model import DEV_SYSTEM_PROMPT
 from patchloop.dev.model_state import compact_model_state
 from patchloop.dev.thin_policy import system_prompt
 from patchloop.dev.working_notes import memory_update_schema
 from patchloop.runtime import repository_root
+from patchloop.util import canonical_json
 
 
 def test_active_checkout_is_exact_frozen_arm_and_factors_commute():
@@ -124,3 +127,25 @@ def test_preparation_rejects_product_checkout_and_unknown_factor(tmp_path):
         ablation.arm_sources(Path("."), "invented")
     with pytest.raises(ValueError, match="exact occurrences"):
         ablation.replace_exact("changed", "expected", "replacement")
+
+
+def test_j_metadata_can_cross_size_boundary_without_changing_observed_bodies():
+    # Factor isolation is before admission, not a claim of equal serialized sizes.
+    before = {"working_notes": {"findings": [{"note_id": "n", "statement": "Unverified",
+        "status": "current", "evidence": [{"kind": "source", "path": "x.py",
+            "file_hash": "h", "start_line": 1, "end_line": 2}]}], "open_question": None},
+        "working_plan": {"plan": "Investigate"},
+        "current_sources": [{"path": "x.py", "file_hash": "h", "inline_spans": [
+            {"start_line": 1, "end_line": 2, "content": "PUBLIC_BODY\nCOUNTER_BRANCH"}]}]}
+    after = copy.deepcopy(before)
+    project_interpretations(after, [])
+    assert after["current_sources"] == before["current_sources"]
+    left = {"input": [{"role": "user", "content": canonical_json(before)}], "padding": ""}
+    right = {"input": [{"role": "user", "content": canonical_json(after)}], "padding": ""}
+    assert segments.request_sizes(right)["request_bytes"] > segments.request_sizes(left)[
+        "request_bytes"]
+    padding = "x" * (segments.MAX_REQUEST_BYTES - segments.request_sizes(left)["request_bytes"])
+    left["padding"] = right["padding"] = padding
+    assert segments.request_sizes(left)["request_bytes"] == 1048576
+    assert segments.size_reasons(segments.request_sizes(left)) == []
+    assert segments.size_reasons(segments.request_sizes(right)) == ["request_bytes"]
