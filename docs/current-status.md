@@ -40,9 +40,9 @@ USD 1.47315645; batch stop too broad; effect unmeasured.
 [I4](history/2026-10-16-isort-requirement-audit.md): inferred type_item;
 frozen grades unchanged.
 
-[Revision comparison](../.agent/revision-comparison.md): preparing four exposed tasks,
-two revisions and two repetitions with two workers. Proposed USD 19.20 cap awaits
-exact manifest approval. No live result or quality gain is established.
+[Call support](../.agent/plans/question-support-comparison.md): 3 tasks, A/B, 2 repeats;
+USD 10.56 proposed. [Checks](history/2026-10-17-question-support-experiment-preparation.md):
+timing failure, coverage complete; paid execution unauthorized.
 
 [Navigation](history/2026-10-08-failure-navigation.md) found no current tool defect;
 keep baseline. [Rule ownership](history/2026-10-08-rule-ownership.md) is an operator
