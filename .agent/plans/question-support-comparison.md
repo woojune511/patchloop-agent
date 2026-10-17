@@ -1,155 +1,322 @@
-# Current-question call support: bounded comparison
+# Evidence retention and judgment support: bounded repair comparison
 
-Date: 2026-10-17. Preparation only; paid execution is not authorized.
-This allocation is separate from every closed panel and the older revision-comparison
-proposal. No old approval, remaining allowance, or interrupted run is reused.
+Date: 2026-10-17. Revised proposal; paid execution is **NOT_AUTHORIZED**.
+This replaces the unexecuted call-support A/B design, not any closed allocation.
+The specification is prepared; experimental ablations and their execution manifest
+are **NOT_IMPLEMENTED / NOT_READY**. No old approval or unused allowance transfers.
 
-## Question and competing explanations
+## Question, evidence and scope
 
-Does preserving observed immediate call conditions alongside the current question's
-primary/countercheck evidence improve repairs at the same resource limits, or does
-the extra syntax displace more useful indirect counterevidence?
+Do focused evidence retention (E) and explicit judgment support (J) improve actual
+repairs, separately or together, within the same limits? Distinguish a missing body
+at a handoff from an unsupported conclusion despite relevant delivered evidence.
 
-The [saved-input audit](../../docs/history/2026-10-17-question-call-support.md) restored
-11 caller lines and seven local exclusion lines, but displaced 59 other line versions
-at one boundary, including nine relevant indirect lookup lines. Its two active examples
-used operator-authored references. Autonomous reference selection, model use and repair
-quality remain unmeasured. Delivery alone does not establish understanding or truth.
+The [saved-input audit](../../docs/history/2026-10-17-question-call-support.md)
+restored caller conditions and local exclusions while displacing 59 line versions,
+including nine useful indirect counterevidence lines. Its active references were
+operator-authored: delivery improved in those inputs, not yet in autonomous solves.
+The [plan comparison](../../docs/history/2026-10-16-plan-grounds.md) preserved reasons
+and reviews but achieved 0/8 independent acceptances in each arm. The
+[Astroid closure audit](../../docs/history/2026-10-16-astroid-plan-closure.md) found
+unsupported closure despite available evidence; the later purpose-guidance arm was
+[not executed](../../docs/history/2026-10-16-output-stop.md). These observations
+motivate separate factors; they are not fresh controls or proof of either cause.
 
-Plausible alternatives are that the model never declares eligible references, that
-failure comes from its verification/repair decision despite adequate context, or that
-conservative call support crowds out more useful evidence. Those outcomes weaken the
-case for this selector. Do not add task hints or force references to obtain exposure.
+Alternatives: the solver may not declare usable references; recency may already
+retain sufficient evidence; extra support may displace a necessary branch; explicit
+labels/reasons may merely justify the same wrong patch. Even better judgments can
+fail to produce a repair within four edits. Delivery, checks, longer notes, public
+PASS and submission alone establish no repair gain.
 
-## Fixed arms and task selection
+## Four arms on one common implementation
 
-| Arm | Exact source commit | Runtime content hash |
+Use base `168765b55b7d5c26cdfc7ce50c0d70cf729e39b8`, including the timeout-fixture
+and settled-INCOMPLETE_RESPONSE batch fixes in every arm. Base runtime content hash:
+`sha256:2f0d160691daa1df55f1a9a671b7ff09881b53932559380eae6fc8abac7684d9`.
+Build isolated experiment-only ablations from that base; do not run old commits as
+controls or change dev-head's default behavior. Arm labels are not runtime versions.
+
+| Arm | Focused retention E | Judgment support J | Comparison role |
+| --- | --- | --- | --- |
+| E0J0 | Off | Off | Common-contract control |
+| E1J0 | On | Off | Added retention with baseline judgment presentation |
+| E0J1 | Off | On | Added judgment support with baseline retention |
+| E1J1 | On | On | Current combined behavior |
+
+### E: which already-observed evidence reaches the request
+
+E1 uses the current atomic priority: mutation anchors/postimages, eligible current
+countercheck, primary, observed immediate call-support bundle, then ordinary recency.
+It also permits the existing bounded replay of question-cited check/test/probe
+call/result bodies, subject to the current deterministic size fallback.
+
+E0 uses the same observed candidate pool, native latest-result delivery, anchor
+protection, line accounting, staleness and fallback rules. It passes no priority
+references to `context.project_observed_sources` and adds no optional question-cited
+exchanges via `evidence_focus.optional_exchanges`. Ordinary recency can still retain
+the same evidence; evidence is not deliberately deleted to create failure.
+Question binding, stored bodies, validation and the two-reference interface stay on.
+
+Implementation seams: `dev/context.py`, projection callers in `dev/tools.py`, and
+optional-exchange selection in `dev/runner.py`. Do not disable annotation binding,
+mutation admission, recovery, native result delivery or actual count/cap guards.
+Only the selection-specific help sentence in `DEV_SYSTEM_PROMPT` may differ with E:
+E1 describes its priority; E0 states that references do not receive extra priority.
+The request to cite minimal observed primary/countercheck units remains common.
+This estimates the focused-retention package, not call support alone or the benefit
+of merely introducing a reference schema.
+
+### J: observations, interpretations and unfinished purposes
+
+J1 keeps `evidence_focus.project_interpretations`: proposed remaining work,
+`model_interpretation`, separate evidence currency/delivery and missing ranges,
+`closed_by_model` / `dismissed_by_model`, and coverage `not_assessed`. It keeps current
+plan/note guidance and purpose-preserving completion instructions: account for the
+original input/path/outcome, distinguish execution from source inference, and do not
+substitute an unrelated PASS or make verification conditional on failure.
+
+J0 omits only that final interpretation projection from `dev/model_state.py`.
+Use the earlier, still explicitly unverified note/concern view: `statement`,
+`status`, existing `model_authored_unverified`, model-decision basis and warning that
+current evidence is not proof of the prose. Keep the same source/result bodies.
+Restore `working_plan.INSTRUCTIONS` and the completion paragraph from
+`fcfa496dfb57f7e0d79616e5389fac034cfbc6b2` (before `5fbce0c` purpose guidance), not its
+runtime. In the current notes paragraph, replace help for renamed J1-only fields
+with their J0 equivalents; retain minimal-reference help and honest unverified-data
+warnings. Freeze the exact resulting strings before any execution.
+
+Shared in all arms: original concern/progress separation, concern persistence, plan
+predecessor/revision-reason retention and validation, final diff-bound review,
+annotation bounds, original check verdicts and current-diff finish requirements.
+J never certifies an assertion or requires an extra check. This tests the incremental
+presentation/purpose-guidance bundle; it does **not** re-estimate earlier plan-history
+or concern-persistence contracts, or isolate individual sentences.
+
+### Isolation contract
+
+Freeze each arm's patch, source/import hash, rendered prompt and common schemas.
+Verify factor instructions and required shared guidance in the rendered prompt after
+the existing ceiling is applied, not just in source strings; never enlarge the bound.
+E and J transformations must commute. E0J1/E1J1 share J rules; E1J0/E1J1 share the
+evidence selector. On an identical saved public state, toggling J must leave source
+line versions and tool call/result bodies equal before final size admission.
+J may change metadata and request size; record resulting fallback/body loss as a
+delivery-mediated interaction, not judgment-only evidence. E1J1 must match the base.
+No task-ID/path special cases, forced references, new tools, historical-answer hints
+or extra model calls are allowed.
+
+## Fixed tasks, model and resources
+
+Retain the previous proposal's three tasks; do not replace them after seeing exposure
+or grades. Astroid supplies observed examples of both mechanisms; the other two test
+public call/exception behavior and regressions, not known judgment failures.
+
+| Index | Registered public input | Public selection reason |
 | --- | --- | --- |
-| A: preceding paired-reference selector | `04fb9e005523e8690910c72303b6aad168e11b46` | `sha256:eac04bee22dc7bc571a925364a0f851c5c9101f721243478690bfd322ecdde76` |
-| B: observed immediate call support | `18dfe0e68dbbc2d3617c4d4cdcdec7d1ae5b6dad` | `sha256:2f0d160691daa1df55f1a9a671b7ff09881b53932559380eae6fc8abac7684d9` |
+| 13 | `tasks/dev-train/current-dev20/13/public.yaml` (Astroid-1333) | Directory/file dispatch evidence loss and separately observed unsupported purpose closure. |
+| 1 | `tasks/dev-train/current-dev20/1/public.yaml` (Marshmallow-1343) | Nested deserialization/validator chain; missing data and error propagation. |
+| 9 | `tasks/dev-train/current-dev20/9/public.yaml` (Pydicom-1694) | Lookup/value-conversion traceback; caller scope of exception suppression. |
 
-The runtime diff is confined to `dev/context.py`, `dev/question_support.py`, and
-the selector identity in `dev/contracts.py`. This tests the latest optional support
-tier, not the accumulated notes/handoff redesign or encrypted reasoning itself.
-Both arms retain the preceding question/reference and unverified-note behavior.
-Use independent interpreters/checkouts; never patch a running arm.
+All are development-exposed. Historical FAIL/PASS/PASS discloses selection only;
+historical runs are not pooled into fresh denominators. No private spec, hidden test,
+reference patch or evaluator detail informs task annotations or solver context.
+Private assets may be hashed opaquely and used only by isolated evaluation.
 
-| Fixed task index | Registered public input | Selection reason from public evidence |
-| --- | --- | --- |
-| 13 | `tasks/dev-train/current-dev20/13/public.yaml` (Astroid-1333) | Observed directory/file dispatch gap; positive mechanism case with known indirect-evidence losses. |
-| 1 | `tasks/dev-train/current-dev20/1/public.yaml` (Marshmallow-1343) | Nested deserialization/field-validator call chain; guards must respect missing data and error propagation. |
-| 9 | `tasks/dev-train/current-dev20/9/public.yaml` (Pydicom-1694) | Public traceback crosses item lookup and value conversion; exception suppression depends on caller scope. |
-
-The latter two were not the active-reference examples used to adjust this selector.
-All three are development-exposed, including legacy saved-input replay; none is unseen
-or held out. Historical PatchLoop outcomes were FAIL/PASS/PASS, used only to disclose
-selection and regression opportunities, never as fresh A measurements. Task selection
-does not use private specs, hidden tests or reference patches. Private package assets
-may be hashed opaquely and used only by the isolated evaluator after submission.
-
-## Model, policies, repetitions and budget
-
-- Both arms use `gpt-5.4-mini-2026-03-17`, xhigh, desired output 25,000 tokens,
+- Model: `gpt-5.4-mini-2026-03-17`, xhigh, desired output 25,000 tokens,
   standard/global Responses, `store=false`, zero SDK retries. This preserves the
-  model of the saved failure panel; it does not change the general baseline model.
-- Exact credential path for a later approved run:
-  `C:/Users/geonj/Documents/PatchLoop/.env`. Preparation never reads its contents.
+  saved panel's model, not a change to the general baseline model.
+- Later credential path: `C:/Users/geonj/Documents/PatchLoop/.env`; preparation
+  does not read its contents. No availability or token-count API call is permitted.
 - Preserve `segmented-v1`, `result-or-size-v1`, `brief-v1`, current agent policy,
-  ordinary probes enabled, probe-policy/recheck none, repair-recheck true,
-  protected-v1 inspection and per-call-v1 cost admission.
-- At most two question references; retain the existing primary/countercheck roles,
-  validation, staleness and diff-scope rules. No operator-provided question, citation,
-  plan, note, patch, previous conversation, or saved continuation enters a fresh solve.
-- Retained source 24,000 characters; counted input 60,000 tokens; full request
-  1,048,576 bytes; encrypted item 262,144 bytes. Preserve the existing 8,000-character
-  system-prompt ceiling, note/schema limits and all remaining request defaults.
-- Per solve: 40 model calls, 100 actions, four accepted edits, 1,800 seconds including
-  the existing 330-second registered-evaluation reserve. Run counters never reset at
-  a segment boundary. Size-trigger positions may differ because selected text differs;
-  the boundary algorithm and thresholds stay identical, and realized reasons are logged.
-- Three tasks x two arms x two repetitions = **12 fresh solves**. Each request has
-  `repeat=1`, its own state root and one fixed **USD 0.88** allocation, matching the
-  observed panel. Total new invocation cap: **USD 10.56**, USD 5.28 per arm.
-  This is a proposed ceiling, not spending authorization or a promise of completion.
-- Fixed waves A1, B1, B2, A2; task order 13, 1, 9 in each wave. Use the existing
-  two-process scheduler, wait for each wave to settle, and import only that wave's arm.
-  No transfers, replacement rows, retries, resume, continuation or automatic expansion.
-- Model prices checked on 2026-10-17: USD 0.75 uncached input, USD 0.075 cached input,
-  USD 4.50 output per million tokens, matching the runtime's registered rates.
-  [Official model](https://developers.openai.com/api/docs/models/gpt-5.4-mini) and
-  [OpenAI pricing](https://developers.openai.com/api/docs/pricing).
-  Reserve uncached input cost immediately before dispatch; record actual usage and
-  any output-ceiling reduction. A maximum-size 60k-input/25k-output call reserves
-  USD 0.1575; the row cap therefore does not guarantee 40 such calls.
-- Reuse the exact local prepared source/dependency descriptors and pinned images
-  from the observed panel after current verification. Registered and native assessment
-  remain separate; native host allowance 600 seconds and test timeout 300 seconds.
-  No image pull/build, new dependency resolution or task registration is included.
+  probes enabled, probe-policy/recheck none, repair-recheck true, protected-v1
+  inspection and per-call-v1 cost admission, except the two specified ablations.
+- Keep at most **two** question references, one primary and one countercheck, and
+  existing validity, expiry, rebinding and diff-scope rules. Fresh solves receive no
+  operator question, note, plan, citation, patch, saved conversation or continuation.
+- Retained source **24,000 characters**, counted input **60,000 tokens**, request
+  **1,048,576 bytes**, encrypted item **262,144 bytes**, system prompt **8,000
+  characters**; all note/schema bounds and other request defaults remain unchanged.
+- Per row: **40 model calls, 100 actions, four accepted edits, 1,800 seconds**,
+  including the **330-second** registered-evaluation reserve. Counters do not reset.
+  Transition algorithm/thresholds are identical; realized size transitions can differ
+  with content and must be reported, not forced to the same action index.
+- **3 tasks x 4 arms x 1 repetition = 12 fresh solves**; each resolved request has
+  `repeat=1`, a unique state root and **USD 0.88**. Total invocation cap stays
+  **USD 10.56**: USD 2.64 per arm, USD 3.52 per task. No transfers, replacements,
+  retries, resume, continuation, paid judges or automatic expansion.
+- The previous A/B's two repeats per cell become one to fund factor separation.
+  There is no within-cell variance estimate, seed matching, statistical significance
+  or generalization claim. Low exposure does not authorize additional repetitions.
+- Registered pricing carried from the 2026-10-17 packet: USD 0.75 uncached input,
+  USD 0.075 cached input, USD 4.50 output per million tokens. This revision does not
+  recheck prices. Reserve uncached cost immediately before dispatch; settle usage
+  and record output-ceiling reductions. A 60k-input/25k-output call reserves USD
+  0.1575; USD 0.88 does not guarantee 40 maximum-size calls. Revalidate rates before
+  later approved dispatch; a mismatch needs a revised frozen packet.
+- Keep the same prepared source/dependency descriptors and pinned images, verified
+  anew before execution. Registered and native grading stay separate; native host
+  allowance 600 seconds and test timeout 300 seconds. No image pull/build, dependency
+  resolution or task registration is included.
 
-## Freeze and provider-free readiness
+Use this fixed order, reading each round left to right. Each cell is one settled,
+single-row wave of the existing scheduler with its arm's own interpreter. This
+interleaves arms without importing multiple arms into one process. The existing
+two-worker ceiling is preserved but these waves use one worker; no launcher extension
+is required. Order varies by task but cannot remove time effects or stochastic noise.
 
-Evidence root: `C:/pt/analyses/question-support-experiment-20261017-v1`.
-Reserved, uncreated live root: `C:/pt/qcscompare17live01`.
-The external proposal binds all 12 resolved requests, task/package/descriptor hashes,
-arm origins, common prompt/schema/transition hashes, runtime prices, validation receipts,
-native harness identity and this protocol. Hashes bind opaque private assets without
-projecting their contents. Historical inputs and all prior allocations stay immutable.
+| Round | First: task 13 | Second: task 1 | Third: task 9 |
+| --- | --- | --- | --- |
+| 1 | E0J0 | E1J0 | E0J1 |
+| 2 | E1J0 | E0J1 | E1J1 |
+| 3 | E0J1 | E1J1 | E0J0 |
+| 4 | E1J1 | E0J0 | E1J0 |
 
-Run the entire suite at exact B commit in the isolated checkout, preserving its raw
-tracked bytes before/after; prior v3 results do not satisfy this gate. Run mock isolated
-evaluation for both arms and inspect public prepared-source/dependency and image
-identities without provider calls. Fresh public import/operation/selected-test canaries
-are needed for live readiness; stale receipts are not silently promoted. Freeze any
-missing prerequisite as NOT_RUN/BLOCKED with its reason, never as a successful check.
+## Public-only mechanism audit
 
-The proposal is reviewable before approval; preparation exposes no live dispatch
-entry point. A subsequent execution request must bind this exact packet and cap,
-recheck immutable inputs and the validated batch launcher, and supply exact human
-approval. A model availability check or token-count endpoint is provider work and is
-not part of this preparation. Do not relax a failed preflight to spend the allocation.
+Freeze the rubric before dispatch. Seal public annotations before unblinding final
+acceptance grades; record unavoidable grade exposure. Arm blinding is not claimed.
+Keep an operator-only ledger linked to journal/request hash and event sequence;
+never send that ledger or evaluator output to the solver. No paid judging is included.
 
-## Measurement and decisions
+For every material public question/purpose, record original input/path/outcome,
+supporting observations, competing branch/counterevidence, versions, actual delivery,
+explicit claim/disposition, next action, candidate diff and remaining call/edit/time
+budget. Include requirements omitted from plans; no concern/question is not proof
+of correct judgment.
 
-Record every intended row, including unsubmitted/unevaluated rows, on separate axes:
-submission, required public checks, registered/native acceptance and agreement, safety,
-infrastructure/cleanup, settled usage/cost, elapsed time and exhausted limits.
-Missing evaluation is NOT_RUN/ERROR, not acceptance FAIL or PASS. Public PASS alone
-does not establish task correctness. No evaluator feedback is fed back to the solver.
+1. **Opportunity and exposure.** Count transitions, autonomous references, eligibility,
+   priority/support admission and actual request changes. Distinguish NO_TRANSITION,
+   NO_DECLARATION, INELIGIBLE, ALREADY_RETAINED, BUDGET_REJECTED and DELIVERED_CHANGE.
+   J instruction exposure alone is not an eligible decision: identify an interpretation,
+   purpose closure or finish judgment with relevant evidence. Report denominators.
+2. **Retention and displacement.** Replay E0/E1 on identical saved public state,
+   references, diff, native results and observed text without new reads/provider calls.
+   Audit both J presentations for size effects. Inventory every gained/lost
+   `(path, file_hash, line)` and result `(action_id, input_hash, diff_hash)` with text,
+   roles and omissions. Judge minimum sufficient evidence by public conditions and
+   branches, not line totals or citation completeness. Label direct support,
+   countercheck, caller gate, indirect counterevidence, mutation anchor, unrelated and
+   uncertain; allow mixed roles. Include uncited and newly displaced evidence.
+   Separate original output truncation from delivery.
+   A loss claim requires a material unit in an actual earlier request and absent
+   after the handoff. Distinguish NOT_ACQUIRED (never observed), STALE_AFTER_EDIT,
+   LOST_AT_HANDOFF, PRESENT and UNCERTAIN; failed acquisition is not retention loss.
+3. **Judgment and subsequent action.** Reconstruct the complete actual request just
+   before the decision across all delivery routes. Journal presence, a citation or an
+   earlier segment does not prove current delivery. Classify executed support
+   (matching input/assertion/result/current diff), explicit supported source inference,
+   acknowledged open gap, unsupported closure, or UNASSESSABLE. An unrelated PASS,
+   silently dropped purpose, conditional weakening, or explicit assertion contradicted
+   by supplied source is unsupported. Do not infer hidden beliefs from silence or
+   inspect/decrypt raw reasoning.
+4. **Behavior and repair.** Link evidence to revised public claims, discriminating
+   checks, re-reads, accepted corrective edits and submitted diff. Record whether the
+   relevant code changed after the observation; repeated checks or accurate caveats
+   with the same wrong patch are not repairs. Source inference may justify finishing
+   without another check; there is no check quota.
 
-From saved public inputs/actions only, measure the following in order:
+Use independent labels, not one inferred root-cause bucket. A row can have both loss
+and unsupported judgment at different decisions. At one decision, a missing material
+unit makes evidence-adequate judgment NOT_ASSESSABLE; do not assign that failure to J.
+With complete relevant support/counterevidence in the request, an unsupported public
+conclusion is an evidence-present judgment failure. Complete citations alone do not
+establish sufficiency. Preserve reviewer uncertainty and mismatched task scope.
+Even confirmed loss plus a later failure is an association; the fresh arm contrasts,
+not the chronological coincidence, supply the repair-outcome comparison.
 
-1. **Exposure:** segment transitions, actual autonomous question/reference declarations,
-   eligibility, observed parseable support candidates, budget admission, and whether
-   the B selector changes the delivered line set at an actual handoff. No eligible
-   declaration is NOT_EXPOSED, not evidence that call support cannot help.
-2. **Retention and displacement:** at each eligible saved state, replay A and B on
-   identical observed text, versions, native deliveries and references, without new
-   reads or model calls. Inventory every gained/lost `(path, hash, line)` plus text;
-   classify direct caller conditions, explicit counterchecks, indirect counterevidence,
-   mutation anchors, unrelated context and uncertain relevance. Preserve mixed cases.
-   Counterfactual selection is input evidence, not a counterfactual solver outcome.
-3. **Observable use:** link retained/lost evidence to later public actions, explicit
-   plan/note changes, discriminating checks, repeated contradicted assertions and
-   re-reads. Do not inspect/decrypt reasoning, infer an internal belief from silence,
-   or treat advisory concern resolution as verified fact. Review source relevance
-   before unblinding final task grades where feasible; record uncertainty explicitly.
-4. **Repair outcome:** report each task's A/B acceptance count out of two, and total
-   acceptance out of six per arm. Record cost/time and loss-driven regressions even
-   when completion or source-delivery counts improve. No seed matching is claimed.
+Historical replay establishes selection differences only. Its operator-authored active
+references cannot demonstrate autonomous use or counterfactual repair success.
+Same-state replay of a new trajectory is also an input diagnostic, not an unexecuted
+solve outcome. Exposed post-treatment subsets are not the primary causal comparison.
 
-A favorable pilot signal requires actual feature exposure, settled accounting,
-complete agreeing assessments for submitted patches, more B acceptances and no task
-with fewer B acceptances. A gain with a regression remains a tradeoff. Equal acceptance
-is no demonstrated repair-quality gain. Low exposure, resource-censored outcomes or
-missing assessment leave the relevant question unresolved; do not discard those rows
-from the primary denominator or add replacement runs. Twelve solves on three exposed
-tasks do not establish statistical significance or general accuracy. There is no
-automatic adoption, rollback, prompt change, saved-case tuning or follow-up spending.
+## Primary repair outcome and conditional comparisons
 
-Stop all pending admissions on source/request drift, private-context exposure, changed
-limits/transition rules, missing mandatory evidence, count/transport/billing uncertainty,
-unconfirmed cleanup or assessment disagreement. Already admitted work must settle
-with its usage preserved. Known row cost/time/action limits stay local under the
-existing scheduler and remain reported failures/incompletions. Ordinary acceptance
-FAIL does not terminate the fixed comparison or trigger a patch/retry. Every run is
-`official=false`, `claim_eligible=false`; cross-run memory and held-out tuning stay off.
+Retain all 12 intended rows, including stopped/unsubmitted ones. Record separately:
+submission, required public checks, registered acceptance, native acceptance/agreement,
+safety, infrastructure/cleanup, settled cost/time and exhausted limits. Acceptance FAIL,
+ERROR and NOT_RUN stay distinct; public PASS is not correctness.
+
+Report accepted repairs per task/arm out of **one intended row**, and per-arm totals
+out of **three**. Let `S_ej` count registered/native agreeing PASS results in that arm.
+This counts accepted repairs, not graded failures inferred from unsubmitted rows.
+Keep ERROR/NOT_RUN visible; never drop, replace or label them acceptance FAIL.
+
+| Prespecified contrast | What it can distinguish |
+| --- | --- |
+| `S_10 - S_00` and `S_11 - S_01` | Retention contribution with J off and on |
+| `S_01 - S_00` and `S_11 - S_10` | Judgment-support contribution with E off and on |
+| `(S_11 - S_01) - (S_10 - S_00)` | Descriptive interaction: dependence on the other factor |
+| `S_11 - S_00` | Combined outcome only; cannot assign a gain to either factor |
+
+Report all cells, task-level contrasts and unfavorable results. A favorable
+**conditional pilot signal** requires eligible exposure of that factor, more accepted
+repairs in its on arm, no per-task acceptance decrease, complete agreeing grades for
+submitted patches, settled accounting, and no infrastructure/missing-assessment
+uncertainty in the contrasted rows. Known local resource stops remain non-successes
+for bounded repair throughput and are separate from graded FAIL; the mechanism can
+still be unassessable.
+
+A factor-wide signal additionally requires no aggregate/task regression in its other
+conditional contrast. A zero/unexposed contrast is not independent confirmation.
+Opposite signs are an interaction/tradeoff, not one main-effect gain. Three one-shot
+tasks cannot establish an individual repair's cause or a statistically reliable effect;
+traces provide only a mechanism-consistent account.
+
+| Observed chain | Allowed conclusion |
+| --- | --- |
+| Better delivery, same acceptance | Retention worked; repair gain not demonstrated |
+| Fewer unsupported closures, same acceptance | Judgment changed; repair gain not demonstrated |
+| More acceptances without exposure/traceable mechanism | Outcome signal; intended explanation unresolved |
+| E1J0 gains; J adds no gain | Retention signal in this panel; no added J quality signal |
+| E0J1 gains with adequate delivered evidence | Judgment-support signal under baseline retention |
+| Only E1J1 gains with both mechanisms exposed | Possible complementarity; neither alone shown sufficient |
+| Useful counterevidence displaced and task acceptance drops | Selection tradeoff/regression despite more cited lines |
+| No opportunity, ambiguous sufficiency or missing assessment | Corresponding mechanism/quality question unresolved |
+
+Close after the fixed rows. No automatic adoption, rollback, exposed-case tuning,
+extra repetitions or follow-up spending follows any result.
+
+## Freeze, validation and stops
+
+New preparation record: `C:/pt/analyses/repair-mechanisms-spec-20261017-v1`.
+Reserved, uncreated live root: `C:/pt/repairmechanisms17live01`.
+The old `C:/pt/analyses/question-support-experiment-20261017-v1` packet, its
+`qcscompare17live01` reservation and readiness/failure receipts remain immutable;
+they neither authorize nor describe this four-arm experiment.
+
+This revision changes documentation only. Before live readiness, implement and freeze
+the three ablations, exact strings, factor patch hashes and source/import identities;
+bind all 12 resolved requests, descriptors/images, common schemas, transition/limit
+hashes, registered prices, native harness, rubric and protocol hash. Hash private
+assets opaquely. Check actual effective fields, not just CLI arguments.
+
+Provider-free gates for later arm preparation:
+
+- Same-state public fixtures must prove E/J isolation, E1J1/base parity, unchanged
+  transition algorithm/thresholds, two-reference bounds and every admission limit.
+  Cover no-focus, stale/oversized refs, native overlap, result truncation, displaced
+  counterevidence and J-induced size fallback. Preserve failed receipts.
+- Each exact arm must pass relevant regression tests and Ruff, the full suite, and
+  mock isolated evaluation, with source bytes frozen before/after. Expected ablation
+  differences must be explicit; no blanket skips or weakened production expectations.
+  Verify that each interpreter imports only its pinned arm.
+- Fresh public import/operation/selected-test canaries and image identities remain
+  required. Missing prerequisites are NOT_RUN/BLOCKED, never PASS.
+- The base's exact-commit 5,215-pass / 19-skip receipt at
+  `C:/pt/analyses/batch-stop-fix-20261017-v1` establishes the common fix only; it does
+  not validate unbuilt ablations. This docs revision needs layout/link validation.
+
+Arm validation, replay isolation, canaries and a resolved execution manifest remain
+NOT_RUN here. Specification arithmetic/link checks are not runtime or repair evidence.
+Preparation provides no dispatch entry point. A later execution request must approve
+the exact new packet, tasks, model, credential, repeats and USD 10.56 cap; no
+availability/count/model call is allowed before that authorization.
+
+Stop all pending admissions on source/request drift, private-context exposure,
+changed limits/transitions, missing mandatory evidence, count/transport/billing
+uncertainty, unconfirmed cleanup or grader disagreement. Already admitted work must
+settle with usage preserved. The common fixed scheduler keeps known row caps and
+fully accounted, cleanup-confirmed INCOMPLETE_RESPONSE local; the latter is unsubmitted
+with acceptance NOT_RUN, never a repair PASS. Ordinary acceptance FAIL does not stop
+other rows or trigger retry. Every run is `official=false`, `claim_eligible=false`;
+cross-run memory, held-out tuning and claim execution remain disabled.
