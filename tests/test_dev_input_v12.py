@@ -6,6 +6,7 @@ from types import SimpleNamespace
 
 import pytest
 from native_history_support import input_context
+from repair_mechanism_expectations import JUDGMENT
 
 import patchloop.dev.runner as runner
 from patchloop.dev.contracts import DevRunRequest, DevToolResult
@@ -63,7 +64,8 @@ def test_working_notes_are_nonblocking_in_actual_model_input(
     assert bool(contexts[2]["working_notes"]["findings"]) is valid_note
     if valid_note:
         finding = contexts[2]["working_notes"]["findings"][0]
-        assert finding["evidence_currency"] == "historical"
+        currency_key = "evidence_currency" if JUDGMENT else "status"
+        assert finding[currency_key] == "historical"
         assert finding["model_authored"] is True
     # Once the native batch changes, the retained accepted edit becomes self-contained again.
     assert "hypothesis" in contexts[3]["last_successful_mutation"]

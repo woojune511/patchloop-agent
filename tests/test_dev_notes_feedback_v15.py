@@ -284,7 +284,9 @@ def test_mock_row_recovers_notes_via_native_receipts_without_extra_model_or_tool
         assert "last_update_diagnostics" not in notes
     final_notes = input_context(inputs[-1])["working_notes"]["findings"]
     assert [note["note_id"] for note in final_notes] == ["n1"]
-    assert final_notes[0]["evidence_currency"] == "current"
+    from repair_mechanism_expectations import JUDGMENT
+    currency_key = "evidence_currency" if JUDGMENT else "status"
+    assert final_notes[0][currency_key] == "current"
 
 
 def test_prompt_and_memory_schema_explain_before_batch_timing_and_initial_question():

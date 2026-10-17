@@ -379,12 +379,15 @@ def test_major_result_waits_for_next_normal_decision_and_completed_batch(tool, s
 
 
 def test_notes_are_rebound_or_expired_not_resurrected_in_new_segment(tmp_path, monkeypatch):
+    from repair_mechanism_expectations import JUDGMENT
     request, _, _, views = configured(monkeypatch, tmp_path, with_notes=True)
     assert_submitted(runner.run_dev(request)["runs"][0])
     notes = views[-1]["working_notes"]
-    assert [n["model_interpretation"] for n in notes["findings"]] == ["The module imports csv."]
+    prose_key = "model_interpretation" if JUDGMENT else "statement"
+    assert [n[prose_key] for n in notes["findings"]] == ["The module imports csv."]
     assert notes["interpretation_status"] == "model_authored_unverified"
-    assert notes["findings"][0]["evidence_currency"] == "current"
+    currency_key = "evidence_currency" if JUDGMENT else "status"
+    assert notes["findings"][0][currency_key] == "current"
     assert "quoted newlines" in str(notes["open_question"])
 
 

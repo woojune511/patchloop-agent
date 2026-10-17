@@ -6,6 +6,7 @@ import json
 
 import pytest
 from native_history_support import input_context
+from repair_mechanism_expectations import JUDGMENT
 from test_dev_check_identity_v19 import _result
 from test_dev_context_v12 import note_call, source_note
 from test_dev_feedback_integration_v18 import _completed_batch, _context, _input
@@ -84,7 +85,9 @@ def test_row27_cross_diff_false_summary_keeps_each_cited_failure_beside_the_note
     items = _input(gateway, results, tmp_path)
     public = input_context(items)
     finding = public["working_notes"]["findings"][0]
-    assert finding["model_interpretation"] == "The visible failure has moved to an assertion."
+    prose_key = "model_interpretation" if JUDGMENT else "statement"
+    assert finding[prose_key] == "The visible failure has moved to an assertion."
+    assert finding["interpretation_status"] == "model_authored_unverified"
     assert [ref["check_result"] for ref in finding["evidence"]] == [
         {"check_id": "traversal", "passed": False, "exception_type": "AssertionError",
          "currency": "historical"},
