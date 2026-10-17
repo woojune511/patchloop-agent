@@ -5,6 +5,7 @@ import hashlib
 import json
 
 import pytest
+from repair_mechanism_expectations import JUDGMENT
 
 from patchloop.dev.model_state import compact_model_state
 
@@ -57,7 +58,12 @@ def test_current_public_fields_keep_ordered_wire_and_independent_values(reverse,
     before = copy.deepcopy(state)
     view = compact_model_state(state, [])
     wire = json.dumps(view, ensure_ascii=False, separators=(",", ":")).encode()
-    assert hashlib.sha256(wire).hexdigest() == expected_hash
+    # Keep the baseline node IDs and J1 snapshots; J0 omits the plan authority label.
+    wire_hash = expected_hash if JUDGMENT else {
+        False: "410b7f0901b8b7cd6dbfcce7b67616b81ad674fbfb1d1df8d30b4049d47396bc",
+        True: "1a5fae24aaa568dda32a37cf9eac03964c4ff74159950c34172ac4bf42d955a7",
+    }[reverse]
+    assert hashlib.sha256(wire).hexdigest() == wire_hash
     assert state == before
     view["remaining_budget"]["model_calls"] = 0
     view["working_plan"]["steps"].append("changed")
