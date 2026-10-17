@@ -11,6 +11,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Any, Literal
 
+from patchloop.dev.question_support import question_support
 from patchloop.util import sha256_json
 
 SOURCE_OUTPUT_CHARS = 24_000
@@ -229,7 +230,7 @@ def project_observed_sources(
     max_chars: int = RETAINED_SOURCE_CHARS,
     focus_references: list[dict[str, Any]] | None = None,
 ) -> SourceProjection:
-    """Merge equal source lines, select pinned ranges, then use remaining recency."""
+    """Protect mutations/citations, admit observed call support, then use recency."""
 
     native_lines: set[tuple[str, str, int]] = set()
     for span in native_spans:
@@ -326,6 +327,25 @@ def project_observed_sources(
             selected[key] = observed[key]
             selected_keys.add(key)
         used += cost
+    # Inferred syntax support never outranks either explicit citation. Treat the
+    # pair's support as one optional bundle so we do not admit half a caller gate
+    # while evicting its exception/countercheck context. No extra reference or read.
+    admitted_refs = [ref for ref in focus_references or []
+                     if ref.get("kind") == "source" and not ref.get("unavailable_reason")
+                     and all((ref["path"], ref["file_hash"], n) in selected_keys | native_lines
+                             for n in range(ref["start_line"], ref["end_line"] + 1))]
+    support = question_support(observed, admitted_refs)
+    if not support & blocked:
+        additions = sorted(support - native_lines - selected_keys)
+        proposed_keys, cost = set(selected_keys), 0
+        for key in additions:
+            cost += incremental_cost(key, proposed_keys)
+            proposed_keys.add(key)
+        if used + cost <= max_chars:
+            for key in additions:
+                selected[key] = observed[key]
+                selected_keys.add(key)
+            used += cost
     for group in groups:
         for key, value in group:
             if key in selected or key in blocked:

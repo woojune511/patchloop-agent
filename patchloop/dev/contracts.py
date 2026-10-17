@@ -124,7 +124,7 @@ def dev_tool_surface_hash(
             "failed_check_repair_action_space": "budget-only-public-inspection-v2",
             "evidence_plateau_transition": "advisory-only-v2",
             "check_recovery_reserve": "order-independent-distinct-failure-bound-v2",
-            "context_projection": "observed-mutation-countercheck-primary-24000-chars-v2",
+            "context_projection": "observed-mutation-paired-call-support-24000-chars-v3",
             "observed_source_index": "delivered-lexical-headers-16-entries-4000-chars-v1",
             "tool_closure_warning": "actual-single-inspection-successor-conditional-v1",
             "working_notes": "stable-notes-diff-scoped-question-evidence-v5",

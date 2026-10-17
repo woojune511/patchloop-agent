@@ -1,11 +1,13 @@
 # Evidence-preserving handoff and unverified interpretations
 
-Date: 2026-10-17. Status: diff-scoped primary/countercheck refs implemented; live quality untested.
+Date: 2026-10-17. Status: diff-scoped refs and observed call support; live quality untested.
 Design baseline: `e9966142e1a24f5c3a78d2261013cbf8542723d2`; design commit: `ffe11a0`.
 See [implementation and offline evidence](../../docs/history/2026-10-17-evidence-handoff-implementation.md).
 The [displacement audit](../../docs/history/2026-10-17-handoff-counterevidence.md)
 motivates the current reference-scope refinement below.
 See its [implementation and displacement results](../../docs/history/2026-10-17-question-evidence-priority.md).
+The [call-support refinement](question-call-support.md) adds optional observed syntax
+support; its [follow-up](../../docs/history/2026-10-17-question-call-support.md) records displacement.
 Only provider-free validation is authorized; no paid comparison is scheduled.
 
 ## Problem and intended change
@@ -98,8 +100,9 @@ and may be historical, explicitly labelled as such.
 
 This direct-reference shape avoids extra focus lists, same-response note-ID aliases,
 and copies of focus in the plan. Do not copy a whole note/function when a smaller
-observed unit addresses the question. There is no automatic surrounding-line or
-function expansion. Overlapping references share one delivered body.
+observed unit addresses the question. There is no arbitrary surrounding-line or
+whole-function promotion. Optional call support below adds no declared references.
+Overlapping references share one delivered body.
 
 Update semantics:
 
@@ -137,7 +140,18 @@ Within the same retained-source budget, use this order:
 
 1. Existing mutation anchors/postimages and their current priorities.
 2. The active question's eligible countercheck source range, then primary range.
-3. Existing ordinary source selection with its current priorities and recency.
+3. One atomic bundle of observed Python call support for admitted source citations.
+4. Existing ordinary source selection with its current priorities and recency.
+
+The support tier uses complete parseable observed function fragments, local
+parameter/assignment/import dependencies, branch and exception conditions, effect
+calls before the focus, and immediate observed caller/cited-target candidates.
+It uses no task names, question-prose ranking or unbounded call traversal. Non-Python
+or unparseable source, ambiguous names and incomplete scopes add no inferred support.
+The bundle must fit after both citations; otherwise ordinary selection still runs.
+It cannot displace mutation protection or an admitted countercheck. Existing delivery
+and omission accounting describes actual source bodies; support is not a third
+reference, resolved dispatch, a sufficient-context certificate or semantic evidence.
 
 The new atomic reference identity includes path, file hash, complete line range,
 and owner/question revision. Deduplicate costs by actual `(path, file_hash, line)`.
@@ -283,7 +297,7 @@ do not assign it that knowledge or claim it would have avoided a reread or bad r
 | Seam | Responsibility |
 | --- | --- |
 | `working_notes.py`, `tools.py` | Question-reference schema/admission, persistence/rebind, atomic priority tier and bounded feedback. |
-| `context.py` | Reuse atomic selection and omission accounting with version-bound owners. |
+| `context.py`, `question_support.py` | Atomic selection, optional observed call support and exact omission accounting. |
 | `evidence_focus.py`, `model_state.py`, existing native/public-history resolvers | Bound references, evidence-versus-interpretation projection and actual inline/native/quoted delivery. |
 | `evidence_focus.py`, `working_plan.py`, existing concern lifecycle | Model-disposition wording, original purpose continuity and plan role; no new correctness gate. |
 | `runner.py`, `segments.py`, `contracts.py` | Compose/bind handoff manifest, hard admission, recovery and fresh contract identity. |

@@ -80,7 +80,7 @@ def test_default_serialization_and_schema_identities_remain_exact():
     )
     assert "memory_update" not in RequestedTool(name="read_file", action_id="x").model_dump()
     assert dev_tool_surface_hash() == (
-        "sha256:eb84e143153fc510c7ec56212f70d9b5d56e3f6042a5f2ecb96f0ff4780577df"
+        "sha256:57193859890419b79cb7f4927c37796d044bc4bf7159c51ddf17723849529e26"
     )
     schemas = dev_tool_schemas(
         finish_enabled=True, check_ids=["public-check"], test_suite_ids=["public-tests"],

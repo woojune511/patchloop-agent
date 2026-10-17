@@ -119,7 +119,7 @@ def test_case_policy_extends_current_probe_schema_without_changing_prompt():
         "sha256:be1012933d3448903e70edb181c229547f0f8c5e9f285f159e50e7582b825a2e"
     )
     assert dev_tool_surface_hash() == (
-        "sha256:eb84e143153fc510c7ec56212f70d9b5d56e3f6042a5f2ecb96f0ff4780577df"
+        "sha256:57193859890419b79cb7f4927c37796d044bc4bf7159c51ddf17723849529e26"
     )
     assert sha256_bytes(DEV_SYSTEM_PROMPT.encode()) == (
         "sha256:9c6c70ddc419c0c7bcc6118476b369dbfa87e452939036f75d28951774dc0016"
