@@ -6,6 +6,7 @@ from pathlib import Path
 
 import httpx
 import pytest
+from repair_mechanism_expectations import EVIDENCE, JUDGMENT
 from test_dev_runner import _crash_journal_once, _SimulatedCrash
 from test_dev_segments import assert_submitted, configured, records
 
@@ -81,6 +82,27 @@ def test_optional_result_delivery_fallback_and_unknown_stop(tmp_path, monkeypatc
     prepared = [e["payload"] for e in journal.events()
                 if e["event_type"] == segments.PREPARED_EVENT]
     committed = [e["payload"] for e in journal.events() if e["event_type"] == segments.EVENT]
+    if not EVIDENCE:
+        # The injected oversize/unknown count is conditional on an optional body.
+        # E0 never sends that body, but still counts and commits each real request.
+        assert_submitted(result)
+        assert len(inputs) == len(counted) == 5
+        assert len(prepared) == len(committed) == 3
+        assert not any(has_optional_check(items) for items in inputs)
+        manifest = segments.load_binding(committed[-1], store)["evidence_manifest"]
+        assert manifest["optional_action_ids"] == []
+        assert not manifest["optional_bodies_omitted"]
+        question = views[-1]["working_notes"]["open_question"]
+        assert question == manifest["question"]
+        assert question["evidence"][0]["execution"]["passed"] is True
+        if JUDGMENT:
+            assert question["evidence_delivery"] == "incomplete"
+        else:
+            assert "evidence_delivery" not in question
+        assert result["accepted_mutations"] == 1
+        assert len([e for e in journal.events() if e["event_type"] == "action_finished"
+                    and e["payload"]["result"]["tool"] == "run_check"]) == 1
+        return
     if limit == "unknown":
         assert result["terminal"] == "COUNT_TIMEOUT_OR_UNKNOWN"
         assert len(inputs) == 4 and len(counted) == 5
@@ -97,9 +119,13 @@ def test_optional_result_delivery_fallback_and_unknown_stop(tmp_path, monkeypatc
     final = views[-1]["working_notes"]["open_question"]
     manifest = segments.load_binding(committed[-1], store)["evidence_manifest"]
     assert final == manifest["question"]
-    assert final["evidence_delivery"] == ("complete" if limit is None else "incomplete")
+    if JUDGMENT:
+        assert final["evidence_delivery"] == ("complete" if limit is None else "incomplete")
+        assert final["evidence"][0]["behavior_coverage"] == "not_assessed"
+    else:
+        assert "evidence_delivery" not in final
+        assert "behavior_coverage" not in final["evidence"][0]
     assert final["evidence"][0]["execution"]["passed"] is True
-    assert final["evidence"][0]["behavior_coverage"] == "not_assessed"
     assert has_optional_check(inputs[-1]) == (limit is None)
     assert not any(i.get("type") == "reasoning" for i in inputs[-1])
     assert len([e for e in journal.events() if e["event_type"] == "action_finished"
@@ -129,10 +155,14 @@ def test_focused_candidate_count_commit_recovery(tmp_path, monkeypatch, boundary
 
     def focused(payload):
         if boundary == "input_count_finished":
+            if not EVIDENCE:
+                return len(counted) == 5
             return len(counted) == 6 if fallback else has_optional_check(counted[-1])
         manifest = json.loads(Path(
             payload["handoff_artifact"]["path"]).read_text(encoding="utf-8"))[
                 "evidence_manifest"]
+        if not EVIDENCE:
+            return isinstance(manifest["question"], dict)
         return manifest["optional_bodies_omitted"] if fallback else bool(
             manifest["optional_action_ids"])
 
@@ -141,10 +171,10 @@ def test_focused_candidate_count_commit_recovery(tmp_path, monkeypatch, boundary
         runner.run_dev(request)
     journal, store = records(request)
     binding, candidate = segments.active(journal, store)
-    assert candidate["evidence_manifest"]["optional_bodies_omitted"] == fallback
+    assert candidate["evidence_manifest"]["optional_bodies_omitted"] == (fallback and EVIDENCE)
     result = runner.run_dev(request.model_copy(update={"resume_run_id": journal.run_id}))["runs"][0]
     assert_submitted(result)
-    assert len(inputs) == 5 and len(counted) == (6 if fallback else 5)
+    assert len(inputs) == 5 and len(counted) == (6 if fallback and EVIDENCE else 5)
     final_binding, _ = segments.active(journal, store, committed_only=True)
     assert final_binding == binding
     assert views[-1]["working_notes"]["open_question"] == candidate["evidence_manifest"]["question"]

@@ -41,7 +41,7 @@ Batch stop fixed; no paid rerun.
 frozen grades unchanged.
 
 [Retention/judgment](../.agent/plans/question-support-comparison.md): 3 tasks x 4 arms
-x 1 repeat; USD 10.56. Spec only; ablations unbuilt, paid work unauthorized.
+x 1 repeat; USD 10.56. Ablations built; validation pending, paid work unauthorized.
 [Timeout fix](history/2026-10-17-capture-timeout-validation.md): validated fixture.
 
 [Navigation](history/2026-10-08-failure-navigation.md) found no current tool defect;

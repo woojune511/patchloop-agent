@@ -141,11 +141,18 @@ def test_original_purpose_reaches_finish_without_forcing_another_check(
         assert plan["last_change"]["interpretation_status"] == "model_authored_unverified"
     # Assert delivery at the actual finish boundary, not just the prompt constant.
     system = " ".join(items[0]["content"].split())
-    assert "Suite PASS or another path's success cannot replace that purpose" in system
-    assert "make verification conditional on a suite failure" in system
-    assert "the original purpose despite plan changes: cite current-diff results" in system
-    assert "Label source inference and tie it to specific current source" in system
-    assert "leaving unexecuted behavior unverified" in system
+    from repair_mechanism_expectations import JUDGMENT
+    if JUDGMENT:
+        assert "Suite PASS or another path's success cannot replace that purpose" in system
+        assert "make verification conditional on a suite failure" in system
+        assert "the original purpose despite plan changes: cite current-diff results" in system
+        assert "Label source inference and tie it to specific current source" in system
+        assert "leaving unexecuted behavior unverified" in system
+    else:
+        assert "Suite PASS or another path's success cannot replace that purpose" not in system
+        assert "source inspection is an inference, not an executed check" in system
+        assert "regression PASS alone does not prove a fix" in system
+        assert "its purpose, and the already observed evidence that meets that purpose" in system
     assert "No additional check is mandatory" in system
     assert delivered["current_diff"]["patch"] and "finish_task" in delivered["available_tool_names"]
     assert not any(e["event_type"] == "protocol_correction" for e in events)

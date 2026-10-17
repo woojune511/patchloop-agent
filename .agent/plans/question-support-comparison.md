@@ -2,8 +2,8 @@
 
 Date: 2026-10-17. Revised proposal; paid execution is **NOT_AUTHORIZED**.
 This replaces the unexecuted call-support A/B design, not any closed allocation.
-The specification is prepared; experimental ablations and their execution manifest
-are **NOT_IMPLEMENTED / NOT_READY**. No old approval or unused allowance transfers.
+Experiment-only ablations are implemented; arm validation is in progress and the live
+execution manifest remains **NOT_READY**. No old approval or unused allowance transfers.
 
 ## Question, evidence and scope
 
@@ -95,8 +95,9 @@ or concern-persistence contracts, or isolate individual sentences.
 ### Isolation contract
 
 Freeze each arm's patch, source/import hash, rendered prompt and common schemas.
-Verify factor instructions and required shared guidance in the rendered prompt after
-the existing ceiling is applied, not just in source strings; never enlarge the bound.
+Verify factor instructions and required shared guidance in the rendered prompt, not
+just source strings. Preserve the existing 8,000-character base prompt and 10,809-character
+combined brief-v1 prompt as maximum comparison sizes; no truncation or added capacity.
 E and J transformations must commute. E0J1/E1J1 share J rules; E1J0/E1J1 share the
 evidence selector. On an identical saved public state, toggling J must leave source
 line versions and tool call/result bodies equal before final size admission.
@@ -134,8 +135,11 @@ Private assets may be hashed opaquely and used only by isolated evaluation.
   existing validity, expiry, rebinding and diff-scope rules. Fresh solves receive no
   operator question, note, plan, citation, patch, saved conversation or continuation.
 - Retained source **24,000 characters**, counted input **60,000 tokens**, request
-  **1,048,576 bytes**, encrypted item **262,144 bytes**, system prompt **8,000
-  characters**; all note/schema bounds and other request defaults remain unchanged.
+  **1,048,576 bytes**, encrypted item **262,144 bytes**. The existing base instruction
+  is **8,000 characters**; brief-v1 appends 2,807 plus two separators, totaling **10,809**.
+  The previous wording incorrectly called 8,000 the whole system-prompt ceiling;
+  runtime has no such truncation. Preserve these existing sizes as comparison maxima,
+  and all note/schema bounds and request admission limits unchanged.
 - Per row: **40 model calls, 100 actions, four accepted edits, 1,800 seconds**,
   including the **330-second** registered-evaluation reserve. Counters do not reset.
   Transition algorithm/thresholds are identical; realized size transitions can differ
@@ -284,8 +288,13 @@ The old `C:/pt/analyses/question-support-experiment-20261017-v1` packet, its
 `qcscompare17live01` reservation and readiness/failure receipts remain immutable;
 they neither authorize nor describe this four-arm experiment.
 
-This revision changes documentation only. Before live readiness, implement and freeze
-the three ablations, exact strings, factor patch hashes and source/import identities;
+The [offline builder](../../diagnostics/repair_mechanisms.py) applies three experiment-only
+patches to clean separate checkouts; it cannot patch the calling product checkout or
+dispatch a solver. [Replay](../../diagnostics/repair_mechanisms_replay.py) uses frozen
+public snapshots, actual source-selection/presentation code and the runner's pure
+optional-exchange selection expression. It does not replay provider continuation or
+exact token admission; the fake-provider recovery tests cover count/fallback/commit.
+Before live readiness, freeze exact strings, factor patch hashes and source/import identities;
 bind all 12 resolved requests, descriptors/images, common schemas, transition/limit
 hashes, registered prices, native harness, rubric and protocol hash. Hash private
 assets opaquely. Check actual effective fields, not just CLI arguments.
@@ -306,8 +315,8 @@ Provider-free gates for later arm preparation:
   `C:/pt/analyses/batch-stop-fix-20261017-v1` establishes the common fix only; it does
   not validate unbuilt ablations. This docs revision needs layout/link validation.
 
-Arm validation, replay isolation, canaries and a resolved execution manifest remain
-NOT_RUN here. Specification arithmetic/link checks are not runtime or repair evidence.
+Arm validation and replay isolation are in progress; fresh environment canaries and
+a resolved execution manifest remain NOT_RUN. No repair-quality experiment has run.
 Preparation provides no dispatch entry point. A later execution request must approve
 the exact new packet, tasks, model, credential, repeats and USD 10.56 cap; no
 availability/count/model call is allowed before that authorization.

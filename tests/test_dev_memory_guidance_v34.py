@@ -112,13 +112,16 @@ def test_guidance_is_bounded_in_characters_and_canonical_bytes_not_claimed_token
 
 
 def test_compact_guidance_keeps_optional_evidence_lifecycle_and_concern_boundaries():
+    from repair_mechanism_expectations import JUDGMENT
     _, memory, _ = _memory_block()
     for instruction in (
         "model interpretations and untested assumptions",
         "not reasoning\ntranscripts or status copies",
         "behavior-bearing observed source/results",
         "note_id=null creates a distinct interpretation", "remove_note_ids",
-        "Updates are optional", "closed_by_model never certify\nbehavior",
+        "Updates are optional",
+        ("closed_by_model never certify\nbehavior" if JUDGMENT else
+         "model concern resolution never certify\nbehavior"),
         "not confirmation of the note's prose", "Reconsider claims after edits",
         "first non-null", "before the batch executes",
         "pending/current-batch results", "findings=[]", "memory_update=null",
