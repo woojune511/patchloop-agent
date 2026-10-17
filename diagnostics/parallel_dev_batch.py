@@ -139,6 +139,7 @@ def recover_usage(state_root):
 
 
 def solve_row(serialized):
+    """Return an accounted row; ``ok`` permits assessment, not task acceptance."""
     req = DevRunRequest.model_validate(serialized)
     started = monotonic()
     result, error = None, None
@@ -179,6 +180,8 @@ def solve_row(serialized):
                 "AGENT_STOPPED",
                 "LIMIT_REACHED",
                 "COST_CAP_REACHED",
+                # A settled generation failure ends only its own row.
+                "INCOMPLETE_RESPONSE",
             }
             for r in result["runs"]
         )

@@ -73,6 +73,12 @@ unsuccessful with the original ERROR and native verdict; independent rows contin
 Other disagreements, missing receipts, and operational uncertainty still stop the batch.
 Settled exhaustion of one row's fixed cost cap also stays local; the runtime's
 stop-repetitions flag must not cancel independent rows with separate allocations.
+A settled `INCOMPLETE_RESPONSE` likewise ends only that row when the runtime has
+not requested a shared stop. Its original terminal and cost remain recorded, and
+an unsubmitted row's assessment stays `NOT_RUN`. Worker `ok` permits assessment
+and continued batch scheduling; it is not task success. Unknown terminals,
+unsettled or unreconciled usage, exceeded caps, runtime stop requests and the
+existing count/transport/continuation/cleanup stop latch still block admissions.
 
 ## Preparation and evidence
 

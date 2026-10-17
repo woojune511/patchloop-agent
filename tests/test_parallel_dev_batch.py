@@ -1,12 +1,14 @@
 """Actual spawned processes: overlap, admission stop, settlement and allocation."""
 
 import multiprocessing
+import socket
 import time
 from decimal import Decimal
 from pathlib import Path
 
 import pytest
 
+from diagnostics import current_dev20
 from diagnostics import parallel_dev_batch as batch
 from patchloop.dev.contracts import DevRunRequest
 from patchloop.dev.state import DevJournal
@@ -219,3 +221,95 @@ def test_row_cap_with_uncertainty_or_invalid_cost_stops_new_admissions(
     peer = batch.CoordinatedJournal(tmp_path / "peer", "run_dev_peer")
     with pytest.raises(batch.BatchStopped):
         peer.append("provider_call_started", {"call_id": "blocked"})
+
+
+def recorded_incomplete_response(req, problem=None):
+    """Record settled usage for a generation failure without invoking a provider."""
+    journal = batch.CoordinatedJournal(req.state_root, "run_dev_incomplete")
+    journal.append("input_count_started", {"count_id": "first"})
+    if problem != "counting":
+        journal.append("input_count_finished", {"count_id": "first"})
+    journal.append("provider_call_started", {"call_id": "first"})
+    cost = 1_000_000_001 if problem == "over_cap" else 17
+    journal.append("provider_call_finished", {
+        "call_id": "first", "cost_nanos": cost, "error_code": "incomplete_response",
+    })
+    if problem in {"billing", "transport"}:
+        journal.append("provider_call_started", {"call_id": "unsettled"})
+    if problem == "transport":
+        raise ConnectionError("transport outcome unknown")
+    if problem == "cleanup":
+        journal.append("action_finished", {"result": {"output": {"cleanup_failed": True}}})
+    return {
+        "cost_nanos": cost + (problem == "reconciliation"),
+        **({"stop_remaining": True} if problem in {"runtime_stop", "cleanup"} else {}),
+        "runs": [{
+            "run_id": journal.run_id,
+            "terminal": {
+                "continuation": "PROVIDER_CONTINUATION_ERROR",
+                "unknown_terminal": "UNRECOGNIZED",
+            }.get(problem, "INCOMPLETE_RESPONSE"),
+        }],
+    }
+
+
+def network_forbidden(*args, **kwargs):
+    raise AssertionError("provider-free batch regression must not use the network")
+
+
+def incomplete_worker(req):
+    with pytest.MonkeyPatch.context() as monkeypatch:
+        monkeypatch.setattr(socket, "socket", network_forbidden)
+        monkeypatch.setattr(batch.runner, "run_dev", recorded_incomplete_response)
+        return batch.solve_row(req)
+
+
+@pytest.mark.parametrize("workers", [1, 2])
+def test_settled_incomplete_rows_continue_without_becoming_successes(tmp_path, workers):
+    journal = DevJournal(tmp_path / "batch", "run_dev_batch")
+    result = batch.run_parallel_rows(
+        rows(tmp_path), total_cap=Decimal("3"), workers=workers, journal=journal,
+        execute=incomplete_worker,
+        after_row=lambda _, value, req: current_dev20.assess(tmp_path, None, value, req),
+    )
+    assert result["started"] == 3 and result["not_started"] == 0
+    assert not result["stopped"]
+    for row in result["rows"]:
+        assert row["ok"] and row["error_type"] is None
+        assert row["result"]["runs"][0]["terminal"] == "INCOMPLETE_RESPONSE"
+        assert row["accounting"]["cost_nanos"] == 17
+        assert row["accounting"]["billing_known"] and row["accounting"]["counting_known"]
+        assert row["assessment"] == {"ok": True, "status": "NOT_RUN", "reason": "unsubmitted"}
+    current_dev20.summarize(result, [{"instance_id": str(i)} for i in range(3)])
+    assert result["resolved"] == 0 and not result["complete_agreeing_evaluation"]
+    assert result["recorded_cost_nanos"] == 51
+    assert sum(e["event_type"] == "row_finished" for e in journal.events()) == 3
+
+
+@pytest.mark.parametrize("problem", [
+    "billing", "counting", "reconciliation", "over_cap", "runtime_stop",
+    "cleanup", "transport", "continuation", "unknown_terminal",
+])
+def test_incomplete_row_does_not_override_shared_stop_conditions(tmp_path, monkeypatch, problem):
+    ctx = multiprocessing.get_context("spawn")
+    monkeypatch.setattr(batch, "_STOP", ctx.Event())
+    monkeypatch.setattr(batch, "_ADMISSION", ctx.Lock())
+    monkeypatch.setattr(socket, "socket", network_forbidden)
+    calls = []
+
+    def execute(req):
+        calls.append(req)
+        return recorded_incomplete_response(req, problem)
+
+    monkeypatch.setattr(batch.runner, "run_dev", execute)
+    result = batch.solve_row(rows(tmp_path, count=1)[0]["request"])
+    assert len(calls) == 1
+    assert not result["ok"] and batch._STOP.is_set()
+    assert result["accounting"]["cost_nanos"] >= 17
+    peer = batch.CoordinatedJournal(tmp_path / "peer", "run_dev_peer")
+    for event, payload in (
+        ("input_count_started", {"count_id": "blocked"}),
+        ("provider_call_started", {"call_id": "blocked"}),
+    ):
+        with pytest.raises(batch.BatchStopped):
+            peer.append(event, payload)

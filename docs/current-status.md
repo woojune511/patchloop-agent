@@ -33,8 +33,8 @@ mixed 12/20 is not uniform accuracy. Mini's SQL metadata mismatch limits compari
 Allocations closed; no paid follow-up or quality gain established.
 
 [C/D](history/2026-10-16-plan-grounds.md): closed, 0/8 each; USD 5.74993635.
-[Purpose](history/2026-10-16-output-stop.md): D 4/16; E NOT_RUN.
-USD 1.47315645; batch stop too broad; effect unmeasured.
+[Purpose](history/2026-10-16-output-stop.md): D 4/16; E NOT_RUN, USD 1.47315645.
+Batch stop fixed; no paid rerun.
 
 [Host A/B](history/2026-10-16-host-plan-stop.md): runtime drift; NOT_RUN / USD 0.
 [I4](history/2026-10-16-isort-requirement-audit.md): inferred type_item;
