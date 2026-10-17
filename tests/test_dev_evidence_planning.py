@@ -6,6 +6,7 @@ import json
 import httpx
 import pytest
 from pydantic import ValidationError
+from repair_mechanism_expectations import JUDGMENT
 from test_dev_planning import call, request
 from test_dev_runner import _crash_journal_once, _enveloped_run_id, _SimulatedCrash
 from test_dev_segments import assert_submitted, configured, records
@@ -53,6 +54,8 @@ def test_old_contract_and_schema_unchanged_new_guidance_is_task_independent(tmp_
     assert plans.instructions() == plans.INSTRUCTIONS
     assert dev_tool_surface_hash(planning_policy=plans.POLICY) == (
         "sha256:b1a9019f91a6bfe219714658b96300c9fce579ac3bc2e85a88ce9c5eaa115d5d"
+        if JUDGMENT else
+        "sha256:3c227b45fea8344f56ec7dcc73e60627c1f407bc2dd548a6a4860c3697dd24d1"
     )
     old, new = plans.contract(), plans.contract(POLICY)
     assert {k: v for k, v in old.items() if k not in {"policy", "instructions_hash"}} == {
