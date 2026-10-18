@@ -1,6 +1,10 @@
 """Public wheel preparation, offline snapshots and run/evaluation binding."""
 from __future__ import annotations
 
+import base64
+import csv
+import hashlib
+import io
 import json
 import subprocess
 import sys
@@ -29,6 +33,35 @@ from patchloop.util import canonical_json, sha256_bytes, sha256_json
 
 WHEEL = {"url": "https://files.pythonhosted.org/packages/aa/fixture-1.0-py3-none-any.whl",
          "hash": sha256_bytes(b"wheel"), "size": 5}
+
+
+def test_normalize_installer_metadata_keeps_package_bytes_and_repairs_record(tmp_path):
+    inventories = []
+    for arm in ("A", "B"):
+        output = tmp_path / arm
+        target = output / "site-packages"
+        folder = target / "fixture-1.dist-info"
+        folder.mkdir(parents=True)
+        source = target / "fixture.py"
+        source.write_bytes(b"SOURCE = 7\n")
+        (folder / "uv_cache.json").write_text(json.dumps({"timestamp": arm}))
+        (folder / "direct_url.json").write_bytes(b'{"url":"https://public-wheel"}')
+        (folder / "RECORD").write_text(
+            "fixture.py,original-source-hash,11\n"
+            f"fixture-1.dist-info/direct_url.json,{arm}-old-local-path-hash,99\n"
+            f"fixture-1.dist-info/uv_cache.json,{arm}-timestamp-hash,21\n"
+            "fixture-1.dist-info/RECORD,,\n")
+        prepared._normalize_install_metadata(target, output)
+        assert source.read_bytes() == b"SOURCE = 7\n"
+        assert not (folder / "uv_cache.json").exists()
+        assert arm + "-old-local-path-hash" in (output / "installer-metadata.json").read_text()
+        rows = list(csv.reader(io.StringIO((folder / "RECORD").read_text())))
+        assert rows[0] == ["fixture.py", "original-source-hash", "11"]
+        raw = (folder / "direct_url.json").read_bytes()
+        digest = base64.urlsafe_b64encode(hashlib.sha256(raw).digest()).rstrip(b"=").decode()
+        assert rows[1] == ["fixture-1.dist-info/direct_url.json", "sha256=" + digest, str(len(raw))]
+        inventories.append(prepared._inventory(target))
+    assert inventories[0] == inventories[1]
 
 
 def write_bundle(root, public, *, roots=()):

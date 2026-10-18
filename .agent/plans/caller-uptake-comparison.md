@@ -1,8 +1,9 @@
 # Public caller uptake and repair: bounded comparison
 
-Status: **SPECIFIED, NOT EXECUTION-READY; PAID NOT AUTHORIZED** (2026-10-18).
-This request prepares a protocol only. It does not dispatch, count tokens, read
-credentials, resolve/install packages, run Docker or obtain evaluator images.
+Status: **LOCAL PREPARATION IMPLEMENTED; PAID NOT AUTHORIZED** (2026-10-18).
+Readiness authority is the final-commit external packet and its validation receipts,
+not this prose. See [preparation record](../../docs/history/2026-10-18-caller-ready.md).
+Preparation uses public wheels and existing images without provider/count calls.
 Old allocations are closed; neither their approvals nor unused balances transfer.
 
 ## Question and evidence
@@ -292,14 +293,14 @@ needs a new evidence-based question. No result automatically changes defaults.
 
 The design baseline is `96179c5e91316239a5a8395e8a0fd224f67f67e3`, runtime content
 `20fb1541d4b2aa5c2f5af6e67f74546ae8762f74c4325988535dc7202075bf0a`.
-This specification changes no runtime. The future execution manifest must bind
+The original design changed no runtime. The execution manifest must bind
 the actual final source commit/runtime, protocol bytes, 12 requests/order/caps,
 task/public/source identities, both complete dependency inventories, image digests,
 tool/model hashes, all assessment programs/rubrics, driver/test receipts and pricing.
 Hash private assets opaquely only through evaluator tooling; never inspect or copy
 them into model/audit context. Preserve the existing uncommitted AGENTS edit.
 
-Remaining provider-free preparation, before requesting any paid authorization:
+Provider-free readiness gates, before requesting any paid authorization:
 
 1. Build matched A/B descriptors at fresh external roots; verify file-level isolation
    and effective common package origins. A must not find/import Pylint; B must use
@@ -314,7 +315,8 @@ Remaining provider-free preparation, before requesting any paid authorization:
    stop propagation and audit/grade separation provider-free. Reuse supported
    preparation/panel paths; do not repurpose seeded `uptake_execution` as fresh
    solves or silently reuse the old E/J manifest. Any needed orchestration/collector
-   adaptation is a separately testable preparation step, not implemented here.
+   adaptation is a separately testable preparation step, implemented in the operator
+   modules listed below.
 4. On the final implementation, run focused checks, Ruff, the full suite and mock
    smoke through isolated evaluation, binding their results to the manifest. No
    source/cap adjustment after seeing pilot trajectories; refresh exact bindings
@@ -337,3 +339,31 @@ No retries, automatic resume, provider-based judging or follow-up spending.
 No paid execution occurs until the user authorizes that exact final packet, task,
 model, credential path, repetition count and positive invocation-wide cap. This
 follows the repository's live gate and the user's explicit no-paid instruction.
+
+## Prepared operator path
+
+`diagnostics/caller_uptake.py` constructs the twelve fresh requests, freezes a new
+packet and revalidates exact identities. `caller_uptake_prepare.py` compares complete
+common installed files and the wheel-derived caller additions, and intercepts real
+initial request construction before counting. Its offline clock is fixed equally
+for both captures to avoid host preparation jitter; only the exact generic caller
+description and derived segment identity are normalized. Full source/context state,
+tools, limits and model flags must otherwise agree. Final captures require normal
+HEAD cleanliness; any earlier development capture is not readiness evidence.
+
+`caller_uptake_execution.py` uses the existing coordinated worker for one row per
+serial wave, with fixed invocation reservations and no transfers. Registered receipt
+validation is due before the next row; its grade remains outside the public export.
+The export binds the actual dispatched request (including any admitted output ceiling)
+and public actions/decisions, while omitting evaluator/terminal records and replacing
+opaque reasoning items with hashes. Public annotations must be sealed before the
+common caller/native assessments can start. The latter share one 600-second allowance.
+
+`caller_uptake_grading.py` handles frozen receipt parsing, annotation lineage and
+intended-row S/T/Q/U accounting. Human interpretation remains necessary; a valid
+annotation schema is not proof that a claim is correct. Local parser/stop fixtures and
+saved-log exports are calibration, not fresh model-use or repair outcomes. The packet
+binds the final commit, complete preparation/validation receipts and pricing evidence;
+`paid_authorized=false` remains immutable. Separate exact human authorization is
+required by `collect`, followed by a current official-price review. There is no paid
+execution in `freeze`, `validate`, initial capture or the test suite.

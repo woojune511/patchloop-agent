@@ -1,6 +1,6 @@
 # History
 
-- [E/J](2026-10-18-repair-mechanism-results.md).
+- [Caller A/B](2026-10-18-caller-ready.md).
 - [Dev20](2026-10-16-mini-swe-dev20-results.md).
 - [Completion](2026-10-16-mini-swe-completion-results.md).
 - [PatchLoop](2026-10-16-patchloop-mini-dev20-results.md).

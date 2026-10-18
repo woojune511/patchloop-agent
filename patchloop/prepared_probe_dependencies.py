@@ -7,6 +7,10 @@ no source builds, project installs, evaluator extraction or image acquisition.
 
 from __future__ import annotations
 
+import base64
+import csv
+import hashlib
+import io
 import json
 import os
 import re
@@ -37,6 +41,43 @@ MAX_BYTES = 256 * 1024 * 1024  # Public wheel download bound.
 MAX_INSTALLED_BYTES = 1024 * 1024 * 1024
 MAX_FILES = 15_000
 MOUNT = "/opt/patchloop-dependencies"
+
+
+def _normalize_install_metadata(target: Path, output: Path) -> None:
+    """Drop installer cache timestamps and repair RECORD after public URL rebinding.
+
+    Snapshots are read-only import environments, never uv install/cache targets.
+    Preserve original installer metadata outside the mounted snapshot for audit.
+    Package source, wheel metadata, entry points and executable bytes are untouched.
+    """
+    original = {}
+    for folder in sorted(target.glob("*.dist-info")):
+        cache, record = folder / "uv_cache.json", folder / "RECORD"
+        for path in (cache, record):
+            if path.is_file():
+                original[path.relative_to(target).as_posix()] = path.read_text(encoding="utf-8")
+        if cache.exists():
+            cache.unlink()
+        if not record.exists():
+            continue
+        rows = list(csv.reader(io.StringIO(original[record.relative_to(target).as_posix()])))
+        updated = []
+        for row in rows:
+            if len(row) != 3:
+                raise ContractError("invalid installed wheel RECORD")
+            relative = safe_relative_path(row[0])
+            if relative == cache.relative_to(target).as_posix():
+                continue
+            if relative == (folder / "direct_url.json").relative_to(target).as_posix():
+                raw = (target / relative).read_bytes()
+                digest = base64.urlsafe_b64encode(hashlib.sha256(raw).digest()).rstrip(b"=")
+                row = [relative, "sha256=" + digest.decode("ascii"), str(len(raw))]
+            updated.append(row)
+        stream = io.StringIO(newline="")
+        csv.writer(stream, lineterminator="\n").writerows(updated)
+        record.write_bytes(stream.getvalue().encode())
+    ArtifactStore(output).write_text_immutable(
+        output / "installer-metadata.json", canonical_json(original))
 
 
 class PublicWheel(StrictModel):
@@ -481,6 +522,7 @@ def prepare_dependencies(*, public: PublicTask, prepared_source: Path, output: P
             wheel = origins[filename]
             path.write_text(canonical_json({"url": wheel.url, "archive_info": {
                 "hash": wheel.hash.replace(":", "=", 1)}}), encoding="utf-8")
+        _normalize_install_metadata(target, output)
         workspace_metadata = _workspace_metadata(repo, packages, roots,
                                                  source.git_commit, target,
                                                  lock_directory=lock_directory)

@@ -29,6 +29,13 @@ checks, finish eligibility, planning/context policies and cost controls are unch
 
 ## Preparation
 
+Before publishing a fresh descriptor, discard uv's install-cache timestamps from
+the mounted import snapshot and refresh `RECORD` entries for rebound public URLs.
+The original installer records remain in external `installer-metadata.json`.
+Wheel/package source, entry points and executable bytes are unchanged. This makes
+independently prepared identical wheels byte-comparable; existing descriptors are
+never rewritten or normalized on load.
+
 First prepare the exact public task source with `task prepare-source`. Choose either
 the existing source-lock selection below or explicit public metadata resolution.
 
