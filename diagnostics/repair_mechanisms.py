@@ -113,6 +113,14 @@ def arm_sources(root: Path, arm: str) -> dict[str, str]:
     return source
 
 
+def verify_sources(root: Path, expected: dict[str, str]) -> None:
+    """Keep frozen replay/arm identity exact, including unrelated source changes."""
+    changed = [path for path, source in expected.items()
+               if (root / path).read_bytes() != source.encode("utf-8")]
+    if changed:
+        raise ValueError("Frozen arm source mismatch: " + ", ".join(changed))
+
+
 def prepare(checkout: Path, arm: str, output: Path) -> dict:
     """Require a separate, pristine checkout and write only the frozen changed files."""
     checkout = checkout.resolve()

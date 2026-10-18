@@ -5,7 +5,7 @@ import copy
 from pathlib import Path
 
 import pytest
-from repair_mechanism_expectations import ARM, EVIDENCE, JUDGMENT
+from repair_mechanism_expectations import ARM, EVIDENCE, FROZEN_ARM, JUDGMENT
 from test_dev_context_v12 import observe
 from test_dev_context_v12 import source_gateway as source_gateway
 from test_dev_notes_v14 import note_call
@@ -22,12 +22,13 @@ from patchloop.runtime import repository_root
 from patchloop.util import canonical_json
 
 
-def test_active_checkout_is_exact_frozen_arm_and_factors_commute():
+def test_selected_frozen_arm_is_exact_and_factors_commute():
     root = repository_root()
-    # An expected-arm environment variable cannot turn the production runtime into
-    # an ablation, or hide a mislabeled full-suite run.
+    # Mutable dev-head keeps E1J1 behavior below. An explicitly selected historical
+    # arm must still match every frozen byte; the environment cannot relabel it.
     expected = ablation.arm_sources(root, ARM)
-    assert all((root / p).read_bytes() == text.encode() for p, text in expected.items())
+    if FROZEN_ARM is not None:
+        ablation.verify_sources(root, expected)
     base = ablation.base_sources(root)
     assert ablation.arm_sources(root, "E1J1") == base
     e0 = ablation.arm_sources(root, "E0J1")
@@ -36,6 +37,25 @@ def test_active_checkout_is_exact_frozen_arm_and_factors_commute():
         "patchloop/dev/tools.py", "patchloop/dev/runner.py", "patchloop/dev/model.py"}
     assert {p for p in base if j0[p] != base[p]} == {
         "patchloop/dev/model_state.py", "patchloop/dev/working_plan.py", "patchloop/dev/model.py"}
+
+
+@pytest.mark.parametrize("arm", ablation.ARMS)
+def test_frozen_identity_rejects_mislabeled_arms_and_unrelated_source_drift(tmp_path, arm):
+    root = repository_root()
+    expected = ablation.arm_sources(root, arm)
+    for path, source in expected.items():
+        target = tmp_path / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(source.encode("utf-8"))
+    ablation.verify_sources(tmp_path, expected)
+    for other in ablation.ARMS:
+        if other != arm:
+            with pytest.raises(ValueError, match="Frozen arm source mismatch"):
+                ablation.verify_sources(tmp_path, ablation.arm_sources(root, other))
+    path = ablation.FILES[0]
+    (tmp_path / path).write_bytes(expected[path].encode("utf-8") + b"\n# unrelated change\n")
+    with pytest.raises(ValueError, match="Frozen arm source mismatch"):
+        ablation.verify_sources(tmp_path, expected)
 
 
 @pytest.mark.parametrize("arm", ablation.ARMS)

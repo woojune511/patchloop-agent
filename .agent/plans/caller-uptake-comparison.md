@@ -5,6 +5,8 @@ Readiness authority is the final-commit external packet and its validation recei
 not this prose. See [preparation record](../../docs/history/2026-10-18-caller-ready.md).
 The [target-path correction](../../docs/history/2026-10-18-caller-target.md) records
 the final oracle follow-up and superseding validation locations.
+The [frozen-arm test correction](../../docs/history/2026-10-18-caller-arm-scope.md)
+records the subsequent final-commit validation at `validation-v3/`.
 Preparation uses public wheels and existing images without provider/count calls.
 Old allocations are closed; neither their approvals nor unused balances transfer.
 

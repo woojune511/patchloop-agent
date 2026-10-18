@@ -10,7 +10,7 @@ from pathlib import Path
 
 from diagnostics.evidence_handoff_replay import Inputs, digest, inventory
 from diagnostics.question_priority_replay import RULES, SavedGateway
-from diagnostics.repair_mechanisms import ARMS, arm_sources
+from diagnostics.repair_mechanisms import ARMS, arm_sources, verify_sources
 from patchloop.dev import runner
 from patchloop.dev.context import build_observed_source_index
 from patchloop.dev.contracts import DevToolResult
@@ -91,7 +91,7 @@ def rebind(raw, gateway, results):
 def replay(root: Path, arm: str, *, max_boundaries: int | None = None):
     assert not root.exists(), "Use a fresh immutable replay directory"
     expected = arm_sources(repository_root(), arm)
-    assert all((repository_root() / p).read_bytes() == s.encode() for p, s in expected.items())
+    verify_sources(repository_root(), expected)
     root.mkdir(parents=True)
     journal = DevJournal(root, "run_dev_repairreplay")
     journal.append("replay_planned", {
