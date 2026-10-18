@@ -6,7 +6,7 @@
 - [PatchLoop](2026-10-16-patchloop-mini-dev20-results.md).
 - [Gap](2026-10-16-assessment-gap-comparison-results.md), [exit audit](2026-10-16-assessment-gap-exit-analysis.md).
 - [Plan grounds](2026-10-16-plan-grounds.md).
-- [Astroid](2026-10-18-astroid-next-fix.md), [D/E](2026-10-16-output-stop.md).
+- [Astroid](2026-10-18-astroid-caller.md), [D/E](2026-10-16-output-stop.md).
 - [Host stop](2026-10-16-host-plan-stop.md).
 - [Probe](2026-10-15-pre-edit-probe.md).
 - [Uptake](2026-10-15-uptake-grade.md).

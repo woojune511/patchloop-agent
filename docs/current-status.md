@@ -41,7 +41,7 @@ Batch stop fixed; no paid rerun.
 frozen grades unchanged.
 
 [E/J](history/2026-10-18-repair-mechanism-results.md): closed, 2/3 per arm; no gain.
-[Astroid](history/2026-10-18-astroid-next-fix.md): caller evidence first; paid NOT_RUN.
+[Astroid](history/2026-10-18-astroid-caller.md): caller failure reproduced; paid NOT_RUN.
 [Duplicate fix](../tests/test_additive_duplicates.py): local validation; live NOT_RUN.
 [Timeout fix](history/2026-10-17-capture-timeout-validation.md): validated fixture.
 
