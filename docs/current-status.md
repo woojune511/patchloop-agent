@@ -40,8 +40,8 @@ Batch stop fixed; no paid rerun.
 [I4](history/2026-10-16-isort-requirement-audit.md): inferred type_item;
 frozen grades unchanged.
 
-[E/J arms](history/2026-10-17-repair-mechanism-isolation.md): four full suites and
-offline replay pass; default unchanged. 3 x 4 x 1 / USD 10.56 remains unauthorized.
+[E/J readiness](history/2026-10-18-repair-mechanism-readiness.md): full suites, replay
+and public environment checks pass; 12 requests frozen, default unchanged. USD 10.56 unauthorized.
 [Timeout fix](history/2026-10-17-capture-timeout-validation.md): validated fixture.
 
 [Navigation](history/2026-10-08-failure-navigation.md) found no current tool defect;

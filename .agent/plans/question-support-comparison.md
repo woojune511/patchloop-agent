@@ -1,10 +1,12 @@
 # Evidence retention and judgment support: bounded repair comparison
 
-Date: 2026-10-17. Revised proposal; paid execution is **NOT_AUTHORIZED**.
+Date: 2026-10-17. Readiness updated: 2026-10-18; paid execution is **NOT_AUTHORIZED**.
 This replaces the unexecuted call-support A/B design, not any closed allocation.
 Experiment-only ablations passed all four full suites and offline factor-isolation replay;
-see the [validation record](../../docs/history/2026-10-17-repair-mechanism-isolation.md). The live execution manifest remains
-**NOT_READY**. No old approval or unused allowance transfers.
+see the [validation record](../../docs/history/2026-10-17-repair-mechanism-isolation.md).
+Public environment checks and all 12 resolved requests are frozen in the
+[readiness record](../../docs/history/2026-10-18-repair-mechanism-readiness.md).
+The manifest is **READY_FOR_EXPLICIT_PAID_APPROVAL**. No old approval or unused allowance transfers.
 
 ## Question, evidence and scope
 
@@ -152,9 +154,10 @@ Private assets may be hashed opaquely and used only by isolated evaluation.
 - The previous A/B's two repeats per cell become one to fund factor separation.
   There is no within-cell variance estimate, seed matching, statistical significance
   or generalization claim. Low exposure does not authorize additional repetitions.
-- Registered pricing carried from the 2026-10-17 packet: USD 0.75 uncached input,
-  USD 0.075 cached input, USD 4.50 output per million tokens. This revision does not
-  recheck prices. Reserve uncached cost immediately before dispatch; settle usage
+- Registered standard/global pricing was rechecked on 2026-10-18 against the
+  [official pricing page](https://developers.openai.com/api/docs/pricing): USD 0.75
+  uncached input, USD 0.075 cached input, USD 4.50 output per million tokens.
+  Reserve uncached cost immediately before dispatch; settle usage
   and record output-ceiling reductions. A 60k-input/25k-output call reserves USD
   0.1575; USD 0.88 does not guarantee 40 maximum-size calls. Revalidate rates before
   later approved dispatch; a mismatch needs a revised frozen packet.
@@ -283,7 +286,9 @@ extra repetitions or follow-up spending follows any result.
 
 ## Freeze, validation and stops
 
-New preparation record: `C:/pt/analyses/repair-mechanisms-spec-20261017-v1`.
+Original design record: `C:/pt/analyses/repair-mechanisms-spec-20261017-v1`.
+Frozen execution manifest:
+`C:/pt/analyses/repair-mechanisms-readiness-20261018-v1/execution-manifest.json`.
 Reserved, uncreated live root: `C:/pt/repairmechanisms17live01`.
 The old `C:/pt/analyses/question-support-experiment-20261017-v1` packet, its
 `qcscompare17live01` reservation and readiness/failure receipts remain immutable;
@@ -310,8 +315,11 @@ Provider-free gates and remaining live prerequisites:
   mock isolated evaluation, with source bytes frozen before/after. Expected ablation
   differences must be explicit; no blanket skips or weakened production expectations.
   Verify that each interpreter imports only its pinned arm.
-- Fresh public import/operation/selected-test canaries and image identities remain
-  required. Missing prerequisites are NOT_RUN/BLOCKED, never PASS.
+- Fresh public import/operation/selected-test canaries passed for all three tasks on
+  2026-10-18. Six pinned images and the native harness identity matched. Environment
+  drivers, source, dependencies and images are shared across the four verified arms.
+  Recheck these identities before approved dispatch; missing prerequisites remain
+  NOT_RUN/BLOCKED, never PASS.
 - The base's exact-commit 5,215-pass / 19-skip receipt at
   `C:/pt/analyses/batch-stop-fix-20261017-v1` establishes the common fix only; it does
   not substitute for arm validation. All four committed arms now have separate
@@ -319,8 +327,10 @@ Provider-free gates and remaining live prerequisites:
 
 Arm validation and replay isolation passed in
 `C:/pt/analyses/repair-mechanisms-20261017-v1`; final arm identities, complete
-displacement inventories and size interactions are recorded there. Fresh environment
-canaries and a resolved execution manifest remain NOT_RUN. No repair-quality experiment ran.
+displacement inventories and size interactions are recorded there. The new readiness
+packet binds fresh environment checks, all 12 effective requests, arm identities,
+prices, the operator-only rubric and existing full-suite evidence. Provider account
+access, token admission and repair-quality execution remain NOT_RUN.
 Preparation provides no dispatch entry point. A later execution request must approve
 the exact new packet, tasks, model, credential, repeats and USD 10.56 cap; no
 availability/count/model call is allowed before that authorization.
