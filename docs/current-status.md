@@ -40,8 +40,8 @@ Batch stop fixed; no paid rerun.
 [I4](history/2026-10-16-isort-requirement-audit.md): inferred type_item;
 frozen grades unchanged.
 
-[E/J](history/2026-10-18-repair-mechanism-results.md): 12 runs closed; all arms 2/3.
-USD 4.93584945; no repair gain or new E evidence bodies. Defaults/caps unchanged.
+[E/J](history/2026-10-18-repair-mechanism-results.md): closed, 2/3 per arm; no gain.
+[Astroid](history/2026-10-18-astroid-next-fix.md): caller evidence first; paid NOT_RUN.
 [Duplicate fix](../tests/test_additive_duplicates.py): local validation; live NOT_RUN.
 [Timeout fix](history/2026-10-17-capture-timeout-validation.md): validated fixture.
 
