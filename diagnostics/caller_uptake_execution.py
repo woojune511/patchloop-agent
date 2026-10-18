@@ -210,7 +210,8 @@ def native_assessment(root, req, patch, entry, deadline):
     with (root / "native.log").open("xb") as log:
         process = subprocess.run([str(portfolio_dev20.NATIVE_PYTHON), "-X", "utf8", "-m",
             "diagnostics.swebench_lite_native", "--rows", entry["native_row"],
-            "--output", str(root / "output"), "--predictions", str(root / "prediction.jsonl")],
+            "--output", str(root / "output"), "--predictions", str(root / "prediction.jsonl"),
+            *(["--empty-source-projection"] if patch == b"" else [])],
             cwd=repository_root(), env=portfolio_dev20.native_env(), stdout=log,
             stderr=subprocess.STDOUT, timeout=deadline.remaining_seconds(), check=False)
     cleanup = json.loads((root / "output/cleanup.json").read_bytes())
@@ -221,6 +222,7 @@ def native_assessment(root, req, patch, entry, deadline):
             "native result or cleanup uncertain")
     status = "PASS" if controls[0]["resolved"] else "FAIL"
     save(root, "receipt.json", {"status": status, "source_only_diff": sha256_bytes(patch),
+        "empty_source_projection": patch == b"",
         "cleanup_confirmed": True, "files": [panel.file_ref(p)
             for p in sorted(root.rglob("*")) if p.is_file()]})
     return status
@@ -238,15 +240,20 @@ def assess(root, digest):
     require(not any(e["event_type"] == "assessments_started" for e in events),
             "no assessment retry")
     journal.append("assessments_started", {"packet_hash": digest})
+    return _assess_rows(root, root, packet, journal, seal)
+
+
+def _assess_rows(source_root, output_root, packet, journal, seal, *, metadata=None):
+    """Read sealed submissions from source_root; write only to the assessment root."""
     rows = []
     panel.read_ref(packet["native_input"]["rows"])
     entry = {"instance_id": packet["native_input"]["instance_id"],
              "native_row": packet["native_input"]["rows"]["path"]}
     by_id = {r["row_id"]: r for r in packet["rows"]}
     try:
-        for bound in json.loads((root / "collection.json").read_bytes())["rows"]:
+        for bound in json.loads((source_root / "collection.json").read_bytes())["rows"]:
             label = bound["row_id"]
-            value = json.loads(ArtifactStore(root / "sealed").read_bytes(
+            value = json.loads(ArtifactStore(source_root / "sealed").read_bytes(
                 Artifact.model_validate(bound["sealed"])))
             runs = (value.get("result") or {}).get("runs", [])
             run = runs[0] if len(runs) == 1 else {}
@@ -272,10 +279,9 @@ def assess(root, digest):
             require(policy.passed, "unsafe submitted tests")
             source_patch = run_git(workspace, "diff", "--binary", "HEAD", "--", ".",
                 *[f":(exclude){p}" for p in policy.details["test_files"]]).stdout.encode()
-            folder = root / "assessments" / label
+            folder = output_root / "assessments" / label
             folder.mkdir(parents=True)
-            ArtifactStore(root / "artifacts").write_bytes_atomic(
-                folder / "source-only.patch", source_patch)
+            ArtifactStore(folder).write_bytes_atomic(folder / "source-only.patch", source_patch)
             row.update(assessed_from_diff=patch_hash, source_only_diff=sha256_bytes(source_patch),
                        omitted_additive_tests=policy.details["test_files"])
             manager = WorkspaceManager(repository_root() / "fixtures/repositories",
@@ -293,7 +299,7 @@ def assess(root, digest):
             sandbox.preflight(deadline=assessment_deadline(started))
             for case in ("missing", "present"):
                 program = panel.read_ref(packet["programs"][case])
-                identity = {"run_id": panel.JOURNAL, "action_id": label + "-" + case,
+                identity = {"run_id": journal.run_id, "action_id": label + "-" + case,
                     "input_hash": sha256_json({"program": sha256_bytes(program),
                         "diff": row["source_only_diff"],
                         "dependencies": admit(dep_path).manifest_hash})}
@@ -328,6 +334,7 @@ def assess(root, digest):
     result = grading.aggregate(rows, panel.ORDER)
     if seal["exposure"]:
         result.update(favorable_local_signal=False, audit_grade_exposure=seal["exposure"])
-    save(root, "result.json", result)
-    journal.append("study_closed", {"result": panel.file_ref(root / "result.json")})
+    result.update(metadata or {})
+    save(output_root, "result.json", result)
+    journal.append("study_closed", {"result": panel.file_ref(output_root / "result.json")})
     return result

@@ -60,3 +60,16 @@ def test_predictions_reject_missing_or_misbound_submissions(tmp_path, kind):
     path.write_text("\n".join(json.dumps(row) for row in rows))
     with pytest.raises(ValueError):
         load_predictions(path, {"one"})
+
+
+@pytest.mark.parametrize("patch", ["", " \n", None])
+def test_only_explicit_exact_empty_source_projection_can_use_unchanged_source(tmp_path, patch):
+    path = tmp_path / "predictions.jsonl"
+    path.write_text(json.dumps({"instance_id": "one", "model_patch": patch}) + "\n")
+    with pytest.raises(ValueError):
+        load_predictions(path, {"one"})
+    if patch == "":
+        assert load_predictions(path, {"one"}, empty_source_projection=True) == {"one": ""}
+    else:
+        with pytest.raises(ValueError):
+            load_predictions(path, {"one"}, empty_source_projection=True)
