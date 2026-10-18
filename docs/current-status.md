@@ -40,8 +40,9 @@ Batch stop fixed; no paid rerun.
 [I4](history/2026-10-16-isort-requirement-audit.md): inferred type_item;
 frozen grades unchanged.
 
-[E/J readiness](history/2026-10-18-repair-mechanism-readiness.md): full suites, replay
-and public environment checks pass; 12 requests frozen, default unchanged. USD 10.56 unauthorized.
+[E/J](history/2026-10-18-repair-mechanism-results.md): 12 runs closed; all arms 2/3.
+USD 4.93584945; no repair gain or new E evidence bodies. Defaults/caps unchanged.
+Additive-test rejection reproduced; runtime unchanged.
 [Timeout fix](history/2026-10-17-capture-timeout-validation.md): validated fixture.
 
 [Navigation](history/2026-10-08-failure-navigation.md) found no current tool defect;
@@ -66,9 +67,8 @@ L003/L039 cycle, regression PASS overinterpreted despite retained notes/tools.
 [Counterexample](history/2026-10-07-counterexample-results.md): both FAIL despite
 B's retained current failure; USD 0.04019910. Keep 24k; no adoption or paid follow-up.
 
-[Handoffs](history/2026-10-17-question-call-support.md): 24k/timing/two refs fixed.
-476: caller + 7 exclusion lines retained; 59 other lines displaced.
-Observed syntax support; quality untested, no paid follow-up.
+[Handoffs](history/2026-10-17-question-call-support.md): saved-input selection only.
+24k/timing/two refs fixed; fresh repair results above.
 
 See [panel contract](../.agent/current-dev20.md) and
 [priority fixes](history/2026-10-06-agent-priority-fixes.md). Prior panels closed.

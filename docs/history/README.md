@@ -1,6 +1,6 @@
 # History
 
-- [E/J](2026-10-18-repair-mechanism-readiness.md).
+- [E/J](2026-10-18-repair-mechanism-results.md).
 - [Dev20](2026-10-16-mini-swe-dev20-results.md).
 - [Completion](2026-10-16-mini-swe-completion-results.md).
 - [PatchLoop](2026-10-16-patchloop-mini-dev20-results.md).
