@@ -165,7 +165,7 @@ def read_metadata(repo, *, groups, extras, supplements=(), python="3.12"):
 
 
 def prepare(public, prepared_source, output, roots, supplements=(), installed_limit_mib=256,
-            runtime_profile="python312-v1"):
+            runtime_profile="python312-v1", caller_requirements=None):
     from patchloop.probe_runtime import runtime
 
     reader = partial(read_metadata, supplements=supplements, python=runtime(runtime_profile)[0])
@@ -221,4 +221,5 @@ def prepare(public, prepared_source, output, roots, supplements=(), installed_li
             resolve=True,
             installed_limit_mib=installed_limit_mib,
             runtime_profile=runtime_profile,
+            caller_requirements=caller_requirements,
         )

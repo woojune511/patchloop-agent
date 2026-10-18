@@ -32,6 +32,65 @@ checks, finish eligibility, planning/context policies and cost controls are unch
 First prepare the exact public task source with `task prepare-source`. Choose either
 the existing source-lock selection below or explicit public metadata resolution.
 
+### Public caller preparation
+
+An external program named in a public failure can be absent from the project's
+own dependencies. With `--resolve`, repeat `--caller-requirement package==version`
+to prepare that caller and its transitive public wheels. Select the version from
+public issue/source evidence; an unknown original version remains an uncertainty,
+not permission to silently substitute the newest release. There are no task-name
+or package-name branches. Up to eight exact, unique pins are supported; URLs,
+paths, extras, markers, wildcard/range versions and the workspace package itself
+are rejected. The existing 128-wheel/download/storage limits also apply.
+
+```powershell
+patchloop task prepare-probe-dependencies <task-dir> `
+  --prepared-source <prepared-source.json> --resolve `
+  --caller-requirement "<caller>==<public-version>" `
+  --runtime-profile python312-v1 --output <new-external-directory>
+```
+
+`--runtime-profile` selects an already reviewed image from `probe_runtime.py`;
+the default stays `python312-v1`. It does not acquire an image. Legacy static
+metadata adapters accept the same `caller_requirements` preparation argument;
+the literal setup adapter also exposes `--caller-requirement`.
+
+Caller pins are recorded as `operator_caller_requirements`, separately from
+source-declared dependencies. Both resolution and offline installation exclude
+only the named workspace distribution via a hash-bound `workspace-source.in`.
+Current project source and its declared runtime dependencies remain authoritative;
+all other transitive dependencies are resolved and checked normally. This does
+not use `--no-deps`, source builds or a released copy of the project under repair.
+The resolver still rejects a lock containing the workspace distribution and
+requires every caller's exact wheel to be present. Preparation fails without
+publishing a descriptor if resolution, installation or pin verification fails.
+
+The substitution is explicitly `unverified_source_snapshot`: caller constraints
+on a released workspace version have not been proved compatible with the checked
+out source. Minimal project metadata and interpreter/image differences remain
+visible limitations. Wheel hashes and the installed inventory, including caller
+source, are bound by the normal descriptor identity and checked before reuse.
+Old descriptors and preparations without callers retain their existing behavior.
+
+The existing `run_probe` description exposes just the caller pins and how to
+inspect them. Use `importlib.metadata` for versions/entry points and
+`inspect.getsource` or bounded Python file reads for available caller source.
+Reconstruct public input files/configuration in `/tmp`, observe actual arguments,
+cwd, import paths, environment and file layout, then invoke the caller's Python
+entry point in the same process. Compare the reported failure and a normal
+control through that entry point; existing probe replay can reuse the program
+after edits. Reading caller source and running a helper do not establish that
+the original failure was reproduced. Missing source, an unavailable caller,
+subprocess-only entry points or unmatched environment/input conditions remain
+unverified; there is no fallback that labels a reduction end-to-end verification.
+
+No new solver tool, network/install permission, mandatory probe, acceptance gate,
+transition rule, evidence-reference slot or budget is added. Source inspection,
+fixture construction and calls use the existing probe action/time/source/output
+caps. The optional description consumes the existing counted input budget.
+Neither caller preparation nor setup checks establish semantic correctness or
+model uptake. See the [local validation](../docs/history/2026-10-18-public-callers.md).
+
 ### Select from an existing source lock
 
 Select

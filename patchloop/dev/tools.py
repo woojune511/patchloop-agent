@@ -14,6 +14,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from patchloop import probe_callers
 from patchloop.contracts import PublicTask, RegisteredCheck
 from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
 from patchloop.dev import (
@@ -414,6 +415,7 @@ def dev_tool_schemas(
                 "Import and exercise the current project implementation when relevant. "
                 "Network and dependency installation are unavailable. Missing imports remain "
                 "diagnostic failures; a standard-library reduction does not verify project code. "
+                + probe_callers.description(probe_environment.get("callers", []))
             )
         schemas.append({
             "type": "function",

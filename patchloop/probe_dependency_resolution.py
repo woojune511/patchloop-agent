@@ -15,6 +15,7 @@ from packaging.tags import compatible_tags, cpython_tags
 from packaging.utils import canonicalize_name, parse_wheel_filename
 from packaging.version import Version
 
+from patchloop import probe_callers
 from patchloop.artifacts import ArtifactStore
 from patchloop.errors import ContractError
 from patchloop.generated_probe_wheel import GeneratedWheel
@@ -181,6 +182,7 @@ def resolve_dependencies(
     generated: GeneratedWheel | None = None,
     generated_provenance: dict | None = None,
     runtime_profile: str = "python312-v1",
+    caller_requirements: list[str] | None = None,
 ) -> tuple[dict, list[PublicWheel | GeneratedWheel], list[dict]]:
     from patchloop.probe_runtime import runtime
 
@@ -190,6 +192,8 @@ def resolve_dependencies(
     groups = sorted({canonicalize_name(name, validate=True) for name in groups})
     extras = sorted({canonicalize_name(name, validate=True) for name in extras})
     metadata = project_requirements(repo, groups=groups, extras=extras, **target_options)
+    callers = probe_callers.requirements(caller_requirements or [],
+                                        project_name=metadata["project_name"])
     if selected_dependencies:
         if not (groups or extras):
             raise ContractError("--select-dependency requires a public --group or --extra")
@@ -213,9 +217,21 @@ def resolve_dependencies(
     if generated_provenance is not None:
         provenance["generated_wheel"] = generated_provenance
     store = ArtifactStore(output)
+    exclusions = output / "workspace-source.in"
+    if callers:
+        # Resolve all other dependencies normally. Never install a released copy of
+        # the implementation under repair, including through a caller's dependency.
+        body = canonicalize_name(metadata["project_name"]) + "\n"
+        store.write_text_immutable(exclusions, body)
+        provenance.update(operator_caller_requirements=callers, workspace_source={
+            "name": canonicalize_name(metadata["project_name"]),
+            "exclusion_hash": sha256_bytes(body.encode()),
+            "version_compatibility": "unverified_source_snapshot",
+        })
     store.write_text_immutable(output / "resolution-input.json", canonical_json(provenance))
     requirements = output / "requirements.in"
-    store.write_text_immutable(requirements, "\n".join(metadata["requirements"]) + "\n")
+    store.write_text_immutable(requirements,
+                               "\n".join(sorted(set([*metadata["requirements"], *callers]))) + "\n")
     # Public resolution must not consult the operator's saved HTTP credentials.
     credentials = output / "resolver-credentials"
     credentials.mkdir()
@@ -229,6 +245,8 @@ def resolve_dependencies(
                "--keyring-provider", "disabled", "--no-header"]
     if generated is not None:
         command.extend(["--find-links", str(output / "generated-wheels")])
+    if callers:
+        command.extend(["--excludes", str(exclusions)])
     resolver_hash = sha256_bytes(Path(uv).read_bytes())
     result = subprocess.run(command, capture_output=True, check=False, timeout=120, cwd=output,
                             env={**{key: os.environ[key] for key in
@@ -244,6 +262,7 @@ def resolve_dependencies(
     raw_lock = _read_bytes(lock_path)
     wheels = select_wheels(raw_lock, project_name=metadata["project_name"], generated=generated,
                           **target_options)
+    probe_callers.verify_selection(callers, wheels)
     if generated is not None and generated not in wheels:
         raise ContractError("reviewed generated wheel was not selected by public requirements")
     provenance.update({"resolver_hash": resolver_hash, "pylock_hash": sha256_bytes(raw_lock),

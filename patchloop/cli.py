@@ -259,6 +259,12 @@ def prepare_task_probe_dependencies(
     group: Annotated[list[str] | None, typer.Option("--group")] = None,
     extra: Annotated[list[str] | None, typer.Option("--extra")] = None,
     source_root: Annotated[list[str] | None, typer.Option("--source-root")] = None,
+    caller_requirement: Annotated[list[str] | None, typer.Option(
+        "--caller-requirement", help="Explicit public caller package==version; requires --resolve.",
+    )] = None,
+    runtime_profile: Annotated[str, typer.Option(
+        "--runtime-profile", help="Existing reviewed public probe interpreter/image profile.",
+    )] = "python312-v1",
     installed_limit_mib: Annotated[int, typer.Option(
         "--installed-limit-mib", min=256, max=1024,
         help="Installed dependency storage cap; download and execution limits stay fixed.",
@@ -286,6 +292,8 @@ def prepare_task_probe_dependencies(
             generated_wheel_receipt=generated_wheel_receipt,
             generated_wheel_receipt_hash=generated_wheel_receipt_hash,
             installed_limit_mib=installed_limit_mib,
+            caller_requirements=caller_requirement,
+            runtime_profile=runtime_profile,
         )
         return {"ok": True, "prepared_probe_dependencies": str(path)}
 

@@ -23,7 +23,7 @@ from urllib.parse import urlsplit
 import httpx
 from pydantic import Field, ValidationError, field_validator
 
-from patchloop import probe_project_files
+from patchloop import probe_callers, probe_project_files
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import ProbeDependencyIdentity, PublicTask, StrictModel
 from patchloop.deadline import ExecutionDeadline
@@ -160,6 +160,7 @@ class PreparedDependencies:
     base_commit: str
     generated_project_files: tuple[probe_project_files.GeneratedProjectFile, ...] = ()
     import_roots: tuple[str, ...] | None = None
+    callers: tuple[str, ...] = ()
 
     @property
     def environment(self) -> dict:
@@ -170,6 +171,7 @@ class PreparedDependencies:
                 "source_roots": ["/workspace", *[f"/workspace/{root}"
                                  for root in imports]],
                 "dependency_path": MOUNT, "network": "none", "installation": "unavailable",
+                **({"callers": list(self.callers)} if self.callers else {}),
                 **({"generated_version_files": True} if self.generated_project_files else {})}
 
     def verify(self, *, target: Path | None = None,
@@ -177,6 +179,8 @@ class PreparedDependencies:
         descriptor, identity = read_descriptor(self.path)
         if identity != self.identity:
             raise ContractError("prepared dependency identity changed")
+        if probe_callers.from_descriptor(descriptor) != self.callers:
+            raise ContractError("prepared public caller identity changed")
         try:
             hashes = _inventory(self.path.parent / "site-packages", target=target,
                                 deadline=deadline, byte_limit=_installed_limit(descriptor))
@@ -231,6 +235,7 @@ def read_descriptor(path: Path) -> tuple[dict, ProbeDependencyIdentity]:
         if not isinstance(descriptor["files"], dict):
             raise ValueError("missing dependency file inventory")
         probe_project_files.records(descriptor)
+        probe_callers.from_descriptor(descriptor)
         _installed_limit(descriptor)
         imports = descriptor.get("import_roots", descriptor["source_roots"])
         if (not isinstance(imports, list)
@@ -265,7 +270,8 @@ def load_dependencies(path: Path, public: PublicTask,
     return PreparedDependencies(path.resolve(), identity, public.repository.url,
                                 public.repository.base_commit,
                                 tuple(probe_project_files.records(descriptor)),
-                                tuple(descriptor.get("import_roots", descriptor["source_roots"])))
+                                tuple(descriptor.get("import_roots", descriptor["source_roots"])),
+                                probe_callers.from_descriptor(descriptor))
 
 
 def _download(wheel: PublicWheel, destination: Path) -> None:
@@ -332,7 +338,8 @@ def prepare_dependencies(*, public: PublicTask, prepared_source: Path, output: P
                          generated_wheel_receipt: Path | None = None,
                          generated_wheel_receipt_hash: str | None = None,
                          installed_limit_mib: int = 256,
-                         runtime_profile: str = "python312-v1") -> Path:
+                         runtime_profile: str = "python312-v1",
+                         caller_requirements: list[str] | None = None) -> Path:
     from patchloop.dev.state import DevJournal
     from patchloop.probe_runtime import runtime
     from patchloop.runtime import repository_root
@@ -352,8 +359,9 @@ def prepare_dependencies(*, public: PublicTask, prepared_source: Path, output: P
         raise ContractError("generated wheel admission requires --resolve")
     if resolve == (wheel_lock is not None):
         raise ContractError("choose exactly one of --wheel-lock or --resolve")
-    if not resolve and (groups or extras or source_roots or selected_dependencies):
-        raise ContractError("dependency selections and --source-root require --resolve")
+    if not resolve and (groups or extras or source_roots or selected_dependencies
+                        or caller_requirements):
+        raise ContractError("dependency/caller selections and --source-root require --resolve")
     if selected_dependencies and not (groups or extras):
         raise ContractError("--select-dependency requires a public --group or --extra")
     output = output.resolve()
@@ -418,6 +426,7 @@ def prepare_dependencies(*, public: PublicTask, prepared_source: Path, output: P
                 repo=repo, source=source, source_hash=source_hash, output=output, uv=uv,
                 groups=groups or [], extras=extras or [], source_roots=roots,
                 selected_dependencies=selected_dependencies,
+                **({"caller_requirements": caller_requirements} if caller_requirements else {}),
                 **({"runtime_profile": runtime_profile}
                    if runtime_profile != "python312-v1" else {}),
                 **({"generated": generated, "generated_provenance": provenance}
@@ -444,6 +453,10 @@ def prepare_dependencies(*, public: PublicTask, prepared_source: Path, output: P
                    "--python-version", python, "--python-platform", "x86_64-manylinux_2_28",
                    "--link-mode", "copy", "--target", str(target), "--find-links", str(wheels),
                    *paths]
+        if caller_requirements:
+            # Keep ordinary offline dependency validation; exclude only the exact
+            # source-supplied workspace package as in the recorded resolution.
+            command.extend(["--excludes", str(output / "workspace-source.in")])
         if paths:
             result = subprocess.run(command, capture_output=True, timeout=120, check=False,
                                     env={key: os.environ[key] for key in
