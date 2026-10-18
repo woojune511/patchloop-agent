@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ast
 import copy
+from collections import Counter
 
 
 class UnsupportedTestChange(ValueError):
@@ -104,15 +105,17 @@ def _parameters(old: ast.FunctionDef, new: ast.FunctionDef) -> dict:
 
 
 def _added_statements(old, new, path, *, suite_additions):
-    names = {node.name for node in old if isinstance(node, (ast.FunctionDef, ast.ClassDef))}
+    names = Counter(node.name for node in old if isinstance(node, (ast.FunctionDef, ast.ClassDef)))
     seen, cursor, additions = set(), 0, []
     for node in new:
+        previous = old[cursor] if cursor < len(old) else None
+        unchanged = previous is not None and _dump(previous) == _dump(node)
         if isinstance(node, (ast.FunctionDef, ast.ClassDef)):
-            if node.name in seen:
+            # Preserve original duplicates in order; editing either occurrence is ambiguous.
+            if not unchanged and (node.name in seen or names[node.name] > 1):
                 raise UnsupportedTestChange("duplicate definitions cannot be separated")
             seen.add(node.name)
-        previous = old[cursor] if cursor < len(old) else None
-        if previous is not None and _dump(previous) == _dump(node):
+        if unchanged:
             cursor += 1
         elif (suite_additions and isinstance(node, ast.ClassDef)
               and node.name.startswith("Test") and node.name not in names):

@@ -56,6 +56,11 @@ marks and IDs, must remain structurally unchanged and in their original order.
 Existing test bodies, imports, fixtures and decorators stay protected. New imports
 needed by a new test belong inside that test.
 
+Pre-existing duplicate definitions may remain unchanged in their original order.
+An unrelated, uniquely named test or method can still be added. Changing either
+duplicate (including its parameter cases), adding another duplicate, or removing
+or reordering original definitions remains unsupported.
+
 Case selection uses collected parameter indices, so a descriptive `id` does not
 change which addition is compared. The repair comparison runs added cases against
 base and candidate source; original-test restoration for isolated evaluation still

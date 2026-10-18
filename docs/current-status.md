@@ -42,7 +42,7 @@ frozen grades unchanged.
 
 [E/J](history/2026-10-18-repair-mechanism-results.md): 12 runs closed; all arms 2/3.
 USD 4.93584945; no repair gain or new E evidence bodies. Defaults/caps unchanged.
-Additive-test rejection reproduced; runtime unchanged.
+[Duplicate fix](../tests/test_additive_duplicates.py): local validation; live NOT_RUN.
 [Timeout fix](history/2026-10-17-capture-timeout-validation.md): validated fixture.
 
 [Navigation](history/2026-10-08-failure-navigation.md) found no current tool defect;
