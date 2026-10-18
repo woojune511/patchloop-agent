@@ -31,7 +31,8 @@ def public_receipt(case="missing"):
         "sys_path": ["/workspace", "/opt/patchloop-dependencies"],
         "environment": {"HOME": cwd + "/home", "PYLINTHOME": cwd + "/cache", "PYTHONPATH": None}}}
     calls = [{"function": function, "file": "/opt/patchloop-dependencies/" + file,
-              "cwd": cwd, "arguments": args} for function, file, args in (
+              "cwd": cwd, "arguments": args, "path_exists": True}
+             for function, file, args in (
         ("run_pylint", "pylint/__init__.py", {}),
         ("__init__", "pylint/lint/run.py", {"args": ["src/project"]}),
         ("get_ast", "pylint/lint/pylinter.py", {"filepath": "src/project/file.py"}))]
@@ -83,6 +84,26 @@ def test_probe_success_is_not_public_success(changes):
 def test_empty_output_skip_is_fail_even_when_caller_exits_zero():
     receipt = public_receipt()
     calls = json.loads(receipt["stdout"].splitlines()[1])["calls"][:2]
+    assert grade(change_outcome(receipt, calls=calls))["status"] == "FAIL"
+
+
+@pytest.mark.parametrize("path", ["./src/project/file.py",
+    "/tmp/public-caller-fixture/src/project/file.py"])
+def test_same_existing_child_accepts_equivalent_relative_or_absolute_paths(path):
+    receipt = public_receipt()
+    calls = json.loads(receipt["stdout"].splitlines()[1])["calls"]
+    calls[-1]["arguments"]["filepath"] = path
+    assert grade(change_outcome(receipt, calls=calls))["status"] == "PASS"
+
+
+@pytest.mark.parametrize("path,exists", [
+    ("src/project/other.py", True), ("/elsewhere/src/project/file.py", True),
+    ("../src/project/file.py", True), ("src/project/file.py", False),
+])
+def test_other_or_nonexistent_child_does_not_receive_analysis_credit(path, exists):
+    receipt = public_receipt()
+    calls = json.loads(receipt["stdout"].splitlines()[1])["calls"]
+    calls[-1]["arguments"]["filepath"], calls[-1]["path_exists"] = path, exists
     assert grade(change_outcome(receipt, calls=calls))["status"] == "FAIL"
 
 

@@ -7,6 +7,7 @@ are separate axes. A schema-valid annotation is not a semantic proof.
 from __future__ import annotations
 
 import json
+import posixpath
 from collections import Counter
 from pathlib import Path
 
@@ -77,8 +78,13 @@ def caller_grade(receipt, *, case, dependency_hash, diff_hash, expected_diff, cl
         require(observed("run_pylint", "/opt/patchloop-dependencies/pylint/__init__.py", {})
                 and observed("__init__", "/opt/patchloop-dependencies/pylint/lint/run.py",
                              {"args": ["src/project"]}), "entry not observed")
-        target = observed("get_ast", "/opt/patchloop-dependencies/pylint/lint/pylinter.py",
-                          {"filepath": "src/project/file.py"})
+        target_path = cwd + "/src/project/file.py"
+        target = any(c["function"] == "get_ast"
+            and c["file"] == "/opt/patchloop-dependencies/pylint/lint/pylinter.py"
+            and c["cwd"] == cwd and c.get("path_exists") is True
+            and isinstance(c["arguments"].get("filepath"), str)
+            and posixpath.normpath(posixpath.join(cwd, c["arguments"]["filepath"])) == target_path
+            for c in calls)
         exit_code = outcome["pylint_exit_code"]
         require(type(exit_code) is int and 0 <= exit_code <= 63, "invalid caller exit")
         text = outcome["pylint_stdout"] + outcome["pylint_stderr"]

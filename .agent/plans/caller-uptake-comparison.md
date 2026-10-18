@@ -3,6 +3,8 @@
 Status: **LOCAL PREPARATION IMPLEMENTED; PAID NOT AUTHORIZED** (2026-10-18).
 Readiness authority is the final-commit external packet and its validation receipts,
 not this prose. See [preparation record](../../docs/history/2026-10-18-caller-ready.md).
+The [target-path correction](../../docs/history/2026-10-18-caller-target.md) records
+the final oracle follow-up and superseding validation locations.
 Preparation uses public wheels and existing images without provider/count calls.
 Old allocations are closed; neither their approvals nor unused balances transfer.
 
@@ -245,6 +247,8 @@ must not accept silently skipping the target. Do not require the historical
 erroneous manager/builder branch; patches can change that route. The observer's
 overflow/timeout/truncation is UNKNOWN/ERROR, never semantic FAIL or PASS. There is
 no post-outcome program editing or rerun with weaker conditions.
+The observed target must exist and resolve under the frozen cwd to that exact child;
+equivalent relative/absolute spellings are accepted, other or missing files are not.
 
 Two post-run probes per submitted patch, at most 24, retain existing probe caps.
 They and the native evaluation share the existing **600-second per-row host
