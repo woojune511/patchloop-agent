@@ -41,7 +41,7 @@ Batch stop fixed; no paid rerun.
 frozen grades unchanged.
 
 [E/J](history/2026-10-18-repair-mechanism-results.md): closed, 2/3 per arm; no gain.
-[Caller preparation](history/2026-10-18-public-callers.md): local validation; paid NOT_RUN.
+[Caller check](history/2026-10-18-caller-check.md): Pylint failure reproduced; uptake NOT_RUN.
 [Duplicate fix](../tests/test_additive_duplicates.py): local only.
 [Timeout fix](history/2026-10-17-capture-timeout-validation.md): validated fixture.
 
