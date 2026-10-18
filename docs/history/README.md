@@ -1,6 +1,6 @@
 # History
 
-- [Caller A/B](2026-10-18-caller-arm-scope.md).
+- [Caller A/B](2026-10-19-caller-uptake-results.md).
 - [Dev20](2026-10-16-mini-swe-dev20-results.md).
 - [Completion](2026-10-16-mini-swe-completion-results.md).
 - [PatchLoop](2026-10-16-patchloop-mini-dev20-results.md).
