@@ -109,8 +109,9 @@ class LocalEncoder:
                     flush=True)
         self.inference_seconds += time.perf_counter() - started
 
-    def score(self, query, records):
-        bodies = {key: canonical_json(r["body"]) for key, r in records.items()}
+    def score(self, query, records, *, body_for=None):
+        bodies = {key: canonical_json(body_for(r) if body_for else r["body"])
+                  for key, r in records.items()}
         self.prepare(list(bodies.values()))
         self.prepare([query], query=True)
         started = time.perf_counter()

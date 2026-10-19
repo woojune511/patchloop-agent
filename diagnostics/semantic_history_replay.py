@@ -16,6 +16,7 @@ from diagnostics.cleanup_information_checkpoint import ForkStore
 from diagnostics.decision_sampler import require
 from diagnostics.declaration_checkpoint import disjoint
 from diagnostics.history_search_replay import pack_result, query_for, search_available
+from diagnostics.semantic_history_index import PROJECTION, EvidenceHistory, observed_body, separate
 from diagnostics.semantic_history_search import LocalEncoder, fuse, ranked
 from diagnostics.size_only_replay import TokenEstimator, inventory, load_row, verify_baseline
 from patchloop.artifacts import ArtifactStore
@@ -120,8 +121,22 @@ def run(args, encode, tokenizer):
     sources = {str(p.resolve()): sha256_bytes(p.read_bytes()) for p in (
         args.manifest, args.baseline_replay, args.protocol,
         Path(__file__), Path(__file__).with_name("semantic_history_search.py"),
+        Path(__file__).with_name("semantic_history_index.py"),
         Path(__file__).with_name("history_search_replay.py"),
         Path(__file__).with_name("size_only_replay.py"), args.model / "download.json")}
+    if args.raw_replay:
+        raw = read_json(args.raw_replay)
+        require(raw["contract"]["runtime_hash"] == runtime_content_hash(), "raw runtime drift")
+        require(raw["contract"]["model"] == download, "raw embedding model drift")
+        require(raw["contract"]["target"] == prior["contract"]["target_observation_hash"]
+                and raw["contract"]["after_sequence"] == prior["contract"]["after_sequence"],
+                "raw comparison target/cutoff drift")
+        raw_queries = {(row["row"], q["sequence"]): q["query"]
+                       for row in raw["rows"] for q in row["requests"]}
+        require(raw_queries == {(row["row"], q["request_sequence"]): q["query"]
+                                for row in prior["rows"] for q in row["requests"]},
+                "raw comparison query/roster drift")
+        sources[str(args.raw_replay.resolve())] = sha256_bytes(args.raw_replay.read_bytes())
     for name, identity in download["files"].items():
         path = args.model / name
         digest = sha256_bytes(path.read_bytes())
@@ -142,6 +157,8 @@ def run(args, encode, tokenizer):
         "target": prior["contract"]["target_observation_hash"], "query": prior["contract"]["query"],
         "network": "socket connections blocked", "tuning_after_results": False,
         "cpu_threads": 4, "batch_size": 8, "packing": "independent-known-content-only"}
+    contract["index_projection"] = PROJECTION if args.index_mode == "observed" else "raw-json"
+    contract["raw_comparison"] = str(args.raw_replay.resolve()) if args.raw_replay else None
     (output / "manifest.json").write_text(canonical_json(contract) + "\n", encoding="utf-8")
     journal.append("experiment_frozen", contract)
     encoder = LocalEncoder(args.model)
@@ -161,17 +178,21 @@ def run(args, encode, tokenizer):
     for row in manifest["rows"]:
         root = Path(row["request"]["state_root"])
         events = DevJournal(root, row["request"]["resume_run_id"]).events()
-        reader, corpus, requests = ForkStore(root, events), search.PublicHistory(), []
+        corpus_type = EvidenceHistory if args.index_mode == "observed" else search.PublicHistory
+        reader, corpus, requests = ForkStore(root, events), corpus_type(), []
         for turn in cases[row["row_id"]]:
             corpus.sync(events, reader, before_sequence=turn.sequence + 1)
             query, source = query_for(turn.state)
             previous = saved[row["row_id"], turn.sequence]
             require(query and query == previous["query"], "query drift")
             diff = turn.state["current_diff"]["patch_hash"]
-            baseline = corpus.search(query, current_diff_hash=diff)
+            raw_order = search.PublicHistory.rank(corpus, query)
+            with patch.object(corpus, "rank", return_value=raw_order):
+                baseline = corpus.search(query, current_diff_hash=diff)
             require(baseline == previous["retrieval"], "baseline retrieval drift")
             lexical, excerpts = corpus.rank(query)
-            scores, matches = encoder.score(query, corpus.records)
+            scores, matches = encoder.score(query, corpus.records,
+                body_for=observed_body if args.index_mode == "observed" else None)
             dense = ranked(corpus.records, scores)
             orders = {"bm25": lexical, "dense": dense,
                       "hybrid": fuse(corpus.records, lexical, dense)}
@@ -184,7 +205,7 @@ def run(args, encode, tokenizer):
             for name, order in orders.items():
                 with patch.object(corpus, "rank", return_value=(order, excerpts)):
                     result = corpus.search(query, current_diff_hash=diff)
-                if name == "bm25":
+                if name == "bm25" and args.index_mode == "raw":
                     require(result == baseline, "renderer mismatch")
                 selected = next((r for r in result["records"] if r["record_id"] == target), None)
                 complete = {r["record_id"] for r in result["records"]
@@ -197,7 +218,7 @@ def run(args, encode, tokenizer):
                     "complete_displaced": sorted(original_complete - complete),
                     "delivery_counts": dict(Counter(r["delivery"] for r in result["records"])),
                     "retrieval": store.put_json(result).model_dump(mode="json"), "packing": {}}
-                if name == "bm25":
+                if name == "bm25" and args.index_mode == "raw":
                     value["packing"] = previous["packing"]
                     ref = value["packing"]["central"]["input_artifact"]
                     path = Path(ref["path"])
@@ -230,6 +251,9 @@ def run(args, encode, tokenizer):
                                   "replayed": len(requests)}), flush=True)
         sources.update({p: h for p, h in reader.reads.items() if Path(p).is_file()})
         item = {"row": row["row_id"], "requests": requests}
+        item["index_records"] = store.put_json({
+            key: {"original": record, **separate(record["body"])}
+            for key, record in corpus.records.items()}).model_dump(mode="json")
         rows.append(item)
         journal.append("row_replayed", {"row": row["row_id"],
                                         "result": store.put_json(item).model_dump(mode="json")})
@@ -253,7 +277,11 @@ def main():
     for name in ("manifest", "baseline-replay", "model", "dependencies", "output", "protocol",
                  "tokenizer-package", "tokenizer-cache"):
         parser.add_argument("--" + name, type=Path, required=True)
+    parser.add_argument("--index-mode", choices=("raw", "observed"), default="raw")
+    parser.add_argument("--raw-replay", type=Path)
     args = parser.parse_args()
+    require(args.index_mode == "raw" or args.raw_replay is not None,
+            "observed index comparison requires the frozen raw replay")
     sys.path[:0] = [str(args.dependencies.resolve()), str(args.tokenizer_package.resolve())]
     os.environ["TIKTOKEN_CACHE_DIR"] = str(args.tokenizer_cache.resolve())
     import tiktoken

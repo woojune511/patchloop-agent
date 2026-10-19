@@ -1,15 +1,18 @@
 from __future__ import annotations
 
+import copy
+import json
 from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
 from test_dev_history_search import items
 
+from diagnostics.semantic_history_index import EvidenceHistory, separate
 from diagnostics.semantic_history_search import fuse, ranked, windows
 from patchloop.dev.history_search import PublicHistory
 from patchloop.errors import ContractError
-from patchloop.util import canonical_json
+from patchloop.util import canonical_json, sha256_json
 
 
 def test_semantic_candidates_are_run_local_even_when_cache_contains_future_records():
@@ -55,3 +58,68 @@ def test_ranking_change_keeps_whole_body_priority_and_same_eight_hit_result_budg
     full = [r for r in result["records"] if r["delivery"] == "complete"]
     assert full and len(full) < 8
     assert all(r["body"] == corpus.records[r["record_id"]]["body"] for r in full)
+
+
+def test_projection_moves_owned_annotations_reversibly_without_touching_execution():
+    for tool, arguments, output in (
+        ("read_file", {"path": "a.py"}, {
+            "inspection_intent": {"plan_update": "unverified", "basis": "guess"},
+            "inspection_intent_ref": {"action_id": "old"},
+            "spans": [{"content": 'hypothesis = "keep this source"', "start_line": 3}]}),
+        ("replace_text", {"path": "a.py", "old_text": "x", "new_text": "y",
+                          "hypothesis": "guess", "expected_behavior": "hope",
+                          "causal_revision": {"alternative_mechanism": "unconfirmed"}},
+            {"mutation": {"hypothesis": "guess", "expected_behavior": "hope",
+                          "changed_hunk": "-x\n+y"}, "mutation_evidence": {"content": "y"}}),
+        ("run_probe", {"question": "Does it work?", "python_source": "assert dispatch(3) == 4"},
+            {"question": "Does it work?", "stdout": '{"hypothesis":"actual captured value"}',
+             "stderr": "", "exit_code": 1,
+             "setup_checks": {"checks": [{"actual": "a", "expected": "b", "matched": False}]}}),
+    ):
+        body = {"call": {"tool": tool, "arguments": arguments},
+                "result": {"output": output, "status": "succeeded"}}
+        before = copy.deepcopy(body)
+        split = separate(body)
+        assert split["annotations"] and body == before
+        restored = copy.deepcopy(split["observed"])
+        for pointer, value in split["annotations"].items():
+            path = pointer.strip("/").split("/")
+            node = restored
+            for part in path[:-1]:
+                node = node[part]
+            node[path[-1]] = value
+        assert restored == body
+        if tool == "read_file":
+            assert split["observed"]["result"]["output"]["spans"] == output["spans"]
+        if tool == "run_probe":
+            assert split["observed"]["call"]["arguments"] == {
+                "python_source": arguments["python_source"]}
+            assert split["observed"]["result"]["output"]["stdout"] == output["stdout"]
+            assert split["observed"]["result"]["output"]["setup_checks"] == output["setup_checks"]
+
+
+def test_supplied_or_source_data_is_not_deleted_by_matching_key_names():
+    body = {"field": "public_observation", "value": {"hypothesis": "a captured literal",
+            "inspection_intent": {"plan_update": "a domain input"}, "source": True}}
+    assert separate(body) == {"observed": body, "annotations": {}}
+
+
+def test_clean_rank_ignores_intent_but_returns_original_body_and_excerpt_bytes():
+    from test_dev_history_search import exchange
+
+    history = EvidenceHistory()
+    events = exchange(text="actual execution")
+    result = json.loads(events[1]["output"])
+    result["output"]["question"] = "unverifiedmotive"
+    events[1]["output"] = canonical_json(result)
+    history.ingest(items(exchanges=events), sequence=1, turn_id="old", input_hash="input")
+    # Tool question is metadata; it cannot supply ranking support on its own.
+    assert not history.search("unverifiedmotive", current_diff_hash="current")["records"]
+    raw_order, raw_excerpts = PublicHistory.rank(history, "actual execution")
+    order, excerpts = history.rank("actual execution")
+    assert excerpts == raw_excerpts
+    assert order[0][1] == raw_order[0][1]
+    found = history.search("actual execution", current_diff_hash="current")["records"][0]
+    assert found["body"]["result"]["output"]["question"] == "unverifiedmotive"
+    assert found["delivery"] == "complete"
+    assert sha256_json(found["body"]) == found["record_id"]

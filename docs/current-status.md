@@ -1,6 +1,6 @@
 # Current status
 
-Updated: 2026-10-19. Current decisions; runtime source owns behavior.
+Updated: 2026-10-20. Current decisions; runtime source owns behavior.
 Historical reports are evidence, not an active queue.
 
 ## Product and working baseline
@@ -64,9 +64,9 @@ L003/L039 cycle, regression PASS overinterpreted despite retained notes/tools.
 [Counterexample](history/2026-10-07-counterexample-results.md): both FAIL despite
 B's retained current failure; USD 0.04019910. Keep 24k; no adoption or paid follow-up.
 
-[Search](history/2026-10-19-semantic-history-search.md): offline BM25/dense/hybrid
-full-packet recovery 11/2/6 of 28. BM25 kept, 8 hits/48k, default off. Public results
-echo model intent; a cleaned index is untested. No live uptake/repair claim.
+[Search](history/2026-10-19-history-index-separation.md): separated BM25/dense/hybrid
+packet recovery 25/2/20 of 28 (raw 11/2/6). New counterevidence/context losses prevent
+adoption. Runtime BM25, 8 hits/48k, default off unchanged; no live repair claim.
 Routine tests use `tests/quick.txt`; prior full-suite 4 FAIL remains unresolved.
 
 See [panel contract](../.agent/current-dev20.md) and
