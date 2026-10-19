@@ -53,10 +53,7 @@ The [corrected dev20 measurement](history/2026-10-06-corrected-dev20-results.md)
 11 PASS/7 FAIL/2 NOT_RUN; USD 5.08206870. A deadline with unconfirmed cleanup stopped
 admission. Matching 18 tasks moved from 8 to 11 successes; no all-20 accuracy claim.
 
-[Search fix and supplement](history/2026-10-06-search-once-supplement.md): rows 18/20
-submitted and failed; searches took under 0.74s. Original NOT_RUN stays unchanged.
-[Trace](history/2026-10-06-agent-trace-comparison.md)/[verification](history/2026-10-06-verification-closure-results.md):
-A 1/4, B 0/4; saved-case NOT_EXERCISED.
+Search and trace follow-ups remain closed; see the [history index](history/README.md).
 [Diagnosis](history/2026-10-06-verification-context-budget-diagnosis.md): untested
 submission, source loss, reservation;
 [accounting](history/2026-10-06-resource-budget-context-review.md) fixed model/tool
@@ -67,8 +64,10 @@ L003/L039 cycle, regression PASS overinterpreted despite retained notes/tools.
 [Counterexample](history/2026-10-07-counterexample-results.md): both FAIL despite
 B's retained current failure; USD 0.04019910. Keep 24k; no adoption or paid follow-up.
 
-[History search](history/2026-10-19-run-history-search.md): offline 1/28 recovery.
-Default off; full suite 4 FAIL, isolated 4 PASS. No paid run.
+[History search](history/2026-10-19-history-search-followup.md): 8 candidates/48k,
+offline full-packet recovery 11/28 versus 1/28; 17 extra size handoffs. BM25 kept
+after the alternative ranker lost recall. Default off; no live uptake/repair claim.
+Routine tests use `tests/quick.txt`; prior full-suite 4 FAIL remains unresolved.
 
 See [panel contract](../.agent/current-dev20.md) and
 [priority fixes](history/2026-10-06-agent-priority-fixes.md). Prior panels closed.

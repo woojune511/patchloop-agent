@@ -87,3 +87,22 @@ def test_search_completes_major_result_followup_even_with_plenty_of_context_spac
     state = reconstruct_state(items, context_policy="segmented-v1")
     assert state["segment_handoff"]["review_requested"]
     assert "context_handoff" in state["working_plan"]["review_request"]["reasons"]
+
+
+def test_eight_candidates_do_not_increase_two_handoff_references(saved):
+    from test_dev_history_search import items
+
+    turns = copy.deepcopy(saved)
+    for turn in turns:
+        turn.usage["input_tokens"] = 20_000
+    history = search.PublicHistory()
+    for n in range(10):
+        history.ingest(items(observation={"name": n, "text": "public caller setup"}),
+                       sequence=n, turn_id=str(n), input_hash=str(n))
+    result = history.search("caller setup", current_diff_hash="different")
+    assert len(result["records"]) == 8
+    estimator = TokenEstimator(lambda text: list(text[::4]), {}, turns)
+    packed, projected = replay.pack_result(turns[2], result, estimator)
+    assert packed["fits_known_content"] and packed["mode"] == "major_result_handoff"
+    state = reconstruct_state(projected, context_policy="segmented-v1")
+    assert len((state["working_notes"].get("open_question") or {}).get("evidence", [])) <= 2

@@ -54,8 +54,9 @@ and absent-versus-explicit serialization. Keep recovery annotations unadvertised
 and cross-field/anchor/scope validation intact.
 
 Batch 1–4 `read_file`/`search_files` calls; other tools run singly.
-Opt-in [history search](../docs/history/2026-10-19-run-history-search.md): two
-historical records, optional headroom, no source/PASS credit.
+Opt-in history search: eight candidates within 48,000 result characters, exact
+labelled excerpts and ID-based pages; optional headroom, no source/PASS credit.
+The separate two-reference handoff limit is unchanged.
 A bounded public `turn_decision` accompanies each default-policy call. Opt-in
 `--agent-policy thin --planning-policy none` replaces it with root nullable
 `memory_update`; see [contract](thin-policy-reference.md). Execution gates stay shared.
@@ -211,26 +212,24 @@ Live repair requires exact public-request/cost approval; live dev requires dev-t
 
 ## Validation checklist
 
-Run focused tests appropriate to the changed contract, Ruff, the fast suite, and mock
-smoke as relevant. Documentation-only changes need the documentation layout/link tests.
-Keep focused validation under two minutes; report longer or unrun groups honestly.
-Freeze runtime source during provenance checks. Use unique external basetemps under
-`C:\pt\tmp\<unique-name>`; parallel processes need separate roots. Durable run/evidence
-stores are not scratch. Never sweep a parent directory or relocate recorded state.
-Keep Windows basetemp names short; nested CAS temporary paths can exceed MAX_PATH.
+Use the explicit quick selection below for routine validation; add focused tests
+for other changed owners. It covers contracts, journal recovery, cost reservations,
+history search and isolated mock smoke, not the whole repository. Keep regressions;
+run all tests for broad integration changes or an explicit request. Documentation-only
+changes need `tests/test_documentation_layout.py`. Aim for under two minutes.
+Freeze runtime during provenance checks. Use short, unique external basetemps;
+parallel runs need separate roots. Never sweep durable evidence or a parent directory.
 
 ```powershell
-uv run pytest tests/test_documentation_layout.py -p no:cacheprovider
 uv run ruff check patchloop tests
-uv run --locked pytest tests -n 4 --dist loadfile --max-worker-restart 0 --durations=20 --basetemp C:\pt\tmp\<unique-name>
-uv run patchloop dev --provider mock --task tasks/smoke/csv-quoted-newline/public.yaml --model mock-dev --repeat 1
+uv run --locked pytest @tests/quick.txt --basetemp C:\pt\tmp\<unique-name>
+# Full regression when warranted:
+uv run --locked pytest tests -n 4 --dist loadfile --max-worker-restart 0 --basetemp C:\pt\tmp\<unique-name>
 ```
 
-Set `PATCHLOOP_STATE_ROOT` to an external directory for mock smoke. Omit `-n 4` for
-small focused checks; full-suite workers keep each test file together and use separate temporary
-directories. Automatic worker restart is disabled so worker crashes fail validation.
-Real-Docker tests remain opt-in and require existing images; mock/local evidence
-does not prove live behavior.
+The quick suite includes mock smoke. Full-suite workers keep each file together;
+worker crashes fail validation. Real-Docker tests require opt-in and existing images.
+Mock/local evidence does not prove live behavior.
 Before handoff check public/private boundaries, current links, external state, exact
 recovery identities, unrelated edits, and unchanged historical artifacts. Report what
 was implemented, locally tested, live-executed, and left `NOT_RUN` separately.

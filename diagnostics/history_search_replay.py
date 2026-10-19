@@ -154,7 +154,7 @@ def pack_result(turn, result, estimator, *, level="central"):
                     for key in before_outputs.keys() - after_outputs.keys()}
     lost_observations = {key: before_obs[key] for key in before_obs.keys() - after_obs.keys()}
     require(len(canonical_json(result)) <= search.MAX_RESULT_CHARS, "result bound exceeded")
-    require(len(result["records"]) <= 2, "retrieval reference bound exceeded")
+    require(len(result["records"]) <= search.MAX_RESULTS, "retrieval result bound exceeded")
     serialized = canonical_json(items)
     for record in result["records"]:
         if record["delivery"] == "complete":
@@ -171,7 +171,7 @@ def pack_result(turn, result, estimator, *, level="central"):
                          "tool_time_and_later_trajectory"]}, items
 
 
-def run(manifest_path, output, after_sequence, target_hash, encode, tokenizer):
+def run(manifest_path, output, after_sequence, target_hash, encode, tokenizer, protocol_path):
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     require(not output.exists(), "use a fresh output directory")
     disjoint(output, [repository_root(), manifest_path.parent,
@@ -184,7 +184,6 @@ def run(manifest_path, output, after_sequence, target_hash, encode, tokenizer):
     output.mkdir(parents=True)
     journal = DevJournal(output, "run_dev_historysearchreplay")
     store = ArtifactStore(output / "artifacts")
-    protocol_path = Path(__file__).parents[1] / "docs/history/2026-10-19-run-history-search.md"
     contract = {"official": False, "new_spend_nanos": 0, "provider_calls": 0,
                 "baseline_manifest_hash": sha256_bytes(manifest_path.read_bytes()),
                 "source_runtime_hash": manifest["runtime_hash"],
@@ -277,6 +276,7 @@ def main():
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--after-sequence", type=int, required=True)
     parser.add_argument("--target-observation-hash", required=True)
+    parser.add_argument("--protocol", type=Path, required=True)
     parser.add_argument("--tokenizer-package", type=Path, required=True)
     parser.add_argument("--tokenizer-cache", type=Path, required=True)
     args = parser.parse_args()
@@ -297,7 +297,8 @@ def main():
                         for p in args.tokenizer_cache.iterdir() if p.is_file()}}
         run(args.manifest.resolve(), args.output.resolve(), args.after_sequence,
             args.target_observation_hash,
-            lambda value: encoding.encode(value, disallowed_special=()), metadata)
+            lambda value: encoding.encode(value, disallowed_special=()), metadata,
+            args.protocol.resolve())
 
 
 if __name__ == "__main__":

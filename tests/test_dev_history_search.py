@@ -126,22 +126,27 @@ def test_artifact_or_history_metadata_corruption_fails_closed(tmp_path):
         search.PublicHistory().sync(events, store, before_sequence=99)
 
 
-def test_oversize_is_explicit_and_combined_two_record_budget_is_hard():
+def test_oversize_has_exact_labelled_excerpt_and_combined_budget_is_hard():
     history = search.PublicHistory()
     for n, size in enumerate([60_000, 23_000, 500]):
         history.ingest(items(observation={"text": "needle " * 100 + "x" * size}),
                        sequence=n + 1, turn_id=str(n), input_hash=str(n))
     result = history.search("needle", current_diff_hash="new")
-    assert len(result["records"]) == 2
+    assert len(result["records"]) == 3
     assert len(canonical_json(result)) <= search.MAX_RESULT_CHARS
-    assert any(r["delivery"] == "metadata_only_result_bound" and r["body"] is None
-               for r in result["records"])
+    missing = next(r for r in result["records"] if r["body"] is None)
+    assert missing["delivery"] == "excerpt_only_result_bound"
+    assert not missing["excerpt_is_complete_record"]
+    excerpt = missing["excerpt"]
+    assert excerpt["pointer"] == "/value/text"
+    original = history.records[missing["record_id"]]["body"]["value"]["text"]
+    assert original[excerpt["start"]:excerpt["end"]] == excerpt["text"]
 
 
 def test_record_id_fetch_recovers_a_body_crowded_out_by_the_other_hit():
     history = search.PublicHistory()
     for n in range(2):
-        history.ingest(items(observation={"name": n, "text": "needle " * 1800}),
+        history.ingest(items(observation={"name": n, "text": "needle " * 4000}),
                        sequence=n + 1, turn_id=str(n), input_hash=str(n))
     result = history.search("needle", current_diff_hash="new")
     missing = next(r for r in result["records"] if r["body"] is None)
@@ -151,6 +156,90 @@ def test_record_id_fetch_recovers_a_body_crowded_out_by_the_other_hit():
     assert sha256_json(fetched["records"][0]["body"]) == missing["record_id"]
     assert all(r["body"] is None or sha256_json(r["body"]) == r["record_id"]
                for r in result["records"])
+
+
+def test_candidate_previews_cannot_evict_complete_higher_ranked_evidence(monkeypatch):
+    history = search.PublicHistory()
+    for n in range(8):
+        history.ingest(items(observation={"text": "needle " * (2700 if n < 2 else 10000),
+                                         "name": n}),
+                       sequence=n, turn_id=str(n), input_hash=str(n))
+    ordered = list(history.records.values())
+    _, excerpts = history.rank("needle")
+    monkeypatch.setattr(history, "rank", lambda query: (
+        [(8 - i, record) for i, record in enumerate(ordered)], excerpts))
+    result = history.search("needle", current_diff_hash="new")
+    assert all(r["delivery"] == "complete" for r in result["records"][:2])
+    assert all(r["body"] is None for r in result["records"][2:])
+    assert len(canonical_json(result)) <= search.MAX_RESULT_CHARS
+
+
+def test_large_record_pages_round_trip_without_silent_truncation():
+    history = search.PublicHistory()
+    history.ingest(items(observation={"source": 'needle "한글"\n' * 6000}),
+                   sequence=1, turn_id="t", input_hash="input")
+    key = next(iter(history.records))
+    text, offset = "", None
+    while True:
+        result = history.search(key, current_diff_hash="new", offset=offset)
+        assert len(canonical_json(result)) <= search.MAX_RESULT_CHARS
+        row = result["records"][0]
+        assert row["body"] is None and row["delivery"] == "partial_json_page"
+        page = row["page"]
+        assert page["start"] == len(text) and page["end"] > page["start"]
+        text += page["text"]
+        offset = page["next_offset"]
+        if offset is None:
+            break
+    assert json.loads(text) == history.records[key]["body"]
+    assert sha256_json(json.loads(text)) == key
+    for offset, query in [(len(text), key), (-1, key), (True, key), (0, "needle")]:
+        with pytest.raises(ContractError):
+            history.search(query, current_diff_hash="new", offset=offset)
+
+
+def test_eight_candidates_include_exact_excerpt_of_large_record_conditions():
+    history = search.PublicHistory()
+    history.ingest(items(observation={"call": "load_config source_path fallback_enabled",
+                                     "unrelated": "background detail " * 6000}),
+                   sequence=1, turn_id="first", input_hash="first")
+    target = next(iter(history.records))
+    for n in range(10):
+        history.ingest(items(observation={"name": n, "call": "load_config retry mode"}),
+                       sequence=n + 2, turn_id=str(n), input_hash=str(n))
+    history.ingest(items(), sequence=20, turn_id="current", input_hash="current")
+    result = history.search("load_config source_path fallback_enabled", current_diff_hash="new")
+    assert len(result["records"]) == 8
+    candidate = next(r for r in result["records"] if r["record_id"] == target)
+    assert candidate["excerpt"]["text"] == "load_config source_path fallback_enabled"
+
+
+def test_visible_duplicate_is_labelled_and_exact_id_lookup_remains_available():
+    history = search.PublicHistory()
+    a = items(observation={"text": "original_dispatch left"})
+    b = items(observation={"text": "original_dispatch right"})
+    history.ingest(a, sequence=1, turn_id="a", input_hash="a")
+    old = next(iter(history.records))
+    history.ingest(b, sequence=2, turn_id="b", input_hash="b")
+    result = history.search("original_dispatch", current_diff_hash="new")
+    assert result["records"][0]["record_id"] == old
+    visible = next(r for r in result["records"] if r["already_visible"])
+    assert history.search(visible["record_id"], current_diff_hash="new")["records"][0]["body"]
+
+
+def test_reduced_handoff_view_does_not_mark_original_action_body_visible():
+    history = search.PublicHistory()
+    full = exchange(text="original_dispatch complete caller and environment")
+    history.ingest(items(exchanges=full), sequence=1, turn_id="first", input_hash="first")
+    shortened = json.loads(json.dumps(full))
+    body = json.loads(shortened[1]["output"])
+    body["output"]["stdout"] = "original_dispatch"
+    shortened[1]["output"] = canonical_json(body)
+    history.ingest(items(exchanges=shortened), sequence=2, turn_id="next", input_hash="next")
+    assert len(history.records) == 1
+    result = history.search("original_dispatch", current_diff_hash="new")
+    assert not result["records"][0]["already_visible"]
+    assert result["records"][0]["body"]["result"] == json.loads(full[1]["output"])
 
 
 @pytest.mark.parametrize("query", ["", "  ", "x" * 801, 3])

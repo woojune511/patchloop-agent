@@ -87,13 +87,13 @@ was not prepared or executed. Portfolio v1 measurement and local materials are c
 
 ## Try the local loop
 
-Mock mode uses no credentials, provider call, or Docker image.
+Mock runs use no provider or Docker.
 
 ```powershell
 $env:PATCHLOOP_STATE_ROOT = 'C:\patchloop-state'
 uv sync --extra dev --locked
 uv run ruff check patchloop tests
-uv run pytest tests
+uv run pytest @tests/quick.txt --basetemp ("C:\pt\tmp\" + [IO.Path]::GetRandomFileName())
 uv run patchloop dev `
   --provider mock `
   --task tasks/smoke/csv-quoted-newline/public.yaml `
