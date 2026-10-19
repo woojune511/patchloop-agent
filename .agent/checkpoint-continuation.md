@@ -54,6 +54,13 @@ This avoids conflating legitimate references while still rejecting metadata drif
 
 ## Rehearsal and evidence limits
 
+The [saved caller checkpoint](plans/caller-evidence-checkpoint.md) selects an
+explicit unchanged-base turn through a separate backend. It retains the prepared
+segment before the target count and excludes its later start commit/dispatch.
+Request restoration preserves envelope-bound evaluation reserve, retained-source
+selection, agent policy and probe replay policy. First-state equality may normalize
+elapsed solving/total seconds only; the reserve and all remaining allowances stay exact.
+
 `rehearse(branch, ScriptedClient(steps))` is a single-use offline entry point. Each
 step contains function name, action ID and arguments; responses are finite and
 synthetic. The real adapter parses them and the ordinary runner executes admitted

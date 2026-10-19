@@ -1,7 +1,10 @@
 # Public caller evidence at the same failed decision
 
-Status: **SPECIFICATION PREPARED; COLLECTOR NOT READY; PAID NOT AUTHORIZED**
-(2026-10-19). This is a new, selected checkpoint experiment, not a reopening of
+Status: **COLLECTOR IMPLEMENTED; PAID NOT AUTHORIZED** (2026-10-19).
+Final readiness is owned by the exact-commit validation and execution packet under
+`C:/pt/ce19ready/`; absence or failure of any required receipt means NOT_READY.
+See the [implementation record](../../docs/history/2026-10-19-caller-evidence-ready.md).
+This is a new, selected checkpoint experiment, not a reopening of
 the closed [caller-availability panel](caller-uptake-comparison.md). Its approval,
 unused allocation and historical outcomes do not transfer. Every new branch is
 `official=false`, claim-ineligible, with no cross-run memory or held-out tuning.
@@ -272,12 +275,15 @@ A zero/negative Q contrast or incomplete/uncertain evaluation closes this alloca
 without adjacent prompt changes, extra repetitions or spending the remainder. Even
 a favorable result does not automatically change production context or defaults.
 
-## Remaining preparation gates and hard stops
+## Preparation gates and hard stops
 
-1. Implement a task-neutral checkpoint packet/collector adapter. Existing
+1. The task-neutral `diagnostics/saved_caller_checkpoint.py` adapter connects the
+   frozen specification to `checkpoint_continuation.py` and `checkpoint_comparison.py`.
+   `caller_evidence_execution.py` owns the twelve-row manifest, audit and assessment.
+   Existing
    [first-input injection](../caller-information.md) and
    [restoration](../checkpoint-continuation.md) are useful seams, but their existing
-   evidence loader/packet assumptions do not make this Astroid checkpoint executable.
+   evidence loader/packet assumptions are kept separate from the new saved-base loader.
    Keep task-specific program data in the frozen diagnostic packet, not product rules.
 2. Provider-free rehearsal must restore the exact prefix/CAS, source/plan/notes,
    empty diff, counters, debit, active deadline and prepared segment. Compare naturally
@@ -306,7 +312,7 @@ a favorable result does not automatically change production context or defaults.
    no replacements. An assessment ERROR stops remaining assessments under the frozen
    policy; it does not authorize retries or erase already completed solver outcomes.
 
-## Work completed for this specification
+## Preparation evidence and invocation
 
 `C:/pt/callerevidence19-spec/` holds the read-only builder, preserved-input hashes,
 exact first-request pair, operator observation, specification/check receipts and a
@@ -315,8 +321,26 @@ base/environment, lossless program variants, single-field difference, unchanged
 two references/source selection and byte bounds pass static checks. Historical
 source artifacts and the preexisting user edit in `AGENTS.md` are preserved.
 
-**No** new model/count calls, credential reads, solver continuations, public probes
-or native evaluations occurred. Exact new token admission, collector restoration,
-rubric calibration, full implementation tests and paid readiness remain **NOT_RUN**.
-Documentation layout/link checks validate this documentation change only. Static
-packet consistency is not evidence of model uptake, repair success or live readiness.
+That initial specification performed no model/count calls, credential reads, solver
+continuations, public probes or native evaluations. Subsequent implementation receipts
+are separate under `C:/pt/ce19ready/`: scripted actual-checkpoint restoration, two
+bounded public base/control probes, rubric/oracle fixtures, and final-commit tests.
+The source programs have CRLF bytes while the frozen input uses LF text templates;
+validation permits only that explicit newline projection and keeps original execution
+hashes. No program statement, input condition or first-request byte is changed.
+
+`python -m diagnostics.caller_evidence_execution freeze --root <fresh-external-root>
+--inputs <freeze-inputs.json>` binds final validation, preparation, reviewed pricing,
+packet, credential **path** and fresh live destination. `validate --root ... --hash ...`
+checks the frozen identities. Only a separately authorized `collect` with exact
+manifest hash, task/model/credential/repeats/cap and current pricing review can count
+or dispatch. There is no retry/resume. `export`, `seal --inputs <annotations.json>` and
+`assess` enforce the public-audit-before-grades sequence. Keep the full submitted
+patch for native evaluation and the source-only projection for public caller checks.
+
+`caller_evidence_grading.py` validates linked public events and separates G/D/J/action
+use from S/T/Q. Human review owns relevance and semantic judgment; schema validation
+is not an automatic correctness judge. Raw reasoning and private grades are excluded
+from the public audit. A new token count/provider acceptance and autonomous repair
+remain NOT_RUN until an explicitly approved paid collection. Scripted fixture success
+does not establish model uptake or a repair-quality improvement.

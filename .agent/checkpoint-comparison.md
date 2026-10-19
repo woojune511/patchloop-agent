@@ -36,6 +36,12 @@ NOT_RUN. Collection repeats admission immediately before execution.
 
 ## Cost, execution and stopping
 
+The [saved caller evidence panel](plans/caller-evidence-checkpoint.md) binds its
+twelve-row order in the verified checkpoint packet. Other packet schemas retain
+the four-row order. Its wrapper requires exact human approval, current price review,
+due registered-receipt checks and a sealed public audit before separate assessments.
+The same inherited row ledger and shared new-cost ledger apply, without refills.
+
 An atomic fresh result directory makes a plan single-use, including interrupted or
 failed attempts. There is no resume or retry command. Rows run serially because
 restoration hooks are process-local. Every row gets a fresh base workspace, exact

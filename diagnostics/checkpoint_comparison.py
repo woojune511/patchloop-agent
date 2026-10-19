@@ -41,6 +41,7 @@ IMPLEMENTATION = (
     "diagnostics/anyio_cleanup_probe.py",
     "diagnostics/probes/anyio_cleanup_trace.py",
     ".agent/cleanup-information.md",
+    "diagnostics/saved_caller_checkpoint.py",
 )
 
 
@@ -63,14 +64,15 @@ def controls(packet_path: Path, packet_hash: str, env_file: Path, result_root: P
     remaining = packet["checkpoint"]["remaining_budget"]["cost"]["remaining"]
     require(remaining > 0, "no remaining checkpoint allowance")
     pricing = pricing_for_model(envelope.model)
+    order = packet["order"] if packet["schema"] == "saved-caller-checkpoint-v1" else list(ORDER)
     plan = {
         "schema": "checkpoint-live-comparison-v1", "official": False,
         "packet": str(packet_path.resolve()), "packet_hash": packet_hash,
         "task": str(source.public_path.resolve()), "model": envelope.model,
         "reasoning_effort": envelope.reasoning_effort,
         "env_file": str(env_file), "credential_path_hash": envelope.credential_file_path_hash,
-        "result_root": str(result_root), "order": list(ORDER), "repeat": len(ORDER),
-        "row_new_cap_nanos": remaining, "new_cap_nanos": len(ORDER) * remaining,
+        "result_root": str(result_root), "order": order, "repeat": len(order),
+        "row_new_cap_nanos": remaining, "new_cap_nanos": len(order) * remaining,
         "historical_spent_nanos": packet["checkpoint"]["remaining_budget"]["cost"][
             "settled_usage"],
         "original_row_cap_nanos": envelope.max_cost_nanos,
@@ -90,6 +92,10 @@ def controls(packet_path: Path, packet_hash: str, env_file: Path, result_root: P
     if packet["schema"] == "cleanup-information-checkpoint-v1":
         require(caller_evidence is None, "cleanup packet already binds its observation")
         plan["intervention"] = "cleanup-information-first-input-only"
+        plan["supplement_hash"] = packet["supplement_hash"]
+    if packet["schema"] == "saved-caller-checkpoint-v1":
+        require(caller_evidence is None, "saved packet already binds its observation")
+        plan["intervention"] = "saved-caller-information-first-input-only"
         plan["supplement_hash"] = packet["supplement_hash"]
     if caller_evidence is not None:
         supplement, binding = caller_information.load(
@@ -259,7 +265,7 @@ def run_branch(branch, group, journal, store, label):
             "historical_spent_nanos": branch.initial_spent_nanos, "stop_remaining": stop}
 
 
-def collect(manifest_path: Path, approved_hash: str, approved_cap_usd: Decimal):
+def collect(manifest_path: Path, approved_hash: str, approved_cap_usd: Decimal, *, after_row=None):
     raw = manifest_path.read_bytes()
     require(sha256_bytes(raw) == approved_hash, "approved manifest hash differs")
     plan = json.loads(raw)
@@ -281,7 +287,7 @@ def collect(manifest_path: Path, approved_hash: str, approved_cap_usd: Decimal):
     journal = DevJournal(root, "run_dev_checkpointcomparison")
     store = ArtifactStore(root / "artifacts")
     group = DevCostLedger(approved_cap_usd, pricing_for_model(plan["model"]))
-    rows = [{"row": label, "status": "NOT_RUN"} for label in ORDER]
+    rows = [{"row": label, "status": "NOT_RUN"} for label in plan["order"]]
     billing_known, stop_reason = True, None
     with journal.execution_lock():
         journal.append("comparison_authorized", {"manifest_hash": approved_hash,
@@ -290,11 +296,11 @@ def collect(manifest_path: Path, approved_hash: str, approved_cap_usd: Decimal):
         journal.append("environment_checked", preflight)
         if preflight["status"] != "READY":
             stop_reason = "PREFLIGHT_FAILED"
-        for index, label in enumerate(ORDER):
+        for index, label in enumerate(plan["order"]):
             if stop_reason is not None:
                 break
             journal.append("row_started", {"row": label})
-            branch = None
+            branch, row = None, None
             try:
                 branch = continuation.restore(packet_path, plan["packet_hash"], root / label,
                                               label[0], mode="live-checkpoint",
@@ -303,10 +309,12 @@ def collect(manifest_path: Path, approved_hash: str, approved_cap_usd: Decimal):
                 require(runner._credential_file_path_hash(branch.request)
                         == branch.envelope.credential_file_path_hash, "credential path changed")
                 row = run_branch(branch, group, journal, store, label)
+                if after_row is not None:
+                    after_row(branch, row)
             except Exception as exc:
                 # The branch journal, not a guessed zero charge, determines billing certainty.
                 known = branch is None or runner._provider_usage_failure(branch.journal) is None
-                row = {"row": label, "status": "COLLECTOR_FAILED",
+                row = {**(row or {}), "row": label, "status": "COLLECTOR_FAILED",
                        "error_type": type(exc).__name__, "billing_known": known,
                        "stop_remaining": True}
             rows[index] = row

@@ -35,6 +35,9 @@ from patchloop.util import canonical_json, sha256_json
 
 
 def checkpoint_backend(path):
+    if json.loads(path.read_bytes())["schema"] == "saved-caller-checkpoint-v1":
+        from diagnostics import saved_caller_checkpoint
+        return saved_caller_checkpoint
     if json.loads(path.read_bytes())["schema"] == "post-check-extension-v1":
         from diagnostics import post_check_extension
         return post_check_extension
@@ -79,6 +82,28 @@ def inherited_reads(branch):
 
     with patch.object(ArtifactStore, "read_bytes", read):
         yield
+
+
+def restored_request(source, envelope, output):
+    """Restore envelope-bound options, including non-default reserve/retention policy."""
+    return DevRunRequest(
+        provider="openai", task=source.public_path, model=envelope.model,
+        reasoning_effort=envelope.reasoning_effort,
+        max_output_tokens=envelope.max_output_tokens,
+        env_file=output / "NO_CREDENTIAL_FILE",
+        max_cost_usd=Decimal(envelope.max_cost_nanos) / 10**9,
+        state_root=output, resume_run_id=source.run_id, limits=envelope.limits,
+        prepared_source=Path(envelope.prepared_source_path)
+        if envelope.prepared_source_path else None,
+        prepared_probe_dependencies=Path(envelope.prepared_probe_dependencies_path)
+        if envelope.prepared_probe_dependencies_path else None,
+        enable_probes=envelope.probe_image_digest is not None,
+        **{k: getattr(envelope, k) for k in (
+            "repair_recheck", "repair_inspection_policy", "planning_policy", "probe_policy",
+            "context_policy", "segment_boundary_policy", "completion_cost_policy",
+            "retained_source_chars", "evaluation_reserve_seconds", "agent_policy", "probe_recheck",
+        )},
+    )
 
 
 def restore(
@@ -130,6 +155,8 @@ def restore(
             require(len(mutations) == 1, "review restoration supports one historical mutation")
         loaded = SimpleNamespace(request=selected_request, store=ForkStore(source.root, inherited),
                                  mutation=mutations[0], mutations=mutations)
+    elif packet["schema"] == "saved-caller-checkpoint-v1":
+        loaded = backend.load(source, packet["checkpoint"]["source_turn_id"])
     else:
         loaded = backend.load(source)
     historical = DevJournal(source.root, source.run_id)
@@ -196,6 +223,8 @@ def restore(
         "intervention": ("post-check-time-extension" if extension_fork else
                          "expectation-review" if review_fork else
                          "post-edit-budget" if budget_fork else
+                         "saved-caller-information" if packet["schema"]
+                         == "saved-caller-checkpoint-v1" else
                          "cleanup-information" if backend is not checkpoint else
                          "caller-information" if supplemental_observation else "mutation-advice"),
         "supplement_hash": sha256_json(supplemental_observation)
@@ -238,37 +267,7 @@ def restore(
         else:
             backend.restore_candidate(workspace, loaded.mutation)
     runner._validate_resumed_workspace(workspace, journal)
-    request = DevRunRequest(
-        provider="openai",
-        task=source.public_path,
-        model=envelope.model,
-        reasoning_effort=envelope.reasoning_effort,
-        max_output_tokens=envelope.max_output_tokens,
-        env_file=output / "NO_CREDENTIAL_FILE",
-        max_cost_usd=Decimal(envelope.max_cost_nanos) / 10**9,
-        state_root=output,
-        resume_run_id=source.run_id,
-        limits=envelope.limits,
-        prepared_source=manager.prepared_source,
-        prepared_probe_dependencies=(
-            Path(envelope.prepared_probe_dependencies_path)
-            if envelope.prepared_probe_dependencies_path
-            else None
-        ),
-        enable_probes=envelope.probe_image_digest is not None,
-        **{
-            k: getattr(envelope, k)
-            for k in (
-                "repair_recheck",
-                "repair_inspection_policy",
-                "planning_policy",
-                "probe_policy",
-                "context_policy",
-                "segment_boundary_policy",
-                "completion_cost_policy",
-            )
-        },
-    )
+    request = restored_request(source, envelope, output)
     pricing = pricing_for_model(envelope.model)
     if review_fork:
         frozen_budget = json.loads(loaded.request["input"][-1]["content"])["state"][
@@ -476,6 +475,9 @@ def first_input(branch):
             view["state"]["remaining_budget"]["active_wall_time_seconds"] = old["state"][
                 "remaining_budget"
             ]["active_wall_time_seconds"]
+            if "total_active_wall_time_seconds" in old["state"]["remaining_budget"]:
+                view["state"]["remaining_budget"]["total_active_wall_time_seconds"] = old[
+                    "state"]["remaining_budget"]["total_active_wall_time_seconds"]
             normalized["input"][-1]["content"] = canonical_json(view)
             require(
                 normalized == branch.original, "restored first state differs beyond elapsed time"

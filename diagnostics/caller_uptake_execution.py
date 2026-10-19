@@ -202,7 +202,7 @@ def assessment_deadline(started, *, clock=monotonic):
     return ExecutionDeadline.from_remaining(remaining)
 
 
-def native_assessment(root, req, patch, entry, deadline):
+def native_assessment(root, req, patch, entry, deadline, *, patch_scope="source-only"):
     """Existing pinned native harness, within the remainder shared with public probes."""
     root.mkdir(parents=True)
     save(root, "prediction.jsonl", {"instance_id": entry["instance_id"],
@@ -221,7 +221,8 @@ def native_assessment(root, req, patch, entry, deadline):
             and controls[0]["missing_count"] == 0 and type(controls[0]["resolved"]) is bool,
             "native result or cleanup uncertain")
     status = "PASS" if controls[0]["resolved"] else "FAIL"
-    save(root, "receipt.json", {"status": status, "source_only_diff": sha256_bytes(patch),
+    save(root, "receipt.json", {"status": status,
+        "submitted_diff" if patch_scope == "submitted" else "source_only_diff": sha256_bytes(patch),
         "empty_source_projection": patch == b"",
         "cleanup_confirmed": True, "files": [panel.file_ref(p)
             for p in sorted(root.rglob("*")) if p.is_file()]})
@@ -243,7 +244,8 @@ def assess(root, digest):
     return _assess_rows(root, root, packet, journal, seal)
 
 
-def _assess_rows(source_root, output_root, packet, journal, seal, *, metadata=None):
+def _assess_rows(source_root, output_root, packet, journal, seal, *, metadata=None,
+                 order=None, aggregate=None, native_full_patch=False):
     """Read sealed submissions from source_root; write only to the assessment root."""
     rows = []
     panel.read_ref(packet["native_input"]["rows"])
@@ -267,6 +269,8 @@ def _assess_rows(source_root, output_root, packet, journal, seal, *, metadata=No
                 "safety": (run.get("evaluator") or {}).get("safety_state", "NOT_RUN"),
                 "native": "NOT_RUN", "missing": "NOT_RUN", "present": "NOT_RUN"}
             rows.append(row)
+            if "axes" in seal:
+                row["audit"] = seal["axes"][label]
             if not patch_hash:
                 continue
             started = monotonic()
@@ -319,9 +323,13 @@ def _assess_rows(source_root, output_root, packet, journal, seal, *, metadata=No
                     "receipt": panel.file_ref(folder / (case + "-receipt.json"))})
                 require(row[case] != "ERROR", "caller assessment uncertain; stop remaining")
             row["caller_diff"] = row["source_only_diff"]
-            row["native"] = native_assessment(folder / "native", req, source_patch, entry,
-                                               assessment_deadline(started))
-            row["native_diff"] = row["source_only_diff"]
+            native_patch = diff.patch.encode() if native_full_patch else source_patch
+            require(not native_full_patch or sha256_bytes(native_patch) == patch_hash,
+                    "full native submission changed")
+            row["native"] = native_assessment(folder / "native", req, native_patch, entry,
+                assessment_deadline(started), **({"patch_scope": "submitted"}
+                                                if native_full_patch else {}))
+            row["native_diff"] = sha256_bytes(native_patch)
             row["native_receipt"] = panel.file_ref(folder / "native/receipt.json")
             row["assessment_seconds"] = monotonic() - started
             save(folder, "row.json", row)
@@ -331,7 +339,7 @@ def _assess_rows(source_root, output_root, packet, journal, seal, *, metadata=No
     except BaseException as exc:
         journal.append("assessment_stopped", {"error_type": type(exc).__name__, "rows": rows})
         raise
-    result = grading.aggregate(rows, panel.ORDER)
+    result = (aggregate or grading.aggregate)(rows, panel.ORDER if order is None else order)
     if seal["exposure"]:
         result.update(favorable_local_signal=False, audit_grade_exposure=seal["exposure"])
     result.update(metadata or {})
