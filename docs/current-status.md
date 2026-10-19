@@ -41,7 +41,7 @@ Batch stop fixed; no paid rerun.
 frozen grades unchanged.
 
 [E/J](history/2026-10-18-repair-mechanism-results.md): closed, 2/3 per arm; no gain.
-[Caller](history/2026-10-19-caller-saved-assessment.md): 10 native FAIL; A4 caller ERROR.
+[Caller](history/2026-10-19-caller-diagnosis.md): access delivered; caller scope missed.
 [Duplicate fix](../tests/test_additive_duplicates.py): local only.
 [Timeout fix](history/2026-10-17-capture-timeout-validation.md): validated fixture.
 
