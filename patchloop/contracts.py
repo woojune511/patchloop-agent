@@ -333,6 +333,9 @@ class ProbeDependencyIdentity(StrictModel):
 
 
 class RunManifest(StrictModel):
+    history_search_policy: Literal["none", "public-v1"] = Field(
+        default="none", exclude_if=lambda value: value == "none",
+    )
     schema_version: Literal["dev-manifest-v1"] = "dev-manifest-v1"
     official: Literal[False] = False
     runtime_id: Literal["dev-head"] = "dev-head"

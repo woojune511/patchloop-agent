@@ -45,7 +45,7 @@ a different runtime.
 ## Loop and mutation contract
 
 Only mutable `dev-head` runs, always `official=false`.
-Public gates are `needs_mutation`, `needs_visible_checks`, and `ready_to_submit`.
+Gates: `needs_mutation`, `needs_visible_checks`, and `ready_to_submit`.
 Gates and resource horizons expose registered tools, never unrestricted shell.
 
 `replace_text` uses `TextReplacementIntent` and `CausalRevision`. Project public
@@ -53,13 +53,14 @@ fields explicitly; preserve required/null rules, keyword order, recovery default
 and absent-versus-explicit serialization. Keep recovery annotations unadvertised
 and cross-field/anchor/scope validation intact.
 
-A response contains 1–4 parallel `read_file`/`search_files` calls, or exactly one
-`replace_text`, `run_check`, enabled `run_tests`/`run_probe`, `finish_task`, or `stop_task`.
+Batch 1–4 `read_file`/`search_files` calls; other tools run singly.
+Opt-in [history search](../docs/history/2026-10-19-run-history-search.md): two
+historical records, optional headroom, no source/PASS credit.
 A bounded public `turn_decision` accompanies each default-policy call. Opt-in
 `--agent-policy thin --planning-policy none` replaces it with root nullable
 `memory_update`; see [contract](thin-policy-reference.md). Execution gates stay shared.
-Notes/plans are unverified working data, not reasoning transcripts.
-Allow one consecutive protocol/incomplete correction; valid batches reset it.
+Notes/plans are unverified; never reasoning transcripts.
+One consecutive protocol/incomplete correction; reset on valid batches.
 
 Reads return at most 400 lines. Searches use literal queries, rooted component-aware
 globs and one tracked-path enumeration per uncached call. Edits require delivered

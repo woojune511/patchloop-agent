@@ -142,6 +142,10 @@ def dev(
         Literal["result-or-size-v1", "size-only-v1"],
         typer.Option("--segment-boundary-policy", help="Segmented-v1 transition condition."),
     ] = "result-or-size-v1",
+    history_search_policy: Annotated[
+        Literal["none", "public-v1"],
+        typer.Option("--history-search", help="Search already delivered public run evidence."),
+    ] = "none",
     completion_cost_policy: Annotated[
         Literal["per-call-v1", "completion-reserve-v1"],
         typer.Option("--completion-cost-policy",
@@ -196,6 +200,7 @@ def dev(
                 context_policy=context_policy,
                 retained_source_chars=retained_source_chars,
                 segment_boundary_policy=segment_boundary_policy,
+                history_search_policy=history_search_policy,
                 completion_cost_policy=completion_cost_policy,
                 planning_policy=planning_policy,
                 agent_policy=agent_policy,

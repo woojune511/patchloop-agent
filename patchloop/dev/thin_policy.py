@@ -85,7 +85,9 @@ def contract() -> dict:
     }
 
 
-def system_prompt(agent_policy: str = "current", planning_policy: str = "none") -> str:
+def system_prompt(agent_policy: str = "current", planning_policy: str = "none",
+                  history_search_policy: str = "none") -> str:
+    from patchloop.dev import history_search
     from patchloop.dev.model import DEV_SYSTEM_PROMPT
     from patchloop.dev.working_plan import instructions
 
@@ -95,8 +97,13 @@ def system_prompt(agent_policy: str = "current", planning_policy: str = "none") 
         return SYSTEM_PROMPT
     if agent_policy != "current":
         raise ValueError("unknown agent policy")
-    return (DEV_SYSTEM_PROMPT + "\n\n" + instructions(planning_policy)
-            if planning_policy != "none" else DEV_SYSTEM_PROMPT)
+    prompt = (DEV_SYSTEM_PROMPT + "\n\n" + instructions(planning_policy)
+              if planning_policy != "none" else DEV_SYSTEM_PROMPT)
+    if history_search_policy != "none":
+        if history_search_policy != history_search.POLICY:
+            raise ValueError("unknown history search policy")
+        prompt += "\n\n" + history_search.INSTRUCTIONS
+    return prompt
 
 
 def project_state(state: dict, agent_policy: str = "current") -> dict:

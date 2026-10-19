@@ -1,6 +1,6 @@
 # History
 
-- [Context](2026-10-19-size-only-replay.md).
+- [Search](2026-10-19-run-history-search.md).
 - [Dev20](2026-10-16-mini-swe-dev20-results.md).
 - [Completion](2026-10-16-mini-swe-completion-results.md).
 - [PatchLoop](2026-10-16-patchloop-mini-dev20-results.md).

@@ -67,8 +67,8 @@ L003/L039 cycle, regression PASS overinterpreted despite retained notes/tools.
 [Counterexample](history/2026-10-07-counterexample-results.md): both FAIL despite
 B's retained current failure; USD 0.04019910. Keep 24k; no adoption or paid follow-up.
 
-[Size-only replay](history/2026-10-19-size-only-replay.md): more raw evidence;
-larger inputs shorten affordable continuation. Keep baseline; no paid run.
+[History search](history/2026-10-19-run-history-search.md): offline 1/28 recovery.
+Default off; full suite 4 FAIL, isolated 4 PASS. No paid run.
 
 See [panel contract](../.agent/current-dev20.md) and
 [priority fixes](history/2026-10-06-agent-priority-fixes.md). Prior panels closed.

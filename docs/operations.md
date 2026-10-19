@@ -140,6 +140,7 @@ The selected baseline is a working configuration, not a change to CLI defaults:
 | Probes / probe policy | Disabled / `none` |
 | Repair recheck / inspection | Disabled / `protected-v1` |
 | Completion cost | `per-call-v1` |
+| History search | `none` |
 | Repeat | 1, maximum 6 |
 | Automatic compaction | Disabled |
 
@@ -147,6 +148,14 @@ Per-run defaults: 40 model calls, 100 tool actions, four accepted mutations and
 1,800 active seconds. Output includes reasoning (128..128,000 desired tokens);
 cost admission can lower it. Full GPT-5.4 requires `segmented-v1`.
 See [CLI options](../patchloop/cli.py) and [request contracts](../patchloop/dev/contracts.py).
+
+`--history-search public-v1` requires `segmented-v1` and the current agent policy.
+It offers a singleton search of already delivered public evidence from this run,
+including earlier segments. At most two historical records fit in 24,000 result
+characters; a returned ID can be fetched singly with another counted action.
+It uses optional budget and grants no current source/check credit. Boundaries and
+run/input limits stay unchanged. [Offline evidence](history/2026-10-19-run-history-search.md)
+does not establish model uptake or better repairs; the selected baseline keeps it off.
 
 Before dispatch:
 

@@ -11,7 +11,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, model_serializer, model_validator
 
 from patchloop.contracts import Artifact, ProbeDependencyIdentity
-from patchloop.dev import check_review, cost, probe_cases, segments
+from patchloop.dev import check_review, cost, history_search, probe_cases, segments
 from patchloop.dev.context import RETAINED_SOURCE_CHARS, RetainedSourceChars
 from patchloop.util import sha256_json
 
@@ -25,8 +25,15 @@ DEV_SINGLE_ACTION_TOOLS = frozenset({
 
 def dev_tool_surface_hash(
     *, planning_policy: str = "none", probe_policy: str = "none", probe_recheck: str = "none",
-    agent_policy: str = "current",
+    agent_policy: str = "current", history_search_policy: history_search.Policy = "none",
 ) -> str:
+    if history_search_policy != "none":
+        if history_search_policy != history_search.POLICY:
+            raise ValueError("unknown history search policy")
+        return sha256_json({"base_tool_surface_hash": dev_tool_surface_hash(
+            planning_policy=planning_policy, probe_policy=probe_policy,
+            probe_recheck=probe_recheck, agent_policy=agent_policy),
+            "history_search": history_search.contract()})
     if agent_policy not in {"current", "thin"}:
         raise ValueError("unknown agent policy")
     if agent_policy == "thin":
@@ -450,6 +457,9 @@ class RunRequest(StrictModel):
     )
     repair_recheck: bool = False
     repair_inspection_policy: Literal["protected-v1", "current-failure-v1"] = "protected-v1"
+    history_search_policy: history_search.Policy = Field(
+        default="none", exclude_if=lambda value: value == "none",
+    )
     agent_policy: Literal["current", "thin"] = Field(
         default="current", exclude_if=lambda value: value == "current",
     )
@@ -470,6 +480,10 @@ class RunRequest(StrictModel):
 
     @model_validator(mode="after")
     def provider_options_match(self) -> RunRequest:
+        if self.history_search_policy != "none" and (
+            self.context_policy != segments.POLICY or self.agent_policy != "current"
+        ):
+            raise ValueError("--history-search public-v1 requires segmented-v1 and current policy")
         if self.agent_policy == "thin" and self.planning_policy != "none":
             raise ValueError("--agent-policy thin requires --planning-policy none")
         if (self.completion_cost_policy != cost.DEFAULT_COMPLETION_COST_POLICY
@@ -561,6 +575,9 @@ class RunEnvelope(StrictModel):
     repair_inspection_policy: Literal["protected-v1", "current-failure-v1"] = Field(
         default="protected-v1", exclude_if=lambda value: value == "protected-v1",
     )
+    history_search_policy: history_search.Policy = Field(
+        default="none", exclude_if=lambda value: value == "none",
+    )
     agent_policy: Literal["current", "thin"] = Field(
         default="current", exclude_if=lambda value: value == "current",
     )
@@ -608,6 +625,10 @@ class RunEnvelope(StrictModel):
 
     @model_validator(mode="after")
     def provider_boundary_is_exact(self) -> RunEnvelope:
+        if self.history_search_policy != "none" and (
+            self.context_policy != segments.POLICY or self.agent_policy != "current"
+        ):
+            raise ValueError("history search requires segmented-v1 and current policy")
         if self.agent_policy == "thin" and self.planning_policy != "none":
             raise ValueError("thin policy forbids planning state")
         if self.completion_cost_policy == cost.COMPLETION_RESERVE_POLICY:

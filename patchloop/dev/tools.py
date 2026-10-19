@@ -15,11 +15,13 @@ from typing import Any
 from pydantic import ValidationError
 
 from patchloop import probe_callers
+from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import PublicTask, RegisteredCheck
 from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
 from patchloop.dev import (
     behavior_cases,
     evidence_focus,
+    history_search,
     probe_cases,
     probe_replay,
     requirement_reference,
@@ -89,7 +91,7 @@ from patchloop.verifier.policy import _is_test_path, validate_test_addition, ver
 
 READ_TOOLS = DEV_READ_TOOLS
 SINGLE_ACTION_TOOLS = DEV_SINGLE_ACTION_TOOLS
-ALL_DEV_TOOLS = READ_TOOLS | SINGLE_ACTION_TOOLS
+ALL_DEV_TOOLS = READ_TOOLS | SINGLE_ACTION_TOOLS | {history_search.TOOL}
 _MAX_MUTATION_HUNK_CHARS = 24_000
 _MAX_NOTE_SOURCE_BODY_CHARS = 24_000
 _PATCH_ERROR_LINE = re.compile(r"corrupt patch at (?:<stdin>:|line )(\d+)")
@@ -228,6 +230,7 @@ def dev_tool_schemas(
     probe_recheck_policy: str = "none",
     probe_environment: dict[str, Any] | None = None,
     agent_policy: str = "current",
+    history_search_policy: history_search.Policy = "none",
 ) -> list[dict[str, Any]]:
     if agent_policy not in {"current", "thin"}:
         raise ContractError("unknown agent policy")
@@ -493,7 +496,12 @@ def dev_tool_schemas(
                 "required": ["suite_id", "targets"],
             },
         })
+    if history_search_policy != "none":
+        if history_search_policy != history_search.POLICY:
+            raise ContractError("unknown history search policy")
+        schemas.append(history_search.schema())
     decision_modes = {
+        history_search.TOOL: "inspect",
         "search_files": "inspect",
         "read_file": "inspect",
         "run_check": "verify",
@@ -571,6 +579,7 @@ def validate_tool_batch(
         if any(call.turn_decision is None for call in calls):
             raise ContractError("every tool call requires one bounded public turn_decision")
     expected_modes = {
+        history_search.TOOL: "inspect",
         "search_files": "inspect",
         "read_file": "inspect",
         "run_check": "verify",
@@ -595,7 +604,7 @@ def validate_tool_batch(
         if len(calls) > max_parallel_reads:
             raise ContractError(f"a read batch may contain at most {max_parallel_reads} calls")
         return "parallel_read"
-    if len(calls) == 1 and names[0] in SINGLE_ACTION_TOOLS:
+    if len(calls) == 1 and names[0] in SINGLE_ACTION_TOOLS | {history_search.TOOL}:
         return "single_action"
     raise ContractError(
         "a response must contain only up to four reads/searches or exactly one action"
@@ -616,6 +625,7 @@ class DevToolGateway:
         probe_policy: str = "none",
         retained_source_chars: RetainedSourceChars = RETAINED_SOURCE_CHARS,
         agent_policy: str = "current",
+        history_search_policy: history_search.Policy = "none",
     ) -> None:
         self.workspace = workspace.resolve()
         self.public_task = public_task
@@ -626,6 +636,10 @@ class DevToolGateway:
         if agent_policy not in {"current", "thin"}:
             raise ContractError("unknown agent policy")
         self.agent_policy = agent_policy
+        if history_search_policy not in {"none", history_search.POLICY}:
+            raise ContractError("unknown history search policy")
+        self.history_search_policy = history_search_policy
+        self._public_history = history_search.PublicHistory()
         self.deadline = deadline
         self.probe_sandbox = probe_sandbox
         if probe_policy not in {"none", *probe_cases.POLICIES}:
@@ -2728,6 +2742,22 @@ class DevToolGateway:
                         raise RecoveryError("replayed probe source differs from its bound program",
                                             details=output)
                     output["replayed_from"] = prepared_probe["replayed_from"]
+                evidence_cache_hit = False
+            elif call.name == history_search.TOOL:
+                if self.history_search_policy != history_search.POLICY:
+                    raise ContractError("history search is disabled")
+                events = self.journal.events()
+                cutoff = next(e["sequence"] for e in events
+                              if e["event_type"] == "action_started"
+                              and e["payload"]["action_id"] == call.action_id)
+                self._public_history.sync(
+                    events, ArtifactStore(self.journal.root / "artifacts"),
+                    before_sequence=cutoff,
+                    check_deadline=self.deadline.check if self.deadline else lambda: None,
+                )
+                output = self._public_history.search(
+                    **call.arguments, current_diff_hash=baseline,
+                )
                 evidence_cache_hit = False
             elif call.name in READ_TOOLS:
                 if self.deadline is not None:

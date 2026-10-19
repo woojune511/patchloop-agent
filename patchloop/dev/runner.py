@@ -30,6 +30,7 @@ from patchloop.contracts import Artifact, ModelConfig, RunManifest, VerdictState
 from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
 from patchloop.dev import (
     evidence_focus,
+    history_search,
     native_compaction,
     probe_recheck,
     segments,
@@ -264,6 +265,8 @@ def _model_hash(request: RunRequest, pricing: ModelPricing | None) -> str:
             "model": request.model,
             "reasoning_effort": request.reasoning_effort,
             "context_policy": request.context_policy,
+            **({"history_search_contract": history_search.contract()}
+               if request.history_search_policy != "none" else {}),
             **({"agent_policy_contract": thin_policy.contract()}
                if request.agent_policy == "thin" else {}),
             **({"retained_source_chars": request.retained_source_chars}
@@ -402,6 +405,7 @@ def _manifest(
         planning_policy=request.planning_policy,
         probe_policy=request.probe_policy,
         probe_recheck=request.probe_recheck,
+        history_search_policy=request.history_search_policy,
         task_id=package.public.task_id,
         task_version=package.public.task_version,
         base_commit=package.public.repository.base_commit,
@@ -411,6 +415,7 @@ def _manifest(
         runtime_content_hash=runtime_hash,
         model_hash=model_hash,
         tool_surface_hash=dev_tool_surface_hash(
+            history_search_policy=request.history_search_policy,
             agent_policy=request.agent_policy,
             planning_policy=request.planning_policy, probe_policy=request.probe_policy,
             probe_recheck=request.probe_recheck,
@@ -868,6 +873,12 @@ def _tool_policy(
             allowed.add("finish_task")
         if inspection_allowed:
             allowed.update({"read_file", "search_files"})
+            # Historical evidence cannot satisfy the reserved current-anchor read
+            # or consume a failed-check repair-read credit. Fund it as optional work.
+            if (getattr(gateway, "history_search_policy", "none") == history_search.POLICY
+                    and remaining_model_calls - 1 >= budget.protected
+                    and remaining_tool_actions - 1 >= budget.protected_tool_actions):
+                allowed.add(history_search.TOOL)
         if mutation_allowed:
             allowed.add("replace_text")
         # On a baseline that already requires repair, a diagnostic check is
@@ -996,7 +1007,7 @@ def _tool_policy(
                 optional_mutation_protected_calls
                 if mutation_protected_completion_possible else optional_mutation_completion_calls
             ) - 1)
-        if {"run_probe", "run_tests"} & allowed:
+        if {"run_probe", "run_tests", history_search.TOOL} & allowed:
             successors.append(budget.protected)
         if "run_check" in allowed:
             successors.append(check_successor_reserve)
@@ -1939,6 +1950,7 @@ def _build_model_input(
     agent_policy: str = "current",
     force_segment_reason: str | None = None,
     segment_boundary_policy: segments.BoundaryPolicy = segments.DEFAULT_BOUNDARY_POLICY,
+    history_search_policy: history_search.Policy = "none",
 ) -> list[dict[str, Any]]:
     """Append the latest exchange to the exact saved active-episode history."""
     events = journal.events()
@@ -1951,6 +1963,7 @@ def _build_model_input(
                 agent_policy=agent_policy,
                 force_reason=force_segment_reason,
                 boundary_policy=segment_boundary_policy,
+                history_search_policy=history_search_policy,
             )
         except (OSError, KeyError, TypeError, ValueError, ContractError, RecoveryError) as exc:
             raise _ProviderContinuationError("segmented public handoff is invalid") from exc
@@ -2064,6 +2077,7 @@ def _build_segmented_model_input(
     *, journal, store, context, latest_results, planning_policy, force_reason=None,
     boundary_policy: segments.BoundaryPolicy = segments.DEFAULT_BOUNDARY_POLICY,
     agent_policy="current",
+    history_search_policy: history_search.Policy = "none",
 ):
     """A public, explicitly lossy handoff; never splice or fabricate native history."""
     events = journal.events()
@@ -2085,7 +2099,7 @@ def _build_segmented_model_input(
         journal=journal, artifact_store=store, context=context, latest_tool_results=latest_results,
     )
     reason = force_reason or segments.boundary_reason(journal, binding)
-    prompt = thin_policy.system_prompt(agent_policy, planning_policy)
+    prompt = thin_policy.system_prompt(agent_policy, planning_policy, history_search_policy)
     replace_pending = force_reason == "omit_optional_evidence"
     if replace_pending:
         if not binding or not segments.is_fresh(journal, binding):
@@ -2674,7 +2688,7 @@ def _batch_attempt_card(
             raise RecoveryError("completed tool batch is missing a public action decision")
         decisions.append(call.turn_decision.model_dump(mode="json")
                          if call.turn_decision is not None else None)
-    if all(call.name in {"read_file", "search_files"} for call in calls):
+    if all(call.name in {"read_file", "search_files", history_search.TOOL} for call in calls):
         actions: list[dict[str, Any]] = []
         for call, result, decision in zip(calls, results, decisions, strict=True):
             spans = result.output.get("spans", [])
@@ -3019,6 +3033,7 @@ def _run_envelope(
         sandbox_identity_hash=_sandbox_identity_hash(request, package, probe_dependencies),
         repair_recheck=request.repair_recheck,
         probe_recheck=request.probe_recheck,
+        history_search_policy=request.history_search_policy,
         repair_inspection_policy=request.repair_inspection_policy,
         planning_policy=request.planning_policy,
         agent_policy=request.agent_policy,
@@ -3110,6 +3125,12 @@ def _update_inspection_counters(
     results: list[DevToolResult],
     gateway: DevToolGateway | None = None,
 ) -> None:
+    if len(results) == 1 and results[0].tool == history_search.TOOL:
+        counters.inspection_turns_at_diff += 1
+        # Retrieval does not acquire a current source anchor or spend repair-read
+        # credit. Nor does a repeated search reset the no-new-source warning.
+        counters.consecutive_no_evidence_gain_turns += 1
+        return
     if results and all(result.tool in {"read_file", "search_files"} for result in results):
         counters.inspection_turns_at_diff += 1
         if counters.failed_check_pending:
@@ -3707,6 +3728,8 @@ def _run_one(
                     **({"repair_inspection_policy": request.repair_inspection_policy}
                        if request.repair_inspection_policy != "protected-v1" else {}),
                     "context_policy": request.context_policy,
+                    **({"history_search_policy": request.history_search_policy}
+                       if request.history_search_policy != "none" else {}),
                     **({"retained_source_chars": request.retained_source_chars}
                        if request.retained_source_chars != 24_000 else {}),
                     **({"evaluation_reserve_seconds": request.evaluation_reserve_seconds}
@@ -4144,6 +4167,7 @@ def _run_one_active(
         probe_policy=request.probe_policy,
         retained_source_chars=request.retained_source_chars,
         agent_policy=request.agent_policy,
+        history_search_policy=request.history_search_policy,
     )
     correction: dict[str, Any] | None = _pending_protocol_correction(journal)
     latest_tool_results = journal.latest_tool_batch_results() if resuming else []
@@ -4517,6 +4541,7 @@ def _run_one_active(
                 planning_policy=request.planning_policy,
                 agent_policy=request.agent_policy,
                 segment_boundary_policy=request.segment_boundary_policy,
+                history_search_policy=request.history_search_policy,
             )
             model_input_text = canonical_json(model_input)
             model_input_artifact = artifact_store.put_text(
@@ -4546,6 +4571,7 @@ def _run_one_active(
             probe_policy=request.probe_policy,
             probe_recheck_policy=request.probe_recheck,
             probe_environment=getattr(gateway.probe_sandbox, "environment", None),
+            history_search_policy=request.history_search_policy,
         )
         if isinstance(request, RepairRunRequest):
             for schema in schemas:
@@ -4622,7 +4648,8 @@ def _run_one_active(
             try:
                 request_payload = (openai_adapter.request_payload(
                     model_input, schemas, system_prompt=thin_policy.system_prompt(
-                        request.agent_policy, request.planning_policy),
+                        request.agent_policy, request.planning_policy,
+                        request.history_search_policy),
                 ) if openai_adapter is not None else {
                     "model": request.model, "input": model_input, "tools": schemas,
                     "max_output_tokens": request.max_output_tokens,
@@ -4643,6 +4670,7 @@ def _run_one_active(
                                 planning_policy=request.planning_policy,
                                 agent_policy=request.agent_policy,
                                 segment_boundary_policy=request.segment_boundary_policy,
+                                history_search_policy=request.history_search_policy,
                                 force_segment_reason="omit_optional_evidence",
                             )
                             continue
@@ -4656,6 +4684,7 @@ def _run_one_active(
                         planning_policy=request.planning_policy,
                         agent_policy=request.agent_policy,
                         segment_boundary_policy=request.segment_boundary_policy,
+                        history_search_policy=request.history_search_policy,
                         force_segment_reason="+".join(reasons),
                     )
                     continue
@@ -4671,7 +4700,8 @@ def _run_one_active(
             try:
                 request_payload = openai_adapter.request_payload(
                     model_input, schemas, system_prompt=thin_policy.system_prompt(
-                        request.agent_policy, request.planning_policy),
+                        request.agent_policy, request.planning_policy,
+                        request.history_search_policy),
                 )
                 request_payload["parallel_tool_calls"] = True
                 request_payload["tool_choice"] = "required"
@@ -4704,6 +4734,7 @@ def _run_one_active(
                                 planning_policy=request.planning_policy,
                                 agent_policy=request.agent_policy,
                                 segment_boundary_policy=request.segment_boundary_policy,
+                                history_search_policy=request.history_search_policy,
                                 force_segment_reason="omit_optional_evidence",
                             )
                             continue
@@ -4717,6 +4748,7 @@ def _run_one_active(
                         planning_policy=request.planning_policy,
                         agent_policy=request.agent_policy,
                         segment_boundary_policy=request.segment_boundary_policy,
+                        history_search_policy=request.history_search_policy,
                         force_segment_reason="input_tokens",
                     )
                     continue
@@ -4821,7 +4853,8 @@ def _run_one_active(
                                    else openai_adapter.request_payload(
                                        model_input, schemas,
                                        system_prompt=thin_policy.system_prompt(
-                                           request.agent_policy, request.planning_policy),
+                                           request.agent_policy, request.planning_policy,
+                                           request.history_search_policy),
                                    ))
             except Exception as exc:
                 terminal_code = DevTerminal.TASK_FAILED
