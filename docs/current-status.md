@@ -41,7 +41,7 @@ Batch stop fixed; no paid rerun.
 frozen grades unchanged.
 
 [E/J](history/2026-10-18-repair-mechanism-results.md): closed, 2/3 per arm; no gain.
-[Caller](../.agent/plans/caller-evidence-checkpoint.md): local runner; unpaid.
+[Caller](history/2026-10-19-caller-evidence-results.md): closed, A/B 0/6; USD 3.97121625.
 [Duplicate fix](../tests/test_additive_duplicates.py): local only.
 [Timeout fix](history/2026-10-17-capture-timeout-validation.md): validated fixture.
 
