@@ -109,7 +109,20 @@ def pack_result(turn, result, estimator, *, level="central"):
                     - estimator.text_count(canonical_json(turn.wire["tools"])))
     attempts = []
     handoff_mode = "major_result_handoff" if required_boundary else "size_handoff"
-    for mode in ("same_segment", handoff_mode, handoff_mode + "_without_optional"):
+    delivered_result = result
+    for mode in ("same_segment", handoff_mode, handoff_mode + "_without_optional",
+                 handoff_mode + "_history_overflow"):
+        if mode.endswith("_history_overflow"):
+            from patchloop.dev.history_evidence import overflow_result
+
+            reduced = overflow_result(tool_result)
+            if reduced == tool_result:
+                mode = attempts[-1]["mode"]
+                break
+            tool_result = reduced
+            delivered_result = tool_result.output
+            quoted_base = runner._segment_public_base(
+                prompt, state, [tool_result], [call.model_dump(mode="json")])
         if mode == "same_segment":
             previous = copy.deepcopy(turn.wire["input"])
             previous[0]["content"] += "\n\n" + search.INSTRUCTIONS
@@ -153,19 +166,22 @@ def pack_result(turn, result, estimator, *, level="central"):
     lost_outputs = {key: before_outputs[key]
                     for key in before_outputs.keys() - after_outputs.keys()}
     lost_observations = {key: before_obs[key] for key in before_obs.keys() - after_obs.keys()}
-    require(len(canonical_json(result)) <= search.MAX_RESULT_CHARS, "result bound exceeded")
+    require(len(canonical_json(result)) <= search.MAX_ORIGINAL_CHARS, "result bound exceeded")
     require(len(result["records"]) <= search.MAX_RESULTS, "retrieval result bound exceeded")
     serialized = canonical_json(items)
     for record in result["records"]:
         if record["delivery"] == "complete":
             require(sha256_json(record["body"]) == record["record_id"], "partial retrieved body")
-    # The actual tool result must survive public projection without altered content.
-    require(after_outputs[call.action_id]["output"] == result, "retrieval delivery changed")
+    # Only measured fresh-seed overflow may select the bounded delivery view.
+    require(after_outputs[call.action_id]["output"] == delivered_result,
+            "retrieval delivery changed")
     return {"attempts": attempts, "mode": mode, "fits_known_content": not reasons,
             "already_due_result_boundary": required_boundary,
             "input_hash": sha256_json(items), "visible_chars": len(serialized),
             "lost_sources": lost_sources, "lost_outputs": lost_outputs,
             "lost_observations": lost_observations,
+            "history_result_reduced": delivered_result != result,
+            "delivered_result_hash": sha256_json(delivered_result),
             "selected_source_chars_unchanged": turn.state.get("context_projection"),
             "unknowns": ["search_decision_reasoning", "model_output_cost", "new_decisions",
                          "tool_time_and_later_trajectory"]}, items

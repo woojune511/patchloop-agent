@@ -54,8 +54,9 @@ and absent-versus-explicit serialization. Keep recovery annotations unadvertised
 and cross-field/anchor/scope validation intact.
 
 Batch 1–4 `read_file`/`search_files` calls; other tools run singly.
-Opt-in history search: eight candidates/48,000 chars, execution-only ranking,
-whole execution or observed function/span units, exact-ID pages. No source/PASS credit.
+Opt-in history search: eight candidates, execution-only ranking, whole originals
+within actual input limits. Only fresh-seed overflow uses 48k units; ID pages are
+48k too. Authored fields labelled, no source/PASS credit.
 A question may retain search results within its existing two handoff references.
 A bounded public `turn_decision` accompanies each default-policy call. Opt-in
 `--agent-policy thin --planning-policy none` replaces it with root nullable

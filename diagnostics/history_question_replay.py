@@ -24,9 +24,9 @@ from patchloop.util import canonical_json, sha256_bytes, sha256_json
 LEVELS = ("lower", "central", "upper")
 
 
-def validate(result, records):
+def validate(result, records, *, max_chars=48_000):
     """Check original bytes and that a probe never contains only its favorable output."""
-    assert len(result["records"]) <= 8 and len(canonical_json(result)) <= 48_000
+    assert len(result["records"]) <= 8 and len(canonical_json(result)) <= max_chars
     count = 0
     for row in result["records"]:
         body = records[row["record_id"]]["body"]

@@ -1,14 +1,14 @@
 """Question-focused public history delivery; quoted data, never current proof.
 
 The raw index remains the replay baseline. Runtime lookup ranks execution data,
-returns atomic execution/source units, and preserves exact-ID paging of originals.
+returns originals first, and reduces only records that exceed the response bound.
 """
 
 from __future__ import annotations
 
 import copy
 
-from patchloop.dev.history_search import MAX_RESULT_CHARS, PublicHistory, tokens
+from patchloop.dev.history_search import MAX_ORIGINAL_CHARS, MAX_RESULT_CHARS, PublicHistory, tokens
 from patchloop.dev.question_support import observed_functions
 from patchloop.util import canonical_json
 
@@ -116,15 +116,17 @@ def execution_fields(body):
     return {"fields": fields, "source_excerpts": [], "omitted_fields": sorted(omitted)}
 
 
-def source_unit(bundle, query):
-    """One observed function, or a whole observed span; never an arbitrary text cut.
+def source_candidates(bundle, query):
+    """Fallback source units, used only after a complete record fails to fit.
 
     Function names explicitly present in the query outrank incidental body matches.
     Parseable fragments need an observed dedent boundary to count as functions.
-    This is a lexical selection aid, not a resolved call graph or relevance verdict.
+    This is a lexical ordering aid, not a resolved call graph or relevance verdict.
+    There is no per-record function count limit. The caller admits as many units as
+    actually fit in the serialized response, including lower-ranked functions.
     """
     result = copy.deepcopy(bundle)
-    candidates, terms = [], set(tokens(query))
+    candidates, spans_first, terms = [], [], set(tokens(query))
     for pointer in sorted(SOURCE_LISTS):
         spans = result["fields"].get(pointer)
         if not isinstance(spans, list) or not spans:
@@ -155,8 +157,23 @@ def source_unit(bundle, query):
                         "observed_function",
                     )
                 )
-            if not units:
-                units = [(0, len(terms & set(tokens(content))), 0, len(content), "observed_span")]
+            # Even under pressure, first try each complete observed span. Function
+            # slicing is the last fallback, not a reason to discard module context.
+            spans_first.append(
+                (
+                    (max((u[0] for u in units), default=0), len(terms & set(tokens(content)))),
+                    pointer,
+                    index,
+                    span,
+                    {
+                        "pointer": f"{pointer}/{index}/content",
+                        "start": 0,
+                        "end": len(content),
+                        "text": content,
+                        "unit": "observed_span",
+                    },
+                )
+            )
             for named, overlap, start, end, kind in units:
                 candidates.append(
                     (
@@ -173,42 +190,50 @@ def source_unit(bundle, query):
                         },
                     )
                 )
-    if not candidates:
-        return result
-    _, pointer, index, span, excerpt = max(candidates, key=lambda c: c[0])
+    if not spans_first:
+        return result, []
     for source_list in SOURCE_LISTS:
         if source_list in result["fields"] and result["fields"][source_list]:
             del result["fields"][source_list]
             result["omitted_fields"].append(source_list)
-    result["fields"].update(
-        {
+    result["omitted_fields"] = sorted(set(result["omitted_fields"]))
+    units = []
+    ordered = [
+        *sorted(spans_first, key=lambda c: c[0], reverse=True),
+        *sorted(candidates, key=lambda c: c[0], reverse=True),
+    ]
+    for _, pointer, index, span, excerpt in ordered:
+        fields = {
             f"{pointer}/{index}/{key}": copy.deepcopy(value)
             for key, value in span.items()
             if key != "content"
         }
-    )
-    result["source_excerpts"] = [excerpt]
-    result["omitted_fields"] = sorted(set(result["omitted_fields"]))
-    return result
+        units.append({"fields": fields, "excerpt": excerpt})
+    return result, units
 
 
-def render(baseline, records):
-    """Candidate cards first, then ranked atomic units within the shared response cap.
+def render(baseline, records, *, max_chars=MAX_ORIGINAL_CHARS):
+    """Whole originals first; reduce only after actual serialized size overflow.
 
-    Do not fill spare space with unrelated source expansion. No preservation guard
-    can reject new evidence just because an ordinary size handoff would be needed.
+    Ranking is independent of delivery. Full records get the first pass, followed
+    by execution fields and then whole source units for records that could not fit.
+    The outer ceiling cannot exceed the request-byte ceiling. The runner counts
+    the complete request and only then requests the smaller overflow view if a
+    fresh seed still cannot fit. Never estimate tokens or rewrite native history.
     """
     if baseline["query"] in records:
         return copy.deepcopy(baseline)
     result = copy.deepcopy(baseline)
-    result["presentation"] = "question-evidence-v1"
+    result["presentation"] = "full-first-evidence-v2"
     result["evidence_notice"] = (
-        "Exact original fields; omitted fields are not delivered. Source units are observed "
-        "fragments, not the whole file. Execution data is historical, not current proof. "
-        "Fetch record_id for the complete original, including model-authored annotations."
+        "Complete bodies are exact originals. model_annotation_paths identify authored intent "
+        "or notes, not observations. Only records exceeding the serialized response limit are "
+        "reduced; omitted fields are not delivered. Source excerpts are observed fragments, "
+        "not the whole file. All records are historical, not current proof. Fetch record_id "
+        "for the complete original or exact JSON pages."
     )
     for row in result["records"]:
-        body = records[row["record_id"]]["body"]
+        body = records.get(row["record_id"], {}).get("body")
         row.update(
             body=None,
             excerpt=None,
@@ -217,6 +242,9 @@ def render(baseline, records):
         )
         row.pop("page", None)
         row.pop("evidence", None)
+        if body is None:
+            continue  # An overflow view cannot recover an already omitted record.
+        row["model_annotation_paths"] = sorted(separate(body)["annotations"])
         call = body.get("call", {})
         row["candidate"] = (
             {
@@ -227,17 +255,67 @@ def render(baseline, records):
             if isinstance(call, dict) and "tool" in call
             else {"field": body.get("field"), "kind": row["kind"]}
         )
-    for i, row in enumerate(result["records"]):
-        body = records[row["record_id"]]["body"]
+
+    def admit(index, **values):
+        nonlocal result
         candidate = copy.deepcopy(result)
-        if row["kind"] == "public_tool_exchange":
-            evidence = source_unit(execution_fields(body), result["query"])
-            candidate["records"][i].update(evidence=evidence, delivery="evidence_fields")
-        else:
-            candidate["records"][i].update(body=copy.deepcopy(body), delivery="complete")
-        if len(canonical_json(candidate)) <= MAX_RESULT_CHARS:
+        candidate["records"][index].update(values)
+        if len(canonical_json(candidate)) <= max_chars:
             result = candidate
+            return True
+        return False
+
+    # Try every original before spending space on previews. An oversized record
+    # must not suppress a smaller complete execution/counterexample ranked below it.
+    for i, row in enumerate(result["records"]):
+        if row["record_id"] in records:
+            admit(i, body=copy.deepcopy(records[row["record_id"]]["body"]), delivery="complete")
+    for i, row in enumerate(result["records"]):
+        if (
+            row["body"] is not None
+            or row["kind"] != "public_tool_exchange"
+            or row["record_id"] not in records
+        ):
+            continue
+        bundle = execution_fields(records[row["record_id"]]["body"])
+        if admit(i, evidence=bundle, delivery="evidence_fields"):
+            continue
+        partial, units = source_candidates(bundle, result["query"])
+        whole_spans = set()
+        for unit in units:
+            excerpt = unit["excerpt"]
+            if excerpt["pointer"] in whole_spans:
+                continue
+            candidate = copy.deepcopy(partial)
+            candidate["fields"].update(unit["fields"])
+            candidate["source_excerpts"].append(excerpt)
+            if admit(i, evidence=candidate, delivery="evidence_fields"):
+                partial = candidate
+                if excerpt["unit"] == "observed_span":
+                    whole_spans.add(excerpt["pointer"])
     return result
+
+
+def overflow_result(result):
+    """Project only a not-yet-delivered fresh seed after a measured size failure.
+
+    The canonical action result and old native outputs stay immutable. All full
+    bodies needed for the smaller view are already inside this public result;
+    this neither searches again nor reads the repository or original journal.
+    """
+    if (
+        result.tool != "search_history"
+        or not isinstance(result.output, dict)
+        or len(canonical_json(result.output)) <= MAX_RESULT_CHARS
+    ):
+        return result
+    originals = {
+        r["record_id"]: {"body": r["body"]}
+        for r in result.output["records"]
+        if r.get("body") is not None
+    }
+    output = render(result.output, originals, max_chars=MAX_RESULT_CHARS)
+    return result.model_copy(update={"output": output})
 
 
 class EvidenceHistory(PublicHistory):

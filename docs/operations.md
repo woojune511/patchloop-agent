@@ -152,8 +152,10 @@ See [CLI options](../patchloop/cli.py) and [request contracts](../patchloop/dev/
 `--history-search public-v1` requires `segmented-v1` and the current agent policy.
 It offers a singleton search of already delivered public evidence from this run,
 including earlier segments. BM25 ranks execution data, excluding owned plans and
-hypotheses. Eight candidates share 48,000 result characters: atomic execution data
-or a whole observed function/span, with omissions labelled. Fetch any returned ID
+hypotheses. Eight candidates return whole originals within actual input limits.
+If a fresh seed still exceeds those limits, reduce the new result to 48,000 chars;
+never rewrite dispatched outputs. Authored fields and omissions are labelled;
+no one-function limit. Fetch any returned ID
 for its complete original; oversized records offer canonical JSON pages through
 `offset`. Every fetch/page spends another ordinary action. A question can retain
 a search result within its existing two references; it remains historical data.

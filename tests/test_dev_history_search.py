@@ -353,9 +353,9 @@ def test_mock_search_round_trip_reaches_isolated_evaluation_and_binds_resume(mon
                if e["event_type"] == "action_finished" and e["payload"]["result"]["tool"]
                == search.TOOL]
     assert len(actions) == 1 and actions[0]["output"]["records"]
-    assert actions[0]["output"]["presentation"] == "question-evidence-v1"
-    assert all(r["delivery"] == "evidence_fields" for r in actions[0]["output"]["records"])
-    assert all(r["evidence"]["source_excerpts"] for r in actions[0]["output"]["records"]
+    assert actions[0]["output"]["presentation"] == "full-first-evidence-v2"
+    assert all(r["delivery"] == "complete" for r in actions[0]["output"]["records"])
+    assert all(r["body"]["result"]["output"]["spans"] for r in actions[0]["output"]["records"]
                if r["candidate"]["tool"] in {"read_file", "search_files"})
     envelope = journal.load_envelope()
     assert envelope.history_search_policy == search.POLICY

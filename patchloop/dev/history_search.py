@@ -14,6 +14,7 @@ from collections import Counter
 from typing import Literal
 
 from patchloop.contracts import Artifact
+from patchloop.dev.segments import MAX_REQUEST_BYTES
 from patchloop.errors import ContractError, RecoveryError
 from patchloop.util import canonical_json, sha256_json
 
@@ -23,6 +24,10 @@ TOOL = "search_history"
 MAX_QUERY_CHARS = 800
 MAX_RESULTS = 8
 MAX_RESULT_CHARS = 48_000
+# Keyword originals use the actual request-byte ceiling as a necessary outer
+# bound. Final token/serialized-request admission belongs to the runner. The
+# smaller bound remains the explicit exact-ID page size and overflow fallback.
+MAX_ORIGINAL_CHARS = MAX_REQUEST_BYTES
 PASSAGE_CHARS = 1_200
 PUBLIC_TOOLS = frozenset({"read_file", "search_files", "replace_text", "run_check",
                           "run_tests", "run_probe"})
@@ -31,29 +36,34 @@ INSTRUCTIONS = (
     "call with inspect mode. It searches only public evidence already delivered in this "
     "run, including earlier segments. Use identifiers or an unresolved question to "
     "recover original inputs, setup and results when summaries are insufficient. "
-    "It returns up to eight historical candidates within 48,000 result characters, not "
-    "direct journal/CAS access. It spends a normal action and model opportunity. "
+    "It returns up to eight historical candidates, not direct journal/CAS access. "
+    "It spends a normal action and model opportunity. "
     "Compare the original caller, environment, inputs and diff before reusing a result. "
     "An old result, supplied observation or model annotation is not proof about the "
     "current candidate. Read current source for edit anchors and use registered checks "
     "for current verification. Ranking excludes schema-owned plans and hypotheses. "
-    "Candidates quote whole execution units or a question-matching observed function/span; "
-    "omitted fields remain available by ID. Do not infer absent branches from a fragment. "
+    "Candidates return complete original records first. Only records that exceed the "
+    "actual request-size limits are reduced to execution fields or whole observed source "
+    "units as space permits; there is no one-function limit. model_annotation_paths mark "
+    "authored notes/intent, not observations. Omitted fields remain available by ID. "
+    "Do not infer absent branches from a fragment. "
     "When needed, cite this search action as a primary/countercheck tool_result in the "
     "current open_question to retain it at handoff, within the same two references. "
     "To fetch a candidate separately, pass its exact record_id as query and offset=null. "
     "Large records return a canonical JSON page with next_offset; use that offset with "
     "the same record_id to continue. Use offset=null for keyword searches. Every search "
-    "or page is another ordinary action with the same result bound."
+    "or page is another ordinary action. Exact-ID pages and overflow fallback share "
+    "a 48,000-character bound; whole keyword originals may use the available input space."
 )
 
 
 def contract():
     return {"policy": POLICY, "tool": TOOL, "corpus": "dispatched-public-inputs-v1",
             "ranking": "execution-evidence-bm25-v1", "max_query_chars": MAX_QUERY_CHARS,
-            "max_results": MAX_RESULTS, "max_result_chars": MAX_RESULT_CHARS,
-            "source_units": "observed-function-or-span",
-            "presentation": "question-evidence-v1",
+            "max_results": MAX_RESULTS, "max_result_chars": MAX_ORIGINAL_CHARS,
+            "page_and_overflow_chars": MAX_RESULT_CHARS,
+            "source_units": "full-original-then-bounded-observed-units",
+            "presentation": "full-first-evidence-v2",
             "oversize": "metadata-and-exact-id-json-pages", "batch": "singleton-inspect",
             "lookup": "exact-record-id-or-bm25",
             "instructions_hash": sha256_json(INSTRUCTIONS)}

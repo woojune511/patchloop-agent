@@ -3,15 +3,32 @@ from __future__ import annotations
 import copy
 import json
 
+import pytest
 from test_dev_history_search import exchange, items
 
 from patchloop.dev import evidence_focus
 from patchloop.dev import history_evidence as evidence
+from patchloop.dev.contracts import DevToolResult
 from patchloop.dev.history_search import PublicHistory
 from patchloop.util import canonical_json, sha256_json
 
 
-def test_rank_and_payload_exclude_authored_plans_but_id_read_preserves_original():
+def overflow(output):
+    result = DevToolResult(
+        action_id="s",
+        tool="search_history",
+        status="succeeded",
+        input_hash="i",
+        workspace_diff_hash="d",
+        output=output,
+    )
+    original = result.model_dump(mode="json")
+    reduced = evidence.overflow_result(result)
+    assert result.model_dump(mode="json") == original
+    return reduced.output
+
+
+def test_rank_excludes_authored_plans_but_full_delivery_labels_and_preserves_them():
     original = exchange(text="observed_failure")
     result = json.loads(original[1]["output"])
     result["memory_update_result"] = {"statement": "unverifiedmotive"}
@@ -20,18 +37,19 @@ def test_rank_and_payload_exclude_authored_plans_but_id_read_preserves_original(
     history.ingest(items(exchanges=original), sequence=1, turn_id="t", input_hash="i")
     assert not history.search("unverifiedmotive", current_diff_hash="d")["records"]
     row = history.search("observed_failure", current_diff_hash="d")["records"][0]
-    assert row["delivery"] == "evidence_fields"
-    fields = row["evidence"]["fields"]
-    assert fields["/call/arguments/python_source"] == "print('observed_failure')"
-    assert fields["/result/output/stdout"] == "observed_failure"
-    assert fields["/result/output/environment"]["cwd"] == "isolated"
-    assert "unverifiedmotive" not in canonical_json(fields)
+    assert row["delivery"] == "complete"
+    assert row["body"]["call"]["arguments"]["python_source"] == "print('observed_failure')"
+    assert row["body"]["result"] == result
+    assert row["model_annotation_paths"] == [
+        "/call/arguments/question",
+        "/result/memory_update_result",
+    ]
     full = history.search(row["record_id"], current_diff_hash="d")["records"][0]
     assert sha256_json(full["body"]) == row["record_id"]
     assert full["body"]["result"] == result
 
 
-def test_function_unit_keeps_exception_and_dispatch_conditions_not_class_preamble():
+def test_source_fallback_keeps_multiple_functions_only_after_real_overflow():
     text = '''class Loader:
     def unrelated(self):
         """dispatch path fallback source path source path"""
@@ -56,21 +74,32 @@ def test_function_unit_keeps_exception_and_dispatch_conditions_not_class_preambl
             }
         },
     }
-    unit = evidence.source_unit(evidence.execution_fields(body), "dispatch source path")
-    excerpt = unit["source_excerpts"][0]
-    assert excerpt["unit"] == "observed_function"
-    assert "def dispatch" in excerpt["text"] and "except OSError:" in excerpt["text"]
-    assert "if fallback:" in excerpt["text"] and "            raise" in excerpt["text"]
-    assert "def unrelated" not in excerpt["text"] and "def neighbor" not in excerpt["text"]
-    assert excerpt["text"] == text[excerpt["start"] : excerpt["end"]]
+    # Complete source fits normally, including the neighbor and class context.
+    history = evidence.EvidenceHistory()
+    history._add("public_tool_exchange", body, {"first_delivered_sequence": 1}, "D")
+    result = history.search("dispatch source path", current_diff_hash="D")
+    assert result["records"][0]["body"] == body
+    # Actual 48k overflow, not the query, activates lexical unit fallback.
+    text = "# module context\n" * 4000 + text
+    body["result"]["output"]["spans"][0]["content"] = text
+    history = evidence.EvidenceHistory()
+    history._add("public_tool_exchange", body, {"first_delivered_sequence": 1}, "D")
+    result = history.search("dispatch source path", current_diff_hash="D")
+    assert result["records"][0]["body"] == body
+    result = overflow(result)
+    assert len(canonical_json(result)) <= 48_000
+    excerpts = result["records"][0]["evidence"]["source_excerpts"]
+    assert len(excerpts) == 2  # Both complete observed functions, not just the named one.
+    assert "def dispatch" in excerpts[0]["text"] and "except OSError:" in excerpts[0]["text"]
+    assert "if fallback:" in excerpts[0]["text"] and "            raise" in excerpts[0]["text"]
+    assert "def unrelated" in excerpts[1]["text"]
+    for excerpt in excerpts:
+        assert excerpt["unit"] == "observed_function"
+        assert excerpt["text"] == text[excerpt["start"] : excerpt["end"]]
     # Without an observed end boundary, retain the observed span, never certify a full function.
     body["result"]["output"]["spans"][0]["content"] = "    def dispatch(self):\n        return 1\n"
-    assert (
-        evidence.source_unit(evidence.execution_fields(body), "dispatch")["source_excerpts"][0][
-            "unit"
-        ]
-        == "observed_span"
-    )
+    _, units = evidence.source_candidates(evidence.execution_fields(body), "dispatch")
+    assert [u["excerpt"]["unit"] for u in units] == ["observed_span"]
 
 
 def test_oversized_execution_stays_atomic_and_original_pages_round_trip():
@@ -78,7 +107,9 @@ def test_oversized_execution_stays_atomic_and_original_pages_round_trip():
     history.ingest(
         items(exchanges=exchange(text="needle " * 10_000)), sequence=1, turn_id="t", input_hash="i"
     )
-    record = history.search("needle", current_diff_hash="d")["records"][0]
+    original = history.search("needle", current_diff_hash="d")
+    assert original["records"][0]["delivery"] == "complete"
+    record = overflow(original)["records"][0]
     assert record["delivery"] == "metadata_only_evidence_budget"
     assert "evidence" not in record and record["excerpt"] is None
     text, offset = "", None
@@ -150,7 +181,7 @@ def test_two_question_refs_keep_search_and_countercheck_with_exact_exchange_and_
     )[1]
 
 
-def test_render_prioritizes_units_without_filling_remaining_space_with_unrelated_source():
+def test_render_retains_whole_original_until_exact_serialized_limit():
     history = PublicHistory()
     code = "def chosen(x):\n    return x\n\ndef neighbor():\n    return 2\n" + "# unrelated\n" * 800
     body = {
@@ -164,8 +195,166 @@ def test_render_prioritizes_units_without_filling_remaining_space_with_unrelated
     history._add("public_tool_exchange", body, {"first_delivered_sequence": 1}, "D")
     baseline = history.search("chosen", current_diff_hash="D")
     result = evidence.render(baseline, history.records)
-    assert len(canonical_json(result)) < len(canonical_json(baseline))
-    assert (
-        result["records"][0]["evidence"]["source_excerpts"][0]["text"]
-        == "def chosen(x):\n    return x\n"
+    assert result["records"][0]["body"] == body
+    assert sha256_json(result["records"][0]["body"]) == result["records"][0]["record_id"]
+    size = len(canonical_json(result))
+    assert evidence.render(baseline, history.records, max_chars=size) == result
+    reduced = evidence.render(baseline, history.records, max_chars=size - 1)
+    assert len(canonical_json(reduced)) <= size - 1
+    assert reduced["records"][0]["body"] is None
+
+
+def test_overflow_tries_complete_other_records_and_whole_spans_before_functions():
+    history = evidence.EvidenceHistory()
+    small = {
+        "path": "x.py",
+        "file_hash": "H",
+        "start_line": 1,
+        "content": "CONTEXT = 3\ndef caller():\n    return CONTEXT\ndef helper():\n    pass\n",
+    }
+    large = {
+        "path": "y.py",
+        "file_hash": "H",
+        "start_line": 1,
+        "content": "# other module context\n" * 4000,
+    }
+    body = {
+        "call": {"tool": "read_file", "arguments": {"path": "x.py"}},
+        "result": {"output": {"spans": [small, large]}},
+    }
+    history._add("public_tool_exchange", body, {"first_delivered_sequence": 1}, "D")
+    history.ingest(
+        items(exchanges=exchange(text="caller counterexample")),
+        sequence=2,
+        turn_id="probe",
+        input_hash="i",
     )
+    result = overflow(history.search("caller", current_diff_hash="D"))
+    probe = next(r for r in result["records"] if r["candidate"]["tool"] == "run_probe")
+    assert probe["delivery"] == "complete"
+    source = next(r for r in result["records"] if r["candidate"]["tool"] == "read_file")
+    assert source["evidence"]["source_excerpts"] == [
+        {
+            "pointer": "/result/output/spans/0/content",
+            "start": 0,
+            "end": len(small["content"]),
+            "text": small["content"],
+            "unit": "observed_span",
+        }
+    ]
+    assert len(canonical_json(result)) <= 48_000
+
+
+@pytest.mark.parametrize("pressure", [None, "tokens", "bytes", "recovery"])
+def test_runner_delivers_large_original_or_reduces_only_after_measured_fresh_overflow(
+    monkeypatch,
+    tmp_path,
+    pressure,
+):
+    from test_dev_history_search import call
+    from test_dev_runner import _crash_journal_once, _SimulatedCrash
+    from test_dev_segments import assert_submitted, configured, records
+
+    from patchloop.contracts import Artifact
+    from patchloop.dev import runner, segments
+    from patchloop.dev.model import DevModelTurn, MockDevAdapter
+    from patchloop.dev.native_sources import PUBLIC_EVIDENCE_KIND, public_exchanges
+
+    class Script(MockDevAdapter):
+        searched = False
+
+        def _next_action(self, context, schemas):
+            if json.loads(context).get("source_spans") and not self.searched:
+                self.searched = True
+                return DevModelTurn(tool_calls=[call(query="parse_rows")])
+            turn = super()._next_action(context, schemas)
+            # A real size handoff can require a fresh source read. The static mock
+            # IDs must not collide with its earlier read under a different plan.
+            for action in turn.tool_calls:
+                if self.searched and action.name in {"read_file", "search_files"}:
+                    action.action_id += "-after-search"
+            return turn
+
+    req, inputs, counted, _ = configured(
+        monkeypatch,
+        tmp_path,
+        planning="brief-v1",
+        script=Script("csv-quoted-newline"),
+    )
+    req = req.model_copy(update={"history_search_policy": "public-v1"})
+    # A public result stub isolates request admission from retrieval, which the
+    # real gateway/corpus tests exercise separately. No provider/network is used.
+    corpus = evidence.EvidenceHistory()
+    body = {"field": "supplied_observation", "value": "parse_rows " + "raw_context " * 6000}
+    corpus._add("supplied_public_observation", body, {"first_delivered_sequence": 1}, None)
+    lookup = evidence.EvidenceHistory.search
+    monkeypatch.setattr(
+        evidence.EvidenceHistory, "search", lambda self, *a, **kw: lookup(corpus, *a, **kw)
+    )
+
+    def search_outputs(items):
+        return [
+            json.loads(i["output"])["output"]
+            for i in public_exchanges(
+                items,
+                archive_kind=PUBLIC_EVIDENCE_KIND,
+            )
+            if i["type"] == "function_call_output"
+            and json.loads(i["output"]).get("tool") == "search_history"
+        ]
+
+    count = runner.OpenAIResponsesAdapter.count_input_tokens_v2
+
+    def tokens(self, payload, **kw):
+        normal = count(self, payload, **kw)
+        return (
+            60_001
+            if any(len(canonical_json(r)) > 48_000 for r in search_outputs(payload["input"]))
+            else normal
+        )
+
+    if pressure in {"tokens", "recovery"}:
+        monkeypatch.setattr(runner.OpenAIResponsesAdapter, "count_input_tokens_v2", tokens)
+    if pressure == "bytes":
+        monkeypatch.setattr(segments, "MAX_REQUEST_BYTES", 128_000)
+    if pressure == "recovery":
+
+        def reduced_seed(payload):
+            journal, store = records(req)
+            handoff = json.loads(
+                store.read_bytes(Artifact.model_validate(payload["handoff_artifact"]))
+            )
+            return handoff.get("evidence_manifest", {}).get("history_result_reduced", False)
+
+        _crash_journal_once(
+            monkeypatch, event_type=segments.PREPARED_EVENT, predicate=reduced_seed, when="after"
+        )
+        with pytest.raises(_SimulatedCrash):
+            runner.run_dev(req)
+        journal, _ = records(req)
+        req = req.model_copy(update={"resume_run_id": journal.run_id})
+    result = runner.run_dev(req)["runs"][0]
+    assert_submitted(result)
+    journal, store = records(req)
+    canonical = [
+        e["payload"]["result"]
+        for e in journal.events()
+        if e["event_type"] == "action_finished"
+        and e["payload"]["result"]["tool"] == "search_history"
+    ]
+    assert len(canonical) == 1 and canonical[0]["output"]["records"][0]["body"] == body
+    delivered = [r for item in inputs for r in search_outputs(item)]
+    assert delivered
+    assert (
+        all(r["records"][0]["body"] == body for r in delivered)
+        if pressure is None
+        else all(len(canonical_json(r)) <= 48_000 for r in delivered)
+    )
+    # Counts do not spend model/tool actions; the real source refresh does.
+    assert len(inputs) == (5 if pressure is None else 6)
+    assert len(counted) == (8 if pressure in {"tokens", "recovery"} else len(inputs))
+    if pressure == "bytes":
+        assert all(segments.request_sizes({"input": i})["request_bytes"] <= 128_000 for i in inputs)
+    for event in journal.events():
+        if event["event_type"] == "turn_started":
+            runner._load_active_model_input(event["payload"], store, context_policy=segments.POLICY)

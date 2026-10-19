@@ -2100,10 +2100,15 @@ def _build_segmented_model_input(
     )
     reason = force_reason or segments.boundary_reason(journal, binding)
     prompt = thin_policy.system_prompt(agent_policy, planning_policy, history_search_policy)
-    replace_pending = force_reason == "omit_optional_evidence"
+    replace_pending = force_reason in {"omit_optional_evidence", "shrink_history_result"}
+    old_manifest = handoff.get("evidence_manifest", {}) if handoff else {}
+    omit_optional = force_reason == "omit_optional_evidence" or (
+        replace_pending and old_manifest.get("optional_bodies_omitted", False))
+    shrink_history = force_reason == "shrink_history_result" or (
+        replace_pending and old_manifest.get("history_result_reduced", False))
     if replace_pending:
         if not binding or not segments.is_fresh(journal, binding):
-            raise RecoveryError("optional evidence fallback requires a fresh candidate")
+            raise RecoveryError("evidence fallback requires a fresh candidate")
         committed, _ = segments.active(journal, store, committed_only=True)
         if binding == committed:
             raise RecoveryError("cannot trim a committed segment")
@@ -2115,8 +2120,13 @@ def _build_segmented_model_input(
         ids = {r.action_id for r in latest_results}
         calls = [c for e in events if e["event_type"] == "turn_decision_recorded"
                  for c in e["payload"].get("tool_calls", []) if c["action_id"] in ids]
-        base = _segment_public_base(prompt, state, latest_results, calls, agent_policy)
-        optional = [] if replace_pending else evidence_focus.optional_exchanges(
+        seed_results = latest_results
+        if shrink_history:
+            from patchloop.dev.history_evidence import overflow_result
+
+            seed_results = [overflow_result(r) for r in latest_results]
+        base = _segment_public_base(prompt, state, seed_results, calls, agent_policy)
+        optional = [] if omit_optional else evidence_focus.optional_exchanges(
             state.get("working_notes", {}).get("open_question"), events, ids,
             diff_hash=state["current_diff"]["patch_hash"],
         )
@@ -2131,7 +2141,8 @@ def _build_segmented_model_input(
             "source_projection": state.get("context_projection"),
             "optional_action_ids": [i["call_id"] for i in optional
                                     if i["type"] == "function_call_output"],
-            "optional_bodies_omitted": replace_pending,
+            "optional_bodies_omitted": omit_optional,
+            "history_result_reduced": shrink_history,
         }
         binding = segments.start(
             journal, store, base=base, state=state, reason=reason,
@@ -2174,6 +2185,20 @@ def _build_segmented_model_input(
         history=added, previous_input=previous,
         context_policy=segments.POLICY,
     )
+
+
+def _segment_size_fallback(handoff, latest_results):
+    """Only called after measured overflow of a fresh, uncommitted request."""
+    manifest = handoff.get("evidence_manifest", {})
+    if manifest.get("optional_action_ids"):
+        return "omit_optional_evidence"
+    if not manifest.get("history_result_reduced") and any(
+        r.tool == history_search.TOOL and isinstance(r.output, dict)
+        and len(canonical_json(r.output)) > history_search.MAX_RESULT_CHARS
+        for r in latest_results
+    ):
+        return "shrink_history_result"
+    return None
 
 
 def _segment_input_binding(journal, store):
@@ -4662,7 +4687,8 @@ def _run_one_active(
                     binding, _ = segments.active(journal, artifact_store)
                     if segments.is_fresh(journal, binding):
                         handoff = segments.load_binding(binding, artifact_store)
-                        if handoff.get("evidence_manifest", {}).get("optional_action_ids"):
+                        fallback = _segment_size_fallback(handoff, latest_tool_results)
+                        if fallback:
                             _build_model_input(
                                 journal=journal, artifact_store=artifact_store, context=context,
                                 latest_tool_results=latest_tool_results,
@@ -4671,7 +4697,7 @@ def _run_one_active(
                                 agent_policy=request.agent_policy,
                                 segment_boundary_policy=request.segment_boundary_policy,
                                 history_search_policy=request.history_search_policy,
-                                force_segment_reason="omit_optional_evidence",
+                                force_segment_reason=fallback,
                             )
                             continue
                         segments.record_limit(journal, sizes=sizes)
@@ -4726,7 +4752,8 @@ def _run_one_active(
                     binding, _ = segments.active(journal, artifact_store)
                     if segments.is_fresh(journal, binding):
                         handoff = segments.load_binding(binding, artifact_store)
-                        if handoff.get("evidence_manifest", {}).get("optional_action_ids"):
+                        fallback = _segment_size_fallback(handoff, latest_tool_results)
+                        if fallback:
                             _build_model_input(
                                 journal=journal, artifact_store=artifact_store, context=context,
                                 latest_tool_results=latest_tool_results,
@@ -4735,7 +4762,7 @@ def _run_one_active(
                                 agent_policy=request.agent_policy,
                                 segment_boundary_policy=request.segment_boundary_policy,
                                 history_search_policy=request.history_search_policy,
-                                force_segment_reason="omit_optional_evidence",
+                                force_segment_reason=fallback,
                             )
                             continue
                         segments.record_limit(journal, input_tokens=prepared_count[1])
