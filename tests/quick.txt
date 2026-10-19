@@ -6,4 +6,5 @@ tests/test_dev_completion_cost.py::test_offered_actions_always_leave_an_affordab
 tests/test_dev_history_search.py
 tests/test_history_search_replay.py
 tests/test_semantic_history_search.py
+tests/test_history_evidence_bundles.py
 tests/test_documentation_layout.py

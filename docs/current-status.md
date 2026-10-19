@@ -64,9 +64,9 @@ L003/L039 cycle, regression PASS overinterpreted despite retained notes/tools.
 [Counterexample](history/2026-10-07-counterexample-results.md): both FAIL despite
 B's retained current failure; USD 0.04019910. Keep 24k; no adoption or paid follow-up.
 
-[Search](history/2026-10-19-history-index-separation.md): separated BM25/dense/hybrid
-packet recovery 25/2/20 of 28 (raw 11/2/6). New counterevidence/context losses prevent
-adoption. Runtime BM25, 8 hits/48k, default off unchanged; no live repair claim.
+[Search](history/2026-10-20-history-evidence-bundles.md): fixed-rank bundles recover
+24/16/24 packets of 28 (prior 25/2/20). BM25 restores 9/16 lost probes but loses new
+caller/source evidence. Diagnostic only; runtime BM25, 8 hits/48k, default off unchanged.
 Routine tests use `tests/quick.txt`; prior full-suite 4 FAIL remains unresolved.
 
 See [panel contract](../.agent/current-dev20.md) and
