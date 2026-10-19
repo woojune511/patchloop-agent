@@ -151,13 +151,14 @@ See [CLI options](../patchloop/cli.py) and [request contracts](../patchloop/dev/
 
 `--history-search public-v1` requires `segmented-v1` and the current agent policy.
 It offers a singleton search of already delivered public evidence from this run,
-including earlier segments. BM25 ranks eight candidates within 48,000 result
-characters; already visible records are labelled. Complete bodies take priority;
-remaining space holds exact matching excerpts labelled incomplete. Fetch any
-returned ID separately; oversized records offer canonical JSON
-pages through `offset`. Every fetch/page spends another ordinary action.
+including earlier segments. BM25 ranks execution data, excluding owned plans and
+hypotheses. Eight candidates share 48,000 result characters: atomic execution data
+or a whole observed function/span, with omissions labelled. Fetch any returned ID
+for its complete original; oversized records offer canonical JSON pages through
+`offset`. Every fetch/page spends another ordinary action. A question can retain
+a search result within its existing two references; it remains historical data.
 It uses optional budget and grants no current source/check credit. Boundaries and
-run/input limits stay unchanged. [Offline evidence](history/2026-10-19-history-search-followup.md)
+run/input limits stay unchanged. [Offline evidence](history/2026-10-20-history-question-delivery.md)
 does not establish model uptake or better repairs; the selected baseline keeps it off.
 
 Before dispatch:

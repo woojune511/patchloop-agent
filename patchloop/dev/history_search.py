@@ -36,9 +36,11 @@ INSTRUCTIONS = (
     "Compare the original caller, environment, inputs and diff before reusing a result. "
     "An old result, supplied observation or model annotation is not proof about the "
     "current candidate. Read current source for edit anchors and use registered checks "
-    "for current verification. Incomplete candidates include exact excerpts when space "
-    "permits; excerpts cannot establish full execution conditions. Complete bodies have "
-    "priority over previews. Metadata-only candidates can also be fetched by ID. "
+    "for current verification. Ranking excludes schema-owned plans and hypotheses. "
+    "Candidates quote whole execution units or a question-matching observed function/span; "
+    "omitted fields remain available by ID. Do not infer absent branches from a fragment. "
+    "When needed, cite this search action as a primary/countercheck tool_result in the "
+    "current open_question to retain it at handoff, within the same two references. "
     "To fetch a candidate separately, pass its exact record_id as query and offset=null. "
     "Large records return a canonical JSON page with next_offset; use that offset with "
     "the same record_id to continue. Use offset=null for keyword searches. Every search "
@@ -48,10 +50,11 @@ INSTRUCTIONS = (
 
 def contract():
     return {"policy": POLICY, "tool": TOOL, "corpus": "dispatched-public-inputs-v1",
-            "ranking": "unicode-identifier-bm25-v1", "max_query_chars": MAX_QUERY_CHARS,
+            "ranking": "execution-evidence-bm25-v1", "max_query_chars": MAX_QUERY_CHARS,
             "max_results": MAX_RESULTS, "max_result_chars": MAX_RESULT_CHARS,
-            "excerpt_chars": PASSAGE_CHARS,
-            "oversize": "labelled-excerpts-and-exact-id-json-pages", "batch": "singleton-inspect",
+            "source_units": "observed-function-or-span",
+            "presentation": "question-evidence-v1",
+            "oversize": "metadata-and-exact-id-json-pages", "batch": "singleton-inspect",
             "lookup": "exact-record-id-or-bm25",
             "instructions_hash": sha256_json(INSTRUCTIONS)}
 

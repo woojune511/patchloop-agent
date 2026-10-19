@@ -49,7 +49,9 @@ def bind_question(raw, spans, results, *, diff_hash=None):
             result = results.get(ref.action_id)
             if result is None:
                 return None, "question_result_not_observed"
-            if ref.role and result["tool"] not in {"run_check", "run_tests", "run_probe"}:
+            if ref.role and result["tool"] not in {
+                "run_check", "run_tests", "run_probe", "search_history",
+            }:
                 return None, "question_source_requires_range"
             bound.append({**ref.model_dump(exclude_none=True), "tool": result["tool"],
                           "input_hash": result["input_hash"],
@@ -108,7 +110,7 @@ def source_references(question, *, diff_hash=None):
 
 
 def optional_exchanges(question, events, excluded_ids=(), *, diff_hash=None):
-    """Return original bounded public verification calls/results only."""
+    """Retain the question's verification/search results, within its two references."""
     from patchloop.dev.probe_observation import project_probe_result
 
     if priority_status(question, diff_hash) != "eligible":
@@ -123,7 +125,9 @@ def optional_exchanges(question, events, excluded_ids=(), *, diff_hash=None):
     quoted = []
     for action_id in sorted(wanted):
         result, call = results.get(action_id), calls.get(action_id)
-        if not result or not call or result["tool"] not in {"run_check", "run_tests", "run_probe"}:
+        if not result or not call or result["tool"] not in {
+            "run_check", "run_tests", "run_probe", "search_history",
+        }:
             continue
         quoted.extend([
             {"type": "function_call", "call_id": action_id, "name": call["name"],
@@ -178,7 +182,8 @@ def project_interpretations(view, history, *, archive_kind=None):
             matches = result and result.get("input_hash") == ref.get("input_hash")
             item.pop("result_delivery", None)
             item.update(evidence_delivery="complete" if matches else "incomplete",
-                        evidence_currency="unknown" if ref.get("diff_hash") is None
+                        evidence_currency="historical" if ref.get("tool") == "search_history"
+                        else "unknown" if ref.get("diff_hash") is None
                         else "current" if ref["diff_hash"] == diff else "historical")
             if matches:
                 item["result_delivery"] = {"action_id": ref["action_id"],

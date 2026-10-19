@@ -54,9 +54,9 @@ and absent-versus-explicit serialization. Keep recovery annotations unadvertised
 and cross-field/anchor/scope validation intact.
 
 Batch 1–4 `read_file`/`search_files` calls; other tools run singly.
-Opt-in history search: eight candidates within 48,000 result characters, exact
-labelled excerpts and ID-based pages; optional headroom, no source/PASS credit.
-The separate two-reference handoff limit is unchanged.
+Opt-in history search: eight candidates/48,000 chars, execution-only ranking,
+whole execution or observed function/span units, exact-ID pages. No source/PASS credit.
+A question may retain search results within its existing two handoff references.
 A bounded public `turn_decision` accompanies each default-policy call. Opt-in
 `--agent-policy thin --planning-policy none` replaces it with root nullable
 `memory_update`; see [contract](thin-policy-reference.md). Execution gates stay shared.

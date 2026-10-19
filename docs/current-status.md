@@ -64,9 +64,9 @@ L003/L039 cycle, regression PASS overinterpreted despite retained notes/tools.
 [Counterexample](history/2026-10-07-counterexample-results.md): both FAIL despite
 B's retained current failure; USD 0.04019910. Keep 24k; no adoption or paid follow-up.
 
-[Search](history/2026-10-20-history-evidence-bundles.md): fixed-rank bundles recover
-24/16/24 packets of 28 (prior 25/2/20). BM25 restores 9/16 lost probes but loses new
-caller/source evidence. Diagnostic only; runtime BM25, 8 hits/48k, default off unchanged.
+[Search](history/2026-10-20-history-question-delivery.md): optional evidence units;
+caller retained 48/53 vs 46/53, probe units +20/-0; source losses remain. Default off,
+8 hits/48k, two refs/60k input unchanged. 70k sensitivity helps two; live use NOT_RUN.
 Routine tests use `tests/quick.txt`; prior full-suite 4 FAIL remains unresolved.
 
 See [panel contract](../.agent/current-dev20.md) and

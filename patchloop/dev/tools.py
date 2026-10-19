@@ -639,7 +639,9 @@ class DevToolGateway:
         if history_search_policy not in {"none", history_search.POLICY}:
             raise ContractError("unknown history search policy")
         self.history_search_policy = history_search_policy
-        self._public_history = history_search.PublicHistory()
+        from patchloop.dev.history_evidence import EvidenceHistory
+
+        self._public_history = EvidenceHistory()
         self.deadline = deadline
         self.probe_sandbox = probe_sandbox
         if probe_policy not in {"none", *probe_cases.POLICIES}:

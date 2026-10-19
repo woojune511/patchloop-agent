@@ -7,4 +7,5 @@ tests/test_dev_history_search.py
 tests/test_history_search_replay.py
 tests/test_semantic_history_search.py
 tests/test_history_evidence_bundles.py
+tests/test_history_question_delivery.py
 tests/test_documentation_layout.py
