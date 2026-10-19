@@ -64,9 +64,9 @@ L003/L039 cycle, regression PASS overinterpreted despite retained notes/tools.
 [Counterexample](history/2026-10-07-counterexample-results.md): both FAIL despite
 B's retained current failure; USD 0.04019910. Keep 24k; no adoption or paid follow-up.
 
-[History search](history/2026-10-19-history-search-followup.md): 8 candidates/48k,
-offline full-packet recovery 11/28 versus 1/28; 17 extra size handoffs. BM25 kept
-after the alternative ranker lost recall. Default off; no live uptake/repair claim.
+[Search](history/2026-10-19-semantic-history-search.md): offline BM25/dense/hybrid
+full-packet recovery 11/2/6 of 28. BM25 kept, 8 hits/48k, default off. Public results
+echo model intent; a cleaned index is untested. No live uptake/repair claim.
 Routine tests use `tests/quick.txt`; prior full-suite 4 FAIL remains unresolved.
 
 See [panel contract](../.agent/current-dev20.md) and
