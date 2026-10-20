@@ -1,7 +1,8 @@
 # Source recovery and fixed reproduction scope
 
-Implemented in dev-head; local evidence only. No repair-success improvement has
-been established. History search remains opt-in (`public-v1`), probes remain
+Implemented in dev-head; the [Astroid comparison](../docs/history/2026-10-20-recovery-schema-results.md)
+exercised source recovery but established no repair-success improvement.
+History search remains opt-in (`public-v1`), probes remain
 opt-in, and existing transition rules, two question references, source/input,
 action, wall-time and spending limits are unchanged.
 
@@ -43,7 +44,8 @@ The provider-facing schema omits only the entrypoint regex. Strict mode, require
 fields, nullability and length bounds remain; `Intent` still enforces the original
 regex before any probe runs. The [single-call diagnostic](../docs/history/2026-10-20-b-pattern-results.md)
 returned a healthy response with this projection. It did not establish repair
-success or the provider's internal cause; full repair execution remains untested.
+success or the provider's internal cause. The subsequent twelve-run comparison
+completed with settled billing, but accepted repairs remained A/B 0/6.
 
 For declared reproductions only, an in-process observer records up to four calls
 to the named Python entrypoint, bounded primitive arguments, cwd and sys.path.

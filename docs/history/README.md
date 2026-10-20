@@ -1,6 +1,6 @@
 # History
 
-- [B pattern](2026-10-20-b-pattern-results.md).
+- [A/B](2026-10-20-recovery-schema-results.md).
 - [Dev20](2026-10-16-mini-swe-dev20-results.md).
 - [Completion](2026-10-16-mini-swe-completion-results.md).
 - [PatchLoop](2026-10-16-patchloop-mini-dev20-results.md).
