@@ -39,6 +39,12 @@ from its actual observation. The host binds task, purpose, predicate and authore
 program hash before execution; new purpose/predicate/program means a distinct case.
 Repeating an identical declaration retains the original baseline identity.
 
+The provider-facing schema omits only the entrypoint regex. Strict mode, required
+fields, nullability and length bounds remain; `Intent` still enforces the original
+regex before any probe runs. The [single-call diagnostic](../docs/history/2026-10-20-b-pattern-results.md)
+returned a healthy response with this projection. It did not establish repair
+success or the provider's internal cause; full repair execution remains untested.
+
 For declared reproductions only, an in-process observer records up to four calls
 to the named Python entrypoint, bounded primitive arguments, cwd and sys.path.
 Unsupported/truncated arguments or absent calls prevent comparison. Receiver

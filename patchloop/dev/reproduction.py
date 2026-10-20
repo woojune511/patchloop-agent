@@ -46,6 +46,8 @@ def schema():
     result.pop("title", None)
     for item in result["properties"].values():
         item.pop("title", None)
+    # Enforce this regex locally without adding it to the provider's output grammar.
+    del result["properties"]["entrypoint"]["pattern"]
     return {"anyOf": [result, {"type": "null"}]}
 
 

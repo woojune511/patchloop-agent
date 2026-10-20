@@ -203,10 +203,19 @@ def test_unobserved_call_or_unusable_output_is_not_compared(gateway_factory, sou
 
 
 def test_reproduction_schema_public_quote_and_original_source_limit(gateway_factory):
-    schema = dev_tool_schemas(finish_enabled=False, allowed_tools={"run_probe"})[0]["parameters"]
+    tool = dev_tool_schemas(finish_enabled=False, allowed_tools={"run_probe"})[0]
+    assert tool["strict"] is True
+    schema = tool["parameters"]
     assert set(schema["required"]) == set(schema["properties"])
     bound = schema["properties"]["reproduction"]["anyOf"][0]
     assert not bound["additionalProperties"] and set(bound["required"]) == set(bound["properties"])
+    assert schema["properties"]["reproduction"]["anyOf"][1] == {"type": "null"}
+    assert bound["properties"]["entrypoint"] == {
+        "type": "string", "minLength": 3, "maxLength": 200,
+    }
+    assert reproduction.Intent.model_json_schema()["properties"]["entrypoint"]["pattern"] == (
+        r"^[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)+$"
+    )
     gateway, _, _ = gateway_factory()
     backend = ExecutingProbe()
     gateway.probe_sandbox = backend
@@ -215,6 +224,24 @@ def test_reproduction_schema_public_quote_and_original_source_limit(gateway_fact
     assert gateway.execute(call).status == "failed"
     oversized = gateway.execute(probe(gateway.public_task, "oversized", source="#" + "a" * 7998))
     assert oversized.status == "failed" and "8000-character" in oversized.message
+    assert backend.calls == 0
+
+
+def test_reproduction_entrypoint_validation_remains_before_probe_execution(gateway_factory):
+    gateway, _, _ = gateway_factory()
+    backend = ExecutingProbe()
+    gateway.probe_sandbox = backend
+    for entrypoint in ("a.b", "pkg._Type.method1", "a." + "b" * 198, "a.bé"):
+        parsed = reproduction.Intent.model_validate(
+            intent(gateway.public_task, entrypoint=entrypoint),
+        )
+        assert parsed.entrypoint == entrypoint
+    invalid = ("helper", "a..b", "a/b", "a.1b", "a.b()", "a." + "b" * 199, None, 123)
+    for index, entrypoint in enumerate(invalid):
+        call = probe(gateway.public_task, f"invalid-entrypoint-{index}")
+        call.arguments["reproduction"]["entrypoint"] = entrypoint
+        result = gateway.execute(call)
+        assert result.status == "failed" and "entrypoint" in result.message
     assert backend.calls == 0
 
 

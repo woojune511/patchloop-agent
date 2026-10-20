@@ -66,8 +66,8 @@ B's retained current failure; USD 0.04019910. Keep 24k; no adoption or paid foll
 
 [Recovery A/B](history/2026-10-20-recovery-http-results.md): closed; A1 repair FAIL,
 B1 usage ERROR, ten NOT_RUN. New USD 0.48778785 + UNKNOWN; prior charges separate.
-[B pattern](history/2026-10-20-b-pattern-results.md): one regex removed, healthy first
-response; USD 0.0122733. Allocation closed; runtime fix unimplemented.
+[B schema fix](../.agent/evidence-recovery.md): API regex omitted; host validation kept.
+[Single-call evidence](history/2026-10-20-b-pattern-results.md); full A/B still untested.
 Quick: `tests/quick.txt`; four old timing failures remain.
 
 See [panel contract](../.agent/current-dev20.md) and
