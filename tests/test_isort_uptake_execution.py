@@ -450,7 +450,9 @@ def test_inherited_limits_and_time_not_reset(source, tmp_path):
     assert branch.request.limits.max_protocol_recoveries == 0
     assert branch.request.limits.wall_time_seconds == old.limits.wall_time_seconds
     assert branch.request.evaluation_reserve_seconds == 0
-    assert 0 < branch.solver_deadline.remaining_seconds() <= 281
+    deadline = branch.solver_deadline
+    now = deadline.clock()
+    assert now < deadline.expires_at <= now + 281
     assert group.deadline.expires_at == group.started + 720
     assert branch.request.repair_recheck == old.repair_recheck is True
 

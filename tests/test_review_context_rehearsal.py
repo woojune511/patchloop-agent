@@ -198,7 +198,8 @@ def test_review_probe_receipts_and_abort(correct_source, tmp_path, monkeypatch, 
         identity = {"image_digest": "fixture", "profile_hash": "fixture"}
 
         def run_probe(self, workspace, question, python_source, **kwargs):
-            assert kwargs["deadline"].remaining_seconds() <= 180
+            deadline = kwargs["deadline"]
+            assert deadline.expires_at <= deadline.clock() + 180
             if outcome == "recovery":
                 raise RecoveryError("fixture uncertainty")
             return {"exit_code": int(outcome == "counterexample"),

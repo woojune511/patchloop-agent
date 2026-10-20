@@ -276,7 +276,10 @@ def test_pair_full_flow_native_preservation_null_plan_handoff_and_review_order(
     source, fixture_plan, tmp_path
 ):
     original = DevJournal(source.root, source.run_id).path.read_bytes()
-    group = execution.Invocation(DevJournal(tmp_path / "group", "run_dev_hostpair"))
+    # Repeated coarse ticks previously made the 330-second duration round above its cap.
+    group = execution.Invocation(
+        DevJournal(tmp_path / "group", "run_dev_hostpair"), clock=lambda: 1900.001
+    )
     requests = []
     for arm in ("A", "B"):
         branch, _ = prepared(source, fixture_plan, tmp_path, arm, group)
@@ -288,7 +291,10 @@ def test_pair_full_flow_native_preservation_null_plan_handoff_and_review_order(
         assert result["provider_calls"] == result["billed_cost_nanos"] == 0
         assert calls["checks"] == ["existing-unit-tests"]
         assert len(calls["public"]) == len(calls["evaluations"]) == 1
-        assert 0 < calls["public"][0] <= 60 and 0 < calls["evaluations"][0] <= 330
+        for phase, cap in (("public", 60), ("evaluations", 330)):
+            window, = calls["deadline_windows"][phase]
+            now = window["observed_at"]
+            assert now < window["expires_at"] <= now + cap
         events = branch.journal.events()[branch.inherited_events :]
         kinds = [e["event_type"] for e in events]
         assert kinds.index("host_plan_EUR_sealed") < kinds.index("host_plan_terminal_public")

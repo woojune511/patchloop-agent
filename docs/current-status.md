@@ -67,7 +67,7 @@ B's retained current failure; USD 0.04019910. Keep 24k; no adoption or paid foll
 [Search non-use](history/2026-10-20-history-search-nonuse.md): B5 missed recoverable
 source; B6 judged beyond its visible probe; original caller unobserved in all six ON.
 OFF/ON 0/6 each, USD 6.57537510; retrieval unused. Keep OFF, two refs/60k and limits.
-Routine tests use `tests/quick.txt`; prior full-suite 4 FAIL remains unresolved.
+Routine tests use `tests/quick.txt`.
 
 See [panel contract](../.agent/current-dev20.md) and
 [priority fixes](history/2026-10-06-agent-priority-fixes.md). Prior panels closed.

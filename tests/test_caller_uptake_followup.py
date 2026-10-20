@@ -60,7 +60,9 @@ def saved_fixture(tmp_path, monkeypatch, *, tests_only=False, stop=None):
             pass
 
         def preflight(self, **kwargs):
-            assert 0 < kwargs["deadline"].remaining_seconds() <= 600
+            deadline = kwargs["deadline"]
+            now = deadline.clock()
+            assert now < deadline.expires_at <= now + 600
 
         def run_probe(self, staged, purpose, program, **kwargs):
             assert kwargs["execution_identity"]["run_id"] == followup.JOURNAL
@@ -75,7 +77,8 @@ def saved_fixture(tmp_path, monkeypatch, *, tests_only=False, stop=None):
         "status": "ERROR" if stop == "caller_error" else "PASS"})
 
     def native(folder, req, patch, entry, deadline):
-        assert 0 < deadline.remaining_seconds() <= 600
+        now = deadline.clock()
+        assert now < deadline.expires_at <= now + 600
         assert (folder.parent / "source-only.patch").read_bytes() == patch
         assert bool(patch) is not tests_only
         seen.append("native")
