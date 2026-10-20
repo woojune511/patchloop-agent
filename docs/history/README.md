@@ -1,6 +1,6 @@
 # History
 
-- [A1 helper](2026-10-20-a1-helper-replay.md).
+- [Recovery HTTP](2026-10-20-recovery-http-results.md).
 - [Dev20](2026-10-16-mini-swe-dev20-results.md).
 - [Completion](2026-10-16-mini-swe-completion-results.md).
 - [PatchLoop](2026-10-16-patchloop-mini-dev20-results.md).
