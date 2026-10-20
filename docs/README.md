@@ -2,6 +2,9 @@
 
 Current guidance and historical evidence have different reading paths.
 
+Start with the [saved repair and review walkthrough](https://woojune511.github.io/patchloop-agent/)
+for actual outputs, then follow its links to original patches, tests, and design decisions.
+
 | Need | Read |
 | --- | --- |
 | Current priority, baseline, unresolved problem | [Current status](current-status.md) |

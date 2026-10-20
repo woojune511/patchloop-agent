@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Inspect an actual PatchLoop repair: the issue, original patch, before/after tests, and a regression found during review.">
+  <meta name="theme-color" content="#153e39">
+  <title>PatchLoop — from issue to inspectable patch</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="topbar wrap">
+    <a class="wordmark" href="#" aria-label="PatchLoop home"><span class="mark" aria-hidden="true">↻</span> PatchLoop</a>
+    <nav aria-label="Main navigation"><a href="#repair">Repair</a><a href="#review">Review</a><a href="#design">Design</a><a href="https://github.com/woojune511/patchloop-agent">GitHub ↗</a></nav>
+  </header>
+  <main id="main">
+    <section class="hero wrap">
+      <div>
+        <p class="eyebrow">A SINGLE CODING AGENT</p>
+        <h1>From issue to<br>inspectable patch.</h1>
+        <p class="lede">Explore a repository. Change the code. Check the result. Keep the evidence.</p>
+        <p class="intro">PatchLoop runs a model and constrained tools within a fixed budget, returning a patch with the records needed to inspect its work.</p>
+        <div class="actions"><a class="button" href="#repair">Explore a repair ↓</a><a class="text-link" href="https://github.com/woojune511/patchloop-agent#try-it-without-an-api-key">Run the mock example ↗</a></div>
+      </div>
+      <aside class="receipt" aria-label="Saved python-dotenv repair summary">
+        <div class="receipt-top"><span class="dot"></span> SAVED RUN <span>python-dotenv #715</span></div>
+        <div class="receipt-line"><span>01</span><div><b>Issue</b><p>Empty value should use the supplied default.</p></div></div>
+        <div class="receipt-line"><span>02</span><div><b>Patch</b><p>Update the resolver and add a regression case.</p></div></div>
+        <div class="receipt-line"><span>03</span><div><b>Same test, before → after</b><p><span class="failed">1 failed</span> → <span class="passed">219 passed</span></p></div></div>
+        <div class="receipt-foot"><span>7 model calls</span><span>$0.127 recorded solve cost</span></div>
+      </aside>
+    </section>
+    <div class="evidence-note"><div class="wrap"><b>Saved evidence.</b> These cases display recorded patches and results. Opening this page does not run a model or execute tests. Independent acceptance for the public repairs is NOT_RUN.</div></div>
+    <section id="repair" class="wrap section">
+      <div class="section-label">01 / A REPAIR YOU CAN INSPECT</div>
+      <div class="section-heading"><h2>An empty value.<br>A missing default.</h2><p>In <a href="https://github.com/theskumar/python-dotenv/issues/715">python-dotenv #715 ↗</a>, an empty value did not use the supplied default. The agent changed the resolver and added one test case in the existing suite.</p></div>
+      <div class="case-grid">
+        <div class="code-card"><div class="code-title"><span>src/dotenv/variables.py</span><a href="https://github.com/woojune511/patchloop-agent/blob/main/examples/saved-repair/returned.patch">Full original patch ↗</a></div><pre aria-label="Excerpt from the returned patch"><code><span class="context">def resolve(self, env):</span>
+<span class="removed">− default = self.default if self.default is not None else ""</span>
+<span class="removed">− result = env.get(self.name, default)</span>
+<span class="removed">− return result if result is not None else ""</span>
+<span class="added">+ result = env.get(self.name)</span>
+<span class="added">+ if result in (None, ""):</span>
+<span class="added">+     if self.default is not None:</span>
+<span class="added">+         return self.default</span>
+<span class="added">+     return ""</span>
+<span class="added">+ return result</span></code></pre><p class="code-caption">Implementation excerpt; type annotations omitted for readability. The linked patch is the byte-identical original.</p></div>
+        <div class="test-card"><p class="eyebrow">RECORDED TEST COMPARISON</p><h3>One test, unchanged<br>across both versions.</h3><dl class="results"><div><dt>Original source</dt><dd>218 passed</dd></div><div><dt>Original + added test</dt><dd class="failed">1 failed · 218 passed</dd></div><div><dt>Returned patch</dt><dd class="passed">219 passed</dd></div></dl><a class="text-link" href="https://github.com/woojune511/patchloop-agent/blob/main/examples/saved-repair/verification.public.json">Inspect the verification JSON ↗</a></div>
+      </div>
+      <div class="case-details"><p><b>Observed.</b> The added test failed with an assertion mismatch before the implementation change and passed afterward. No operator implementation or test correction is included.</p><p><b>Scope.</b> The model test covers an empty environment variable. The issue's empty value inside a file was checked separately. The full suite and other environments were not run; verifier requirement fit is NOT_ASSESSED.</p><p><b>Cost and provenance.</b> USD 0.12695715 and 98.97 seconds of CLI time exclude preparation and external verification. The later verification replay is the same repair, not another solve. <a href="https://github.com/woojune511/patchloop-agent/blob/main/examples/saved-repair/README.md">Reproduction, source hashes, and upstream license ↗</a></p></div>
+    </section>
+    <section id="review" class="review-band"><div class="wrap section">
+      <div class="section-label">02 / WHAT THE FIRST TEST MISSED</div>
+      <div class="section-heading"><h2>The issue passed.<br>A callback was skipped.</h2><p>In <a href="https://github.com/pallets/click/issues/2786">Click #2786 ↗</a>, the first patch fixed a shared-value overwrite by skipping an omitted option. Review exposed the callback validation that this bypassed.</p></div>
+      <div class="review-steps"><article><span class="step-number">01</span><h3>First patch</h3><p>The issue test passed. Skipping option processing also skipped callback validation.</p><a href="https://github.com/woojune511/patchloop-agent/blob/main/examples/reviewed-repairs/click-2786-original.patch">Original patch ↗</a></article><article><span class="step-number">02</span><h3>Public review</h3><p>A supplied reproduction showed the preserved-behavior requirement the first patch missed.</p><a href="https://github.com/woojune511/patchloop-agent/blob/main/examples/reviewed-repairs/README.md">Review record ↗</a></article><article><span class="step-number">03</span><h3>Feedback-informed correction</h3><p>The agent preserved processing and restricted the overwrite. The final candidate passed the issue case, callback check, and 943 selected tests.</p><a href="https://github.com/woojune511/patchloop-agent/blob/main/examples/reviewed-repairs/click-2786-correction.patch">Correction patch ↗</a></article></div>
+      <p class="review-limit">Across three original public uses, all red/green comparisons passed; review found one scoped candidate and two needing changes. Corrections are recorded separately. Human final approval is unreported.</p>
+    </div></section>
+    <section id="design" class="wrap section">
+      <div class="section-label">03 / DESIGN DECISIONS</div>
+      <div class="section-heading"><h2>Make each action<br>accountable.</h2><p>The agent chooses its inspection, editing, and checking actions. The runtime binds those actions to source, evidence, and remaining resources.</p></div>
+      <div class="design-grid"><article><span class="design-icon" aria-hidden="true">Δ</span><h3>Checks follow the diff</h3><p>A PASS belongs to the exact code that was checked. A subsequent edit requires fresh verification.</p><p class="tradeoff">Tradeoff: more checks consume time and actions.</p><a href="https://github.com/woojune511/patchloop-agent/blob/main/patchloop/dev/tools.py">Tool gateway ↗</a></article><article><span class="design-icon" aria-hidden="true">↻</span><h3>Recovery preserves identity</h3><p>Action IDs and input hashes distinguish completed work from a new request after interruption.</p><p class="tradeoff">Tradeoff: uncertain external state stops recovery.</p><a href="https://github.com/woojune511/patchloop-agent/blob/main/patchloop/dev/state.py">Run journal ↗</a></article><article><span class="design-icon" aria-hidden="true">≤</span><h3>Calls need admitted budget</h3><p>The runtime counts input and checks cost immediately before model dispatch, with zero SDK retries.</p><p class="tradeoff">Tradeoff: a run may stop before solving the task.</p><a href="https://github.com/woojune511/patchloop-agent/blob/main/patchloop/dev/cost.py">Cost admission ↗</a></article></div>
+      <p class="section-tail"><a href="https://github.com/woojune511/patchloop-agent/blob/main/docs/product.md">Read the architecture and linked contract tests ↗</a></p>
+    </section>
+    <section class="wrap section results-section" id="results">
+      <div class="section-label">04 / MEASUREMENT, WITH ITS LIMITS</div>
+      <h2>Keep failures in the picture.</h2>
+      <div class="table-scroll"><table><caption>Separate recorded development checkpoints</caption><thead><tr><th>Panel record</th><th>PASS</th><th>FAIL</th><th>NOT_RUN</th><th>Model-call cost</th></tr></thead><tbody><tr><th><a href="https://github.com/woojune511/patchloop-agent/blob/main/examples/portfolio-dev20/README.md">2026-10-06 dev20</a></th><td>9</td><td>11</td><td>0</td><td>$3.46111455</td></tr><tr><th><a href="https://github.com/woojune511/patchloop-agent/blob/main/docs/history/2026-10-16-patchloop-mini-dev20-results.md">2026-10-16 dev20</a></th><td>8</td><td>10</td><td>2</td><td>$7.01172285</td></tr></tbody></table></div>
+      <p class="results-limit">These development-exposed panels used different recorded conditions. They are not a held-out score or a causal comparison. The later panel stopped two tasks at row cost caps. All runs are official=false; general repair improvement has not been established.</p>
+      <a class="text-link" href="https://github.com/woojune511/patchloop-agent/blob/main/docs/evidence.md">Evidence boundaries and complete records ↗</a>
+    </section>
+    <section class="closing wrap"><div><p class="eyebrow">EXPLORE THE IMPLEMENTATION</p><h2>Read the code.<br>Try the local loop.</h2></div><a class="button" href="https://github.com/woojune511/patchloop-agent#try-it-without-an-api-key">Open the repository ↗</a></section>
+  </main>
+  <footer class="wrap"><a class="wordmark" href="#">↻ PatchLoop</a><p>Static walkthrough · Saved evidence · <a href="https://github.com/woojune511/patchloop-agent/blob/main/docs/current-status.md">Current project status ↗</a></p></footer>
+</body>
+</html>
