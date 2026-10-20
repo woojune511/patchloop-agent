@@ -66,12 +66,12 @@ B's retained current failure; USD 0.04019910. Keep 24k; no adoption or paid foll
 
 [Recovery A/B](history/2026-10-20-recovery-schema-results.md): A/B 0/6; submissions
 4/6 vs 2/6, all fail caller/native. USD 7.70164425; closed, no new run.
-[Verification](history/2026-10-20-regression-contract-repair.md): evidence/decision
-separation retained; diagnostic compatibility and size contracts repaired.
-Final-commit validation: `C:/pt/regression-contract40/`; no paid run.
+[Verification](history/2026-10-20-regression-contract-repair.md): full suite
+5,463 passed/20 skipped at `5bd4c26c`; no paid run.
+[Next A/B](../.agent/plans/verification-state-comparison.md): state separation only;
+spec ready; adapter, grader and execution freeze pending. No paid authorization.
 
-See [panel contract](../.agent/current-dev20.md) and
-[priority fixes](history/2026-10-06-agent-priority-fixes.md). Prior panels closed.
+See [panel contract](../.agent/current-dev20.md); prior panels closed.
 
 Portfolio v1 [remeasurement](history/2026-10-06-portfolio-dev20-results.md) closed at
 9/20 versus historical 10/20, all evaluations agreeing; USD 3.46111455, 102m19s.
