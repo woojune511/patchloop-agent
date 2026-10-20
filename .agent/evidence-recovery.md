@@ -102,5 +102,8 @@ descriptions together with the replay input, retaining reproduction validation.
 Quick checks cover these adapter paths, OFF disclosure and the original 8,000-character
 prompt / 4,000-byte memory-schema ceilings; see the
 [regression repair](../docs/history/2026-10-20-regression-contract-repair.md).
+The [verification-state comparison](plans/verification-state-comparison.md) supplies
+a diagnostic-only OFF control and an independent public-judgment validator.
+Its frozen packet binds local validation; no paid allocation is authorized.
 Source replay and validation:
 [implementation record](../docs/history/2026-10-20-evidence-recovery.md).

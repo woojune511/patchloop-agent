@@ -1,9 +1,10 @@
 # Does separated verification state improve completion judgment and repair?
 
-Status: specification prepared, **not execution-ready or paid-authorized**.
-The arm adapter, new judgment grader and frozen execution packet are not yet built.
-No generation, input-count request, credential read or evaluator run is part of
-this preparation. Old allocations, approvals and unused balances do not transfer.
+Status: OFF control, judgment validator and serial adapter implemented.
+Admission requires the validated final-commit manifest at
+`C:/pt/verification-state42/manifest.json`; **paid execution is not authorized**.
+Preparation uses no generation, input-count request, credential read or real
+evaluator run. Old allocations, approvals and unused balances do not transfer.
 Every proposed run is `official=false` and claim-ineligible.
 
 ## Question and evidence
@@ -302,6 +303,49 @@ follows a negative or inconclusive result.
    and append-only hash-chained `dev-run-v1` journals outside the repository.
    Keep execution authorization false; exact human approval is a later record.
 
-This turn only prepares and checks the specification, prompt construction and
-unchanged contract values. Current runtime code and historical evidence remain
-unchanged. Local specification receipts: `C:/pt/verification-state-spec41/`.
+## Implemented preparation and execution interface
+
+The diagnostic-only implementation is
+[`verification_state_off.py`](../../diagnostics/verification_state_off.py),
+[`verification_state_grading.py`](../../diagnostics/verification_state_grading.py),
+[`verification_state_panel.py`](../../diagnostics/verification_state_panel.py) and
+[`verification_state_execution.py`](../../diagnostics/verification_state_execution.py).
+The product runtime remains byte-identical to the common repaired base.
+The OFF adapter is process-local and restored after local use; spawned paid workers
+receive the assigned initializer. A and B share the existing serial cost ledger,
+due-receipt validation, caller grader and whole-patch native assessor.
+
+The public grader validates dispatched-input/action/diff/receipt bindings and
+literal evidence, requires every finish attempt and observable decision to be
+reviewed, deduplicates action identities, and keeps semantic review explicit.
+Awarding mechanism use requires an actionable contrast and a subsequent action
+bound to the same request. It cannot prove semantic correctness from a valid
+annotation. Three selected historical decisions calibrate discussion-only B2,
+helper-to-task B5 and an accepted source-inference example; these are neither
+fresh blinded predictions nor whole-row completion scores.
+
+Current local evidence lives in `C:/pt/verification-state42/`; the earlier
+specification-only receipt remains at `C:/pt/verification-state-spec41/`.
+`validation.json` binds focused checks, Ruff, both quick selections, mock evaluation,
+initial captures, 368 public input reconstructions, historical grading calibration
+and the final-commit full suite. The full suite runs the product defaults and
+includes the new A/B tests. A's additional quick selection covers 45 common
+contract/state/cost/mock cases under the actual OFF initializer; B's quick
+selection keeps the existing product expectations, plus the new comparison tests.
+No existing assertion, test skip, timeout or budget is relaxed.
+
+Initial requests may differ only in the system paragraph, reproduction review,
+empty concern ID field name and verified derived segment IDs. The complete tool
+schemas match. Saved-log reconstruction compares public bytes with encrypted
+reasoning still redacted: it measures neither full billed input size nor token
+cost and does not rerun the source selector or predict future transitions.
+Historical input files remain immutable. The final replay and capture receipts,
+rather than an earlier intermediate script, are bound by the manifest.
+
+Use `python -m diagnostics.verification_state_panel validate --root
+C:/pt/verification-state42 --hash <manifest-hash>` to recheck the frozen packet.
+The separate `diagnostics.verification_state_execution` CLI supports `collect`,
+`export`, `seal`, and `assess` with the same root/hash. `collect` additionally
+requires exact new human authorization and a fresh official pricing review.
+`export` masks arm codes; `seal` validates all twelve public annotations before
+`assess` can open acceptance results. Preparation never creates an authorization.
