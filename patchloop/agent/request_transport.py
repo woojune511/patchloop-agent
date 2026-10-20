@@ -82,6 +82,7 @@ class BoundedResponsesClient:
         self.observe_response = lambda _: None
         self.response_received = False
         self.received_response = None
+        self.received_http_response = None
 
         async def create():
             transport = httpx.AsyncClient(trust_env=False)
@@ -110,6 +111,7 @@ class BoundedResponsesClient:
             raise ContractError("bounded request requires an open client and positive wait")
         self.phase = kind + "_wait"
         self.response_received, self.received_response = False, None
+        self.received_http_response = None
 
         async def fetch():
             timer = asyncio.timeout(timeout)
@@ -129,6 +131,7 @@ class BoundedResponsesClient:
                 raise
 
         raw = self.runner.run(fetch())
+        self.received_http_response = raw.http_response if kind == "provider_response" else None
         self.response_received = True
         self.phase = kind + "_processing" if kind in {"provider_response", "compaction"} else (
             "input_count_response_processing"
@@ -153,6 +156,7 @@ class BoundedResponsesClient:
             self.runner.run(cleanup())
         finally:
             self.received_response = None
+            self.received_http_response = None
             # Runner.close() joins its default executor for up to five minutes.
             # An OS DNS lookup may outlive coroutine cancellation; it must not hold
             # up the durable failure receipt. Closing the loop prevents re-entry.

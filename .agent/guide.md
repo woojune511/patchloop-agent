@@ -128,9 +128,9 @@ Pre-envelope runs cannot resume. Preserve settled usage, counters, and active de
 The offline [observation-exposure fork](observation-exposure.md) retains parent
 provenance under a new current-runtime envelope; it does not relax ordinary resume.
 
-OpenAI uses `store=false` and encrypted continuation with exact call/output ordering;
-never log plaintext reasoning or reasoning summaries. Missing/corrupt continuation
-fails closed. An unmatched provider dispatch or uncertain usage must not trigger retry.
+Use `store=false` and ordered encrypted continuation. No plaintext reasoning/summaries.
+Missing/corrupt continuation fails closed. Unmatched dispatch/unknown usage forbids retry.
+[HTTP/SDK diagnostics](provider-usage-diagnostics.md) are operator-only.
 Durable evaluator completion verifies check/safety artifact references and bytes
 before finalizing without re-execution;
 a crash before that receipt does not establish exactly-once evaluator execution.

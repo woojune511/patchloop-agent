@@ -66,8 +66,9 @@ B's retained current failure; USD 0.04019910. Keep 24k; no adoption or paid foll
 
 [Recovery A/B](history/2026-10-20-evidence-recovery-results.md): closed; A1 repair FAIL,
 B1 usage mismatch, ten NOT_RUN. USD 0.75890505 settled; B1 billing UNKNOWN.
-Treatment benefit unmeasured. Search opt-in; two refs, transitions and budgets unchanged.
-Use `tests/quick.txt`; four prior full-suite timing FAIL remain unresolved.
+Benefit unmeasured; search opt-in, two refs, transitions and budgets unchanged.
+[HTTP diagnostics](../.agent/provider-usage-diagnostics.md): local only; no paid retry.
+Quick: `tests/quick.txt`; four old full-suite timing failures remain.
 
 See [panel contract](../.agent/current-dev20.md) and
 [priority fixes](history/2026-10-06-agent-priority-fixes.md). Prior panels closed.

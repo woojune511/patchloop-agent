@@ -11,6 +11,7 @@ from openai import OpenAI
 
 from patchloop.agent.usage_diagnostics import (
     provider_usage_evidence,
+    response_diagnostics,
     usage_failure_message,
     usage_token_value,
 )
@@ -188,7 +189,13 @@ class OpenAIResponsesAdapter:
         payload = dict(request)
         if timeout_seconds is not None:
             payload["timeout"] = timeout_seconds
-        response = self.client.responses.create(**payload)
+        if isinstance(self.client, OpenAI):
+            raw = self.client.responses.with_raw_response.create(**payload)
+            response = raw.parse()
+            http_response = raw.http_response
+        else:
+            response = self.client.responses.create(**payload)
+            http_response = getattr(self.client, "received_http_response", None)
         usage_evidence = provider_usage_evidence(response, requested_input_tokens)
         input_tokens = usage_token_value(usage_evidence, "input_tokens")
         cached_input_tokens = usage_token_value(usage_evidence, "cached_input_tokens")
@@ -218,6 +225,10 @@ class OpenAIResponsesAdapter:
             error = ModelTurnError(
                 "incomplete_response",
                 f"provider response was incomplete: {incomplete_reason or response_status}",
+            )
+        if error is not None:
+            usage_evidence["response_diagnostics"] = response_diagnostics(
+                http_response, response, requested_input_tokens,
             )
         output_items = list(response.output or [])
         output_item_types = tuple(
