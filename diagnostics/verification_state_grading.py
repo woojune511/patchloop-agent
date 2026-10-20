@@ -61,6 +61,26 @@ def quote(ref, events, *, before=None):
     return event
 
 
+def current_execution(event, diff_hash):
+    """Execution provenance only; public applicability still needs semantic review."""
+    if event["event_type"] != "action_finished":
+        return False
+    result = event["payload"]["result"]
+    output = result.get("output") or {}
+    return bool(
+        result.get("tool") in {"run_probe", "run_check", "run_tests"}
+        and result.get("status") == "succeeded"
+        and result.get("workspace_diff_hash") == diff_hash
+        and output.get("diff_hash", diff_hash) == diff_hash
+        and type(output.get("exit_code")) is int
+        and all(output.get(k) is False for k in (
+            "timed_out", "truncated", "deadline_exhausted", "cleanup_failed",
+        ))
+        and output.get("setup_checks", {}).get("status") != "failed"
+        and not output.get("reproduction", {}).get("call_observation", {}).get("incomplete")
+    )
+
+
 def decisions(public):
     """Bind each tool decision to its actual preceding input and later receipt."""
     public_index(public)
@@ -156,14 +176,18 @@ def validate_annotation(row, public):
                 "finish admission differs")
         refs = claim["evidence"]
         require(label in {"UNKNOWN", "NO_CLAIM"} or bool(refs), "judgment needs evidence")
-        delivered = []
+        delivered, witnesses = [], []
         for ref in refs:
-            quote(ref, events, before=item["decision_sequence"])
+            event = quote(ref, events, before=item["decision_sequence"])
             present = contains(item["request"]["payload"]["wire"]["input"], ref["text"])
             require(ref["delivered"] is present, "evidence delivery differs from request")
             delivered.append(present)
+            if present and current_execution(event, item["diff_hash"]):
+                witnesses.append(contains(event["payload"]["result"]["output"], ref["text"]))
         require(label in {"UNKNOWN", "NO_CLAIM"} or any(delivered),
                 "judgment requires evidence delivered at decision")
+        require(label not in {"CONTRADICTED", "SUPPORTED_DIRECT"} or any(witnesses),
+                "direct judgment requires delivered current healthy execution")
         reason = claim["reason_kind"]
         allowed_reasons = {
             "CONTRADICTED": {"current_original_path_refutation"},

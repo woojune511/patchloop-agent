@@ -33,7 +33,7 @@ MODEL, TASK, ORDER = prior.MODEL, prior.TASK, prior.ORDER
 ROW_CAP, ARM_CAP, CAP = prior.ROW_CAP, prior.ARM_CAP, prior.CAP
 SPEC = ".agent/plans/verification-state-comparison.md"
 DEPENDENCIES = Path("C:/pt/calleruptake18/preparation-v2/B/prepared-probe-dependencies.json")
-JOURNAL = "run_dev_verificationstate42"
+JOURNAL = "run_dev_verificationstate43"
 
 
 def request(live, label):

@@ -18,9 +18,9 @@ from patchloop.dev.state import DevJournal
 from patchloop.runtime import repository_root
 from patchloop.util import canonical_json
 
-COLLECTION = "run_dev_verificationstatecollection42"
-AUDIT = "run_dev_verificationstateaudit42"
-ASSESSMENT = "run_dev_verificationstateassessment42"
+COLLECTION = "run_dev_verificationstatecollection43"
+AUDIT = "run_dev_verificationstateaudit43"
+ASSESSMENT = "run_dev_verificationstateassessment43"
 
 
 def authorize(digest, authorization):

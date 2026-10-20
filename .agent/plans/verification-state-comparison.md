@@ -2,7 +2,7 @@
 
 Status: OFF control, judgment validator and serial adapter implemented.
 Admission requires the validated final-commit manifest at
-`C:/pt/verification-state42/manifest.json`; **paid execution is not authorized**.
+`C:/pt/verification-state43/manifest.json`; **paid execution is not authorized**.
 Preparation uses no generation, input-count request, credential read or real
 evaluator run. Old allocations, approvals and unused balances do not transfer.
 Every proposed run is `official=false` and claim-ineligible.
@@ -183,6 +183,12 @@ Neither `required=UNKNOWN` nor concern dismissal determines the label.
 Use the public issue and independently inspected programs/results to establish
 scope. Infrastructure failures, incomplete observation and test-setup errors are
 not behavioral counterexamples.
+The validator requires a delivered, completed execution on the claim's current
+patch for CONTRADICTED and SUPPORTED_DIRECT, rejecting stale identities, missing
+execution metadata, timeout, truncation, cleanup/deadline uncertainty, failed
+setup checks and incomplete declared-call observation. Nonzero process exit is
+not itself disqualifying: the reviewer distinguishes behavior from setup failure.
+This structural check does not certify the caller mapping or countercondition.
 
 Primary judgment count J is the number of assigned rows with at least one
 CONTRADICTED or UNSUPPORTED completion assertion, counted once per row.
@@ -324,7 +330,7 @@ annotation. Three selected historical decisions calibrate discussion-only B2,
 helper-to-task B5 and an accepted source-inference example; these are neither
 fresh blinded predictions nor whole-row completion scores.
 
-Current local evidence lives in `C:/pt/verification-state42/`; the earlier
+Current local evidence lives in `C:/pt/verification-state43/`; the earlier
 specification-only receipt remains at `C:/pt/verification-state-spec41/`.
 `validation.json` binds focused checks, Ruff, both quick selections, mock evaluation,
 initial captures, 368 public input reconstructions, historical grading calibration
@@ -343,7 +349,7 @@ Historical input files remain immutable. The final replay and capture receipts,
 rather than an earlier intermediate script, are bound by the manifest.
 
 Use `python -m diagnostics.verification_state_panel validate --root
-C:/pt/verification-state42 --hash <manifest-hash>` to recheck the frozen packet.
+C:/pt/verification-state43 --hash <manifest-hash>` to recheck the frozen packet.
 The separate `diagnostics.verification_state_execution` CLI supports `collect`,
 `export`, `seal`, and `assess` with the same root/hash. `collect` additionally
 requires exact new human authorization and a fresh official pricing review.

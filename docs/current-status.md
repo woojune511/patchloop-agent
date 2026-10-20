@@ -69,7 +69,7 @@ B's retained current failure; USD 0.04019910. Keep 24k; no adoption or paid foll
 [Verification](history/2026-10-20-regression-contract-repair.md): full suite
 5,463 passed/20 skipped at `5bd4c26c`; no paid run.
 [Next A/B](../.agent/plans/verification-state-comparison.md): OFF/grader implemented;
-final-commit validation and unpaid freeze: `C:/pt/verification-state42/`.
+final-commit validation and unpaid freeze: `C:/pt/verification-state43/`.
 
 See [panel contract](../.agent/current-dev20.md); prior panels closed.
 

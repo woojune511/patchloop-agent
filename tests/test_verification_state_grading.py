@@ -30,7 +30,9 @@ def reviewed_row(label="CONTRADICTED"):
     events = [
         event(1, "action_finished", {"result": {
             "action_id": "probe", "input_hash": "probe-input", "tool": "run_probe",
-            "workspace_diff_hash": "D1", "output": {"stdout": observation}}}),
+            "workspace_diff_hash": "D1", "status": "succeeded", "output": {
+                "stdout": observation, "exit_code": 0, "timed_out": False,
+                "truncated": False, "deadline_exhausted": False, "cleanup_failed": False}}}),
         event(2, "provider_call_started", {"turn_id": "t1", "wire": wire,
                                            "actual_request_hash": sha256_json(wire)}),
         event(3, "turn_decision_recorded", {"turn_id": "t1", "tool_calls": [raw]}),
@@ -134,6 +136,45 @@ def test_mechanism_use_cannot_be_awarded_for_unbound_or_earlier_actions():
     row["mechanism_application"]["request_sequence"] += 1
     with pytest.raises(ContractError, match="bound dispatched"):
         grading.validate_annotation(row, public)
+
+
+def test_direct_judgment_rejects_stale_nonexecution_and_unhealthy_witnesses():
+    for label in ("CONTRADICTED", "SUPPORTED_DIRECT"):
+        row, public = reviewed_row(label)
+        public["events"][0]["payload"]["result"]["output"]["exit_code"] = 1
+        row["public_hash"] = sha256_json(public)
+        assert grading.validate_annotation(row, public)["last_claim"] == label
+        for variant in ("old_diff", "output_diff", "not_executed", "notes", "no_exit",
+                        "timed_out", "truncated", "deadline_exhausted", "cleanup_failed",
+                        "setup_failed", "incomplete_call"):
+            row, public = reviewed_row(label)
+            witness = public["events"][0]
+            result = witness["payload"]["result"]
+            output = result["output"]
+            if variant == "old_diff":
+                result["workspace_diff_hash"] = "OLD"
+            elif variant == "output_diff":
+                output["diff_hash"] = "OLD"
+            elif variant == "not_executed":
+                result["status"] = "failed"
+            elif variant == "notes":
+                witness["event_type"] = "working_notes_updated"
+            elif variant == "no_exit":
+                output.pop("exit_code")
+            elif variant == "setup_failed":
+                output["setup_checks"] = {"status": "failed"}
+            elif variant == "incomplete_call":
+                output["reproduction"] = {"call_observation": {"incomplete": True}}
+            else:
+                output[variant] = True
+            witness["event_hash"] = sha256_json(witness["payload"])
+            row["claims"][0]["evidence"][0]["event_hash"] = witness["event_hash"]
+            row["public_hash"] = sha256_json(public)
+            with pytest.raises(ContractError, match="current healthy execution"):
+                grading.validate_annotation(row, public)
+            # An invalid execution can support a reviewed overclaim diagnosis.
+            row["claims"][0].update(label="UNSUPPORTED", reason_kind="stale_pass")
+            assert grading.validate_annotation(row, public)["bad_claim"]
 
 
 def test_deduped_claims_unknown_and_abstention_do_not_inflate_benefit():
