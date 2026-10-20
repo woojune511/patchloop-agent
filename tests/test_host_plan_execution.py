@@ -276,10 +276,7 @@ def test_pair_full_flow_native_preservation_null_plan_handoff_and_review_order(
     source, fixture_plan, tmp_path
 ):
     original = DevJournal(source.root, source.run_id).path.read_bytes()
-    # Repeated coarse ticks previously made the 330-second duration round above its cap.
-    group = execution.Invocation(
-        DevJournal(tmp_path / "group", "run_dev_hostpair"), clock=lambda: 1900.001
-    )
+    group = execution.Invocation(DevJournal(tmp_path / "group", "run_dev_hostpair"))
     requests = []
     for arm in ("A", "B"):
         branch, _ = prepared(source, fixture_plan, tmp_path, arm, group)
