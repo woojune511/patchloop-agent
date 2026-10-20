@@ -19,6 +19,7 @@ jobs:
           python-version: "3.12"
       - run: uv sync --extra dev --locked
       - run: uv run --locked ruff check patchloop tests
+      - run: uv run --locked python scripts/build_site.py --output "${{ runner.temp }}/patchloop-site-check"
       - run: >-
           uv run --locked pytest tests
           -n 4 --dist loadfile --max-worker-restart 0
