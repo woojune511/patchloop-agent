@@ -1,6 +1,6 @@
 # History
 
-- [Scope state](2026-10-20-verification-state-separation.md).
+- [State](2026-10-20-verification-state-separation.md), [stop](2026-10-20-verification-state-stop.md).
 - [Dev20](2026-10-16-mini-swe-dev20-results.md).
 - [Completion](2026-10-16-mini-swe-completion-results.md).
 - [PatchLoop](2026-10-16-patchloop-mini-dev20-results.md).
@@ -49,18 +49,18 @@
 - [Patches](2026-09-30-submitted-patch-review.md).
 - [Replay](2026-09-30-probe-replay-comparison.md).
 - [Basic/current](2026-09-28-basic-current-baseline-comparison.md).
-- [Probe construction](2026-09-28-probe-construction-analysis.md).
+- [Construction](2026-09-28-probe-construction-analysis.md).
 - [Toqito](2026-09-28-toqito-public-validation.md); [mechanism](2026-09-28-general-failure-mechanism.md).
 - [Funding](2026-09-28-minimum-completion-funding.md).
 - [Pilot](2026-09-28-original-pilot-results.md); [budget audit](2026-09-28-completion-budget-audit.md).
 - [Probe capacity](2026-09-27-installed-probe-capacity.md).
 - [Wheel admission](2026-09-27-generated-wheel-admission.md).
 - [OpenBLAS](2026-09-27-probe-openblas-default.md); [PICOS](2026-09-27-picos-wheel-build.md).
-- [Pilot readiness](2026-09-27-original-pilot-readiness.md).
-- [Pilot packages](2026-09-27-original-pilot-packages.md).
-- [Pilot calibration](2026-09-27-original-pilot-calibration.md).
-- [Pilot selection](2026-09-27-original-input-pilot-selection.md).
-- [Oracle calibration](2026-09-27-original-benchmark-calibration.md).
+- [Readiness](2026-09-27-original-pilot-readiness.md).
+- [Packages](2026-09-27-original-pilot-packages.md).
+- [Calibration](2026-09-27-original-pilot-calibration.md).
+- [Selection](2026-09-27-original-input-pilot-selection.md).
+- [Oracle](2026-09-27-original-benchmark-calibration.md).
 - [Benchmark](2026-09-27-original-benchmark-preparation.md).
 - [Differences](2026-09-27-anyio-benchmark-differences.md).
 - [Caller scope](2026-09-27-caller-support-scope.md).
