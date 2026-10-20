@@ -68,8 +68,8 @@ B's retained current failure; USD 0.04019910. Keep 24k; no adoption or paid foll
 4/6 vs 2/6, all fail caller/native. USD 7.70164425; closed, no new run.
 [Verification](history/2026-10-20-regression-contract-repair.md): full suite
 5,463 passed/20 skipped at `5bd4c26c`; no paid run.
-[State A/B](../.agent/plans/verification-state-reduced-comparison.md): prepare
-3/arm, USD 5.28; approval pending. Prior A1/retry closed; effect unassessable.
+[State A/B](history/2026-10-20-verification-state-reduced-results.md): closed;
+J 2/3 vs 3/3, R 0/3 both; USD 2.78692275. No local gain or paid follow-up.
 
 See [panel contract](../.agent/current-dev20.md); prior panels closed.
 
