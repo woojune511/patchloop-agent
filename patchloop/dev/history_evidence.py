@@ -48,8 +48,9 @@ def separate(body):
         move(("call", "arguments"), MUTATION_ANNOTATIONS)
         move(("result", "output", "mutation"), MUTATION_ANNOTATIONS)
     if tool == "run_probe":
-        move(("call", "arguments"), ("question",))
+        move(("call", "arguments"), ("question", "reproduction"))
         move(("result", "output"), ("question",))
+        move(("result", "output", "reproduction", "binding"), ("definition",))
     if tool:
         move(
             ("result",), ("memory_update_result", "plan_update_result", "working_notes_after_batch")

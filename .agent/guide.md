@@ -79,6 +79,8 @@ Submit a nonempty tracked diff only after all required checks pass on it.
 Plan replacements need `plan_update_reason`; invalid reasons preserve the prior plan.
 Latest predecessor/reason stays visible; see [planning](planning-experiment.md).
 Check PASS alone certifies no requirement coverage. Label source inference.
+See [evidence recovery](evidence-recovery.md) for opt-in source restoration and
+fixed probe comparisons.
 No extra action/check required. After edits, require fresh PASS.
 Optional tests/probes give no required-check credit. Preserve pre-state,
 submitted-candidate and incremental patch identities; replay retains action-time identities.

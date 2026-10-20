@@ -1569,6 +1569,7 @@ def _build_context(
             }
             for result in probes[-3:]
         ]
+        payload["reproduction_review"] = gateway.reproduction_review(diff_hash=summary.patch_hash)
     # Construction is allowlist-based from ``package.public`` and public tool outputs;
     # private task fields are never accepted as context inputs.
     return json.dumps(

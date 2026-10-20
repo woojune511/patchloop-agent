@@ -64,10 +64,10 @@ L003/L039 cycle, regression PASS overinterpreted despite retained notes/tools.
 [Counterexample](history/2026-10-07-counterexample-results.md): both FAIL despite
 B's retained current failure; USD 0.04019910. Keep 24k; no adoption or paid follow-up.
 
-[Search non-use](history/2026-10-20-history-search-nonuse.md): B5 missed recoverable
-source; B6 judged beyond its visible probe; original caller unobserved in all six ON.
-OFF/ON 0/6 each, USD 6.57537510; retrieval unused. Keep OFF, two refs/60k and limits.
-Routine tests use `tests/quick.txt`; prior full-suite 4 FAIL remains unresolved.
+[Recovery](history/2026-10-20-evidence-recovery.md): source-hit restoration and fixed
+probe comparisons implemented, 220 local tests PASS; repair benefit unmeasured. Search stays opt-in;
+two refs, transitions and budgets unchanged. Prior OFF/ON: 0/6 each, search unused.
+Use `tests/quick.txt`; four prior full-suite timing FAIL remain unresolved.
 
 See [panel contract](../.agent/current-dev20.md) and
 [priority fixes](history/2026-10-06-agent-priority-fixes.md). Prior panels closed.

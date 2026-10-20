@@ -24,6 +24,7 @@ from patchloop.dev import (
     history_search,
     probe_cases,
     probe_replay,
+    reproduction,
     requirement_reference,
 )
 from patchloop.dev.check_feedback import check_failure_diagnostics, output_tail
@@ -251,6 +252,10 @@ def dev_tool_schemas(
             "name": "search_files",
             "description": (
                 "Search tracked public repository text and return bounded evidence spans."
+                + (" Matching earlier reads missing from the current input may be restored "
+                   "at same-version hits within the same source limit. Omitted bodies carry "
+                   "read ranges and history record IDs."
+                   if history_search_policy == history_search.POLICY else "")
             ),
             "strict": True,
             "parameters": {
@@ -450,7 +455,7 @@ def dev_tool_schemas(
                 "Compare actual input/output and relevant "
                 "line-entry ranges; missing observations are not proof of failure. "
                 "Results are diagnostics, not required visible-check verdicts. "
-                + probe_replay.DESCRIPTION
+                + probe_replay.DESCRIPTION + " " + reproduction.DESCRIPTION
             ),
             "strict": True,
             "parameters": {
@@ -463,8 +468,9 @@ def dev_tool_schemas(
                     "replay_action_id": {
                         "type": ["string", "null"], "minLength": 1, "maxLength": 500,
                     },
+                    "reproduction": reproduction.schema(),
                 },
-                "required": ["question", "python_source", "replay_action_id"],
+                "required": ["question", "python_source", "replay_action_id", "reproduction"],
                 "additionalProperties": False,
             },
         })
@@ -1282,7 +1288,7 @@ class DevToolGateway:
                 )
             if result.workspace_diff_hash is not None:
                 read_request_hash = result.output.get("read_request_hash", result.input_hash)
-                if isinstance(read_request_hash, str):
+                if isinstance(read_request_hash, str) and not result.output.get("source_recovery"):
                     self._read_cache[
                         self._cache_key(read_request_hash, result.workspace_diff_hash)
                     ] = self._cacheable_read_output(result.output)
@@ -2568,8 +2574,9 @@ class DevToolGateway:
         mutation_anchor_evidence_span_id: str | None = None
         candidate_summary: DiffSummary | None = None
         prepared_probe: dict[str, Any] | None = None
+        reproduction_binding: dict[str, Any] | None = None
         probe_arguments = {key: value for key, value in call.arguments.items()
-                           if key != "replay_action_id"}
+                           if key not in {"replay_action_id", "reproduction"}}
         replay_probe = (
             call.name == "run_probe" and call.arguments.get("replay_action_id") is not None
         )
@@ -2603,6 +2610,24 @@ class DevToolGateway:
                     raise RecoveryError("pending probe differs from its admitted program")
             except (PatchLoopError, ValidationError, ValueError) as exc:
                 preflight_error = exc
+        if call.name == "run_probe" and preflight_error is None:
+            try:
+                if call.arguments.get("reproduction") is not None and any(
+                    call.arguments.get(k)
+                    for k in ("case_id", "reference_action_id", "save_program")
+                ):
+                    raise ContractError(
+                        "reproduction uses action replay, not a saved/reference case")
+                reproduction_binding = reproduction.bind(
+                    call.arguments.get("reproduction"), self.public_task,
+                    (prepared_probe or probe_arguments).get("python_source"), call.action_id,
+                    replay=call.arguments.get("replay_action_id"), events=self.journal.events(),
+                )
+                if (pending is not None
+                        and pending.get("reproduction_binding") != reproduction_binding):
+                    raise RecoveryError("pending reproduction differs from its admitted purpose")
+            except (PatchLoopError, ValidationError, ValueError) as exc:
+                preflight_error = exc
         if pending is None:
             if call.name == "replace_text":
                 try:
@@ -2633,6 +2658,8 @@ class DevToolGateway:
                        if "memory_update" in call.model_fields_set else {}),
                     "baseline_diff_hash": baseline,
                     "baseline_changed_files": baseline_summary.changed_files,
+                    **({"reproduction_binding": reproduction_binding}
+                       if reproduction_binding is not None else {}),
                     **({probe_binding_key: prepared_probe}
                        if call.name == "run_probe" and (
                            replay_probe or self.probe_policy in probe_cases.POLICIES)
@@ -2735,6 +2762,7 @@ class DevToolGateway:
                     **({key: prepared_probe[key] for key in ("question", "python_source")}
                        if prepared_probe is not None else probe_arguments),
                     execution_identity={"run_id": self.journal.run_id, "action_id": call.action_id},
+                    reproduction_binding=reproduction_binding,
                 )
                 if prepared_probe is not None and prepared_probe["case"] is not None:
                     output["case_comparison"] = probe_cases.compare(prepared_probe["case"], output)
@@ -2769,6 +2797,24 @@ class DevToolGateway:
                     cached = copy.deepcopy(self._read_cache.get(cache_key))
                 evidence_cache_hit = cached is not None
                 output = cached if cached is not None else self._perform(call.name, call.arguments)
+                if (call.name == "search_files"
+                        and self.history_search_policy == history_search.POLICY):
+                    from patchloop.dev.source_recovery import expand
+
+                    # Prefix-only delivery, not arbitrary past action output. Parallel
+                    # source reads share this derived index under the existing lock.
+                    with self._lock:
+                        events = self.journal.events()
+                        cutoff = next(e["sequence"] for e in events
+                                      if e["event_type"] == "action_started"
+                                      and e["payload"]["action_id"] == call.action_id)
+                        self._public_history.sync(
+                            events, ArtifactStore(self.journal.root / "artifacts"),
+                            before_sequence=cutoff,
+                            check_deadline=self.deadline.check if self.deadline else lambda: None,
+                        )
+                        output = expand(output, self._public_history,
+                                        self._public_history.visible_source_lines)
                 output = self._decorate_read_output(
                     tool=call.name,
                     input_hash=read_request_hash,
@@ -2778,7 +2824,8 @@ class DevToolGateway:
                     action_id=call.action_id,
                 )
                 with self._lock:
-                    self._read_cache[cache_key] = self._cacheable_read_output(output)
+                    if not output.get("source_recovery"):
+                        self._read_cache[cache_key] = self._cacheable_read_output(output)
             else:
                 if self.deadline is not None:
                     self.deadline.check()
@@ -3616,6 +3663,7 @@ class DevToolGateway:
 
     def _run_probe(
         self, question: str, python_source: str, *, execution_identity: dict[str, str],
+        reproduction_binding: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         if self.probe_sandbox is None:
             raise ContractError("public probes are disabled for this run")
@@ -3623,11 +3671,15 @@ class DevToolGateway:
             raise ContractError("probe question must contain 1-500 characters")
         if not isinstance(python_source, str) or not 1 <= len(python_source) <= 8_000:
             raise ContractError("probe source must contain 1-8000 characters")
+        execution_source = (reproduction.program(python_source, reproduction_binding)
+                            if reproduction_binding is not None else python_source)
+        if len(execution_source) > 8_000:
+            raise ContractError("probe plus reproduction observer exceeds the 8000-character limit")
         summary = self.current_diff
         baseline = summary.patch_hash
         targets = self._execution_targets(execution_identity, summary=summary)
         output = self.probe_sandbox.run_probe(
-            self.workspace, question, python_source,
+            self.workspace, question, execution_source,
             deadline=self.deadline, execution_identity=execution_identity,
             **({"execution_targets": targets}
                if getattr(self.probe_sandbox, "supports_public_execution", False) else {}),
@@ -3640,6 +3692,15 @@ class DevToolGateway:
                    "public_execution": output.get("public_execution") or public_feedback(
                        targets, reason="backend_or_command_unmeasured",
                    )}
+        if reproduction_binding is not None:
+            if output.get("source_hash") != sha256_bytes(execution_source.encode("utf-8")):
+                raise RecoveryError("reproduction execution program identity mismatch",
+                                    details=receipt)
+            receipt = reproduction.compare(receipt, reproduction_binding)
+        receipt["verification_scope"] = (
+            "declared_reproduction_mapping_unverified" if reproduction_binding
+            else "helper_or_unbound_diagnostic"
+        )
         if observed_diff_hash != baseline:
             raise RecoveryError(
                 "managed workspace changed during probe execution",
@@ -3726,6 +3787,9 @@ class DevToolGateway:
             if len(diffs) >= 2:
                 self.requires_alternative = True
 
+    def reproduction_review(self, *, diff_hash: str) -> dict[str, Any]:
+        return reproduction.review(self.journal.events(), diff_hash)
+
     def _finish_task(self, arguments: dict[str, Any]) -> dict[str, Any]:
         intent = FinishIntent.model_validate(arguments)
         summary = self.current_diff
@@ -3742,6 +3806,7 @@ class DevToolGateway:
         plan_review = submission_review(self.journal.events(), summary.patch_hash)
         return {
             "assessment": intent.assessment,
+            "reproduction_review": self.reproduction_review(diff_hash=summary.patch_hash),
             **({"plan_review": plan_review} if plan_review is not None else {}),
             "patch": summary.patch,
             "patch_hash": summary.patch_hash,

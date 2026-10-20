@@ -27,7 +27,7 @@ _MODEL_INPUT_FIELDS = frozenset({
     "last_successful_mutation", "current_diff", "recent_checks", "public_execution_summary",
     "latest_tool_results", "source_spans", "recent_attempt_result_next_question", "public_task",
     "working_plan", "probe_cases", "repair_recheck", "probe_recheck",
-    "recent_probes", "recent_tests",
+    "recent_probes", "recent_tests", "reproduction_review",
     "latest_tool_results_delivery", "segment_handoff", "protocol_correction",
     # Existing public diagnostic overlays also pass through this projection when
     # constructed or replayed. Preserving them does not enable their producers.

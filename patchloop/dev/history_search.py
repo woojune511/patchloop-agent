@@ -63,6 +63,8 @@ def contract():
             "max_results": MAX_RESULTS, "max_result_chars": MAX_ORIGINAL_CHARS,
             "page_and_overflow_chars": MAX_RESULT_CHARS,
             "source_units": "full-original-then-bounded-observed-units",
+            "source_hit_recovery": "same-version-dispatched-read-v1",
+            "source_hit_chars": 24_000,
             "presentation": "full-first-evidence-v2",
             "oversize": "metadata-and-exact-id-json-pages", "batch": "singleton-inspect",
             "lookup": "exact-record-id-or-bm25",
@@ -111,13 +113,15 @@ class PublicHistory:
         self._seen_actions: set[str] = set()
         self._visible: set[str] = set()
         self._passages: dict[str, list] = {}
+        self.visible_source_lines: set[tuple] = set()
 
     def ingest(self, items, *, sequence, turn_id, input_hash):
         from patchloop.dev.conversation import SEGMENT_RULES, reconstruct_state
 
         state = reconstruct_state(items, context_policy="segmented-v1")
         self._visible = set()
-        _, exchanges, observations = SEGMENT_RULES.inventory(items)
+        facts, exchanges, observations = SEGMENT_RULES.inventory(items)
+        self.visible_source_lines = set(facts)
         origin = {"first_delivered_sequence": sequence, "turn_id": turn_id,
                   "model_input_hash": input_hash,
                   "delivery_diff_hash": state.get("current_diff", {}).get("patch_hash")}
