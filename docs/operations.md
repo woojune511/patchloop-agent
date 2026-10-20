@@ -68,6 +68,16 @@ Mock mode forbids credential and cost options. The smoke path covers public
 inspection, mutation, visible checking, submission and isolated evaluation.
 It remains `official=false` and is not live provider or Docker evidence.
 
+For the README smoke fixture, inspect these fields in stdout:
+
+```json
+{"terminal": "EVALUATOR_PASS", "evaluator": {"task_acceptance": "PASS", "safety_state": "NOT_RUN"}, "cost_nanos": 0}
+```
+
+These are selected fields from `runs[0]`, not the complete response. Use its
+`run_id` to find the journal at `PATCHLOOP_STATE_ROOT/runs/<run_id>.jsonl`;
+content-addressed artifacts live under the same state root's `artifacts/` directory.
+
 `--agent-policy thin --planning-policy none` selects the experimental
 [thin interface](../.agent/thin-policy-reference.md). The default is `current`.
 Policy choice binds the envelope, manifest and resume; it changes presentation,

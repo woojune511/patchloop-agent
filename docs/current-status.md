@@ -76,9 +76,10 @@ Portfolio v1 [remeasurement](history/2026-10-06-portfolio-dev20-results.md) clos
 9/20 versus historical 10/20, all evaluations agreeing; USD 3.46111455, 102m19s.
 The 11/20 threshold failed; test300 remains unprepared and unauthorized. The
 [decline review](history/2026-10-06-dev20-decline-review.md) adopted no intervention.
-[Public results](../examples/portfolio-dev20/README.md) and saved demos remain local;
-remote publication/release and Linux CI are NOT_RUN. [Preparation](history/2026-10-05-portfolio-preparation.md)
-preserves validation and the closed immutable evidence roots.
+[Public results](../examples/portfolio-dev20/README.md), saved repairs and platform CI
+are tracked in [publication PR #22](https://github.com/woojune511/patchloop-agent/pull/22).
+No release or new model evaluation. [Preparation](history/2026-10-05-portfolio-preparation.md)
+preserves the closed immutable evidence roots.
 
 [Mini/full](history/2026-10-04-mini-full-results.md): mini selected for the six-task
 panel only; 24/24 completed at USD 5.42285815. CLI defaults unchanged.
