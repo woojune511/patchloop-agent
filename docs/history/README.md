@@ -1,6 +1,6 @@
 # History
 
-- [A1/B1](2026-10-20-a1b1-diagnosis.md).
+- [A1 helper](2026-10-20-a1-helper-replay.md).
 - [Dev20](2026-10-16-mini-swe-dev20-results.md).
 - [Completion](2026-10-16-mini-swe-completion-results.md).
 - [PatchLoop](2026-10-16-patchloop-mini-dev20-results.md).

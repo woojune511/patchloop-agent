@@ -64,9 +64,9 @@ L003/L039 cycle, regression PASS overinterpreted despite retained notes/tools.
 [Counterexample](history/2026-10-07-counterexample-results.md): both FAIL despite
 B's retained current failure; USD 0.04019910. Keep 24k; no adoption or paid follow-up.
 
-[A1/B1](history/2026-10-20-a1b1-diagnosis.md): A1 wrong-path edit; B1 usage mismatch.
-Closed; ten NOT_RUN. USD 0.75890505 settled; B1 billing UNKNOWN.
-Guard retained at edit; B unmeasured. Helper replay NOT_RUN (Docker).
+[A1 helper](history/2026-10-20-a1-helper-replay.md): PASS before/after; branch unused.
+Closed A/B; ten NOT_RUN. USD 0.75890505 settled; B1 billing UNKNOWN.
+Test did not distinguish the edit; B effect unmeasured.
 Two refs, transitions, budgets unchanged.
 [HTTP diagnostics](../.agent/provider-usage-diagnostics.md): local; paid NOT_RUN.
 Quick: `tests/quick.txt`; four old timing failures remain.
