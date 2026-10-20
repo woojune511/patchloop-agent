@@ -1,6 +1,6 @@
 # History
 
-- [State A/B](2026-10-20-verification-state-reduced-results.md).
+- [Declaration audit](2026-10-21-reproduction-nonuse.md).
 - [Dev20](2026-10-16-mini-swe-dev20-results.md).
 - [Completion](2026-10-16-mini-swe-completion-results.md).
 - [PatchLoop](2026-10-16-patchloop-mini-dev20-results.md).
