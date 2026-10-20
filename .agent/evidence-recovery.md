@@ -30,15 +30,35 @@ replays its original receipt. No additional action or question reference is used
 Larger results still consume context and can affect later size transitions; no
 claim is made that the rest of a future request will remain unchanged.
 
-## Bind a proposed original-task reproduction before execution
+## Bind a selected original-requirement probe in the same action
 
-`run_probe.reproduction` is nullable in the ordinary probe surface. Null means a
-helper or unbound diagnostic. A declaration includes a literal public issue
-quote, a fully qualified Python entrypoint, input/environment descriptions and
-bounded strict `expected_json`. The program must print one JSON value computed
-from its actual observation. The host binds task, purpose, predicate and authored
-program hash before execution; new purpose/predicate/program means a distinct case.
-Repeating an identical declaration retains the original baseline identity.
+Every fresh `run_probe` selects `purpose`: `{"kind":"helper"}` for exploration,
+or an object with `kind="original_requirement"`, a literal `requirement_quote`,
+fully qualified Python `entrypoint`, `input_conditions`, `environment_conditions`
+and bounded strict `expected_json`. Choosing original-requirement verification
+therefore supplies its mapping and expectation in that same action. Missing or
+invalid mapping fields fail before execution; no separate registration is needed.
+Null is only for replay. The choice remains model-authored, not certified coverage.
+
+For original-requirement probes, call the injected `record_observation(value)`
+exactly once with the actual JSON-compatible result, at most 2,048 UTF-8 bytes.
+Print progress normally. Stdout/stderr are logs, not the predicate's input; the
+recorded value travels with the bounded call-observation report. For example,
+record `{"has_error": actual_has_error}` and let the host compare it to the frozen
+expectation instead of asserting expected behavior before reporting anything.
+
+Missing, duplicate, invalid or oversized observations cannot compare. A recorded
+value remains visible if the process subsequently fails, but failed execution,
+setup mismatch, timeout, truncation, uncertain cleanup or an unobserved declared
+call cannot gain matched/mismatched credit. An observed bug can be recorded by a
+healthy process as a mismatching value; process success is not task success.
+
+The host binds the task, purpose, predicate, observation channel and authored
+program hash before execution. New purpose/predicate/program means a distinct case.
+Repeating an identical selection retains the original baseline identity.
+Unadvertised legacy `reproduction` arguments preserve prior action/recovery
+identities and their stdout comparator. Logs are never automatically converted
+into declared cases, and old results are not regraded.
 
 The provider-facing schema omits only the entrypoint regex. Strict mode, required
 fields, nullability and length bounds remain; `Intent` still enforces the original
@@ -55,7 +75,7 @@ certified. This is diagnostic feedback, not an attestation. The observer and
 authored program together must fit the unchanged 8,000-character source limit;
 the existing sandbox/output/deadline limits still apply.
 
-Replay using the original `action_id`, with question/source/reproduction null.
+Replay using the original `action_id`, with question/source/purpose null.
 The existing replay path keeps the exact program and binding across edits and
 restart. Receipts distinguish authored `source_hash` from the actual
 `execution_source_hash`. A completed same-action retry returns its receipt rather
@@ -94,7 +114,9 @@ remains `not_assessed`; private acceptance stays outside agent context. Declarat
 fields are excluded from evidence ranking and labelled as annotations in returned
 originals. The current review is mutable state, not an archived observation.
 
-Focused checks: `tests/test_evidence_recovery.py`, `tests/test_verification_scope_state.py`.
+Focused checks: `tests/test_probe_purpose.py`, `tests/test_evidence_recovery.py`,
+`tests/test_verification_scope_state.py`.
+[Purpose and observation channel](../docs/history/2026-10-21-probe-purpose.md).
 [State separation and saved-log replay](../docs/history/2026-10-20-verification-state-separation.md).
 Diagnostic probe overrides must forward the host-bound `reproduction_binding`,
 including null, to ordinary execution. Inline-only projections remove both replay

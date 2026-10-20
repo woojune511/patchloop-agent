@@ -437,8 +437,9 @@ def dev_tool_schemas(
                 "are unavailable. Import and call a Python entry point in this process when "
                 "its dependencies are available. "
                 "Choose a public input variation that could falsify an implementation assumption, "
-                "not just repeat a registered example. State the expected observation in the "
-                "question and print or assert it in the experiment. Execution completed means "
+                "not just repeat a registered example. For helper probes, state the expected "
+                "observation in the question and print or assert it in the experiment. "
+                "Execution completed means "
                 "normal exit, not behavior verified. Before exercising behavior, use the available "
                 "check_setup(label, actual, expected) helper on actual constructed settings. "
                 "It is already injected into the probe's global namespace: call it directly, "
@@ -468,9 +469,9 @@ def dev_tool_schemas(
                     "replay_action_id": {
                         "type": ["string", "null"], "minLength": 1, "maxLength": 500,
                     },
-                    "reproduction": reproduction.schema(),
+                    "purpose": reproduction.purpose_schema(),
                 },
-                "required": ["question", "python_source", "replay_action_id", "reproduction"],
+                "required": ["question", "python_source", "replay_action_id", "purpose"],
                 "additionalProperties": False,
             },
         })
@@ -2576,7 +2577,7 @@ class DevToolGateway:
         prepared_probe: dict[str, Any] | None = None
         reproduction_binding: dict[str, Any] | None = None
         probe_arguments = {key: value for key, value in call.arguments.items()
-                           if key not in {"replay_action_id", "reproduction"}}
+                           if key not in {"replay_action_id", "reproduction", "purpose"}}
         replay_probe = (
             call.name == "run_probe" and call.arguments.get("replay_action_id") is not None
         )
@@ -2612,16 +2613,18 @@ class DevToolGateway:
                 preflight_error = exc
         if call.name == "run_probe" and preflight_error is None:
             try:
-                if call.arguments.get("reproduction") is not None and any(
+                selected, observation_channel = reproduction.selection(call.arguments)
+                if selected is not None and any(
                     call.arguments.get(k)
                     for k in ("case_id", "reference_action_id", "save_program")
                 ):
                     raise ContractError(
                         "reproduction uses action replay, not a saved/reference case")
                 reproduction_binding = reproduction.bind(
-                    call.arguments.get("reproduction"), self.public_task,
+                    selected, self.public_task,
                     (prepared_probe or probe_arguments).get("python_source"), call.action_id,
                     replay=call.arguments.get("replay_action_id"), events=self.journal.events(),
+                    observation_channel=observation_channel,
                 )
                 if (pending is not None
                         and pending.get("reproduction_binding") != reproduction_binding):

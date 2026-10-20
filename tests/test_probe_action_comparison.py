@@ -62,8 +62,8 @@ def test_control_changes_only_replay_schema_and_rejects_unoffered_mode():
     b = next(t for t in schemas if t["name"] == "run_probe")
     assert "replay_action_id" not in canonical_json(a)
     # OFF removes replay guidance only, retaining the same strict reproduction input.
-    assert a["parameters"]["properties"]["reproduction"] == (
-        b["parameters"]["properties"]["reproduction"])
+    assert a["parameters"]["properties"]["purpose"] == (
+        b["parameters"]["properties"]["purpose"])
     assert "neither proves" in a["description"]
     assert "replay_action_id" in b["parameters"]["required"]
     assert diagnostic.project_tools(schemas, "B") == schemas

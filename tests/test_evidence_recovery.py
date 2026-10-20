@@ -242,9 +242,12 @@ def test_reproduction_schema_public_quote_and_original_source_limit(gateway_fact
     assert tool["strict"] is True
     schema = tool["parameters"]
     assert set(schema["required"]) == set(schema["properties"])
-    bound = schema["properties"]["reproduction"]["anyOf"][0]
+    choices = schema["properties"]["purpose"]["anyOf"]
+    bound = choices[1]
     assert not bound["additionalProperties"] and set(bound["required"]) == set(bound["properties"])
-    assert schema["properties"]["reproduction"]["anyOf"][1] == {"type": "null"}
+    assert choices[0]["properties"]["kind"]["enum"] == ["helper"]
+    assert bound["properties"]["kind"]["enum"] == ["original_requirement"]
+    assert choices[2] == {"type": "null"}
     assert bound["properties"]["entrypoint"] == {
         "type": "string", "minLength": 3, "maxLength": 200,
     }

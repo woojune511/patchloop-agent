@@ -1,6 +1,6 @@
 # History
 
-- [Declaration audit](2026-10-21-reproduction-nonuse.md).
+- [Probe binding](2026-10-21-probe-purpose.md).
 - [Dev20](2026-10-16-mini-swe-dev20-results.md).
 - [Completion](2026-10-16-mini-swe-completion-results.md).
 - [PatchLoop](2026-10-16-patchloop-mini-dev20-results.md).

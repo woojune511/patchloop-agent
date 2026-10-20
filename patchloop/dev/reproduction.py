@@ -16,21 +16,28 @@ from patchloop.errors import ContractError, RecoveryError
 from patchloop.util import sha256_bytes, sha256_json
 
 REPLAY_DESCRIPTION = (
-    "After an edit, use replay_action_id with reproduction=null to keep the exact program, "
+    "After an edit, use replay_action_id with purpose=null to keep the exact program, "
     "purpose and expected value."
 )
 
 DESCRIPTION = (
-    "For a proposed original-task reproduction, set reproduction before execution: quote "
-    "the public requirement, name the fully qualified Python entrypoint actually called, "
-    "describe inputs/environment, and freeze expected_json. Print exactly one JSON value "
-    "computed from the observed behavior. A helper experiment uses reproduction=null. "
-    "The harness observes the declared Python call and compares stdout with the frozen "
+    "Choose purpose for each new probe: {kind: helper} explores a helper or uncertain path; "
+    "kind=original_requirement verifies a public requirement and must include its literal "
+    "requirement_quote, fully qualified Python entrypoint, input_conditions, "
+    "environment_conditions and expected_json in that same object. No separate declaration "
+    "step is needed. For original_requirement call record_observation(value) exactly once "
+    "with the actual JSON-compatible observation (at most 2048 UTF-8 bytes). Print progress "
+    "normally: stdout/stderr are logs, never the comparison value. Report an observed bug "
+    "as a value, not an assertion against expected behavior; the host compares it. Setup "
+    "failures, crashes and incomplete observations remain unverified. "
+    "The harness observes the declared Python call and compares the recorded value with the frozen "
     "expectation; neither proves that your chosen call represents the public requirement. "
     + REPLAY_DESCRIPTION + " Changing them creates a different experiment, not resolution "
     "of the old one. reproduction_review separates helpers, unobserved calls, changed setup "
     "and same-reproduction comparisons. No extra probe or submission gate is imposed."
 )
+
+OBSERVATION_CHANNEL = "record-observation-v1"
 
 
 class Intent(BaseModel):
@@ -55,7 +62,41 @@ def schema():
     return {"anyOf": [result, {"type": "null"}]}
 
 
-def bind(raw, public_task, source, action_id, *, replay=None, events=()):
+def purpose_schema():
+    original = schema()["anyOf"][0]
+    original["properties"] = {
+        "kind": {"type": "string", "enum": ["original_requirement"]},
+        **original["properties"],
+    }
+    original["required"] = ["kind", *original["required"]]
+    return {"anyOf": [
+        {"type": "object", "additionalProperties": False,
+         "properties": {"kind": {"type": "string", "enum": ["helper"]}},
+         "required": ["kind"]},
+        original, {"type": "null"},
+    ], "description": "Select helper or original_requirement; null only when replaying."}
+
+
+def selection(arguments):
+    """Fresh purposes bind in the same action; old arguments keep their recovery identity."""
+    if "purpose" not in arguments:
+        return arguments.get("reproduction"), None
+    if "reproduction" in arguments:
+        raise ContractError("use purpose, not both purpose and legacy reproduction")
+    purpose = arguments["purpose"]
+    if purpose is None:
+        if not (arguments.get("replay_action_id") or arguments.get("case_id")):
+            raise ContractError("a new probe must select helper or original_requirement purpose")
+        return None, None
+    if purpose == {"kind": "helper"}:
+        return None, None
+    if not isinstance(purpose, dict) or purpose.get("kind") != "original_requirement":
+        raise ContractError("probe purpose must be helper or original_requirement")
+    return {k: v for k, v in purpose.items() if k != "kind"}, OBSERVATION_CHANNEL
+
+
+def bind(raw, public_task, source, action_id, *, replay=None, events=(),
+         observation_channel=None):
     if replay is not None:
         if raw is not None:
             raise ContractError("replay preserves reproduction; use reproduction=null")
@@ -104,6 +145,7 @@ def bind(raw, public_task, source, action_id, *, replay=None, events=()):
         **intent.model_dump(),
         "expected_json": expected,
         "public_task_hash": sha256_json(task),
+        **({"observation_channel": observation_channel} if observation_channel else {}),
     }
     program_hash = sha256_bytes(source.encode("utf-8"))
     identity = sha256_json({"definition": definition, "program_hash": program_hash})
@@ -176,15 +218,38 @@ finally:
         pass
 """
 
+_RECORD = """_pr_observation = {"count": 0, "json": None, "error": None}
+def record_observation(value):
+    _pr_observation["count"] += 1
+    if _pr_observation["count"] != 1:
+        _pr_observation["error"] = "multiple_observations"
+        raise ValueError("record_observation requires exactly one value")
+    try:
+        text = _pr_json.dumps(value, ensure_ascii=True, allow_nan=False,
+                              separators=(",", ":"))
+        if len(text.encode("utf-8")) > 2048:
+            raise ValueError("observation exceeds 2048 bytes")
+        _pr_observation["json"] = text
+    except (ValueError, TypeError, OverflowError, RecursionError):
+        _pr_observation["error"] = "invalid_observation"
+        raise
+"""
+
 
 def marker(binding):
     return "\x1ePATCHLOOP-REPRODUCTION:" + binding["case_id"] + ":"
 
 
 def program(source, binding):
+    trace = _TRACE
+    if binding["definition"].get("observation_channel") == OBSERVATION_CHANNEL:
+        # Keep the legacy wrapper byte-for-byte for old declaration/action replays.
+        trace = trace.replace("_pr_rows = []", _RECORD + "\n_pr_rows = []", 1).replace(
+            '{"calls": _pr_rows, "incomplete": _pr_more[0]}',
+            '{"calls": _pr_rows, "incomplete": _pr_more[0], "observation": _pr_observation}', 1)
     return (
         f"_pr_target = {binding['definition']['entrypoint']!r}\n"
-        f"_pr_marker = {marker(binding)!r}\n_pr_source = {source!r}\n" + _TRACE
+        f"_pr_marker = {marker(binding)!r}\n_pr_source = {source!r}\n" + trace
     )
 
 
@@ -198,12 +263,14 @@ def compare(output, binding):
     frames = [part for part in stderr.split("\n") if part.startswith(prefix)]
     result["stderr"] = "\n".join(part for part in stderr.split("\n") if not part.startswith(prefix))
     trace = {"calls": [], "incomplete": True}
+    recorded = binding["definition"].get("observation_channel") == OBSERVATION_CHANNEL
     if len(frames) == 1:
         try:
             candidate = json.loads(frames[0][len(prefix) :])
             if (
                 isinstance(candidate, dict)
-                and set(candidate) == {"calls", "incomplete"}
+                and set(candidate) == (
+                    {"calls", "incomplete", "observation"} if recorded else {"calls", "incomplete"})
                 and type(candidate["incomplete"]) is bool
                 and isinstance(candidate["calls"], list)
                 and len(candidate["calls"]) <= 4
@@ -221,7 +288,25 @@ def compare(output, binding):
                 trace = candidate
         except (ValueError, TypeError):
             pass
-    actual, reason = observation_json(result)
+    actual, reason = observation_json(result) if not recorded else (None, "missing_observation")
+    if recorded:
+        value = trace.get("observation")
+        if isinstance(value, dict) and set(value) == {"count", "json", "error"}:
+            if (value["error"] or type(value["count"]) is not int
+                    or value["count"] not in (0, 1)):
+                reason = "invalid_or_multiple_observations"
+            elif value["count"] == 1 and isinstance(value["json"], str):
+                # Preserve a recorded observation even if a later assertion/crash
+                # fails the process. It cannot acquire matched/mismatched credit.
+                actual, reason = observation_json(
+                    {"status": "passed", "exit_code": 0, "stdout": value["json"]})
+                if reason is None:
+                    _, reason = observation_json({**result, "stdout": value["json"]})
+            elif value["count"] == 1:
+                reason = "invalid_or_multiple_observations"
+        if result.get("setup_checks", {}).get("status") == "failed":
+            reason = "setup_check_failed"
+        trace = {key: trace[key] for key in ("calls", "incomplete")}
     if not trace["calls"] or trace["incomplete"]:
         reason = "declared_call_unobserved_or_incomplete"
     result["reproduction"] = {

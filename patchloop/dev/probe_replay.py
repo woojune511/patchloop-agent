@@ -30,6 +30,7 @@ class ReplayRequest(BaseModel):
     reference_action_id: None = None
     save_program: Literal[False] = False
     reproduction: None = None
+    purpose: None = None
 
 
 def prepare(arguments: dict[str, Any], events: list[dict[str, Any]]) -> dict[str, Any]:

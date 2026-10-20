@@ -49,11 +49,11 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
                        "run_probe", "finish_task", "stop_task"),
     )
     # Preserve object, tool, enum and required-field order, nullability and defaults.
-    # Pin explicit primary/countercheck roles and the existing reproduction input.
+    # Pin primary/countercheck roles and the explicit probe-purpose input.
     tools = _legacy_compression_surface(tools)
     encoded = json.dumps(_without_descriptions(tools), ensure_ascii=False, separators=(",", ":"))
     assert hashlib.sha256(encoded.encode()).hexdigest() == (
-        "b12af0d8bbe25a339377d5e3c2142fde7b9ec7219eba152cda2a34f43dad1a14"
+        "d4bf40000628df95ab7bdd0374a5e21ac4845e828d73c5320b203c3818b8c0b7"
         if FROZEN_ARM is None else
         "e02c7ceb93201640950920b260422b0ae35fce974e3728b79e63345fb4bcf0e5"
     )
@@ -66,32 +66,32 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
 @pytest.mark.parametrize(("names", "expected"), [
     (
         ("read_file", "run_check", "run_probe", "search_files", "stop_task"),
-        "5086bebd89594b0bcbdd69d581d254c99c9a29dae6aae5ceda997f396cd09874"
+        "99567faf1ea920a9157e5ea6618c5d43e7d56e441820be941403a025d9b2abe9"
         if FROZEN_ARM is None else
         "544c19f4d8e63f8a8810efe1dd4cd0adf3dee51cdb0145a4509de554027739c2",
     ),
     (
         ("finish_task", "read_file", "replace_text", "run_probe", "search_files", "stop_task"),
-        "145ff7be3ef065f7fe5f59328a19e91bc79e27597e92036c3d25d812d8dd9421"
+        "de57dc4e83f8b26994c5df5f659cc208bbd3b348233d0ad3640493ffd5b90bd3"
         if FROZEN_ARM is None else
         "b817201c9d1aa8432575b0c1b55015dc01bc08a2b002e3e2cc09ab13bfa229c6",
     ),
     (
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task"),
-        "d39d5a62e422dddb254d3e2ea179ab02ae430e2f1deffce3a18251271fc85c6e"
+        "923a71312af5fa8d677ce72762b2f045a47ff2ebc4e084caaf1f57a2c11e7032"
         if FROZEN_ARM is None else
         "310f8ec3dd129c93fb10c2a0589decf38eb09ce60e395ef906ac814e399e5139",
     ),
     (
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task",
          "finish_task"),
-        "a18e953f8dc2db068843e9c028fb4e209940ec6dd6ea6827e5be749fb11cd11b"
+        "53d8c9ffaa20544b633c883b1e40010113b680722f23caebeb0ef991f1738caa"
         if FROZEN_ARM is None else
         "6302bc9d248be03d6e1430f0102a0e5c00ecb7883c25d453945f979f21fd3af7",
     ),
 ])
 def test_descriptions_outside_memory_and_schema_order_are_unchanged(names, expected):
-    # Finish prose now ties requirements and unfinished verification to evidence; wire stays fixed.
+    # Pin current probe-purpose guidance; preserve immutable removal-arm snapshots.
     tools = dev_tool_schemas(finish_enabled="finish_task" in names, allowed_tools=names)
     tools = _legacy_compression_surface(tools)
     for tool in tools:
