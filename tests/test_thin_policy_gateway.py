@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
+from repair_mechanism_expectations import FROZEN_ARM
 
 from patchloop.agent.model import RequestedTool as ProviderCall
 from patchloop.dev.contracts import (
@@ -87,6 +88,8 @@ def test_default_serialization_and_schema_identities_remain_exact():
         allowed_tools=list(MODES),
     )
     assert sha256_json(schemas) == (
+        "sha256:d7dea090429638fdf68bf5d24577aa9e109cf7ee020b375d068df67205c0022b"
+        if FROZEN_ARM is None else
         "sha256:9757e80d1590c5274966a80011a24ed12e08340d23d2e202f0f099ea1be47955"
     )
     request = DevRunRequest(provider="mock", task=Path("public.yaml"), model="mock-dev")

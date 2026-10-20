@@ -22,7 +22,7 @@ from patchloop.agent.model import OpenAIResponsesAdapter
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import ModelConfig, PublicTask
 from patchloop.deadline import ExecutionDeadline
-from patchloop.dev import probe_replay
+from patchloop.dev import probe_replay, reproduction
 from patchloop.dev.contracts import DevLimits, PublicTurnDecision, RequestedTool
 from patchloop.dev.state import DevJournal
 from patchloop.dev.tools import DevToolGateway, dev_tool_schemas
@@ -161,6 +161,8 @@ def initial_request(public: PublicTask, patch: str, environment: dict, *,
     probe_schema = next(tool for tool in tools if tool["name"] == "run_probe")
     probe_schema["description"] = probe_schema["description"].replace(
         " " + probe_replay.DESCRIPTION, "",
+    ).replace(
+        " " + reproduction.REPLAY_DESCRIPTION, "",
     )
     parameters = probe_schema["parameters"]
     for name in ("question", "python_source"):

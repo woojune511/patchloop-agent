@@ -14,6 +14,7 @@ from test_dev_probe_cases import CANDIDATE, ExecutingProbe
 from test_dev_probes import context
 from test_dev_tools import mutation_call, read_calls
 
+from diagnostics import discovery_case_selection, paired_observation
 from patchloop.artifacts import ArtifactStore
 from patchloop.dev import reproduction, runner
 from patchloop.dev.contracts import DevModelTurn, RequestedTool
@@ -22,7 +23,7 @@ from patchloop.dev.history_evidence import EvidenceHistory, separate
 from patchloop.dev.model import MockDevAdapter
 from patchloop.dev.model_state import compact_model_state
 from patchloop.dev.source_recovery import expand
-from patchloop.dev.tools import dev_tool_schemas
+from patchloop.dev.tools import DevToolGateway, dev_tool_schemas
 from patchloop.util import canonical_json, sha256_bytes
 
 
@@ -192,6 +193,34 @@ def test_helper_pass_and_changed_predicate_cannot_resolve_original(gateway_facto
     assert backend.calls == 3
     assert gateway.reproduction_review(diff_hash=gateway.current_diff_hash)[
         "helper_or_unbound_executions"] == 1
+
+
+@pytest.mark.parametrize("adapter", ["case_selection", "paired_observation"])
+def test_diagnostic_adapters_preserve_bound_reproduction_and_action_recovery(
+    gateway_factory, adapter,
+):
+    original, journal, workspace = gateway_factory()
+    gateway_type = (discovery_case_selection.CaseSelectionGateway if adapter == "case_selection"
+                    else paired_observation.gateway_type(DevToolGateway))
+    backend = ExecutingProbe()
+    gateway = gateway_type(workspace=workspace, public_task=original.public_task,
+                           sandbox=original.sandbox, journal=journal, limits=original.limits,
+                           probe_sandbox=backend)
+    call = probe(gateway.public_task)
+    result = gateway.execute(call)
+    assert result.status == "succeeded", result
+    receipt = result.output["reproduction"]
+    assert receipt["comparison"] == "mismatched"
+    assert receipt["call_observation"]["calls"][0]["arguments"]
+    assert gateway.execute(call).replayed and backend.calls == 1
+    replay = gateway.execute(probe(gateway.public_task, "repeat", replay="original"))
+    assert replay.output["reproduction"]["binding"] == receipt["binding"]
+    assert replay.output["reproduction"]["comparison"] == "mismatched"
+    invalid = probe(gateway.public_task, "bad-declaration")
+    invalid.arguments["reproduction"]["entrypoint"] = "not a qualified name"
+    assert gateway.execute(invalid).status == "failed" and backend.calls == 2
+    assert gateway.reproduction_review(diff_hash=gateway.current_diff_hash)[
+        "required"]["status"] == "UNKNOWN"
 
 
 @pytest.mark.parametrize("source", [

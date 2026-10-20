@@ -8,6 +8,7 @@ from types import SimpleNamespace
 
 import pytest
 from native_history_support import input_context
+from repair_mechanism_expectations import FROZEN_ARM
 from test_dev_completion_v27 import _batch
 from test_dev_feedback_integration_v18 import _context, _input, _outputs
 from test_dev_notes_lifecycle_v15 import _gateway, _mutation, _read, _restart
@@ -213,9 +214,12 @@ def test_experiment_guidance_is_generic_optional_and_uses_existing_inputs():
     assert "public input variation" in schema["description"]
     assert "expected observation" in schema["description"]
     assert "normal exit, not behavior verified" in schema["description"]
-    assert set(schema["parameters"]["properties"]) == {
+    expected = {
         "question", "python_source", "replay_action_id", "turn_decision",
     }
+    if FROZEN_ARM is None:
+        expected.add("reproduction")
+    assert set(schema["parameters"]["properties"]) == expected
     assert "This judgment needs no separate call or mandatory experiment" in DEV_SYSTEM_PROMPT
     assert len(DEV_SYSTEM_PROMPT) <= 8007
     for task_specific in ("pyfakefs", "makedirs", "0o700", "ENOTDIR"):

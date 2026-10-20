@@ -6,6 +6,7 @@ import json
 
 import pytest
 from native_history_support import input_context
+from repair_mechanism_expectations import FROZEN_ARM
 from test_dev_context_v12 import note_call, source_note
 from test_dev_feedback_integration_v18 import _context, _input, _outputs
 from test_dev_notes_lifecycle_v15 import _gateway, _read, _restart
@@ -247,9 +248,11 @@ def test_projection_preserves_current_ordered_tool_inputs_and_limits():
             return [structure(item) for item in value]
         return value
 
-    # The current ordered inputs include the required finish assessment.
+    # Ordered inputs include finish assessment and the existing reproduction field.
     encoded = json.dumps(structure(schemas), separators=(",", ":"), ensure_ascii=False).encode()
     assert hashlib.sha256(encoded).hexdigest() == (
+        "337bb6defb3a9daf9e0570da479d8f430aed16ff8f8bf3a2e55d033827263d5e"
+        if FROZEN_ARM is None else
         "acdcc28623f92006faaa95a0c58015095e28b851093d0eb983e8d59bcd303222"
     )
     assert dev_tool_surface_hash() != (

@@ -6,7 +6,7 @@ import json
 
 import pytest
 from native_history_support import input_context
-from repair_mechanism_expectations import JUDGMENT
+from repair_mechanism_expectations import FROZEN_ARM, JUDGMENT
 from test_dev_check_identity_v19 import _result
 from test_dev_context_v12 import note_call, source_note
 from test_dev_feedback_integration_v18 import _completed_batch, _context, _input
@@ -204,9 +204,11 @@ def test_probe_description_exposes_existing_capability_without_changing_wire_sha
             return [structure(item) for item in value]
         return value
 
-    # Open questions now bind evidence; probe properties/limits and tool order stay fixed.
+    # Pin the existing reproduction field as well as question references and tool order.
     encoded = json.dumps(structure(schemas), separators=(",", ":"), ensure_ascii=False).encode()
     assert hashlib.sha256(encoded).hexdigest() == (
+        "337bb6defb3a9daf9e0570da479d8f430aed16ff8f8bf3a2e55d033827263d5e"
+        if FROZEN_ARM is None else
         "acdcc28623f92006faaa95a0c58015095e28b851093d0eb983e8d59bcd303222"
     )
     assert dev_tool_surface_hash() != (

@@ -5,6 +5,7 @@ import json
 import pytest
 from native_history_support import input_context
 from pydantic import ValidationError
+from repair_mechanism_expectations import FROZEN_ARM
 from typer.testing import CliRunner
 
 import patchloop.dev.runner as runner
@@ -57,6 +58,8 @@ def test_off_wire_and_prompt_are_unchanged():
         "sha256:57193859890419b79cb7f4927c37796d044bc4bf7159c51ddf17723849529e26"
     )
     assert sha256_json(dev_tool_schemas(finish_enabled=True, check_ids=["check"])) == (
+        "sha256:6c41352e6dae1faa0485facfe2fc438ae7003dbbc6e4a9c843be177491467f18"
+        if FROZEN_ARM is None else
         "sha256:e8ac4db103389896d6df2061340f328e1c400ee83cb439a4c4f1ed4529f50036"
     )
     decision = PublicTurnDecision(mode="verify", basis="baseline")

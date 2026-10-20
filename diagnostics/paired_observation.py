@@ -185,10 +185,12 @@ def gateway_type(base):
                     "semantic_verdict": None,
                 }}) from exc
 
-        def _run_probe(self, question, python_source, *, execution_identity, comparison=None):
+        def _run_probe(self, question, python_source, *, execution_identity, comparison=None,
+                       reproduction_binding=None):
             prepared, _ = self._prepare_comparison(comparison)
             output = super()._run_probe(question, python_source,
-                                        execution_identity=execution_identity)
+                                        execution_identity=execution_identity,
+                                        reproduction_binding=reproduction_binding)
             if prepared is not None:
                 output[FIELD] = probe_comparison(prepared, output)
             return output

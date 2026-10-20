@@ -9,6 +9,7 @@ from types import SimpleNamespace
 
 import pytest
 from native_history_support import input_context
+from repair_mechanism_expectations import FROZEN_ARM
 from test_dev_budget_v16 import PolicyGateway
 from test_dev_feedback_integration_v18 import _completed_batch, _context, _input
 from test_dev_notes_lifecycle_v15 import _gateway, _mutation, _read, _restart
@@ -198,10 +199,12 @@ def test_last_edit_feedback_survives_native_delivery_restart_and_action_replay(t
 def test_feedback_changes_preserve_wire_limits_and_bounded_prompt():
     # V34 compresses memory descriptions only; ordered input shapes and non-memory
     # descriptions are independently pinned in test_dev_memory_guidance_v34.
-    # Include concern guidance, mutation bounds and evidence-based finish assessment prose.
+    # Also pin the existing reproduction input and scope guidance; frozen arms stay exact.
     assert sha256_json(dev_tool_schemas(
         finish_enabled=True, allowed_tools=ALL_DEV_TOOLS, check_ids=["first", "second"],
-    )) == "sha256:8b024770ed22b31b84e2e5b8890080e1aaad9f15ba9843f5c3ea3f1c12ee0fe0"
+    )) == ("sha256:1ee6f9ad3862e16ea04fdc477a91b8d717a8b3a0451373b4107e103f9d0d1182"
+           if FROZEN_ARM is None else
+           "sha256:8b024770ed22b31b84e2e5b8890080e1aaad9f15ba9843f5c3ea3f1c12ee0fe0")
     assert dev_tool_surface_hash() != (
         "sha256:3a114a877f58c774aca0f555b106d7361df7b3087b4c04aa2903cbb9a49853cc"
     )

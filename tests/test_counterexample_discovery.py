@@ -168,6 +168,9 @@ def test_fresh_discovery_projects_inline_probe_only_for_every_annotation_mode(
         planning_policy="brief-v1", probe_policy="none", probe_environment=environment,
     )
     regular_probe = next(tool for tool in regular if tool["name"] == "run_probe")
+    assert parameters["properties"]["reproduction"] == (
+        regular_probe["parameters"]["properties"]["reproduction"])
+    assert "neither proves" in schema["description"]
     assert "replay_action_id" in regular_probe["parameters"]["required"]
     assert regular_probe["parameters"]["properties"]["python_source"]["type"] == ["string", "null"]
     assert [tool for tool in request["tools"] if tool["name"] not in {

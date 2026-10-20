@@ -15,6 +15,11 @@ from patchloop.dev.probe_cases import observation_json
 from patchloop.errors import ContractError, RecoveryError
 from patchloop.util import sha256_bytes, sha256_json
 
+REPLAY_DESCRIPTION = (
+    "After an edit, use replay_action_id with reproduction=null to keep the exact program, "
+    "purpose and expected value."
+)
+
 DESCRIPTION = (
     "For a proposed original-task reproduction, set reproduction before execution: quote "
     "the public requirement, name the fully qualified Python entrypoint actually called, "
@@ -22,8 +27,7 @@ DESCRIPTION = (
     "computed from the observed behavior. A helper experiment uses reproduction=null. "
     "The harness observes the declared Python call and compares stdout with the frozen "
     "expectation; neither proves that your chosen call represents the public requirement. "
-    "After an edit, use replay_action_id with reproduction=null to keep the exact program, "
-    "purpose and expected value. Changing them creates a different experiment, not resolution "
+    + REPLAY_DESCRIPTION + " Changing them creates a different experiment, not resolution "
     "of the old one. reproduction_review separates helpers, unobserved calls, changed setup "
     "and same-reproduction comparisons. No extra probe or submission gate is imposed."
 )

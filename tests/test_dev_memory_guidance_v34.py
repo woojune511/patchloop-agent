@@ -6,6 +6,7 @@ import hashlib
 import json
 
 import pytest
+from repair_mechanism_expectations import FROZEN_ARM
 
 from patchloop.dev.contracts import DEV_RUN_SCHEMA, DevLimits, dev_tool_surface_hash
 from patchloop.dev.model import DEV_SYSTEM_PROMPT
@@ -48,10 +49,12 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
                        "run_probe", "finish_task", "stop_task"),
     )
     # Preserve object, tool, enum and required-field order, nullability and defaults.
-    # Refreshed for explicit primary/countercheck roles; other ordered inputs stay pinned.
+    # Pin explicit primary/countercheck roles and the existing reproduction input.
     tools = _legacy_compression_surface(tools)
     encoded = json.dumps(_without_descriptions(tools), ensure_ascii=False, separators=(",", ":"))
     assert hashlib.sha256(encoded.encode()).hexdigest() == (
+        "b12af0d8bbe25a339377d5e3c2142fde7b9ec7219eba152cda2a34f43dad1a14"
+        if FROZEN_ARM is None else
         "e02c7ceb93201640950920b260422b0ae35fce974e3728b79e63345fb4bcf0e5"
     )
     for tool in tools:
@@ -63,19 +66,27 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
 @pytest.mark.parametrize(("names", "expected"), [
     (
         ("read_file", "run_check", "run_probe", "search_files", "stop_task"),
+        "5086bebd89594b0bcbdd69d581d254c99c9a29dae6aae5ceda997f396cd09874"
+        if FROZEN_ARM is None else
         "544c19f4d8e63f8a8810efe1dd4cd0adf3dee51cdb0145a4509de554027739c2",
     ),
     (
         ("finish_task", "read_file", "replace_text", "run_probe", "search_files", "stop_task"),
+        "145ff7be3ef065f7fe5f59328a19e91bc79e27597e92036c3d25d812d8dd9421"
+        if FROZEN_ARM is None else
         "b817201c9d1aa8432575b0c1b55015dc01bc08a2b002e3e2cc09ab13bfa229c6",
     ),
     (
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task"),
+        "d39d5a62e422dddb254d3e2ea179ab02ae430e2f1deffce3a18251271fc85c6e"
+        if FROZEN_ARM is None else
         "310f8ec3dd129c93fb10c2a0589decf38eb09ce60e395ef906ac814e399e5139",
     ),
     (
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task",
          "finish_task"),
+        "a18e953f8dc2db068843e9c028fb4e209940ec6dd6ea6827e5be749fb11cd11b"
+        if FROZEN_ARM is None else
         "6302bc9d248be03d6e1430f0102a0e5c00ecb7883c25d453945f979f21fd3af7",
     ),
 ])
@@ -93,9 +104,11 @@ def test_descriptions_outside_memory_and_schema_order_are_unchanged(names, expec
 def test_surrounding_action_guidance_identity():
     from repair_mechanism_expectations import JUDGMENT
     prefix, _, suffix = _memory_block()
-    # J0 restores the frozen earlier completion paragraph. Keep exact identities
-    # for both contracts; do not drop the surrounding-guidance drift check.
+    # Current prose fits the original 8,000-character contract with scope separation.
+    # Historical J0/J1 arms retain their exact earlier surrounding-guidance identities.
     assert hashlib.sha256(canonical_json([prefix, suffix]).encode()).hexdigest() == (
+        "43fba7474f0abb96ea0dde12645f4c4e91757b45d6bfb26f49aa967a2c1cd050"
+        if FROZEN_ARM is None else
         "2d0a9063da8d508a3c1218903cae12e33aa5db97f4d5655ca645fd5d52dc1331"
         if JUDGMENT else "c6439ce32e7724ed5d4c08dc1f207186b45e34234947c2867d7a65f096ce10a3"
     )

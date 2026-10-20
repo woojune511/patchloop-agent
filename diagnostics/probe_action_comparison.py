@@ -17,7 +17,7 @@ from diagnostics.decision_sampler import require
 from diagnostics.declaration_checkpoint import Source, disjoint
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import Artifact
-from patchloop.dev import probe_replay, runner
+from patchloop.dev import probe_replay, reproduction, runner
 from patchloop.dev.cost import DevCostLedger, pricing_for_model, usd_to_nanos
 from patchloop.dev.state import DevJournal
 from patchloop.dev.tools import DevToolGateway
@@ -35,6 +35,8 @@ def project_tools(schemas, arm):
             if tool["name"] != "run_probe":
                 continue
             tool["description"] = tool["description"].replace(" " + probe_replay.DESCRIPTION, "")
+            tool["description"] = tool["description"].replace(
+                " " + reproduction.REPLAY_DESCRIPTION, "")
             params = tool["parameters"]
             del params["properties"]["replay_action_id"]
             params["required"].remove("replay_action_id")
