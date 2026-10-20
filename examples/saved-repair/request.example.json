@@ -1,0 +1,30 @@
+{
+  "task": "public.yaml",
+  "source": "../source",
+  "state_root": "../repair-state",
+  "sandbox": {
+    "backend": "docker",
+    "image": "patchloop-public-repair-dotenv@sha256:d7d36d2222d2e0af98beefcf76f77678dfb8b9620b2dc9618ee9bad09820ff69",
+    "image_digest": "sha256:d7d36d2222d2e0af98beefcf76f77678dfb8b9620b2dc9618ee9bad09820ff69"
+  },
+  "provider": "openai",
+  "model": "gpt-5.4-mini-2026-03-17",
+  "reasoning_effort": "xhigh",
+  "max_output_tokens": 25000,
+  "context_policy": "segmented-v1",
+  "segment_boundary_policy": "result-or-size-v1",
+  "planning_policy": "brief-v1",
+  "repair_recheck": true,
+  "repair_inspection_policy": "protected-v1",
+  "completion_cost_policy": "per-call-v1",
+  "enable_probes": false,
+  "env_file": "../credentials.env",
+  "max_cost_usd": "3.00",
+  "repeat": 1,
+  "limits": {
+    "max_model_calls": 40,
+    "max_tool_actions": 100,
+    "max_accepted_mutations": 4,
+    "wall_time_seconds": 1800
+  }
+}

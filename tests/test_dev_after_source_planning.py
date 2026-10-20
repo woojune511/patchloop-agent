@@ -6,6 +6,7 @@ import copy
 import httpx
 import pytest
 from pydantic import ValidationError
+from repair_mechanism_expectations import JUDGMENT
 from test_dev_planning import call, request
 from test_dev_runner import _crash_journal_once, _enveloped_run_id, _SimulatedCrash
 from test_dev_segments import assert_submitted, configured, records
@@ -53,12 +54,18 @@ def result(journal, tool="read_file", *, status="succeeded", spans=()):
 
 def test_timing_only_identity_and_schema_contrast(tmp_path, monkeypatch):
     old_hashes = {
-        "none": "sha256:25f1db63f18b3f138ee8bdc8686ad320d7c9a3965d4e10acd1055fdd590555b7",
-        plans.POLICY: "sha256:e9a1a5de627227db9bcd3ee26d3ff7f55391f21c8775f814a81dcc282fc0bf65",
+        "none": "sha256:57193859890419b79cb7f4927c37796d044bc4bf7159c51ddf17723849529e26",
+        plans.POLICY: ("sha256:b1a9019f91a6bfe219714658b96300c9fce579ac3bc2e85a88ce9c5eaa115d5d"
+                       if JUDGMENT else
+                       "sha256:3c227b45fea8344f56ec7dcc73e60627c1f407bc2dd548a6a4860c3697dd24d1"),
         plans.EVIDENCE_POLICY:
-            "sha256:678b4ce80bc4fa2061b3c0594ac3ecd75f64f18668f8f9fbe9316792b9b053aa",
+            ("sha256:05f847fc00f95e2788363cf2f6500e92a04b7c1870d6909023a9f80904f57343"
+             if JUDGMENT else
+             "sha256:257b19af0efbdc70b7b6129c21d59e593cf9ea70df351cb5d23f03d7ac8bbd19"),
         plans.ASSUMPTION_POLICY:
-            "sha256:dedce78bfb34a2dc417e1a59cdd65e596562e1a25d648cb3bef9c4533bc912fb",
+            ("sha256:0a1d764a65f7175953b7fd52567850aff52602edac3344f30cd5d85217b9658b"
+             if JUDGMENT else
+             "sha256:f4fe1472f3e1df939225db449b565b60ec2a8e38621d678bcde8de33eb17a625"),
     }
     assert {p: dev_tool_surface_hash(planning_policy=p) for p in old_hashes} == old_hashes
     old, new = plans.instructions(), plans.instructions(POLICY)

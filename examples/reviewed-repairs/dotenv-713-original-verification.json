@@ -1,0 +1,330 @@
+{
+  "publication": {
+    "source_hash": "sha256:36765adbe62e764b92bca8e322bfdd28535b86af07762518aaf0e256b1cb44f9",
+    "kind": "sanitized historical verifier result"
+  },
+  "result": {
+    "schema_version": "repair-verification-v1",
+    "run_id": "run_dev_verify_30de4df4db474ffd",
+    "official": false,
+    "acceptance": "NOT_RUN",
+    "requirement_fit": "NOT_ASSESSED",
+    "comparison": {
+      "status": "OBSERVED_FAIL_THEN_PASS",
+      "tests": [
+        {
+          "check_id": "public-regressions",
+          "nodeid": "tests/test_main.py::test_rewrite_fsyncs_before_replace[set_key]",
+          "before": "TEST_FAILED",
+          "after": "PASSED"
+        },
+        {
+          "check_id": "public-regressions",
+          "nodeid": "tests/test_main.py::test_rewrite_fsyncs_before_replace[unset_key]",
+          "before": "TEST_FAILED",
+          "after": "PASSED"
+        }
+      ]
+    },
+    "checks": [
+      {
+        "phase": "base",
+        "check_id": "public-regressions",
+        "diff_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "pytest": true,
+        "exit_code": 0,
+        "expected_exit_codes": [
+          0
+        ],
+        "observation": {
+          "status": "COMPLETED",
+          "exit_code": 0,
+          "collected": 218,
+          "collection_errors": [],
+          "collection_skips": [],
+          "summary": {
+            "passed": 218,
+            "failed": 0,
+            "skipped": 0,
+            "errors": 0,
+            "xfail_xpass": 0
+          },
+          "tests": []
+        },
+        "receipt": {
+          "artifact_id": "art_5684f44a355a4772bfce92d651403ed1",
+          "content_hash": "sha256:2addb862e2828ae69e7f874397ebf59818922fe35b845dde1be11f70a0a3a0b8",
+          "media_type": "application/json; charset=utf-8",
+          "size_bytes": 6192,
+          "created_at": "2026-10-04T23:44:02.437543Z"
+        }
+      },
+      {
+        "phase": "base_with_tests",
+        "check_id": "public-regressions",
+        "diff_hash": "sha256:5cf0ea33309845d4661360b71ea37dbb917814b14d31248ce36f3e41ef713394",
+        "pytest": true,
+        "exit_code": 1,
+        "expected_exit_codes": [
+          0
+        ],
+        "observation": {
+          "status": "COMPLETED",
+          "exit_code": 1,
+          "collected": 220,
+          "collection_errors": [],
+          "collection_skips": [],
+          "summary": {
+            "passed": 218,
+            "failed": 2,
+            "skipped": 0,
+            "errors": 0,
+            "xfail_xpass": 0
+          },
+          "tests": [
+            {
+              "nodeid": "tests/test_main.py::test_rewrite_fsyncs_before_replace[set_key]",
+              "path": "tests/test_main.py",
+              "function": "test_rewrite_fsyncs_before_replace",
+              "xfail_marked": false,
+              "phases": [
+                {
+                  "when": "setup",
+                  "outcome": "passed",
+                  "exception_type": null,
+                  "wasxfail": null,
+                  "detail": null
+                },
+                {
+                  "when": "call",
+                  "outcome": "failed",
+                  "exception_type": "builtins.AssertionError",
+                  "wasxfail": null,
+                  "detail": "tmp_path = PosixPath('/tmp/usage3-pytest/test_rewrite_fsyncs_before_rep0')\nrewrite = <function <lambda> at 0x73f5159545e0>\nexpected_result = (True, 'a', 'y'), expected_content = \"a='y'\\n\"\n\n    @pytest.mark.parametrize(\n        \"rewrite, expected_result, expected_content\",\n        [\n            (lambda path: dotenv.set_key(path, \"a\", \"y\"), (True, \"a\", \"y\"), \"a='y'\\n\"),\n            (lambda path: dotenv.unset_key(path, \"a\"), (True, \"a\"), \"\"),\n        ],\n        ids=[\"set_key\", \"unset_key\"],\n    )\n    def test_rewrite_fsyncs_before_replace(tmp_path, rewrite, expected_result, expected_content):\n        dotenv_path = tmp_path / \".env\"\n        dotenv_path.write_text(\"a=x\\n\")\n        events = []\n        real_replace = os.replace\n    \n        def fsync(fd):\n            events.append(\"fsync\")\n            return None\n    \n        def replace(src, dst):\n            events.append(\"replace\")\n            real_replace(src, dst)\n    \n        with mock.patch(\"dotenv.main.os.fsync\", side_effect=fsync):\n            with mock.patch(\"dotenv.main.os.replace\", side_effect=replace):\n                result = rewrite(dotenv_path)\n    \n>       assert events == [\"fsync\", \"replace\"]\nE       AssertionError: assert ['replace'] == ['fsync', 'replace']\nE         \nE         At index 0 diff: 'replace' != 'fsync'\nE         Right contains one more item: 'replace'\nE         Use -v to get more diff\n\ntests/test_main.py:267: AssertionError"
+                },
+                {
+                  "when": "teardown",
+                  "outcome": "passed",
+                  "exception_type": null,
+                  "wasxfail": null,
+                  "detail": null
+                }
+              ],
+              "parameter_index": null,
+              "status": "TEST_FAILED"
+            },
+            {
+              "nodeid": "tests/test_main.py::test_rewrite_fsyncs_before_replace[unset_key]",
+              "path": "tests/test_main.py",
+              "function": "test_rewrite_fsyncs_before_replace",
+              "xfail_marked": false,
+              "phases": [
+                {
+                  "when": "setup",
+                  "outcome": "passed",
+                  "exception_type": null,
+                  "wasxfail": null,
+                  "detail": null
+                },
+                {
+                  "when": "call",
+                  "outcome": "failed",
+                  "exception_type": "builtins.AssertionError",
+                  "wasxfail": null,
+                  "detail": "tmp_path = PosixPath('/tmp/usage3-pytest/test_rewrite_fsyncs_before_rep1')\nrewrite = <function <lambda> at 0x73f515954680>, expected_result = (True, 'a')\nexpected_content = ''\n\n    @pytest.mark.parametrize(\n        \"rewrite, expected_result, expected_content\",\n        [\n            (lambda path: dotenv.set_key(path, \"a\", \"y\"), (True, \"a\", \"y\"), \"a='y'\\n\"),\n            (lambda path: dotenv.unset_key(path, \"a\"), (True, \"a\"), \"\"),\n        ],\n        ids=[\"set_key\", \"unset_key\"],\n    )\n    def test_rewrite_fsyncs_before_replace(tmp_path, rewrite, expected_result, expected_content):\n        dotenv_path = tmp_path / \".env\"\n        dotenv_path.write_text(\"a=x\\n\")\n        events = []\n        real_replace = os.replace\n    \n        def fsync(fd):\n            events.append(\"fsync\")\n            return None\n    \n        def replace(src, dst):\n            events.append(\"replace\")\n            real_replace(src, dst)\n    \n        with mock.patch(\"dotenv.main.os.fsync\", side_effect=fsync):\n            with mock.patch(\"dotenv.main.os.replace\", side_effect=replace):\n                result = rewrite(dotenv_path)\n    \n>       assert events == [\"fsync\", \"replace\"]\nE       AssertionError: assert ['replace'] == ['fsync', 'replace']\nE         \nE         At index 0 diff: 'replace' != 'fsync'\nE         Right contains one more item: 'replace'\nE         Use -v to get more diff\n\ntests/test_main.py:267: AssertionError"
+                },
+                {
+                  "when": "teardown",
+                  "outcome": "passed",
+                  "exception_type": null,
+                  "wasxfail": null,
+                  "detail": null
+                }
+              ],
+              "parameter_index": null,
+              "status": "TEST_FAILED"
+            }
+          ]
+        },
+        "receipt": {
+          "artifact_id": "art_7ab6fe7af8a64e8597c0918e5ba5c3e2",
+          "content_hash": "sha256:c3e3d8327672c5b13648645cca3cb3334acd3338ee6bb67c5c6607827f263295",
+          "media_type": "application/json; charset=utf-8",
+          "size_bytes": 14233,
+          "created_at": "2026-10-04T23:44:04.984839Z"
+        }
+      },
+      {
+        "phase": "patched",
+        "check_id": "public-regressions",
+        "diff_hash": "sha256:344374486fdcb5b0c4e84ed077e7ea5cc37a22f37d0277154d23884e17b86a0f",
+        "pytest": true,
+        "exit_code": 0,
+        "expected_exit_codes": [
+          0
+        ],
+        "observation": {
+          "status": "COMPLETED",
+          "exit_code": 0,
+          "collected": 220,
+          "collection_errors": [],
+          "collection_skips": [],
+          "summary": {
+            "passed": 220,
+            "failed": 0,
+            "skipped": 0,
+            "errors": 0,
+            "xfail_xpass": 0
+          },
+          "tests": [
+            {
+              "nodeid": "tests/test_main.py::test_rewrite_fsyncs_before_replace[set_key]",
+              "path": "tests/test_main.py",
+              "function": "test_rewrite_fsyncs_before_replace",
+              "xfail_marked": false,
+              "phases": [
+                {
+                  "when": "setup",
+                  "outcome": "passed",
+                  "exception_type": null,
+                  "wasxfail": null,
+                  "detail": null
+                },
+                {
+                  "when": "call",
+                  "outcome": "passed",
+                  "exception_type": null,
+                  "wasxfail": null,
+                  "detail": null
+                },
+                {
+                  "when": "teardown",
+                  "outcome": "passed",
+                  "exception_type": null,
+                  "wasxfail": null,
+                  "detail": null
+                }
+              ],
+              "parameter_index": null,
+              "status": "PASSED"
+            },
+            {
+              "nodeid": "tests/test_main.py::test_rewrite_fsyncs_before_replace[unset_key]",
+              "path": "tests/test_main.py",
+              "function": "test_rewrite_fsyncs_before_replace",
+              "xfail_marked": false,
+              "phases": [
+                {
+                  "when": "setup",
+                  "outcome": "passed",
+                  "exception_type": null,
+                  "wasxfail": null,
+                  "detail": null
+                },
+                {
+                  "when": "call",
+                  "outcome": "passed",
+                  "exception_type": null,
+                  "wasxfail": null,
+                  "detail": null
+                },
+                {
+                  "when": "teardown",
+                  "outcome": "passed",
+                  "exception_type": null,
+                  "wasxfail": null,
+                  "detail": null
+                }
+              ],
+              "parameter_index": null,
+              "status": "PASSED"
+            }
+          ]
+        },
+        "receipt": {
+          "artifact_id": "art_d32278f9909e48839eed2a9d4e423e42",
+          "content_hash": "sha256:5f1f8121c2f098bcad8121f9c86d31458a8014ffb124340c56eecae2edc26995",
+          "media_type": "application/json; charset=utf-8",
+          "size_bytes": 7463,
+          "created_at": "2026-10-04T23:44:07.845654Z"
+        }
+      }
+    ],
+    "base_commit": "0b2880591780a426b0551436f47a17e7a76d954f",
+    "public_spec_hash": "sha256:f4b1abd2d108ec4005a61a2147880987a811159725beedf64ab4bb563ae91639",
+    "runtime_hash": "sha256:713259075f8e8123ad382fc23f218d67ab5d2c2d820c9b35845fba03129270df",
+    "sandbox": {
+      "backend": "docker",
+      "image": "patchloop-public-repair-dotenv@sha256:d7d36d2222d2e0af98beefcf76f77678dfb8b9620b2dc9618ee9bad09820ff69",
+      "image_digest": "sha256:d7d36d2222d2e0af98beefcf76f77678dfb8b9620b2dc9618ee9bad09820ff69"
+    },
+    "journal": "[host path omitted]",
+    "changed_files": [
+      "src/dotenv/main.py",
+      "tests/test_main.py"
+    ],
+    "model_calls": 0,
+    "request": {
+      "artifact_id": "art_76cbc26625df4e0bac987beb0b160389",
+      "content_hash": "sha256:26b0e4bdbb408de68b27e44f339c46ed0a7c978f2d1309efcf664829a71f69c0",
+      "media_type": "application/octet-stream",
+      "size_bytes": 1110,
+      "created_at": "2026-10-04T23:43:57.799858Z"
+    },
+    "patch": {
+      "artifact_id": "art_d13ce42c6ac246a2bc813a32f2c678c3",
+      "content_hash": "sha256:344374486fdcb5b0c4e84ed077e7ea5cc37a22f37d0277154d23884e17b86a0f",
+      "media_type": "application/octet-stream",
+      "size_bytes": 1844,
+      "created_at": "2026-10-04T23:43:57.801060Z"
+    },
+    "public_task": {
+      "artifact_id": "art_432587063de247c28af8da683d88d40c",
+      "content_hash": "sha256:3e8a9f8269bcd045dee68b81f0b41e3d768abaa54647ce4d0cba4db33dd0da52",
+      "media_type": "application/json; charset=utf-8",
+      "size_bytes": 4587,
+      "created_at": "2026-10-04T23:43:57.802221Z"
+    },
+    "scope": {
+      "passed": true,
+      "violations": [],
+      "details": {
+        "changed_files": [
+          "src/dotenv/main.py",
+          "tests/test_main.py"
+        ],
+        "untracked_files": [],
+        "changed_file_count": 2,
+        "added_lines": 38,
+        "deleted_lines": 0,
+        "diff_lines": 38,
+        "typed_violations": []
+      }
+    },
+    "test_additions": [
+      {
+        "path": "tests/test_main.py",
+        "function": "test_rewrite_fsyncs_before_replace",
+        "parameter_names": [],
+        "indices": null
+      }
+    ],
+    "test_paths": [
+      "tests/test_main.py"
+    ],
+    "implementation_paths": [
+      "src/dotenv/main.py"
+    ],
+    "test_file_hashes": {
+      "tests/test_main.py": "sha256:2974534d8a7073cfa85e0290dec29b2434b072e810ea75784fa07ddf72ebce82"
+    },
+    "status": "COMPLETE",
+    "result_artifact": {
+      "artifact_id": "art_93181717e87448a2b9d9b46ab64ccdc4",
+      "content_hash": "sha256:a7a476f938d69a852116b08a5c1fb99d44ba57f51d0fb2699a020fee49f757e8",
+      "media_type": "application/json; charset=utf-8",
+      "size_bytes": 14360,
+      "created_at": "2026-10-04T23:44:07.855927Z"
+    }
+  }
+}

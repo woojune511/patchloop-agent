@@ -242,6 +242,39 @@ def test_semantic_and_shape_errors_are_nonblocking(update, code):
     assert receipt["updates"][0]["code"] == code
 
 
+def test_unknown_id_feedback_supports_explicit_creation_with_original_statement():
+    state = initial()
+    statement = 'Exact original concern: "nested input"\nneeds checking.'
+    updated, receipt = apply(state, [concern(concern_id="v99", statement=statement)])
+    assert updated == state
+    rejected = receipt["updates"][0]
+    assert rejected["code"] == "unknown_concern_id"
+    message = rejected["message"]
+    example, _ = json.JSONDecoder().raw_decode(message[message.index("{"):])
+    assert example == concern(statement="<same original statement>")
+    assert "same original statement" in message
+    assert "available_concern_ids" in message
+    example["statement"] = statement
+    created, accepted = apply(updated, [example])
+    returned_id = accepted["updates"][0]["concern_id"]
+    assert returned_id == "v2" and accepted["available_concern_ids"] == ["v1", "v2"]
+    assert created["items"][1]["statement"] == statement
+    progressed, receipt = apply(created, [concern(
+        concern_id=returned_id, statement="The nested input is now reproduced.",
+    )])
+    assert receipt["status"] == "applied" and progressed["next_id"] == 3
+    assert progressed["items"][1]["statement"] == statement
+    assert progressed["items"][1]["progress_note"] == "The nested input is now reproduced."
+
+
+@pytest.mark.parametrize("operation", ["resolve", "dismiss"])
+def test_unknown_id_decisions_do_not_create_concerns(operation):
+    state = initial()
+    updated, receipt = apply(state, [concern(operation, "v99", reason="Claimed done.")])
+    assert updated == state
+    assert receipt["updates"][0]["code"] == "unknown_concern_id"
+
+
 def test_empty_updates_preserve_concerns_and_legacy_note_shape():
     ordinary = WorkingNotesUpdate.model_validate({"findings": [], "open_question": None})
     assert ordinary.verification_updates == []
@@ -284,3 +317,6 @@ def test_provider_wire_schema_is_strict_and_requires_every_object_property():
     assert set(verification["items"]["required"]) == {
         "operation", "concern_id", "statement", "evidence_action_id", "reason",
     }
+    description = verification["items"]["properties"]["concern_id"]["description"]
+    assert "null with upsert" in description
+    assert "returned ID" in description and "available_concern_ids" in description

@@ -323,10 +323,11 @@ def test_full_model_short_context_price_requires_counted_segment_bound(policy, m
     assert DevRunRequest(**{**config, "model": "gpt-5.4-mini-2026-03-17"})
 
 
-def test_cli_exposes_only_dev_doctor_and_task_commands() -> None:
+def test_cli_exposes_only_repair_dev_doctor_and_task_commands() -> None:
     result = CliRunner().invoke(app, ["--help"])
     assert result.exit_code == 0
     assert "dev" in result.stdout
+    assert "repair" in result.stdout
     assert "rapid" not in result.stdout
     assert "evaluate" not in result.stdout
     assert "resume" not in result.stdout

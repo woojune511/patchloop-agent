@@ -166,7 +166,9 @@ def test_full_gateway_read_mutation_check_finish(branch):
             RequestedTool(
                 name="finish_task",
                 action_id="f",
-                arguments={},
+                arguments={
+                    "assessment": "Reviewed the public patch and remaining uncertainty.",
+                },
                 turn_decision=PublicTurnDecision(mode="finish", basis="Public check passed"),
             )
         ],
@@ -430,7 +432,9 @@ def test_whole_driver_stops_all_branches_on_uncertainty(
                     RequestedTool(
                         name="finish_task",
                         action_id=f"f-{len(sequence)}",
-                        arguments={},
+                        arguments={
+                            "assessment": "Reviewed the public patch and remaining uncertainty.",
+                        },
                         turn_decision=PublicTurnDecision(
                             mode="finish", basis="test checked submission"
                         ),

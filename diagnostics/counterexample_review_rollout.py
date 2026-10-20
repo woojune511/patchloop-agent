@@ -157,6 +157,8 @@ def validate(root: Path) -> tuple[Plan, dict]:
 
 @dataclass
 class Branch(recovery.Branch):
+    repair_recheck = True
+
     inherited_accepted_mutations: int = 0
     diagnostic_schema = SCHEMA
     run_id_prefix = "run_dev_review_"
@@ -235,7 +237,7 @@ class Branch(recovery.Branch):
         projection = self.gateway.prepare_context_projection(latest_results=self.latest)
         snapshot = self.gateway.state_snapshot(projection=projection)
         policy = loop._tool_policy(self.gateway, self.counters, self.gateway.limits,
-                                   snapshot=snapshot)
+                                   snapshot=snapshot, repair_recheck=self.repair_recheck)
         if not policy.completion_possible:
             self.finish("LIMIT_REACHED", "completion horizon exhausted before provider dispatch",
                         completion_horizon=loop._completion_horizon_payload(
@@ -256,7 +258,8 @@ class Branch(recovery.Branch):
                 correction=self.correction, latest_tool_results=self.latest,
                 counters=self.counters, elapsed_seconds=self.elapsed_ms() / 1000,
                 limits=self.gateway.limits, policy=policy, snapshot=snapshot,
-                projection=projection, tool_policy_transition=transition, repair_recheck=True)
+                projection=projection, tool_policy_transition=transition,
+                repair_recheck=self.repair_recheck)
             items = loop._build_model_input(journal=self.journal, artifact_store=self.store,
                                            context=context, latest_tool_results=self.latest)
             schemas = dev_tool_schemas(

@@ -23,9 +23,10 @@ def source_gateway(tmp_path, monkeypatch):
     raw_sources = {"src.py": b"first\nsecond\nthird\nfourth\n"}
     public = SimpleNamespace(
         constraints=SimpleNamespace(
+            additive_test_roots=[],
             allowed_paths=["src.py"], forbidden_paths=[], max_diff_lines=50, max_changed_files=1,
         ),
-        visible_checks=[],
+        visible_checks=[], test_suites=[],
         model_dump=lambda **kwargs: {"task_id": "public-source-test"},
     )
     journal = DevJournal(tmp_path / "state", "run_dev_source")
@@ -177,7 +178,8 @@ def test_search_bounds_total_complete_source_and_keeps_matches_visible(
     source = gateway.workspace / "src.py"
     source.write_text("\n".join(f"MATCH {number} " + "x" * 2_000 for number in range(40)))
     monkeypatch.setattr(
-        "patchloop.dev.tools.run_git", lambda *args, **kwargs: SimpleNamespace(returncode=0)
+        "patchloop.dev.tools.run_git",
+        lambda *args, **kwargs: SimpleNamespace(returncode=0, stdout=b"src.py\0"),
     )
     result = gateway._search_files("MATCH", "*.py")
     assert result["truncated"] is True

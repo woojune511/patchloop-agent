@@ -1,0 +1,12 @@
+diff --git a/tests/test_main.py b/tests/test_main.py
+index 930ab17..405f8ed 100644
+--- a/tests/test_main.py
++++ b/tests/test_main.py
+@@ -894,6 +894,7 @@ def test_dotenv_values_file(dotenv_path):
+         # Undefined
+         ({}, "a=${b}", True, {"a": ""}),
+         ({}, "a=${b:-d}", True, {"a": "d"}),
++        ({"b": ""}, "a=${b:-d}", True, {"a": "d"}),
+         # With quotes
+         ({"b": "c"}, 'a="${b}"', True, {"a": "c"}),
+         ({"b": "c"}, "a='${b}'", True, {"a": "c"}),

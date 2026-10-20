@@ -17,14 +17,17 @@ def restore_transport_bytes(path: Path, expected: bytes):
     path.write_bytes(expected)
 
 
-def load_predictions(path: Path, allowed: set[str]):
+def load_predictions(path: Path, allowed: set[str], *, empty_source_projection: bool = False):
     predictions = {}
     for line in path.read_text(encoding="utf-8").splitlines():
         item = json.loads(line)
         identity = item["instance_id"]
         if identity not in allowed or identity in predictions:
             raise ValueError("unknown or duplicate prediction instance")
-        if not isinstance(item.get("model_patch"), str) or not item["model_patch"].strip():
+        patch = item.get("model_patch")
+        if not isinstance(patch, str) or (
+            not patch.strip() and not (empty_source_projection and patch == "")
+        ):
             raise ValueError("native evaluation requires a submitted nonempty patch")
         predictions[identity] = item["model_patch"]
     if not predictions:
@@ -43,7 +46,14 @@ def validate_rows(rows):
     return {row["image"] for row in rows}
 
 
-def run(rows_path: Path, output: Path, predictions_path: Path | None = None):
+def run(
+    rows_path: Path, output: Path, predictions_path: Path | None = None,
+    *, empty_source_projection: bool = False,
+):
+    # Only an operator which has verified a nonempty submission may assess its
+    # empty source projection. Ordinary predictions still reject empty patches.
+    if empty_source_projection and predictions_path is None:
+        raise ValueError("source projection requires explicit saved predictions")
     # Disable upstream dotenv loading only in the evaluator process.
     os.environ["PYTHON_DOTENV_DISABLED"] = "1"
     from swebench.harness import run_evaluation
@@ -59,7 +69,8 @@ def run(rows_path: Path, output: Path, predictions_path: Path | None = None):
     rows = json.loads(rows_path.read_text(encoding="utf-8"))
     allowed_images = validate_rows(rows)
     predictions = (
-        load_predictions(predictions_path, {row["instance_id"] for row in rows})
+        load_predictions(predictions_path, {row["instance_id"] for row in rows},
+                         empty_source_projection=empty_source_projection)
         if predictions_path is not None else None
     )
     os.chdir(output)
@@ -145,7 +156,8 @@ def run(rows_path: Path, output: Path, predictions_path: Path | None = None):
                     Client(),
                     run_id,
                     timeout=300,
-                    skip_patch=mode == "base",
+                    skip_patch=mode == "base" or (empty_source_projection
+                                                 and pred["model_patch"] == ""),
                 )
                 log = (
                     output
@@ -214,5 +226,8 @@ if __name__ == "__main__":
     parser.add_argument("--rows", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--predictions", type=Path)
+    parser.add_argument("--empty-source-projection", action="store_true",
+                        help="Assess a verified tests-only submission on unchanged source")
     args = parser.parse_args()
-    run(args.rows.resolve(), args.output, args.predictions)
+    run(args.rows.resolve(), args.output, args.predictions,
+        empty_source_projection=args.empty_source_projection)

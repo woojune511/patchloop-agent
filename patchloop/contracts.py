@@ -69,6 +69,31 @@ class RegisteredCheck(StrictModel):
         return safe_relative_path(value, field_name="working_directory")
 
 
+class PublicTestSuite(RegisteredCheck):
+    """Trusted pytest command prefix; the agent selects only tracked test targets."""
+
+    runner: Literal["pytest"] = "pytest"
+    test_roots: list[str] = Field(min_length=1, max_length=8)
+
+    @field_validator("test_roots")
+    @classmethod
+    def validate_test_roots(cls, values: list[str]) -> list[str]:
+        roots = [safe_relative_path(value, field_name="test root") for value in values]
+        for root in roots:
+            if (root == "." or any(part.startswith((".", "-")) or ":" in part
+                                   for part in root.split("/"))):
+                raise ValueError("test roots must name public repository directories")
+        if len(roots) != len(set(roots)):
+            raise ValueError("test roots must be unique")
+        return roots
+
+    @model_validator(mode="after")
+    def pytest_success(self) -> PublicTestSuite:
+        if self.expected_exit_codes != [0]:
+            raise ValueError("selected pytest tests succeed only with exit zero")
+        return self
+
+
 class RegisteredProbeProfile(StrictModel):
     """Parser compatibility for audited task-public-v2 packages.
 
@@ -90,6 +115,16 @@ class TaskConstraints(StrictModel):
     max_diff_lines: int = Field(default=120, ge=1, le=10_000)
     dependency_changes_allowed: bool = False
     public_api_changes_allowed: bool = False
+    additive_test_roots: list[str] = Field(
+        default_factory=list, exclude_if=lambda value: not value,
+    )
+
+    @field_validator("additive_test_roots")
+    @classmethod
+    def validate_additive_test_roots(cls, values: list[str]) -> list[str]:
+        if any(any(c in value for c in "*?[]") for value in values):
+            raise ValueError("additive test roots are directories, not globs")
+        return PublicTestSuite.validate_test_roots(values)
 
     @field_validator("allowed_paths", "forbidden_paths")
     @classmethod
@@ -114,6 +149,9 @@ class PublicTask(StrictModel):
     issue: IssueSpec
     constraints: TaskConstraints = Field(default_factory=TaskConstraints)
     visible_checks: list[RegisteredCheck] = Field(default_factory=list)
+    test_suites: list[PublicTestSuite] = Field(
+        default_factory=list, exclude_if=lambda value: not value,
+    )
     probe_profiles: list[RegisteredProbeProfile] = Field(
         default_factory=list,
         exclude_if=lambda value: not value,
@@ -122,6 +160,10 @@ class PublicTask(StrictModel):
 
     @model_validator(mode="after")
     def bind_probe_profiles_to_v2(self) -> PublicTask:
+        if self.schema_version in {"task-public-v1", "task-public-v2"}:
+            check_ids = [check.id for check in self.visible_checks]
+            if len(check_ids) != len(set(check_ids)):
+                raise ValueError("visible check IDs must be unique")
         if self.schema_version == "task-public-v1" and "probe_profiles" in self.model_fields_set:
             raise ValueError("probe_profiles requires task-public-v2")
         if self.schema_version == "task-public-v2" and not self.probe_profiles:
@@ -129,6 +171,9 @@ class PublicTask(StrictModel):
         ids = [profile.id for profile in self.probe_profiles]
         if len(ids) != len(set(ids)):
             raise ValueError("probe profile IDs must be unique")
+        suite_ids = [suite.id for suite in self.test_suites]
+        if len(suite_ids) != len(set(suite_ids)):
+            raise ValueError("test suite IDs must be unique")
         return self
 
 
@@ -264,7 +309,12 @@ class ModelConfig(StrictModel):
 class ProbeDependencyIdentity(StrictModel):
     manifest_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     content_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
-    python: Literal["3.12"] = "3.12"
+    python: Literal["3.9", "3.10", "3.12"] = "3.12"
+    runtime_profile: Literal[
+        "python312-v1", "python310-v1", "python39-v1", "python312-graphics-v1",
+    ] = Field(
+        default="python312-v1", exclude_if=lambda value: value == "python312-v1",
+    )
     platform: Literal["linux/amd64"] = "linux/amd64"
     source_roots: list[str] = Field(default_factory=list, max_length=8)
 
@@ -283,14 +333,23 @@ class ProbeDependencyIdentity(StrictModel):
 
 
 class RunManifest(StrictModel):
+    history_search_policy: Literal["none", "public-v1"] = Field(
+        default="none", exclude_if=lambda value: value == "none",
+    )
     schema_version: Literal["dev-manifest-v1"] = "dev-manifest-v1"
     official: Literal[False] = False
     runtime_id: Literal["dev-head"] = "dev-head"
+    agent_policy: Literal["current", "thin"] = Field(
+        default="current", exclude_if=lambda value: value == "current",
+    )
     planning_policy: Literal[
         "none", "brief-v1", "brief-evidence-v1", "brief-assumption-v1",
         "brief-after-source-v1",
     ] = "none"
     probe_policy: Literal["none", "cases-v1", "reference-cases-v1"] = "none"
+    probe_recheck: Literal["none", "saved-program-v1"] = Field(
+        default="none", exclude_if=lambda value: value == "none",
+    )
     run_id: str = Field(pattern=r"^run_[a-zA-Z0-9_-]+$")
     task_id: str
     task_version: int = Field(ge=1)
@@ -337,6 +396,8 @@ class RunManifest(StrictModel):
 
     @model_validator(mode="after")
     def sandbox_identity_is_complete(self) -> RunManifest:
+        if self.agent_policy == "thin" and self.planning_policy != "none":
+            raise ValueError("thin policy forbids planning state")
         if self.submitted_patch_content_hash != self.visible_check_diff_hash:
             raise ValueError("submitted patch must equal the visibly checked diff")
         if self.sandbox_backend == "docker" and self.evaluator_image_digest is None:

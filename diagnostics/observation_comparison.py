@@ -34,6 +34,8 @@ def normalized(request):
     value.pop("timeout", None)
     view = json.loads(value["input"][-1]["content"])
     view["state"]["remaining_budget"]["active_wall_time_seconds"] = 0
+    if "total_active_wall_time_seconds" in view["state"]["remaining_budget"]:
+        view["state"]["remaining_budget"]["total_active_wall_time_seconds"] = 0
     value["input"][-1]["content"] = canonical_json(view)
     return value
 
@@ -91,7 +93,7 @@ def controls(cases, env_file, result_root, row_cap_usd):
                     "profile_hash": old.probe_profile_hash,
                 },
                 "executing_probe_identity": {
-                    "image_digest": runner.PROBE_IMAGE_DIGEST,
+                    "image_digest": runner.probe_profile(old.probe_dependencies)["image_digest"],
                     "profile_hash": runner.probe_profile_hash(old.probe_dependencies),
                 },
                 "new_cap_nanos": usd_to_nanos(row_cap_usd),

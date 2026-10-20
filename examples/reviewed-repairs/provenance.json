@@ -1,0 +1,76 @@
+{
+  "schema": "reviewed-repair-public-export-v1",
+  "new_model_calls": 0,
+  "new_project_checks": 0,
+  "human_approval": "UNREPORTED",
+  "files": {
+    "click-2786-original.patch": {
+      "source_hash": "sha256:1d371716b3544e52b8dca719b91a3f7592f333c3f09aa383725b36c1c637dbc7",
+      "transformation": "byte-identical patch"
+    },
+    "click-2786-original-verification.json": {
+      "source_hash": "sha256:fcaf9da0eb6188c34c387caa6b5a1df74a273e9b150de82310368b6b00dd2f61",
+      "transformation": "host workspace/artifact paths removed; comparison, unsupported status and observations preserved"
+    },
+    "click-2786-correction.patch": {
+      "source_hash": "sha256:298fa27840d47459d74927915a6e253c2be77a326be4dde8be4efc6d7a1fcf0e",
+      "transformation": "byte-identical patch"
+    },
+    "click-2786-composed.patch": {
+      "source_hash": "sha256:6a40dac088331b901c921ce39655268f3d95218af601e27c2573a3e058c3b617",
+      "transformation": "byte-identical patch"
+    },
+    "click-2786-correction-verification.json": {
+      "source_hash": "sha256:3b80a963ce272d9ebc3883c62d588383d59d01aa9e36df7b3c9254db09a11cba",
+      "transformation": "host workspace/artifact paths removed; comparison, unsupported status and observations preserved"
+    },
+    "click-2786-composed-verification.json": {
+      "source_hash": "sha256:2a57068838a4fbfffd5f217ad888cbbff0cb2d8127a16597a05a3f2addd155b2",
+      "transformation": "host workspace/artifact paths removed; comparison, unsupported status and observations preserved"
+    },
+    "click-2740-original.patch": {
+      "source_hash": "sha256:76bdce2405f14c2ef5f667178269e3b80e6a049a5b847fb7ee95064de86b32cd",
+      "transformation": "byte-identical patch"
+    },
+    "click-2740-original-verification.json": {
+      "source_hash": "sha256:22aebaa91a709a34c6e642a406bc02b0e437ce553849cc6776095cd8eb7d16c2",
+      "transformation": "host workspace/artifact paths removed; comparison, unsupported status and observations preserved"
+    },
+    "click-2740-correction.patch": {
+      "source_hash": "sha256:9fc1362e02686f133b2c66cc96e67d44e4a167b897e5c2e63ccdb6149e776ce4",
+      "transformation": "byte-identical patch"
+    },
+    "click-2740-composed.patch": {
+      "source_hash": "sha256:2953adecbacfa047bc8f9af1a2291e1f0efd4143841a18291a8e1a69ed395396",
+      "transformation": "byte-identical patch"
+    },
+    "click-2740-correction-verification.json": {
+      "source_hash": "sha256:88f4337ff14fea44d202f4d047e5d55d587b15d447f32b1dbb76fe262f0e9a6a",
+      "transformation": "host workspace/artifact paths removed; comparison, unsupported status and observations preserved"
+    },
+    "click-2740-composed-verification.json": {
+      "source_hash": "sha256:2cfa3ee648dfd80a64308df31f1295776a9fded1f7f1c998a5446e7b601f3e57",
+      "transformation": "host workspace/artifact paths removed; comparison, unsupported status and observations preserved"
+    },
+    "click-2740-composed-verification-python310.json": {
+      "source_hash": "sha256:ac38e626c4f002f0a5f85c378fd05d6ba67ae8ea2b79d6b893b0a60f8660b166",
+      "transformation": "host workspace/artifact paths removed; comparison, unsupported status and observations preserved"
+    },
+    "dotenv-713-original.patch": {
+      "source_hash": "sha256:344374486fdcb5b0c4e84ed077e7ea5cc37a22f37d0277154d23884e17b86a0f",
+      "transformation": "byte-identical patch"
+    },
+    "dotenv-713-original-verification.json": {
+      "source_hash": "sha256:36765adbe62e764b92bca8e322bfdd28535b86af07762518aaf0e256b1cb44f9",
+      "transformation": "host workspace/artifact paths removed; comparison, unsupported status and observations preserved"
+    },
+    "click-LICENSE": {
+      "source_hash": "sha256:757302fe7c41e7026fa46d3315ea8604ed5295fc95c2256d9b38adac43f6fbe5",
+      "transformation": "byte-identical upstream license"
+    },
+    "dotenv-LICENSE": {
+      "source_hash": "sha256:dd1c70c9434fdeb24d08f37fcc43a4eef9cf80db4cee3eb7755e0d888af67a19",
+      "transformation": "byte-identical upstream license"
+    }
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "spec": {
+    "instance_id": "marshmallow-code__marshmallow-1343",
+    "image": "swebench/sweb.eval.x86_64.marshmallow-code_1776_marshmallow-1343@sha256:a61197e0b29461e34010cd83570424eb91a7f265574a81c82ff79e55c6c10f29",
+    "repo": "marshmallow-code/marshmallow",
+    "version": "2.20",
+    "FAIL_TO_PASS": [
+      "tests/test_marshalling.py::TestUnmarshaller::test_deserialize_wrong_nested_type_with_validates_method"
+    ],
+    "PASS_TO_PASS": [
+      "tests/test_marshalling.py::test_missing_is_falsy",
+      "tests/test_marshalling.py::TestMarshaller::test_prefix",
+      "tests/test_marshalling.py::TestMarshaller::test_marshalling_generator",
+      "tests/test_marshalling.py::TestMarshaller::test_default_to_missing",
+      "tests/test_marshalling.py::TestMarshaller::test_serialize_fields_with_load_only_param",
+      "tests/test_marshalling.py::TestMarshaller::test_missing_data_are_skipped",
+      "tests/test_marshalling.py::TestMarshaller::test_serialize_with_load_only_doesnt_validate",
+      "tests/test_marshalling.py::TestMarshaller::test_serialize_fields_with_dump_to_param",
+      "tests/test_marshalling.py::TestMarshaller::test_serialize_fields_with_dump_to_and_prefix_params",
+      "tests/test_marshalling.py::TestMarshaller::test_stores_indices_of_errors_when_many_equals_true",
+      "tests/test_marshalling.py::TestMarshaller::test_doesnt_store_errors_when_index_errors_equals_false",
+      "tests/test_marshalling.py::TestUnmarshaller::test_extra_data_is_ignored",
+      "tests/test_marshalling.py::TestUnmarshaller::test_stores_errors",
+      "tests/test_marshalling.py::TestUnmarshaller::test_stores_indices_of_errors_when_many_equals_true",
+      "tests/test_marshalling.py::TestUnmarshaller::test_doesnt_store_errors_when_index_errors_equals_false",
+      "tests/test_marshalling.py::TestUnmarshaller::test_deserialize",
+      "tests/test_marshalling.py::TestUnmarshaller::test_extra_fields",
+      "tests/test_marshalling.py::TestUnmarshaller::test_deserialize_many",
+      "tests/test_marshalling.py::TestUnmarshaller::test_deserialize_stores_errors",
+      "tests/test_marshalling.py::TestUnmarshaller::test_deserialize_fields_with_attribute_param",
+      "tests/test_marshalling.py::TestUnmarshaller::test_deserialize_fields_with_load_from_param",
+      "tests/test_marshalling.py::TestUnmarshaller::test_deserialize_fields_with_dump_only_param",
+      "tests/test_marshalling.py::TestUnmarshaller::test_deserialize_wrong_type_root_data",
+      "tests/test_marshalling.py::TestUnmarshaller::test_deserialize_wrong_type_nested_data"
+    ],
+    "log_parser": "parse_log_marshmallow",
+    "eval_type": "pass_and_fail",
+    "eval_script_list": []
+  },
+  "test_patch": "diff --git a/tests/test_marshalling.py b/tests/test_marshalling.py\n--- a/tests/test_marshalling.py\n+++ b/tests/test_marshalling.py\n@@ -2,7 +2,7 @@\n \n import pytest\n \n-from marshmallow import fields, Schema\n+from marshmallow import fields, Schema, validates\n from marshmallow.marshalling import Marshaller, Unmarshaller, missing\n from marshmallow.exceptions import ValidationError\n \n@@ -283,3 +283,24 @@ class TestSchema(Schema):\n \n             assert result is None\n             assert excinfo.value.messages == {'foo': {'_schema': ['Invalid input type.']}}\n+\n+    # Regression test for https://github.com/marshmallow-code/marshmallow/issues/1342\n+    def test_deserialize_wrong_nested_type_with_validates_method(self, unmarshal):\n+        class TestSchema(Schema):\n+            value = fields.String()\n+\n+            @validates('value')\n+            def validate_value(self, value):\n+                pass\n+\n+        data = {\n+            'foo': 'not what we need'\n+        }\n+        fields_dict = {\n+            'foo': fields.Nested(TestSchema, required=True)\n+        }\n+        with pytest.raises(ValidationError) as excinfo:\n+            result = unmarshal.deserialize(data, fields_dict)\n+\n+            assert result is None\n+            assert excinfo.value.messages == {'foo': {'_schema': ['Invalid input type.']}}\n",
+  "test_command": [
+    "pytest",
+    "-rA",
+    "tests/test_marshalling.py"
+  ]
+}

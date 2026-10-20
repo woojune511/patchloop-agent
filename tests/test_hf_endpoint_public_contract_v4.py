@@ -291,7 +291,9 @@ def test_failures_reach_actual_inputs_and_require_a_new_diff(
     policy = runner._tool_policy(gateway, runner._restore_counters(gateway.journal), gateway.limits)
     assert "finish_task" not in policy.allowed_tools and CONTRACT not in policy.check_ids
     with pytest.raises(ContractError, match="all visible checks"):
-        gateway._finish_task({})
+        gateway._finish_task({
+            "assessment": "Reviewed the public patch and remaining uncertainty.",
+        })
     before = gateway.journal.path.read_bytes()
     gateway = _restart(gateway)
     assert gateway.execute(call).replayed
@@ -333,7 +335,9 @@ def test_failures_reach_actual_inputs_and_require_a_new_diff(
     finish = RequestedTool(
         name="finish_task",
         action_id="finish",
-        arguments={},
+        arguments={
+            "assessment": "Reviewed the public patch and remaining uncertainty.",
+        },
         turn_decision=PublicTurnDecision(mode="finish", basis="Checks pass"),
     )
     result, state = cycle(gateway, finish, policy_name)

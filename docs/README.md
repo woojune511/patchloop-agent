@@ -2,6 +2,9 @@
 
 Current guidance and historical evidence have different reading paths.
 
+Start with the [saved repair and review walkthrough](https://woojune511.github.io/patchloop-agent/)
+for actual outputs, then follow its links to original patches, tests, and design decisions.
+
 | Need | Read |
 | --- | --- |
 | Current priority, baseline, unresolved problem | [Current status](current-status.md) |
@@ -10,6 +13,10 @@ Current guidance and historical evidence have different reading paths.
 | Interpret results and claim limits | [Evidence](evidence.md) |
 | Change an implementation contract | [Internal guide](../.agent/guide.md), then relevant source/tests |
 | Explain a particular past decision or failure | [History index](history/README.md), then a matching passage |
+
+For a Korean visual walkthrough, open the [interactive system map](system/index.html)
+in a browser. It is a dated source-based explanation; source and current status
+remain authoritative.
 
 Start with current status. Read other material only for the task at hand; do not
 concatenate this directory, the internal guide, and history into every task.

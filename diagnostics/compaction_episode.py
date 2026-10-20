@@ -388,7 +388,8 @@ class Episode(engine.Branch):
         projection = self.gateway.prepare_context_projection(latest_results=self.latest)
         snapshot = self.gateway.state_snapshot(projection=projection)
         policy = loop._tool_policy(
-            self.gateway, self.counters, self.gateway.limits, snapshot=snapshot
+            self.gateway, self.counters, self.gateway.limits, snapshot=snapshot,
+            repair_recheck=self.repair_recheck,
         )
         if not policy.completion_possible:
             self.finish(
@@ -689,7 +690,10 @@ def execute_seed(episode: Episode, *, checkpoint=lambda _: None):
             seed = episode.seed
             continuation = loop._load_provider_continuation(episode.store, seed.continuation_ref)
             loop._validate_continuation_action_order(continuation, seed.tool_calls)
-            policy = loop._tool_policy(episode.gateway, episode.counters, episode.gateway.limits)
+            policy = loop._tool_policy(
+                episode.gateway, episode.counters, episode.gateway.limits,
+                repair_recheck=episode.repair_recheck,
+            )
             require(
                 set(policy.allowed_tools) == {t["name"] for t in episode.seed_request["tools"]},
                 "checkpoint tool policy differs",

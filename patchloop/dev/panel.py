@@ -31,6 +31,18 @@ class RowCostLedger(DevCostLedger):
         self.parent.spent_nanos += cost
         return cost
 
+    def restore_settled_usage(
+        self, usage_rows: list[dict[str, object]], *, base_spent_nanos: int = 0,
+    ) -> None:
+        previous = self.spent_nanos
+        try:
+            super().restore_settled_usage(usage_rows, base_spent_nanos=base_spent_nanos)
+        except ContractError:
+            self.spent_nanos = previous
+            raise
+        # Durable compaction usage joins prior decision charges; replay adds no cost twice.
+        self.parent.spent_nanos += self.spent_nanos - previous
+
 
 def run_panel(
     requests: list[DevRunRequest], *, max_cost_usd: Decimal, state_root: Path,

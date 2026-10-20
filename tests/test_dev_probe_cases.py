@@ -108,22 +108,27 @@ def seed(gateway):
     return result, result.output["case_comparison"]["case_id"]
 
 
-def test_off_schema_prompt_and_identity_are_unchanged():
+def test_case_policy_extends_current_probe_schema_without_changing_prompt():
+    from repair_mechanism_expectations import ARM
     options = {"finish_enabled": True, "allowed_tools": [
         "read_file", "search_files", "replace_text", "run_check", "run_probe",
         "finish_task", "stop_task",
     ]}
     before = dev_tool_schemas(**options)
-    # Refreshed for explicit replacement-explanation bounds; probe policy stays opt-in.
+    # Current ordinary schema includes explicit action-ID replay in every probe policy.
     assert sha256_json(before) == (
-        "sha256:9a4c35ae0b1724c9138e881640fcd0c5c5e811a6b2f798269dd2a6d3c6574435"
+        "sha256:6da3a1eaff70006cf62f16fe99af773c82be5a1c532f0de3623332a199e704c0"
     )
     assert dev_tool_surface_hash() == (
-        "sha256:25f1db63f18b3f138ee8bdc8686ad320d7c9a3965d4e10acd1055fdd590555b7"
+        "sha256:57193859890419b79cb7f4927c37796d044bc4bf7159c51ddf17723849529e26"
     )
-    assert sha256_bytes(DEV_SYSTEM_PROMPT.encode()) == (
-        "sha256:b7124aef4c5fc63cd2a5c8b83346a6d1e36a2fc1cb09ab289150e438f2f22781"
-    )
+    # Probe policy cannot change the exact prompt of the selected frozen arm.
+    assert sha256_bytes(DEV_SYSTEM_PROMPT.encode()) == {
+        "E0J0": "sha256:84a795485c40cbc9024d938335a6b1b349231d6a20c069590527be606122ef72",
+        "E1J0": "sha256:64c42360807cdf8c13e75c39fc7395fa077c6d71f8970eb05ae74398c4dcbfe4",
+        "E0J1": "sha256:629c618311ead9949adcef0f35db84016cde23ecc57266016ecb1f0487837954",
+        "E1J1": "sha256:9c6c70ddc419c0c7bcc6118476b369dbfa87e452939036f75d28951774dc0016",
+    }[ARM]
     after = dev_tool_schemas(**options, probe_policy=cases.POLICY)
     assert [t for t in before if t["name"] != "run_probe"] == [
         t for t in after if t["name"] != "run_probe"]
@@ -208,8 +213,10 @@ def test_case_mismatch_replay_after_edit_and_gateway_restart(gateway_factory, sm
     for check in smoke_package.public.visible_checks:
         restored.execute(RequestedTool(name="run_check", action_id=check.id,
                                        arguments={"check_id": check.id}))
-    assert restored.execute(RequestedTool(name="finish_task", action_id="finish",
-                                          arguments={})).status == "succeeded"
+    assert restored.execute(RequestedTool(
+        name="finish_task", action_id="finish",
+        arguments={"assessment": "Reviewed the public patch and remaining uncertainty."},
+    )).status == "succeeded"
 
 
 @pytest.mark.parametrize("fault", ["unknown", "bad_json", "check", "pending", "oversize",

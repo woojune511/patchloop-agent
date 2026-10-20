@@ -104,6 +104,13 @@ def link_check_evidence(view: dict[str, Any]) -> None:
             "command_hash": sha256_json(command), "selection_kind": kind,
             "declared_targets": [], "omitted_target_count": 0,
             "coverage_status": "not_assessed",
+            "requirement_verification": "not_assessed",
+            "interpretation": (
+                "This receipt establishes only the registered execution result. Requirement "
+                "coverage needs a matching executed input/assertion or observed output; "
+                "PASS alone, test source/additions and mutation expectations do not establish it. "
+                "Unmeasured coverage is unknown, not evidence of execution or non-execution."
+            ),
         }
         for position in positions:
             target = _target(command[position], check.get("working_directory", "."))

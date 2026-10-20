@@ -1,0 +1,75 @@
+{
+  "publication": {
+    "source_hash": "sha256:88f4337ff14fea44d202f4d047e5d55d587b15d447f32b1dbb76fe262f0e9a6a",
+    "kind": "sanitized historical verifier result"
+  },
+  "result": {
+    "schema_version": "repair-verification-v1",
+    "run_id": "run_dev_verify_8de1c982dea144e8",
+    "official": false,
+    "acceptance": "NOT_RUN",
+    "requirement_fit": "NOT_ASSESSED",
+    "comparison": {
+      "status": "NOT_RUN"
+    },
+    "checks": [],
+    "base_commit": "d0d0226e005e27d78c70b495f5f61654952bd894",
+    "public_spec_hash": "sha256:d507109385816958d5aef843dfaf98fad6ab338e0df1aad78c24cd180c81b7ca",
+    "runtime_hash": "sha256:713259075f8e8123ad382fc23f218d67ab5d2c2d820c9b35845fba03129270df",
+    "sandbox": {
+      "backend": "docker",
+      "image": "patchloop-public-repair-pytest@sha256:4512f41e843d57ad7fb8306ece1e549afa2903db6d97815315fa9bf732c82c1a",
+      "image_digest": "sha256:4512f41e843d57ad7fb8306ece1e549afa2903db6d97815315fa9bf732c82c1a"
+    },
+    "journal": "[host path omitted]",
+    "changed_files": [
+      "tests/test_basic.py"
+    ],
+    "model_calls": 0,
+    "request": {
+      "artifact_id": "art_363481ba606541f6a46d4798230b6798",
+      "content_hash": "sha256:d94a56e15ea57b0e606f465374c394682cc002c88642eaeb76524d25c78c283c",
+      "media_type": "application/octet-stream",
+      "size_bytes": 1136,
+      "created_at": "2026-10-05T06:52:02.580302Z"
+    },
+    "patch": {
+      "artifact_id": "art_350819e7f15844e1b4238ac534e06730",
+      "content_hash": "sha256:9fc1362e02686f133b2c66cc96e67d44e4a167b897e5c2e63ccdb6149e776ce4",
+      "media_type": "application/octet-stream",
+      "size_bytes": 2175,
+      "created_at": "2026-10-05T06:52:02.581472Z"
+    },
+    "public_task": {
+      "artifact_id": "art_51303d7f03114ab980c99e88fb5af76b",
+      "content_hash": "sha256:93dbd9902a159a4978dd706a777152a39f0878585b38ac7f99ac8b29cc1acad7",
+      "media_type": "application/json; charset=utf-8",
+      "size_bytes": 8247,
+      "created_at": "2026-10-05T06:52:02.582643Z"
+    },
+    "scope": {
+      "passed": true,
+      "violations": [],
+      "details": {
+        "changed_files": [
+          "tests/test_basic.py"
+        ],
+        "untracked_files": [],
+        "changed_file_count": 1,
+        "added_lines": 19,
+        "deleted_lines": 6,
+        "diff_lines": 25,
+        "typed_violations": []
+      }
+    },
+    "status": "UNSUPPORTED",
+    "reason": "existing test body/decorators changed",
+    "result_artifact": {
+      "artifact_id": "art_d923e0fdc18249608522c6ac3d23e393",
+      "content_hash": "sha256:59e6d0c7f87300a4fa70fe9d3fb289a00d19b4b62fa52f56ac61c208341ace72",
+      "media_type": "application/json; charset=utf-8",
+      "size_bytes": 2798,
+      "created_at": "2026-10-05T06:52:06.257134Z"
+    }
+  }
+}

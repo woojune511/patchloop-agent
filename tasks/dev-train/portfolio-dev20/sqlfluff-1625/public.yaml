@@ -1,0 +1,59 @@
+schema_version: task-public-v1
+task_id: swebench-lite-dev-sqlfluff-sqlfluff-1625
+task_version: 1
+split: dev-train
+repository:
+  url: https://github.com/sqlfluff/sqlfluff.git
+  base_commit: 14e1a23a3166b9a645a16de96f694c77a5d4abb7
+  language: python
+issue:
+  title: TSQL - L031 incorrectly triggers "Avoid using aliases in join condition"
+    when no join present
+  description: "TSQL - L031 incorrectly triggers \"Avoid using aliases in join condition\"\
+    \ when no join present\n## Expected Behaviour\r\n\r\nBoth of these queries should\
+    \ pass, the only difference is the addition of a table alias 'a':\r\n\r\n1/ no\
+    \ alias\r\n\r\n```\r\nSELECT [hello]\r\nFROM\r\n    mytable\r\n```\r\n\r\n2/ same\
+    \ query with alias\r\n\r\n```\r\nSELECT a.[hello]\r\nFROM\r\n    mytable AS a\r\
+    \n```\r\n\r\n## Observed Behaviour\r\n\r\n1/ passes\r\n2/ fails with: L031: Avoid\
+    \ using aliases in join condition.\r\n\r\nBut there is no join condition :-)\r\
+    \n\r\n## Steps to Reproduce\r\n\r\nLint queries above\r\n\r\n## Dialect\r\n\r\n\
+    TSQL\r\n\r\n## Version\r\n\r\nsqlfluff 0.6.9\r\nPython 3.6.9\r\n\r\n## Configuration\r\
+    \n\r\nN/A\n"
+constraints:
+  allowed_paths:
+  - src/sqlfluff/**
+  forbidden_paths:
+  - tests/**
+  - test/**
+  - '**/tests/**'
+  - .patchloop-hidden/**
+  max_changed_files: 4
+  max_diff_lines: 1000
+  dependency_changes_allowed: false
+  public_api_changes_allowed: true
+visible_checks:
+- id: base-regression
+  command:
+  - /opt/miniconda3/envs/testbed/bin/python
+  - -B
+  - -c
+  - "import os, shutil, subprocess, sys, tempfile\nfrom pathlib import Path\nwith\
+    \ tempfile.TemporaryDirectory(prefix=\"lite-public-\") as temporary:\n    checkout\
+    \ = Path(temporary) / \"repo\"\n    shutil.copytree(Path.cwd(), checkout,\n  \
+    \                 ignore=shutil.ignore_patterns(\".git\", \".patchloop-hidden\"\
+    , \"__pycache__\"))\n    env = dict(os.environ)\n    env[\"PYTHONPATH\"] = os.pathsep.join([str(checkout\
+    \ / \"src\"), str(checkout)])\n    env[\"PATH\"] = str(Path(sys.executable).parent)\
+    \ + os.pathsep + env[\"PATH\"]\n    env[\"HOME\"] = temporary\n    result = subprocess.run([sys.executable,\
+    \ \"-m\", \"pytest\", \"-q\", *sys.argv[1:]],\n                            cwd=checkout,\
+    \ env=env)\n    raise SystemExit(result.returncode)\n"
+  - test/rules
+  - -m
+  - not dbt
+  timeout_seconds: 300
+  environment:
+    PYTHONPATH: /workspace
+tags:
+- swebench-lite
+- dev
+- original-input
+- development

@@ -1,45 +1,54 @@
-# Documentation history
+# History
 
-[Current status](../current-status.md).
-Approvals are closed.
-
-## 2026-09-26 snapshots
-
-[Split](2026-09-26-documentation-separation.md).
-
-[Snapshot manifest](2026-09-26-context-split/manifest.json).
-
-[Status](2026-09-26-context-split/current-status.md),
-[guide](2026-09-26-context-split/agent-guide.md),
-[evidence](2026-09-26-context-split/evidence.md),
-[operations](2026-09-26-context-split/operations.md).
-
-
-## New records
-
-- [Public predicate diagnostic](2026-10-03-public-predicate-result.md).
-- [Final verification audit](2026-10-02-lite-final-verification-audit.md).
-- [SQLFluff probe results](2026-10-02-lite-sql3-probe-results.md).
-- [Lite probe support](2026-10-02-lite-probe-support.md).
+- [Search](2026-10-20-history-search-nonuse.md).
+- [Dev20](2026-10-16-mini-swe-dev20-results.md).
+- [Completion](2026-10-16-mini-swe-completion-results.md).
+- [PatchLoop](2026-10-16-patchloop-mini-dev20-results.md).
+- [Gap](2026-10-16-assessment-gap-comparison-results.md), [exit audit](2026-10-16-assessment-gap-exit-analysis.md).
+- [Plan grounds](2026-10-16-plan-grounds.md).
+- [Callers](2026-10-18-caller-check.md), [D/E](2026-10-16-output-stop.md).
+- [Host stop](2026-10-16-host-plan-stop.md).
+- [Probe](2026-10-15-pre-edit-probe.md).
+- [Uptake](2026-10-15-uptake-grade.md).
+- [isort I4](2026-10-16-isort-requirement-audit.md).
+- [Hypotheses](2026-10-15-hypothesis-comparison.md).
+- [Navigation](2026-10-08-failure-navigation.md).
+- [Retention](2026-10-06-source-retention-results.md), [cap](2026-10-06-cost-cap-continuation-results.md).
+- [Diagnosis](2026-10-07-public-verification-failure-diagnosis.md).
+- [Closure](2026-10-06-verification-closure-results.md).
+- [Dev20](2026-10-06-current-dev20-results.md).
+- [Prep](2026-10-05-portfolio-preparation.md), [results](2026-10-06-portfolio-dev20-results.md).
+- [Corrections](2026-10-05-click-feedback-results.md), [review](2026-10-05-original-patch-review.md).
+- [Three uses](2026-10-05-three-public-repair-uses.md).
+- [Verification](2026-10-05-repair-verification.md).
+- [Dotenv](2026-10-05-dotenv-public-repair.md).
+- [Click](2026-10-05-click-public-repair.md).
+- [Repair](2026-10-05-public-repair.md).
+- [Mini/full](2026-10-04-mini-full-results.md).
+- [SQLFluff](2026-10-03-sqlfluff-trajectory-review.md).
+- [Predicate](2026-10-03-public-predicate-result.md).
+- [Audit](2026-10-02-lite-final-verification-audit.md).
+- [Results](2026-10-02-lite-sql3-probe-results.md).
+- [Probes](2026-10-02-lite-probe-support.md).
 - Lite dev20: [results](2026-10-02-lite-dev20-results.md), [diagnosis](2026-10-02-lite-dev20-failure-diagnosis.md).
-- [Lite registration](2026-10-02-lite-dev20-registration.md).
-- [Lite public checks](2026-10-02-lite-public-regressions.md).
-- [Lite validation](2026-10-02-lite-environment-validation.md).
-- [Lite environments](2026-10-02-swebench-lite-environment-preparation.md).
-- [Lite calibration](2026-10-02-swebench-lite-dev20-calibration.md).
-- [Lite dev20 inventory](2026-10-02-swebench-lite-dev20-inventory.md).
-- [Lite mini results](2026-10-02-swebench-lite-mini-pilot.md).
+- [Registration](2026-10-02-lite-dev20-registration.md).
+- [Checks](2026-10-02-lite-public-regressions.md).
+- [Validation](2026-10-02-lite-environment-validation.md).
+- [Environments](2026-10-02-swebench-lite-environment-preparation.md).
+- [Calibration](2026-10-02-swebench-lite-dev20-calibration.md).
+- [Inventory](2026-10-02-swebench-lite-dev20-inventory.md).
+- [Mini](2026-10-02-swebench-lite-mini-pilot.md).
 - [Lite preflight](2026-10-02-swebench-lite-preflight.md).
 - [Public checks](2026-10-02-swebench-lite-public-checks.md).
 - [Darts close-out](2026-10-01-darts-decision-scope-closeout.md).
 - [Zero-width](2026-10-01-zero-width-ownership-diagnosis.md).
 - [Priorities](2026-10-01-failure-priority-review.md).
 - [PDM](2026-10-01-pdm-repair-observation.md).
-- [Guidance baseline](2026-10-01-verification-guidance-baseline.md).
+- [Guidance](2026-10-01-verification-guidance-baseline.md).
 - [Verification](2026-10-01-verification-selection-comparison.md).
 - [Patches](2026-09-30-submitted-patch-review.md).
-- [Probe replay comparison](2026-09-30-probe-replay-comparison.md).
-- [Basic/current 6-task baseline](2026-09-28-basic-current-baseline-comparison.md).
+- [Replay](2026-09-30-probe-replay-comparison.md).
+- [Basic/current](2026-09-28-basic-current-baseline-comparison.md).
 - [Probe construction](2026-09-28-probe-construction-analysis.md).
 - [Toqito](2026-09-28-toqito-public-validation.md); [mechanism](2026-09-28-general-failure-mechanism.md).
 - [Funding](2026-09-28-minimum-completion-funding.md).
@@ -52,46 +61,39 @@ Approvals are closed.
 - [Pilot calibration](2026-09-27-original-pilot-calibration.md).
 - [Pilot selection](2026-09-27-original-input-pilot-selection.md).
 - [Oracle calibration](2026-09-27-original-benchmark-calibration.md).
-- [Benchmark preparation](2026-09-27-original-benchmark-preparation.md).
-- [Benchmark differences](2026-09-27-anyio-benchmark-differences.md).
-- [Caller support scope](2026-09-27-caller-support-scope.md).
-- [Caller cancellation](2026-09-27-caller-cancel-preservation.md).
-- [Cleanup information results](2026-09-27-cleanup-information-results.md).
-- [Cleanup information preparation](2026-09-27-cleanup-information-preparation.md).
-- [Cleanup cancellation](2026-09-27-anyio-cleanup-cancellation.md).
-- [Caller information results](2026-09-27-caller-information-results.md).
+- [Benchmark](2026-09-27-original-benchmark-preparation.md).
+- [Differences](2026-09-27-anyio-benchmark-differences.md).
+- [Caller scope](2026-09-27-caller-support-scope.md).
+- [Caller cancel](2026-09-27-caller-cancel-preservation.md).
+- [Cleanup results](2026-09-27-cleanup-information-results.md).
+- [Cleanup prep](2026-09-27-cleanup-information-preparation.md).
+- [Cancellation](2026-09-27-anyio-cleanup-cancellation.md).
+- [Caller results](2026-09-27-caller-information-results.md).
 - [Caller information](2026-09-27-caller-information.md).
 - [Caller state](2026-09-27-anyio-caller-state.md).
 - [Checkpoint results](2026-09-27-checkpoint-live-results.md).
 - [Live checkpoint](2026-09-27-checkpoint-live-preparation.md).
-- [Offline continuation](2026-09-27-checkpoint-continuation.md).
-- [Mutation advice checkpoint](2026-09-27-mutation-advice-checkpoint.md).
+- [Continuation](2026-09-27-checkpoint-continuation.md).
+- [Mutation checkpoint](2026-09-27-mutation-advice-checkpoint.md).
 - [AnyIO fresh solves](2026-09-27-anyio-fresh-solve.md).
-- [AnyIO B1 branch deletion](2026-09-27-anyio-b1-branch-deletion.md).
-- [AnyIO evidence/action links](2026-09-27-anyio-evidence-action-link.md).
-- [AnyIO final probe scope](2026-09-27-anyio-final-probe-scope.md).
-- [AnyIO process audit](2026-09-27-anyio-observation-process-audit.md).
-- [AnyIO observation repair comparison](2026-09-27-anyio-observation-repair-comparison.md).
-- [AnyIO failure observation](2026-09-27-anyio-failure-observation.md).
-- [AnyIO probe readiness](2026-09-27-anyio-probe-readiness.md).
-- [planning OFF regression](2026-09-27-planning-off-regression.md).
-- [First-plan timing](2026-09-27-after-source-planning-comparison.md).
-- [First plan after source](2026-09-26-after-source-planning.md).
-- [Planning ON/OFF](2026-09-26-planning-off-comparison.md).
-- [Post-search declaration](2026-09-26-declaration-checkpoint-comparison.md).
-- [frozen declaration decision](2026-09-26-declaration-checkpoint-sampler.md).
-- [declaration-context diagnostic](2026-09-26-declaration-context-diagnostic.md).
-- [first interpretation and source questions](2026-09-26-first-interpretation-audit.md):
-  equal inputs, pre-edit questions and source-context limits.
-- [independent candidate comparison](2026-09-26-independent-candidate-comparison.md):
-  HF imports, matched-cost comparison and first-plan scope reduction.
-- [diagnostic claims verification](2026-09-26-diagnostic-claims-verification.md):
-  input audits, four public probes and causal limits.
-- [completion advice comparison](2026-09-26-completion-status-comparison.md):
-  four runs, extra P-B reading and unchanged acceptance after advice removal.
-- [first-input completion advice diagnostic](2026-09-26-completion-status-diagnostic.md):
-  opt-in recommendation removal, unchanged runtime gates, and local delivery validation.
-- [Verification scope audit](2026-09-26-verification-scope-audit.md).
-- [Paired-reference comparison](2026-09-26-paired-reference-comparison.md).
-
-Record evidence, limits and next question once; preserve closed records.
+- [B1 deletion](2026-09-27-anyio-b1-branch-deletion.md).
+- [AnyIO links](2026-09-27-anyio-evidence-action-link.md).
+- [Final probe scope](2026-09-27-anyio-final-probe-scope.md).
+- [Process audit](2026-09-27-anyio-observation-process-audit.md).
+- [Comparison](2026-09-27-anyio-observation-repair-comparison.md).
+- [Observation](2026-09-27-anyio-failure-observation.md).
+- [Probe readiness](2026-09-27-anyio-probe-readiness.md).
+- [Planning OFF](2026-09-27-planning-off-regression.md).
+- [Timing](2026-09-27-after-source-planning-comparison.md).
+- [After source](2026-09-26-after-source-planning.md).
+- [ON/OFF](2026-09-26-planning-off-comparison.md).
+- [Declaration](2026-09-26-declaration-checkpoint-comparison.md).
+- [Decision](2026-09-26-declaration-checkpoint-sampler.md).
+- [Context](2026-09-26-declaration-context-diagnostic.md).
+- [Interpretation](2026-09-26-first-interpretation-audit.md).
+- [Candidates](2026-09-26-independent-candidate-comparison.md).
+- [Diagnostic](2026-09-26-diagnostic-claims-verification.md).
+- [Completion](2026-09-26-completion-status-comparison.md).
+- [First input](2026-09-26-completion-status-diagnostic.md).
+- [Scope](2026-09-26-verification-scope-audit.md).
+- [Paired](2026-09-26-paired-reference-comparison.md).

@@ -284,7 +284,9 @@ def test_current_failure_blocks_finish_and_new_diff_can_recheck(tmp_path, packag
     assert "finish_task" not in policy.allowed_tools
     assert contract not in policy.check_ids  # no repeated failed check on the same diff
     with pytest.raises(ContractError, match="all visible checks"):
-        gateway._finish_task({})
+        gateway._finish_task({
+            "assessment": "Reviewed the public patch and remaining uncertainty.",
+        })
     before = gateway.journal.path.read_bytes()
     gateway = _restart(gateway)
     assert gateway.execute(call).replayed
@@ -323,7 +325,9 @@ def test_current_failure_blocks_finish_and_new_diff_can_recheck(tmp_path, packag
     finish = RequestedTool(
         name="finish_task",
         action_id="finish",
-        arguments={},
+        arguments={
+            "assessment": "Reviewed the public patch and remaining uncertainty.",
+        },
         turn_decision=PublicTurnDecision(mode="finish", basis="Checks pass"),
     )
     result, state = cycle(gateway, finish, policy_name)

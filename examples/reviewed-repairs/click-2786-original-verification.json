@@ -1,0 +1,262 @@
+{
+  "publication": {
+    "source_hash": "sha256:fcaf9da0eb6188c34c387caa6b5a1df74a273e9b150de82310368b6b00dd2f61",
+    "kind": "sanitized historical verifier result"
+  },
+  "result": {
+    "schema_version": "repair-verification-v1",
+    "run_id": "run_dev_verify_01ecb33af75949d1",
+    "official": false,
+    "acceptance": "NOT_RUN",
+    "requirement_fit": "NOT_ASSESSED",
+    "comparison": {
+      "status": "OBSERVED_FAIL_THEN_PASS",
+      "tests": [
+        {
+          "check_id": "public-regressions",
+          "nodeid": "tests/test_options.py::test_shared_option_callback_prefers_flag_value_when_custom_omitted",
+          "before": "TEST_FAILED",
+          "after": "PASSED"
+        }
+      ]
+    },
+    "checks": [
+      {
+        "phase": "base",
+        "check_id": "public-regressions",
+        "diff_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "pytest": true,
+        "exit_code": 0,
+        "expected_exit_codes": [
+          0
+        ],
+        "observation": {
+          "status": "COMPLETED",
+          "exit_code": 0,
+          "collected": 941,
+          "collection_errors": [],
+          "collection_skips": [],
+          "summary": {
+            "passed": 941,
+            "failed": 0,
+            "skipped": 0,
+            "errors": 0,
+            "xfail_xpass": 0
+          },
+          "tests": []
+        },
+        "receipt": {
+          "artifact_id": "art_b6204dc4976249798affecb608e0d657",
+          "content_hash": "sha256:d07576b242f2e363422e9f9817b7903edb66d52aec8ddd620ff4584ecf6458b0",
+          "media_type": "application/json; charset=utf-8",
+          "size_bytes": 7029,
+          "created_at": "2026-10-04T23:31:21.322839Z"
+        }
+      },
+      {
+        "phase": "base_with_tests",
+        "check_id": "public-regressions",
+        "diff_hash": "sha256:b53e17b1d82422773f6daab293da80a2949d827ea64dbeff22b2384925bf8a34",
+        "pytest": true,
+        "exit_code": 1,
+        "expected_exit_codes": [
+          0
+        ],
+        "observation": {
+          "status": "COMPLETED",
+          "exit_code": 1,
+          "collected": 942,
+          "collection_errors": [],
+          "collection_skips": [],
+          "summary": {
+            "passed": 941,
+            "failed": 1,
+            "skipped": 0,
+            "errors": 0,
+            "xfail_xpass": 0
+          },
+          "tests": [
+            {
+              "nodeid": "tests/test_options.py::test_shared_option_callback_prefers_flag_value_when_custom_omitted",
+              "path": "tests/test_options.py",
+              "function": "test_shared_option_callback_prefers_flag_value_when_custom_omitted",
+              "xfail_marked": false,
+              "phases": [
+                {
+                  "when": "setup",
+                  "outcome": "passed",
+                  "exception_type": null,
+                  "wasxfail": null,
+                  "detail": null
+                },
+                {
+                  "when": "call",
+                  "outcome": "failed",
+                  "exception_type": "builtins.AssertionError",
+                  "wasxfail": null,
+                  "detail": "runner = <click.testing.CliRunner object at 0x7a2570f5bcb0>\n\n    def test_shared_option_callback_prefers_flag_value_when_custom_omitted(runner):\n        sentinel = \"$_fetch\"\n        fetch_calls = 0\n    \n        def fetch():\n            nonlocal fetch_calls\n            fetch_calls += 1\n            return \"foo\"\n    \n        def callback(ctx, param, value):\n            if value == sentinel:\n                return fetch()\n            return value\n    \n        @click.command()\n        @click.option(\"--custom\", \"custom\")\n        @click.option(\"--fetch\", \"custom\", flag_value=sentinel, callback=callback)\n        def cli(custom):\n            click.echo(custom)\n    \n        result = runner.invoke(cli, [\"--custom\", \"bar\"])\n        assert result.exit_code == 0\n        assert result.output == \"bar\\n\"\n        assert fetch_calls == 0\n    \n        result = runner.invoke(cli, [\"--fetch\"])\n        assert result.exit_code == 0\n>       assert result.output == \"foo\\n\"\nE       AssertionError: assert '$_fetch\\n' == 'foo\\n'\nE         \nE         - foo\nE         + $_fetch\n\ntests/test_options.py:2033: AssertionError"
+                },
+                {
+                  "when": "teardown",
+                  "outcome": "passed",
+                  "exception_type": null,
+                  "wasxfail": null,
+                  "detail": null
+                }
+              ],
+              "parameter_index": null,
+              "status": "TEST_FAILED"
+            }
+          ]
+        },
+        "receipt": {
+          "artifact_id": "art_ffe3c1e4ba5749aea074739e4d50d556",
+          "content_hash": "sha256:b2b63c563f3eec8413de387a1f64ce412b73b6d4fedee4cc9192e57a66ee0619",
+          "media_type": "application/json; charset=utf-8",
+          "size_bytes": 10620,
+          "created_at": "2026-10-04T23:31:27.290462Z"
+        }
+      },
+      {
+        "phase": "patched",
+        "check_id": "public-regressions",
+        "diff_hash": "sha256:1d371716b3544e52b8dca719b91a3f7592f333c3f09aa383725b36c1c637dbc7",
+        "pytest": true,
+        "exit_code": 0,
+        "expected_exit_codes": [
+          0
+        ],
+        "observation": {
+          "status": "COMPLETED",
+          "exit_code": 0,
+          "collected": 942,
+          "collection_errors": [],
+          "collection_skips": [],
+          "summary": {
+            "passed": 942,
+            "failed": 0,
+            "skipped": 0,
+            "errors": 0,
+            "xfail_xpass": 0
+          },
+          "tests": [
+            {
+              "nodeid": "tests/test_options.py::test_shared_option_callback_prefers_flag_value_when_custom_omitted",
+              "path": "tests/test_options.py",
+              "function": "test_shared_option_callback_prefers_flag_value_when_custom_omitted",
+              "xfail_marked": false,
+              "phases": [
+                {
+                  "when": "setup",
+                  "outcome": "passed",
+                  "exception_type": null,
+                  "wasxfail": null,
+                  "detail": null
+                },
+                {
+                  "when": "call",
+                  "outcome": "passed",
+                  "exception_type": null,
+                  "wasxfail": null,
+                  "detail": null
+                },
+                {
+                  "when": "teardown",
+                  "outcome": "passed",
+                  "exception_type": null,
+                  "wasxfail": null,
+                  "detail": null
+                }
+              ],
+              "parameter_index": null,
+              "status": "PASSED"
+            }
+          ]
+        },
+        "receipt": {
+          "artifact_id": "art_649f74dd99ec4d3cb93e4abf909a3f72",
+          "content_hash": "sha256:c768ca6a8df942b97123298b755a47e75f5d52c37de29d5f7999b65d8ec91414",
+          "media_type": "application/json; charset=utf-8",
+          "size_bytes": 7818,
+          "created_at": "2026-10-04T23:31:32.713670Z"
+        }
+      }
+    ],
+    "base_commit": "2247b35ea1c47c727d7a06e51fa280e12a863ff6",
+    "public_spec_hash": "sha256:854c9ecec9ea1b5898a2c1dcf1f39b49a6aea7bc4cd384d110608ae4943ef6c7",
+    "runtime_hash": "sha256:713259075f8e8123ad382fc23f218d67ab5d2c2d820c9b35845fba03129270df",
+    "sandbox": {
+      "backend": "docker",
+      "image": "patchloop-public-repair-pytest@sha256:4512f41e843d57ad7fb8306ece1e549afa2903db6d97815315fa9bf732c82c1a",
+      "image_digest": "sha256:4512f41e843d57ad7fb8306ece1e549afa2903db6d97815315fa9bf732c82c1a"
+    },
+    "journal": "[host path omitted]",
+    "changed_files": [
+      "src/click/core.py",
+      "tests/test_options.py"
+    ],
+    "model_calls": 0,
+    "request": {
+      "artifact_id": "art_0bd1bb34567747e38a45618debc7fb73",
+      "content_hash": "sha256:116c09655de6615aab21cf0c11bf3774809eaf034534ff3c0f2dc88d012d0a28",
+      "media_type": "application/octet-stream",
+      "size_bytes": 1109,
+      "created_at": "2026-10-04T23:31:11.128993Z"
+    },
+    "patch": {
+      "artifact_id": "art_77ce3795215440749f0b8e07efe30dc4",
+      "content_hash": "sha256:1d371716b3544e52b8dca719b91a3f7592f333c3f09aa383725b36c1c637dbc7",
+      "media_type": "application/octet-stream",
+      "size_bytes": 2159,
+      "created_at": "2026-10-04T23:31:11.130113Z"
+    },
+    "public_task": {
+      "artifact_id": "art_f18c691cf9f74c28a4256c0ad5f1918c",
+      "content_hash": "sha256:7129b20919e68ebc42b09c3ad32db203ad1af6f2e49d3c4b6ea55044f706c949",
+      "media_type": "application/json; charset=utf-8",
+      "size_bytes": 5046,
+      "created_at": "2026-10-04T23:31:11.131315Z"
+    },
+    "scope": {
+      "passed": true,
+      "violations": [],
+      "details": {
+        "changed_files": [
+          "src/click/core.py",
+          "tests/test_options.py"
+        ],
+        "untracked_files": [],
+        "changed_file_count": 2,
+        "added_lines": 44,
+        "deleted_lines": 0,
+        "diff_lines": 44,
+        "typed_violations": []
+      }
+    },
+    "test_additions": [
+      {
+        "path": "tests/test_options.py",
+        "function": "test_shared_option_callback_prefers_flag_value_when_custom_omitted",
+        "parameter_names": [],
+        "indices": null
+      }
+    ],
+    "test_paths": [
+      "tests/test_options.py"
+    ],
+    "implementation_paths": [
+      "src/click/core.py"
+    ],
+    "test_file_hashes": {
+      "tests/test_options.py": "sha256:4a917a6e3ee62d2b1297e904cd1f2e596fb580338c41ba5c14fe6bfe40acd90a"
+    },
+    "status": "COMPLETE",
+    "result_artifact": {
+      "artifact_id": "art_ee8f516c8c3d42059583e87674081859",
+      "content_hash": "sha256:4d923369e58a656171920e5010a0aaa73c297a300e86b370a881896d4b851975",
+      "media_type": "application/json; charset=utf-8",
+      "size_bytes": 10529,
+      "created_at": "2026-10-04T23:31:32.722878Z"
+    }
+  }
+}

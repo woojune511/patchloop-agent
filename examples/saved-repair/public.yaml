@@ -1,0 +1,67 @@
+schema_version: repair-task-v1
+task_id: python-dotenv-715
+task_version: 1
+split: repair
+repository:
+  url: https://github.com/theskumar/python-dotenv.git
+  base_commit: 0b2880591780a426b0551436f47a17e7a76d954f
+  language: python
+issue:
+  title: An empty value ignores ${name:-default}
+  description: |
+    https://github.com/theskumar/python-dotenv/issues/715
+
+    `${name:-default}` is the POSIX form that uses the default when `name` is unset or empty. An empty value is returned as itself.
+
+    ```python
+    dotenv.dotenv_values(stream=io.StringIO("b=\na=${b:-d}"))
+    # {'b': '', 'a': ''}
+    ```
+
+    `a` should be `d`. A missing `b` already becomes `d`. `b=c` still stays `c`. `${b}` with no default stays empty.
+
+    Repair requirements:
+    Fix the reported behavior and add regression tests in the existing tests/test_main.py, tests/test_variables.py, or tests/test_parser.py files. Test the public behavior described by the issue. Confirm that the same new tests fail because of this bug before the implementation fix and pass after the fix. Preserve existing tests, assertions, parameter cases, fixtures, and their coverage; do not delete, skip, weaken, or replace them. Do not change dependency or test-runner configuration. Return both the implementation and tests in the original submitted patch. Report which before/after checks you actually ran; do not claim an unexecuted check passed. Any externally performed verification is recorded separately.
+constraints:
+  allowed_paths:
+  - src/dotenv/**
+  - tests/test_main.py
+  - tests/test_variables.py
+  - tests/test_parser.py
+  forbidden_paths:
+  - tests/conftest.py
+  - pyproject.toml
+  - uv.lock
+  - setup.cfg
+  - tox.ini
+  max_changed_files: 4
+  max_diff_lines: 120
+  dependency_changes_allowed: false
+  public_api_changes_allowed: false
+visible_checks:
+- id: public-regressions
+  command:
+  - python
+  - -m
+  - pytest
+  - -q
+  - -p
+  - no:cacheprovider
+  - tests/test_main.py
+  - tests/test_variables.py
+  - tests/test_parser.py
+  - --basetemp=/tmp/dotenv-pytest
+  timeout_seconds: 120
+  working_directory: .
+  environment:
+    PYTHONPATH: /workspace/src:/workspace
+    PYTEST_DISABLE_PLUGIN_AUTOLOAD: '1'
+  expected_exit_codes:
+  - 0
+  infrastructure_exit_codes:
+  - 2
+  - 3
+  - 4
+  - 5
+  output_limit_bytes: 200000
+tags: []

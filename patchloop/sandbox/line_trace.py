@@ -26,6 +26,7 @@ class LineTrace:
         self.request = request
         self.rows = []
         self.targets = {}
+        self.filename_aliases = {}
         self.trace = self._trace
         self.previous = sys.gettrace()
         # Retain real I/O before project code may patch Python's filesystem APIs.
@@ -60,7 +61,8 @@ class LineTrace:
 
     def _trace(self, frame, event, arg):
         del arg
-        target = self.targets.get(frame.f_code.co_filename)
+        filename = frame.f_code.co_filename
+        target = self.targets.get(self.filename_aliases.get(filename, filename))
         if target is None:
             return None
         if event == "line" and frame.f_lineno in target[1]:
@@ -97,6 +99,9 @@ def main() -> None:
     request_path, root, mode, *arguments = sys.argv[1:]
     request = json.loads(Path(request_path).read_bytes())
     collector = LineTrace(request, root)
+    if mode not in {"-c", "-m"}:
+        # run_path retains this spelling in co_filename, even if the script later chdirs.
+        collector.filename_aliases[mode] = str(Path(mode).resolve())
     # Match Python -c/-m/script argv, import path and __main__, not wrapper globals.
     sys.path[0] = os.getcwd()
     collector.start()

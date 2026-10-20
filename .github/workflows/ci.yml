@@ -14,11 +14,15 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Frozen diagnostic controls read their exact historical source commits.
+          fetch-depth: 0
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.12"
       - run: uv sync --extra dev --locked
       - run: uv run --locked ruff check patchloop tests
+      - run: uv run --locked python scripts/build_site.py --output "${{ runner.temp }}/patchloop-site-check"
       - run: >-
           uv run --locked pytest tests
           -n 4 --dist loadfile --max-worker-restart 0

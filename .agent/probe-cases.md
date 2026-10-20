@@ -1,4 +1,36 @@
-# Reusable public probe cases: experimental cases-v1
+# Public probe replay and experimental cases-v1
+
+## Ordinary action-ID replay
+
+Whenever probes are enabled, `run_probe` exposes nullable `replay_action_id` under
+`none`, `cases-v1`, and `reference-cases-v1`. Ordinary executions provide question
+and Python source with `replay_action_id=null`. To execute an earlier completed
+same-run probe again, use its action ID with question/source null. Leave case and
+reference IDs null and `save_program=false` where those fields are offered.
+The separate counterexample-discovery and paired initial-observation diagnostics
+retain inline-only probe schemas because their annotations bind supplied programs.
+
+The new action executes the exact recorded question and program on the current
+diff. No earlier save or saved-case registration is required; the action neither
+activates a case nor performs reference comparison. A completed assertion/import
+failure is eligible, including non-JSON output. A recorded timeout or output limit
+also permits explicit reuse after confirmed cleanup; new admission still applies
+the current resource limits. Pending or outer-failed actions and unconfirmed cleanup
+are ineligible. Prior action/input/diff/program identities must match the receipt.
+
+Admission stores the resolved program and original action/input/diff/source hashes
+in `action_started.probe_replay_request`; the new result retains `replayed_from`
+provenance and its own execution identities. Pending recovery rejects changed
+bindings or an admitted workspace diff that has drifted. Reusing the same
+`action_id + input_hash` still returns its completed receipt without execution.
+Explicit replay uses normal probe admission and resources; it triggers no automatic
+execution, grants no required-check credit, and changes no submission gate.
+
+This removes the prior-save prerequisite for a program already in the public action
+journal. It does not select a useful reproducer or establish correct expectations.
+Local validation includes unchanged-source failure-to-pass replay, interruption and
+identity checks, case compatibility, and a segmented mock solve through isolated
+evaluation. Evidence is under `C:/pt/parvalidation01`; repair-success benefit is unmeasured.
 
 ## Purpose and boundary
 
@@ -8,29 +40,30 @@ observation to a reusable model-authored candidate program. It does not certify
 that either program implements the task's intended behavior. Do not inject the
 diagnostic pyfakefs cases or private evaluation details into a fresh agent run.
 
-`--enable-probes --probe-policy cases-v1` opts in. Default `probe_policy=none`
-preserves the existing system prompt, tools, schema order and tool-surface hash.
-The new policy changes only run_probe's input extension and its saved case view;
+`--enable-probes --probe-policy cases-v1` opts into saved cases. Default
+`probe_policy=none` exposes ordinary probes and action-ID replay, without saved-case
+fields or a catalog. The case policy extends run_probe's input and saved case view;
 no new tool, planner call, tool mask, required test, scope allowance or budget.
 All context policies support the view. Plans and notes remain independent.
 
 For the [incremental capability comparison](probe-replay-comparison.md),
 `--probe-policy reference-cases-v1` selects control A in the same runtime.
 It retains ordinary probes and reference-based registration/comparison/replay,
-but omits `save_program` from the schema and description. Supplying that field
-(even false), or replaying a reference-free definition, fails before dispatch.
+but omits `save_program` from its schema. Supplying that field (even false), or
+replaying a reference-free definition by case ID, fails before dispatch.
 `cases-v1` remains B with its existing contract. The effective policy/contract
 binds model/tool hashes, envelope, manifest and exact resume identity. This
 experimental control does not change the selected baseline or enable probes itself.
 
 ## Four uses of the same run_probe action
 
-With cases-v1, `question`, `python_source`, `reference_action_id`, and `case_id`
-are required nullable fields. `save_program` is a required boolean, false except
+With cases-v1, `question`, `python_source`, `replay_action_id`, `reference_action_id`,
+and `case_id` are required nullable fields. Keep `replay_action_id=null` for the four
+uses below. `save_program` is a required boolean, false except
 for reference-free registration. All calls still carry the normal turn_decision.
 This follows the [OpenAI strict function-calling contract](https://developers.openai.com/api/docs/guides/function-calling#strict-mode):
-required keys with nullable values, no extra object properties. OFF retains the
-old two non-null source/question fields without the extra case fields.
+required keys with nullable values, no extra object properties. Case policy `none`
+has nullable question/source/replay fields without the extra case fields.
 
 1. Ordinary/reference observation: provide question and Python source; save_program=false, both IDs
    are null. Ad-hoc probes keep their old behavior. A potential reference should
@@ -118,15 +151,17 @@ mutation and completed probe calls are not duplicated after a durable decision/r
 Uncertain cleanup, provider usage, deadline or state is never bypassed by case reuse.
 
 Policy/limits/description/retention semantics have their own identity composed over
-the existing v39 tool-surface hash, including any planning policy. Model hash,
+the current base tool-surface hash, including any planning policy. Model hash,
 envelope, manifest and evaluator tool identity bind the option. Resume must repeat
 it; old runs are not migrated. Probe image/profile identity does not change because
 the sandbox execution surface is unchanged.
 
 ## Required validation / remaining hypothesis
 
-Test OFF byte/hash parity; valid/malformed/oversized reference observations; current
-versus historical comparisons; exact source rerun; bounded eviction; bad references;
+Test ordinary action-ID replay across all policies; completed failure eligibility;
+invalid identities and pending recovery drift; valid/malformed/oversized reference
+observations; current versus historical comparisons; exact source rerun; bounded
+eviction; bad references;
 source/definition/workspace drift; interrupted admission/result/batch boundaries;
 native continuation/call/result identity; window/segment replacement; no gate/budget
 changes; and mock submission through isolated evaluation. No real network/Docker

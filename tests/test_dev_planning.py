@@ -32,12 +32,14 @@ def request(root, policy="brief-v1"):
     )
 
 
-def call(update=None, *, action="read", tool="read_file"):
+def call(update=None, *, action="read", tool="read_file",
+         reason="Refine the next action; unfinished verification remains in scope."):
     inspect = tool == "read_file"
     return RequestedTool(
         name=tool, action_id=action, arguments={}, turn_decision=PublicTurnDecision(
             mode="inspect" if inspect else "verify", basis="public evidence",
             evidence_goal="public question" if inspect else None, plan_update=update,
+            plan_update_reason=reason,
         ),
     )
 
@@ -52,13 +54,14 @@ def view(journal, diff="d1", gate="needs_mutation"):
 
 def test_off_wire_and_prompt_are_unchanged():
     assert dev_tool_surface_hash() == (
-        "sha256:25f1db63f18b3f138ee8bdc8686ad320d7c9a3965d4e10acd1055fdd590555b7"
+        "sha256:57193859890419b79cb7f4927c37796d044bc4bf7159c51ddf17723849529e26"
     )
     assert sha256_json(dev_tool_schemas(finish_enabled=True, check_ids=["check"])) == (
-        "sha256:bf2bad4901949789ce8ab2407bcd6b7b15f2789d156faa4538f9216ca5f4e45e"
+        "sha256:8308e96a9765a4aad652e50e2851d737d60f0093bc3ab1e11084c1b271ad827a"
     )
     decision = PublicTurnDecision(mode="verify", basis="baseline")
     assert "plan_update" not in decision.model_dump(mode="json")
+    assert "plan_update_reason" not in decision.model_dump(mode="json")
     restored = PublicTurnDecision.model_validate(decision.model_dump(mode="json"))
     assert restored.model_dump() == decision.model_dump()
     assert "Brief planning is enabled" not in DEV_SYSTEM_PROMPT
@@ -72,6 +75,8 @@ def test_enabled_schema_only_adds_annotation():
     for tool in after:
         decision = tool["parameters"]["properties"]["turn_decision"]
         assert decision["properties"].pop("plan_update") == plans.update_schema()
+        assert decision["properties"].pop("plan_update_reason") == plans.reason_schema()
+        assert decision["required"].pop() == "plan_update_reason"
         assert decision["required"].pop() == "plan_update"
     assert after == before
     assert dev_tool_surface_hash(planning_policy=plans.POLICY) != dev_tool_surface_hash()

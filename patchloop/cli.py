@@ -56,6 +56,29 @@ def _parse_cost(value: str | None) -> Decimal | None:
 
 
 @app.command()
+def repair(
+    request: Annotated[Path, typer.Option("--request", exists=True, dir_okay=False,
+                                          help="Public repair execution request JSON.")],
+) -> None:
+    """Repair a public task in an isolated checkout; return patch and public evidence."""
+    from patchloop.repair import load_repair_request, run_repair
+
+    _guarded(lambda: run_repair(load_repair_request(request)))
+
+
+@app.command("repair-verify")
+def repair_verify(
+    request: Annotated[Path, typer.Option("--request", exists=True, dir_okay=False)],
+    patch: Annotated[Path, typer.Option("--patch", exists=True, dir_okay=False)],
+    state_root: Annotated[Path | None, typer.Option("--state-root")] = None,
+) -> None:
+    """Compare added pytest cases on base and repaired code, without model calls."""
+    from patchloop.repair_verification import verify_repair
+
+    _guarded(lambda: verify_repair(request, patch, state_root=state_root))
+
+
+@app.command()
 def dev(
     provider: Annotated[Literal["mock", "openai"], typer.Option("--provider")],
     task: Annotated[Path, typer.Option("--task", exists=True, dir_okay=False)],
@@ -93,6 +116,10 @@ def dev(
         Literal["none", "cases-v1", "reference-cases-v1"],
         typer.Option("--probe-policy", help="Opt-in reusable reference/candidate experiments."),
     ] = "none",
+    probe_recheck: Annotated[
+        Literal["none", "saved-program-v1"],
+        typer.Option("--probe-recheck", help="Rerun the last saved program after edits."),
+    ] = "none",
     repair_recheck: Annotated[
         bool, typer.Option(
             "--repair-recheck", help="After a repair, rerun its prior failed public check."
@@ -107,15 +134,28 @@ def dev(
         Literal["append-v1", "native-window-v1", "segmented-v1"],
         typer.Option("--context-policy", help="Opt-in snapshot window or bounded public handoffs."),
     ] = "append-v1",
+    retained_source_chars: Annotated[
+        int, typer.Option("--retained-source-chars",
+                          help="Previously observed source pool in characters: 24000 or 48000."),
+    ] = 24_000,
     segment_boundary_policy: Annotated[
         Literal["result-or-size-v1", "size-only-v1"],
         typer.Option("--segment-boundary-policy", help="Segmented-v1 transition condition."),
     ] = "result-or-size-v1",
+    history_search_policy: Annotated[
+        Literal["none", "public-v1"],
+        typer.Option("--history-search", help="Search already delivered public run evidence."),
+    ] = "none",
     completion_cost_policy: Annotated[
         Literal["per-call-v1", "completion-reserve-v1"],
         typer.Option("--completion-cost-policy",
                      help="Opt-in future-call cost reservation; requires segmented-v1."),
     ] = "per-call-v1",
+    agent_policy: Annotated[
+        Literal["current", "thin"],
+        typer.Option("--agent-policy",
+                     help="Agent presentation; thin requires planning-policy none."),
+    ] = "current",
     planning_policy: Annotated[
         Literal["none", "brief-v1", "brief-evidence-v1", "brief-assumption-v1",
                 "brief-after-source-v1"],
@@ -155,11 +195,15 @@ def dev(
                 enable_probes=enable_probes,
                 probe_policy=probe_policy,
                 repair_recheck=repair_recheck,
+                probe_recheck=probe_recheck,
                 repair_inspection_policy=repair_inspection_policy,
                 context_policy=context_policy,
+                retained_source_chars=retained_source_chars,
                 segment_boundary_policy=segment_boundary_policy,
+                history_search_policy=history_search_policy,
                 completion_cost_policy=completion_cost_policy,
                 planning_policy=planning_policy,
+                agent_policy=agent_policy,
                 compact_at_input_tokens=compact_at_input_tokens,
                 accept_compaction_model_limit_reservation=accept_compaction_model_limit_reservation,
                 resume_run_id=resume_run_id,
@@ -220,6 +264,12 @@ def prepare_task_probe_dependencies(
     group: Annotated[list[str] | None, typer.Option("--group")] = None,
     extra: Annotated[list[str] | None, typer.Option("--extra")] = None,
     source_root: Annotated[list[str] | None, typer.Option("--source-root")] = None,
+    caller_requirement: Annotated[list[str] | None, typer.Option(
+        "--caller-requirement", help="Explicit public caller package==version; requires --resolve.",
+    )] = None,
+    runtime_profile: Annotated[str, typer.Option(
+        "--runtime-profile", help="Existing reviewed public probe interpreter/image profile.",
+    )] = "python312-v1",
     installed_limit_mib: Annotated[int, typer.Option(
         "--installed-limit-mib", min=256, max=1024,
         help="Installed dependency storage cap; download and execution limits stay fixed.",
@@ -247,6 +297,8 @@ def prepare_task_probe_dependencies(
             generated_wheel_receipt=generated_wheel_receipt,
             generated_wheel_receipt_hash=generated_wheel_receipt_hash,
             installed_limit_mib=installed_limit_mib,
+            caller_requirements=caller_requirement,
+            runtime_profile=runtime_profile,
         )
         return {"ok": True, "prepared_probe_dependencies": str(path)}
 

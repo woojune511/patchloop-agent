@@ -9,12 +9,14 @@ import tokenize
 from collections import defaultdict
 from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Literal
 
+from patchloop.dev.question_support import question_support
 from patchloop.util import sha256_json
 
 SOURCE_OUTPUT_CHARS = 24_000
 RETAINED_SOURCE_CHARS = 24_000
+RetainedSourceChars = Literal[24_000, 48_000]
 OBSERVED_SOURCE_INDEX_ENTRIES = 16
 OBSERVED_SOURCE_INDEX_CHARS = 4_000
 _PYTHON_HEADER = re.compile(
@@ -226,8 +228,9 @@ def project_observed_sources(
     priorities: list[tuple[str, int, int, int]],
     editable_paths: set[str],
     max_chars: int = RETAINED_SOURCE_CHARS,
+    focus_references: list[dict[str, Any]] | None = None,
 ) -> SourceProjection:
-    """Merge equal source lines, select pinned ranges, then use remaining recency."""
+    """Protect mutations/citations, admit observed call support, then use recency."""
 
     native_lines: set[tuple[str, str, int]] = set()
     for span in native_spans:
@@ -298,6 +301,47 @@ def project_observed_sources(
                 blocked.update(additions)
                 omitted_pinned.append({"path": path, "start_line": start, "end_line": end})
                 continue
+            for key in additions:
+                selected[key] = observed[key]
+                selected_keys.add(key)
+            used += cost
+    # Optional focus is atomic for priority admission, but a rejected large range
+    # must not suppress source the ordinary selector would otherwise retain.
+    # A large primary citation cannot crowd out an explicitly declared countercheck.
+    # Roles describe the model's intent, not a runtime judgment of the source.
+    for ref in sorted(focus_references or [], key=lambda ref: ref.get("role") != "countercheck"):
+        if ref.get("kind") != "source" or ref.get("unavailable_reason"):
+            continue
+        keys = {(ref["path"], ref["file_hash"], n)
+                for n in range(ref["start_line"], ref["end_line"] + 1)}
+        if not keys <= observed_keys or keys & blocked:
+            continue
+        additions = sorted(keys - native_lines - selected_keys)
+        proposed_keys, cost = set(selected_keys), 0
+        for key in additions:
+            cost += incremental_cost(key, proposed_keys)
+            proposed_keys.add(key)
+        if used + cost > max_chars:
+            continue
+        for key in additions:
+            selected[key] = observed[key]
+            selected_keys.add(key)
+        used += cost
+    # Inferred syntax support never outranks either explicit citation. Treat the
+    # pair's support as one optional bundle so we do not admit half a caller gate
+    # while evicting its exception/countercheck context. No extra reference or read.
+    admitted_refs = [ref for ref in focus_references or []
+                     if ref.get("kind") == "source" and not ref.get("unavailable_reason")
+                     and all((ref["path"], ref["file_hash"], n) in selected_keys | native_lines
+                             for n in range(ref["start_line"], ref["end_line"] + 1))]
+    support = question_support(observed, admitted_refs)
+    if not support & blocked:
+        additions = sorted(support - native_lines - selected_keys)
+        proposed_keys, cost = set(selected_keys), 0
+        for key in additions:
+            cost += incremental_cost(key, proposed_keys)
+            proposed_keys.add(key)
+        if used + cost <= max_chars:
             for key in additions:
                 selected[key] = observed[key]
                 selected_keys.add(key)

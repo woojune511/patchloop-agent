@@ -185,7 +185,9 @@ def test_final_unchecked_edit_keeps_consistent_identity_and_available_check_or_s
         assert checked.output["passed"]
         assert checked.workspace_diff_hash == gateway.current_diff_hash
     finished = _batch(gateway, RequestedTool(
-        name="finish_task", action_id="finish", arguments={},
+        name="finish_task", action_id="finish", arguments={
+            "assessment": "Reviewed the public patch and remaining uncertainty.",
+        },
     ), tmp_path)
     assert finished.output["patch_hash"] == gateway.current_diff_hash
     assert finished.workspace_diff_hash == gateway.current_diff_hash

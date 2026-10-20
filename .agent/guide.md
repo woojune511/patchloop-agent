@@ -1,14 +1,7 @@
 # Internal implementation guide
 
-This is the current contract and navigation companion to [AGENTS.md](../AGENTS.md).
-Read [current status](../docs/current-status.md) for current facts and priorities.
-Checked-in source and tests own runtime behavior; this guide identifies the relevant
-contracts. Read only the sections and source needed for the change.
-
-Historical observations are indexed in [history](../docs/history/README.md).
-Search that index for a specific question, then read a bounded matching excerpt.
-Do not concatenate histories into normal context or treat old next steps as work orders.
-Keep run narratives and validation history out of this guide.
+Companion to [AGENTS.md](../AGENTS.md). [Status](../docs/current-status.md) owns
+current facts; source/tests own behavior. Read relevant sections only.
 
 ## Choosing the next improvement
 
@@ -27,7 +20,7 @@ Comparisons answer causal questions when needed; routine fixes need no new proce
 | --- | --- |
 | CLI and request/default contracts | `patchloop/cli.py`, `patchloop/dev/contracts.py` |
 | Loop, preflight, action horizon, terminal handling | `patchloop/dev/runner.py` |
-| Pure completion/mutation call-budget forecasts | `patchloop/dev/completion_budget.py` |
+| Pure completion/mutation resource forecasts | `patchloop/dev/completion_budget.py` |
 | Public prompt and provider adapter | `patchloop/dev/model.py`, `patchloop/agent/model.py` |
 | Tool grammar, observed anchors, edits, checks, finish | `patchloop/dev/tools.py` |
 | Audit context and compact public view | `patchloop/dev/context.py`, `patchloop/dev/model_state.py` |
@@ -36,7 +29,8 @@ Comparisons answer causal questions when needed; routine fixes need no new proce
 | Journal/recovery and evaluator completion | `patchloop/dev/state.py`, `patchloop/dev/evaluation_completion.py` |
 | Prices and pre-dispatch cost admission | `patchloop/dev/cost.py` |
 | Workspaces, prepared inputs, deadlines | `patchloop/repository.py`, `patchloop/prepared_source.py`, `patchloop/git_execution.py`, `patchloop/deadline.py` |
-| Registered checks and public probes | `patchloop/sandbox/`, `patchloop/dev/probe_cases.py` |
+| Registered checks and public probes | `patchloop/sandbox/`, `patchloop/dev/probe_replay.py`, `patchloop/dev/probe_cases.py` |
+| Patch/test comparison | `patchloop/repair_verification.py` |
 | Task/manifest contracts and isolated evaluation | `patchloop/contracts.py`, `patchloop/task_loader.py`, `patchloop/verifier/` |
 
 Use public task inputs for agent work. Private task material and evaluator internals
@@ -45,76 +39,88 @@ never enter coding-agent context, including through diagnostics or repair hints.
 Completion-budget forecasts take an immutable state snapshot and perform no I/O.
 The runner assembles that snapshot and owns tool admission; `dev/cost.py` owns
 provider cost admission. Keep arithmetic independent of journals, gateways and model
-calls. Source extraction changes runtime identity, so existing exact-envelope resume
-checks still reject a different runtime; do not relax them for refactors.
+calls. Refactors change runtime identity; exact-envelope resume must still reject
+a different runtime.
 
 ## Loop and mutation contract
 
-The only runtime is mutable `dev-head`; every run is `official=false`.
-Public gates are `needs_mutation`, `needs_visible_checks`, and `ready_to_submit`.
-The current gate and resource horizon expose registered tools, never unrestricted shell.
+Only mutable `dev-head` runs, always `official=false`.
+Gates: `needs_mutation`, `needs_visible_checks`, and `ready_to_submit`.
+Gates and resource horizons expose registered tools, never unrestricted shell.
 
-`replace_text` scalar constraints come from `TextReplacementIntent` and
-`CausalRevision`; the provider projection in `dev/tools.py` selects public fields
-explicitly. Keep provider-required presence and nullable revision shape separate from
-internal recovery defaults, and retain the existing provider keyword order.
-Recovery-only annotations stay unadvertised, and their
-absent-versus-explicit serialization remains unchanged. Schema field constraints do
-not replace cross-field validators, observed-anchor checks or mutation scope admission.
+`replace_text` uses `TextReplacementIntent` and `CausalRevision`. Project public
+fields explicitly; preserve required/null rules, keyword order, recovery defaults
+and absent-versus-explicit serialization. Keep recovery annotations unadvertised
+and cross-field/anchor/scope validation intact.
 
-A response contains 1–4 parallel `read_file`/`search_files` calls, or exactly one
-`replace_text`, `run_check`, enabled `run_probe`, `finish_task`, or `stop_task`.
-A bounded public `turn_decision` accompanies each call. Optional notes/plans are
-unverified working data, not reasoning transcripts or an extra workflow phase.
-One consecutive protocol/incomplete correction is allowed; a valid tool batch resets it.
+Batch 1–4 `read_file`/`search_files` calls; other tools run singly.
+Opt-in history search: eight candidates, execution-only ranking, whole originals
+within actual input limits. Only fresh-seed overflow uses 48k units; ID pages are
+48k too. Authored fields labelled, no source/PASS credit.
+A question may retain search results within its existing two handoff references.
+A bounded public `turn_decision` accompanies each default-policy call. Opt-in
+`--agent-policy thin --planning-policy none` replaces it with root nullable
+`memory_update`; see [contract](thin-policy-reference.md). Execution gates stay shared.
+Notes/plans are unverified; never reasoning transcripts.
+One consecutive protocol/incomplete correction; reset on valid batches.
 
-Reads return at most 400 inclusive lines within output bounds. Searches use literal
-queries and repository-rooted component-aware globs. Only delivered, current public
-source can authorize an edit. `replace_text` requires an exact occurrence in an
-existing tracked allowed file, a hypothesis, and expected behavior (each 1-1,500
-characters in both the public schema and internal contract). The gateway binds
-the contiguous observed anchor, creates the canonical full diff, enforces complete-diff
-scope, and restores the pre-image on rejection. Do not substitute fuzzy matching,
-unobserved source, new paths, or model-selected mutation evidence IDs.
+Reads return at most 400 lines. Searches use literal queries, rooted component-aware
+globs and one tracked-path enumeration per uncached call. Edits require delivered
+current public source. `replace_text` requires an exact occurrence in a tracked,
+allowed file, a hypothesis and expected behavior (each 1-1,500 characters in both
+schemas). Bind the contiguous observed anchor, enforce canonical full-diff scope,
+and restore the pre-image on rejection. No fuzzy matching, unseen source, new paths
+or model-selected mutation evidence IDs. Exact reads/previews use literal Git pathspecs;
+decode quoted/NUL-delimited Git paths without changing diff bytes.
 Retired requirement/case annotations remain for exact legacy recovery, not fresh requests.
 
-A repair invalidates checks for the prior diff. Submission requires a nonempty tracked
-diff and every registered required check passing on that exact diff. Optional probes
-do not supply required-check credit. Passing checks establish their observed results,
-not complete semantic coverage. Preserve pre-state, submitted-candidate, and incremental
-patch identities separately; replayed results retain action-time identities.
+Submit a nonempty tracked diff only after all required checks pass on it.
+`finish_task.assessment` and `plan_review` bind judgment and plan to the submitted diff.
+Plan replacements need `plan_update_reason`; invalid reasons preserve the prior plan.
+Latest predecessor/reason stays visible; see [planning](planning-experiment.md).
+Check PASS alone certifies no requirement coverage. Label source inference.
+No extra action/check required. After edits, require fresh PASS.
+Optional tests/probes give no required-check credit. Preserve pre-state,
+submitted-candidate and incremental patch identities; replay retains action-time identities.
+Visible-check IDs must be unique at task admission.
+Advisory line feedback decodes those paths and binds script filenames at launch,
+preserving arguments and tracking across chdir.
 
-The scheduler reserves the minimum completion path and bounded recovery opportunities.
+Reserve the minimum completion path and bounded recovery. Forecast model calls and
+tool actions separately: an eligible automatic required-check recheck costs zero
+model calls and one action. Share execution's current/healthy/registered eligibility
+in admission, successor and cost forecasts; retain all tool slots. Disabled recheck
+preserves the common counts.
 A failed check does not require another read when current edit evidence exists.
 Preserve the distinction between minimum and protected completion, and do not add
 hard tool restrictions from advisory progress signals or task-specific failure patterns.
 
 ## Context and recovery
 
-The compact view copies only explicit top-level fields, preserving order and nested rules.
+Project only explicit public task/source/diff/action/check fields, preserving order
+and nested rules. Distinguish current evidence, history and unverified notes;
+delivery does not imply model use.
+Completed checks/tests/probes reconstruct working_notes.verification.observations:
+latest six plus omission count, with action/input/diff identity and execution flags,
+not bug verdicts. Unrelated PASS cannot erase them; edits make them historical.
+Concern upsert uses concern_id=null to create, or a returned ID to update progress.
+evidence_action_id immutably links an unsuccessful observation; reject missing/healthy
+IDs. Null keeps a hypothesis-only concern. Operator feedback stays separately labelled,
+never a registered observation. Links change no resolution or finish gate.
 
-Project only public task/source/diff/action/check information. Keep current evidence
-distinct from historical or unverified notes; do not equate delivery with model use.
-Verification observations are reconstructed from completed public check/probe actions
-under working_notes.verification.observations (latest six, with omission count).
-They preserve action/input/diff identity and execution flags, not bug verdicts. Unrelated
-PASS does not erase them; edits make prior observations historical. Upsert may link
-one using evidence_action_id; the original link is immutable, and missing/healthy
-result IDs are rejected as links. Null retains hypothesis-only concerns. External
-operator feedback remains separately labelled; it is not imported as a registered
-check/probe observation. Linked observations do not alter resolution or finish gates.
+Latest observations must reach the next request. `--retained-source-chars` selects
+24,000 (default) or 48,000 previously observed characters; complete lines only, no
+unseen gaps. The setting binds model/envelope identity and resume. Native history
+and the separate 60,000-token segmented limit are unchanged. Result handoffs may
+discard older history below that limit. Run-local notes are not cross-run memory.
 
-Latest tool observations must reach the next request. Retained source is bounded,
-uses only observed complete lines, and never fills unseen gaps. Optional run-local
-working notes do not enable cross-run memory.
-
-External state uses append-only, hash-chained `dev-run-v1` JSONL and immutable run
-envelopes. Mutations/checks preserve `action_id + input_hash`: replay completed results,
-reject conflicting reuse, reconcile admitted mutations after crashes instead of
-applying them twice. Do not rewrite journals, old envelopes, or prior native outputs.
-Reads and appends share the reentrant process lock; only append takes a file lock.
-Append returns only after complete writes and fsync. Write/sync errors propagate;
-torn tails remain untouched and block replay/append. Failed sync is not durability.
+External state is append-only, hash-chained `dev-run-v1` JSONL with immutable envelopes.
+Preserve `action_id + input_hash`: replay completed mutations/checks, reject conflicting
+reuse, and reconcile admitted mutations after crashes without applying them twice.
+Never rewrite journals, old envelopes or native outputs. Reads/appends share the
+reentrant process lock; only append takes a file lock. Append completes writes and
+fsync before returning; I/O errors propagate. LF alone separates records. Preserve
+Unicode data; torn tails, including missing final LF, block replay/append unchanged.
 Resume requires repeat=1, exact envelope-bound settings/identities, and the run lock.
 Pre-envelope runs cannot resume. Preserve settled usage, counters, and active deadlines.
 The offline [observation-exposure fork](observation-exposure.md) retains parent
@@ -123,10 +129,14 @@ provenance under a new current-runtime envelope; it does not relax ordinary resu
 OpenAI uses `store=false` and encrypted continuation with exact call/output ordering;
 never log plaintext reasoning or reasoning summaries. Missing/corrupt continuation
 fails closed. An unmatched provider dispatch or uncertain usage must not trigger retry.
-Durable evaluator completion can finalize from verified artifacts without re-execution;
+Durable evaluator completion verifies check/safety artifact references and bytes
+before finalizing without re-execution;
 a crash before that receipt does not establish exactly-once evaluator execution.
 
 One deadline covers preparation, counting, generation, tools, Git, and evaluation.
+Development requests may reserve evaluation time inside that total (default zero).
+A timely, bound `solver_finished` receipt permits recovery after the solver cutoff,
+with no new solver actions; see [current panel](current-dev20.md).
 After expiry permit only bounded metadata/reconciliation work. Unknown process or
 container cleanup stops execution/repetitions; preserve the original failure and typed
 cleanup evidence. Interrupted probes may rerun only on their bound snapshot after
@@ -145,6 +155,7 @@ Count actual input immediately before dispatch and reserve conservative input/ou
 cost using reviewed prices. Cost admission may reduce the desired output ceiling.
 Use zero SDK retries; count, transport, billing, or cleanup uncertainty stops all
 remaining repetitions. Reservations are not billed usage; unknown usage is not zero.
+Panel usage restoration includes compaction and adds only the row's delta to shared cost.
 
 Probes use isolated public snapshots and the approved clean image/profile: no network,
 read-only source/root, bounded resources, and no private files, credentials, Git data,
@@ -175,60 +186,51 @@ Choosing a baseline or reading a diagnostic never authorizes a live run or chang
 Read optional implementation notes only when changing that feature. They contain
 experimental context and historical plans; current source/status take precedence:
 
-- Context: [segmented context](plans/segmented-context.md), [native window](plans/native-context-window.md).
-- Planning and probes: [planning](planning-experiment.md), [probe cases](probe-cases.md),
+- Context: [handoffs](plans/evidence-preserving-handoff.md), [native window](plans/native-context-window.md).
+- Planning and probes: [planning](planning-experiment.md), [probe replay/cases](probe-cases.md),
+  [saved-program recheck](probe-recheck.md),
   [setup](probe-setup.md), [dependencies](prepared-probe-dependencies.md), [threads](probe-threads.md).
+- Public test selection: [registered pytest suites](selected-tests.md).
+- Current dev20 capability and task parallelism: [bounded panel](current-dev20.md).
 - Discovery diagnostics: [counterexamples](counterexample-discovery.md),
   [task-first discovery](task-first-discovery.md), [construction links](construction-links.md),
   [frozen expectations](frozen-probe-expectation.md), [profile scope](profile-scope-diagnostic.md).
-- Completion advice: [status-only diagnostic](completion-status-diagnostic.md), an
-  opt-in seeded-loop projection that keeps completion gates and tool admission intact.
-  [Mutation advice checkpoint](mutation-advice-checkpoint.md) prepares an offline
-  post-probe input pair; [offline continuation](checkpoint-continuation.md) restores
-  that state for scripted registered-action and evaluation tests. The separate
-  [live collector](checkpoint-comparison.md) binds fresh accounting and admission.
-  The [caller-state probe](caller-state-probe.md) is a separate provider-free observation.
-  [Caller information](caller-information.md) tests its first-input delivery with advice fixed.
-  [Cleanup probe](cleanup-probe.md) diagnoses saved first-patch cancellation and teardown.
-  [Closure-policy sampler](closure-policy-sampler.md) collects independent decisions only.
-  [Selected probe boundary](selected-probe-continuation.md) replays a saved response offline.
+- Completion diagnostics: [status-only](completion-status-diagnostic.md),
+  [mutation checkpoint](mutation-advice-checkpoint.md),
+  [offline continuation](checkpoint-continuation.md), [live collector](checkpoint-comparison.md),
+  [caller state](caller-state-probe.md), [caller information](caller-information.md),
+  [cleanup](cleanup-probe.md), [closure sampler](closure-policy-sampler.md),
+  [selected probe replay](selected-probe-continuation.md).
 - Candidate comparison: [independent candidate](independent-candidate.md), an
   opt-in public alternative in the ordinary seeded repair loop.
 - Search context: [declaration context](declaration-context.md), opt-in bounded
   declaration/documentation expansion in the first tool batch; the separate
   [checkpoint sampler](declaration-checkpoint.md) retains a saved first decision prefix.
 
-For a provider-free saved-candidate caller-cancellation follow-up, see
-[caller preservation](caller-preservation.md).
+Public [repair and repair-verify](../examples/repair/README.md) return public evidence,
+acceptance `NOT_RUN`. Verification compares unchanged submitted tests without a model.
+Live repair requires exact public-request/cost approval; live dev requires dev-train.
 
 ## Validation checklist
 
-For the first-failed-check information comparison, see
-[cleanup-information](cleanup-information.md). Its raw operator observations,
-candidate restoration and new allocation remain separate from prior closed runs.
-For an unhinted continuation after the first accepted edit, see
-[post-edit budget continuation](post-edit-budget-continuation.md). Only the fresh
-cost allowance changes; prior solving state and resource counters remain intact.
-
-Run focused tests appropriate to the changed contract, Ruff, the fast suite, and mock
-smoke as relevant. Documentation-only changes need the documentation layout/link tests.
-Keep focused validation under two minutes; report longer or unrun groups honestly.
-Freeze runtime source during provenance checks. Use unique external basetemps under
-`C:\pt\tmp\<unique-name>`; parallel processes need separate roots. Durable run/evidence
-stores are not scratch. Never sweep a parent directory or relocate recorded state.
+Use the explicit quick selection below for routine validation; add focused tests
+for other changed owners. It covers contracts, journal recovery, cost reservations,
+history search and isolated mock smoke, not the whole repository. Keep regressions;
+run all tests for broad integration changes or an explicit request. Documentation-only
+changes need `tests/test_documentation_layout.py`. Aim for under two minutes.
+Freeze runtime during provenance checks. Use short, unique external basetemps;
+parallel runs need separate roots. Never sweep durable evidence or a parent directory.
 
 ```powershell
-uv run pytest tests/test_documentation_layout.py -p no:cacheprovider
 uv run ruff check patchloop tests
-uv run --locked pytest tests -n 4 --dist loadfile --max-worker-restart 0 --durations=20 --basetemp C:\pt\tmp\<unique-name>
-uv run patchloop dev --provider mock --task tasks/smoke/csv-quoted-newline/public.yaml --model mock-dev --repeat 1
+uv run --locked pytest @tests/quick.txt --basetemp C:\pt\tmp\<unique-name>
+# Full regression when warranted:
+uv run --locked pytest tests -n 4 --dist loadfile --max-worker-restart 0 --basetemp C:\pt\tmp\<unique-name>
 ```
 
-Set `PATCHLOOP_STATE_ROOT` to an external directory for mock smoke. Omit `-n 4` for
-small focused checks; full-suite workers keep each test file together and use separate temporary
-directories. Automatic worker restart is disabled so worker crashes fail validation.
-Real-Docker tests remain opt-in and require existing images; mock/local evidence
-does not prove live behavior.
+The quick suite includes mock smoke. Full-suite workers keep each file together;
+worker crashes fail validation. Real-Docker tests require opt-in and existing images.
+Mock/local evidence does not prove live behavior.
 Before handoff check public/private boundaries, current links, external state, exact
 recovery identities, unrelated edits, and unchanged historical artifacts. Report what
 was implemented, locally tested, live-executed, and left `NOT_RUN` separately.

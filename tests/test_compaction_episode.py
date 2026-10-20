@@ -44,6 +44,8 @@ def no_network_or_credentials(monkeypatch):
 
 
 def tool(name, action_id, **arguments):
+    if name == "finish_task":
+        arguments.setdefault("assessment", "Reviewed the public patch and remaining uncertainty.")
     mode = {
         "run_check": "verify",
         "replace_text": "mutate",

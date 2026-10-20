@@ -66,12 +66,12 @@ WINDOW_RULES = SnapshotRules(
     "Exact observations do not override the latest current state, source/check currency, "
     "notes, correction, budgets or allowed actions. Missing current fields are not inherited.",
     initial_state_index=1,
-    mutable_fields=MUTABLE_FIELDS | {"protocol_correction", "probe_cases"},
+    mutable_fields=MUTABLE_FIELDS | {"protocol_correction", "probe_cases", "probe_recheck"},
 )
 SEGMENT_RULES = replace(WINDOW_RULES, mutable_fields=WINDOW_RULES.mutable_fields | {
     "working_plan", "segment_handoff", "current_public_failure", "pending_recheck",
     "last_successful_mutation", "last_failed_mutation", "recent_checks", "recent_probes",
-    "latest_tool_results", "public_execution_summary", "repair_recheck",
+    "latest_tool_results", "public_execution_summary", "repair_recheck", "probe_recheck",
 })
 
 
@@ -275,11 +275,11 @@ def assemble_model_input(
     ]
 
 
-def segment_seed(system_prompt: str, public_task: dict) -> list[dict]:
+def segment_seed(system_prompt: str, public_task: dict, *, agent_policy="current") -> list[dict]:
     """An explicit independent request for the unchanged task, not fake tool feedback."""
     return [
         {"role": "system", "content": system_prompt + "\n" + CONVERSATION_INSTRUCTIONS
-         + "\n" + segments.INSTRUCTIONS},
+         + "\n" + segments.segment_instructions(segments.INSTRUCTIONS, agent_policy)},
         {"role": "developer", "content": canonical_json({"public_task": public_task})},
         dict(TASK_MESSAGE),
     ]

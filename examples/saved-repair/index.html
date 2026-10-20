@@ -1,0 +1,109 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>PatchLoop · Saved repair</title><style>body{max-width:980px;margin:3rem auto;padding:0 1.2rem;background:#f6f7fa;color:#182235;font:17px/1.6 system-ui}h1{line-height:1.15}section{background:white;border:1px solid #dbe0e8;border-radius:12px;padding:1.4rem;margin:1rem 0}pre{overflow:auto;background:#eef1f6;padding:1rem;font-size:13px;line-height:1.5}a{color:#225dc2}.badge{color:#754d00;background:#fff1cc;padding:.3rem .6rem;border-radius:5px}table{width:100%;border-collapse:collapse}td,th{text-align:left;border-bottom:1px solid #ddd;padding:.5rem}</style><p class="badge">Saved evidence · No live run · No model call</p><h1>A repair with a model-written regression test</h1><p>python-dotenv #715 · An empty value should use the supplied default.</p><p><a href="README.md">Reproduce and limitations</a> · <a href="provenance.json">Source hashes and transformations</a></p><section><h2>1. Public request</h2><p>Fix the bug and add a regression test in an existing test file. Preserve existing checks.</p><p>Base: <code>0b2880591780a426b0551436f47a17e7a76d954f</code> · <a href="https://github.com/theskumar/python-dotenv/issues/715">Original issue</a></p><details><summary>Portable request example</summary><pre>{
+  &quot;task&quot;: &quot;public.yaml&quot;,
+  &quot;source&quot;: &quot;../source&quot;,
+  &quot;state_root&quot;: &quot;../repair-state&quot;,
+  &quot;sandbox&quot;: {
+    &quot;backend&quot;: &quot;docker&quot;,
+    &quot;image&quot;: &quot;patchloop-public-repair-dotenv@sha256:d7d36d2222d2e0af98beefcf76f77678dfb8b9620b2dc9618ee9bad09820ff69&quot;,
+    &quot;image_digest&quot;: &quot;sha256:d7d36d2222d2e0af98beefcf76f77678dfb8b9620b2dc9618ee9bad09820ff69&quot;
+  },
+  &quot;provider&quot;: &quot;openai&quot;,
+  &quot;model&quot;: &quot;gpt-5.4-mini-2026-03-17&quot;,
+  &quot;reasoning_effort&quot;: &quot;xhigh&quot;,
+  &quot;max_output_tokens&quot;: 25000,
+  &quot;context_policy&quot;: &quot;segmented-v1&quot;,
+  &quot;segment_boundary_policy&quot;: &quot;result-or-size-v1&quot;,
+  &quot;planning_policy&quot;: &quot;brief-v1&quot;,
+  &quot;repair_recheck&quot;: true,
+  &quot;repair_inspection_policy&quot;: &quot;protected-v1&quot;,
+  &quot;completion_cost_policy&quot;: &quot;per-call-v1&quot;,
+  &quot;enable_probes&quot;: false,
+  &quot;env_file&quot;: &quot;../credentials.env&quot;,
+  &quot;max_cost_usd&quot;: &quot;3.00&quot;,
+  &quot;repeat&quot;: 1,
+  &quot;limits&quot;: {
+    &quot;max_model_calls&quot;: 40,
+    &quot;max_tool_actions&quot;: 100,
+    &quot;max_accepted_mutations&quot;: 4,
+    &quot;wall_time_seconds&quot;: 1800
+  }
+}</pre></details></section><section><h2>2. Original returned patch</h2><p>No operator correction. The model added one parameter case and changed the value resolver.</p><pre>diff --git a/src/dotenv/variables.py b/src/dotenv/variables.py
+index 667f2f2..d88f0df 100644
+--- a/src/dotenv/variables.py
++++ b/src/dotenv/variables.py
+@@ -62,9 +62,12 @@ class Variable(Atom):
+         return hash((self.__class__, self.name, self.default))
+ 
+     def resolve(self, env: Mapping[str, Optional[str]]) -&gt; str:
+-        default = self.default if self.default is not None else &quot;&quot;
+-        result = env.get(self.name, default)
+-        return result if result is not None else &quot;&quot;
++        result = env.get(self.name)
++        if result in (None, &quot;&quot;):
++            if self.default is not None:
++                return self.default
++            return &quot;&quot;
++        return result
+ 
+ 
+ def parse_variables(value: str) -&gt; Iterator[Atom]:
+diff --git a/tests/test_main.py b/tests/test_main.py
+index 930ab17..405f8ed 100644
+--- a/tests/test_main.py
++++ b/tests/test_main.py
+@@ -894,6 +894,7 @@ def test_dotenv_values_file(dotenv_path):
+         # Undefined
+         ({}, &quot;a=${b}&quot;, True, {&quot;a&quot;: &quot;&quot;}),
+         ({}, &quot;a=${b:-d}&quot;, True, {&quot;a&quot;: &quot;d&quot;}),
++        ({&quot;b&quot;: &quot;&quot;}, &quot;a=${b:-d}&quot;, True, {&quot;a&quot;: &quot;d&quot;}),
+         # With quotes
+         ({&quot;b&quot;: &quot;c&quot;}, &#x27;a=&quot;${b}&quot;&#x27;, True, {&quot;a&quot;: &quot;c&quot;}),
+         ({&quot;b&quot;: &quot;c&quot;}, &quot;a=&#x27;${b}&#x27;&quot;, True, {&quot;a&quot;: &quot;c&quot;}),
+</pre><a href="returned.patch">Download original patch</a></section><section><h2>3. Same model test, two source versions</h2><table><tr><th>Phase</th><th>Recorded result</th></tr><tr><td>Original source</td><td>218 passed</td></tr><tr><td>Original source + model test</td><td>1 failed, 218 passed</td></tr><tr><td>Returned implementation + same test</td><td>219 passed</td></tr></table><p>The failure is an assertion mismatch, not an import or collection error. The model test covers an empty environment variable; the issue's empty file value was checked separately.</p><details><summary>Recorded comparison</summary><pre>{
+  &quot;status&quot;: &quot;OBSERVED_FAIL_THEN_PASS&quot;,
+  &quot;tests&quot;: [
+    {
+      &quot;check_id&quot;: &quot;public-regressions&quot;,
+      &quot;nodeid&quot;: &quot;tests/test_main.py::test_dotenv_values_string_io[env9-a=${b:-d}-True-expected9]&quot;,
+      &quot;before&quot;: &quot;TEST_FAILED&quot;,
+      &quot;after&quot;: &quot;PASSED&quot;
+    }
+  ]
+}</pre></details></section><section><h2>4. Delivery and limits</h2><p>Recorded solve cost: USD 0.12695715 · CLI time: 98.97 s. This later verification replay is not another autonomous success.</p><p><strong>Acceptance: NOT_RUN. Requirement fit: NOT_ASSESSED by the verifier.</strong> Full project suite and other environments were not run. Human approval is unreported.</p><details><summary>Public summary JSON</summary><pre>{
+  &quot;run_id&quot;: &quot;run_dev_cc274e9b0eb144a4&quot;,
+  &quot;base_commit&quot;: &quot;0b2880591780a426b0551436f47a17e7a76d954f&quot;,
+  &quot;terminal&quot;: &quot;PATCH_READY&quot;,
+  &quot;acceptance&quot;: &quot;NOT_RUN&quot;,
+  &quot;before&quot;: {
+    &quot;failed&quot;: 1,
+    &quot;passed&quot;: 218,
+    &quot;failure&quot;: &quot;bug assertion mismatch: empty result instead of default&quot;
+  },
+  &quot;after&quot;: {
+    &quot;failed&quot;: 0,
+    &quot;passed&quot;: 219,
+    &quot;skipped&quot;: 0
+  },
+  &quot;existing_tests_preserved&quot;: true,
+  &quot;unchanged_model_test_files_on_both_sources&quot;: true,
+  &quot;agent_direct_red_green&quot;: &quot;CONFIRMED, check events 76 and 96&quot;,
+  &quot;external_red_green&quot;: &quot;CONFIRMED&quot;,
+  &quot;manual_correction&quot;: false,
+  &quot;cost_usd&quot;: &quot;0.12695715&quot;,
+  &quot;cli_wall_seconds&quot;: 98.9673417,
+  &quot;active_elapsed_ms&quot;: 97550,
+  &quot;call_counts&quot;: {
+    &quot;model&quot;: 7,
+    &quot;input_count&quot;: 7,
+    &quot;tool&quot;: 12
+  },
+  &quot;accepted_mutations&quot;: 2,
+  &quot;full_project_suite&quot;: &quot;NOT_RUN&quot;,
+  &quot;schema&quot;: &quot;saved-repair-public-summary-v1&quot;,
+  &quot;saved_evidence&quot;: true,
+  &quot;model&quot;: &quot;gpt-5.4-mini-2026-03-17&quot;,
+  &quot;human_approval&quot;: &quot;UNREPORTED&quot;,
+  &quot;requirement_fit&quot;: &quot;NOT_ASSESSED_BY_VERIFIER&quot;,
+  &quot;test_scope&quot;: &quot;Model test covers an empty environment variable; original file-value example was checked externally, not added by the model.&quot;,
+  &quot;publication&quot;: &quot;Historical saved evidence, not a new live solve or verification.&quot;
+}</pre></details><p><a href="verification.public.json">Sanitized verification JSON</a> · <a href="result.public.json">Solve summary</a></p></section></html>

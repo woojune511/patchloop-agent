@@ -253,7 +253,9 @@ def test_all_checks_pass_advises_review_but_still_allows_finish_with_concern(tmp
     assert card["verification_review_diff_hash"] == result.workspace_diff_hash
     assert "submit" in card["next_question"].lower()
     finish = gateway.execute(RequestedTool(
-        name="finish_task", action_id="finish", arguments={},
+        name="finish_task", action_id="finish", arguments={
+            "assessment": "Reviewed the public patch and remaining uncertainty.",
+        },
         turn_decision=PublicTurnDecision(mode="finish", basis="Submit with the recorded caveat."),
     ))
     assert finish.status == "succeeded"

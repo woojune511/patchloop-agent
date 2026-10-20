@@ -6,6 +6,7 @@ import json
 
 import pytest
 from native_history_support import input_context
+from repair_mechanism_expectations import JUDGMENT
 from test_dev_check_identity_v19 import _result
 from test_dev_context_v12 import note_call, source_note
 from test_dev_feedback_integration_v18 import _completed_batch, _context, _input
@@ -84,7 +85,9 @@ def test_row27_cross_diff_false_summary_keeps_each_cited_failure_beside_the_note
     items = _input(gateway, results, tmp_path)
     public = input_context(items)
     finding = public["working_notes"]["findings"][0]
-    assert finding["statement"] == "The visible failure has moved to an assertion."
+    prose_key = "model_interpretation" if JUDGMENT else "statement"
+    assert finding[prose_key] == "The visible failure has moved to an assertion."
+    assert finding["interpretation_status"] == "model_authored_unverified"
     assert [ref["check_result"] for ref in finding["evidence"]] == [
         {"check_id": "traversal", "passed": False, "exception_type": "AssertionError",
          "currency": "historical"},
@@ -201,10 +204,10 @@ def test_probe_description_exposes_existing_capability_without_changing_wire_sha
             return [structure(item) for item in value]
         return value
 
-    # Explanation bounds are explicit; probe properties/limits and tool order stay fixed.
+    # Open questions now bind evidence; probe properties/limits and tool order stay fixed.
     encoded = json.dumps(structure(schemas), separators=(",", ":"), ensure_ascii=False).encode()
     assert hashlib.sha256(encoded).hexdigest() == (
-        "71fc128a9a6696f48ab8ca233f60ed2069f33a19bcf4fdfd787753128cab52ea"
+        "acdcc28623f92006faaa95a0c58015095e28b851093d0eb983e8d59bcd303222"
     )
     assert dev_tool_surface_hash() != (
         "sha256:d69d9d4f71a4ed6517e0ae077d2df1fe934f6498abcacf104eed0b9b0fc717a8"
@@ -217,14 +220,14 @@ def test_probe_description_exposes_existing_capability_without_changing_wire_sha
 
 def test_guidance_prioritizes_reusable_facts_without_growing_the_system_prompt():
     assert len(DEV_SYSTEM_PROMPT) <= 8007  # v19 length; replace guidance, do not stack warnings.
-    assert "current_public_failure describes this diff's failure" in DEV_SYSTEM_PROMPT
-    assert "pending_recheck references an" in DEV_SYSTEM_PROMPT
+    assert "current_public_failure is current" in DEV_SYSTEM_PROMPT
+    assert "pending_recheck concerns an older diff" in DEV_SYSTEM_PROMPT
     assert "Recheck a repair before assuming it persists" in DEV_SYSTEM_PROMPT
     assert "another edit can use independent current evidence" in DEV_SYSTEM_PROMPT
     assert "headers do not establish behavior of unread return paths" in DEV_SYSTEM_PROMPT
-    assert "note_id=null creates a distinct fact" in DEV_SYSTEM_PROMPT
+    assert "note_id=null creates a distinct interpretation" in DEV_SYSTEM_PROMPT
     assert "experiment on the current candidate" in DEV_SYSTEM_PROMPT
     assert "not confirmation of the note's prose" in DEV_SYSTEM_PROMPT
     note_id = memory_update_schema()["properties"]["findings"]["items"]["properties"]["note_id"]
-    assert "refines the same fact even if citations change" in note_id["description"]
-    assert "note_id=null creates a distinct fact" in note_id["description"]
+    assert "refines the same interpretation even if citations change" in note_id["description"]
+    assert "note_id=null creates a distinct interpretation" in note_id["description"]

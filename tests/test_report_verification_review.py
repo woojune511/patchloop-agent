@@ -108,7 +108,7 @@ def test_any_probe_is_not_same_case_proof_and_expires_after_edit(factory, status
     assert "PUBLIC_PROBE_OUTPUT" not in canonical_json(issue)  # Reference, not duplicate body.
     assert "PUBLIC_PROBE_OUTPUT" in canonical_json(request)
     assert "unrelated" in state["completion_guidance"]["message"]
-    assert state["completion_guidance"]["next_action"] == {"tool": "finish_task"}
+    assert state["completion_guidance"]["next_action"] is None
     # Reconstruct from durable public receipts; no extra analysis-model call or lifecycle store.
     restored = as_review_branch(reopen(branch))
     assert current(restored)[0]["working_notes"][rollout.FIELD] == issue
@@ -144,7 +144,7 @@ def test_guidance_uses_actual_action_space_and_never_treats_note_resolution_as_p
     issue = rollout.review(state)
     guidance = rollout.completion_guidance(state, issue)
     assert "run_probe" not in canonical_json(guidance)
-    assert guidance["next_action"] == {"tool": "finish_task"}
+    assert guidance["next_action"] is None
     assert issue["state"] == "reported_failure_on_current_candidate"
     assert issue["current_diff_behavior_verdict"] == "NOT_ASSESSED"
     assert state["working_notes"]["verification"]["items"][0]["status"] == "resolved"

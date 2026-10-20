@@ -264,14 +264,15 @@ def test_actual_inputs_repair_recheck_submission_isolated_evaluation_and_resume(
     assert result["terminal"] == "EVALUATOR_PASS", result
     assert result["accepted_mutations"] == 2
     assert result["cost_nanos"] == result["call_counts"]["input_count"] == 0
-    assert result["call_counts"]["model"] == (10 if policy == POLICY else 6)
+    # The greedy reader spends model slots released for current and future automatic rechecks.
+    # current-failure-v1 already releases future recovery, so only one extra slot opens.
+    assert result["call_counts"]["model"] == (11 if policy == POLICY else 8)
     assert len(workspaces) == 2 and workspaces[1][0].startswith("eval_")
     assert workspaces[0][1] != workspaces[1][1]
     failures = [state for state in contexts if state["current_public_failure"]]
-    assert len(failures) == (5 if policy == POLICY else 1)
-    if policy == POLICY:
-        assert [state["action_horizon"]["model_turns_available_for_exploration"]
-                for state in failures] == [4, 3, 2, 1, 0]
+    assert len(failures) == (6 if policy == POLICY else 3)
+    assert [state["action_horizon"]["model_turns_available_for_exploration"]
+            for state in failures] == ([5, 4, 3, 2, 1, 0] if policy == POLICY else [2, 1, 0])
     journal = DevJournal(tmp_path, result["run_id"])
     assert journal.load_envelope().repair_inspection_policy == policy
     started = next(event["payload"] for event in journal.events()
@@ -328,9 +329,9 @@ def test_resume_replays_extra_inspection_once_and_keeps_the_selected_horizon(tmp
     run_id = next((tmp_path / "runs").glob("*.jsonl")).stem
     result = runner.run_dev(request.model_copy(update={"resume_run_id": run_id}))["runs"][0]
     assert result["terminal"] == "EVALUATOR_PASS", result
-    assert result["call_counts"]["model"] == len(contexts) == 10
+    assert result["call_counts"]["model"] == len(contexts) == 11
     events = DevJournal(tmp_path, run_id).events()
     assert sum(event["event_type"] == "action_finished"
                and event["payload"]["result"]["action_id"] == "boundary-10-0"
                for event in events) == 1
-    assert contexts[4]["action_horizon"]["model_turns_available_for_exploration"] == 3
+    assert contexts[4]["action_horizon"]["model_turns_available_for_exploration"] == 4

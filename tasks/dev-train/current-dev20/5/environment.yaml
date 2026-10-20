@@ -1,0 +1,3 @@
+schema_version: task-environment-v1
+evaluator_image: patchloop-lite-env-5@sha256:b5665a5ba7b588567234c8e67e0fbd5c6953a971903b68163afbf0a666496915
+image_digest: sha256:b5665a5ba7b588567234c8e67e0fbd5c6953a971903b68163afbf0a666496915

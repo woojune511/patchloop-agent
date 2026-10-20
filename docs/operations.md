@@ -68,6 +68,35 @@ Mock mode forbids credential and cost options. The smoke path covers public
 inspection, mutation, visible checking, submission and isolated evaluation.
 It remains `official=false` and is not live provider or Docker evidence.
 
+For the README smoke fixture, inspect these fields in stdout:
+
+```json
+{"terminal": "EVALUATOR_PASS", "evaluator": {"task_acceptance": "PASS", "safety_state": "NOT_RUN"}, "cost_nanos": 0}
+```
+
+These are selected fields from `runs[0]`, not the complete response. Use its
+`run_id` to find the journal at `PATCHLOOP_STATE_ROOT/runs/<run_id>.jsonl`;
+content-addressed artifacts live under the same state root's `artifacts/` directory.
+
+`--agent-policy thin --planning-policy none` selects the experimental
+[thin interface](../.agent/thin-policy-reference.md). The default is `current`.
+Policy choice binds the envelope, manifest and resume; it changes presentation,
+not tool availability, source retention, verification gates or resource limits.
+Local parity does not establish repair quality or authorize a paid comparison.
+
+## Public-only repair
+
+`patchloop repair --request request.json` accepts a separate public task, local Git
+source and exact base commit, allowed paths, registered checks, explicit sandbox,
+model and invocation-wide cost cap. See the [small example](../examples/repair/README.md).
+OpenAI needs an existing digest-pinned image; mock uses trusted local checks.
+The shared loop preserves costs, edit limits, tool restrictions and recovery.
+`PATCH_READY` returns a patch plus public receipts, with acceptance `NOT_RUN`.
+It neither changes the original checkout nor applies/opens a PR for its patch.
+No hidden/reference material is needed; `dev` admission remains unchanged.
+Paid repair requires approval of this exact public request, credential, repeats and
+cap. No provider call was used to implement or locally validate this path.
+
 ## Explicitly approved live development
 
 A live invocation needs the exact checked-in `dev-train` task, model, credential
@@ -121,6 +150,7 @@ The selected baseline is a working configuration, not a change to CLI defaults:
 | Probes / probe policy | Disabled / `none` |
 | Repair recheck / inspection | Disabled / `protected-v1` |
 | Completion cost | `per-call-v1` |
+| History search | `none` |
 | Repeat | 1, maximum 6 |
 | Automatic compaction | Disabled |
 
@@ -128,6 +158,20 @@ Per-run defaults: 40 model calls, 100 tool actions, four accepted mutations and
 1,800 active seconds. Output includes reasoning (128..128,000 desired tokens);
 cost admission can lower it. Full GPT-5.4 requires `segmented-v1`.
 See [CLI options](../patchloop/cli.py) and [request contracts](../patchloop/dev/contracts.py).
+
+`--history-search public-v1` requires `segmented-v1` and the current agent policy.
+It offers a singleton search of already delivered public evidence from this run,
+including earlier segments. BM25 ranks execution data, excluding owned plans and
+hypotheses. Eight candidates return whole originals within actual input limits.
+If a fresh seed still exceeds those limits, reduce the new result to 48,000 chars;
+never rewrite dispatched outputs. Authored fields and omissions are labelled;
+no one-function limit. Fetch any returned ID
+for its complete original; oversized records offer canonical JSON pages through
+`offset`. Every fetch/page spends another ordinary action. A question can retain
+a search result within its existing two references; it remains historical data.
+It uses optional budget and grants no current source/check credit. Boundaries and
+run/input limits stay unchanged. [Offline evidence](history/2026-10-20-history-question-delivery.md)
+does not establish model uptake or better repairs; the selected baseline keeps it off.
 
 Before dispatch:
 
@@ -178,16 +222,36 @@ verified local copies without network/install. Add `--enable-probes
 
 For other context, planning, cost or repair policies, read the relevant internal
 contract and CLI compatibility checks first. Reusable probe cases have a separate
-[case contract](../.agent/probe-cases.md). Compaction needs a compatible mini
+[case contract](../.agent/probe-cases.md). Optional `--probe-recheck saved-program-v1`
+requires enabled probes and `cases-v1`; it reruns the last saved program after edits
+within existing budgets and never gates submission. Defaults remain off; see the
+[recheck contract](../.agent/probe-recheck.md). Compaction needs a compatible mini
 configuration and conditional model-limit reservation acknowledgement; it is not
 part of the selected baseline. Repeat every selected option on resume. Interface
 availability and local tests alone do not demonstrate an acceptance improvement.
 
 ## Submission, evidence and interpretation
 
+Public task `test_suites` can expose `run_tests` for 1–8 tracked public Python test
+files or pytest node IDs. The registration owns the command, environment and
+sandbox limits; the model cannot supply command flags. See the
+[selection contract](../.agent/selected-tests.md). Results bind the executed diff
+and remain optional: they supply no required-check credit. Missing nodes,
+collection errors and incomplete execution do not establish behavior correctness.
+
 The coding agent receives registered public tools, never unrestricted shell access.
 `finish_task` requires a non-empty current diff, every registered visible check
-passing on that exact diff and no non-ignored untracked files. Historical PASS,
+passing on that exact diff, no non-ignored untracked files, and a nonblank agent
+`assessment` of up to 1,500 characters. After PASS, the agent reviews the public
+requirements, patch, evidence and remaining uncertainties before deciding to submit.
+The assessment connects public requirements to observed evidence and accounts for
+unfinished verification plans, including skipped/rejected checks. It explains what
+evidence addresses their purpose or why a remaining gap does not affect completion;
+listing a limitation alone is insufficient. A material gap that an available action
+could resolve calls for continued work. Regression PASS alone does not prove the
+reported problem is fixed. This is agent judgment, not a new semantic gate or hidden
+success guarantee. Further edits require fresh checks and reassessment.
+No separate review call or mandatory probe is added. Historical PASS,
 probe execution and notes do not provide current check credit. A diagnostic probe
 does not replace a registered check. `stop_task` ends without submission/evaluation.
 

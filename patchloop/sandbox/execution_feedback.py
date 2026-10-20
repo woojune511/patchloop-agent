@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from patchloop.errors import ContractError
+from patchloop.repository import _decode_git_path
 from patchloop.sandbox.line_trace import marker
 from patchloop.util import canonical_json, sha256_json
 
@@ -34,13 +35,16 @@ def changed_lines(patch: str) -> dict[str, set[int]]:
     paths: dict[str, set[int]] = {}
     path = None
     line_number = None
-    for line in patch.splitlines():
+    for line in patch.split("\n"):
         if line.startswith("diff --git "):
             path = None
             line_number = None
-        elif line.startswith("+++ b/") and line_number is None:
-            path = line[6:]
-            paths.setdefault(path, set())
+        elif line.startswith("+++ ") and line_number is None:
+            # Git quotes unusual paths and terminates unquoted spaced paths with a tab.
+            header_path = _decode_git_path(line[4:].removesuffix("\t"))
+            if header_path.startswith("b/"):
+                path = header_path[2:]
+                paths.setdefault(path, set())
         elif match := _HUNK.match(line):
             line_number = int(match[1])
         elif path is not None and line_number is not None:

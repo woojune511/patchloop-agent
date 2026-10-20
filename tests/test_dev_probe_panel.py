@@ -4,6 +4,7 @@ from decimal import Decimal
 
 import httpx
 import pytest
+from test_dev_native_compaction import configured as compaction_request
 from test_dev_planning import request as mock_request
 from test_dev_probe_cases import call, scripted_cases, setup_gateway
 from test_dev_runner import _live_request, _patch_live_boundaries
@@ -93,6 +94,55 @@ def test_shared_ledger_settles_immediately_and_never_transfers_row_budget():
     parent.spent_nanos = parent.cap_nanos - 100
     assert second.remaining_nanos == 100
     assert second.admit(1) is None
+
+
+def test_shared_ledger_restores_only_the_row_delta_once():
+    parent = DevCostLedger(Decimal(12), pricing_for_model("gpt-5.4-mini-2026-03-17"))
+    row = panel.RowCostLedger(Decimal(3), parent)
+    other = panel.RowCostLedger(Decimal(3), parent)
+    decision_cost = row.settle(input_tokens=1000, cached_input_tokens=0, output_tokens=100)
+    other_cost = other.settle(input_tokens=500, cached_input_tokens=0, output_tokens=200)
+    usage = [{"cost_nanos": decision_cost}, {"cost_nanos": 923_250}]
+    for _ in range(2):
+        row.restore_settled_usage(usage)
+        assert row.spent_nanos == decision_cost + 923_250
+        assert parent.spent_nanos == row.spent_nanos + other_cost
+        assert other.spent_nanos == other_cost
+        assert row.remaining_nanos == row.cap_nanos - row.spent_nanos
+    later_cost = row.settle(input_tokens=100, cached_input_tokens=0, output_tokens=20)
+    row.restore_settled_usage([*usage, {"cost_nanos": later_cost}])
+    assert parent.spent_nanos == row.spent_nanos + other_cost
+
+
+@pytest.mark.parametrize("usage,base", [
+    ([{"cost_nanos": 12}, {"cost_nanos": -1}], 0),
+    ([{"cost_nanos": 12}, {}], 0),
+    ([], -1),
+])
+def test_invalid_row_usage_restore_preserves_both_ledgers(usage, base):
+    parent = DevCostLedger(Decimal(12), pricing_for_model("gpt-5.4-mini-2026-03-17"))
+    row = panel.RowCostLedger(Decimal(3), parent)
+    paid = row.settle(input_tokens=1000, cached_input_tokens=0, output_tokens=100)
+    with pytest.raises(ContractError):
+        row.restore_settled_usage(usage, base_spent_nanos=base)
+    assert row.spent_nanos == parent.spent_nanos == paid
+
+
+def test_panel_total_includes_native_compaction_usage(tmp_path, monkeypatch):
+    request, _, _, clients = compaction_request(monkeypatch, tmp_path)
+    root = tmp_path / "panel"
+    result = panel.run_panel([request], max_cost_usd=Decimal("1.20"), state_root=root)
+    row = result["rows"][0]
+    journal = DevJournal(root / "row-1", row["result"]["run_id"])
+    assert row["result"]["terminal"] == "AGENT_STOPPED"
+    assert len(clients) == len(clients[0].calls) == 1
+    compaction_cost = sum(event["payload"]["accounting"]["model_rate_cost_nanos"]
+                          for event in journal.events()
+                          if event["event_type"] == "compaction_usage_recorded")
+    assert compaction_cost > 0
+    recorded_cost = sum(usage["cost_nanos"] for usage in journal.provider_usage())
+    assert result["cost_nanos"] == row["cost_nanos"] == recorded_cost
+    assert row["result"]["cost_nanos"] == recorded_cost
 
 
 @pytest.mark.parametrize("failure", ["count", "transport", "billing", "cleanup", "state", "cap"])

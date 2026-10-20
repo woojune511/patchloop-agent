@@ -1,6 +1,6 @@
 # Current status
 
-Updated: 2026-10-03. Current decisions; runtime source owns behavior.
+Updated: 2026-10-20. Current decisions; runtime source owns behavior.
 Historical reports are evidence, not an active queue.
 
 ## Product and working baseline
@@ -11,7 +11,7 @@ support that product. Start improvements from observed failures, not a commitmen
 to memory, planning or another preselected technique.
 
 - dev-head is the sole mutable runtime; every run is official=false and claim-ineligible.
-- Selected working model: gpt-5.4-2026-03-05, xhigh, 25,000 output tokens.
+- General baseline model: gpt-5.4-2026-03-05, xhigh, 25,000 output tokens.
 - Selected policies: segmented-v1, result-or-size-v1, brief-v1, probes enabled with
   policy none, repair-recheck, protected-v1 inspection, per-call-v1 cost admission.
 - Working limits: 40 model calls, 100 actions, four accepted edits, 1,800 seconds.
@@ -25,15 +25,64 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[Lite pilot](history/2026-10-02-swebench-lite-mini-pilot.md): 1/3, USD 0.29098320;
-closed.
-[Lite dev20](history/2026-10-02-lite-dev20-results.md): 10/20 original resolved;
-allocation closed. [Diagnosis](history/2026-10-02-lite-dev20-failure-diagnosis.md):
-mixed causes; [probe support](history/2026-10-02-lite-probe-support.md).
-[SQLFluff follow-up](history/2026-10-02-lite-sql3-probe-results.md): 0/3.
-[Predicate diagnostic](history/2026-10-03-public-predicate-result.md): quote invalid;
-code matches public example statically; execution NOT_RUN. Allocation closed.
+[PatchLoop dev20](history/2026-10-16-patchloop-mini-dev20-results.md): 8 PASS/10 FAIL/
+2 NOT_RUN at row cost caps; USD 7.01172285, cumulative USD 13.27841505.
+[Mini](history/2026-10-16-mini-swe-dev20-results.md): 10 PASS/5 FAIL/5 NOT_RUN.
+[Completion](history/2026-10-16-mini-swe-completion-results.md): 2 PASS/3 FAIL;
+mixed 12/20 is not uniform accuracy. Mini's SQL metadata mismatch limits comparison.
+Allocations closed; no paid follow-up or quality gain established.
 
+[C/D](history/2026-10-16-plan-grounds.md): closed, 0/8 each; USD 5.74993635.
+[Purpose](history/2026-10-16-output-stop.md): D 4/16; E NOT_RUN, USD 1.47315645.
+Batch stop fixed; no paid rerun.
+
+[Host A/B](history/2026-10-16-host-plan-stop.md): runtime drift; NOT_RUN / USD 0.
+[I4](history/2026-10-16-isort-requirement-audit.md): inferred type_item;
+frozen grades unchanged.
+
+[E/J](history/2026-10-18-repair-mechanism-results.md): closed, 2/3 per arm; no gain.
+[Caller](history/2026-10-19-caller-evidence-results.md): closed, A/B 0/6; USD 3.97121625.
+[Duplicate fix](../tests/test_additive_duplicates.py): local only.
+[Timeout fix](history/2026-10-17-capture-timeout-validation.md): validated fixture.
+
+[Navigation](history/2026-10-08-failure-navigation.md) found no current tool defect;
+keep baseline. [Rule ownership](history/2026-10-08-rule-ownership.md) is an operator
+control. [Thin disclosure](history/2026-10-07-thin-followup.md) remains live-untested.
+
+The [corrected dev20 measurement](history/2026-10-06-corrected-dev20-results.md) closed:
+11 PASS/7 FAIL/2 NOT_RUN; USD 5.08206870. A deadline with unconfirmed cleanup stopped
+admission. Matching 18 tasks moved from 8 to 11 successes; no all-20 accuracy claim.
+
+Search and trace follow-ups remain closed; see the [history index](history/README.md).
+[Diagnosis](history/2026-10-06-verification-context-budget-diagnosis.md): untested
+submission, source loss, reservation;
+[accounting](history/2026-10-06-resource-budget-context-review.md) fixed model/tool
+mismatch. [48k](history/2026-10-06-source-retention-results.md): 2/4 tie;
+[continuations](history/2026-10-06-cost-cap-continuation-results.md): both FAIL.
+[Public diagnosis](history/2026-10-07-public-verification-failure-diagnosis.md):
+L003/L039 cycle, regression PASS overinterpreted despite retained notes/tools.
+[Counterexample](history/2026-10-07-counterexample-results.md): both FAIL despite
+B's retained current failure; USD 0.04019910. Keep 24k; no adoption or paid follow-up.
+
+[Search non-use](history/2026-10-20-history-search-nonuse.md): B5 missed recoverable
+source; B6 judged beyond its visible probe; original caller unobserved in all six ON.
+OFF/ON 0/6 each, USD 6.57537510; retrieval unused. Keep OFF, two refs/60k and limits.
+Routine tests use `tests/quick.txt`.
+
+See [panel contract](../.agent/current-dev20.md) and
+[priority fixes](history/2026-10-06-agent-priority-fixes.md). Prior panels closed.
+
+Portfolio v1 [remeasurement](history/2026-10-06-portfolio-dev20-results.md) closed at
+9/20 versus historical 10/20, all evaluations agreeing; USD 3.46111455, 102m19s.
+The 11/20 threshold failed; test300 remains unprepared and unauthorized. The
+[decline review](history/2026-10-06-dev20-decline-review.md) adopted no intervention.
+[Public results](../examples/portfolio-dev20/README.md), saved repairs and platform CI
+are tracked in [publication PR #22](https://github.com/woojune511/patchloop-agent/pull/22).
+No release or new model evaluation. [Preparation](history/2026-10-05-portfolio-preparation.md)
+preserves the closed immutable evidence roots.
+
+[Mini/full](history/2026-10-04-mini-full-results.md): mini selected for the six-task
+panel only; 24/24 completed at USD 5.42285815. CLI defaults unchanged.
 [Direction review](history/2026-10-01-development-direction-review.md): task-by-task
 diagnosis closed; no isort repair control or agent change queued.
 [Selection review](history/2026-10-02-requirement-selection-decision.md): task-first
@@ -71,12 +120,9 @@ locates Darts' defect in inverse column reconstruction. The
 verification gaps from environment/resource failures.
 
 The [guidance comparison](history/2026-10-01-verification-selection-comparison.md)
-closed at USD 1.125171 of USD 6. Both Darts patches retained the same frozen gaps;
-B's probes corrected a test expectation, not a candidate defect. Correctness was
-INCONCLUSIVE. The [baseline decision](history/2026-10-01-verification-guidance-baseline.md)
-restored previous guidance: no adoption evidence, not general ineffectiveness.
-Preserve original records; the [comparison note](../.agent/verification-selection-comparison.md)
-is closed and grants no further execution.
+closed at USD 1.125171: both Darts patches retained the frozen gaps; correctness was
+INCONCLUSIVE. Its [baseline decision](history/2026-10-01-verification-guidance-baseline.md)
+and [closed comparison](../.agent/verification-selection-comparison.md) remain historical evidence.
 
 The [PDM observation](history/2026-10-01-pdm-repair-observation.md) passed 24 public
 bug cases, 36 regressions, acceptance and safety in one edit. USD 0.3550415;
@@ -93,61 +139,23 @@ and panel ledger remain implemented. Earlier Darts/MontePy observations and
 operator corrections are separate from this panel's fresh control rows; see the
 comparison record. Mock safety NOT_RUN remains separate from live safety PASS.
 
-The [mock journal-read profile](history/2026-09-30-journal-read-profile.md) did not
-meet its threshold; no journal cache or RunState change is queued. Its smoke-only
-result does not establish live-run performance. [Projection tests](../tests/test_model_view_fields.py)
-cover the compact public view. Budget arithmetic lives in
-[completion_budget.py](../patchloop/dev/completion_budget.py); resume identity rules remain intact.
+[Mock profiling](history/2026-09-30-journal-read-profile.md) did not justify a journal
+cache. [Projection tests](../tests/test_model_view_fields.py) cover the compact public
+view; [completion arithmetic](../patchloop/dev/completion_budget.py) preserves resume
+identity. These local results do not establish live performance.
 
-The [development review](history/2026-09-30-development-review.md) closes repeated
-ablations: no quality experiment, memory extension or mandatory probe gate queued.
+[Development review](history/2026-09-30-development-review.md): repeated ablations closed.
 
-The subsequent contract review identified two reproducible engineering defects:
-undisclosed mutation-explanation length limits and successful append returns after
-incomplete journal writes. The public schema now derives mutation field constraints
-from the internal intent models, preserving public descriptions, required/null rules
-and recovery-only serialization. [Boundary tests](../tests/test_replacement_schema.py)
-cover length, occurrence, missing/null and legacy-field behavior. Journal append
-completes short writes and propagates zero-progress/I/O failures.
-Invalid journal tails remain preserved and block recovery. The [contract tests](../tests/test_dev_contracts.py)
-and [journal tests](../tests/test_dev_state.py) cover the boundaries and injected failures.
-[CI](../.github/workflows/ci.yml) is configured for locked dependencies and both Windows
-and Linux. These changes do not establish improved patch correctness.
-
-CI runs the complete suite with four file-grouped workers on PRs and main pushes,
-with duration/JUnit reports. The [completed investigation](history/2026-09-30-ci-feedback-speed.md)
-and [merged PR #2](https://github.com/woojune511/patchloop-agent/pull/2) retain the
-individual timing evidence; those timings are not a stable performance benchmark.
-
-The approved [fresh tox repair](history/2026-09-30-tox-fresh-repair.md) completed with
-the working baseline unchanged: one edit, 29 public regression tests passed,
-isolated acceptance PASS and safety PASS. Five model calls cost USD 0.2702935 by
-recorded usage; elapsed process time was 113.233 seconds. The one-run USD 3.00
-allocation is closed. This exposed development-task success establishes one completed
-repair path, not a quality gain, feature effect or held-out generalization. No new
-runtime defect or follow-up experiment was established; retain the working baseline.
-
-The clearest repeated weakness is selecting verification that exposes an incorrect
-repair condition. The 24-run six-task panel had nine acceptance failures despite all
-final public checks passing; public replay confirms omitted distinctions on Pydantic
-and HF. This does not establish one general harness fix or explain every failure.
-
-Conversely, 11 registered failure events across three tasks reached later same-check
-PASS; tox and one HF seeded episode repaired their identified public mismatch. Only
-one reviewed seeded HF episode meets the strict unresolved-delivered-counterexample
-criterion. Do not generalize that episode into universal evidence loss or incapacity.
-
-Known environment/recount/receipt-lineage problems were separately reproduced and
-corrected. Historical probe failures include invalid setup, API use and expectations;
-they are not all current environment defects or product bugs. Resources censored the
-original toqito attempt but not the completed panel. Full distinctions and exclusions
-are in the review, including 95 source-journal hash/chain rechecks.
-
-Further development should address a concrete current-contract defect or an implementation
-with a specific predicted repair benefit. Use focused fixes/tests for reproducible
-bugs. For quality interventions, executed patch correctness, regressions and cost/time
-are decision evidence; explanation scores and tool/plan counts are auxiliary. Do not
-start another adjacent diagnostic merely because the previous one is complete.
+[Journal](../tests/test_dev_state.py) and [admission](../tests/test_visible_check_ids.py)
+tests cover record integrity and unique check IDs. [Paths](../tests/test_repository_paths.py),
+[repair verification](../tests/test_repair_verification.py) and
+[line feedback](../tests/test_execution_feedback_paths.py) preserve unusual filenames.
+[Panel costs](../tests/test_dev_probe_panel.py) count compaction once;
+[evaluation recovery](../tests/test_dev_evaluation_resume.py) verifies evidence files.
+[Schema tests](../tests/test_replacement_schema.py) cover intent bounds and legacy fields.
+[CI](../.github/workflows/ci.yml) uses locked dependencies on Windows/Linux.
+[Impact review](history/2026-10-07-fix-impact.md): latest runtime fix triggers were absent
+from 24 reviewed runs. No patch-quality gain established or paid rerun queued.
 
 ## Evidence map
 
@@ -167,12 +175,11 @@ start another adjacent diagnostic merely because the previous one is complete.
   locally tested engineering corrections; not agent-accuracy evidence.
 - [Observation linking](history/2026-09-29-verification-observation-linking.md):
   implemented provenance retention; no semantic verdict or new submission gate.
-- [History index](history/README.md): targeted lookup only. Closed reports and
-  generated evidence remain immutable; changed interpretations get new follow-ups.
+- [History](history/README.md): closed evidence is immutable; interpretations get follow-ups.
 
 ## Execution and claim boundaries
 
-Paid allocations, including the Lite pilot, are closed. No further run is authorized.
+All executed allocations are closed; no paid follow-up is queued.
 An [older interrupted call](history/2026-09-28-expectation-review-results.md)
 retains unknown billing separately from later settled allocations; closed allocation
 does not mean that earlier uncertainty was resolved.
@@ -185,6 +192,3 @@ cases; submission eligibility is not semantic correctness. Mock safety is NOT_RU
 Do not start Docker Desktop or pull/build evaluator images automatically. Preserve
 exact recovery identities, zero SDK retries and stop-all on count/transport/billing
 uncertainty. Runtime/default adoption and general improvement remain unestablished.
-
-Replace this page's active decision when real work changes it. Keep completed
-investigations in linked history, not in a growing sequence of suggested experiments.

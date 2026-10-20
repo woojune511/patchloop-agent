@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from patchloop.dev.verification_concerns import verification_updates_schema
 
@@ -35,12 +35,36 @@ class PublicFinding(_NoteModel):
     ] = Field(min_length=1, max_length=2)
 
 
+class QuestionSourceEvidence(SourceNoteEvidence):
+    # Absent roles are readable legacy declarations, never promoted as a fresh focus.
+    role: Literal["primary", "countercheck"] | None = None
+
+
+class QuestionToolEvidence(ToolNoteEvidence):
+    role: Literal["primary", "countercheck"] | None = None
+
+
+class OpenQuestion(_NoteModel):
+    text: str = Field(min_length=1, max_length=500)
+    evidence: list[
+        Annotated[QuestionSourceEvidence | QuestionToolEvidence, Field(discriminator="kind")]
+    ] = Field(max_length=2)
+
+    @model_validator(mode="after")
+    def distinct_roles(self) -> OpenQuestion:
+        roles = [ref.role for ref in self.evidence]
+        if any(roles) and (None in roles or len(roles) != len(set(roles))):
+            raise ValueError("Use at most one primary and one countercheck reference")
+        return self
+
+
 class WorkingNotesUpdate(_NoteModel):
     findings: list[PublicFinding] = Field(max_length=2)
     remove_note_ids: list[
         Annotated[str, Field(pattern=r"^n[1-9][0-9]*$", max_length=30)]
     ] = Field(default_factory=list, max_length=6)
-    open_question: str | None = Field(max_length=500)
+    # Validate independently so a bad question cannot discard valid note updates.
+    open_question: Any
     # Independently validated annotations must not reject valid source findings
     # or the focus question. Old durable/synthetic updates omit this field.
     verification_updates: Any = Field(default_factory=list)
@@ -247,11 +271,10 @@ def memory_update_schema() -> dict[str, Any]:
     return {
         "type": ["object", "null"],
         "description": (
-            "Optional public facts/assumptions; null preserves notes and open_question. "
-            "Only the first non-null update is applied before the batch; cite already "
-            "observed public source/results, never pending/current-batch results. "
-            "memory_update_result is before-tool-batch; note_ids_after_update is historical. "
-            "Use working_notes.available_note_ids; main-action success does not imply note storage."
+            "Optional interpretations; null preserves notes/open_question. First non-null "
+            "update is before-tool-batch; cite prior observations. "
+            "note_ids_after_update is historical; use working_notes.available_note_ids. "
+            "Action success does not imply note storage."
         ),
         "properties": {
             "findings": {
@@ -264,15 +287,15 @@ def memory_update_schema() -> dict[str, Any]:
                             "type": ["string", "null"], "pattern": r"^n[1-9][0-9]*$",
                             "maxLength": 30,
                             "description": (
-                                "note_id=null creates a distinct fact; an existing ID refines "
-                                "the same fact even if citations change."
+                                "note_id=null creates a distinct interpretation; an existing ID "
+                                "refines the same interpretation even if citations change."
                             ),
                         },
                         "statement": {
                             "type": "string", "minLength": 1, "maxLength": 400,
                             "description": (
-                                "Reusable public mechanism, observation, or explicitly untested "
-                                "assumption; cite behavior-bearing source/results."
+                                "Public interpretation or untested assumption; "
+                                "cite behavior-bearing observations."
                             ),
                         },
                         "evidence": {
@@ -292,10 +315,23 @@ def memory_update_schema() -> dict[str, Any]:
                 "description": "Remove existing IDs to consolidate duplicates; [] preserves.",
             },
             "open_question": {
-                "type": ["string", "null"], "maxLength": 500,
+                "type": ["object", "null"],
+                "properties": {
+                    "text": {"type": "string", "minLength": 1, "maxLength": 500},
+                    "evidence": {"type": "array", "maxItems": 2, "items": {"anyOf": [
+                        {**shape, "properties": {**shape["properties"], "role": {
+                            "type": "string", "enum": ["primary", "countercheck"],
+                        }}, "required": [*shape["required"], "role"]}
+                        for shape in (source, result)
+                    ]}},
+                },
+                "required": ["text", "evidence"], "additionalProperties": False,
                 "description": (
-                    "Resolve an answered question with null; otherwise name the next "
-                    "uncertainty that could change an edit/experiment. Does not resolve concerns."
+                    "Question; at most one primary (minimal answering evidence) and one "
+                    "countercheck (competing branch/precondition). Cite observed source ranges or "
+                    "check/test/probe/search_history results. "
+                    "Refresh after edits in an ordinary response. "
+                    "[] means no evidence; null clears only focus."
                 ),
             },
             "verification_updates": verification_updates_schema(),

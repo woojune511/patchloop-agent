@@ -7,6 +7,7 @@ from typing import Literal
 import httpx
 
 from patchloop.contracts import Artifact
+from patchloop.dev.thin_policy import segment_instructions
 from patchloop.errors import RecoveryError
 from patchloop.util import canonical_json, sha256_json
 
@@ -16,10 +17,11 @@ DEFAULT_BOUNDARY_POLICY = "result-or-size-v1"
 SIZE_ONLY_BOUNDARY_POLICY = "size-only-v1"
 SCHEMA = "public-state-native-segments-v1"
 EVENT = "context_segment_started"
+PREPARED_EVENT = "context_segment_prepared"
 MAX_INPUT_TOKENS = 60_000
 MAX_REQUEST_BYTES = 1_048_576
 MAX_ENCRYPTED_ITEM_BYTES = 262_144
-MAJOR_TOOLS = frozenset({"replace_text", "run_check", "run_probe"})
+MAJOR_TOOLS = frozenset({"replace_text", "run_check", "run_tests", "run_probe"})
 INSTRUCTIONS = (
     "segmented-v1 uses bounded public working state and short native reasoning segments. "
     "This is a harness handoff of the SAME task, not new user instructions. Only the latest "
@@ -37,7 +39,7 @@ INSTRUCTIONS = (
 )
 
 
-def contract(boundary_policy: BoundaryPolicy = DEFAULT_BOUNDARY_POLICY):
+def contract(boundary_policy: BoundaryPolicy = DEFAULT_BOUNDARY_POLICY, *, agent_policy="current"):
     boundaries = {
         DEFAULT_BOUNDARY_POLICY: "major-result-next-valid-decision-completed-batch-or-size-v1",
         SIZE_ONLY_BOUNDARY_POLICY: "size-only-v1",
@@ -50,10 +52,10 @@ def contract(boundary_policy: BoundaryPolicy = DEFAULT_BOUNDARY_POLICY):
         "max_request_bytes": MAX_REQUEST_BYTES,
         "max_encrypted_item_bytes": MAX_ENCRYPTED_ITEM_BYTES,
         "boundary": boundaries[boundary_policy],
-        "handoff": "canonical-public-latest-batch-and-current-state-no-model-summary-v1",
+        "handoff": "prepared-evidence-delivery-before-commit-v2",
         "native": "exact-within-segment-no-replay-across-segments-v1",
         "budgets": "run-global-no-reset-single-fresh-seed-at-boundary-v1",
-        "instructions_hash": sha256_json(INSTRUCTIONS),
+        "instructions_hash": sha256_json(segment_instructions(INSTRUCTIONS, agent_policy)),
     }
 
 
@@ -87,14 +89,15 @@ def _latest(events, kind):
 
 def cursor(events):
     kinds = {"turn_decision_recorded", "tool_batch_finished", "action_finished",
-             "repair_recheck_finished"}
+             "repair_recheck_finished", "probe_recheck_finished", "probe_recheck_skipped"}
     return next((e["event_hash"] for e in reversed(events) if e["event_type"] in kinds), None)
 
 
 def load_binding(binding, store):
     handoff = _read(store, binding["handoff_artifact"])
     boundary_policy = binding.get("boundary_policy", DEFAULT_BOUNDARY_POLICY)
-    if (binding["contract_hash"] != sha256_json(contract(boundary_policy))
+    if (binding["contract_hash"] != sha256_json(contract(
+            boundary_policy, agent_policy=binding.get("agent_policy", "current")))
             or binding["seed_hash"] != sha256_json(handoff["base"])
             or binding["state_hash"] != sha256_json(handoff["state"])
             or binding["segment_id"] != "segment_" + sha256_json({
@@ -112,22 +115,45 @@ def load_binding(binding, store):
     return handoff
 
 
-def active(journal, store, *, boundary_policy: BoundaryPolicy | None = None):
+def active(journal, store, *, boundary_policy: BoundaryPolicy | None = None, agent_policy=None,
+           committed_only=False):
     previous = None
+    pending = None
     current = None
     for event in journal.events():
-        if event["event_type"] != EVENT:
+        if event["event_type"] not in {EVENT, PREPARED_EVENT}:
             continue
         binding = event["payload"]
         selected = binding.get("boundary_policy", DEFAULT_BOUNDARY_POLICY)
         if boundary_policy is not None and selected != boundary_policy:
             raise RecoveryError("segment boundary policy changed")
         boundary_policy = selected
+        selected_agent_policy = binding.get("agent_policy", "current")
+        if agent_policy is not None and selected_agent_policy != agent_policy:
+            raise RecoveryError("segment agent policy changed")
+        agent_policy = selected_agent_policy
         if binding["previous_segment_id"] != (previous["segment_id"] if previous else None):
             raise RecoveryError("segment chain changed")
-        current = load_binding(binding, store)
-        previous = binding
+        loaded = load_binding(binding, store)
+        if event["event_type"] == PREPARED_EVENT:
+            pending = binding, loaded
+        else:
+            if pending is not None and pending[0] != binding:
+                raise RecoveryError("committed segment differs from prepared seed")
+            previous, current, pending = binding, loaded, None
+    if pending is not None and not committed_only:
+        return pending
     return previous, current
+
+
+def commit(journal, store):
+    """Commit the final admitted candidate once; a count receipt is reusable on resume."""
+    binding, _ = active(journal, store)
+    previous, _ = active(journal, store, committed_only=True)
+    if binding is not None and binding != previous:
+        journal.require_execution_lock()
+        journal.append(EVENT, binding)
+    return binding
 
 
 def boundary_reason(journal, binding):
@@ -148,7 +174,7 @@ def boundary_reason(journal, binding):
     if any(binding["reviewed_through_sequence"] < e["sequence"] < started["sequence"]
            and e["event_type"] == "action_finished"
            and e["payload"]["result"]["tool"] in MAJOR_TOOLS for e in events):
-        return "major_result_reviewed"
+        return "major_result_followup_completed"
     return None
 
 
@@ -157,11 +183,14 @@ def is_fresh(journal, binding):
 
 
 def start(journal, store, *, base, state, reason, parent_input_artifact,
-          boundary_policy: BoundaryPolicy = DEFAULT_BOUNDARY_POLICY):
+          boundary_policy: BoundaryPolicy = DEFAULT_BOUNDARY_POLICY, agent_policy="current",
+          prepare=False, replace_pending=False, evidence_manifest=None):
     journal.require_execution_lock()
-    previous, _ = active(journal, store, boundary_policy=boundary_policy)
-    if is_fresh(journal, previous):
+    previous, _ = active(journal, store, boundary_policy=boundary_policy, agent_policy=agent_policy)
+    if is_fresh(journal, previous) and not replace_pending:
         return previous
+    if prepare:
+        previous, _ = active(journal, store, committed_only=True)
     events = journal.events()
     decision = _latest(events, "turn_decision_recorded")
     batch = _latest(events, "tool_batch_finished")
@@ -171,11 +200,15 @@ def start(journal, store, *, base, state, reason, parent_input_artifact,
             raise RecoveryError("cannot hand off an unfinished tool batch")
         reviewed = next(e["sequence"] for e in events if e["event_type"] == "turn_started"
                         and e["payload"]["turn_id"] == decision["payload"]["turn_id"])
-    artifact = store.put_text(canonical_json({"base": base, "state": state}), "application/json")
+    handoff = {"base": base, "state": state}
+    if evidence_manifest is not None:
+        handoff["evidence_manifest"] = evidence_manifest
+    artifact = store.put_text(canonical_json(handoff), "application/json")
     binding = {
         "previous_segment_id": previous["segment_id"] if previous else None,
         "reason": reason, "cursor": cursor(events),
-        "contract_hash": sha256_json(contract(boundary_policy)),
+        "contract_hash": sha256_json(contract(boundary_policy, agent_policy=agent_policy)),
+        **({"agent_policy": agent_policy} if agent_policy != "current" else {}),
         **({"boundary_policy": boundary_policy}
            if boundary_policy != DEFAULT_BOUNDARY_POLICY else {}),
         "handoff_artifact": artifact.model_dump(mode="json"),
@@ -187,7 +220,7 @@ def start(journal, store, *, base, state, reason, parent_input_artifact,
     }
     binding["segment_id"] = "segment_" + sha256_json(binding).removeprefix("sha256:")
     load_binding(binding, store)
-    journal.append(EVENT, binding)
+    journal.append(PREPARED_EVENT if prepare else EVENT, binding)
     return binding
 
 

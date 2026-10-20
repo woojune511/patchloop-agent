@@ -35,6 +35,7 @@ def project_inspection_result(
 
 def project_inspection_context(
     payload: dict[str, Any], *, native_action_ids: Collection[str] = (),
+    agent_policy: str = "current",
 ) -> dict[str, Any]:
     """Project known intent fields only; never deduplicate source or note prose.
 
@@ -44,6 +45,9 @@ def project_inspection_context(
     """
 
     projected = copy.deepcopy(payload)
+    if agent_policy == "thin":
+        # There is no model-authored inspection intent to reference on this wire.
+        return projected
     latest = projected.get("latest_tool_results", [])
     result_ids = {
         result["action_id"] for result in latest

@@ -15,6 +15,7 @@ from packaging.tags import compatible_tags, cpython_tags
 from packaging.utils import canonicalize_name, parse_wheel_filename
 from packaging.version import Version
 
+from patchloop import probe_callers
 from patchloop.artifacts import ArtifactStore
 from patchloop.errors import ContractError
 from patchloop.generated_probe_wheel import GeneratedWheel
@@ -32,6 +33,13 @@ MARKERS = {
     "python_full_version": "3.12.0", "platform_python_implementation": "CPython",
     "python_version": PYTHON, "sys_platform": "linux", "extra": "",
 }
+
+
+def target_markers(python: str) -> dict:
+    if python not in {"3.9", "3.10", "3.12"}:
+        raise ContractError("unsupported probe Python target")
+    return {**MARKERS, "implementation_version": python + ".0",
+            "python_full_version": python + ".0", "python_version": python}
 
 
 def _named_table(value: dict) -> dict:
@@ -63,7 +71,8 @@ def _group(name: str, groups: dict, seen: tuple[str, ...] = ()) -> list[str]:
     return result
 
 
-def project_requirements(repo: Path, *, groups: list[str], extras: list[str]) -> dict:
+def project_requirements(repo: Path, *, groups: list[str], extras: list[str],
+                         python: str = PYTHON) -> dict:
     """Read PEP 621/735 data only; never import the project or invoke its build backend."""
     path = repo / "pyproject.toml"
     if not path.resolve().is_relative_to(repo):
@@ -76,7 +85,8 @@ def project_requirements(repo: Path, *, groups: list[str], extras: list[str]) ->
     if "dependencies" in dynamic or "optional-dependencies" in dynamic:
         raise ContractError("dynamic public dependencies require build hooks and are unsupported")
     requires_python = project.get("requires-python", "")
-    if not SpecifierSet(requires_python).contains(MARKERS["python_full_version"]):
+    markers = target_markers(python)
+    if not SpecifierSet(requires_python).contains(markers["python_full_version"]):
         raise ContractError("public project does not support the probe Python target")
     dependencies = project.get("dependencies", [])
     if not isinstance(dependencies, list):
@@ -101,7 +111,7 @@ def project_requirements(repo: Path, *, groups: list[str], extras: list[str]) ->
             raise ContractError(
                 "only public index dependencies are supported; no URL/path/self deps",
             )
-        if requirement.marker and not requirement.marker.evaluate({**MARKERS, "extra": extra}):
+        if requirement.marker and not requirement.marker.evaluate({**markers, "extra": extra}):
             continue
         requirement.marker = None
         selected.add(str(requirement))
@@ -111,22 +121,26 @@ def project_requirements(repo: Path, *, groups: list[str], extras: list[str]) ->
 
 
 def select_wheels(raw: bytes, *, project_name: str,
-                  generated: GeneratedWheel | None = None) -> list[PublicWheel | GeneratedWheel]:
+                  generated: GeneratedWheel | None = None,
+                  python: str = PYTHON) -> list[PublicWheel | GeneratedWheel]:
     """Choose one compatible wheel per resolved package, without host platform tags."""
     lock = tomllib.loads(raw.decode("utf-8"))
     if lock.get("lock-version") != "1.0" or lock.get("created-by") != "uv":
         raise ContractError("unsupported resolver lock format")
-    if not SpecifierSet(lock.get("requires-python", "")).contains(MARKERS["python_full_version"]):
+    markers = target_markers(python)
+    if not SpecifierSet(lock.get("requires-python", "")).contains(markers["python_full_version"]):
         raise ContractError("resolver lock excludes the probe Python target")
     platforms = [f"manylinux_2_{minor}_x86_64" for minor in range(28, 4, -1)]
     platforms.extend(["manylinux2014_x86_64", "manylinux2010_x86_64", "manylinux1_x86_64",
                       "linux_x86_64"])
-    tags = [*cpython_tags((3, 12), abis=["cp312"], platforms=platforms),
-            *compatible_tags((3, 12), interpreter="cp312", platforms=platforms)]
+    version = tuple(int(part) for part in python.split("."))
+    interpreter = "cp" + python.replace(".", "")
+    tags = [*cpython_tags(version, abis=[interpreter], platforms=platforms),
+            *compatible_tags(version, interpreter=interpreter, platforms=platforms)]
     ranks = {tag: index for index, tag in enumerate(tags)}
     selected, names = [], set()
     for package in lock.get("packages", []):
-        if package.get("marker") and not Marker(package["marker"]).evaluate(MARKERS):
+        if package.get("marker") and not Marker(package["marker"]).evaluate(markers):
             continue
         name = canonicalize_name(package["name"], validate=True)
         if name in names or name == canonicalize_name(project_name):
@@ -167,12 +181,19 @@ def resolve_dependencies(
     selected_dependencies: list[str] | None = None,
     generated: GeneratedWheel | None = None,
     generated_provenance: dict | None = None,
+    runtime_profile: str = "python312-v1",
+    caller_requirements: list[str] | None = None,
 ) -> tuple[dict, list[PublicWheel | GeneratedWheel], list[dict]]:
-    from patchloop.sandbox.probes import PROBE_IMAGE
+    from patchloop.probe_runtime import runtime
+
+    python, image = runtime(runtime_profile)
+    target_options = {"python": python} if python != PYTHON else {}
 
     groups = sorted({canonicalize_name(name, validate=True) for name in groups})
     extras = sorted({canonicalize_name(name, validate=True) for name in extras})
-    metadata = project_requirements(repo, groups=groups, extras=extras)
+    metadata = project_requirements(repo, groups=groups, extras=extras, **target_options)
+    callers = probe_callers.requirements(caller_requirements or [],
+                                        project_name=metadata["project_name"])
     if selected_dependencies:
         if not (groups or extras):
             raise ContractError("--select-dependency requires a public --group or --extra")
@@ -181,12 +202,13 @@ def resolve_dependencies(
         declared = {canonicalize_name(Requirement(item).name) for item in requirements}
         if set(names) - declared:
             raise ContractError("selected dependency is absent from target public declarations")
-        runtime = project_requirements(repo, groups=[], extras=[])["requirements"]
-        metadata["requirements"] = [item for item in requirements if item in runtime
+        base_requirements = project_requirements(repo, groups=[], extras=[],
+                                                **target_options)["requirements"]
+        metadata["requirements"] = [item for item in requirements if item in base_requirements
                                     or canonicalize_name(Requirement(item).name) in names]
         metadata["selected_dependencies"] = names
-    target = {"python": PYTHON, "platform": "linux/amd64", "image": PROBE_IMAGE,
-              "wheel_platform": PLATFORM, "marker_environment": MARKERS}
+    target = {"python": python, "platform": "linux/amd64", "image": image,
+              "wheel_platform": PLATFORM, "marker_environment": target_markers(python)}
     provenance = {"schema_version": "resolved-public-probe-wheel-lock-v1",
                   "prepared_source": source.model_dump(mode="json"),
                   "prepared_source_hash": source_hash, "source_metadata": metadata,
@@ -195,9 +217,21 @@ def resolve_dependencies(
     if generated_provenance is not None:
         provenance["generated_wheel"] = generated_provenance
     store = ArtifactStore(output)
+    exclusions = output / "workspace-source.in"
+    if callers:
+        # Resolve all other dependencies normally. Never install a released copy of
+        # the implementation under repair, including through a caller's dependency.
+        body = canonicalize_name(metadata["project_name"]) + "\n"
+        store.write_text_immutable(exclusions, body)
+        provenance.update(operator_caller_requirements=callers, workspace_source={
+            "name": canonicalize_name(metadata["project_name"]),
+            "exclusion_hash": sha256_bytes(body.encode()),
+            "version_compatibility": "unverified_source_snapshot",
+        })
     store.write_text_immutable(output / "resolution-input.json", canonical_json(provenance))
     requirements = output / "requirements.in"
-    store.write_text_immutable(requirements, "\n".join(metadata["requirements"]) + "\n")
+    store.write_text_immutable(requirements,
+                               "\n".join(sorted(set([*metadata["requirements"], *callers]))) + "\n")
     # Public resolution must not consult the operator's saved HTTP credentials.
     credentials = output / "resolver-credentials"
     credentials.mkdir()
@@ -205,12 +239,14 @@ def resolve_dependencies(
     lock_path = output / "pylock.toml"
     command = [uv, "pip", "compile", str(requirements), "--format", "pylock.toml",
                "--output-file", str(lock_path), "--python", sys.executable,
-               "--python-version", PYTHON, "--python-platform", PLATFORM,
+               "--python-version", python, "--python-platform", PLATFORM,
                "--only-binary", ":all:", "--no-config", "--no-cache", "--no-sources",
                "--no-python-downloads", "--default-index", "https://pypi.org/simple",
                "--keyring-provider", "disabled", "--no-header"]
     if generated is not None:
         command.extend(["--find-links", str(output / "generated-wheels")])
+    if callers:
+        command.extend(["--excludes", str(exclusions)])
     resolver_hash = sha256_bytes(Path(uv).read_bytes())
     result = subprocess.run(command, capture_output=True, check=False, timeout=120, cwd=output,
                             env={**{key: os.environ[key] for key in
@@ -224,7 +260,9 @@ def resolve_dependencies(
     if result.returncode:
         raise ContractError("public dependency resolution failed; no descriptor published")
     raw_lock = _read_bytes(lock_path)
-    wheels = select_wheels(raw_lock, project_name=metadata["project_name"], generated=generated)
+    wheels = select_wheels(raw_lock, project_name=metadata["project_name"], generated=generated,
+                          **target_options)
+    probe_callers.verify_selection(callers, wheels)
     if generated is not None and generated not in wheels:
         raise ContractError("reviewed generated wheel was not selected by public requirements")
     provenance.update({"resolver_hash": resolver_hash, "pylock_hash": sha256_bytes(raw_lock),

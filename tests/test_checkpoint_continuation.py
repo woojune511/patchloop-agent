@@ -23,6 +23,9 @@ def packet(source, tmp_path_factory):
 
 
 def call(name, arguments, mode):
+    if name == "finish_task":
+        arguments = {"assessment": "Reviewed the public patch and remaining uncertainty.",
+                     **arguments}
     return {
         "name": name,
         "action_id": "offline_" + name,

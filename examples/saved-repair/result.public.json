@@ -1,0 +1,38 @@
+{
+  "run_id": "run_dev_cc274e9b0eb144a4",
+  "base_commit": "0b2880591780a426b0551436f47a17e7a76d954f",
+  "terminal": "PATCH_READY",
+  "acceptance": "NOT_RUN",
+  "before": {
+    "failed": 1,
+    "passed": 218,
+    "failure": "bug assertion mismatch: empty result instead of default"
+  },
+  "after": {
+    "failed": 0,
+    "passed": 219,
+    "skipped": 0
+  },
+  "existing_tests_preserved": true,
+  "unchanged_model_test_files_on_both_sources": true,
+  "agent_direct_red_green": "CONFIRMED, check events 76 and 96",
+  "external_red_green": "CONFIRMED",
+  "manual_correction": false,
+  "cost_usd": "0.12695715",
+  "cli_wall_seconds": 98.9673417,
+  "active_elapsed_ms": 97550,
+  "call_counts": {
+    "model": 7,
+    "input_count": 7,
+    "tool": 12
+  },
+  "accepted_mutations": 2,
+  "full_project_suite": "NOT_RUN",
+  "schema": "saved-repair-public-summary-v1",
+  "saved_evidence": true,
+  "model": "gpt-5.4-mini-2026-03-17",
+  "human_approval": "UNREPORTED",
+  "requirement_fit": "NOT_ASSESSED_BY_VERIFIER",
+  "test_scope": "Model test covers an empty environment variable; original file-value example was checked externally, not added by the model.",
+  "publication": "Historical saved evidence, not a new live solve or verification."
+}

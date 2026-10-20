@@ -16,6 +16,7 @@ from unittest.mock import patch
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from diagnostics import discovery_probe_expectation as expectation
+from patchloop.dev import probe_replay
 from patchloop.errors import ContractError
 from patchloop.util import canonical_json, sha256_json, sha256_text
 
@@ -321,13 +322,22 @@ def install(loop, *, enabled):
         if active:
             for tool in result:
                 if tool["name"] in {"run_check", "run_probe"}:
+                    params = tool["parameters"]
+                    if tool["name"] == "run_probe":
+                        # This phase binds a fresh comparison declaration to submitted source.
+                        # Ordinary action-ID replay does not carry that diagnostic annotation.
+                        tool["description"] = tool["description"].replace(
+                            " " + probe_replay.DESCRIPTION, "")
+                        del params["properties"]["replay_action_id"]
+                        params["required"].remove("replay_action_id")
+                        for field in ("question", "python_source"):
+                            params["properties"][field]["type"] = "string"
                     tool["description"] += (
                         " During the initial paired_observation phase, supply comparison "
                         "before execution as described in current state. Null on run_check "
                         "records a limitation, not a comparison; explain it in your basis. "
                         "Select evidence IDs from the current evidence_catalog; declarations "
                         "rejected before execution remain correctable within this phase.")
-                    params = tool["parameters"]
                     params["properties"]["comparison"] = design_schema(
                         nullable=tool["name"] == "run_check", catalog=catalog)
                     params["required"].append("comparison")

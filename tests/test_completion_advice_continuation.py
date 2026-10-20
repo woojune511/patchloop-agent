@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 from test_checkpoint_continuation import call, stop_steps
+from test_completion_advice_checkpoint import pin_historical_ready_guidance
 from test_deferred_scope_cue import correct_source as correct_source  # noqa: F401
 from test_mutation_advice_checkpoint import source as source  # noqa: F401
 
@@ -16,6 +17,13 @@ from diagnostics.cleanup_information_checkpoint import ForkStore
 from diagnostics.segmented_input_audit import verify_turn
 from patchloop.contracts import Artifact
 from patchloop.util import canonical_json
+
+
+@pytest.fixture(scope="module", autouse=True)
+def historical_ready_guidance():
+    with pytest.MonkeyPatch.context() as scoped:
+        pin_historical_ready_guidance(scoped)
+        yield
 
 
 @pytest.mark.parametrize("scenario", ["ready", "count", "segment", "edit"])

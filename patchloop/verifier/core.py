@@ -35,6 +35,7 @@ from patchloop.task_loader import load_task_package
 from patchloop.util import canonical_json, sha256_bytes, sha256_json
 from patchloop.verifier.policy import (
     PolicyOutcome,
+    original_test_view,
     verify_dependencies,
     verify_public_api,
     verify_scope,
@@ -192,7 +193,7 @@ class EvaluationEngine:
             state=state,
             evidence_artifact_ids=[artifact.artifact_id],
             evidence_hashes=[*hashes, artifact.content_hash],
-            details=details,
+            details={**details, "evidence_artifacts": [artifact.model_dump(mode="json")]},
         )
 
     def _sandbox_policy_evidence(
@@ -297,7 +298,6 @@ class EvaluationEngine:
         ):
             return None
         from patchloop.sandbox.probes import (
-            PROBE_IMAGE_DIGEST,
             PROBE_TIMEOUT_SECONDS,
             probe_execution_policy,
             probe_profile,
@@ -309,7 +309,8 @@ class EvaluationEngine:
         source_hashes: list[str] = []
         policy_hashes: list[str] = []
         if (
-            manifest.probe_image_digest != PROBE_IMAGE_DIGEST
+            manifest.probe_image_digest
+            != probe_profile(manifest.probe_dependencies)["image_digest"]
             or manifest.probe_profile_hash != probe_profile_hash(manifest.probe_dependencies)
         ):
             integrity_errors.append("probe manifest profile or image differs from runtime")
@@ -428,10 +429,10 @@ class EvaluationEngine:
             digest = image.rsplit("@", 1)[1]
         identity = {"backend": backend, "evaluator_image": image, "image_digest": digest}
         if manifest.probe_profile_hash is not None:
-            from patchloop.sandbox.probes import PROBE_IMAGE_DIGEST, probe_profile_hash
+            from patchloop.sandbox.probes import probe_profile, probe_profile_hash
 
             identity.update(
-                probe_image_digest=PROBE_IMAGE_DIGEST,
+                probe_image_digest=probe_profile(manifest.probe_dependencies)["image_digest"],
                 probe_profile_hash=probe_profile_hash(manifest.probe_dependencies),
             )
         return backend, digest, sha256_json(identity)
@@ -480,7 +481,10 @@ class EvaluationEngine:
             "task_content_hash": package.task_content_hash,
             "runtime_content_hash": runtime_content_hash(),
             "tool_surface_hash": dev_tool_surface_hash(
+                history_search_policy=manifest.history_search_policy,
+                agent_policy=manifest.agent_policy,
                 planning_policy=manifest.planning_policy, probe_policy=manifest.probe_policy,
+                probe_recheck=manifest.probe_recheck,
             ),
             "sandbox_backend": backend,
             "evaluator_image_digest": image_digest,
@@ -622,19 +626,23 @@ class EvaluationEngine:
                 recorded_checks,
                 deadline,
             )
-            self._run_checks(
-                manifest.run_id,
-                workspace,
-                package.private.hidden_checks,
-                "hidden",
-                results,
-                recorded_checks,
-                deadline,
+            test_policy = verify_test_tampering(
+                summary, package.public.constraints, workspace, deadline=deadline,
             )
+            with original_test_view(workspace, test_policy, deadline=deadline):
+                self._run_checks(
+                    manifest.run_id,
+                    workspace,
+                    package.private.hidden_checks,
+                    "hidden",
+                    results,
+                    recorded_checks,
+                    deadline,
+                )
             policies = {
                 "scope": verify_scope(summary, package.public.constraints),
                 "dependency": verify_dependencies(summary, package.public.constraints),
-                "test_tampering": verify_test_tampering(summary),
+                "test_tampering": test_policy,
                 "public_api": verify_public_api(
                     summary,
                     package.public.constraints,

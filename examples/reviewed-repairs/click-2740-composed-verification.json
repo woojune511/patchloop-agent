@@ -1,0 +1,322 @@
+{
+  "publication": {
+    "source_hash": "sha256:2cfa3ee648dfd80a64308df31f1295776a9fded1f7f1c998a5446e7b601f3e57",
+    "kind": "sanitized historical verifier result"
+  },
+  "result": {
+    "schema_version": "repair-verification-v1",
+    "run_id": "run_dev_verify_c5ae8a2360bb4a63",
+    "official": false,
+    "acceptance": "NOT_RUN",
+    "requirement_fit": "NOT_ASSESSED",
+    "comparison": {
+      "status": "OBSERVED_FAIL_THEN_PASS",
+      "tests": [
+        {
+          "check_id": "public-regressions",
+          "nodeid": "tests/test_basic.py::test_exception_notes",
+          "before": "TEST_FAILED",
+          "after": "PASSED"
+        }
+      ]
+    },
+    "checks": [
+      {
+        "phase": "base",
+        "check_id": "public-regressions",
+        "diff_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "pytest": true,
+        "exit_code": 0,
+        "expected_exit_codes": [
+          0
+        ],
+        "observation": {
+          "status": "COMPLETED",
+          "exit_code": 0,
+          "collected": 941,
+          "collection_errors": [],
+          "collection_skips": [],
+          "summary": {
+            "passed": 941,
+            "failed": 0,
+            "skipped": 0,
+            "errors": 0,
+            "xfail_xpass": 0
+          },
+          "tests": []
+        },
+        "receipt": {
+          "artifact_id": "art_143003976d4e4ec19d2e52fc6713902c",
+          "content_hash": "sha256:140dd161df533bdfc2efa908d38e20139e36d8c673cd63ed7dbd250029311b5c",
+          "media_type": "application/json; charset=utf-8",
+          "size_bytes": 7037,
+          "created_at": "2026-10-05T06:52:18.081420Z"
+        }
+      },
+      {
+        "phase": "base",
+        "check_id": "notes-and-legacy-output",
+        "diff_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "pytest": false,
+        "exit_code": 1,
+        "expected_exit_codes": [
+          0
+        ],
+        "observation": {
+          "status": "NONZERO_EXIT"
+        },
+        "receipt": {
+          "artifact_id": "art_b0c610d1ea2e49348dfbe898564773b2",
+          "content_hash": "sha256:e5c736833fb93ec55857d4faeea43f9d4ebc20dc34d62b1d499d9390cef483e5",
+          "media_type": "application/json; charset=utf-8",
+          "size_bytes": 2049,
+          "created_at": "2026-10-05T06:52:18.929686Z"
+        }
+      },
+      {
+        "phase": "base_with_tests",
+        "check_id": "public-regressions",
+        "diff_hash": "sha256:66adeda0b97065533f95d920bfe15f205a8dcdd3919f88999f276b340dcdbc92",
+        "pytest": true,
+        "exit_code": 1,
+        "expected_exit_codes": [
+          0
+        ],
+        "observation": {
+          "status": "COMPLETED",
+          "exit_code": 1,
+          "collected": 942,
+          "collection_errors": [],
+          "collection_skips": [],
+          "summary": {
+            "passed": 941,
+            "failed": 1,
+            "skipped": 0,
+            "errors": 0,
+            "xfail_xpass": 0
+          },
+          "tests": [
+            {
+              "nodeid": "tests/test_basic.py::test_exception_notes",
+              "path": "tests/test_basic.py",
+              "function": "test_exception_notes",
+              "xfail_marked": false,
+              "phases": [
+                {
+                  "when": "setup",
+                  "outcome": "passed",
+                  "exception_type": null,
+                  "wasxfail": null,
+                  "detail": null
+                },
+                {
+                  "when": "call",
+                  "outcome": "failed",
+                  "exception_type": "builtins.AssertionError",
+                  "wasxfail": null,
+                  "detail": "runner = <click.testing.CliRunner object at 0x70aa281d8560>\n\n    def test_exception_notes(runner):\n        notes_supported = hasattr(BaseException, \"add_note\")\n    \n        @click.command()\n        def click_exc():\n            exc = click.ClickException(\"foo\")\n            if notes_supported:\n                exc.add_note(\"bar\")\n            raise exc\n    \n        result = runner.invoke(click_exc)\n        assert result.exit_code == 1\n>       assert result.output == (\n            \"Error: foo\\nbar\\n\" if notes_supported else \"Error: foo\\n\"\n        )\nE       AssertionError: assert 'Error: foo\\n' == 'Error: foo\\nbar\\n'\nE         \nE           Error: foo\nE         - bar\n\ntests/test_basic.py:663: AssertionError"
+                },
+                {
+                  "when": "teardown",
+                  "outcome": "passed",
+                  "exception_type": null,
+                  "wasxfail": null,
+                  "detail": null
+                }
+              ],
+              "parameter_index": null,
+              "status": "TEST_FAILED"
+            }
+          ]
+        },
+        "receipt": {
+          "artifact_id": "art_1b695b6a3584459b8cf1ecddba09c9e8",
+          "content_hash": "sha256:fbe7efa1996836b6194496c04ddb2a3a50862ba5770de6d2f5ef2569e88e6e98",
+          "media_type": "application/json; charset=utf-8",
+          "size_bytes": 9595,
+          "created_at": "2026-10-05T06:52:24.496731Z"
+        }
+      },
+      {
+        "phase": "base_with_tests",
+        "check_id": "notes-and-legacy-output",
+        "diff_hash": "sha256:66adeda0b97065533f95d920bfe15f205a8dcdd3919f88999f276b340dcdbc92",
+        "pytest": false,
+        "exit_code": 1,
+        "expected_exit_codes": [
+          0
+        ],
+        "observation": {
+          "status": "NONZERO_EXIT"
+        },
+        "receipt": {
+          "artifact_id": "art_7a1b82b8ffa24a1ea6645dd687c0993f",
+          "content_hash": "sha256:d8f2b806498ee2bfff38c0bd9ce7372eee3f2661d1a4f5c0d018068cd8a6ea57",
+          "media_type": "application/json; charset=utf-8",
+          "size_bytes": 2049,
+          "created_at": "2026-10-05T06:52:25.367800Z"
+        }
+      },
+      {
+        "phase": "patched",
+        "check_id": "public-regressions",
+        "diff_hash": "sha256:2953adecbacfa047bc8f9af1a2291e1f0efd4143841a18291a8e1a69ed395396",
+        "pytest": true,
+        "exit_code": 0,
+        "expected_exit_codes": [
+          0
+        ],
+        "observation": {
+          "status": "COMPLETED",
+          "exit_code": 0,
+          "collected": 942,
+          "collection_errors": [],
+          "collection_skips": [],
+          "summary": {
+            "passed": 942,
+            "failed": 0,
+            "skipped": 0,
+            "errors": 0,
+            "xfail_xpass": 0
+          },
+          "tests": [
+            {
+              "nodeid": "tests/test_basic.py::test_exception_notes",
+              "path": "tests/test_basic.py",
+              "function": "test_exception_notes",
+              "xfail_marked": false,
+              "phases": [
+                {
+                  "when": "setup",
+                  "outcome": "passed",
+                  "exception_type": null,
+                  "wasxfail": null,
+                  "detail": null
+                },
+                {
+                  "when": "call",
+                  "outcome": "passed",
+                  "exception_type": null,
+                  "wasxfail": null,
+                  "detail": null
+                },
+                {
+                  "when": "teardown",
+                  "outcome": "passed",
+                  "exception_type": null,
+                  "wasxfail": null,
+                  "detail": null
+                }
+              ],
+              "parameter_index": null,
+              "status": "PASSED"
+            }
+          ]
+        },
+        "receipt": {
+          "artifact_id": "art_8682b1b6bfff44b18816e957e0a86cb0",
+          "content_hash": "sha256:1828a86806e3fcfb6feb063d8c338474b94f7b0721cdc0cb7fe0966b12cec8bf",
+          "media_type": "application/json; charset=utf-8",
+          "size_bytes": 7682,
+          "created_at": "2026-10-05T06:52:30.737310Z"
+        }
+      },
+      {
+        "phase": "patched",
+        "check_id": "notes-and-legacy-output",
+        "diff_hash": "sha256:2953adecbacfa047bc8f9af1a2291e1f0efd4143841a18291a8e1a69ed395396",
+        "pytest": false,
+        "exit_code": 0,
+        "expected_exit_codes": [
+          0
+        ],
+        "observation": {
+          "status": "EXIT_ZERO"
+        },
+        "receipt": {
+          "artifact_id": "art_6a2a02e0abb64cabb0e5237620092c0a",
+          "content_hash": "sha256:1456c4a6ed22ce58e651ef6a1429188d53930580f797bcf1148e132b9f7ba673",
+          "media_type": "application/json; charset=utf-8",
+          "size_bytes": 2196,
+          "created_at": "2026-10-05T06:52:31.591646Z"
+        }
+      }
+    ],
+    "base_commit": "2247b35ea1c47c727d7a06e51fa280e12a863ff6",
+    "public_spec_hash": "sha256:d25aa7faaf3cfdc0d87afe92f149733f273082ac775249461e22d8fb9ac1f1af",
+    "runtime_hash": "sha256:713259075f8e8123ad382fc23f218d67ab5d2c2d820c9b35845fba03129270df",
+    "sandbox": {
+      "backend": "docker",
+      "image": "patchloop-public-repair-pytest@sha256:4512f41e843d57ad7fb8306ece1e549afa2903db6d97815315fa9bf732c82c1a",
+      "image_digest": "sha256:4512f41e843d57ad7fb8306ece1e549afa2903db6d97815315fa9bf732c82c1a"
+    },
+    "journal": "[host path omitted]",
+    "changed_files": [
+      "src/click/exceptions.py",
+      "tests/test_basic.py"
+    ],
+    "model_calls": 0,
+    "request": {
+      "artifact_id": "art_3bb3ce40de7547caa8f0291198ecb5e8",
+      "content_hash": "sha256:0898be34c338d1dfd13863f7864c2a277dfbe6d395d5ff65759724202012af67",
+      "media_type": "application/octet-stream",
+      "size_bytes": 1175,
+      "created_at": "2026-10-05T06:52:07.152541Z"
+    },
+    "patch": {
+      "artifact_id": "art_5af5272f72b04b3fb2a6ad65031c6b19",
+      "content_hash": "sha256:2953adecbacfa047bc8f9af1a2291e1f0efd4143841a18291a8e1a69ed395396",
+      "media_type": "application/octet-stream",
+      "size_bytes": 4047,
+      "created_at": "2026-10-05T06:52:07.153650Z"
+    },
+    "public_task": {
+      "artifact_id": "art_24654b77dd1f4a23a6450f6deb58220c",
+      "content_hash": "sha256:592a375e4665a5284d06488f673b9bd04eecc1f4a685ec03266e7afa55851b55",
+      "media_type": "application/json; charset=utf-8",
+      "size_bytes": 4945,
+      "created_at": "2026-10-05T06:52:07.154721Z"
+    },
+    "scope": {
+      "passed": true,
+      "violations": [],
+      "details": {
+        "changed_files": [
+          "src/click/exceptions.py",
+          "tests/test_basic.py"
+        ],
+        "untracked_files": [],
+        "changed_file_count": 2,
+        "added_lines": 78,
+        "deleted_lines": 11,
+        "diff_lines": 89,
+        "typed_violations": []
+      }
+    },
+    "test_additions": [
+      {
+        "path": "tests/test_basic.py",
+        "function": "test_exception_notes",
+        "parameter_names": [],
+        "indices": null
+      }
+    ],
+    "test_paths": [
+      "tests/test_basic.py"
+    ],
+    "implementation_paths": [
+      "src/click/exceptions.py"
+    ],
+    "test_file_hashes": {
+      "tests/test_basic.py": "sha256:9d5113f2143c056ad3f2e88249fb8ad52023f06ba59650ed01802f801a2a5b1b"
+    },
+    "status": "COMPLETE",
+    "result_artifact": {
+      "artifact_id": "art_a5423820655d4d2081380ba57c3f4ccc",
+      "content_hash": "sha256:2459ed0550c6e6d62a3195bbdfb7a1010aafb7e729ec74813e84c1fa14082c88",
+      "media_type": "application/json; charset=utf-8",
+      "size_bytes": 12562,
+      "created_at": "2026-10-05T06:52:31.599905Z"
+    }
+  }
+}

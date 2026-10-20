@@ -4,13 +4,15 @@ from __future__ import annotations
 
 import ast
 import fnmatch
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 
 from patchloop.contracts import TaskConstraints
 from patchloop.deadline import ExecutionDeadline
 from patchloop.git_execution import run_git
-from patchloop.repository import DiffSummary
+from patchloop.repository import DiffSummary, WorkspaceManager
+from patchloop.test_additions import UnsupportedTestChange, added_tests
 
 DEPENDENCY_FILES = {
     "pyproject.toml",
@@ -119,10 +121,84 @@ def _is_test_path(path: str) -> bool:
     )
 
 
-def verify_test_tampering(summary: DiffSummary) -> PolicyOutcome:
+def validate_test_addition(
+    workspace: Path,
+    path: str,
+    after: bytes,
+    constraints: TaskConstraints,
+    *,
+    deadline: ExecutionDeadline | None = None,
+) -> None:
+    roots = constraints.additive_test_roots
+    if not path.endswith(".py") or not any(path.startswith(root + "/") for root in roots):
+        raise UnsupportedTestChange("test edits require a declared additive test root")
+    if PurePosixPath(path).name == "conftest.py":
+        raise UnsupportedTestChange("existing test fixtures cannot be changed")
+    before = run_git(workspace, "show", f"HEAD:{path}", text=False, deadline=deadline).stdout
+    if not added_tests(before, after, path, suite_additions=True):
+        raise UnsupportedTestChange("test edit must add a test function or literal parameter cases")
+
+
+def verify_test_tampering(
+    summary: DiffSummary,
+    constraints: TaskConstraints | None = None,
+    workspace: Path | None = None,
+    *,
+    deadline: ExecutionDeadline | None = None,
+) -> PolicyOutcome:
     changed = [path for path in summary.changed_files if _is_test_path(path)]
+    if constraints is not None and constraints.additive_test_roots:
+        changed = sorted(
+            set(changed)
+            | {
+                p
+                for p in summary.changed_files
+                if any(p.startswith(root + "/") for root in constraints.additive_test_roots)
+            }
+        )
+        violations = []
+        for path in changed:
+            try:
+                if workspace is None:
+                    raise UnsupportedTestChange("test validation requires the submitted workspace")
+                validate_test_addition(
+                    workspace, path, (workspace / path).read_bytes(), constraints, deadline=deadline
+                )
+            except (UnsupportedTestChange, OSError) as exc:
+                violations.append(f"{path}: {exc}")
+        return PolicyOutcome(
+            not violations,
+            violations,
+            {
+                "test_files": changed,
+                "policy": "additions-preserve-base-tests-v1",
+            },
+        )
     violations = [f"test files changed: {', '.join(changed)}"] if changed else []
     return PolicyOutcome(not violations, violations, {"test_files": changed})
+
+
+@contextmanager
+def original_test_view(workspace: Path, outcome: PolicyOutcome, *, deadline=None):
+    """Grade source against original tests; retain added tests for public regression.
+
+    Only the isolated evaluator checkout is changed, after submitted-diff identity
+    and additive integrity have been checked. Restore even on evaluator failure.
+    """
+    saved = {}
+    try:
+        if outcome.passed and outcome.details.get("policy") == "additions-preserve-base-tests-v1":
+            for path in outcome.details["test_files"]:
+                target = workspace / path
+                before = run_git(
+                    workspace, "show", f"HEAD:{path}", text=False, deadline=deadline
+                ).stdout
+                saved[path] = target.read_bytes()
+                WorkspaceManager.atomic_replace_source(workspace, path, before)
+        yield
+    finally:
+        for path, content in saved.items():
+            WorkspaceManager.atomic_replace_source(workspace, path, content)
 
 
 def _signature_map(source: str) -> dict[str, str]:
@@ -146,8 +222,11 @@ def _signature_map(source: str) -> dict[str, str]:
 
 
 def verify_public_api(
-    summary: DiffSummary, constraints: TaskConstraints, workspace: Path,
-    *, deadline: ExecutionDeadline | None = None,
+    summary: DiffSummary,
+    constraints: TaskConstraints,
+    workspace: Path,
+    *,
+    deadline: ExecutionDeadline | None = None,
 ) -> PolicyOutcome:
     if constraints.public_api_changes_allowed:
         return PolicyOutcome(True, [], {"changes_allowed": True, "changed_symbols": []})

@@ -98,7 +98,8 @@ def exposure(arm):
         yield
 
 
-def fork(source: Source, cut_sequence: int, output: Path, arm: str, *, synthetic_cap_usd: Decimal):
+def fork(source: Source, cut_sequence: int, output: Path, arm: str, *, synthetic_cap_usd: Decimal,
+         preserve_parent_configuration=False):
     return _fork(
         source,
         cut_sequence,
@@ -107,10 +108,12 @@ def fork(source: Source, cut_sequence: int, output: Path, arm: str, *, synthetic
         new_cap_usd=synthetic_cap_usd,
         mode="offline-scripted-only",
         env_file=output / "NO_CREDENTIAL_FILE",
+        preserve_parent_configuration=preserve_parent_configuration,
     )
 
 
-def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file):
+def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
+          preserve_parent_configuration=False):
     """Copy a settled prefix; bind current runtime without changing the parent."""
     require(arm in {"A", "B"}, "unknown exposure arm")
     require(mode in {"offline-scripted-only", "funded-observation"}, "unknown fork mode")
@@ -225,7 +228,8 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file):
         and old.limits.max_accepted_mutations - len(accepted) == budget["accepted_mutations"],
         "restored action allowances differ",
     )
-    pricing = pricing_for_model("gpt-5.4-2026-03-05")
+    model = old.model if preserve_parent_configuration else "gpt-5.4-2026-03-05"
+    pricing = pricing_for_model(model)
     spent = budget["cost"]["settled_usage"]
     ledger = DevCostLedger(Decimal(spent) / 10**9 + new_cap_usd, pricing)
     ledger.restore_settled_usage(journal.provider_usage(), base_spent_nanos=old.cost_start_nanos)
@@ -233,9 +237,9 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file):
     request = DevRunRequest(
         provider="openai",
         task=source.public_path,
-        model="gpt-5.4-2026-03-05",
-        reasoning_effort="xhigh",
-        max_output_tokens=25000,
+        model=model,
+        reasoning_effort=old.reasoning_effort if preserve_parent_configuration else "xhigh",
+        max_output_tokens=old.max_output_tokens if preserve_parent_configuration else 25000,
         env_file=env_file,
         max_cost_usd=Decimal(ledger.cap_nanos) / 10**9,
         state_root=output,
@@ -255,6 +259,9 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file):
         context_policy=old.context_policy,
         segment_boundary_policy=old.segment_boundary_policy,
         completion_cost_policy=old.completion_cost_policy,
+        **({key: getattr(old, key) for key in (
+            "retained_source_chars", "evaluation_reserve_seconds", "probe_recheck",
+        )} if preserve_parent_configuration else {}),
     )
     runtime_hash = runner._runtime_hash()
     model_hash = runner._model_hash(request, pricing)
@@ -290,6 +297,8 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file):
         ],
         "active_elapsed_ms": int(bundle["turn"]["active_elapsed_ms"]),
     }
+    if preserve_parent_configuration:
+        marker["preserve_parent_configuration"] = True
     journal.append("observation_exposure_fork", marker)
     branch = SimpleNamespace(
         root=output,
@@ -398,11 +407,9 @@ def rehearse(branch, client: ScriptedClient, *, probe_outcomes=None):
     """Single-use synthetic execution. Remote-task mutations/checks/finish are forbidden."""
     require(type(client) is ScriptedClient, "finite offline client required")
     require(branch.envelope.runtime_hash == runner._runtime_hash(), "fork runtime changed")
-    marker = next(
-        e["payload"]
-        for e in branch.journal.events()
-        if e["event_type"] == "observation_exposure_fork"
-    )
+    current = branch.journal.events()[branch.inherited_events:]
+    require(current[0]["event_type"] == "observation_exposure_fork", "fork boundary changed")
+    marker = current[0]["payload"]
     require(sha256_json(marker) == branch.marker_hash, "fork binding changed")
     require(marker["mode"] == "offline-scripted-only", "funded branch is not a rehearsal")
     require(
@@ -411,7 +418,7 @@ def rehearse(branch, client: ScriptedClient, *, probe_outcomes=None):
     )
     require(
         not any(
-            e["event_type"] == "observation_rehearsal_started" for e in branch.journal.events()
+            e["event_type"] == "observation_rehearsal_started" for e in current
         ),
         "rehearsal cannot be retried",
     )

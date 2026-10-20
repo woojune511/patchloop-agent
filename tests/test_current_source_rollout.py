@@ -151,7 +151,9 @@ def test_mock_mutation_check_finish_with_inline_history(branch):
     calls = [mutation_call(branch.gateway), RequestedTool(
         name="run_check", action_id="new-check", arguments={"check_id": "existing-unit-tests"},
         turn_decision=PublicTurnDecision(mode="verify", basis="Check repaired public code"),
-    ), RequestedTool(name="finish_task", action_id="new-finish", arguments={},
+    ), RequestedTool(name="finish_task", action_id="new-finish", arguments={
+        "assessment": "Reviewed the public patch and remaining uncertainty.",
+    },
                      turn_decision=PublicTurnDecision(mode="finish", basis="Public check passed"))]
     cost = ledger()
     for call in calls:

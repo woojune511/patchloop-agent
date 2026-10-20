@@ -1,0 +1,62 @@
+{
+  "spec": {
+    "instance_id": "pydicom__pydicom-1139",
+    "image": "swebench/sweb.eval.x86_64.pydicom_1776_pydicom-1139@sha256:a2344b4b6db428913523e14f576fe358d6ae0c349cd77ac82e616188955ddb3b",
+    "repo": "pydicom/pydicom",
+    "version": "2.0",
+    "FAIL_TO_PASS": [
+      "pydicom/tests/test_valuerep.py::TestPersonName::test_next",
+      "pydicom/tests/test_valuerep.py::TestPersonName::test_iterator",
+      "pydicom/tests/test_valuerep.py::TestPersonName::test_contains"
+    ],
+    "PASS_TO_PASS": [
+      "pydicom/tests/test_valuerep.py::TestTM::test_pickling",
+      "pydicom/tests/test_valuerep.py::TestDT::test_pickling",
+      "pydicom/tests/test_valuerep.py::TestDA::test_pickling",
+      "pydicom/tests/test_valuerep.py::TestDS::test_empty_value",
+      "pydicom/tests/test_valuerep.py::TestDS::test_float_values",
+      "pydicom/tests/test_valuerep.py::TestDSfloat::test_pickling",
+      "pydicom/tests/test_valuerep.py::TestDSfloat::test_str",
+      "pydicom/tests/test_valuerep.py::TestDSfloat::test_repr",
+      "pydicom/tests/test_valuerep.py::TestDSdecimal::test_pickling",
+      "pydicom/tests/test_valuerep.py::TestDSdecimal::test_float_value",
+      "pydicom/tests/test_valuerep.py::TestIS::test_empty_value",
+      "pydicom/tests/test_valuerep.py::TestIS::test_valid_value",
+      "pydicom/tests/test_valuerep.py::TestIS::test_invalid_value",
+      "pydicom/tests/test_valuerep.py::TestIS::test_pickling",
+      "pydicom/tests/test_valuerep.py::TestIS::test_longint",
+      "pydicom/tests/test_valuerep.py::TestIS::test_overflow",
+      "pydicom/tests/test_valuerep.py::TestIS::test_str",
+      "pydicom/tests/test_valuerep.py::TestIS::test_repr",
+      "pydicom/tests/test_valuerep.py::TestBadValueRead::test_read_bad_value_in_VR_default",
+      "pydicom/tests/test_valuerep.py::TestBadValueRead::test_read_bad_value_in_VR_enforce_valid_value",
+      "pydicom/tests/test_valuerep.py::TestDecimalString::test_DS_decimal_set",
+      "pydicom/tests/test_valuerep.py::TestDecimalString::test_valid_decimal_strings",
+      "pydicom/tests/test_valuerep.py::TestDecimalString::test_invalid_decimal_strings",
+      "pydicom/tests/test_valuerep.py::TestPersonName::test_last_first",
+      "pydicom/tests/test_valuerep.py::TestPersonName::test_copy",
+      "pydicom/tests/test_valuerep.py::TestPersonName::test_three_component",
+      "pydicom/tests/test_valuerep.py::TestPersonName::test_formatting",
+      "pydicom/tests/test_valuerep.py::TestPersonName::test_unicode_kr",
+      "pydicom/tests/test_valuerep.py::TestPersonName::test_unicode_jp_from_bytes",
+      "pydicom/tests/test_valuerep.py::TestPersonName::test_unicode_jp_from_bytes_comp_delimiter",
+      "pydicom/tests/test_valuerep.py::TestPersonName::test_unicode_jp_from_bytes_caret_delimiter",
+      "pydicom/tests/test_valuerep.py::TestPersonName::test_unicode_jp_from_unicode",
+      "pydicom/tests/test_valuerep.py::TestPersonName::test_not_equal",
+      "pydicom/tests/test_valuerep.py::TestPersonName::test_encoding_carried",
+      "pydicom/tests/test_valuerep.py::TestPersonName::test_hash",
+      "pydicom/tests/test_valuerep.py::TestDateTime::test_date",
+      "pydicom/tests/test_valuerep.py::TestDateTime::test_date_time",
+      "pydicom/tests/test_valuerep.py::TestDateTime::test_time"
+    ],
+    "log_parser": "parse_log_pydicom",
+    "eval_type": "pass_and_fail",
+    "eval_script_list": []
+  },
+  "test_patch": "diff --git a/pydicom/tests/test_valuerep.py b/pydicom/tests/test_valuerep.py\n--- a/pydicom/tests/test_valuerep.py\n+++ b/pydicom/tests/test_valuerep.py\n@@ -427,6 +427,62 @@ def test_hash(self):\n         )\n         assert hash(pn1) == hash(pn2)\n \n+    def test_next(self):\n+        \"\"\"Test that the next function works on it's own\"\"\"\n+        # Test getting the first character\n+        pn1 = PersonName(\"John^Doe^^Dr\", encodings=default_encoding)\n+        pn1_itr = iter(pn1)\n+        assert next(pn1_itr) == \"J\"\n+\n+        # Test getting multiple characters\n+        pn2 = PersonName(\n+            \"Yamada^Tarou=\u5c71\u7530^\u592a\u90ce=\u3084\u307e\u3060^\u305f\u308d\u3046\", [default_encoding, \"iso2022_jp\"]\n+        )\n+        pn2_itr = iter(pn2)\n+        assert next(pn2_itr) == \"Y\"\n+        assert next(pn2_itr) == \"a\"\n+\n+        # Test getting all characters\n+        pn3 = PersonName(\"SomeName\")\n+        pn3_itr = iter(pn3)\n+        assert next(pn3_itr) == \"S\"\n+        assert next(pn3_itr) == \"o\"\n+        assert next(pn3_itr) == \"m\"\n+        assert next(pn3_itr) == \"e\"\n+        assert next(pn3_itr) == \"N\"\n+        assert next(pn3_itr) == \"a\"\n+        assert next(pn3_itr) == \"m\"\n+        assert next(pn3_itr) == \"e\"\n+\n+        # Attempting to get next characeter should stop the iteration\n+        # I.e. next can only start once\n+        with pytest.raises(StopIteration):\n+            next(pn3_itr)\n+\n+        # Test that next() doesn't work without instantiating an iterator\n+        pn4 = PersonName(\"SomeName\")\n+        with pytest.raises(AttributeError):\n+            next(pn4)\n+\n+    def test_iterator(self):\n+        \"\"\"Test that iterators can be corretly constructed\"\"\"\n+        name_str = \"John^Doe^^Dr\"\n+        pn1 = PersonName(name_str)\n+        \n+        for i, c in enumerate(pn1):\n+            assert name_str[i] == c\n+\n+        # Ensure that multiple iterators can be created on the same variable\n+        for i, c in enumerate(pn1):\n+            assert name_str[i] == c\n+\n+    def test_contains(self):\n+        \"\"\"Test that characters can be check if they are within the name\"\"\"\n+        pn1 = PersonName(\"John^Doe\")\n+        assert (\"J\" in pn1) == True\n+        assert (\"o\" in pn1) == True\n+        assert (\"x\" in pn1) == False\n+\n \n class TestDateTime:\n     \"\"\"Unit tests for DA, DT, TM conversion to datetime objects\"\"\"\n",
+  "test_command": [
+    "pytest",
+    "-rA",
+    "pydicom/tests/test_valuerep.py"
+  ]
+}

@@ -11,21 +11,58 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, model_serializer, model_validator
 
 from patchloop.contracts import Artifact, ProbeDependencyIdentity
-from patchloop.dev import check_review, cost, probe_cases, segments
+from patchloop.dev import check_review, cost, history_search, probe_cases, segments
+from patchloop.dev.context import RETAINED_SOURCE_CHARS, RetainedSourceChars
 from patchloop.util import sha256_json
 
 DEV_RUN_SCHEMA = "dev-run-v1"
 DEV_RUNTIME_ID = "dev-head"
 DEV_READ_TOOLS = frozenset({"search_files", "read_file"})
 DEV_SINGLE_ACTION_TOOLS = frozenset({
-    "replace_text", "run_check", "run_probe", "finish_task", "stop_task",
+    "replace_text", "run_check", "run_tests", "run_probe", "finish_task", "stop_task",
 })
 
 
-def dev_tool_surface_hash(*, planning_policy: str = "none", probe_policy: str = "none") -> str:
+def dev_tool_surface_hash(
+    *, planning_policy: str = "none", probe_policy: str = "none", probe_recheck: str = "none",
+    agent_policy: str = "current", history_search_policy: history_search.Policy = "none",
+) -> str:
+    if history_search_policy != "none":
+        if history_search_policy != history_search.POLICY:
+            raise ValueError("unknown history search policy")
+        return sha256_json({"base_tool_surface_hash": dev_tool_surface_hash(
+            planning_policy=planning_policy, probe_policy=probe_policy,
+            probe_recheck=probe_recheck, agent_policy=agent_policy),
+            "history_search": history_search.contract()})
+    if agent_policy not in {"current", "thin"}:
+        raise ValueError("unknown agent policy")
+    if agent_policy == "thin":
+        if planning_policy != "none":
+            raise ValueError("thin policy forbids planning state")
+        from patchloop.dev import thin_policy
+
+        return sha256_json({
+            "base_tool_surface_hash": dev_tool_surface_hash(
+                planning_policy=planning_policy, probe_policy=probe_policy,
+                probe_recheck=probe_recheck,
+            ),
+            "agent_policy": agent_policy,
+            "thin_policy": thin_policy.contract(),
+        })
+    if probe_recheck != "none":
+        from patchloop.dev.probe_recheck import POLICY, contract
+        if probe_recheck != POLICY or probe_policy != "cases-v1":
+            raise ValueError("probe recheck requires saved-program-v1 and cases-v1")
+        return sha256_json({
+            "base": dev_tool_surface_hash(
+                planning_policy=planning_policy, probe_policy=probe_policy),
+            "probe_recheck": contract(),
+        })
     base = sha256_json(
         {
-            "schema_version": "dev-tool-surface-v45",
+            "schema_version": "dev-tool-surface-v48",
+            "submission_assessment": "required-nonblank-current-diff-plan-review-v2",
+            "selected_public_tests": "registered-pytest-tracked-targets-optional-v1",
             "segmented_context": segments.contract(),
             "native_context_policy": "opt-in-full-compaction-seed-public-reentry-prepared-count-v2",
             "repair_recheck": "opt-in-current-failure-child-check-before-inference-v1",
@@ -50,7 +87,7 @@ def dev_tool_surface_hash(*, planning_policy: str = "none", probe_policy: str = 
             "public_execution_report_limit_bytes": 16_000,
             "native_conversation": "single-user-append-only-current-state-v3",
             "native_state_view": "complete-mutable-view-immutable-public-task-v1",
-            "model_state_projection": "current-completion-first-native-body-references-v2",
+            "model_state_projection": "evidence-delivery-question-priority-scope-v4",
             "current_source_catalog": "file-hash-delivery-groups-with-mutation-path-permission-v2",
             "native_source_delivery": "exact-path-hash-line-union-references-v1",
             "native_source_reference_limit": 16,
@@ -94,10 +131,11 @@ def dev_tool_surface_hash(*, planning_policy: str = "none", probe_policy: str = 
             "failed_check_repair_action_space": "budget-only-public-inspection-v2",
             "evidence_plateau_transition": "advisory-only-v2",
             "check_recovery_reserve": "order-independent-distinct-failure-bound-v2",
-            "context_projection": "observed-priority-merged-24000-chars-v1",
+            "context_projection": "observed-mutation-paired-call-support-24000-chars-v3",
             "observed_source_index": "delivered-lexical-headers-16-entries-4000-chars-v1",
             "tool_closure_warning": "actual-single-inspection-successor-conditional-v1",
-            "working_notes": "stable-note-id-independent-body-durable-lifecycle-v3",
+            "working_notes": "stable-notes-diff-scoped-question-evidence-v5",
+            "question_evidence": "two-role-refs-current-diff-countercheck-first-v2",
             "source_note_normalization": "shared-observation-lf-not-mutation-format-v1",
             "working_note_feedback": "action-bound-expiry-independent-of-annotation-v3",
             "working_note_receipt_projection": "exact-prior-native-receipt-reference-v1",
@@ -107,16 +145,17 @@ def dev_tool_surface_hash(*, planning_policy: str = "none", probe_policy: str = 
             "working_note_guidance": "compact-reusable-facts-and-lifecycle-guidance-v2",
             "verification_concerns": "original-question-progress-note-exact-noop-v2",
             "check_evidence_identity": "retained-action-check-diff-explicit-completion-currency-v2",
-            "check_definition_review": "registered-literal-targets-current-source-navigation-v1",
+            "check_definition_review": "registered-selection-requirement-scope-unassessed-v2",
             "check_definition_review_bounds": [
                 check_review.MAX_TARGETS, check_review.MAX_RANGES,
                 check_review.MAX_TARGET_CHARS, check_review.MAX_REVIEW_CHARS,
             ],
             "behavior_verification": "current-diff-intent-and-public-results-v3",
             "verification_concern_limit": 3,
-            "submission_guidance": "current-check-finish-versus-unsuccessful-voluntary-stop-v2",
+            "submission_guidance": "current-check-review-before-finish-v3",
             "working_note_source_body_chars": 24_000,
             "public_probe": "optional-clean-python-diagnostic-protected-budget-v1",
+            "public_probe_replay": "explicit-completed-action-program-current-diff-v1",
             "public_probe_dependencies": "opt-in-public-locked-wheels-offline-snapshot-v1",
             "public_probe_discovery": "explicit-source-root-and-stdlib-reduction-limits-v2",
             "public_probe_process_guidance": "same-process-threads-no-child-process-v1",
@@ -148,6 +187,7 @@ class StrictModel(BaseModel):
 
 
 class DevTerminal(StrEnum):
+    PATCH_READY = "PATCH_READY"
     EVALUATOR_PASS = "EVALUATOR_PASS"
     EVALUATOR_FAIL = "EVALUATOR_FAIL"
     EVALUATOR_ERROR = "EVALUATOR_ERROR"
@@ -207,6 +247,18 @@ class TextReplacementIntent(StrictModel):
         return self
 
 
+class FinishIntent(StrictModel):
+    """The agent's public submission judgment, bound to the diff by the gateway."""
+
+    assessment: str = Field(min_length=1, max_length=1_500)
+
+    @model_validator(mode="after")
+    def assessment_is_nonblank(self) -> FinishIntent:
+        if not self.assessment.strip():
+            raise ValueError("finish_task requires a nonblank submission assessment")
+        return self
+
+
 class StopIntent(StrictModel):
     reason_code: Literal[
         "insufficient_public_evidence",
@@ -226,12 +278,14 @@ class PublicTurnDecision(StrictModel):
     memory_update: Any = None
     # Independent annotation parsing must not turn a bad plan into a tool failure.
     plan_update: Any = None
+    plan_update_reason: Any = None
 
     @model_serializer(mode="wrap")
     def preserve_optional_plan_wire(self, handler: Any) -> dict[str, Any]:
         result = handler(self)
-        if "plan_update" not in self.model_fields_set:
-            result.pop("plan_update", None)
+        for field in ("plan_update", "plan_update_reason"):
+            if field not in self.model_fields_set:
+                result.pop(field, None)
         return result
 
     @model_validator(mode="after")
@@ -248,6 +302,34 @@ class RequestedTool(StrictModel):
     action_id: str = Field(min_length=1, max_length=500)
     arguments: dict[str, Any] = Field(default_factory=dict)
     turn_decision: PublicTurnDecision | None = None
+    # Thin-policy annotations remain independent and nonblocking, like legacy notes.
+    memory_update: Any = None
+    # Provider B records must distinguish an absent decision from an explicitly
+    # invalid null even after durable hydration. Legacy A keeps its original dumps.
+    preserve_annotation_presence: bool = Field(
+        default=False, exclude_if=lambda value: value is False,
+    )
+    # An unadvertised B decision is rejected as received, never parsed as A data.
+    rejected_turn_decision: Any = None
+
+    @model_serializer(mode="wrap")
+    def preserve_annotation_wire(self, handler: Any) -> dict[str, Any]:
+        result = handler(self)
+        if "memory_update" not in self.model_fields_set:
+            result.pop("memory_update", None)
+        if "rejected_turn_decision" not in self.model_fields_set:
+            result.pop("rejected_turn_decision", None)
+        has_wire_presence = (self.preserve_annotation_presence
+                             or "memory_update" in self.model_fields_set)
+        if "turn_decision" not in self.model_fields_set and has_wire_presence:
+            result.pop("turn_decision", None)
+        return result
+
+    @property
+    def actual_memory_update(self) -> Any:
+        if "memory_update" in self.model_fields_set:
+            return self.memory_update
+        return self.turn_decision.memory_update if self.turn_decision is not None else None
 
 
 class EncryptedReasoningContinuationItem(StrictModel):
@@ -348,7 +430,7 @@ class DevToolResult(StrictModel):
     workspace_diff_hash: str | None = None
 
 
-class DevRunRequest(StrictModel):
+class RunRequest(StrictModel):
     provider: Literal["mock", "openai"]
     task: Path
     model: str
@@ -370,13 +452,26 @@ class DevRunRequest(StrictModel):
     prepared_probe_dependencies: Path | None = None
     enable_probes: bool = False
     probe_policy: Literal["none", "cases-v1", "reference-cases-v1"] = "none"
+    probe_recheck: Literal["none", "saved-program-v1"] = Field(
+        default="none", exclude_if=lambda value: value == "none",
+    )
     repair_recheck: bool = False
     repair_inspection_policy: Literal["protected-v1", "current-failure-v1"] = "protected-v1"
+    history_search_policy: history_search.Policy = Field(
+        default="none", exclude_if=lambda value: value == "none",
+    )
+    agent_policy: Literal["current", "thin"] = Field(
+        default="current", exclude_if=lambda value: value == "current",
+    )
     planning_policy: Literal[
         "none", "brief-v1", "brief-evidence-v1", "brief-assumption-v1",
         "brief-after-source-v1",
     ] = "none"
     context_policy: Literal["append-v1", "native-window-v1", "segmented-v1"] = "append-v1"
+    retained_source_chars: RetainedSourceChars = Field(
+        default=RETAINED_SOURCE_CHARS,
+        exclude_if=lambda value: value == RETAINED_SOURCE_CHARS,
+    )
     segment_boundary_policy: segments.BoundaryPolicy = segments.DEFAULT_BOUNDARY_POLICY
     completion_cost_policy: cost.CompletionCostPolicy = cost.DEFAULT_COMPLETION_COST_POLICY
     compact_at_input_tokens: int | None = Field(default=None, gt=0, lt=272_000)
@@ -384,7 +479,13 @@ class DevRunRequest(StrictModel):
     limits: DevLimits = Field(default_factory=DevLimits)
 
     @model_validator(mode="after")
-    def provider_options_match(self) -> DevRunRequest:
+    def provider_options_match(self) -> RunRequest:
+        if self.history_search_policy != "none" and (
+            self.context_policy != segments.POLICY or self.agent_policy != "current"
+        ):
+            raise ValueError("--history-search public-v1 requires segmented-v1 and current policy")
+        if self.agent_policy == "thin" and self.planning_policy != "none":
+            raise ValueError("--agent-policy thin requires --planning-policy none")
         if (self.completion_cost_policy != cost.DEFAULT_COMPLETION_COST_POLICY
                 and self.context_policy != segments.POLICY):
             raise ValueError("--completion-cost-policy completion-reserve-v1 requires segmented-v1")
@@ -395,6 +496,10 @@ class DevRunRequest(StrictModel):
             raise ValueError("--prepared-probe-dependencies requires --enable-probes")
         if self.probe_policy != "none" and not self.enable_probes:
             raise ValueError("--probe-policy cases-v1 requires --enable-probes")
+        if self.probe_recheck != "none" and (
+            not self.enable_probes or self.probe_policy != "cases-v1"
+        ):
+            raise ValueError("--probe-recheck requires --enable-probes and --probe-policy cases-v1")
         if self.planning_policy != "none" and self.context_policy not in {
             "append-v1", "segmented-v1",
         }:
@@ -425,8 +530,23 @@ class DevRunRequest(StrictModel):
         return self
 
 
-class DevRunEnvelope(StrictModel):
-    schema_version: Literal["dev-run-envelope-v1"] = "dev-run-envelope-v1"
+class DevRunRequest(RunRequest):
+    """An evaluated development task; private task admission remains mandatory."""
+
+    evaluation_reserve_seconds: int = Field(
+        default=0, ge=0, strict=True, exclude_if=lambda value: value == 0,
+    )
+
+    @model_validator(mode="after")
+    def evaluation_reserve_fits(self) -> DevRunRequest:
+        if self.evaluation_reserve_seconds >= self.limits.wall_time_seconds:
+            raise ValueError(
+                "evaluation reserve must leave positive solver time within the total limit"
+            )
+        return self
+
+
+class RunEnvelope(StrictModel):
     official: Literal[False] = False
     runtime_id: Literal["dev-head"] = "dev-head"
     run_id: str = Field(pattern=r"^run_dev_[a-zA-Z0-9_-]+$")
@@ -434,13 +554,6 @@ class DevRunEnvelope(StrictModel):
     task_path: str
     task_id: str
     task_version: int = Field(ge=1)
-    split: Literal[
-        "smoke",
-        "dev-train",
-        "dev-validation",
-        "same-repo-heldout",
-        "cross-repo-heldout",
-    ]
     base_commit: str
     prepared_source_path: str | None = None
     prepared_source_hash: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
@@ -451,20 +564,32 @@ class DevRunEnvelope(StrictModel):
         default=None, exclude_if=lambda value: value is None,
     )
     public_spec_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
-    private_spec_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     task_content_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     runtime_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     model_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     sandbox_identity_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    probe_recheck: Literal["none", "saved-program-v1"] = Field(
+        default="none", exclude_if=lambda value: value == "none",
+    )
     repair_recheck: bool = False
     repair_inspection_policy: Literal["protected-v1", "current-failure-v1"] = Field(
         default="protected-v1", exclude_if=lambda value: value == "protected-v1",
+    )
+    history_search_policy: history_search.Policy = Field(
+        default="none", exclude_if=lambda value: value == "none",
+    )
+    agent_policy: Literal["current", "thin"] = Field(
+        default="current", exclude_if=lambda value: value == "current",
     )
     planning_policy: Literal[
         "none", "brief-v1", "brief-evidence-v1", "brief-assumption-v1",
         "brief-after-source-v1",
     ] = "none"
     context_policy: Literal["append-v1", "native-window-v1", "segmented-v1"] = "append-v1"
+    retained_source_chars: RetainedSourceChars = Field(
+        default=RETAINED_SOURCE_CHARS,
+        exclude_if=lambda value: value == RETAINED_SOURCE_CHARS,
+    )
     segment_boundary_policy: segments.BoundaryPolicy = Field(
         default=segments.DEFAULT_BOUNDARY_POLICY,
         exclude_if=lambda value: value == segments.DEFAULT_BOUNDARY_POLICY,
@@ -496,14 +621,16 @@ class DevRunEnvelope(StrictModel):
     cost_start_nanos: int = Field(ge=0)
     limits: DevLimits
     sandbox_backend: Literal["local", "docker"]
-    evaluator_image_digest: str | None = Field(
-        default=None,
-        pattern=r"^sha256:[0-9a-f]{64}$",
-    )
     created_at: datetime
 
     @model_validator(mode="after")
-    def provider_boundary_is_exact(self) -> DevRunEnvelope:
+    def provider_boundary_is_exact(self) -> RunEnvelope:
+        if self.history_search_policy != "none" and (
+            self.context_policy != segments.POLICY or self.agent_policy != "current"
+        ):
+            raise ValueError("history search requires segmented-v1 and current policy")
+        if self.agent_policy == "thin" and self.planning_policy != "none":
+            raise ValueError("thin policy forbids planning state")
         if self.completion_cost_policy == cost.COMPLETION_RESERVE_POLICY:
             if (self.context_policy != segments.POLICY
                     or self.completion_cost_contract != cost.completion_cost_contract()):
@@ -513,6 +640,8 @@ class DevRunEnvelope(StrictModel):
         if (self.segment_boundary_policy != segments.DEFAULT_BOUNDARY_POLICY
                 and self.context_policy != segments.POLICY):
             raise ValueError("size-only-v1 boundary requires segmented-v1")
+        if self.probe_recheck != "none" and self.probe_policy != "cases-v1":
+            raise ValueError("probe recheck requires cases-v1")
         if self.probe_policy != "none" and self.probe_image_digest is None:
             raise ValueError("probe cases require enabled probe identities")
         if self.planning_policy != "none" and self.context_policy not in {
@@ -539,7 +668,7 @@ class DevRunEnvelope(StrictModel):
                 self.credential_file_path_hash is None
                 or self.max_cost_nanos <= 0
                 or self.sandbox_backend != "docker"
-                or self.evaluator_image_digest is None
+                or self.execution_image_digest is None
             ):
                 raise ValueError("live run envelope is missing an exact execution boundary")
         elif (
@@ -547,7 +676,38 @@ class DevRunEnvelope(StrictModel):
             or self.max_cost_nanos != 0
             or self.cost_start_nanos != 0
             or self.sandbox_backend != "local"
-            or self.evaluator_image_digest is not None
+            or self.execution_image_digest is not None
         ):
             raise ValueError("mock run envelope contains a live execution boundary")
         return self
+
+
+class DevRunEnvelope(RunEnvelope):
+    schema_version: Literal["dev-run-envelope-v1"] = "dev-run-envelope-v1"
+    split: Literal[
+        "smoke",
+        "dev-train",
+        "dev-validation",
+        "same-repo-heldout",
+        "cross-repo-heldout",
+    ]
+    private_spec_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    evaluator_image_digest: str | None = Field(
+        default=None,
+        pattern=r"^sha256:[0-9a-f]{64}$",
+    )
+    evaluation_reserve_seconds: int = Field(
+        default=0, ge=0, strict=True, exclude_if=lambda value: value == 0,
+    )
+
+    @model_validator(mode="after")
+    def evaluation_reserve_fits(self) -> DevRunEnvelope:
+        if self.evaluation_reserve_seconds >= self.limits.wall_time_seconds:
+            raise ValueError(
+                "evaluation reserve must leave positive solver time within the total limit"
+            )
+        return self
+
+    @property
+    def execution_image_digest(self) -> str | None:
+        return self.evaluator_image_digest

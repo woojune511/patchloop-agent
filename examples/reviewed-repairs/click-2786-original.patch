@@ -1,0 +1,68 @@
+diff --git a/src/click/core.py b/src/click/core.py
+index 59ed94e..f166413 100644
+--- a/src/click/core.py
++++ b/src/click/core.py
+@@ -1399,8 +1399,16 @@ class Command:
+ 
+         parser = self.make_parser(ctx)
+         opts, args, param_order = parser.parse_args(args=args)
++        ctx._parameter_order = param_order
+ 
+         for param in iter_params_for_processing(param_order, self.get_params(ctx)):
++            if (
++                param not in ctx._parameter_order
++                and ctx.get_parameter_source(param.name)
++                is ParameterSource.COMMANDLINE
++            ):
++                continue
++
+             _, args = param.handle_parse_result(ctx, opts, args)
+ 
+         # We now have all parameters' values into `ctx.params`, but the data may contain
+diff --git a/tests/test_options.py b/tests/test_options.py
+index 3434ce6..abc4a8b 100644
+--- a/tests/test_options.py
++++ b/tests/test_options.py
+@@ -2003,6 +2003,42 @@ def test_default_dual_option_callback(runner, default, args, expected):
+     assert result.exit_code == 0
+ 
+ 
++def test_shared_option_callback_prefers_flag_value_when_custom_omitted(runner):
++    sentinel = "$_fetch"
++    fetch_calls = 0
++
++    def fetch():
++        nonlocal fetch_calls
++        fetch_calls += 1
++        return "foo"
++
++    def callback(ctx, param, value):
++        if value == sentinel:
++            return fetch()
++        return value
++
++    @click.command()
++    @click.option("--custom", "custom")
++    @click.option("--fetch", "custom", flag_value=sentinel, callback=callback)
++    def cli(custom):
++        click.echo(custom)
++
++    result = runner.invoke(cli, ["--custom", "bar"])
++    assert result.exit_code == 0
++    assert result.output == "bar\n"
++    assert fetch_calls == 0
++
++    result = runner.invoke(cli, ["--fetch"])
++    assert result.exit_code == 0
++    assert result.output == "foo\n"
++    assert fetch_calls == 1
++
++    result = runner.invoke(cli, ["--custom", "bar", "--fetch"])
++    assert result.exit_code == 0
++    assert result.output == "foo\n"
++    assert fetch_calls == 2
++
++
+ @pytest.mark.parametrize(
+     ("flag_value", "envvar_value", "expected"),
+     [

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 import os
 import uuid
@@ -27,7 +28,15 @@ from patchloop.agent.usage_diagnostics import usage_failure_message
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import Artifact, ModelConfig, RunManifest, VerdictState
 from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
-from patchloop.dev import native_compaction, segments, working_plan
+from patchloop.dev import (
+    evidence_focus,
+    history_search,
+    native_compaction,
+    probe_recheck,
+    segments,
+    thin_policy,
+    working_plan,
+)
 from patchloop.dev.check_feedback import output_tail
 from patchloop.dev.compaction import CompactionAdapter
 from patchloop.dev.completion_budget import (
@@ -50,6 +59,8 @@ from patchloop.dev.contracts import (
     ProviderContinuationArtifact,
     ProviderContinuationRef,
     RequestedTool,
+    RunEnvelope,
+    RunRequest,
     dev_tool_surface_hash,
 )
 from patchloop.dev.conversation import (
@@ -92,8 +103,13 @@ from patchloop.dev.native_sources import (
 )
 from patchloop.dev.probe_observation import probe_observation, project_probe_result
 from patchloop.dev.public_history import NATIVE
-from patchloop.dev.repair_recheck import repair_recheck_context, select_repair_recheck
+from patchloop.dev.repair_recheck import (
+    latest_repair_check,
+    repair_recheck_context,
+    select_repair_recheck,
+)
 from patchloop.dev.state import DevJournal
+from patchloop.dev.test_selection import recent_tests
 from patchloop.dev.tools import (
     DevGatewayStateSnapshot,
     DevToolGateway,
@@ -110,6 +126,14 @@ from patchloop.errors import (
 from patchloop.git_execution import GitExecutionUncertain, run_git
 from patchloop.prepared_probe_dependencies import admit, load_dependencies
 from patchloop.prepared_source import admission_hash, load_source
+from patchloop.repair import (
+    RepairEnvelope,
+    RepairRunRequest,
+    RepairTask,
+    load_delivery,
+    prepared_sandbox,
+    record_delivery,
+)
 from patchloop.repository import WorkspaceManager
 from patchloop.runtime import (
     git_commit,
@@ -119,7 +143,7 @@ from patchloop.runtime import (
     runtime_content_paths,
 )
 from patchloop.sandbox import DockerSandbox, LocalSandbox
-from patchloop.sandbox.probes import PROBE_IMAGE_DIGEST, DockerProbeSandbox, probe_profile_hash
+from patchloop.sandbox.probes import DockerProbeSandbox, probe_profile, probe_profile_hash
 from patchloop.sandbox.runner import SandboxCleanupError
 from patchloop.task_loader import load_task_package, task_package_content_paths
 from patchloop.util import canonical_json, sha256_bytes, sha256_json, utc_now
@@ -193,6 +217,12 @@ class _ToolPolicy:
     inspection_reserve_calls: int = 0
     inspection_released_check_recovery_calls: int = 0
     completion_cost: dict[str, Any] | None = None
+    repair_recheck: bool = False
+    minimum_completion_tool_actions: int = 0
+    completion_budget_tool_actions: int = 0
+    optional_mutation_completion_tool_actions: int = 0
+    optional_mutation_protected_tool_actions: int = 0
+    inspection_reserve_tool_actions: int = 0
 
     @property
     def feedback_recovery_reserve_calls(self) -> int:
@@ -226,7 +256,7 @@ def _runtime_hash() -> str:
     return runtime_content_hash()
 
 
-def _model_hash(request: DevRunRequest, pricing: ModelPricing | None) -> str:
+def _model_hash(request: RunRequest, pricing: ModelPricing | None) -> str:
     from patchloop.dev import probe_cases
 
     return sha256_json(
@@ -235,17 +265,29 @@ def _model_hash(request: DevRunRequest, pricing: ModelPricing | None) -> str:
             "model": request.model,
             "reasoning_effort": request.reasoning_effort,
             "context_policy": request.context_policy,
+            **({"history_search_contract": history_search.contract()}
+               if request.history_search_policy != "none" else {}),
+            **({"agent_policy_contract": thin_policy.contract()}
+               if request.agent_policy == "thin" else {}),
+            **({"retained_source_chars": request.retained_source_chars}
+               if request.retained_source_chars != 24_000 else {}),
+            **({"evaluation_reserve_seconds": request.evaluation_reserve_seconds}
+               if isinstance(request, DevRunRequest)
+               and request.evaluation_reserve_seconds else {}),
             **({"completion_cost_contract": completion_cost_contract()}
                if request.completion_cost_policy == COMPLETION_RESERVE_POLICY else {}),
             **({"repair_inspection_policy": request.repair_inspection_policy}
                if request.repair_inspection_policy != "protected-v1" else {}),
-            **({"segment_contract": segments.contract(request.segment_boundary_policy)}
+            **({"segment_contract": segments.contract(
+                request.segment_boundary_policy, agent_policy=request.agent_policy)}
                if request.context_policy == segments.POLICY else {}),
             "compaction_contract": native_compaction.policy_contract(request),
             **({"planning_contract": working_plan.contract(request.planning_policy)}
                if request.planning_policy != "none" else {}),
             **({"probe_case_contract": probe_cases.contract(request.probe_policy)}
                if request.probe_policy != "none" else {}),
+            **({"probe_recheck_contract": probe_recheck.contract()}
+               if request.probe_recheck != "none" else {}),
             "transport_max_retries": 0 if request.provider == "openai" else None,
             "service_tier": "default",
             "api_base_url": "https://api.openai.com/v1",
@@ -343,7 +385,7 @@ def _live_sandbox_preflight(
 
 def _manifest(
     *,
-    request: DevRunRequest,
+    request: RunRequest,
     package: Any,
     run_id: str,
     sandbox_backend: str,
@@ -359,8 +401,11 @@ def _manifest(
 ) -> RunManifest:
     return RunManifest(
         run_id=run_id,
+        agent_policy=request.agent_policy,
         planning_policy=request.planning_policy,
         probe_policy=request.probe_policy,
+        probe_recheck=request.probe_recheck,
+        history_search_policy=request.history_search_policy,
         task_id=package.public.task_id,
         task_version=package.public.task_version,
         base_commit=package.public.repository.base_commit,
@@ -370,10 +415,14 @@ def _manifest(
         runtime_content_hash=runtime_hash,
         model_hash=model_hash,
         tool_surface_hash=dev_tool_surface_hash(
+            history_search_policy=request.history_search_policy,
+            agent_policy=request.agent_policy,
             planning_policy=request.planning_policy, probe_policy=request.probe_policy,
+            probe_recheck=request.probe_recheck,
         ),
         sandbox_identity_hash=_sandbox_identity_hash(request, package, probe_dependencies),
-        probe_image_digest=PROBE_IMAGE_DIGEST if request.enable_probes else None,
+        probe_image_digest=(probe_profile(probe_dependencies)["image_digest"]
+                            if request.enable_probes else None),
         probe_profile_hash=(probe_profile_hash(probe_dependencies)
                             if request.enable_probes else None),
         probe_dependencies=probe_dependencies,
@@ -549,18 +598,18 @@ def _completion_guidance(
     )
     if snapshot.ready_to_submit and "finish_task" in allowed:
         stage = "ready_to_submit"
-        next_action = {"tool": "finish_task"}
         message = (
-            "All required visible checks pass on the current diff; submission is eligible, "
-            "not proof of untested behavior. "
+            "Current required checks pass; this establishes eligibility, not correctness. "
+            "Before deciding whether the task is complete, revisit unfinished verification "
+            "plans and unsupported public requirements. Continue if an available action "
+            "could resolve a material gap. Only if you judge complete, call finish_task with "
+            "your assessment explaining why evidence suffices and remaining gaps do not "
+            "affect completion. Edits require fresh checks and reassessment. "
         )
         if "run_probe" in allowed:
             message += (
-                "Use run_probe if a concrete remaining public uncertainty could change the edit; "
-                "otherwise use finish_task to submit. No extra experiment is required."
+                "Use run_probe when it could change this judgment."
             )
-        else:
-            message += "Use finish_task to submit; keep any remaining uncertainty explicit."
     elif needs_mutation:
         if "replace_text" in allowed:
             stage = "needs_mutation"
@@ -643,6 +692,7 @@ def _tool_policy(
     *,
     snapshot: DevGatewayStateSnapshot | None = None,
     repair_inspection_policy: str = "protected-v1",
+    repair_recheck: bool = False,
     cost_ledger: DevCostLedger | None = None,
     completion_cost_policy: str = DEFAULT_COMPLETION_COST_POLICY,
     _preview_inspection: bool = True,
@@ -707,6 +757,13 @@ def _tool_policy(
         and counters.failed_check_pending
         and not counters.failed_check_repair_read_used
     )
+    current_recheck_eligible = bool(
+        repair_recheck and current_check_failed and getattr(gateway, "journal", None) is not None
+        and latest_repair_check(
+            gateway.journal.events(), baseline=summary.patch_hash,
+            registered_checks={check.id for check in gateway.public_task.visible_checks},
+        ) is not None
+    )
     completion_state = CompletionState(
         check_count=len(gateway.public_task.visible_checks),
         remaining_check_count=len(remaining_check_ids),
@@ -717,17 +774,19 @@ def _tool_policy(
         remaining_mutations=remaining_mutations,
         mutation_retry_available=not counters.mutation_recovery_used,
         repair_read_credit=repair_read_credit,
+        automatic_recheck=repair_recheck,
+        current_recheck_eligible=current_recheck_eligible,
     )
     budget = completion_budget(completion_state)
     completion_possible = (
         remaining_model_calls >= budget.minimum
-        and remaining_tool_actions >= budget.minimum
+        and remaining_tool_actions >= budget.minimum_tool_actions
         and (not requires_mutation or mutation_capacity)
     )
     protected_completion_possible = (
         completion_possible
         and remaining_model_calls >= budget.protected
-        and remaining_tool_actions >= budget.protected
+        and remaining_tool_actions >= budget.protected_tool_actions
     )
 
     # An inspection can spend its reserved repair credit, or acquire a missing
@@ -745,6 +804,11 @@ def _tool_policy(
         if required_inspection and not protected_completion_possible
         else inspection_budget.protected
     )
+    inspection_tool_floor = (
+        inspection_budget.minimum_tool_actions
+        if required_inspection and not protected_completion_possible
+        else inspection_budget.protected_tool_actions
+    )
     # On an observed current failure, the opt-in policy can spend speculative
     # future-check recovery on inspection. Keep the full forecast for all other
     # actions; a later failed check is no longer guaranteed a recovery path.
@@ -757,7 +821,8 @@ def _tool_policy(
     ):
         released_check_recovery = inspection_budget.check_recovery_reserve
         inspection_floor -= released_check_recovery
-    inspection_tool_slack = remaining_tool_actions - inspection_floor
+        inspection_tool_floor -= inspection_budget.check_recovery_tool_actions
+    inspection_tool_slack = remaining_tool_actions - inspection_tool_floor
     inspection_model_slack = remaining_model_calls - inspection_floor
     inspection_allowed = (
         completion_possible
@@ -789,14 +854,14 @@ def _tool_policy(
             requires_mutation
             or (
                 remaining_model_calls >= optional_mutation_completion_calls
-                and remaining_tool_actions >= optional_mutation_completion_calls
+                and remaining_tool_actions >= mutation_budget.minimum_tool_actions
             )
         )
     )
     mutation_protected_completion_possible = (
         mutation_allowed
         and remaining_model_calls >= optional_mutation_protected_calls
-        and remaining_tool_actions >= optional_mutation_protected_calls
+        and remaining_tool_actions >= mutation_budget.protected_tool_actions
     )
     allowed = {"stop_task"}
     available_check_ids = unrun_checks
@@ -808,39 +873,55 @@ def _tool_policy(
             allowed.add("finish_task")
         if inspection_allowed:
             allowed.update({"read_file", "search_files"})
+            # Historical evidence cannot satisfy the reserved current-anchor read
+            # or consume a failed-check repair-read credit. Fund it as optional work.
+            if (getattr(gateway, "history_search_policy", "none") == history_search.POLICY
+                    and remaining_model_calls - 1 >= budget.protected
+                    and remaining_tool_actions - 1 >= budget.protected_tool_actions):
+                allowed.add(history_search.TOOL)
         if mutation_allowed:
             allowed.add("replace_text")
         # On a baseline that already requires repair, a diagnostic check is
         # optional work and must leave the whole protected repair path intact.
         if requires_mutation:
-            check_successor_floors = {
-                check_id: max(
-                    budget.protected,
-                    completion_budget(replace(
+            check_successor_budgets = {
+                check_id: completion_budget(replace(
                         completion_state,
                         unused_check_count=(completion_state.unused_check_count
                                             - int(check_id in unused_check_ids)),
                         repair_read_credit=True,
-                    )).protected,
-                )
+                        current_recheck_eligible=repair_recheck,
+                    ))
                 for check_id in unrun_checks
             }
             available_check_ids = tuple(
                 check_id
                 for check_id in unrun_checks
-                if min(remaining_model_calls, remaining_tool_actions) - 1
-                >= check_successor_floors[check_id]
+                if remaining_model_calls - 1 >= max(
+                    budget.protected, check_successor_budgets[check_id].protected,
+                ) and remaining_tool_actions - 1 >= max(
+                    budget.protected_tool_actions,
+                    check_successor_budgets[check_id].protected_tool_actions,
+                )
             )
             check_successor_reserve = max(
-                (check_successor_floors[c] for c in available_check_ids), default=0,
+                (max(budget.protected, check_successor_budgets[c].protected)
+                 for c in available_check_ids), default=0,
             )
         if available_check_ids:
             allowed.add("run_check")
         if (
             getattr(gateway, "probe_sandbox", None) is not None
-            and min(remaining_model_calls, remaining_tool_actions) - 1 >= budget.protected
+            and remaining_model_calls - 1 >= budget.protected
+            and remaining_tool_actions - 1 >= budget.protected_tool_actions
         ):
             allowed.add("run_probe")
+        if (
+            getattr(gateway.public_task, "test_suites", [])
+            and remaining_model_calls - 1 >= budget.protected
+            and remaining_tool_actions - 1 >= budget.protected_tool_actions
+        ):
+            allowed.add("run_tests")
 
     exploration_capacity = (
         max(0, min(inspection_model_slack, inspection_tool_slack))
@@ -910,6 +991,12 @@ def _tool_policy(
         repair_inspection_policy=repair_inspection_policy,
         inspection_reserve_calls=inspection_floor,
         inspection_released_check_recovery_calls=released_check_recovery,
+        repair_recheck=repair_recheck,
+        minimum_completion_tool_actions=budget.minimum_tool_actions,
+        completion_budget_tool_actions=budget.protected_tool_actions,
+        optional_mutation_completion_tool_actions=mutation_budget.minimum_tool_actions,
+        optional_mutation_protected_tool_actions=mutation_budget.protected_tool_actions,
+        inspection_reserve_tool_actions=inspection_tool_floor,
     )
     if funded_calls is not None:
         successors = [0]  # finish/stop have no subsequent provider call.
@@ -920,7 +1007,7 @@ def _tool_policy(
                 optional_mutation_protected_calls
                 if mutation_protected_completion_possible else optional_mutation_completion_calls
             ) - 1)
-        if "run_probe" in allowed:
+        if {"run_probe", "run_tests", history_search.TOOL} & allowed:
             successors.append(budget.protected)
         if "run_check" in allowed:
             successors.append(check_successor_reserve)
@@ -955,6 +1042,7 @@ def _tool_policy(
             limits,
             snapshot=snapshot,
             repair_inspection_policy=repair_inspection_policy,
+            repair_recheck=repair_recheck,
             cost_ledger=cost_ledger,
             completion_cost_policy=completion_cost_policy,
             _preview_inspection=False,
@@ -976,11 +1064,22 @@ def _repair_inspection_payload(policy: _ToolPolicy) -> dict[str, Any]:
         "policy": policy.repair_inspection_policy,
         "reserve_calls_after_inspection": policy.inspection_reserve_calls,
         "released_future_check_recovery_calls": policy.inspection_released_check_recovery_calls,
+        **({"reserve_tool_actions_after_inspection": policy.inspection_reserve_tool_actions}
+           if policy.repair_recheck else {}),
     }}
 
 
 def _completion_cost_payload(policy: _ToolPolicy) -> dict[str, Any]:
     return {"completion_cost": policy.completion_cost} if policy.completion_cost is not None else {}
+
+
+def _completion_resources_payload(policy: _ToolPolicy) -> dict[str, Any]:
+    if not policy.repair_recheck:
+        return {}
+    return {
+        "minimum_completion_tool_actions": policy.minimum_completion_tool_actions,
+        "completion_budget_tool_actions": policy.completion_budget_tool_actions,
+    }
 
 
 def _mutation_completion_horizon(policy: _ToolPolicy) -> dict[str, Any]:
@@ -989,6 +1088,10 @@ def _mutation_completion_horizon(policy: _ToolPolicy) -> dict[str, Any]:
     return {
         "minimum_calls": policy.optional_mutation_completion_calls,
         "protected_calls": policy.optional_mutation_protected_calls,
+        **({
+            "minimum_tool_actions": policy.optional_mutation_completion_tool_actions,
+            "protected_tool_actions": policy.optional_mutation_protected_tool_actions,
+        } if policy.repair_recheck else {}),
         "minimum_possible": policy.mutation_completion_possible,
         "protected_possible": policy.mutation_protected_completion_possible,
         "recovery_warning": (
@@ -1058,7 +1161,7 @@ def _completion_horizon_payload(
         blocking_resources.append("cost")
     if remaining_model_calls < policy.minimum_completion_calls:
         blocking_resources.append("model_calls")
-    if remaining_tool_actions < policy.minimum_completion_calls:
+    if remaining_tool_actions < policy.minimum_completion_tool_actions:
         blocking_resources.append("tool_actions")
     current_diff = snapshot.diff if snapshot is not None else gateway.current_diff
     visible_status = (
@@ -1079,6 +1182,7 @@ def _completion_horizon_payload(
         "remaining_model_calls": remaining_model_calls,
         "remaining_tool_actions": remaining_tool_actions,
         "minimum_completion_calls": policy.minimum_completion_calls,
+        **_completion_resources_payload(policy),
         "blocking_resources": blocking_resources,
         **_completion_cost_payload(policy),
     }
@@ -1189,11 +1293,20 @@ def _protocol_correction(
             "diff satisfy completion; a check on an empty diff is diagnostic."
         )
     if "finish_task" in allowed:
-        actions.append("Use finish_task to submit the current visibly checked diff.")
+        actions.append(
+            "Before finish_task, judge the current evidence against public requirements "
+            "and unfinished verification plans; justify remaining gaps in the assessment. "
+            "Submit only if you judge the task complete."
+        )
     if "run_probe" in allowed:
         actions.append(
             "Use run_probe for a small public behavior experiment when useful; it is "
             "diagnostic only and never replaces required visible checks."
+        )
+    if "run_tests" in allowed:
+        actions.append(
+            "Use run_tests to select public test files or node IDs from a registered suite; "
+            "selected tests do not replace required visible checks."
         )
     if "stop_task" in allowed:
         actions.append(
@@ -1232,8 +1345,10 @@ def _build_context(
     tool_policy_transition: dict[str, Any] | None = None,
     projection: SourceProjection | None = None,
     repair_recheck: bool = False,
+    probe_recheck_policy: str = "none",
     repair_inspection_policy: str = "protected-v1",
     planning_policy: str = "none",
+    evaluation_reserve_seconds: int = 0,
 ) -> str:
     projection = projection or gateway.prepare_context_projection(
         latest_results=latest_tool_results,
@@ -1249,6 +1364,7 @@ def _build_context(
         limits,
         snapshot=active_snapshot,
         repair_inspection_policy=repair_inspection_policy,
+        repair_recheck=repair_recheck,
     )
     commitment_signal = _commitment_signal(
         gateway,
@@ -1282,8 +1398,15 @@ def _build_context(
             ),
             "active_wall_time_seconds": max(
                 0,
-                int(limits.wall_time_seconds - elapsed_seconds),
+                int(limits.wall_time_seconds - evaluation_reserve_seconds - elapsed_seconds),
             ),
+            **({
+                "active_wall_time_scope": "solver",
+                "total_active_wall_time_seconds": max(
+                    0, int(limits.wall_time_seconds - elapsed_seconds),
+                ),
+                "evaluation_reserve_seconds": evaluation_reserve_seconds,
+            } if evaluation_reserve_seconds else {}),
             "consecutive_protocol_corrections": max(
                 0,
                 limits.max_protocol_recoveries - counters.protocol_recoveries,
@@ -1291,6 +1414,7 @@ def _build_context(
         },
         "action_horizon": {
             **_repair_inspection_payload(active_policy),
+            **_completion_resources_payload(active_policy),
             "minimum_completion_calls": active_policy.minimum_completion_calls,
             "completion_budget_calls": active_policy.completion_budget_calls,
             "feedback_recovery_reserve_calls": (active_policy.feedback_recovery_reserve_calls),
@@ -1354,7 +1478,7 @@ def _build_context(
         "working_notes": gateway.working_notes(diff_hash=summary.patch_hash),
         "context_projection": {
             "retained_content_chars": projection.retained_content_chars,
-            "retained_content_limit": 24_000,
+            "retained_content_limit": gateway.retained_source_chars,
             "omitted_observed_line_count": projection.omitted_observed_line_count,
             "omitted_pinned_ranges": list(projection.omitted_pinned_ranges),
             "omitted_observed_ranges": list(projection.omitted_observed_ranges),
@@ -1393,6 +1517,8 @@ def _build_context(
         "recent_attempt_result_next_question": _cards(journal, correction),
         "public_task": package.public.model_dump(mode="json"),
     }
+    if gateway.public_task.test_suites:
+        payload["recent_tests"] = recent_tests(journal.events(), summary.patch_hash)
     if planning_policy != "none":
         payload["working_plan"] = working_plan.project(
             journal.events(), diff_hash=summary.patch_hash, gate=active_policy.workflow_gate,
@@ -1404,6 +1530,12 @@ def _build_context(
         payload["probe_cases"] = probe_cases.project(
             journal.events(), summary.patch_hash, gateway.probe_policy
         )
+    if evaluation_reserve_seconds:
+        payload["completion_guidance"]["message"] += (
+            " active_wall_time_seconds is the remaining solver time, including finish_task. "
+            "The evaluation reserve belongs to the same total task limit and is unavailable "
+            "for additional model calls, edits or public checks."
+        )
     if repair_recheck:
         payload["repair_recheck"] = recheck_context
         last_recheck = recheck_context["last_result"]
@@ -1411,6 +1543,8 @@ def _build_context(
             row["action_id"] == last_recheck["action_id"] for row in payload["recent_checks"]
         ):
             last_recheck["details_delivery"] = "not_retained; consult current visible_check_status"
+    if probe_recheck_policy != "none":
+        payload["probe_recheck"] = probe_recheck.context(journal, summary.patch_hash)
     if getattr(gateway, "probe_sandbox", None) is not None:
         latest_ids = {result.action_id for result in latest_tool_results}
         probes = [
@@ -1438,18 +1572,26 @@ def _build_context(
     # Construction is allowlist-based from ``package.public`` and public tool outputs;
     # private task fields are never accepted as context inputs.
     return json.dumps(
-        project_inspection_context(payload), separators=(",", ":"), ensure_ascii=False,
+        project_inspection_context(payload, agent_policy=gateway.agent_policy),
+        separators=(",", ":"), ensure_ascii=False,
     )
 
 
-def _requested_tool_from_openai(call: Any) -> RequestedTool:
+def _requested_tool_from_openai(call: Any, *, agent_policy: str = "current") -> RequestedTool:
     arguments = dict(call.arguments)
-    turn_decision = arguments.pop("turn_decision", None)
+    if agent_policy == "thin":
+        annotations = {key: arguments.pop(key) for key in ("turn_decision", "memory_update")
+                       if key in arguments}
+        if "turn_decision" in annotations:
+            annotations["rejected_turn_decision"] = annotations.pop("turn_decision")
+    else:
+        annotations = {"turn_decision": arguments.pop("turn_decision", None)}
     return RequestedTool(
         name=call.name,
         action_id=call.action_id,
         arguments=arguments,
-        turn_decision=turn_decision,
+        **({"preserve_annotation_presence": True} if agent_policy == "thin" else {}),
+        **annotations,
     )
 
 
@@ -1499,13 +1641,13 @@ def _tool_contract_failure(
     )
 
 
-def _turn_from_openai(turn: Any) -> DevModelTurn:
+def _turn_from_openai(turn: Any, *, agent_policy: str = "current") -> DevModelTurn:
     calls: list[RequestedTool] = []
     conversion_error: str | None = None
     contract_failure: DevToolContractFailure | None = None
     for call in turn.tool_calls:
         try:
-            calls.append(_requested_tool_from_openai(call))
+            calls.append(_requested_tool_from_openai(call, agent_policy=agent_policy))
         except (TypeError, ValueError, ValidationError) as exc:
             calls = []
             conversion_error = "invalid_dev_tool_contract"
@@ -1682,6 +1824,9 @@ def _model_error_issue(
 
 def _provider_tool_arguments(call: RequestedTool) -> dict[str, Any]:
     arguments = dict(call.arguments)
+    if "memory_update" in call.model_fields_set and "turn_decision" not in call.model_fields_set:
+        arguments["memory_update"] = call.memory_update
+        return arguments
     if call.turn_decision is None:
         raise RecoveryError("public tool transcript is missing its turn decision")
     arguments["turn_decision"] = call.turn_decision.model_dump(mode="json")
@@ -1690,8 +1835,16 @@ def _provider_tool_arguments(call: RequestedTool) -> dict[str, Any]:
 
 def _provider_rejected_call_arguments(call: RequestedTool) -> dict[str, Any]:
     arguments = dict(call.arguments)
-    if call.turn_decision is not None:
+    if "rejected_turn_decision" in call.model_fields_set:
+        arguments["turn_decision"] = call.rejected_turn_decision
+    elif call.turn_decision is not None:
         arguments["turn_decision"] = call.turn_decision.model_dump(mode="json")
+    elif "turn_decision" in call.model_fields_set and (
+        call.preserve_annotation_presence or "memory_update" in call.model_fields_set
+    ):
+        arguments["turn_decision"] = None
+    if "memory_update" in call.model_fields_set:
+        arguments["memory_update"] = call.memory_update
     return arguments
 
 
@@ -1794,8 +1947,10 @@ def _build_model_input(
     latest_tool_results: list[DevToolResult],
     context_policy: str = APPEND_POLICY,
     planning_policy: str = "none",
+    agent_policy: str = "current",
     force_segment_reason: str | None = None,
     segment_boundary_policy: segments.BoundaryPolicy = segments.DEFAULT_BOUNDARY_POLICY,
+    history_search_policy: history_search.Policy = "none",
 ) -> list[dict[str, Any]]:
     """Append the latest exchange to the exact saved active-episode history."""
     events = journal.events()
@@ -1805,8 +1960,10 @@ def _build_model_input(
             return _build_segmented_model_input(
                 journal=journal, store=artifact_store, context=context,
                 latest_results=latest_tool_results, planning_policy=planning_policy,
+                agent_policy=agent_policy,
                 force_reason=force_segment_reason,
                 boundary_policy=segment_boundary_policy,
+                history_search_policy=history_search_policy,
             )
         except (OSError, KeyError, TypeError, ValueError, ContractError, RecoveryError) as exc:
             raise _ProviderContinuationError("segmented public handoff is invalid") from exc
@@ -1864,23 +2021,23 @@ def _build_model_input(
         _deduplicate_native_state(state, latest_tool_results)
     state = project_inspection_context(
         state,
+        agent_policy=agent_policy,
         native_action_ids=[item["call_id"] for item in public_history
                            if item.get("type") == "function_call"],
     )
     state = reference_native_sources(state, history, archive_kind=archive_kind)
     state = compact_model_state(state, history, archive_kind=archive_kind)
     return assemble_model_input(
-        system_prompt=(DEV_SYSTEM_PROMPT + "\n\n" + working_plan.instructions(planning_policy)
-                       if planning_policy != "none" else DEV_SYSTEM_PROMPT),
-        state=state, history=new_history,
+        system_prompt=thin_policy.system_prompt(agent_policy, planning_policy),
+        state=thin_policy.project_state(state, agent_policy), history=new_history,
         previous_input=previous_input, context_policy=context_policy,
         window=compact_window,
     )
 
 
-def _segment_public_base(prompt, state, latest_results, calls):
+def _segment_public_base(prompt, state, latest_results, calls, agent_policy="current"):
     """Build a public-only seed from already observed records; no source reads."""
-    base = segment_seed(prompt, state["public_task"])
+    base = segment_seed(prompt, state["public_task"], agent_policy=agent_policy)
     ids = {r.action_id for r in latest_results}
     quoted = [{"type": "function_call", "call_id": c["action_id"], "name": c["name"],
                "arguments": canonical_json(_provider_tool_arguments(
@@ -1896,13 +2053,14 @@ def _segment_public_base(prompt, state, latest_results, calls):
     return base
 
 
-def _segment_current_view(state, history, latest_results):
+def _segment_current_view(state, history, latest_results, agent_policy="current"):
     public = list(public_exchanges(history, archive_kind=PUBLIC_EVIDENCE_KIND))
     output_ids = {i["call_id"] for i in public if i.get("type") == "function_call_output"}
     if latest_results and all(r.action_id in output_ids for r in latest_results):
         _deduplicate_native_state(state, latest_results)
     state = project_inspection_context(
         state, native_action_ids=[i["call_id"] for i in public if i.get("type") == "function_call"],
+        agent_policy=agent_policy,
     )
     state = reference_native_sources(state, history, archive_kind=PUBLIC_EVIDENCE_KIND)
     view = compact_model_state(state, history, archive_kind=PUBLIC_EVIDENCE_KIND)
@@ -1918,10 +2076,14 @@ def _segment_current_view(state, history, latest_results):
 def _build_segmented_model_input(
     *, journal, store, context, latest_results, planning_policy, force_reason=None,
     boundary_policy: segments.BoundaryPolicy = segments.DEFAULT_BOUNDARY_POLICY,
+    agent_policy="current",
+    history_search_policy: history_search.Policy = "none",
 ):
     """A public, explicitly lossy handoff; never splice or fabricate native history."""
     events = journal.events()
-    binding, handoff = segments.active(journal, store, boundary_policy=boundary_policy)
+    binding, handoff = segments.active(
+        journal, store, boundary_policy=boundary_policy, agent_policy=agent_policy,
+    )
     decision = next((e["payload"] for e in reversed(events)
                      if e["event_type"] == "turn_decision_recorded"), None)
     parent = next((e["payload"] for e in reversed(events)
@@ -1937,20 +2099,57 @@ def _build_segmented_model_input(
         journal=journal, artifact_store=store, context=context, latest_tool_results=latest_results,
     )
     reason = force_reason or segments.boundary_reason(journal, binding)
-    prompt = (DEV_SYSTEM_PROMPT + "\n\n" + working_plan.instructions(planning_policy)
-              if planning_policy != "none" else DEV_SYSTEM_PROMPT)
-    if reason and not segments.is_fresh(journal, binding):
+    prompt = thin_policy.system_prompt(agent_policy, planning_policy, history_search_policy)
+    replace_pending = force_reason in {"omit_optional_evidence", "shrink_history_result"}
+    old_manifest = handoff.get("evidence_manifest", {}) if handoff else {}
+    omit_optional = force_reason == "omit_optional_evidence" or (
+        replace_pending and old_manifest.get("optional_bodies_omitted", False))
+    shrink_history = force_reason == "shrink_history_result" or (
+        replace_pending and old_manifest.get("history_result_reduced", False))
+    if replace_pending:
+        if not binding or not segments.is_fresh(journal, binding):
+            raise RecoveryError("evidence fallback requires a fresh candidate")
+        committed, _ = segments.active(journal, store, committed_only=True)
+        if binding == committed:
+            raise RecoveryError("cannot trim a committed segment")
+        reason = binding["reason"]
+    if reason and (not segments.is_fresh(journal, binding) or replace_pending):
         state = json.loads(context)
         # Canonical gateway records are quoted data, not top-level provider
         # output items. Include the matching real arguments for source/intent refs.
         ids = {r.action_id for r in latest_results}
         calls = [c for e in events if e["event_type"] == "turn_decision_recorded"
                  for c in e["payload"].get("tool_calls", []) if c["action_id"] in ids]
-        base = _segment_public_base(prompt, state, latest_results, calls)
+        seed_results = latest_results
+        if shrink_history:
+            from patchloop.dev.history_evidence import overflow_result
+
+            seed_results = [overflow_result(r) for r in latest_results]
+        base = _segment_public_base(prompt, state, seed_results, calls, agent_policy)
+        optional = [] if omit_optional else evidence_focus.optional_exchanges(
+            state.get("working_notes", {}).get("open_question"), events, ids,
+            diff_hash=state["current_diff"]["patch_hash"],
+        )
+        if optional:
+            base.append(SEGMENT_RULES.archive(exchanges=optional))
+        manifest_view = _segment_current_view(copy.deepcopy(state), base[3:], latest_results,
+                                              agent_policy)
+        manifest = {
+            "question": manifest_view.get("working_notes", {}).get("open_question"),
+            "notes": [{"note_id": n["note_id"], "evidence": n.get("evidence", [])}
+                      for n in manifest_view.get("working_notes", {}).get("findings", [])],
+            "source_projection": state.get("context_projection"),
+            "optional_action_ids": [i["call_id"] for i in optional
+                                    if i["type"] == "function_call_output"],
+            "optional_bodies_omitted": omit_optional,
+            "history_result_reduced": shrink_history,
+        }
         binding = segments.start(
             journal, store, base=base, state=state, reason=reason,
             parent_input_artifact=parent["model_input_artifact"] if parent else None,
             boundary_policy=boundary_policy,
+            agent_policy=agent_policy, prepare=True, replace_pending=replace_pending,
+            evidence_manifest=manifest,
         )
         handoff = segments.load_binding(binding, store)
     if binding is None or handoff is None:
@@ -1980,11 +2179,26 @@ def _build_segmented_model_input(
         "review_requested": fresh, "previous_reasoning_available": False,
         "interpretation": "public execution facts and unverified model-authored notes/plan",
     }
-    view = _segment_current_view(state, history, latest_results)
+    view = _segment_current_view(state, history, latest_results, agent_policy)
     return assemble_model_input(
-        system_prompt=prompt, state=view, history=added, previous_input=previous,
+        system_prompt=prompt, state=thin_policy.project_state(view, agent_policy),
+        history=added, previous_input=previous,
         context_policy=segments.POLICY,
     )
+
+
+def _segment_size_fallback(handoff, latest_results):
+    """Only called after measured overflow of a fresh, uncommitted request."""
+    manifest = handoff.get("evidence_manifest", {})
+    if manifest.get("optional_action_ids"):
+        return "omit_optional_evidence"
+    if not manifest.get("history_result_reduced") and any(
+        r.tool == history_search.TOOL and isinstance(r.output, dict)
+        and len(canonical_json(r.output)) > history_search.MAX_RESULT_CHARS
+        for r in latest_results
+    ):
+        return "shrink_history_result"
+    return None
 
 
 def _segment_input_binding(journal, store):
@@ -2284,6 +2498,12 @@ def _deduplicate_native_state(
             for probe in payload.get("recent_probes", []):
                 if probe.get("action_id") == result.action_id:
                     probe.update(reference)
+        if result.tool == "run_tests":
+            for tests in payload.get("recent_tests", []):
+                if tests.get("action_id") == result.action_id:
+                    for key in ("stdout", "stderr"):
+                        tests.pop(key, None)
+                    tests.update(reference)
 
 
 def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, Any]:
@@ -2435,6 +2655,17 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
             card["verification_review_scope"] = "at_check_completion"
             card["verification_review_diff_hash"] = result.output["diff_hash"]
         return card
+    if result.tool == "run_tests":
+        return {
+            "action_id": result.action_id, "attempt": "selected_tests",
+            "result": {key: result.output.get(key) for key in (
+                "suite_id", "targets", "diff_hash", "test_status", "exit_code",
+            )},
+            "next_question": (
+                "What do these selected public tests establish about this diff, and what "
+                "behavior remains untested? Setup or collection errors do not verify behavior."
+            ),
+        }
     if result.tool == "run_probe":
         return {
             "action_id": result.action_id,
@@ -2461,7 +2692,9 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
         "action_id": result.action_id,
         "attempt": "finish_task",
         "result": result.output.get("patch_hash", "submitted"),
-        "next_question": "Run the isolated private evaluator.",
+        "next_question": ("Return the patch and public verification receipt."
+                          if isinstance(gateway.public_task, RepairTask)
+                          else "Run the isolated private evaluator."),
     }
 
 
@@ -2474,12 +2707,13 @@ def _batch_attempt_card(
 ) -> dict[str, Any]:
     if not calls or len(calls) != len(results):
         raise RecoveryError("completed tool batch cannot form one public attempt card")
-    decisions: list[dict[str, Any]] = []
+    decisions: list[dict[str, Any] | None] = []
     for call in calls:
-        if call.turn_decision is None:
+        if call.turn_decision is None and "memory_update" not in call.model_fields_set:
             raise RecoveryError("completed tool batch is missing a public action decision")
-        decisions.append(call.turn_decision.model_dump(mode="json"))
-    if all(call.name in {"read_file", "search_files"} for call in calls):
+        decisions.append(call.turn_decision.model_dump(mode="json")
+                         if call.turn_decision is not None else None)
+    if all(call.name in {"read_file", "search_files", history_search.TOOL} for call in calls):
         actions: list[dict[str, Any]] = []
         for call, result, decision in zip(calls, results, decisions, strict=True):
             spans = result.output.get("spans", [])
@@ -2488,7 +2722,7 @@ def _batch_attempt_card(
                     "action_id": result.action_id,
                     "tool": result.tool,
                     "input": call.arguments,
-                    "turn_decision": decision,
+                    **({"turn_decision": decision} if decision is not None else {}),
                     "status": result.status,
                     "error_code": result.error_code,
                     "span_count": len(spans),
@@ -2527,7 +2761,8 @@ def _batch_attempt_card(
             "next_question": next_question,
         }
     card = _attempt_card(results[0], gateway)
-    card["turn_decision"] = decisions[0]
+    if decisions[0] is not None:
+        card["turn_decision"] = decisions[0]
     return card
 
 
@@ -2655,6 +2890,7 @@ def _terminal(
     active_elapsed_ms: int | None = None,
     run_age_seconds: int | None = None,
     completion_horizon: dict[str, Any] | None = None,
+    delivery: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     existing = journal.terminal()
     if existing is None:
@@ -2687,14 +2923,19 @@ def _terminal(
                 else run_age_seconds
             ),
         }
+        if delivery is not None:
+            payload["delivery"] = delivery
         if completion_horizon is not None:
             payload["completion_horizon"] = completion_horizon
         segment_events = [e for e in journal.events() if e["event_type"] == segments.EVENT]
-        if segment_events:
+        preparations = [e for e in journal.events() if e["event_type"] == segments.PREPARED_EVENT]
+        if segment_events or preparations:
+            first_segment = (segment_events or preparations)[0]["payload"]
             payload["context_management"] = {
                 "policy": segments.POLICY, "segment_count": len(segment_events),
-                **({"boundary_policy": segment_events[0]["payload"]["boundary_policy"]}
-                   if "boundary_policy" in segment_events[0]["payload"] else {}),
+                "prepared_candidate_count": len(preparations),
+                **({"boundary_policy": first_segment["boundary_policy"]}
+                   if "boundary_policy" in first_segment else {}),
                 "transition_reasons": [e["payload"]["reason"] for e in segment_events],
                 "limit": next((e["payload"] for e in reversed(journal.events())
                                if e["event_type"] == "context_limit_reached"), None),
@@ -2732,6 +2973,8 @@ def _public_result(run_id: str, terminal_payload: dict[str, Any]) -> dict[str, A
         "artifact_hashes": terminal_payload.get("artifact_hashes", {}),
         "agent_stop": terminal_payload.get("milestones", {}).get("agent_stop"),
     }
+    if "delivery" in terminal_payload:
+        result["delivery"] = terminal_payload["delivery"]
     if "completion_horizon" in terminal_payload:
         result["completion_horizon"] = terminal_payload["completion_horizon"]
     if "input_count_failure" in terminal_payload:
@@ -2744,13 +2987,15 @@ def _public_result(run_id: str, terminal_payload: dict[str, Any]) -> dict[str, A
     return result
 
 
-def _credential_file_path_hash(request: DevRunRequest) -> str | None:
+def _credential_file_path_hash(request: RunRequest) -> str | None:
     if request.env_file is None:
         return None
     return sha256_bytes(str(request.env_file.resolve()).encode("utf-8"))
 
 
-def _sandbox_identity_hash(request: DevRunRequest, package: Any, probe_dependencies=None) -> str:
+def _sandbox_identity_hash(request: RunRequest, package: Any, probe_dependencies=None) -> str:
+    if isinstance(request, RepairRunRequest):
+        return sha256_json(request.sandbox.model_dump(mode="json"))
     environment = package.environment if request.provider == "openai" else None
     return sha256_json(
         {
@@ -2758,7 +3003,7 @@ def _sandbox_identity_hash(request: DevRunRequest, package: Any, probe_dependenc
             "evaluator_image": environment.evaluator_image if environment else None,
             "image_digest": environment.image_digest if environment else None,
             **({
-                "probe_image_digest": PROBE_IMAGE_DIGEST,
+                "probe_image_digest": probe_profile(probe_dependencies)["image_digest"],
                 "probe_profile_hash": probe_profile_hash(probe_dependencies),
             } if request.enable_probes else {}),
         }
@@ -2767,7 +3012,7 @@ def _sandbox_identity_hash(request: DevRunRequest, package: Any, probe_dependenc
 
 def _run_envelope(
     *,
-    request: DevRunRequest,
+    request: RunRequest,
     task_dir: Path,
     package: Any,
     run_id: str,
@@ -2778,11 +3023,24 @@ def _run_envelope(
     created_at: Any | None = None,
     prepared_source_hash: str | None = None,
     probe_dependencies=None,
-) -> DevRunEnvelope:
-    return DevRunEnvelope(
+) -> RunEnvelope:
+    public_only = isinstance(request, RepairRunRequest)
+    envelope_type = RepairEnvelope if public_only else DevRunEnvelope
+    boundary = ({
+        "source_path": str(request.source.resolve()),
+        "sandbox_image_digest": request.sandbox.image_digest,
+    } if public_only else {
+        "private_spec_hash": package.private_spec_hash,
+        "evaluator_image_digest": (package.environment.image_digest
+                                   if package.environment else None),
+        "evaluation_reserve_seconds": request.evaluation_reserve_seconds,
+    })
+    return envelope_type(
+        **boundary,
         run_id=run_id,
         provider=request.provider,
-        task_path=str((task_dir / "public.yaml").resolve()),
+        task_path=str(request.task.resolve() if public_only
+                      else (task_dir / "public.yaml").resolve()),
         task_id=package.public.task_id,
         task_version=package.public.task_version,
         split=package.public.split,
@@ -2794,25 +3052,30 @@ def _run_envelope(
                                           if request.prepared_probe_dependencies else None),
         probe_dependencies=probe_dependencies,
         public_spec_hash=package.public_spec_hash,
-        private_spec_hash=package.private_spec_hash,
         task_content_hash=package.task_content_hash,
         runtime_hash=runtime_hash,
         model_hash=model_hash,
         sandbox_identity_hash=_sandbox_identity_hash(request, package, probe_dependencies),
         repair_recheck=request.repair_recheck,
+        probe_recheck=request.probe_recheck,
+        history_search_policy=request.history_search_policy,
         repair_inspection_policy=request.repair_inspection_policy,
         planning_policy=request.planning_policy,
+        agent_policy=request.agent_policy,
         probe_policy=request.probe_policy,
         context_policy=request.context_policy,
+        retained_source_chars=request.retained_source_chars,
         completion_cost_policy=request.completion_cost_policy,
         completion_cost_contract=(completion_cost_contract()
                                   if request.completion_cost_policy == COMPLETION_RESERVE_POLICY
                                   else None),
         segment_boundary_policy=request.segment_boundary_policy,
-        segment_contract=(segments.contract(request.segment_boundary_policy)
+        segment_contract=(segments.contract(
+            request.segment_boundary_policy, agent_policy=request.agent_policy)
                           if request.context_policy == segments.POLICY else None),
         compaction_contract=native_compaction.policy_contract(request),
-        probe_image_digest=PROBE_IMAGE_DIGEST if request.enable_probes else None,
+        probe_image_digest=(probe_profile(probe_dependencies)["image_digest"]
+                            if request.enable_probes else None),
         probe_profile_hash=(probe_profile_hash(probe_dependencies)
                             if request.enable_probes else None),
         model=request.model,
@@ -2823,12 +3086,11 @@ def _run_envelope(
         cost_start_nanos=cost_start_nanos,
         limits=request.limits,
         sandbox_backend="docker" if request.provider == "openai" else "local",
-        evaluator_image_digest=(package.environment.image_digest if package.environment else None),
         created_at=created_at or utc_now(),
     )
 
 
-def _validate_resume_envelope(actual: DevRunEnvelope, expected: DevRunEnvelope) -> None:
+def _validate_resume_envelope(actual: RunEnvelope, expected: RunEnvelope) -> None:
     if actual.model_dump(mode="json") != expected.model_dump(mode="json"):
         raise ResumeContractMismatch("run configuration or runtime changed")
 
@@ -2852,7 +3114,8 @@ def _restore_counters(journal: DevJournal) -> _RunCounters:
             len(event["payload"].get("tool_calls", []))
             for event in events
             if event["event_type"] == "tool_batch_started"
-        ) + sum(event["event_type"] == "repair_recheck_started" for event in events),
+        ) + sum(event["event_type"] in {"repair_recheck_started", "probe_recheck_started"}
+                for event in events),
         input_count_calls=sum(event["event_type"] == "input_count_started" for event in events),
         compaction_calls=sum(event["event_type"] == "compaction_started" for event in events),
         protocol_recoveries=consecutive_protocol_recoveries,
@@ -2862,10 +3125,12 @@ def _restore_counters(journal: DevJournal) -> _RunCounters:
         if event["event_type"] == "action_finished":
             result = DevToolResult.model_validate(event["payload"]["result"])
             action_results[result.action_id] = result
-        elif event["event_type"] in {"tool_batch_finished", "repair_recheck_finished"}:
+        elif event["event_type"] in {
+            "tool_batch_finished", "repair_recheck_finished", "probe_recheck_finished",
+        }:
             action_ids = (
                 [event["payload"]["action_id"]]
-                if event["event_type"] == "repair_recheck_finished"
+                if event["event_type"] in {"repair_recheck_finished", "probe_recheck_finished"}
                 else event["payload"].get("action_ids", [])
             )
             if not isinstance(action_ids, list) or not action_ids:
@@ -2885,6 +3150,12 @@ def _update_inspection_counters(
     results: list[DevToolResult],
     gateway: DevToolGateway | None = None,
 ) -> None:
+    if len(results) == 1 and results[0].tool == history_search.TOOL:
+        counters.inspection_turns_at_diff += 1
+        # Retrieval does not acquire a current source anchor or spend repair-read
+        # credit. Nor does a repeated search reset the no-new-source warning.
+        counters.consecutive_no_evidence_gain_turns += 1
+        return
     if results and all(result.tool in {"read_file", "search_files"} for result in results):
         counters.inspection_turns_at_diff += 1
         if counters.failed_check_pending:
@@ -3251,6 +3522,72 @@ def _run_repair_recheck(
     return terminal, message
 
 
+def _run_probe_recheck(
+    *, journal: DevJournal, gateway: DevToolGateway, latest_results: list[DevToolResult],
+    counters: _RunCounters, active_elapsed_ms: Callable[[], int],
+    request: RunRequest, cost_ledger: DevCostLedger | None = None,
+) -> tuple[DevTerminal | None, str | None]:
+    selected = probe_recheck.select(journal, latest_results)
+    if selected is None:
+        return None, None
+    call = selected.call(journal.run_id)
+    identity = selected.payload(journal.run_id)
+    receipts = {
+        event["event_type"]: event["payload"] for event in journal.events()
+        if event["event_type"] in {
+            "probe_recheck_started", "probe_recheck_finished", "probe_recheck_skipped",
+        } and event["payload"].get("action_id") == call.action_id
+    }
+    for receipt in receipts.values():
+        if any(receipt.get(key) != value for key, value in identity.items()):
+            raise RecoveryError("probe recheck identity changed")
+    if "probe_recheck_skipped" in receipts:
+        if len(receipts) != 1:
+            raise RecoveryError("skipped probe recheck has execution receipts")
+        return None, None
+    replay = journal.action_result(
+        call.action_id, sha256_json({"tool": call.name, "arguments": call.arguments}),
+    )
+    if "probe_recheck_finished" in receipts and replay is None:
+        raise RecoveryError("completed probe recheck is missing its durable action result")
+    if replay is None and gateway.current_diff_hash != selected.candidate_diff_hash:
+        raise ResumeContractMismatch("probe recheck workspace differs from accepted candidate")
+    if "probe_recheck_started" not in receipts:
+        policy = _tool_policy(
+            gateway, counters, request.limits,
+            repair_inspection_policy=request.repair_inspection_policy,
+            repair_recheck=request.repair_recheck,
+            cost_ledger=cost_ledger, completion_cost_policy=request.completion_cost_policy,
+        )
+        if "run_probe" not in policy.allowed_tools:
+            journal.append("probe_recheck_skipped", {
+                **identity, "status": "NOT_RUN", "reason": "existing_probe_budget_policy",
+                "active_elapsed_ms": active_elapsed_ms(),
+            })
+            return None, None
+        if gateway.deadline is not None:
+            gateway.deadline.check()
+        journal.append("probe_recheck_started", {
+            **identity, "active_elapsed_ms": active_elapsed_ms(),
+        })
+        counters.tool_actions += 1
+    result = replay if replay is not None else gateway.execute(call)
+    if "probe_recheck_finished" not in receipts:
+        journal.append("probe_recheck_finished", {
+            **identity, "status": result.status,
+            "observation": probe_observation(result.model_dump(mode="json")),
+            "case_comparison": result.output.get("case_comparison"),
+            "stdout": result.output.get("stdout", "")[-2_000:],
+            "stderr": result.output.get("stderr", "")[-2_000:],
+            "active_elapsed_ms": active_elapsed_ms(),
+        })
+        _update_inspection_counters(counters, [result], gateway)
+    terminal, message = _batch_execution_abort([result])
+    if terminal is None and result.status == "failed":
+        return DevTerminal.TASK_FAILED, "probe recheck gateway action failed"
+    return terminal, message
+
+
 def _record_planning_decision(
     policy: str, *, journal: DevJournal, gateway: DevToolGateway,
     calls: list[RequestedTool], turn_id: str,
@@ -3323,9 +3660,21 @@ def _finish_evaluation_metadata(
     return _OneRunResult(_public_result(journal.run_id, terminal), completion.stop_remaining)
 
 
+def _finish_repair_metadata(*, journal, delivery, counters, cost_ledger,
+                            cost_start_nanos, hashes):
+    terminal = _terminal(
+        journal=journal, terminal=DevTerminal.PATCH_READY, counters=counters,
+        cost_ledger=cost_ledger, cost_start_nanos=cost_start_nanos, hashes=hashes,
+        delivery=delivery, active_elapsed_ms=delivery["active_elapsed_ms"],
+        artifacts={"submitted_patch": delivery["patch"]["content_hash"],
+                   "public_verification": delivery["public_verification"]["content_hash"]},
+    )
+    return _OneRunResult(_public_result(journal.run_id, terminal), False)
+
+
 def _run_one(
     *,
-    request: DevRunRequest,
+    request: RunRequest,
     task_dir: Path,
     package: Any,
     state_root: Path,
@@ -3362,6 +3711,12 @@ def _run_one(
                 )
             existing_terminal = journal.terminal()
             if existing_terminal is not None:
+                if (isinstance(request, RepairRunRequest)
+                        and existing_terminal["payload"]["terminal"] == "PATCH_READY"):
+                    delivery = load_delivery(journal, ArtifactStore(state_root / "artifacts"),
+                                             envelope)
+                    if delivery != existing_terminal["payload"].get("delivery"):
+                        raise RecoveryError("terminal repair delivery differs from its receipt")
                 return _OneRunResult(
                     _public_result(run_id, existing_terminal["payload"]),
                     False,
@@ -3393,9 +3748,18 @@ def _run_one(
                     "task_hash": package.task_content_hash,
                     "model_hash": model_hash,
                     "repair_recheck": request.repair_recheck,
+                    **({"probe_recheck": request.probe_recheck}
+                       if request.probe_recheck != "none" else {}),
                     **({"repair_inspection_policy": request.repair_inspection_policy}
                        if request.repair_inspection_policy != "protected-v1" else {}),
                     "context_policy": request.context_policy,
+                    **({"history_search_policy": request.history_search_policy}
+                       if request.history_search_policy != "none" else {}),
+                    **({"retained_source_chars": request.retained_source_chars}
+                       if request.retained_source_chars != 24_000 else {}),
+                    **({"evaluation_reserve_seconds": request.evaluation_reserve_seconds}
+                       if isinstance(request, DevRunRequest)
+                       and request.evaluation_reserve_seconds else {}),
                     **({"segment_boundary_policy": request.segment_boundary_policy}
                        if request.segment_boundary_policy != segments.DEFAULT_BOUNDARY_POLICY
                        else {}),
@@ -3484,7 +3848,8 @@ def _run_one(
             try:
                 segment_store = ArtifactStore(state_root / "artifacts")
                 segments.active(journal, segment_store,
-                                boundary_policy=request.segment_boundary_policy)
+                                boundary_policy=request.segment_boundary_policy,
+                                agent_policy=request.agent_policy)
                 _validate_recorded_continuations(journal.events(), segment_store)
                 for event in journal.events():
                     if event["event_type"] == "turn_started":
@@ -3509,7 +3874,17 @@ def _run_one(
 
         if resuming:
             store = ArtifactStore(state_root / "artifacts")
-            completion = load_evaluation_completion(journal, store, envelope)
+            if isinstance(request, RepairRunRequest):
+                delivery = load_delivery(journal, store, envelope)
+                if delivery is not None:
+                    return _finish_repair_metadata(
+                        journal=journal, delivery=delivery, counters=counters,
+                        cost_ledger=cost_ledger, cost_start_nanos=envelope.cost_start_nanos,
+                        hashes=hashes,
+                    )
+                completion = None
+            else:
+                completion = load_evaluation_completion(journal, store, envelope)
             if completion is not None:
                 return _finish_evaluation_metadata(
                     journal=journal, store=store, completion=completion, counters=counters,
@@ -3533,9 +3908,31 @@ def _run_one(
         )
 
 
+def _solver_finish_receipt(journal: DevJournal, request: DevRunRequest) -> dict | None:
+    """A durable, timely finish permits evaluation recovery after solver time expires."""
+    events = journal.events()
+    receipts = [event["payload"] for event in events if event["event_type"] == "solver_finished"]
+    if not receipts:
+        return None
+    if len(receipts) != 1:
+        raise RecoveryError("multiple solver finish receipts")
+    receipt = receipts[0]
+    result = next((event["payload"]["result"] for event in events
+                   if event["event_type"] == "action_finished"
+                   and event["payload"]["result"]["action_id"] == receipt.get("action_id")), None)
+    solve_ms = (request.limits.wall_time_seconds - request.evaluation_reserve_seconds) * 1_000
+    if (result is None or result["tool"] != "finish_task" or result["status"] != "succeeded"
+            or receipt.get("input_hash") != result["input_hash"]
+            or receipt.get("patch_hash") != result["output"].get("patch_hash")
+            or type(receipt.get("active_elapsed_ms")) is not int
+            or not 0 <= receipt["active_elapsed_ms"] < solve_ms):
+        raise RecoveryError("solver finish receipt does not bind a timely submitted candidate")
+    return receipt
+
+
 def _run_one_locked(
     *,
-    request: DevRunRequest,
+    request: RunRequest,
     task_dir: Path,
     package: Any,
     state_root: Path,
@@ -3545,7 +3942,7 @@ def _run_one_locked(
     model_hash: str,
     run_id: str,
     journal: DevJournal,
-    envelope: DevRunEnvelope,
+    envelope: RunEnvelope,
     resuming: bool,
 ) -> _OneRunResult:
     # Terminal and completed-evaluation recovery already returned before this
@@ -3556,13 +3953,23 @@ def _run_one_locked(
         started + max(0.0, request.limits.wall_time_seconds - active_base_ms / 1_000),
         clock=monotonic,
     )
+    reserve_seconds = (
+        request.evaluation_reserve_seconds if isinstance(request, DevRunRequest) else 0
+    )
+    # The absolute task deadline never moves. A previously completed finish is
+    # recovered using the total remainder; new solver work cannot spend its reserve.
+    solver_finished = reserve_seconds and _solver_finish_receipt(journal, request) is not None
+    execution_deadline = (
+        ExecutionDeadline(deadline.expires_at - reserve_seconds, clock=deadline.clock)
+        if reserve_seconds and not solver_finished else deadline
+    )
     try:
         identity = next((
             event["payload"] for event in journal.events()
             if event["event_type"] == "runtime_git_identity"
         ), None)
         if identity is None:
-            identity = {"harness_git_commit": git_commit(deadline=deadline)}
+            identity = {"harness_git_commit": git_commit(deadline=execution_deadline)}
             journal.append("runtime_git_identity", {
                 **identity,
                 "active_elapsed_ms": active_base_ms + int((monotonic() - started) * 1_000),
@@ -3571,8 +3978,9 @@ def _run_one_locked(
             request=request, task_dir=task_dir, package=package, state_root=state_root,
             pricing=pricing, cost_ledger=cost_ledger, runtime_hash=runtime_hash,
             model_hash=model_hash, run_id=run_id, journal=journal, envelope=envelope,
-            resuming=resuming, deadline=deadline, active_base_ms=active_base_ms,
+            resuming=resuming, deadline=execution_deadline, active_base_ms=active_base_ms,
             started=started, harness_git_commit=identity["harness_git_commit"],
+            evaluation_deadline=deadline,
         )
     except (ExecutionDeadlineExceeded, GitExecutionUncertain) as exc:
         exhausted = isinstance(exc, ExecutionDeadlineExceeded) or exc.details.get(
@@ -3612,15 +4020,20 @@ def _probe_evidence(journal, artifact_store, run_id):
 
 
 def _run_one_active(
-    *, request: DevRunRequest, task_dir: Path, package: Any, state_root: Path,
+    *, request: RunRequest, task_dir: Path, package: Any, state_root: Path,
     pricing: ModelPricing | None, cost_ledger: DevCostLedger | None,
     runtime_hash: str, model_hash: str, run_id: str, journal: DevJournal,
-    envelope: DevRunEnvelope, resuming: bool, deadline: ExecutionDeadline,
+    envelope: RunEnvelope, resuming: bool, deadline: ExecutionDeadline,
     active_base_ms: int, started: float, harness_git_commit: str,
+    evaluation_deadline: ExecutionDeadline | None = None,
 ) -> _OneRunResult:
     artifact_store = ArtifactStore(state_root / "artifacts")
     counters = _restore_counters(journal) if resuming else _RunCounters()
     cost_start_nanos = envelope.cost_start_nanos
+    evaluation_deadline = evaluation_deadline or deadline
+    evaluation_reserve_seconds = (
+        request.evaluation_reserve_seconds if isinstance(request, DevRunRequest) else 0
+    )
     hashes = {
         "runtime_hash": runtime_hash,
         "task_hash": package.task_content_hash,
@@ -3636,6 +4049,7 @@ def _run_one_active(
     workspace_manager = WorkspaceManager(
         repository_root() / "fixtures" / "repositories",
         state_root / "workspaces",
+        **({"local_source": request.source} if isinstance(request, RepairRunRequest) else {}),
         **({"prepared_source": request.prepared_source,
             "prepared_source_hash": envelope.prepared_source_hash}
            if request.prepared_source is not None else {}),
@@ -3643,7 +4057,11 @@ def _run_one_active(
     workspace_path = state_root / "workspaces" / run_id / "repo"
     try:
         if request.provider == "openai" and remaining_active_seconds() > 0:
-            _live_source_preflight(task_dir, package, deadline=deadline)
+            if isinstance(request, RepairRunRequest):
+                root = repository_root().resolve()
+                _require_tracked_clean_paths(root, runtime_content_paths(root), deadline=deadline)
+            else:
+                _live_source_preflight(task_dir, package, deadline=deadline)
         if resuming and not workspace_path.exists():
             raise RecoveryError("resumable development workspace is missing")
         if request.prepared_source is not None and workspace_path.exists():
@@ -3662,6 +4080,10 @@ def _run_one_active(
                 deadline=deadline,
             )
         )
+        if isinstance(request, RepairRunRequest):
+            head = run_git(workspace, "rev-parse", "HEAD", deadline=deadline).stdout.strip()
+            if head != package.public.repository.base_commit:
+                raise RecoveryError("repair workspace HEAD differs from the admitted base")
         if request.prepared_source is not None and not any(
             event["event_type"] == "prepared_source_bound" for event in journal.events()
         ):
@@ -3705,7 +4127,11 @@ def _run_one_active(
     api_key: str | None = None
     probe_sandbox = None
     try:
-        if request.provider == "openai":
+        if isinstance(request, RepairRunRequest):
+            sandbox = prepared_sandbox(request, deadline=deadline)
+            if request.provider == "openai" and remaining_active_seconds() > 0:
+                api_key = load_exact_openai_api_key(request.env_file)
+        elif request.provider == "openai":
             assert request.env_file is not None
             if remaining_active_seconds() > 0:
                 api_key = load_exact_openai_api_key(request.env_file)
@@ -3764,6 +4190,9 @@ def _run_one_active(
         deadline=deadline,
         probe_sandbox=probe_sandbox,
         probe_policy=request.probe_policy,
+        retained_source_chars=request.retained_source_chars,
+        agent_policy=request.agent_policy,
+        history_search_policy=request.history_search_policy,
     )
     correction: dict[str, Any] | None = _pending_protocol_correction(journal)
     latest_tool_results = journal.latest_tool_batch_results() if resuming else []
@@ -3889,6 +4318,7 @@ def _run_one_active(
                     next_policy = _tool_policy(
                         gateway, counters, request.limits,
                         repair_inspection_policy=request.repair_inspection_policy,
+                        repair_recheck=request.repair_recheck,
                         cost_ledger=cost_ledger,
                         completion_cost_policy=request.completion_cost_policy,
                     )
@@ -3909,6 +4339,7 @@ def _run_one_active(
                 try:
                     validate_tool_batch(
                         pending_calls,
+                        agent_policy=request.agent_policy,
                         max_parallel_reads=pending_max_parallel_reads,
                         allowed_tools=pending_allowed_tools,
                         allowed_read_paths=pending_targeted_read_paths,
@@ -3922,6 +4353,7 @@ def _run_one_active(
                         next_policy = _tool_policy(
                             gateway, counters, request.limits,
                             repair_inspection_policy=request.repair_inspection_policy,
+                            repair_recheck=request.repair_recheck,
                             cost_ledger=cost_ledger,
                             completion_cost_policy=request.completion_cost_policy,
                         )
@@ -4024,6 +4456,24 @@ def _run_one_active(
             if terminal_code is not None:
                 stop_remaining = terminal_code == DevTerminal.TASK_FAILED
                 break
+        if request.probe_recheck != "none":
+            try:
+                terminal_code, terminal_message = _run_probe_recheck(
+                    journal=journal, gateway=gateway, latest_results=latest_tool_results,
+                    counters=counters, active_elapsed_ms=active_elapsed_ms,
+                    request=request, cost_ledger=cost_ledger,
+                )
+            except ExecutionDeadlineExceeded:
+                terminal_code = DevTerminal.LIMIT_REACHED
+                terminal_message = "active deadline exhausted during probe recheck"
+            except GitExecutionUncertain:
+                raise
+            except Exception as exc:
+                terminal_code = DevTerminal.TASK_FAILED
+                terminal_message = f"probe recheck failed: {type(exc).__name__}"
+            if terminal_code is not None:
+                stop_remaining = terminal_code == DevTerminal.TASK_FAILED
+                break
         if remaining_active_seconds() <= 0:
             terminal_code = DevTerminal.LIMIT_REACHED
             terminal_message = "row wall-time limit reached"
@@ -4037,6 +4487,7 @@ def _run_one_active(
             request.limits,
             snapshot=snapshot,
             repair_inspection_policy=request.repair_inspection_policy,
+            repair_recheck=request.repair_recheck,
             cost_ledger=cost_ledger,
             completion_cost_policy=request.completion_cost_policy,
         )
@@ -4082,8 +4533,10 @@ def _run_one_active(
                 tool_policy_transition=policy_transition,
                 projection=projection,
                 repair_recheck=request.repair_recheck,
+                probe_recheck_policy=request.probe_recheck,
                 repair_inspection_policy=request.repair_inspection_policy,
                 planning_policy=request.planning_policy,
+                evaluation_reserve_seconds=evaluation_reserve_seconds,
             )
             context_payload = json.loads(context)
             if request.context_policy == segments.POLICY:
@@ -4111,7 +4564,9 @@ def _run_one_active(
                 latest_tool_results=latest_tool_results,
                 context_policy=request.context_policy,
                 planning_policy=request.planning_policy,
+                agent_policy=request.agent_policy,
                 segment_boundary_policy=request.segment_boundary_policy,
+                history_search_policy=request.history_search_policy,
             )
             model_input_text = canonical_json(model_input)
             model_input_artifact = artifact_store.put_text(
@@ -4133,12 +4588,27 @@ def _run_one_active(
         schemas = dev_tool_schemas(
             finish_enabled="finish_task" in policy.allowed_tools,
             check_ids=policy.check_ids,
+            test_suite_ids=[suite.id for suite in gateway.public_task.test_suites],
             allowed_tools=policy.allowed_tools,
             read_paths=policy.targeted_read_paths,
             planning_policy=request.planning_policy,
+            agent_policy=request.agent_policy,
             probe_policy=request.probe_policy,
+            probe_recheck_policy=request.probe_recheck,
             probe_environment=getattr(gateway.probe_sandbox, "environment", None),
+            history_search_policy=request.history_search_policy,
         )
+        if isinstance(request, RepairRunRequest):
+            for schema in schemas:
+                if schema["name"] == "finish_task":
+                    schema["description"] = (
+                        "Return the current patch and public verification records after all "
+                        "required visible checks pass on this diff and you review the public "
+                        "requirements against observed evidence, including unfinished "
+                        "verification plans. Call only if you judge the task complete; justify "
+                        "remaining gaps in your assessment. Independent acceptance is NOT_RUN; "
+                        "regression PASS alone does not prove the reported problem is fixed."
+                    )
         turn_payload = {
             "turn_id": turn_id,
             "context_artifact": context_artifact.model_dump(mode="json"),
@@ -4165,6 +4635,7 @@ def _run_one_active(
             "minimum_completion_calls": policy.minimum_completion_calls,
             **_completion_cost_payload(policy),
             **_repair_inspection_payload(policy),
+            **_completion_resources_payload(policy),
             "completion_budget_calls": policy.completion_budget_calls,
             "feedback_recovery_reserve_calls": (policy.feedback_recovery_reserve_calls),
             "mutation_recovery_reserve_calls": (policy.mutation_recovery_reserve_calls),
@@ -4201,7 +4672,9 @@ def _run_one_active(
         if request.context_policy == segments.POLICY:
             try:
                 request_payload = (openai_adapter.request_payload(
-                    model_input, schemas, system_prompt=DEV_SYSTEM_PROMPT,
+                    model_input, schemas, system_prompt=thin_policy.system_prompt(
+                        request.agent_policy, request.planning_policy,
+                        request.history_search_policy),
                 ) if openai_adapter is not None else {
                     "model": request.model, "input": model_input, "tools": schemas,
                     "max_output_tokens": request.max_output_tokens,
@@ -4213,6 +4686,20 @@ def _run_one_active(
                 if reasons:
                     binding, _ = segments.active(journal, artifact_store)
                     if segments.is_fresh(journal, binding):
+                        handoff = segments.load_binding(binding, artifact_store)
+                        fallback = _segment_size_fallback(handoff, latest_tool_results)
+                        if fallback:
+                            _build_model_input(
+                                journal=journal, artifact_store=artifact_store, context=context,
+                                latest_tool_results=latest_tool_results,
+                                context_policy=segments.POLICY,
+                                planning_policy=request.planning_policy,
+                                agent_policy=request.agent_policy,
+                                segment_boundary_policy=request.segment_boundary_policy,
+                                history_search_policy=request.history_search_policy,
+                                force_segment_reason=fallback,
+                            )
+                            continue
                         segments.record_limit(journal, sizes=sizes)
                         terminal_code = DevTerminal.LIMIT_REACHED
                         terminal_message = "fresh public state exceeds segment request size limit"
@@ -4221,7 +4708,9 @@ def _run_one_active(
                         journal=journal, artifact_store=artifact_store, context=context,
                         latest_tool_results=latest_tool_results, context_policy=segments.POLICY,
                         planning_policy=request.planning_policy,
+                        agent_policy=request.agent_policy,
                         segment_boundary_policy=request.segment_boundary_policy,
+                        history_search_policy=request.history_search_policy,
                         force_segment_reason="+".join(reasons),
                     )
                     continue
@@ -4236,7 +4725,9 @@ def _run_one_active(
         ):
             try:
                 request_payload = openai_adapter.request_payload(
-                    model_input, schemas, system_prompt=DEV_SYSTEM_PROMPT,
+                    model_input, schemas, system_prompt=thin_policy.system_prompt(
+                        request.agent_policy, request.planning_policy,
+                        request.history_search_policy),
                 )
                 request_payload["parallel_tool_calls"] = True
                 request_payload["tool_choice"] = "required"
@@ -4260,6 +4751,20 @@ def _run_one_active(
                         and prepared_count[1] > segments.MAX_INPUT_TOKENS):
                     binding, _ = segments.active(journal, artifact_store)
                     if segments.is_fresh(journal, binding):
+                        handoff = segments.load_binding(binding, artifact_store)
+                        fallback = _segment_size_fallback(handoff, latest_tool_results)
+                        if fallback:
+                            _build_model_input(
+                                journal=journal, artifact_store=artifact_store, context=context,
+                                latest_tool_results=latest_tool_results,
+                                context_policy=segments.POLICY,
+                                planning_policy=request.planning_policy,
+                                agent_policy=request.agent_policy,
+                                segment_boundary_policy=request.segment_boundary_policy,
+                                history_search_policy=request.history_search_policy,
+                                force_segment_reason=fallback,
+                            )
+                            continue
                         segments.record_limit(journal, input_tokens=prepared_count[1])
                         terminal_code = DevTerminal.LIMIT_REACHED
                         terminal_message = "fresh public state exceeds segment input token limit"
@@ -4268,7 +4773,9 @@ def _run_one_active(
                         journal=journal, artifact_store=artifact_store, context=context,
                         latest_tool_results=latest_tool_results, context_policy=segments.POLICY,
                         planning_policy=request.planning_policy,
+                        agent_policy=request.agent_policy,
                         segment_boundary_policy=request.segment_boundary_policy,
+                        history_search_policy=request.history_search_policy,
                         force_segment_reason="input_tokens",
                     )
                     continue
@@ -4325,6 +4832,8 @@ def _run_one_active(
                 terminal_message = "prepared input or compacted window is unavailable or invalid"
                 stop_remaining = True
                 break
+        if request.context_policy == segments.POLICY:
+            segments.commit(journal, artifact_store)
         journal.append("turn_started", turn_payload)
         if policy_transition is not None:
             journal.append(
@@ -4336,7 +4845,9 @@ def _run_one_active(
             assert mock_adapter is not None
             counters.model_calls += 1
             try:
-                turn = mock_adapter.next_turn(context, schemas)
+                mock_context = (canonical_json(thin_policy.project_state(
+                    json.loads(context), "thin")) if request.agent_policy == "thin" else context)
+                turn = mock_adapter.next_turn(mock_context, schemas)
             except Exception as exc:
                 terminal_code = DevTerminal.TASK_FAILED
                 terminal_message = f"mock model failed: {type(exc).__name__}"
@@ -4367,7 +4878,10 @@ def _run_one_active(
             try:
                 request_payload = (bundle["request"] if prepared_count
                                    else openai_adapter.request_payload(
-                                       model_input, schemas, system_prompt=DEV_SYSTEM_PROMPT,
+                                       model_input, schemas,
+                                       system_prompt=thin_policy.system_prompt(
+                                           request.agent_policy, request.planning_policy,
+                                           request.history_search_policy),
                                    ))
             except Exception as exc:
                 terminal_code = DevTerminal.TASK_FAILED
@@ -4481,7 +4995,7 @@ def _run_one_active(
                 terminal_message = f"provider dispatch failed: {type(exc).__name__}"
                 stop_remaining = True
                 break
-            turn = _turn_from_openai(raw_turn)
+            turn = _turn_from_openai(raw_turn, agent_policy=request.agent_policy)
             try:
                 cost_nanos = cost_ledger.settle(
                     input_tokens=turn.input_tokens,
@@ -4609,6 +5123,7 @@ def _run_one_active(
             next_policy = _tool_policy(
                 gateway, counters, request.limits,
                 repair_inspection_policy=request.repair_inspection_policy,
+                repair_recheck=request.repair_recheck,
                 cost_ledger=cost_ledger,
                 completion_cost_policy=request.completion_cost_policy,
             )
@@ -4629,6 +5144,7 @@ def _run_one_active(
         try:
             validate_tool_batch(
                 turn.tool_calls,
+                agent_policy=request.agent_policy,
                 max_parallel_reads=policy.max_parallel_reads,
                 allowed_tools=policy.allowed_tools,
                 allowed_read_paths=policy.targeted_read_paths,
@@ -4642,6 +5158,7 @@ def _run_one_active(
             next_policy = _tool_policy(
                 gateway, counters, request.limits,
                 repair_inspection_policy=request.repair_inspection_policy,
+                repair_recheck=request.repair_recheck,
                 cost_ledger=cost_ledger,
                 completion_cost_policy=request.completion_cost_policy,
             )
@@ -4740,6 +5257,17 @@ def _run_one_active(
         return _OneRunResult(_public_result(run_id, terminal), stop_remaining)
 
     patch = finish_result.output["patch"]
+    if evaluation_reserve_seconds:
+        receipt = _solver_finish_receipt(journal, request)
+        if receipt is None:
+            deadline.check()
+            journal.append("solver_finished", {
+                "action_id": finish_result.action_id, "input_hash": finish_result.input_hash,
+                "patch_hash": finish_result.output["patch_hash"],
+                "active_elapsed_ms": active_elapsed_ms(),
+            })
+        elif receipt["action_id"] != finish_result.action_id:
+            raise RecoveryError("recovered finish differs from the reserved evaluation candidate")
     submitted = artifact_store.put_text(patch, "text/x-diff")
     if submitted.content_hash != finish_result.output["patch_hash"]:
         raise RecoveryError("submitted artifact differs from the visibly checked diff")
@@ -4751,6 +5279,17 @@ def _run_one_active(
             "changed_files": finish_result.output["changed_files"],
         },
     )
+    if isinstance(request, RepairRunRequest):
+        delivery = load_delivery(journal, artifact_store, envelope)
+        if delivery is None:
+            delivery = record_delivery(
+                journal, artifact_store, envelope, submitted, finish_result.output,
+                active_elapsed_ms(),
+            )
+        return _finish_repair_metadata(
+            journal=journal, delivery=delivery, counters=counters, cost_ledger=cost_ledger,
+            cost_start_nanos=cost_start_nanos, hashes=hashes,
+        )
     manifest = _manifest(
         request=request,
         package=package,
@@ -4784,7 +5323,7 @@ def _run_one_active(
             submitted.path,
             manifest,
             submitted_patch_artifact=submitted,
-            deadline=deadline,
+            deadline=evaluation_deadline,
         )
         evaluator_summary = _evaluator_summary(evaluation)
         terminal_code = (
@@ -4865,6 +5404,13 @@ def run_dev(request: DevRunRequest) -> dict[str, Any]:
         except ValidationError as exc:
             raise ContractError(str(exc)) from exc
     task_dir, package = _resolve_task_file(request.task)
+    if request.provider == "openai":
+        _live_task_is_admitted(task_dir, package)
+    return _run_invocation(request, task_dir, package)
+
+
+def _run_invocation(request: RunRequest, task_dir: Path, package: Any) -> dict[str, Any]:
+    """One shared admission, budget, journal and solver loop for both entry points."""
     state_root = request.state_root.resolve() if request.state_root else default_state_root()
     repo = repository_root().resolve()
     if state_root == repo or state_root.is_relative_to(repo):
@@ -4874,7 +5420,6 @@ def run_dev(request: DevRunRequest) -> dict[str, Any]:
     pricing: ModelPricing | None = None
     cost_ledger: DevCostLedger | None = None
     if request.provider == "openai":
-        _live_task_is_admitted(task_dir, package)
         assert request.max_cost_usd is not None
         pricing = pricing_for_model(request.model)
         cost_ledger = DevCostLedger(request.max_cost_usd, pricing)
@@ -4905,4 +5450,5 @@ def run_dev(request: DevRunRequest) -> dict[str, Any]:
         "cost_cap_nanos": cost_ledger.cap_nanos if cost_ledger else 0,
         "cost_nanos": cost_ledger.spent_nanos if cost_ledger else 0,
         "runs": results,
+        **({"stop_remaining": True} if one.stop_remaining else {}),
     }

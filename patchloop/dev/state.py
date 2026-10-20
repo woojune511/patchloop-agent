@@ -12,7 +12,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
-from patchloop.dev.contracts import DEV_RUN_SCHEMA, DevRunEnvelope, DevToolResult
+from patchloop.dev.contracts import DEV_RUN_SCHEMA, DevRunEnvelope, DevToolResult, RunEnvelope
 from patchloop.errors import ActionConflict, RecoveryError
 from patchloop.util import canonical_json, sha256_json, utc_now
 
@@ -28,9 +28,12 @@ _UNIQUE_TURN_EVENTS = {
     "protocol_correction",
     "tool_policy_transition",
 }
-_UNIQUE_ACTION_EVENTS = {"attempt_card", "repair_recheck_started", "repair_recheck_finished"}
+_UNIQUE_ACTION_EVENTS = {
+    "attempt_card", "repair_recheck_started", "repair_recheck_finished",
+    "probe_recheck_started", "probe_recheck_finished", "probe_recheck_skipped",
+}
 _UNIQUE_RUN_EVENTS = {"manifest_recorded", "submission_recorded", "evaluator_finished",
-                      "context_window_activated"}
+                      "context_window_activated", "repair_delivered"}
 
 
 @contextmanager
@@ -128,7 +131,7 @@ class DevJournal:
             if _ACTIVE_EXECUTIONS.get(str(self.execution_lock_path)) != threading.get_ident():
                 raise RecoveryError("current thread does not own the development run lock")
 
-    def write_envelope(self, envelope: DevRunEnvelope) -> None:
+    def write_envelope(self, envelope: RunEnvelope) -> None:
         if envelope.run_id != self.run_id:
             raise RecoveryError("run envelope identity does not match its journal")
         encoded = (canonical_json(envelope.model_dump(mode="json")) + "\n").encode("utf-8")
@@ -147,12 +150,17 @@ class DevJournal:
         finally:
             temporary.unlink(missing_ok=True)
 
-    def load_envelope(self) -> DevRunEnvelope:
+    def load_envelope(self) -> RunEnvelope:
         if not self.envelope_path.is_file() or self.envelope_path.is_symlink():
             raise RecoveryError("development run predates resumable envelopes")
         try:
             raw = json.loads(self.envelope_path.read_text(encoding="utf-8"))
-            envelope = DevRunEnvelope.model_validate(raw)
+            if raw.get("schema_version") == "repair-run-envelope-v1":
+                from patchloop.repair import RepairEnvelope
+
+                envelope = RepairEnvelope.model_validate(raw)
+            else:
+                envelope = DevRunEnvelope.model_validate(raw)
         except (OSError, json.JSONDecodeError, ValueError) as exc:
             raise RecoveryError("development run envelope is invalid") from exc
         if envelope.run_id != self.run_id:
@@ -170,9 +178,15 @@ class DevJournal:
         events: list[dict[str, Any]] = []
         previous_hash: str | None = None
         try:
-            lines = self.path.read_text(encoding="utf-8").splitlines()
+            text = self.path.read_bytes().decode("utf-8")
         except (OSError, UnicodeDecodeError) as exc:
             raise RecoveryError("development journal is unreadable") from exc
+        if not text:
+            return []
+        if not text.endswith("\n"):
+            raise RecoveryError("development journal contains invalid JSONL")
+        # Only LF frames records; Unicode line separators are valid JSON string data.
+        lines = text[:-1].split("\n")
         for expected_sequence, line in enumerate(lines, start=1):
             try:
                 event = json.loads(line)

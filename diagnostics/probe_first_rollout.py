@@ -234,7 +234,8 @@ class Branch(source.Branch):
                 raise common.AbortExperiment("PROVIDER_CONTINUATION_ERROR") from exc
             loop._validate_resumed_workspace(self.gateway.workspace, self.journal,
                                              deadline=self.gateway.deadline)
-            policy = replace(loop._tool_policy(self.gateway, self.counters, self.gateway.limits),
+            policy = replace(loop._tool_policy(self.gateway, self.counters, self.gateway.limits,
+                                               repair_recheck=self.repair_recheck),
                              allowed_tools=names, max_parallel_reads=maximum,
                              targeted_read_paths=paths)
             payload = next(e for e in self._new_events("turn_decision_recorded")
@@ -251,7 +252,8 @@ class Branch(source.Branch):
             return None
         # A correction can use the probe's last available slack. Do not dispatch a
         # forced call if the ordinary budget no longer offers that action.
-        policy = loop._tool_policy(self.gateway, self.counters, self.gateway.limits)
+        policy = loop._tool_policy(self.gateway, self.counters, self.gateway.limits,
+                                   repair_recheck=self.repair_recheck)
         if (self.label.startswith("B") and self._probe_batch() is None
                 and "run_probe" not in policy.allowed_tools):
             self.finish("LIMIT_REACHED", "probe phase has no remaining completion slack",

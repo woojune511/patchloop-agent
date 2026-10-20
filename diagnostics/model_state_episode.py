@@ -136,7 +136,8 @@ class Episode(engine.Branch):
         shared.require(request["model"] == design.PROFILES[self.arm].model_id,
                        "episode model mismatch")
         state = json.loads(request["input"][1]["content"])
-        policy = loop._tool_policy(self.gateway, self.counters, self.gateway.limits)
+        policy = loop._tool_policy(self.gateway, self.counters, self.gateway.limits,
+                                   repair_recheck=self.repair_recheck)
         shared.require(set(state["available_tool_names"]) == set(policy.allowed_tools),
                        "restored tool policy mismatch")
         shared.require(policy.completion_possible, "checkpoint completion horizon exhausted")

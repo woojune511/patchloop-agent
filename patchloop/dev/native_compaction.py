@@ -45,12 +45,25 @@ def cursor(journal):
         "tool_batch_finished",
         "action_finished",
         "repair_recheck_finished",
+        "probe_recheck_finished",
+        "probe_recheck_skipped",
         "context_window_activated",
         "context_segment_started",
+        "context_segment_prepared",
     }
-    return next(
-        (e["event_hash"] for e in reversed(journal.events()) if e["event_type"] in kinds), None
-    )
+    events = journal.events()
+    # Committing a prepared seed does not invalidate its already counted request.
+    for event in reversed(events):
+        if event["event_type"] not in kinds:
+            continue
+        if event["event_type"] == "context_segment_started":
+            prepared = next((e for e in reversed(events)
+                             if e["event_type"] == "context_segment_prepared"
+                             and e["payload"] == event["payload"]), None)
+            if prepared:
+                return prepared["event_hash"]
+        return event["event_hash"]
+    return None
 
 
 def prepared_input(journal, store, turn, request_payload, transition):

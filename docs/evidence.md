@@ -59,6 +59,47 @@ preparation, not a solver tool or automatic rule for disregarding failing tests.
 
 ## Where evidence lives
 
+### Recorded public uses
+
+| Case | Original artifact | Later work, kept separate |
+| --- | --- | --- |
+| Click #3362 | Usage wrapping repair; test writing was outside the request | Human-written tests are not autonomous test-writing evidence |
+| dotenv #715 | Implementation plus useful model regression case; external red/green confirmation | Common verifier replay of the same patch, not another solve |
+| Click #2786 | Issue test passed, but omitted callback/validation was bypassed | Model corrected the regression after public review feedback |
+| Click #2740 | Notes test passed on 3.12, but unguarded add_note was incompatible with 3.10 | Model corrected test compatibility; 3.10 and 3.12 checked |
+| dotenv #713 | Requested file synchronization sequence and selected tests checked | Scoped code-review candidate; power-loss durability not demonstrated |
+
+Sources: [three uses](history/2026-10-05-three-public-repair-uses.md),
+[original review](history/2026-10-05-original-patch-review.md),
+[feedback corrections](history/2026-10-05-click-feedback-results.md), and the
+[portable saved dotenv evidence](../examples/saved-repair/README.md).
+The [public review packet](../examples/reviewed-repairs/README.md) contains original,
+correction and final patches with sanitized verifier JSONs.
+The three-use original code review yielded one candidate and two modifications;
+the two corrections do not retroactively make the first attempt 3/3 successful.
+Human final approval and active review time remain unreported. The user reported
+that reading the diff alone was insufficient to judge correctness; this is a
+qualitative review burden, not measured time savings.
+
+For Click #2740 the correction-only verifier returned `UNSUPPORTED` because it
+changed an existing test body. The upstream-based composed patch was supported:
+3.12 failed before/passed after; 3.10 passed both. Python 3.11 itself was not run.
+These are different comparisons, not a replacement of UNSUPPORTED with PASS.
+Full project suites and unlisted environments remain unverified; independent
+acceptance for these public repairs remains `NOT_RUN`.
+
+### Benchmark measurements
+
+The [dev20 rerun](history/2026-10-06-portfolio-dev20-results.md) resolved **9/20** at
+USD 3.46111455 versus [historical](history/2026-10-02-lite-dev20-results.md) 10/20
+at USD 5.01124395. Same mini, roster and USD 1.20/task cap; current runtime.
+All twenty submitted; evaluations agreed and cleanup was confirmed.
+Transitions: nine PASS->PASS, one PASS->FAIL, ten FAIL->FAIL; no evaluation errors.
+[Public JSON](../examples/portfolio-dev20/results.json) records costs, times and
+receipt/patch hashes. Eight environment corrections and two public-check projections
+remain limitations. This exposed dev panel is not a Lite test or causal comparison.
+Below 11/20: test300 NOT_RUN. Allocation closed; no retries or case diagnoses.
+
 - [Current status](current-status.md): current implications, unresolved questions,
   and links to the latest relevant validation and experiment records.
 - [Documentation history](history/README.md): retained investigations and byte-exact

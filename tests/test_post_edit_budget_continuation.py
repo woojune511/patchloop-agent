@@ -73,6 +73,13 @@ def test_scope_cue_is_the_only_input_difference_and_not_reinjected(
 def test_cost_only_and_persistent_budget(packet, failed_source, tmp_path):
     before = (failed_source.root / "runs" / f"{failed_source.run_id}.jsonl").read_bytes()
     branch = restore(packet, tmp_path)
+    # The inherited segment candidate precedes admission: a projected request
+    # must receive its own count, never reuse the source request's count receipt.
+    inherited = branch.journal.events()[:branch.inherited_events]
+    last_batch = max(e["sequence"] for e in inherited
+                     if e["event_type"] == "tool_batch_finished")
+    assert not any(e["event_type"] in {"input_count_started", "input_count_finished"}
+                   and e["sequence"] > last_batch for e in inherited)
     projected = copy.deepcopy(branch.selected)
     view = json.loads(projected["input"][-1]["content"])
     old = json.loads(branch.source_request["input"][-1]["content"])

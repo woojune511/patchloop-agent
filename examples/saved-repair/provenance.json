@@ -1,0 +1,52 @@
+{
+  "schema": "saved-evidence-export-v1",
+  "generated_from": "closed 2026-10-05 dotenv-715 repair and separate repair-verify replay",
+  "new_model_calls": 0,
+  "new_project_check_runs": 0,
+  "files": {
+    "returned.patch": {
+      "source_hash": "sha256:e5be31d3be9dfc76410c86c7608c868179d41236e4a3c2f4fdcd9aa4848cb7df",
+      "transformation": "byte-identical copy"
+    },
+    "model-tests-only.patch": {
+      "source_hash": "sha256:486df91c77500674feee50133c6ce42435664dd14242c3856adb3525cd7f216b",
+      "transformation": "byte-identical copy"
+    },
+    "public.yaml": {
+      "source_hash": "sha256:a44a230e7be04c0ad845df2b256b485cb152dfa0f0fc80042e5347037998d95b",
+      "transformation": "byte-identical copy"
+    },
+    "request.example.json": {
+      "source_hash": "sha256:214e6fa32df0c21509d90e050091c8aa9f20c48721873ab367ea18e6f61b139a",
+      "transformation": "task/source/state_root/env_file replaced by portable relative example paths; settings retained"
+    },
+    "issue.json": {
+      "source_hash": "sha256:e6b5a2d77e60a67fc87fbdf0c4e14bd63e49ec7c3d4dfe9b9a5e2b2da55cf11d",
+      "transformation": "only public issue URL/title/body/timestamps; profile metadata omitted"
+    },
+    "result.public.json": {
+      "source_hash": "sha256:2b1d78efaaef65ea6ff4502c58bc593375e57a781c3fc699706c2bf4f12e4029",
+      "transformation": "allowlisted observed results with explicit interpretation boundaries; operator paths and unrelated metadata omitted"
+    },
+    "verification.public.json": {
+      "source_hash": "sha256:fd0681a1de2f42a31a480b3d1142b09ff17e6c197dee32461b8cec3dff595a6b",
+      "transformation": "host workspace/journal/artifact paths removed; original result hash recorded"
+    },
+    "UPSTREAM-LICENSE": {
+      "source_hash": "sha256:dd1c70c9434fdeb24d08f37fcc43a4eef9cf80db4cee3eb7755e0d888af67a19",
+      "transformation": "byte-identical python-dotenv license"
+    },
+    "base-model-tests.json": {
+      "source_hash": "sha256:8bb99bde3b0dfda1a5a87634089a0fa480a75cb42e2a996bb585d4f8a0bf3c56",
+      "transformation": "public command, output, exit, timing and truncation fields only; execution metadata omitted"
+    },
+    "patched-model-tests.json": {
+      "source_hash": "sha256:b031870a55250511d119d98d2c5e619df67f167b115e7f24e6af03ce8f888c30",
+      "transformation": "public command, output, exit, timing and truncation fields only; execution metadata omitted"
+    },
+    "patched-public-issue.json": {
+      "source_hash": "sha256:b67ab5ddb2f2aae0117d504a3541e3b9e5e33596e08ceaf2936b2ae1a4371190",
+      "transformation": "public command, output, exit, timing and truncation fields only; execution metadata omitted"
+    }
+  }
+}

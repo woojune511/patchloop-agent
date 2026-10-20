@@ -1,0 +1,322 @@
+{
+  "publication": {
+    "source_hash": "sha256:3b80a963ce272d9ebc3883c62d588383d59d01aa9e36df7b3c9254db09a11cba",
+    "kind": "sanitized historical verifier result"
+  },
+  "result": {
+    "schema_version": "repair-verification-v1",
+    "run_id": "run_dev_verify_22cce66d3d95427d",
+    "official": false,
+    "acceptance": "NOT_RUN",
+    "requirement_fit": "NOT_ASSESSED",
+    "comparison": {
+      "status": "OBSERVED_FAIL_THEN_PASS",
+      "tests": [
+        {
+          "check_id": "public-regressions",
+          "nodeid": "tests/test_options.py::test_shared_option_callback_validation_for_omitted_custom_option",
+          "before": "TEST_FAILED",
+          "after": "PASSED"
+        }
+      ]
+    },
+    "checks": [
+      {
+        "phase": "base",
+        "check_id": "public-regressions",
+        "diff_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "pytest": true,
+        "exit_code": 0,
+        "expected_exit_codes": [
+          0
+        ],
+        "observation": {
+          "status": "COMPLETED",
+          "exit_code": 0,
+          "collected": 942,
+          "collection_errors": [],
+          "collection_skips": [],
+          "summary": {
+            "passed": 942,
+            "failed": 0,
+            "skipped": 0,
+            "errors": 0,
+            "xfail_xpass": 0
+          },
+          "tests": []
+        },
+        "receipt": {
+          "artifact_id": "art_e2e764d8fb7948b9a1e582c232bff38c",
+          "content_hash": "sha256:6f7293e133574658f8ded510564a7ee7c1c9f33904d788e699663817dbbe12da",
+          "media_type": "application/json; charset=utf-8",
+          "size_bytes": 7037,
+          "created_at": "2026-10-05T06:47:59.553269Z"
+        }
+      },
+      {
+        "phase": "base",
+        "check_id": "callback-preservation",
+        "diff_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "pytest": false,
+        "exit_code": 1,
+        "expected_exit_codes": [
+          0
+        ],
+        "observation": {
+          "status": "NONZERO_EXIT"
+        },
+        "receipt": {
+          "artifact_id": "art_477522288ec6457e87965e54762fe7df",
+          "content_hash": "sha256:96279f1a312e56d834e3a22582017afdd2dc71d32fd99198f40a33e6a136e0c7",
+          "media_type": "application/json; charset=utf-8",
+          "size_bytes": 2268,
+          "created_at": "2026-10-05T06:48:00.425857Z"
+        }
+      },
+      {
+        "phase": "base_with_tests",
+        "check_id": "public-regressions",
+        "diff_hash": "sha256:ba0f6784425dd91843a2c083d163c331b6a0a9fd420263d9e5e3d9dd0e3e4f0e",
+        "pytest": true,
+        "exit_code": 1,
+        "expected_exit_codes": [
+          0
+        ],
+        "observation": {
+          "status": "COMPLETED",
+          "exit_code": 1,
+          "collected": 943,
+          "collection_errors": [],
+          "collection_skips": [],
+          "summary": {
+            "passed": 942,
+            "failed": 1,
+            "skipped": 0,
+            "errors": 0,
+            "xfail_xpass": 0
+          },
+          "tests": [
+            {
+              "nodeid": "tests/test_options.py::test_shared_option_callback_validation_for_omitted_custom_option",
+              "path": "tests/test_options.py",
+              "function": "test_shared_option_callback_validation_for_omitted_custom_option",
+              "xfail_marked": false,
+              "phases": [
+                {
+                  "when": "setup",
+                  "outcome": "passed",
+                  "exception_type": null,
+                  "wasxfail": null,
+                  "detail": null
+                },
+                {
+                  "when": "call",
+                  "outcome": "failed",
+                  "exception_type": "builtins.AssertionError",
+                  "wasxfail": null,
+                  "detail": "runner = <click.testing.CliRunner object at 0x7eff10aa82f0>\n\n    def test_shared_option_callback_validation_for_omitted_custom_option(runner):\n        observations = []\n        for reject in (False, True):\n            seen = []\n            fetch_calls = 0\n    \n            def fetch():\n                nonlocal fetch_calls\n                fetch_calls += 1\n                return \"foo\"\n    \n            def callback(ctx, param, value):\n                seen.append(value)\n                if reject:\n                    raise click.BadParameter(\"blocked by omitted option validation\")\n                return fetch()\n    \n            @click.command()\n            @click.option(\"--custom\", \"custom\", callback=callback)\n            @click.option(\"--fetch\", \"custom\", flag_value=\"blocked\")\n            def cli(custom):\n                click.echo(custom)\n    \n            result = runner.invoke(cli, [\"--fetch\"])\n            observations.append(\n                {\n                    \"reject\": reject,\n                    \"callback_values\": seen,\n                    \"exit_code\": result.exit_code,\n                    \"output\": result.output,\n                    \"fetch_calls\": fetch_calls,\n                }\n            )\n    \n>       assert observations[0][\"callback_values\"] == [\"blocked\"]\nE       AssertionError: assert [] == ['blocked']\nE         \nE         Right contains one more item: 'blocked'\nE         Use -v to get more diff\n\ntests/test_options.py:2076: AssertionError"
+                },
+                {
+                  "when": "teardown",
+                  "outcome": "passed",
+                  "exception_type": null,
+                  "wasxfail": null,
+                  "detail": null
+                }
+              ],
+              "parameter_index": null,
+              "status": "TEST_FAILED"
+            }
+          ]
+        },
+        "receipt": {
+          "artifact_id": "art_dd8c139212b1419fae14386fda172b00",
+          "content_hash": "sha256:dfd73b4f917671dd72e35e211e11b477a2e4ca201f56fb47261e209a5a47e167",
+          "media_type": "application/json; charset=utf-8",
+          "size_bytes": 11389,
+          "created_at": "2026-10-05T06:48:06.235154Z"
+        }
+      },
+      {
+        "phase": "base_with_tests",
+        "check_id": "callback-preservation",
+        "diff_hash": "sha256:ba0f6784425dd91843a2c083d163c331b6a0a9fd420263d9e5e3d9dd0e3e4f0e",
+        "pytest": false,
+        "exit_code": 1,
+        "expected_exit_codes": [
+          0
+        ],
+        "observation": {
+          "status": "NONZERO_EXIT"
+        },
+        "receipt": {
+          "artifact_id": "art_5ff8f38e4d1d4e75ac8b0b0d38b52c39",
+          "content_hash": "sha256:15be7015ed7787337a2d5fbbd6ea297cc75a12656b87e0798f6f4334a7efbcec",
+          "media_type": "application/json; charset=utf-8",
+          "size_bytes": 2268,
+          "created_at": "2026-10-05T06:48:07.104345Z"
+        }
+      },
+      {
+        "phase": "patched",
+        "check_id": "public-regressions",
+        "diff_hash": "sha256:298fa27840d47459d74927915a6e253c2be77a326be4dde8be4efc6d7a1fcf0e",
+        "pytest": true,
+        "exit_code": 0,
+        "expected_exit_codes": [
+          0
+        ],
+        "observation": {
+          "status": "COMPLETED",
+          "exit_code": 0,
+          "collected": 943,
+          "collection_errors": [],
+          "collection_skips": [],
+          "summary": {
+            "passed": 943,
+            "failed": 0,
+            "skipped": 0,
+            "errors": 0,
+            "xfail_xpass": 0
+          },
+          "tests": [
+            {
+              "nodeid": "tests/test_options.py::test_shared_option_callback_validation_for_omitted_custom_option",
+              "path": "tests/test_options.py",
+              "function": "test_shared_option_callback_validation_for_omitted_custom_option",
+              "xfail_marked": false,
+              "phases": [
+                {
+                  "when": "setup",
+                  "outcome": "passed",
+                  "exception_type": null,
+                  "wasxfail": null,
+                  "detail": null
+                },
+                {
+                  "when": "call",
+                  "outcome": "passed",
+                  "exception_type": null,
+                  "wasxfail": null,
+                  "detail": null
+                },
+                {
+                  "when": "teardown",
+                  "outcome": "passed",
+                  "exception_type": null,
+                  "wasxfail": null,
+                  "detail": null
+                }
+              ],
+              "parameter_index": null,
+              "status": "PASSED"
+            }
+          ]
+        },
+        "receipt": {
+          "artifact_id": "art_17f611903d3c49ec9729e83dfedb7ff0",
+          "content_hash": "sha256:499c7a2ede3ee41de24f9fc2746e0ce73a8c4f307ab7fe551b261be61755ca8c",
+          "media_type": "application/json; charset=utf-8",
+          "size_bytes": 7820,
+          "created_at": "2026-10-05T06:48:12.799740Z"
+        }
+      },
+      {
+        "phase": "patched",
+        "check_id": "callback-preservation",
+        "diff_hash": "sha256:298fa27840d47459d74927915a6e253c2be77a326be4dde8be4efc6d7a1fcf0e",
+        "pytest": false,
+        "exit_code": 0,
+        "expected_exit_codes": [
+          0
+        ],
+        "observation": {
+          "status": "EXIT_ZERO"
+        },
+        "receipt": {
+          "artifact_id": "art_328294917d08441fa3f5885855148981",
+          "content_hash": "sha256:fd93014426390dce93681e051c720598c02733652b93fd72c98b5d7c473e59a5",
+          "media_type": "application/json; charset=utf-8",
+          "size_bytes": 2283,
+          "created_at": "2026-10-05T06:48:13.666878Z"
+        }
+      }
+    ],
+    "base_commit": "37bcf423d98460047957619ec0c49475fc4169c5",
+    "public_spec_hash": "sha256:18526ae83780942f574d1c40cc90af7c46ccd12c406ead67b88dedc8b105e05c",
+    "runtime_hash": "sha256:713259075f8e8123ad382fc23f218d67ab5d2c2d820c9b35845fba03129270df",
+    "sandbox": {
+      "backend": "docker",
+      "image": "patchloop-public-repair-pytest@sha256:4512f41e843d57ad7fb8306ece1e549afa2903db6d97815315fa9bf732c82c1a",
+      "image_digest": "sha256:4512f41e843d57ad7fb8306ece1e549afa2903db6d97815315fa9bf732c82c1a"
+    },
+    "journal": "[host path omitted]",
+    "changed_files": [
+      "src/click/core.py",
+      "tests/test_options.py"
+    ],
+    "model_calls": 0,
+    "request": {
+      "artifact_id": "art_b03081232a804ccbb6c950aeccbc9371",
+      "content_hash": "sha256:37775b2eba79db4492d67b6e444dc194e6f8a564e278ffc1d44ad78d3e8e8665",
+      "media_type": "application/octet-stream",
+      "size_bytes": 1136,
+      "created_at": "2026-10-05T06:47:47.565766Z"
+    },
+    "patch": {
+      "artifact_id": "art_021b6724232e4935b31fd78255c267fc",
+      "content_hash": "sha256:298fa27840d47459d74927915a6e253c2be77a326be4dde8be4efc6d7a1fcf0e",
+      "media_type": "application/octet-stream",
+      "size_bytes": 3183,
+      "created_at": "2026-10-05T06:47:47.566831Z"
+    },
+    "public_task": {
+      "artifact_id": "art_4ccb52620031464bbd82a2ff9557ef3d",
+      "content_hash": "sha256:ab9867aade8a61bb037894b94631365902f99ad582f6875e4d680387df45259a",
+      "media_type": "application/json; charset=utf-8",
+      "size_bytes": 9189,
+      "created_at": "2026-10-05T06:47:47.567979Z"
+    },
+    "scope": {
+      "passed": true,
+      "violations": [],
+      "details": {
+        "changed_files": [
+          "src/click/core.py",
+          "tests/test_options.py"
+        ],
+        "untracked_files": [],
+        "changed_file_count": 2,
+        "added_lines": 54,
+        "deleted_lines": 8,
+        "diff_lines": 62,
+        "typed_violations": []
+      }
+    },
+    "test_additions": [
+      {
+        "path": "tests/test_options.py",
+        "function": "test_shared_option_callback_validation_for_omitted_custom_option",
+        "parameter_names": [],
+        "indices": null
+      }
+    ],
+    "test_paths": [
+      "tests/test_options.py"
+    ],
+    "implementation_paths": [
+      "src/click/core.py"
+    ],
+    "test_file_hashes": {
+      "tests/test_options.py": "sha256:b994cad35b8529f0899c57c4cdf93c1a20414dd41bc3c8939084c46bbc6d6a62"
+    },
+    "status": "COMPLETE",
+    "result_artifact": {
+      "artifact_id": "art_b7e64ba94e3a4dacb27dbb0b31aeec7a",
+      "content_hash": "sha256:617a63c28a6b179b37749e5c8621a1450eaaf009388986960da23f5828ef7222",
+      "media_type": "application/json; charset=utf-8",
+      "size_bytes": 13645,
+      "created_at": "2026-10-05T06:48:13.675667Z"
+    }
+  }
+}

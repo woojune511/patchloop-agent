@@ -168,6 +168,26 @@ def test_unknown_check_and_legacy_inputs_do_not_gain_an_invented_definition():
     assert "evidence_review" not in compact_model_state(state, [])["recent_checks"][0]
 
 
+@pytest.mark.parametrize("passed", [True, False])
+def test_result_and_added_test_source_cannot_certify_requirement_verification(passed):
+    state = _state(command=["python", "-B", "-c", "registered_wrapper()", "tests/test_old.py"])
+    state["recent_checks"][0]["passed"] = passed
+    state["source_spans"] = [_span("def test_new(): assert reported_case()",
+                                   path="tests/test_new.py")]
+    state["recent_checks"][0]["mutation_expectation"] = {"expected_behavior": "bug fixed"}
+    state["current_diff"]["patch"] += "\n+def test_new(): assert reported_case()"
+    before = copy.deepcopy(state)
+    projected = compact_model_state(state, [])
+    review = projected["recent_checks"][0]["evidence_review"]
+    assert review["selection_kind"] == "unresolved"
+    assert review["coverage_status"] == review["requirement_verification"] == "not_assessed"
+    assert "test source/additions and mutation expectations do not establish it" in (
+        review["interpretation"])
+    assert projected["recent_checks"][0]["passed"] is passed
+    assert projected["available_tool_names"] == state["available_tool_names"]
+    assert state == before
+
+
 @pytest.mark.parametrize("context_policy", ["append-v1", "segmented-v1"])
 def test_actual_mock_inputs_link_registered_check_and_keep_submission_eligible(
     tmp_path, monkeypatch, context_policy,
@@ -201,6 +221,7 @@ def test_actual_mock_inputs_link_registered_check_and_keep_submission_eligible(
     command = final["public_task"]["visible_checks"][0]["command"]
     assert review["command_hash"] == sha256_json(command)
     assert review["coverage_status"] == "not_assessed" and review["declared_targets"] == []
+    assert review["requirement_verification"] == "not_assessed"
     assert row["passed"] and row["diff_hash"] == final["current_diff"]["patch_hash"]
     assert "finish_task" in final["available_tool_names"]
     assert first["current_diff"]["patch"] == "" and first["public_task"] == final["public_task"]

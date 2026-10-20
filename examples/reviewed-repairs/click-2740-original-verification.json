@@ -1,0 +1,262 @@
+{
+  "publication": {
+    "source_hash": "sha256:22aebaa91a709a34c6e642a406bc02b0e437ce553849cc6776095cd8eb7d16c2",
+    "kind": "sanitized historical verifier result"
+  },
+  "result": {
+    "schema_version": "repair-verification-v1",
+    "run_id": "run_dev_verify_e0106c3ca3174534",
+    "official": false,
+    "acceptance": "NOT_RUN",
+    "requirement_fit": "NOT_ASSESSED",
+    "comparison": {
+      "status": "OBSERVED_FAIL_THEN_PASS",
+      "tests": [
+        {
+          "check_id": "public-regressions",
+          "nodeid": "tests/test_basic.py::test_exception_notes",
+          "before": "TEST_FAILED",
+          "after": "PASSED"
+        }
+      ]
+    },
+    "checks": [
+      {
+        "phase": "base",
+        "check_id": "public-regressions",
+        "diff_hash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "pytest": true,
+        "exit_code": 0,
+        "expected_exit_codes": [
+          0
+        ],
+        "observation": {
+          "status": "COMPLETED",
+          "exit_code": 0,
+          "collected": 941,
+          "collection_errors": [],
+          "collection_skips": [],
+          "summary": {
+            "passed": 941,
+            "failed": 0,
+            "skipped": 0,
+            "errors": 0,
+            "xfail_xpass": 0
+          },
+          "tests": []
+        },
+        "receipt": {
+          "artifact_id": "art_99f3513097ae40ccacdcdefa65f57c9e",
+          "content_hash": "sha256:fef7cf396d3abb879cba8339168e4d7eaa08eb4884fa64eba53bacd786f7f563",
+          "media_type": "application/json; charset=utf-8",
+          "size_bytes": 7029,
+          "created_at": "2026-10-04T23:40:59.828567Z"
+        }
+      },
+      {
+        "phase": "base_with_tests",
+        "check_id": "public-regressions",
+        "diff_hash": "sha256:c91f9ebe94ea83509b2b893294b10e88742b352861f2a114e4f42dbba203f176",
+        "pytest": true,
+        "exit_code": 1,
+        "expected_exit_codes": [
+          0
+        ],
+        "observation": {
+          "status": "COMPLETED",
+          "exit_code": 1,
+          "collected": 942,
+          "collection_errors": [],
+          "collection_skips": [],
+          "summary": {
+            "passed": 941,
+            "failed": 1,
+            "skipped": 0,
+            "errors": 0,
+            "xfail_xpass": 0
+          },
+          "tests": [
+            {
+              "nodeid": "tests/test_basic.py::test_exception_notes",
+              "path": "tests/test_basic.py",
+              "function": "test_exception_notes",
+              "xfail_marked": false,
+              "phases": [
+                {
+                  "when": "setup",
+                  "outcome": "passed",
+                  "exception_type": null,
+                  "wasxfail": null,
+                  "detail": null
+                },
+                {
+                  "when": "call",
+                  "outcome": "failed",
+                  "exception_type": "builtins.AssertionError",
+                  "wasxfail": null,
+                  "detail": "runner = <click.testing.CliRunner object at 0x739eab7915b0>\n\n    def test_exception_notes(runner):\n        @click.command()\n        def click_exc():\n            exc = click.ClickException(\"foo\")\n            exc.add_note(\"bar\")\n            raise exc\n    \n        result = runner.invoke(click_exc)\n        assert result.exit_code == 1\n>       assert result.output == \"Error: foo\\nbar\\n\"\nE       AssertionError: assert 'Error: foo\\n' == 'Error: foo\\nbar\\n'\nE         \nE           Error: foo\nE         - bar\n\ntests/test_basic.py:660: AssertionError"
+                },
+                {
+                  "when": "teardown",
+                  "outcome": "passed",
+                  "exception_type": null,
+                  "wasxfail": null,
+                  "detail": null
+                }
+              ],
+              "parameter_index": null,
+              "status": "TEST_FAILED"
+            }
+          ]
+        },
+        "receipt": {
+          "artifact_id": "art_37796046575c43e9a5f668d8049057bd",
+          "content_hash": "sha256:fb498a04e2597a755c7cc3565b256cd048ef9ffecd8f0a555861b1641395669e",
+          "media_type": "application/json; charset=utf-8",
+          "size_bytes": 9222,
+          "created_at": "2026-10-04T23:41:05.506767Z"
+        }
+      },
+      {
+        "phase": "patched",
+        "check_id": "public-regressions",
+        "diff_hash": "sha256:76bdce2405f14c2ef5f667178269e3b80e6a049a5b847fb7ee95064de86b32cd",
+        "pytest": true,
+        "exit_code": 0,
+        "expected_exit_codes": [
+          0
+        ],
+        "observation": {
+          "status": "COMPLETED",
+          "exit_code": 0,
+          "collected": 942,
+          "collection_errors": [],
+          "collection_skips": [],
+          "summary": {
+            "passed": 942,
+            "failed": 0,
+            "skipped": 0,
+            "errors": 0,
+            "xfail_xpass": 0
+          },
+          "tests": [
+            {
+              "nodeid": "tests/test_basic.py::test_exception_notes",
+              "path": "tests/test_basic.py",
+              "function": "test_exception_notes",
+              "xfail_marked": false,
+              "phases": [
+                {
+                  "when": "setup",
+                  "outcome": "passed",
+                  "exception_type": null,
+                  "wasxfail": null,
+                  "detail": null
+                },
+                {
+                  "when": "call",
+                  "outcome": "passed",
+                  "exception_type": null,
+                  "wasxfail": null,
+                  "detail": null
+                },
+                {
+                  "when": "teardown",
+                  "outcome": "passed",
+                  "exception_type": null,
+                  "wasxfail": null,
+                  "detail": null
+                }
+              ],
+              "parameter_index": null,
+              "status": "PASSED"
+            }
+          ]
+        },
+        "receipt": {
+          "artifact_id": "art_2abb9bb24b524b44867e876cbe9765a1",
+          "content_hash": "sha256:6f0aa64a7a3edc7f923d50967bae2d464dcdc9e7ffade010dbf608bdad97f8c3",
+          "media_type": "application/json; charset=utf-8",
+          "size_bytes": 7674,
+          "created_at": "2026-10-04T23:41:11.058798Z"
+        }
+      }
+    ],
+    "base_commit": "2247b35ea1c47c727d7a06e51fa280e12a863ff6",
+    "public_spec_hash": "sha256:b11a950596248026a08d2d8325db949f510f9bfab2b84ffb41f05f151d823ade",
+    "runtime_hash": "sha256:713259075f8e8123ad382fc23f218d67ab5d2c2d820c9b35845fba03129270df",
+    "sandbox": {
+      "backend": "docker",
+      "image": "patchloop-public-repair-pytest@sha256:4512f41e843d57ad7fb8306ece1e549afa2903db6d97815315fa9bf732c82c1a",
+      "image_digest": "sha256:4512f41e843d57ad7fb8306ece1e549afa2903db6d97815315fa9bf732c82c1a"
+    },
+    "journal": "[host path omitted]",
+    "changed_files": [
+      "src/click/exceptions.py",
+      "tests/test_basic.py"
+    ],
+    "model_calls": 0,
+    "request": {
+      "artifact_id": "art_4df1ebc24166449a9e272224b07b821e",
+      "content_hash": "sha256:fc24d6072faa3efc02b9480089b2d75f6238b4af837de4a2edcb10224748a95f",
+      "media_type": "application/octet-stream",
+      "size_bytes": 1109,
+      "created_at": "2026-10-04T23:40:50.578902Z"
+    },
+    "patch": {
+      "artifact_id": "art_cf1ad8540a3149b6915b1accd36219c4",
+      "content_hash": "sha256:76bdce2405f14c2ef5f667178269e3b80e6a049a5b847fb7ee95064de86b32cd",
+      "media_type": "application/octet-stream",
+      "size_bytes": 3657,
+      "created_at": "2026-10-04T23:40:50.579888Z"
+    },
+    "public_task": {
+      "artifact_id": "art_43128aba37254344961401a3c44cf6f7",
+      "content_hash": "sha256:8d518b76c2e80a36f8f6c4dda58e9ac5df85962da7e4f888337d0d49fcbf9ea4",
+      "media_type": "application/json; charset=utf-8",
+      "size_bytes": 3395,
+      "created_at": "2026-10-04T23:40:50.581000Z"
+    },
+    "scope": {
+      "passed": true,
+      "violations": [],
+      "details": {
+        "changed_files": [
+          "src/click/exceptions.py",
+          "tests/test_basic.py"
+        ],
+        "untracked_files": [],
+        "changed_file_count": 2,
+        "added_lines": 65,
+        "deleted_lines": 11,
+        "diff_lines": 76,
+        "typed_violations": []
+      }
+    },
+    "test_additions": [
+      {
+        "path": "tests/test_basic.py",
+        "function": "test_exception_notes",
+        "parameter_names": [],
+        "indices": null
+      }
+    ],
+    "test_paths": [
+      "tests/test_basic.py"
+    ],
+    "implementation_paths": [
+      "src/click/exceptions.py"
+    ],
+    "test_file_hashes": {
+      "tests/test_basic.py": "sha256:c0a5ec961661998e23028c1d1bfbf85c16f9a83d2efdce7268b33ba9c72aad6f"
+    },
+    "status": "COMPLETE",
+    "result_artifact": {
+      "artifact_id": "art_382d507c8cd04093a898318fdf873009",
+      "content_hash": "sha256:7c26505ab6c929282c08157283e633b4a28a17069240fec7da5d99968a3bfb29",
+      "media_type": "application/json; charset=utf-8",
+      "size_bytes": 9656,
+      "created_at": "2026-10-04T23:41:11.066704Z"
+    }
+  }
+}

@@ -11,7 +11,7 @@ from patchloop.errors import ContractError
 DEV_SYSTEM_PROMPT = """You are PatchLoop dev-head, a constrained coding agent.
 Use the supplied tools to investigate the public task, make a scoped edit, check its
 behavior, and submit. Every response must request either 1-4 read_file/search_files
-calls or exactly one replace_text, run_check, run_probe, finish_task, or stop_task,
+calls or exactly one replace_text, run_check, run_tests, run_probe, finish_task, or stop_task,
 using only the tools supplied on this turn. Do not mix
 those shapes. Every call carries a bounded public turn_decision whose mode matches
 the tool family. Parallel inspections can have different basis and evidence_goal.
@@ -41,23 +41,23 @@ mutation_readiness.state=ready_to_attempt means only that current editable sourc
 evidence is delivered. It guarantees neither coverage of a particular replacement
 anchor nor a sufficient semantic solution.
 
-An optional memory_update retains reusable public behavior rules and explicitly
-untested implementation assumptions, not status copies or reasoning transcripts.
-Cite behavior-bearing source or already observed tool results, not wrapper locations.
-current_public_failure describes this diff's failure; pending_recheck references an
-older failure, not this candidate's verdict.
-Refine the same fact with its existing note_id; note_id=null creates a distinct fact.
-Consolidate duplicates with remove_note_ids. Close an answered open_question or name
-the next uncertainty. No update or three-part plan is required each turn.
-status=current only means cited evidence is current; interpretation remains unverified.
-A citation's check_result is its verdict, not confirmation of the note's prose.
-Reconsider claims against the post-image after edits.
+memory_update retains model interpretations and untested assumptions, not reasoning
+transcripts or status copies. Cite behavior-bearing observed source/results.
+current_public_failure is current; pending_recheck concerns an older diff.
+Refine using note_id; note_id=null creates a distinct interpretation.
+Use remove_note_ids. open_question is null or {text, evidence}:
+at most one primary and one countercheck. Cite minimal observed units and a competing
+branch/precondition if available. After edits refresh with an ordinary action if relevant:
+mutation anchors precede current countercheck, then primary. Do not invent counterchecks.
+Missing bodies stay explicit. evidence_currency=current and closed_by_model never certify
+behavior. A citation's check_result is its verdict, not confirmation of the note's prose.
+Reconsider claims after edits. Updates are optional.
 
-Only the first non-null memory_update is applied before the batch executes: cite no
-pending/current-batch results. Before observing an answer, use findings=[] with
-open_question, or memory_update=null. Null preserves notes and the question;
+Apply the first non-null memory_update before the batch executes; cite no
+pending/current-batch results. Use findings=[] with open_question or memory_update=null
+before an answer. Null preserves notes and the question;
 open_question=null within an update clears only the question.
-Use working_notes.available_note_ids for updates. memory_update_result is a pre-batch
+Use working_notes.available_note_ids. memory_update_result is a pre-batch
 receipt, not current availability; working_notes_after_batch reports surviving IDs.
 Source changes can expire notes, including ones just recorded. Main-action success
 does not mean a note was stored. Fix annotation errors on a useful later call without
@@ -72,7 +72,7 @@ validate a candidate. Dismiss needs a reason why further verification is not use
 not test evidence. Neither certifies semantic coverage. Reconsider resolved/dismissed
 concerns after diff changes; focus changes, unrelated fixes and source-note expiry
 do not resolve them. Use [] for no concern change. Concerns and annotation errors
-never block the main action or finish, and require no extra call.
+do not mechanically gate actions or finish; no extra call is required.
 
 A mutation requires hypothesis, expected_behavior, and one exact old_text/new_text
 replacement in an allowed existing file. State the expected observable effect of
@@ -97,18 +97,21 @@ counts. finish_task submits; historical PASS does not. Zero remaining mutations 
 edits, not affordable checks or submission. completion_possible describes completion;
 mutation_completion_horizon describes another edit starting now; its false eligibility
 flags do not predict availability after acquiring missing source evidence.
-When run_probe is supplied,
-use a small public behavior experiment on the current candidate to test a concrete
-uncertainty. Use public input variations, as described by the tool. Its observation
-separates execution from behavior: behavior_verdict=not_assessed is not a PASS.
-Use the next turn's basis or optional notes to separate tested behavior from assumptions.
-Failure may be in the experiment itself.
-Base conclusions on actual check inputs and results. mutation_expectation records
-the intended effect of the checked edit, not coverage. recent_checks.evidence_review
-locates public check definitions and observed source; it does not certify execution
-of every case. Keep conclusions limited to what the evidence supports.
-Use an affordable experiment if it could change the decision, otherwise submit.
-No extra review call, annotation or experiment is required.
+When run_probe is supplied, use a small public behavior experiment on the current candidate
+to resolve a concrete uncertainty with public input variations.
+behavior_verdict=not_assessed is not a PASS; failures may belong to the experiment.
+Check evidence_review does not certify requirements; mutation_expectation
+is intent. Reading/adding tests is not execution. Judge requirements by executed
+input/assertion/result on this diff for the original input/path/outcome, or label source
+inference. Suite PASS or another path's success cannot replace that purpose or make
+verification conditional on suite failure.
+Skipped/rejected verification remains unperformed. Finish assessment must cover
+the original purpose despite plan changes: cite current-diff results or specific source
+inference explaining why gaps do not affect completion;
+listing a limitation is insufficient. Keep unexecuted behavior unverified.
+Continue if an available action could resolve a material gap.
+Call finish_task only if you judge complete. Edits require fresh checks and reassessment.
+This judgment needs no separate call or mandatory experiment.
 stop_task abandons as AGENT_STOPPED, without submission or
 evaluation; it is not completion. Use it when no available action supports progress,
 not merely when no edit is needed. Keep decisions and findings concise; never emit
@@ -174,7 +177,13 @@ class MockDevAdapter:
         if planning is not None:
             for call in turn.tool_calls:
                 call.turn_decision.plan_update = None
+                call.turn_decision.plan_update_reason = None
             if planning["review_request"]["requested"]:
+                if planning["plan"] is not None:
+                    turn.tool_calls[0].turn_decision.plan_update_reason = (
+                        "The scripted stage changed; unfinished public verification remains "
+                        "in the plan. Only already executed checks count as observations."
+                    )
                 turn.tool_calls[0].turn_decision.plan_update = (
                     "Goal: " + payload["public_task"]["issue"]["title"] + ". "
                     "Inspect the parser lifetime, make an exact small replacement, "
@@ -193,6 +202,11 @@ class MockDevAdapter:
                         + " for the next scripted public obligation; use results bound "
                         "to the current diff to decide whether to repair or submit."
                     )
+        if tools and "memory_update" in tools[0]["parameters"]["properties"]:
+            turn.tool_calls = [RequestedTool(
+                name=call.name, action_id=call.action_id, arguments=call.arguments,
+                memory_update=call.turn_decision.memory_update,
+            ) for call in turn.tool_calls]
         return turn
 
     def _next_action(self, context: str, tools: list[dict]) -> DevModelTurn:
@@ -285,10 +299,16 @@ class MockDevAdapter:
                 RequestedTool(
                     name="finish_task",
                     action_id="mock-finish",
-                    arguments={},
+                    arguments={
+                        "assessment": (
+                            "The scoped replacement implements the public task's requested "
+                            "behavior and all required checks pass on this diff. This is a "
+                            "deterministic mock assessment; untested behavior remains unverified."
+                        ),
+                    },
                     turn_decision=PublicTurnDecision(
                         mode="finish",
-                        basis="Every visible check passed on the projected current diff.",
+                        basis="Reviewed the repair and current public checks for submission.",
                         evidence_goal=None,
                     ),
                 )

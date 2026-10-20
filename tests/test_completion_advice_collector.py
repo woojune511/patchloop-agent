@@ -7,6 +7,7 @@ import pytest
 from test_checkpoint_comparison import install_sdk
 from test_checkpoint_continuation import call, stop_steps
 from test_cleanup_information_checkpoint import failed_source as failed_source  # noqa: F401
+from test_completion_advice_checkpoint import pin_historical_ready_guidance
 from test_mutation_advice_checkpoint import source as source  # noqa: F401
 
 from diagnostics import checkpoint_continuation as continuation
@@ -15,6 +16,13 @@ from diagnostics import post_edit_budget_checkpoint as checkpoint
 from patchloop.dev.model import MOCK_MUTATIONS
 from patchloop.errors import ContractError
 from patchloop.util import sha256_json
+
+
+@pytest.fixture(scope="module", autouse=True)
+def historical_ready_guidance():
+    with pytest.MonkeyPatch.context() as scoped:
+        pin_historical_ready_guidance(scoped)
+        yield
 
 
 @pytest.mark.parametrize("failure", [None, "count", "transport", "usage", "repair"])

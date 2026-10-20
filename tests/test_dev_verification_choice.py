@@ -48,7 +48,7 @@ def _record(status="recorded", diff="current"):
 def test_legacy_cases_do_not_add_a_second_completion_menu(review_tools):
     mutation = _record()
     result = _guidance(mutation, review_tools | {"finish_task", "stop_task"})
-    assert result["submission_ready"] and result["next_action"] == {"tool": "finish_task"}
+    assert result["submission_ready"] and result["next_action"] is None
     assert "verification_choice" not in result
     assert ("run_probe" in result["message"]) is ("run_probe" in review_tools)
     assert CONTRAST["scope_basis"] not in canonical_json(result)
@@ -60,13 +60,13 @@ def test_legacy_cases_do_not_add_a_second_completion_menu(review_tools):
 ])
 def test_absent_invalid_stale_or_older_cases_keep_existing_guidance(mutation):
     result = _guidance(mutation, {"read_file", "run_probe", "finish_task", "stop_task"})
-    assert result["next_action"] == {"tool": "finish_task"}
+    assert result["next_action"] is None
     assert "verification_choice" not in result
 
 
 def test_case_presence_neither_reopens_closed_tools_nor_skips_required_checks():
     closed = _guidance(_record(), {"finish_task", "stop_task"})
-    assert closed["next_action"] == {"tool": "finish_task"}
+    assert closed["next_action"] is None
     assert "verification_choice" not in closed
     missing = _guidance(_record(), {"read_file", "run_check", "stop_task"}, ready=False)
     assert missing["next_action"] == {"tool": "run_check", "check_id": "public"}
@@ -91,7 +91,7 @@ def test_legacy_case_receipt_survives_restart_without_changing_completion(tmp_pa
     view = input_context(original)
     guidance = view["completion_guidance"]
     assert view["workflow_gate"] == "ready_to_submit"
-    assert guidance["next_action"] == {"tool": "finish_task"}
+    assert guidance["next_action"] is None
     record = view["last_successful_mutation"]
     assert record["delivery"] == "preceding_function_call_output"
     output = next(item for item in original if item.get("type") == "function_call_output"
@@ -107,7 +107,9 @@ def test_legacy_case_receipt_survives_restart_without_changing_completion(tmp_pa
     )
     assert _input(gateway, [check], tmp_path) == original
     finish = _batch(gateway, RequestedTool(
-        name="finish_task", action_id="finish-with-cases", arguments={},
+        name="finish_task", action_id="finish-with-cases", arguments={
+            "assessment": "Reviewed the public patch and remaining uncertainty.",
+        },
         turn_decision=PublicTurnDecision(mode="finish", basis="Submit after the public check."),
     ), tmp_path)
     assert finish.output["patch_hash"] == check.output["diff_hash"]

@@ -27,7 +27,14 @@ _FEEDBACK = {
     "or use null for a concern without an observed failure.",
     "invalid_verification_updates": "Use an array of at most three verification updates.",
     "invalid_verification_update": "This verification update does not match its public schema.",
-    "unknown_concern_id": "Use an existing concern ID, or upsert with null to create one.",
+    "unknown_concern_id": (
+        "This update created or changed no concern. To create one, resend the same original "
+        "statement with operation=upsert and concern_id=null. Complete example: "
+        '{"operation":"upsert","concern_id":null,"statement":"<same original statement>",'
+        '"evidence_action_id":null,"reason":null}. Keep an already observed failure ID in '
+        "evidence_action_id when linking it. To update, resolve or dismiss a concern, use its "
+        "returned ID from available_concern_ids."
+    ),
     "statement_required": "Upsert requires a public concern or a progress note about its original.",
     "reason_required": "Resolve or dismiss requires a nonempty public reason.",
     "concern_capacity": "Three unresolved concerns are already retained; update or address one.",
@@ -107,7 +114,7 @@ def _resolution_evidence(
     result = prior_results.get(action_id) if action_id else None
     if (
         not isinstance(result, dict) or result.get("action_id") != action_id
-        or result.get("tool") not in {"run_check", "run_probe"}
+        or result.get("tool") not in {"run_check", "run_tests", "run_probe"}
         or not isinstance(result.get("input_hash"), str) or not result["input_hash"]
     ):
         return None, "unobserved_verification_result"
@@ -122,7 +129,7 @@ def _resolution_evidence(
     healthy = not any(output.get(flag, False) for flag in (
         "timed_out", "deadline_exhausted", "cleanup_failed",
     ))
-    if result["tool"] == "run_check":
+    if result["tool"] in {"run_check", "run_tests"}:
         passed = output.get("passed") is True
     else:
         passed = (
@@ -134,6 +141,8 @@ def _resolution_evidence(
     return {
         "action_id": action_id, "input_hash": result["input_hash"],
         "tool": result["tool"], "diff_hash": diff_hash,
+        **({"suite_id": output["suite_id"], "targets": output["targets"]}
+           if result["tool"] == "run_tests" else {}),
         **({"check_id": output["check_id"]}
            if result["tool"] == "run_check" and isinstance(output.get("check_id"), str)
            else {}),
@@ -269,10 +278,9 @@ def verification_updates_schema() -> dict[str, Any]:
     return {
         "type": "array", "maxItems": 3,
         "description": (
-            "Optional public uncertainties; [] preserves. Upsert with null ID creates; "
-            "an existing ID only updates progress and reopens for changed progress. "
-            "Exact repeats do nothing. Resolve requires a prior successful current-diff "
-            "check/probe plus reason; dismiss requires a reason. Neither proves semantic coverage."
+            "[] preserves. New progress reopens; identical updates do nothing. Resolve needs "
+            "a prior successful current-diff check/probe plus reason; dismiss needs a reason. "
+            "Neither proves coverage."
         ),
         "items": {
             "type": "object",
@@ -280,6 +288,10 @@ def verification_updates_schema() -> dict[str, Any]:
                 "operation": {"type": "string", "enum": ["upsert", "resolve", "dismiss"]},
                 "concern_id": {
                     "type": ["string", "null"], "pattern": r"^v[1-9][0-9]*$", "maxLength": 30,
+                    "description": (
+                        "Use null with upsert to create; use returned ID from "
+                        "available_concern_ids to update, resolve or dismiss."
+                    ),
                 },
                 "statement": {
                     "type": ["string", "null"], "maxLength": 400,

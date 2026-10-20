@@ -30,6 +30,25 @@ class RepairRecheck:
         return {"origin": "harness", "action_id": self.call(run_id).action_id, **asdict(self)}
 
 
+def latest_repair_check(
+    events: list[dict[str, Any]], *, baseline: str, registered_checks: set[str],
+) -> DevToolResult | None:
+    """Return the current registered failure eligible for an accepted repair's child."""
+    checks: dict[str, tuple[int, DevToolResult]] = {}
+    for event in events:
+        if event["event_type"] != "action_finished":
+            continue
+        result = DevToolResult.model_validate(event["payload"]["result"])
+        check_id = result.output.get("check_id")
+        if (result.tool == "run_check" and result.status == "succeeded"
+                and check_id in registered_checks and result.output.get("diff_hash") == baseline):
+            checks[check_id] = (event["sequence"], result)
+    failed = [row for row in checks.values() if row[1].output.get("passed") is False
+              and not row[1].output.get("deadline_exhausted")
+              and not row[1].output.get("cleanup_failed")]
+    return max(failed, key=lambda row: row[0])[1] if failed else None
+
+
 def select_repair_recheck(
     journal: DevJournal, latest_results: list[DevToolResult], *, registered_checks: set[str],
 ) -> RepairRecheck | None:
@@ -50,26 +69,19 @@ def select_repair_recheck(
         raise RecoveryError("repair recheck requires durable mutation diff identities")
     if candidate == baseline:
         return None
-    checks: dict[str, tuple[int, DevToolResult]] = {}
+    before_mutation = []
     for event in journal.events():
         if (event["event_type"] == "action_started"
                 and event["payload"].get("action_id") == mutation.action_id):
             break
-        if event["event_type"] != "action_finished":
-            continue
-        result = DevToolResult.model_validate(event["payload"]["result"])
-        check_id = result.output.get("check_id")
-        if (result.tool == "run_check" and result.status == "succeeded"
-                and check_id in registered_checks and result.output.get("diff_hash") == baseline):
-            checks[check_id] = (event["sequence"], result)
+        before_mutation.append(event)
     else:
         raise RecoveryError("repair recheck mutation admission is missing")
-    failed = [row for row in checks.values() if row[1].output.get("passed") is False
-              and not row[1].output.get("deadline_exhausted")
-              and not row[1].output.get("cleanup_failed")]
-    if not failed:
+    previous = latest_repair_check(
+        before_mutation, baseline=baseline, registered_checks=registered_checks,
+    )
+    if previous is None:
         return None
-    previous = max(failed, key=lambda row: row[0])[1]
     return RepairRecheck(
         parent_action_id=mutation.action_id, previous_check_action_id=previous.action_id,
         check_id=previous.output["check_id"], baseline_diff_hash=baseline,
