@@ -64,11 +64,12 @@ L003/L039 cycle, regression PASS overinterpreted despite retained notes/tools.
 [Counterexample](history/2026-10-07-counterexample-results.md): both FAIL despite
 B's retained current failure; USD 0.04019910. Keep 24k; no adoption or paid follow-up.
 
-[Recovery A/B](history/2026-10-20-evidence-recovery-results.md): closed; A1 repair FAIL,
-B1 usage mismatch, ten NOT_RUN. USD 0.75890505 settled; B1 billing UNKNOWN.
-Benefit unmeasured; search opt-in, two refs, transitions and budgets unchanged.
-[HTTP diagnostics](../.agent/provider-usage-diagnostics.md): local only; no paid retry.
-Quick: `tests/quick.txt`; four old full-suite timing failures remain.
+[A1/B1](history/2026-10-20-a1b1-diagnosis.md): A1 wrong-path edit; B1 usage mismatch.
+Closed; ten NOT_RUN. USD 0.75890505 settled; B1 billing UNKNOWN.
+Guard retained at edit; B unmeasured. Helper replay NOT_RUN (Docker).
+Two refs, transitions, budgets unchanged.
+[HTTP diagnostics](../.agent/provider-usage-diagnostics.md): local; paid NOT_RUN.
+Quick: `tests/quick.txt`; four old timing failures remain.
 
 See [panel contract](../.agent/current-dev20.md) and
 [priority fixes](history/2026-10-06-agent-priority-fixes.md). Prior panels closed.

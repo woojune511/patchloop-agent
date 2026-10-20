@@ -1,6 +1,6 @@
 # History
 
-- [Recovery](2026-10-20-evidence-recovery-results.md).
+- [A1/B1](2026-10-20-a1b1-diagnosis.md).
 - [Dev20](2026-10-16-mini-swe-dev20-results.md).
 - [Completion](2026-10-16-mini-swe-completion-results.md).
 - [PatchLoop](2026-10-16-patchloop-mini-dev20-results.md).
