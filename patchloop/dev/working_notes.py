@@ -327,7 +327,7 @@ def memory_update_schema() -> dict[str, Any]:
                 },
                 "required": ["text", "evidence"], "additionalProperties": False,
                 "description": (
-                    "Current question; at most one primary (minimal answering evidence) and one "
+                    "Question; at most one primary (minimal answering evidence) and one "
                     "countercheck (competing branch/precondition). Cite observed source ranges or "
                     "check/test/probe/search_history results. "
                     "Refresh after edits in an ordinary response. "
