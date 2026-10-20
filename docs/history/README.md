@@ -1,6 +1,6 @@
 # History
 
-- [B HTTP diagnosis](2026-10-20-b1-http-diagnosis.md).
+- [B schema pair](2026-10-20-b-schema-results.md).
 - [Dev20](2026-10-16-mini-swe-dev20-results.md).
 - [Completion](2026-10-16-mini-swe-completion-results.md).
 - [PatchLoop](2026-10-16-patchloop-mini-dev20-results.md).

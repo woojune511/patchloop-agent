@@ -66,8 +66,8 @@ B's retained current failure; USD 0.04019910. Keep 24k; no adoption or paid foll
 
 [Recovery A/B](history/2026-10-20-recovery-http-results.md): closed; A1 repair FAIL,
 B1 usage ERROR, ten NOT_RUN. New USD 0.48778785 + UNKNOWN; prior charges separate.
-[B schema check](../.agent/plans/b-first-schema-comparison.md): prepared, NOT_RUN;
-2 first responses, USD 0.315. Cause unresolved; no paid approval.
+[B schema pair](history/2026-10-20-b-schema-results.md): OFF healthy, ON zero-usage ERROR.
+Closed: USD 0.0138645 + UNKNOWN; schema implicated, exact cause unresolved.
 Quick: `tests/quick.txt`; four old timing failures remain.
 
 See [panel contract](../.agent/current-dev20.md) and
