@@ -3788,7 +3788,7 @@ class DevToolGateway:
                 self.requires_alternative = True
 
     def reproduction_review(self, *, diff_hash: str) -> dict[str, Any]:
-        return reproduction.review(self.journal.events(), diff_hash)
+        return reproduction.review(self.journal.events(), diff_hash, public_task=self.public_task)
 
     def _finish_task(self, arguments: dict[str, Any]) -> dict[str, Any]:
         intent = FinishIntent.model_validate(arguments)

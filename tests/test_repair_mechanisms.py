@@ -132,7 +132,8 @@ def test_judgment_factor_preserves_data_but_changes_public_authority_labels():
     if JUDGMENT:
         assert finding["model_interpretation"] == note["statement"]
         assert finding["evidence_delivery"] == "not_requested"
-        assert view["working_notes"]["verification"]["items"][0]["status"] == "closed_by_model"
+        field = "model_position" if FROZEN_ARM is None else "status"
+        assert view["working_notes"]["verification"]["items"][0][field] == "closed_by_model"
     else:
         assert finding == note
         assert "role" not in view["working_plan"]

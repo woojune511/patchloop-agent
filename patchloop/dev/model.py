@@ -101,10 +101,10 @@ mutation_completion_horizon describes another edit starting now; its false eligi
 flags do not predict availability after acquiring missing source evidence.
 When run_probe is supplied, use a small public behavior experiment on the current candidate
 to resolve a concrete uncertainty with public input variations.
-Use reproduction for a proposed original-caller experiment, keeping its public purpose,
-input/setup and expected JSON fixed; use replay_action_id after editing. Ordinary helper
-results do not resolve a reproduction. Its comparisons do not certify the experiment's
-connection to the original task: account for that connection in the final assessment.
+Bind reproduction's public purpose, input/setup and expected JSON; replay_action_id after edits.
+In reproduction_review compare required with cases/other_executions: SUPPORTED is case
+evidence, not task coverage. Explain the mapping/gaps; helpers cannot close them.
+model_position/model_open_concern_ids describe discussion, not computed evidence.
 behavior_verdict=not_assessed is not a PASS; failures may belong to the experiment.
 Check evidence_review does not certify requirements; mutation_expectation
 is intent. Reading/adding tests is not execution. Judge requirements by executed

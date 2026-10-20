@@ -121,7 +121,9 @@ def test_runner_fields_have_an_explicit_model_projection(gateway_factory, smoke_
         limits=gateway.limits, planning_policy="brief-v1" if optional else "none",
         repair_recheck=optional,
     ))
-    assert set(raw) <= set(public_state())
+    assert set(raw) <= set(public_state()) | {"reproduction_review"}
+    assert raw["reproduction_review"]["required"]["status"] == "UNKNOWN"
+    assert raw["reproduction_review"]["required"]["source"] == "public_task.issue"
     before = copy.deepcopy(raw)
     view = compact_model_state(raw, [])
     assert list(view) == [

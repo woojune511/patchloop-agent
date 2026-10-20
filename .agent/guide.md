@@ -99,16 +99,16 @@ hard tool restrictions from advisory progress signals or task-specific failure p
 
 ## Context and recovery
 
-Project only explicit public task/source/diff/action/check fields, preserving order
-and nested rules. Distinguish current evidence, history and unverified notes;
-delivery does not imply model use.
-Completed checks/tests/probes reconstruct working_notes.verification.observations:
-latest six plus omission count, with action/input/diff identity and execution flags,
-not bug verdicts. Unrelated PASS cannot erase them; edits make them historical.
-Concern upsert uses concern_id=null to create, or a returned ID to update progress.
-evidence_action_id immutably links an unsuccessful observation; reject missing/healthy
-IDs. Null keeps a hypothesis-only concern. Operator feedback stays separately labelled,
-never a registered observation. Links change no resolution or finish gate.
+Project explicit public fields with their order and nested rules. Separate current
+evidence, history and unverified notes; delivery does not imply use.
+working_notes.verification.observations keeps six unsuccessful executions plus
+omission count, action/input/diff IDs and execution flags, not bug verdicts.
+PASS cannot erase them; edits make them historical. Null concern ID creates; an ID
+updates. Immutable evidence_action_id requires an unsuccessful
+observation; null means hypothesis only. Operator feedback is never an observation.
+Model `model_position`/`model_open_concern_ids` describe discussion. Independent
+`reproduction_review` computes case evidence; requirement mapping stays unverified.
+Plans/concerns cannot close it or gate finish. See [scope](evidence-recovery.md).
 
 Latest observations must reach the next request. `--retained-source-chars` selects
 24,000 (default) or 48,000 previously observed characters; complete lines only, no

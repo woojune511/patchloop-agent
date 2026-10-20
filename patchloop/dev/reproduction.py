@@ -242,18 +242,74 @@ def compare(output, binding):
     return result
 
 
-def review(events, current_diff):
-    cases, helper_count = {}, 0
+def _case_evidence(case, current_diff):
+    """Judge a declared experiment, never the model's requirement mapping."""
+    base = case["baseline"]
+    current = [row for row in case["observations"] if row["diff_hash"] == current_diff]
+    comparable = [
+        row for row in current
+        if base is not None and row["comparison"] in {"matched", "mismatched"}
+        and not row["call_observation"]["incomplete"] and row["call_observation"]["calls"]
+        and call_identity(row["call_observation"]) == call_identity(base["call_observation"])
+    ]
+    outcomes = {row["comparison"] for row in comparable}
+    status = (
+        "CONFLICT" if len(outcomes) == 2 else "REFUTED" if "mismatched" in outcomes
+        else "SUPPORTED" if "matched" in outcomes else "UNKNOWN"
+    )
+    # One witness per outcome keeps a contradictory observation visible even if a
+    # later execution succeeds. Different snapshots and observed setups do not pair.
+    witnesses = {
+        row["comparison"]: row["action_id"] for row in comparable
+    }
+    return {
+        "status": status,
+        "currency": "current" if current else "historical",
+        "reason": "same_case_conflicting_observations" if status == "CONFLICT"
+        else "frozen_expectation_comparison" if comparable
+        else "no_comparable_current_observation",
+        "evidence_action_ids": list(witnesses.values()),
+    }
+
+
+def _unbound_execution(result, current_diff):
+    output = result.get("output") or {}
+    diff = result.get("workspace_diff_hash")
+    return {
+        "action_id": result["action_id"], "tool": result["tool"], "diff_hash": diff,
+        "currency": "unknown" if diff is None else "current" if diff == current_diff
+        else "historical",
+        "scope": "helper_or_unbound_diagnostic" if result["tool"] == "run_probe"
+        else "registered_check" if result["tool"] == "run_check" else "selected_tests",
+        "subject": str(output.get("question") or output.get("check_id")
+                       or output.get("targets") or result["tool"])[:400],
+        "subject_role": "model_authored_question" if result["tool"] == "run_probe"
+        else "executed_check_identifier",
+        "execution": {
+            "action_status": result.get("status"),
+            **{key: output[key] for key in (
+                "status", "passed", "exit_code", "timed_out", "truncated",
+                "deadline_exhausted", "cleanup_failed",
+            ) if key in output},
+        },
+        "requirement_coverage": "not_assessed",
+    }
+
+
+def review(events, current_diff, *, public_task=None):
+    cases, helper_count, other_executions = {}, 0, []
     for event in events:
         if event["event_type"] != "action_finished":
             continue
         result = event["payload"]["result"]
-        if result["tool"] != "run_probe":
+        if result["tool"] not in {"run_probe", "run_check", "run_tests"}:
             continue
         repro = (result.get("output") or {}).get("reproduction")
         if repro is None:
             # Rejected declarations/replays are actions, not executed helpers.
-            helper_count += isinstance((result.get("output") or {}).get("source_hash"), str)
+            helper_count += result["tool"] == "run_probe" and isinstance(
+                (result.get("output") or {}).get("source_hash"), str)
+            other_executions.append(_unbound_execution(result, current_diff))
             continue
         binding = repro["binding"]
         row = {
@@ -264,12 +320,15 @@ def review(events, current_diff):
             "call_observation": repro["call_observation"],
         }
         case = cases.setdefault(
-            binding["case_id"], {"binding": binding, "baseline": None, "latest": None}
+            binding["case_id"], {
+                "binding": binding, "baseline": None, "latest": None, "observations": [],
+            },
         )
         # A new declaration is a new baseline; it cannot resolve a previous case.
         if result["action_id"] == binding["root_action_id"]:
             case["baseline"] = row
         case["latest"] = row
+        case["observations"].append(row)
     items = []
     for case in cases.values():
         base, latest = case["baseline"], case["latest"]
@@ -277,16 +336,16 @@ def review(events, current_diff):
         if base is not None:
             if latest["diff_hash"] != current_diff:
                 progress = "current_diff_not_observed"
-            elif latest["diff_hash"] == base["diff_hash"]:
-                progress = "no_modified_diff_comparison"
-            elif base["comparison"] != "mismatched":
-                progress = "baseline_not_different"
             elif latest["comparison"] == "not_compared":
                 progress = "current_observation_incomplete"
             elif call_identity(base["call_observation"]) != call_identity(
                 latest["call_observation"]
             ):
                 progress = "observed_call_or_setup_changed"
+            elif latest["diff_hash"] == base["diff_hash"]:
+                progress = "no_modified_diff_comparison"
+            elif base["comparison"] != "mismatched":
+                progress = "baseline_not_different"
             else:
                 progress = (
                     "mismatch_to_match" if latest["comparison"] == "matched" else "still_mismatched"
@@ -297,6 +356,9 @@ def review(events, current_diff):
                 None if row is None else {k: v for k, v in row.items() if k != "call_observation"}
             )
 
+        evidence = _case_evidence(case, current_diff)
+        if evidence["status"] == "CONFLICT":
+            progress = "conflicting_current_observations"
         items.append(
             {
                 "case_id": case["binding"]["case_id"],
@@ -304,19 +366,45 @@ def review(events, current_diff):
                 "baseline": compact(base),
                 "latest": compact(latest),
                 "comparison_status": progress,
+                "evidence": evidence,
                 "requirement_mapping": "model_authored_unverified",
+                "unverified_scope": [
+                    "issue_to_entrypoint_mapping", "expectation_matches_requirement",
+                    "reported_failure_match",
+                    "unobserved_environment",
+                ],
                 "repair_success": "not_assessed",
             }
         )
+    # Show material counterevidence first without losing the counts of omitted cases.
+    priority = {"CONFLICT": 0, "REFUTED": 1, "UNKNOWN": 2, "SUPPORTED": 3}
+    items.sort(key=lambda item: priority[item["evidence"]["status"]])
     return {
         "original_task_verification": "mapping_unverified" if items else "no_bound_reproduction",
+        "required": {
+            "source": "public_task.issue",
+            "public_task_hash": (
+                sha256_json(public_task.model_dump(mode="json"))
+                if public_task is not None else None
+            ),
+            "status": "UNKNOWN",
+            "reason": "requirement_mapping_unverified" if items else "no_bound_reproduction",
+        },
+        "current_diff_hash": current_diff,
         "helper_or_unbound_executions": helper_count,
         "items": items[:3],
         "omitted_count": max(0, len(items) - 3),
-        "interpretation": "Helper results and suite PASS cannot resolve a reproduction. "
-        "Replay the original action on the current diff, preserving its purpose and predicate. "
-        "Even mismatch_to_match verifies only that declared experiment; assess its connection "
-        "to the reported caller/input/failure separately. Submission eligibility is unchanged.",
+        "case_status_counts": {
+            status: sum(item["evidence"]["status"] == status for item in items)
+            for status in priority
+        },
+        "other_executions": other_executions[-3:],
+        "other_executions_omitted_count": max(0, len(other_executions) - 3),
+        "interpretation": "Code-derived evidence state, independent of notes and plan decisions. "
+        "SUPPORTED/REFUTED concern a declared experiment, not the original task. UNKNOWN scope "
+        "requires connecting the public issue to actual inputs, setup and observations. "
+        "Helper/suite PASS and model dismissal cannot close it. "
+        "Submission eligibility is unchanged.",
     }
 
 

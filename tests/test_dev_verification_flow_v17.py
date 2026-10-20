@@ -3,7 +3,6 @@ from __future__ import annotations
 import copy
 import json
 from pathlib import Path
-from types import SimpleNamespace
 
 import pytest
 from native_history_support import input_context
@@ -13,6 +12,7 @@ from test_dev_probes import FakeProbe, probe_call
 
 import patchloop.dev.runner as runner
 from patchloop.artifacts import ArtifactStore
+from patchloop.contracts import RegisteredCheck
 from patchloop.dev.contracts import (
     DevLimits,
     DevRunRequest,
@@ -79,7 +79,7 @@ def _evidence(gateway, action_id, kind):
 
 def test_concern_survives_focus_failure_source_note_expiry_and_two_mutations(tmp_path):
     gateway = _gateway(tmp_path)
-    gateway.public_task.visible_checks = [SimpleNamespace(id="behavior")]
+    gateway.public_task.visible_checks = [RegisteredCheck(id="behavior", command=["python"])]
     _read(gateway)
     note = source_note("The observed declaration controls a public value.", 3, 3)
     payload = _apply_update(gateway, "remember", _update(
@@ -204,7 +204,7 @@ def test_parallel_owner_receipt_delivery_and_restart_replay_are_exactly_once(tmp
     assert outputs["owner"]["memory_update_result"] == payload["receipt"]
     assert all("memory_update_result" not in outputs[owner] for owner in ["no-update", "ignored"])
     projected = input_context(model_input)["working_notes"]
-    assert projected["verification"]["unresolved_ids"] == ["v1"]
+    assert projected["verification"]["model_open_concern_ids"] == ["v1"]
     assert projected["last_update_result"]["delivery"] == "preceding_function_call_output"
     assert "verification" not in projected["last_update_result"]
     echoed = {
@@ -239,7 +239,7 @@ def test_invalid_verification_reference_is_nonblocking_and_does_not_echo_raw_con
 
 def test_all_checks_pass_advises_review_but_still_allows_finish_with_concern(tmp_path):
     gateway = _gateway(tmp_path)
-    gateway.public_task.visible_checks = [SimpleNamespace(id="behavior")]
+    gateway.public_task.visible_checks = [RegisteredCheck(id="behavior", command=["python"])]
     _read(gateway)
     _add_concern(gateway)
     assert gateway.execute(_mutation("edit")).status == "succeeded"
@@ -321,6 +321,6 @@ def test_mock_verification_annotations_keep_call_counts_and_native_delivery(tmp_
                     if "memory_update_result" in output]
         assert receipts == [prior["receipt"] for prior in updates[:index]]
         notes = input_context(items)["working_notes"]
-        assert notes["verification"]["unresolved_ids"] == ["v1"]
+        assert notes["verification"]["model_open_concern_ids"] == ["v1"]
         assert notes["last_update_result"]["delivery"] == "preceding_function_call_output"
         assert "verification" not in notes["last_update_result"]

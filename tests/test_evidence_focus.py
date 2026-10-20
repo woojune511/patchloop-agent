@@ -136,7 +136,8 @@ def test_projection_distinguishes_current_missing_and_model_closure():
     assert notes["open_question"]["evidence_delivery"] == "incomplete"
     assert notes["findings"][0]["evidence_currency"] == "current"
     assert notes["findings"][0]["model_interpretation"] == "The patch is correct."
-    assert notes["verification"]["items"][0]["status"] == "closed_by_model"
+    assert notes["verification"]["items"][0]["model_position"] == "closed_by_model"
+    assert "status" not in notes["verification"]["items"][0]
     assert notes["verification"]["items"][0]["behavior_coverage"] == "not_assessed"
 
 
@@ -241,7 +242,9 @@ def test_generic_pass_model_closure_keeps_purpose_and_reopens_after_diff_change(
         project_interpretations(view, history)
         concern = view["working_notes"]["verification"]["items"][0]
         assert concern["statement"] == state["items"][0]["statement"]
-        assert concern["status"] == ("closed_by_model" if diff == "D1" else "unresolved")
+        assert concern["model_position"] == ("closed_by_model" if diff == "D1" else "unresolved")
+        assert view["working_notes"]["verification"]["model_open_concern_ids"] == (
+            [] if diff == "D1" else ["v1"])
         evidence = concern["decision"]["evidence"]
         assert evidence["execution"]["passed"] is True
         assert evidence["behavior_coverage"] == "not_assessed"

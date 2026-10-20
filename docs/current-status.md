@@ -66,9 +66,9 @@ B's retained current failure; USD 0.04019910. Keep 24k; no adoption or paid foll
 
 [Recovery A/B](history/2026-10-20-recovery-schema-results.md): A/B 0/6; submissions
 4/6 vs 2/6, all fail caller/native. USD 7.70164425; closed, no new run.
-[Scope](history/2026-10-20-verification-scope-context-audit.md): task/warnings retained;
-caller mapping and concern decisions unresolved. Runtime unchanged.
-Quick: `tests/quick.txt`; four old timing failures remain.
+[Scope state](history/2026-10-20-verification-state-separation.md): separate computed
+case evidence from model concern decisions; caller mapping remains unverified.
+Quick: `tests/quick.txt`; 80 pre-existing regression failures remain.
 
 See [panel contract](../.agent/current-dev20.md) and
 [priority fixes](history/2026-10-06-agent-priority-fixes.md). Prior panels closed.

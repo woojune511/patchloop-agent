@@ -64,12 +64,28 @@ than executing again. No automatic probe or extra finish gate is added.
 ## Separate observations from task acceptance
 
 `reproduction_review` is rebuilt from durable public results, projected into the
-current state across handoffs, and included with `finish_task`. It retains the
-first three declared case identities, their baseline/latest result and an omission
-count. Helpers, visible check PASS and free-form assessment cannot resolve these
-comparisons. Only a current-diff replay with the same observed arguments/setup can
-show `mismatch_to_match`; later edits make it historical. Fresh scratch cwd paths
-are normalized while preserving their relative relationships.
+current state across handoffs even without probes, and included with `finish_task`.
+`required` points to the unchanged public issue and task hash. Its status remains
+`UNKNOWN`: this runtime does not certify the issue-to-test mapping. Cases retain
+their fixed program/predicate identity and baseline/latest result. Their separate
+`evidence.status` is computed over current-diff results with the baseline's observed
+arguments/setup: matched gives `SUPPORTED`, mismatched gives `REFUTED`, both give
+`CONFLICT`, and no comparable result gives `UNKNOWN`. A later success on the same
+snapshot cannot erase a failure; unrelated checks or changed inputs cannot close it.
+Edits make earlier observations historical. Fresh scratch cwd paths are normalized
+while preserving their relative relationships.
+
+The bounded view shows three cases, prioritizing conflict/refutation, plus counts
+for all case states and omitted cases. At most two witness action IDs per case
+identify the success/failure results. `other_executions` shows the latest three
+unbound diagnostics/checks with actual execution flags, scope and an omission count;
+zero exit and suite PASS do not acquire original-requirement coverage. Existing
+recent probe bodies and the unsuccessful-observation catalog remain separate.
+
+Concern `model_position` and `model_open_concern_ids` in the model view describe
+discussion only. Resolve/dismiss and plan edits never write computed evidence
+state. Durable concern operations and receipts retain their original schema for
+recovery. No new completion gate or automatic probe is added.
 
 Even `mismatch_to_match` means only that declared experiment changed as expected.
 The issue-to-entrypoint mapping and expected value are model-authored, and a
@@ -78,5 +94,7 @@ remains `not_assessed`; private acceptance stays outside agent context. Declarat
 fields are excluded from evidence ranking and labelled as annotations in returned
 originals. The current review is mutable state, not an archived observation.
 
-Focused checks: `tests/test_evidence_recovery.py`. Source replay and validation:
+Focused checks: `tests/test_evidence_recovery.py`, `tests/test_verification_scope_state.py`.
+[State separation and saved-log replay](../docs/history/2026-10-20-verification-state-separation.md).
+Source replay and validation:
 [implementation record](../docs/history/2026-10-20-evidence-recovery.md).

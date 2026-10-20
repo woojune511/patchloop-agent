@@ -135,6 +135,8 @@ def test_same_reproduction_before_after_restart_and_handoff_remains_scoped(
     original = gateway.execute(probe(gateway.public_task))
     assert original.status == "succeeded", original
     assert original.output["reproduction"]["comparison"] == "mismatched"
+    assert gateway.reproduction_review(diff_hash=gateway.current_diff_hash)["items"][0][
+        "evidence"]["status"] == "REFUTED"
     assert original.output["reproduction"]["call_observation"]["calls"][0]["arguments"]
     gateway.execute_batch(read_calls())
     assert gateway.execute(mutation_call(gateway)).status == "succeeded"
@@ -149,8 +151,10 @@ def test_same_reproduction_before_after_restart_and_handoff_remains_scoped(
     assert current.execute(replay_call).replayed and backend.calls == 2
     review = current.reproduction_review(diff_hash=current.current_diff_hash)
     assert review["items"][0]["comparison_status"] == "mismatch_to_match"
+    assert review["items"][0]["evidence"]["status"] == "SUPPORTED"
     assert review["items"][0]["repair_success"] == "not_assessed"
     assert review["items"][0]["requirement_mapping"] == "model_authored_unverified"
+    assert review["required"]["status"] == "UNKNOWN"
     assert not current.checks_by_diff
     state = compact_model_state(context(current, smoke_package), [])
     handoff = assemble_model_input(system_prompt="fixed", state=state, history=[],
@@ -165,6 +169,8 @@ def test_same_reproduction_before_after_restart_and_handoff_remains_scoped(
     assert "expected_json" not in canonical_json(split["observed"])
     assert current.reproduction_review(diff_hash="later-diff")["items"][0][
         "comparison_status"] == "current_diff_not_observed"
+    assert current.reproduction_review(diff_hash="later-diff")["items"][0][
+        "evidence"]["status"] == "UNKNOWN"
 
 
 def test_helper_pass_and_changed_predicate_cannot_resolve_original(gateway_factory):
@@ -312,6 +318,8 @@ def test_segmented_reproduction_reaches_submission_and_isolated_mock_evaluation(
                   and e["payload"]["result"]["tool"] == "finish_task")
     scope = finish["output"]["reproduction_review"]
     assert scope["items"][0]["comparison_status"] == "mismatch_to_match"
+    assert scope["items"][0]["evidence"]["status"] == "SUPPORTED"
+    assert scope["required"]["status"] == "UNKNOWN"
     assert scope["items"][0]["repair_success"] == "not_assessed"
     assert result["evaluator"]["claim_eligible"] is False
     assert result["evaluator"]["safety_state"] == "NOT_RUN"

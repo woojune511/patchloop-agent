@@ -45,6 +45,10 @@ memory_update is optional working data; null leaves it unchanged. Only the first
 non-null update in a batch is processed before the actions. Cite already observed
 evidence, never pending results. Current source currency does not validate a
 note's interpretation. Annotation errors do not block the main action.
+Concern model_position and model_open_concern_ids describe discussion, not verification.
+reproduction_review separately computes current case evidence and the original task's
+unverified scope. Compare its required source with the actual caller/input/setup tested;
+helper/suite success or dismissing a concern cannot close that gap.
 
 Judge public requirements against current-patch evidence; regression PASS alone does
 not prove the reported problem is fixed. Revisit unfinished planned checks and

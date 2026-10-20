@@ -208,9 +208,15 @@ def project_interpretations(view, history, *, archive_kind=None):
         question["priority_status"] = priority_status(question, diff)
         question["evidence"] = [evidence(r) for r in question["evidence"]]
         question["evidence_delivery"] = delivery(question["evidence"])
-    for concern in notes.get("verification", {}).get("items", []):
-        concern["status"] = {"resolved": "closed_by_model", "dismissed": "dismissed_by_model"}.get(
-            concern.get("status"), concern.get("status"))
+    verification = notes.get("verification")
+    if isinstance(verification, dict):
+        verification["model_open_concern_ids"] = verification.pop(
+            "unresolved_ids", verification.get("model_open_concern_ids", []))
+    for concern in (verification or {}).get("items", []):
+        position = concern.pop("status", concern.get("model_position"))
+        concern["model_position"] = {
+            "resolved": "closed_by_model", "dismissed": "dismissed_by_model",
+        }.get(position, position)
         concern["behavior_coverage"] = "not_assessed"
         decision = concern.get("decision")
         if isinstance(decision, dict):
