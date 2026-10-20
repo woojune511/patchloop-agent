@@ -64,10 +64,10 @@ L003/L039 cycle, regression PASS overinterpreted despite retained notes/tools.
 [Counterexample](history/2026-10-07-counterexample-results.md): both FAIL despite
 B's retained current failure; USD 0.04019910. Keep 24k; no adoption or paid follow-up.
 
-[Recovery A/B](history/2026-10-20-recovery-http-results.md): closed; A1 failed repair,
-B1 usage ERROR, ten NOT_RUN. New USD 0.48778785 + B1 UNKNOWN; no comparison result.
-HTTP/SDK usage both zero; upstream cause unresolved. Prior USD 0.75890505 + UNKNOWN
-stays separate. Two refs, transitions, budgets unchanged; no paid follow-up queued.
+[Recovery A/B](history/2026-10-20-recovery-http-results.md): closed; A1 repair FAIL,
+B1 usage ERROR, ten NOT_RUN. New USD 0.48778785 + UNKNOWN; prior charges separate.
+[B diagnosis](history/2026-10-20-b1-http-diagnosis.md): local request/SDK checks pass;
+HTTP usage is zero before parsing. Upstream cause unresolved; no paid run queued.
 Quick: `tests/quick.txt`; four old timing failures remain.
 
 See [panel contract](../.agent/current-dev20.md) and
