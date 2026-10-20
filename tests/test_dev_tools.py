@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import subprocess
 
+from repair_mechanism_expectations import FROZEN_ARM
+
 from patchloop.contracts import RegisteredCheck
 from patchloop.dev.contracts import PublicTurnDecision, RequestedTool
 from patchloop.dev.model import DEV_SYSTEM_PROMPT, MOCK_MUTATIONS
@@ -168,10 +170,19 @@ def test_mutation_tool_contract_is_one_exact_gateway_generated_replacement() -> 
             assert evidence_goal["type"] == "null"
     assert "binds observed evidence" in DEV_SYSTEM_PROMPT
     assert "do not supply evidence span IDs or a patch wrapper" in DEV_SYSTEM_PROMPT
-    assert "Every response must request either" in DEV_SYSTEM_PROMPT
-    assert "Every call carries a bounded public turn_decision" in DEV_SYSTEM_PROMPT
+    assert (
+        "Request either 1-4 read_file/search_files calls or exactly one other supplied tool."
+        if FROZEN_ARM is None else "Every response must request either"
+    ) in DEV_SYSTEM_PROMPT
+    assert (
+        "Each call needs bounded public turn_decision with mode\nmatching its tool family."
+        if FROZEN_ARM is None else "Every call carries a bounded public turn_decision"
+    ) in DEV_SYSTEM_PROMPT
     assert "memory_update" in DEV_SYSTEM_PROMPT
-    assert "Coverage and commitment signals are advisory" in DEV_SYSTEM_PROMPT
+    assert (
+        "Coverage and commitment are advisory"
+        if FROZEN_ARM is None else "Coverage and commitment signals are advisory"
+    ) in DEV_SYSTEM_PROMPT
     assert "causal_revision is optional" in DEV_SYSTEM_PROMPT
     assert (
         "source read is required for edit admission only when exact evidence is missing"

@@ -29,7 +29,7 @@ Only two new execution cases were added, one per diagnostic adapter. Actual loca
 Python execution checks bound mismatch evidence, replay identity, same-action
 idempotency, invalid-declaration rejection before execution and UNKNOWN requirement
 coverage. Existing OFF tests additionally check that reproduction inputs and scope
-warnings survive projection. Four cheap existing contract checks join the quick
+warnings survive projection. Five cheap existing contract checks join the quick
 selection; adapter coverage is already in its evidence-recovery file.
 
 ## Validation and boundaries
@@ -40,10 +40,18 @@ Earlier failed checks remain in `focused1.xml` and `focused2.xml`. The initial q
 selection passed 116 tests in 61.94 seconds. Final focused checks passed 100 tests in
 51.17 seconds; expanded quick selection plus isolated mock evaluation passed 121
 tests in 64.82 seconds. Ruff passed for runtime, tests and diagnostics.
-The full committed-source run is recorded separately in this packet.
+The first committed full run (`698d4368`) passed 5,462 cases, failed one and skipped
+the existing 20 in 1,464.63 seconds; all original 80 failures passed. Its sole failure
+was another literal protocol-guidance assertion that expected pre-compression
+sentences. The correction retains the assertion, checks the new complete batching
+and mode clauses, preserves historical-arm phrases and joins the quick selection.
+No runtime source changed after that first full run. Its reports remain preserved.
+After the literal correction, quick checks plus isolated mock evaluation passed
+122 tests in 58.45 seconds; the targeted contract and documentation checks passed
+six tests in 0.28 seconds. Ruff passed again before the final commit.
 
 `validation.json` binds final results to the tested commit and tree.
-`full-final.xml` / `full-final.txt` are the final-commit full-suite evidence; their
+`full-final2.xml` / `full-final2.txt` are the final-commit full-suite evidence; their
 result is authoritative rather than a prediction embedded in this source commit.
 The full command retains four workers, file grouping and zero worker restarts.
 
