@@ -64,10 +64,9 @@ L003/L039 cycle, regression PASS overinterpreted despite retained notes/tools.
 [Counterexample](history/2026-10-07-counterexample-results.md): both FAIL despite
 B's retained current failure; USD 0.04019910. Keep 24k; no adoption or paid follow-up.
 
-[A1 helper](history/2026-10-20-a1-helper-replay.md): PASS before/after; branch unused.
-Closed A/B; ten NOT_RUN. USD 0.75890505 settled; B1 billing UNKNOWN.
-Test did not distinguish the edit; B effect unmeasured.
-Two refs, transitions, budgets unchanged.
+[Recovery A/B](../.agent/plans/recovery-http-comparison.md): prepared; approval pending.
+Fresh 6/arm, USD 10.56 proposed. Prior allocation closed; B1 billing UNKNOWN.
+Prior settled USD 0.75890505; two refs, transitions, budgets unchanged.
 [HTTP diagnostics](../.agent/provider-usage-diagnostics.md): local; paid NOT_RUN.
 Quick: `tests/quick.txt`; four old timing failures remain.
 
