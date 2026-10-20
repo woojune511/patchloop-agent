@@ -64,9 +64,9 @@ L003/L039 cycle, regression PASS overinterpreted despite retained notes/tools.
 [Counterexample](history/2026-10-07-counterexample-results.md): both FAIL despite
 B's retained current failure; USD 0.04019910. Keep 24k; no adoption or paid follow-up.
 
-[Recovery](history/2026-10-20-evidence-recovery.md): source-hit restoration and fixed
-probe comparisons implemented, 220 local tests PASS; repair benefit unmeasured. Search stays opt-in;
-two refs, transitions and budgets unchanged. Prior OFF/ON: 0/6 each, search unused.
+[Recovery](history/2026-10-20-evidence-recovery.md): implemented, 220 local tests PASS;
+repair benefit unmeasured. [Fresh A/B](../.agent/plans/evidence-recovery-comparison.md):
+prepared; paid approval pending. Search opt-in; two refs, transitions and budgets unchanged.
 Use `tests/quick.txt`; four prior full-suite timing FAIL remain unresolved.
 
 See [panel contract](../.agent/current-dev20.md) and
