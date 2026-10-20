@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 from datetime import UTC, datetime
+from decimal import Decimal
 from pathlib import Path
 
 from diagnostics import caller_uptake as prior
@@ -14,6 +15,7 @@ from diagnostics import verification_state_off as off
 from diagnostics import verification_state_panel as panel
 from diagnostics.positive_verification_panel import require, save
 from patchloop.artifacts import ArtifactStore
+from patchloop.dev.cost import usd_to_nanos
 from patchloop.dev.state import DevJournal
 from patchloop.runtime import repository_root
 from patchloop.util import canonical_json
@@ -24,17 +26,23 @@ ASSESSMENT = "run_dev_verificationstateassessment43"
 
 
 def authorize(digest, authorization):
+    assigned = panel.allocation(authorization.get("repeat_per_arm"))
     require(authorization == {
         "approved": True, "manifest_hash": digest,
         "task": str(repository_root() / panel.TASK), "model": panel.MODEL,
-        "credential_file": str(repository_root() / ".env"), "repeat_per_arm": 6,
-        "total_cap_usd": "10.56", "human_message": authorization.get("human_message"),
+        "credential_file": str(repository_root() / ".env"),
+        "repeat_per_arm": assigned["repeat_per_arm"],
+        "total_cap_usd": assigned["total_cap_usd"],
+        "human_message": authorization.get("human_message"),
     } and bool(authorization["human_message"]), "new exact human authorization required")
+    return assigned
 
 
 def collect(root, digest, authorization, rates):
-    authorize(digest, authorization)
+    assigned = authorize(digest, authorization)
     packet = panel.validate(root, digest)
+    require(all(packet[k] == v for k, v in assigned.items()),
+            "authorization differs from frozen allocation")
     require(rates == {
         "verified_on": datetime.now(UTC).date().isoformat(),
         "source": "https://developers.openai.com/api/docs/pricing", "prices": packet["pricing"],
@@ -46,9 +54,12 @@ def collect(root, digest, authorization, rates):
         live.mkdir(parents=True)
         journal.append("collection_started", {
             "manifest_hash": digest, "authorization": authorization, "pricing_review": rates,
-            "reserved_nanos": 10_560_000_000, "transfer": False,
+            "reserved_nanos": usd_to_nanos(Decimal(packet["total_cap_usd"])), "transfer": False,
         })
-        ledger, completed, attempted = existing.Allocation(), [], []
+        ledger = existing.Allocation(
+            order=packet["order"], row_cap=Decimal(packet["row_cap_usd"]),
+            arm_cap=Decimal(packet["arm_cap_usd"]), cap=Decimal(packet["total_cap_usd"]))
+        completed, attempted = [], []
         reason, billing_known = None, True
         try:
             for row in packet["rows"]:
@@ -76,10 +87,10 @@ def collect(root, digest, authorization, rates):
         result = {
             "rows": completed, "stopped": ledger.stopped, "stop_reason": reason,
             "settled_cost_nanos": ledger.cost, "billing_known": billing_known,
-            "intended": list(panel.ORDER), "attempted": attempted,
+            "intended": packet["order"], "attempted": attempted,
             "unsealed_unknown_rows": [r for r in attempted
                                      if r not in {c["row_id"] for c in completed}],
-            "not_run": [r for r in panel.ORDER if r not in attempted],
+            "not_run": [r for r in packet["order"] if r not in attempted],
             "allocation_closed": True, "grades": "SEALED", "repair_success": "NOT_ASSESSED",
         }
         save(root, "collection.json", result)
@@ -158,13 +169,14 @@ def assess(root, digest):
         require(not journal.events(), "no assessment retry")
         journal.append("assessments_started", {
             "manifest_hash": digest, "audit_seal": seal_event["event_hash"],
-            "maximum_caller_checks": 24, "maximum_native_evaluations": 12,
+            "maximum_caller_checks": 2 * len(packet["order"]),
+            "maximum_native_evaluations": len(packet["order"]),
         })
         seal_value = {"axes": value["rows"], "uptake": {
             row: v["supported_application"] for row, v in value["judgments"].items()},
             "exposure": []}
         return existing._assess_rows(
-            root, root, packet, journal, seal_value, order=panel.ORDER,
+            root, root, packet, journal, seal_value, order=packet["order"],
             aggregate=grading.aggregate, native_full_patch=True,
             metadata={"audit_seal": seal_event["event_hash"], "new_paid_calls": 0})
 

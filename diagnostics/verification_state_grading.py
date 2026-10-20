@@ -5,6 +5,7 @@ import copy
 from collections import Counter
 
 from diagnostics.positive_verification_panel import require
+from diagnostics.verification_state_panel import allocation
 from patchloop.dev.contracts import RequestedTool
 from patchloop.dev.conversation import reconstruct_state
 from patchloop.util import canonical_json, sha256_json
@@ -223,7 +224,8 @@ def validate_annotation(row, public):
 
 
 def aggregate(rows, order):
-    require(len(order) == len(set(order)) == 12, "fixed twelve-row allocation")
+    repeat_per_arm = len(order) // 2
+    require(list(order) == allocation(repeat_per_arm)["order"], "fixed allocation order")
     require(len({r["row_id"] for r in rows}) == len(rows)
             and {r["row_id"] for r in rows} <= set(order), "duplicate or foreign outcome")
     by_id = {r["row_id"]: r for r in rows}
@@ -240,10 +242,10 @@ def aggregate(rows, order):
     arms = {}
     for arm in "AB":
         group = [r for r in complete if r["row_id"].startswith(arm)]
-        require(len(group) == 6, "six assigned rows per arm")
+        require(len(group) == repeat_per_arm, "balanced assigned rows per arm")
         audit = [r.get("audit", {}).get("judgment", {}) for r in group]
         arms[arm] = {
-            "assigned": 6, "submitted": sum(bool(r["submitted"]) for r in group),
+            "assigned": repeat_per_arm, "submitted": sum(bool(r["submitted"]) for r in group),
             "J": sum(a.get("bad_claim", False) for a in audit),
             "J_conservative": sum(a.get("bad_claim", False) or
                                   (arm == "B" and a.get("unknown_claim", False)) for a in audit),
@@ -257,7 +259,7 @@ def aggregate(rows, order):
             "last_claims": dict(Counter(a.get("last_claim", "NOT_RUN") for a in audit)),
             "native": dict(Counter(r.get("native", "NOT_RUN") for r in group)),
         }
-    closed = len(by_id) == 12 and all(
+    closed = len(by_id) == len(order) and all(
         r.get("completed") and r.get("settled") and r.get("cleanup")
         and r.get("audit", {}).get("judgment", {}).get("started")
         and (not r["submitted"] or (

@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import copy
+import json
 from datetime import UTC, datetime
+from decimal import Decimal
 
 import pytest
 
@@ -10,6 +12,7 @@ from diagnostics import verification_state_execution as execution
 from diagnostics import verification_state_grading as grading
 from diagnostics import verification_state_panel as panel
 from patchloop.dev.conversation import assemble_model_input
+from patchloop.dev.state import DevJournal
 from patchloop.errors import ContractError
 from patchloop.util import sha256_json
 
@@ -177,9 +180,11 @@ def test_direct_judgment_rejects_stale_nonexecution_and_unhealthy_witnesses():
             assert grading.validate_annotation(row, public)["bad_claim"]
 
 
-def test_deduped_claims_unknown_and_abstention_do_not_inflate_benefit():
+@pytest.mark.parametrize("repeats", [3, 6])
+def test_deduped_claims_unknown_and_abstention_do_not_inflate_benefit(repeats):
+    order = panel.allocation(repeats)["order"]
     rows = []
-    for label in panel.ORDER:
+    for label in order:
         bad = label.startswith("A") and label in {"A-r1-t13", "A-r2-t13"}
         accepted = label in {"B-r1-t13", "B-r2-t13"}
         rows.append({
@@ -192,14 +197,14 @@ def test_deduped_claims_unknown_and_abstention_do_not_inflate_benefit():
                 "changed_mechanism_applied": "YES" if accepted else "NO_OBSERVED",
             }},
         })
-    result = grading.aggregate(rows, panel.ORDER)
+    result = grading.aggregate(rows, order)
     assert result["arms"]["A"]["J"] == 2 and result["arms"]["B"]["R"] == 2
     assert result["favorable_local_signal"]
     ambiguous = copy.deepcopy(rows)
     next(r for r in ambiguous if r["row_id"] == "B-r3-t13")["audit"]["judgment"].update(
         unknown_claim=True, last_claim="UNKNOWN")
-    assert not grading.aggregate(ambiguous, panel.ORDER)["favorable_local_signal"]
-    for variant in ("abstain", "error", "no_use"):
+    assert not grading.aggregate(ambiguous, order)["favorable_local_signal"]
+    for variant in ("abstain", "error", "no_use", "one_fewer_bad_claim", "one_repair"):
         changed = copy.deepcopy(rows)
         for row in changed:
             if row["row_id"].startswith("B"):
@@ -208,11 +213,16 @@ def test_deduped_claims_unknown_and_abstention_do_not_inflate_benefit():
                     row["audit"]["judgment"].update(claiming=False, last_claim="NO_CLAIM")
                 elif variant == "error":
                     row["native"] = "ERROR"
-                else:
+                elif variant == "no_use":
                     row["audit"]["judgment"]["changed_mechanism_applied"] = "NO_OBSERVED"
-        assert not grading.aggregate(changed, panel.ORDER)["favorable_local_signal"]
-    partial = grading.aggregate(rows[:-1], panel.ORDER)
-    assert not partial["outcomes_complete"] and partial["arms"]["A"]["assigned"] == 6
+                elif variant == "one_repair" and row["row_id"] == "B-r2-t13":
+                    row["native"] = row["registered"] = "FAIL"
+            elif variant == "one_fewer_bad_claim" and row["row_id"] == "A-r2-t13":
+                row["audit"]["judgment"]["bad_claim"] = False
+        assert not grading.aggregate(changed, order)["favorable_local_signal"]
+    partial = grading.aggregate(rows[:-1], order)
+    assert not partial["outcomes_complete"] and partial["arms"]["A"]["assigned"] == repeats
+    assert partial["arms"]["B"]["assigned"] == repeats
 
 
 def test_missing_authorization_rejected_before_environment_or_provider(monkeypatch, tmp_path):
@@ -224,10 +234,16 @@ def test_missing_authorization_rejected_before_environment_or_provider(monkeypat
             execution.collect(tmp_path, "digest", auth, {})
 
 
-def test_serial_dispatch_uses_off_initializer_and_stops_unknown_billing(monkeypatch, tmp_path):
+@pytest.mark.parametrize("repeats", [3, 6])
+@pytest.mark.parametrize("stop_on_b", [False, True])
+def test_serial_dispatch_binds_count_caps_and_stops_unknown_billing(
+    monkeypatch, tmp_path, repeats, stop_on_b,
+):
+    assigned = panel.allocation(repeats)
     packet = {
+        **assigned,
         "live_root": str(tmp_path / "live"), "pricing": {"frozen": "prices"},
-        "rows": [{"row_id": label, "arm": label[0]} for label in panel.ORDER],
+        "rows": [{"row_id": label, "arm": label[0]} for label in assigned["order"]],
     }
     monkeypatch.setattr(panel, "validate", lambda *_: packet)
     calls = []
@@ -235,26 +251,98 @@ def test_serial_dispatch_uses_off_initializer_and_stops_unknown_billing(monkeypa
     def run(rows, **kwargs):
         row, = rows
         calls.append((row["row_id"], kwargs["initializer"]))
-        known = row["arm"] == "A"
+        known = not stop_on_b or row["arm"] == "A"
+        assert kwargs["total_cap"] == Decimal("0.88")
         return {"rows": [{
             "row_id": row["row_id"], "ok": known,
-            "accounting": {"cost_nanos": 1, "billing_known": known, "counting_known": True},
+            "accounting": {"cost_nanos": 880_000_000, "billing_known": known,
+                           "counting_known": True},
         }], "stopped": not known}
     monkeypatch.setattr(execution.parallel_dev_batch, "run_parallel_rows", run)
     auth = {
         "approved": True, "manifest_hash": "digest",
         "task": str(execution.repository_root() / panel.TASK), "model": panel.MODEL,
-        "credential_file": str(execution.repository_root() / ".env"), "repeat_per_arm": 6,
-        "total_cap_usd": "10.56", "human_message": "TEST ONLY, no provider dispatch.",
+        "credential_file": str(execution.repository_root() / ".env"), "repeat_per_arm": repeats,
+        "total_cap_usd": assigned["total_cap_usd"],
+        "human_message": "TEST ONLY, no provider dispatch.",
     }
     rates = {
         "verified_on": datetime.now(UTC).date().isoformat(),
         "source": "https://developers.openai.com/api/docs/pricing", "prices": packet["pricing"],
     }
+    mismatched = {**auth, "repeat_per_arm": 9 - repeats,
+                  "total_cap_usd": "10.56" if repeats == 3 else "5.28"}
+    with pytest.raises(ContractError, match="authorization differs"):
+        execution.collect(tmp_path, "digest", mismatched, rates)
+    assert not calls and not (tmp_path / "live").exists()
     result = execution.collect(tmp_path, "digest", auth, rates)
-    assert [c[0] for c in calls] == list(panel.ORDER[:2])
+    count = 2 if stop_on_b else 2 * repeats
+    assert [c[0] for c in calls] == assigned["order"][:count]
     assert calls[0][1] == execution.off.initialize_off_worker
     assert calls[1][1] == execution.parallel_dev_batch.initialize_worker
-    assert result["stopped"] and not result["billing_known"] and len(result["not_run"]) == 10
+    assert result["stopped"] is stop_on_b and result["billing_known"] is not stop_on_b
+    assert result["not_run"] == assigned["order"][count:]
+    assert result["intended"] == assigned["order"]
+    assert sum(result["settled_cost_nanos"].values()) == 880_000_000 * count
+    start = DevJournal(tmp_path, execution.COLLECTION).events()[0]["payload"]
+    assert start["reserved_nanos"] == 1_760_000_000 * repeats
     with pytest.raises(ContractError):
         execution.collect(tmp_path, "digest", auth, rates)
+
+
+def test_reduced_manifest_rejects_changed_roster_caps_or_spec(monkeypatch, tmp_path):
+    current = {"head": "test-commit"}
+    monkeypatch.setattr(panel, "identity", lambda *_: current)
+    assigned = panel.allocation(3)
+    packet = {
+        "schema": "verification-state-comparison-v2", **current, **assigned,
+        "paid_authorized": False, "live_root": str(tmp_path / "live"),
+        "specification": panel.prior.file_ref(panel.repository_root() / panel.REDUCED_SPEC),
+        "validation": {}, "preexisting_guidance": {}, "files": [], "initial": {}, "programs": {},
+        "rows": [{
+            "row_id": label, "arm": label[0],
+            "public_id": "case-" + sha256_json({"head": current["head"], "row": label})[-12:],
+            "request": panel.request(tmp_path / "live", label).model_dump(mode="json"),
+        } for label in assigned["order"]],
+    }
+    monkeypatch.setattr(panel.prior, "read_ref", lambda _: b"")
+    path = tmp_path / "manifest.json"
+
+    def validate(value):
+        path.write_text(json.dumps(value), encoding="utf-8")
+        return panel.validate(tmp_path, sha256_json(value))
+
+    assert validate(packet)["total_cap_usd"] == "5.28"
+    requests = [r["request"] for r in packet["rows"]]
+    assert all(r["max_cost_usd"] == "0.88" and r["repeat"] == 1 for r in requests)
+    assert len(requests) == 6 and panel.prior.invariants()["references"] == 2
+    for field, value in (
+        ("repeat_per_arm", 6), ("order", list(panel.ORDER)),
+        ("row_cap_usd", "0.89"), ("arm_cap_usd", "5.28"), ("total_cap_usd", "10.56"),
+        ("rows", packet["rows"][:-1]), ("specification", {}),
+    ):
+        with pytest.raises(ContractError):
+            validate({**packet, field: value})
+
+
+def test_reduced_ledger_stops_after_six_rows_and_rejects_row_overrun():
+    assigned = panel.allocation(3)
+
+    def ledger():
+        return execution.existing.Allocation(
+            order=assigned["order"], row_cap=Decimal(assigned["row_cap_usd"]),
+            arm_cap=Decimal(assigned["arm_cap_usd"]), cap=Decimal(assigned["total_cap_usd"]))
+
+    value = {"ok": True, "accounting": {
+        "cost_nanos": 880_000_000, "billing_known": True, "counting_known": True}}
+    completed = ledger()
+    for label in assigned["order"]:
+        assert completed.settle(label, value)
+    assert completed.cost == {"A": 2_640_000_000, "B": 2_640_000_000}
+    with pytest.raises(ContractError):
+        completed.settle(panel.ORDER[6], value)
+    overrun = ledger()
+    value["accounting"]["cost_nanos"] += 1
+    assert not overrun.settle(assigned["order"][0], value)
+    with pytest.raises(ContractError):
+        overrun.settle(assigned["order"][1], value)

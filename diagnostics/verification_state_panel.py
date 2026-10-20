@@ -32,8 +32,19 @@ from patchloop.util import canonical_json, sha256_json
 MODEL, TASK, ORDER = prior.MODEL, prior.TASK, prior.ORDER
 ROW_CAP, ARM_CAP, CAP = prior.ROW_CAP, prior.ARM_CAP, prior.CAP
 SPEC = ".agent/plans/verification-state-comparison.md"
+REDUCED_SPEC = ".agent/plans/verification-state-reduced-comparison.md"
 DEPENDENCIES = Path("C:/pt/calleruptake18/preparation-v2/B/prepared-probe-dependencies.json")
 JOURNAL = "run_dev_verificationstate43"
+
+
+def allocation(repeat_per_arm):
+    require(type(repeat_per_arm) is int and repeat_per_arm in (3, 6),
+            "fixed three- or six-per-arm allocation required")
+    return {
+        "repeat_per_arm": repeat_per_arm, "order": list(ORDER[:2 * repeat_per_arm]),
+        "row_cap_usd": str(ROW_CAP), "arm_cap_usd": str(ROW_CAP * repeat_per_arm),
+        "total_cap_usd": str(ROW_CAP * repeat_per_arm * 2),
+    }
 
 
 def request(live, label):
@@ -45,7 +56,7 @@ def request(live, label):
 
 def bindings():
     repo = repository_root()
-    paths = [SPEC, "tests/test_verification_state_comparison.py",
+    paths = [SPEC, REDUCED_SPEC, "tests/test_verification_state_comparison.py",
              "tests/test_verification_state_grading.py", "tests/quick.txt"]
     paths += [p.relative_to(repo).as_posix() for p in (repo / "diagnostics").rglob("*.py")]
     return {name: prior.file_ref(repo / name)["hash"] for name in sorted(paths)}
@@ -197,7 +208,8 @@ def xml_receipt(path, *, full=False):
             "skipped": len(skipped), "failed": 0}
 
 
-def freeze(root, live, validation):
+def freeze(root, live, validation, *, repeat_per_arm=6):
+    assigned = allocation(repeat_per_arm)
     require(not (root / "manifest.json").exists() and not live.exists(), "fresh allocation")
     require(not root.resolve().is_relative_to(repository_root())
             and not live.resolve().is_relative_to(repository_root()), "external state required")
@@ -219,14 +231,16 @@ def freeze(root, live, validation):
     require(all(programs[k]["hash"] == caller_uptake_grading.PROGRAMS[k] for k in programs),
             "caller oracle changed")
     packet = {
-        "schema": "verification-state-comparison-v1", **current,
+        "schema": "verification-state-comparison-v2", **current, **assigned,
+        "specification": prior.file_ref(repository_root() / (
+            REDUCED_SPEC if repeat_per_arm == 3 else SPEC)),
         "paid_authorized": False, "official": False, "claim_eligible": False,
         "live_root": str(live.resolve()), "model": MODEL,
         "credential_file": str(repository_root() / ".env"),
         "rows": [{"row_id": label, "arm": label[0],
                   "public_id": "case-" + sha256_json({"head": current["head"], "row": label})[-12:],
-                  "request": request(live, label).model_dump(mode="json")} for label in ORDER],
-        "row_cap_usd": str(ROW_CAP), "arm_cap_usd": str(ARM_CAP), "total_cap_usd": str(CAP),
+                  "request": request(live, label).model_dump(mode="json")}
+                 for label in assigned["order"]],
         "programs": programs, "initial_difference": pair, "checks": checks,
         "validation": prior.file_ref(validation), "files": value["files"],
         "initial": {a: prior.file_ref(root / f"initial-{a}.json") for a in "AB"},
@@ -247,6 +261,12 @@ def validate(root, digest):
     packet = json.loads((root / "manifest.json").read_bytes())
     require(sha256_json(packet) == digest and packet["paid_authorized"] is False,
             "manifest identity or authorization changed")
+    assigned = allocation(packet["repeat_per_arm"])
+    require(packet["schema"] == "verification-state-comparison-v2"
+            and all(packet[k] == v for k, v in assigned.items()),
+            "allocation order/caps changed")
+    require(packet["specification"] == prior.file_ref(repository_root() / (
+        REDUCED_SPEC if packet["repeat_per_arm"] == 3 else SPEC)), "specification changed")
     current = identity(Path(packet["live_root"]))
     require(all(packet[k] == v for k, v in current.items()), "runtime/environment changed")
     for ref in [packet["validation"], packet["preexisting_guidance"],
@@ -255,10 +275,8 @@ def validate(root, digest):
     expected = [{"row_id": label, "arm": label[0],
                  "public_id": "case-" + sha256_json({"head": current["head"], "row": label})[-12:],
                  "request": request(Path(packet["live_root"]), label).model_dump(mode="json")}
-                for label in ORDER]
-    require(packet["rows"] == expected and
-            (packet["row_cap_usd"], packet["arm_cap_usd"], packet["total_cap_usd"])
-            == ("0.88", "5.28", "10.56"), "roster/caps changed")
+                for label in assigned["order"]]
+    require(packet["rows"] == expected, "roster changed")
     return packet
 
 
@@ -270,12 +288,14 @@ def main():
     parser.add_argument("--live", type=Path)
     parser.add_argument("--validation", type=Path)
     parser.add_argument("--hash")
+    parser.add_argument("--repeat-per-arm", type=int, choices=(3, 6), default=6)
     args = parser.parse_args()
     if args.mode == "capture":
         capture(args.root, args.arm)
         print("offline capture saved")
         return
-    packet = (freeze(args.root, args.live, args.validation) if args.mode == "freeze"
+    packet = (freeze(args.root, args.live, args.validation, repeat_per_arm=args.repeat_per_arm)
+              if args.mode == "freeze"
               else validate(args.root, args.hash))
     print(canonical_json({"manifest_hash": sha256_json(packet), "head": packet["head"],
                           "paid_authorized": False}))

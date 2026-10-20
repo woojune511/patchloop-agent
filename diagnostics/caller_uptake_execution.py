@@ -35,25 +35,27 @@ from patchloop.verifier.policy import verify_scope, verify_test_tampering
 
 
 class Allocation:
-    def __init__(self):
+    def __init__(self, *, order=panel.ORDER, row_cap=panel.ROW_CAP,
+                 arm_cap=panel.ARM_CAP, cap=panel.CAP):
+        self.order = tuple(order)
+        self.row_cap, self.arm_cap, self.cap = map(usd_to_nanos, (row_cap, arm_cap, cap))
         self.cursor = 0
         self.cost = {"A": 0, "B": 0}
         self.stopped = False
 
     def settle(self, label, value):
-        require(not self.stopped and self.cursor < len(panel.ORDER)
-                and label == panel.ORDER[self.cursor], "out of order or stopped allocation")
+        require(not self.stopped and self.cursor < len(self.order)
+                and label == self.order[self.cursor], "out of order or stopped allocation")
         self.cursor += 1
         account = value.get("accounting", {})
         cost = account.get("cost_nanos")
         known = (value.get("ok") is True and account.get("billing_known") is True
                  and account.get("counting_known") is True and type(cost) is int
-                 and 0 <= cost <= usd_to_nanos(panel.ROW_CAP))
+                 and 0 <= cost <= self.row_cap)
         if type(cost) is int:
             self.cost[label[0]] += cost
-        self.stopped = not (known and all(n <= usd_to_nanos(panel.ARM_CAP)
-                                         for n in self.cost.values())
-                            and sum(self.cost.values()) <= usd_to_nanos(panel.CAP))
+        self.stopped = not (known and all(n <= self.arm_cap for n in self.cost.values())
+                            and sum(self.cost.values()) <= self.cap)
         return not self.stopped
 
 
