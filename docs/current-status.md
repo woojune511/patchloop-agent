@@ -64,9 +64,10 @@ L003/L039 cycle, regression PASS overinterpreted despite retained notes/tools.
 [Counterexample](history/2026-10-07-counterexample-results.md): both FAIL despite
 B's retained current failure; USD 0.04019910. Keep 24k; no adoption or paid follow-up.
 
-[Recovery A/B](history/2026-10-20-recovery-schema-results.md): closed, A/B 0/6.
-Submissions A 4/6, B 2/6; all six fail caller/native. USD 7.70164425 settled.
-B restored source in 4/6; reproduction declarations 0/6. No repair gain or new run.
+[Recovery A/B](history/2026-10-20-recovery-schema-results.md): A/B 0/6; submissions
+4/6 vs 2/6, all fail caller/native. USD 7.70164425; closed, no new run.
+[Scope](history/2026-10-20-verification-scope-context-audit.md): task/warnings retained;
+caller mapping and concern decisions unresolved. Runtime unchanged.
 Quick: `tests/quick.txt`; four old timing failures remain.
 
 See [panel contract](../.agent/current-dev20.md) and

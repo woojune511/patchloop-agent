@@ -1,6 +1,6 @@
 # History
 
-- [A/B](2026-10-20-recovery-schema-results.md).
+- [Scope audit](2026-10-20-verification-scope-context-audit.md).
 - [Dev20](2026-10-16-mini-swe-dev20-results.md).
 - [Completion](2026-10-16-mini-swe-completion-results.md).
 - [PatchLoop](2026-10-16-patchloop-mini-dev20-results.md).
