@@ -197,9 +197,25 @@ def start(journal, store, *, base, state, reason, parent_input_artifact,
     reviewed = previous["reviewed_through_sequence"] if previous else 0
     if decision and not decision["payload"].get("error_code"):
         if batch is None or batch["payload"]["turn_id"] != decision["payload"]["turn_id"]:
-            raise RecoveryError("cannot hand off an unfinished tool batch")
-        reviewed = next(e["sequence"] for e in events if e["event_type"] == "turn_started"
-                        and e["payload"]["turn_id"] == decision["payload"]["turn_id"])
+            # Batch validation rejects before execution, after a syntactically valid
+            # decision. Preserve its correction without inventing a completed batch
+            # or treating that decision as a normal review of previous results.
+            correction = _latest(events, "protocol_correction")
+            turn_id = decision["payload"]["turn_id"]
+            rejected = (
+                correction is not None
+                and correction["sequence"] > decision["sequence"]
+                and correction["payload"].get("turn_id") == turn_id
+                and correction["payload"].get("code") in {
+                    "INVALID_TOOL_BATCH", "MISSING_REQUIRED_TOOL"}
+                and not any(e["event_type"] == "tool_batch_started"
+                            and e["payload"].get("turn_id") == turn_id for e in events)
+            )
+            if not rejected:
+                raise RecoveryError("cannot hand off an unfinished tool batch")
+        else:
+            reviewed = next(e["sequence"] for e in events if e["event_type"] == "turn_started"
+                            and e["payload"]["turn_id"] == decision["payload"]["turn_id"])
     handoff = {"base": base, "state": state}
     if evidence_manifest is not None:
         handoff["evidence_manifest"] = evidence_manifest
