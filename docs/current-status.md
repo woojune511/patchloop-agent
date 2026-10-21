@@ -67,9 +67,9 @@ B's retained current failure; USD 0.04019910. Keep 24k; no adoption or paid foll
 [Probe A/B](history/2026-10-21-probe-purpose-results.md): closed, USD 1.97877345;
 bound probe unused, B1 FAIL. Rejected-batch size handoffs
 [fixed locally](../tests/test_dev_segment_rejection.py); no paid rerun.
-[Verification-role executor](../.agent/plans/verification-role-comparison.md):
-shared USD 0.88/row; 3/arm proposed. Local tests only; task qualification and
-freeze pending. Judgment/acceptance separate; no paid authorization.
+[Role qualification](history/2026-10-21-verification-role-qualification.md):
+A/B entry contrast exists; B drops both selected probe bodies on return.
+Freeze blocked; USD 0.88/row unchanged. No paid authorization.
 
 See [panel contract](../.agent/current-dev20.md); prior panels closed.
 

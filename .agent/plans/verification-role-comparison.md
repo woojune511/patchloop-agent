@@ -1,7 +1,10 @@
 # Same-context verification versus an independent verifier
 
-Status: diagnostic executor implemented, 2026-10-21; local validation described
-in [implementation record](../../docs/history/2026-10-21-verification-role-executor.md).
+Status: qualification blocked, 2026-10-21. Same-checkpoint contrast survives, but
+B drops selected public probe bodies on return to repair; see the
+[qualification record](../../docs/history/2026-10-21-verification-role-qualification.md).
+The [implementation record](../../docs/history/2026-10-21-verification-role-executor.md)
+remains the earlier local implementation evidence.
 No execution packet is frozen and no paid work is authorized. Previous allocations
 are closed. Every proposed run remains official=false and claim-ineligible.
 
@@ -356,8 +359,15 @@ corresponding freeze gates above; placeholder or earlier-commit validation is
 insufficient. Ordinary focused/quick/full XML receipts are also required. The
 executor does not manufacture qualification from its implementation tests.
 
-Those task-specific capture/replay/funding receipts and a frozen six-row packet
-remain preparation work. In the local smoke trajectory, the unchanged result
-rule resets A at verification entry too. Its common state then resembles B's
-fresh entry. Qualification must measure actual retained-history differences;
-an arm label alone is not evidence that the intended contrast was delivered.
+`diagnostics.verification_role_qualification` reconstructs immutable historical
+inputs, captures both phase projections, enumerates source displacement and checks
+saved-count-based cost admission without network access. Its replay has no run
+envelope and cannot resume. Three historical entry pairs preserve native-history
+contrast, common public state and identical schemas. Minimum-path funding is not
+useful-output or candidate-availability evidence.
+
+The return-delivery fixture fails qualification for B: two selected public probe
+receipts become incomplete despite fitting the existing limits. A retains both.
+Do not freeze or request paid approval until the two-reference public return path
+is repaired and requalified. Keep the phase split, boundary policy and total budget
+unchanged. No new paid allocation or executable manifest was created.
