@@ -199,10 +199,10 @@ def test_last_edit_feedback_survives_native_delivery_restart_and_action_replay(t
 def test_feedback_changes_preserve_wire_limits_and_bounded_prompt():
     # V34 compresses memory descriptions only; ordered input shapes and non-memory
     # descriptions are independently pinned in test_dev_memory_guidance_v34.
-    # Also pin the existing reproduction input and scope guidance; frozen arms stay exact.
+    # Pin current purpose selection and observation guidance; frozen arms stay exact.
     assert sha256_json(dev_tool_schemas(
         finish_enabled=True, allowed_tools=ALL_DEV_TOOLS, check_ids=["first", "second"],
-    )) == ("sha256:1ee6f9ad3862e16ea04fdc477a91b8d717a8b3a0451373b4107e103f9d0d1182"
+    )) == ("sha256:10d81de3148c352a77b9976fb81cf5d08c64643c2cdbfc8792c4ce82c191e5c6"
            if FROZEN_ARM is None else
            "sha256:8b024770ed22b31b84e2e5b8890080e1aaad9f15ba9843f5c3ea3f1c12ee0fe0")
     assert dev_tool_surface_hash() != (

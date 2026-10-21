@@ -24,7 +24,7 @@ from diagnostics import probe_purpose_panel as panel
 from diagnostics import verification_state_execution as shared
 from patchloop.dev import reproduction, runner
 from patchloop.dev import tools as tools_module
-from patchloop.dev.contracts import DevModelTurn
+from patchloop.dev.contracts import DEV_READ_TOOLS, DEV_SINGLE_ACTION_TOOLS, DevModelTurn
 from patchloop.dev.conversation import assemble_model_input
 from patchloop.dev.model import DEV_SYSTEM_PROMPT, MockDevAdapter
 from patchloop.dev.tools import dev_tool_schemas
@@ -62,6 +62,20 @@ def test_control_is_exact_prior_schema_and_only_probe_surface_changes():
     a = control.project_tools(schemas, "A")
     assert a == scope["dev_tool_schemas"](
         finish_enabled=True, allowed_tools=["run_probe", "finish_task"])
+    # Cover the distinct pinned schema configurations in the fast regression suite.
+    for options in (
+        {"allowed_tools": ["read_file", "search_files", "replace_text", "run_check",
+                           "run_tests", "run_probe", "finish_task", "stop_task"],
+         "check_ids": ["public-check"], "test_suite_ids": ["public-tests"]},
+        {"allowed_tools": tools_module.ALL_DEV_TOOLS},
+        {"allowed_tools": tools_module.ALL_DEV_TOOLS, "check_ids": ["first", "second"]},
+        {"allowed_tools": DEV_READ_TOOLS | DEV_SINGLE_ACTION_TOOLS,
+         "check_ids": ["first", "second"]},
+    ):
+        current = dev_tool_schemas(finish_enabled=True, **options)
+        restored = control.project_tools(current, "A")
+        legacy = scope["dev_tool_schemas"](finish_enabled=True, **options)
+        assert json.dumps(restored) == json.dumps(legacy)  # Includes field order.
     assert schemas == before == control.project_tools(schemas, "B")
     assert [t for t in a if t["name"] != "run_probe"] == [
         t for t in schemas if t["name"] != "run_probe"]

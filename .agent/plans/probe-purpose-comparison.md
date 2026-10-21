@@ -5,7 +5,10 @@ closed. This specification, its diagnostic adapters and the final-commit packet
 must be validated before any provider operation. No paid authorization is created
 by preparation; every run remains official=false and claim-ineligible.
 
-Preparation root: C:/pt/probe-purpose46.
+Final preparation root: C:/pt/probe-purpose46/final.
+The earlier C:/pt/probe-purpose46 validation is retained separately: its full
+suite exposed five stale current-schema hash fixtures, corrected without changing
+runtime behavior, frozen-arm fixtures or limits. Final-commit validation is fresh.
 New execution root: C:/pt/probe-purpose46-live.
 
 ## Question and comparison

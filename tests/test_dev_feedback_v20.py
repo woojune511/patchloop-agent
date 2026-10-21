@@ -204,10 +204,10 @@ def test_probe_description_exposes_existing_capability_without_changing_wire_sha
             return [structure(item) for item in value]
         return value
 
-    # Pin the existing reproduction field as well as question references and tool order.
+    # Pin purpose selection as well as question references and tool order.
     encoded = json.dumps(structure(schemas), separators=(",", ":"), ensure_ascii=False).encode()
     assert hashlib.sha256(encoded).hexdigest() == (
-        "337bb6defb3a9daf9e0570da479d8f430aed16ff8f8bf3a2e55d033827263d5e"
+        "4044a663fde46de911cccdf8f263daa3d213e5491abb75207d73758433e3fcc8"
         if FROZEN_ARM is None else
         "acdcc28623f92006faaa95a0c58015095e28b851093d0eb983e8d59bcd303222"
     )
