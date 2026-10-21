@@ -66,10 +66,10 @@ B's retained current failure; USD 0.04019910. Keep 24k; no adoption or paid foll
 
 [Recovery A/B](history/2026-10-20-recovery-schema-results.md): A/B 0/6; submissions
 4/6 vs 2/6, all fail caller/native. USD 7.70164425; closed, no new run.
-[Verification](history/2026-10-20-regression-contract-repair.md): full suite
-5,463 passed/20 skipped at `5bd4c26c`; no paid run.
 [State A/B](history/2026-10-20-verification-state-reduced-results.md): R 0/3 both.
-[Probe A/B](../.agent/plans/probe-purpose-comparison.md): preparing; unapproved.
+[Probe A/B](history/2026-10-21-probe-purpose-results.md): closed after A1/B1/B2,
+USD 1.97877345; bound probe unused, B1 FAIL. B2's rejected batch blocks a size
+transition; reproduced, unfixed.
 
 See [panel contract](../.agent/current-dev20.md); prior panels closed.
 
