@@ -35,6 +35,7 @@ SPEC = ".agent/plans/verification-state-comparison.md"
 REDUCED_SPEC = ".agent/plans/verification-state-reduced-comparison.md"
 DEPENDENCIES = Path("C:/pt/calleruptake18/preparation-v2/B/prepared-probe-dependencies.json")
 JOURNAL = "run_dev_verificationstate43"
+SCHEMA = "verification-state-comparison-v2"
 
 
 def allocation(repeat_per_arm):
@@ -231,7 +232,7 @@ def freeze(root, live, validation, *, repeat_per_arm=6):
     require(all(programs[k]["hash"] == caller_uptake_grading.PROGRAMS[k] for k in programs),
             "caller oracle changed")
     packet = {
-        "schema": "verification-state-comparison-v2", **current, **assigned,
+        "schema": SCHEMA, **current, **assigned,
         "specification": prior.file_ref(repository_root() / (
             REDUCED_SPEC if repeat_per_arm == 3 else SPEC)),
         "paid_authorized": False, "official": False, "claim_eligible": False,
@@ -262,7 +263,7 @@ def validate(root, digest):
     require(sha256_json(packet) == digest and packet["paid_authorized"] is False,
             "manifest identity or authorization changed")
     assigned = allocation(packet["repeat_per_arm"])
-    require(packet["schema"] == "verification-state-comparison-v2"
+    require(packet["schema"] == SCHEMA
             and all(packet[k] == v for k, v in assigned.items()),
             "allocation order/caps changed")
     require(packet["specification"] == prior.file_ref(repository_root() / (
@@ -280,7 +281,7 @@ def validate(root, digest):
     return packet
 
 
-def main():
+def main(*, default_repeat=6, repeat_choices=(3, 6)):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("mode", choices=("capture", "freeze", "validate"))
     parser.add_argument("--root", type=Path, required=True)
@@ -288,7 +289,8 @@ def main():
     parser.add_argument("--live", type=Path)
     parser.add_argument("--validation", type=Path)
     parser.add_argument("--hash")
-    parser.add_argument("--repeat-per-arm", type=int, choices=(3, 6), default=6)
+    parser.add_argument("--repeat-per-arm", type=int,
+                        choices=repeat_choices, default=default_repeat)
     args = parser.parse_args()
     if args.mode == "capture":
         capture(args.root, args.arm)

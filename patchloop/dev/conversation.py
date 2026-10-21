@@ -72,6 +72,7 @@ SEGMENT_RULES = replace(WINDOW_RULES, mutable_fields=WINDOW_RULES.mutable_fields
     "working_plan", "segment_handoff", "current_public_failure", "pending_recheck",
     "last_successful_mutation", "last_failed_mutation", "recent_checks", "recent_probes",
     "latest_tool_results", "public_execution_summary", "repair_recheck", "probe_recheck",
+    "verification_phase",
 })
 
 

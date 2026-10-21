@@ -4195,6 +4195,13 @@ def _run_one_active(
         agent_policy=request.agent_policy,
         history_search_policy=request.history_search_policy,
     )
+    # Diagnostic gateways may schedule bounded phases while sharing this loop's
+    # ledger, counters, workspace, deadline and real action receipts. Default runs
+    # have no extension and retain their existing context and tool behavior.
+    extension = getattr(gateway, "run_extension", None)
+    if extension is not None:
+        extension.bind(request=request, counters=counters, ledger=cost_ledger,
+                       store=artifact_store, resuming=resuming)
     correction: dict[str, Any] | None = _pending_protocol_correction(journal)
     latest_tool_results = journal.latest_tool_batch_results() if resuming else []
 
@@ -4440,6 +4447,13 @@ def _run_one_active(
         if recovered_receipt and recovered_receipt.get("ready_for_activation"):
             native_compaction.activate(journal, artifact_store, recovered_receipt)
     while terminal_code is None and finish_result is None and stop_result is None:
+        if extension is not None:
+            try:
+                extension.before_turn()
+            except RecoveryError as exc:
+                terminal_code, terminal_message = DevTerminal.TASK_FAILED, str(exc)
+                stop_remaining = True
+                break
         if request.repair_recheck:
             try:
                 terminal_code, terminal_message = _run_repair_recheck(
@@ -4480,6 +4494,16 @@ def _run_one_active(
             terminal_message = "row wall-time limit reached"
             break
         elapsed_seconds = active_elapsed_ms() / 1_000
+        if extension is not None:
+            try:
+                extension.before_turn()
+            except RecoveryError as exc:
+                terminal_code, terminal_message = DevTerminal.TASK_FAILED, str(exc)
+                stop_remaining = True
+                break
+        input_journal = extension.input_journal if extension is not None else journal
+        input_results = (input_journal.latest_tool_batch_results()
+                         if extension is not None else latest_tool_results)
         projection = gateway.prepare_context_projection(latest_results=latest_tool_results)
         snapshot = gateway.state_snapshot(projection=projection)
         policy = _tool_policy(
@@ -4539,6 +4563,8 @@ def _run_one_active(
                 planning_policy=request.planning_policy,
                 evaluation_reserve_seconds=evaluation_reserve_seconds,
             )
+            if extension is not None:
+                context = extension.context(context)
             context_payload = json.loads(context)
             if request.context_policy == segments.POLICY:
                 context_payload["remaining_budget"]["cost"] = {
@@ -4559,10 +4585,10 @@ def _run_one_active(
                     projected_spans.append(mutation_evidence)
             context_artifact = artifact_store.put_text(context, "application/json")
             model_input = _build_model_input(
-                journal=journal,
+                journal=input_journal,
                 artifact_store=artifact_store,
                 context=context,
-                latest_tool_results=latest_tool_results,
+                latest_tool_results=input_results,
                 context_policy=request.context_policy,
                 planning_policy=request.planning_policy,
                 agent_policy=request.agent_policy,
@@ -4599,6 +4625,8 @@ def _run_one_active(
             probe_environment=getattr(gateway.probe_sandbox, "environment", None),
             history_search_policy=request.history_search_policy,
         )
+        if extension is not None:
+            schemas = extension.schemas(schemas)
         if isinstance(request, RepairRunRequest):
             for schema in schemas:
                 if schema["name"] == "finish_task":
@@ -4622,7 +4650,7 @@ def _run_one_active(
                 window=native_compaction.active_window(journal, artifact_store)[1],
             ),
             **({"context_window": window_binding} if window_binding is not None else {}),
-            **({"context_segment": _segment_input_binding(journal, artifact_store)}
+            **({"context_segment": _segment_input_binding(input_journal, artifact_store)}
                if request.context_policy == segments.POLICY else {}),
             "transcript_action_ids": [
                 item["call_id"]
@@ -4685,14 +4713,15 @@ def _run_one_active(
                 reasons = segments.size_reasons(sizes)
                 turn_payload["context_request_sizes"] = sizes
                 if reasons:
-                    binding, _ = segments.active(journal, artifact_store)
-                    if segments.is_fresh(journal, binding):
+                    binding, _ = segments.active(input_journal, artifact_store)
+                    if segments.is_fresh(input_journal, binding):
                         handoff = segments.load_binding(binding, artifact_store)
-                        fallback = _segment_size_fallback(handoff, latest_tool_results)
+                        fallback = _segment_size_fallback(handoff, input_results)
                         if fallback:
                             _build_model_input(
-                                journal=journal, artifact_store=artifact_store, context=context,
-                                latest_tool_results=latest_tool_results,
+                                journal=input_journal, artifact_store=artifact_store,
+                                context=context,
+                                latest_tool_results=input_results,
                                 context_policy=segments.POLICY,
                                 planning_policy=request.planning_policy,
                                 agent_policy=request.agent_policy,
@@ -4701,13 +4730,13 @@ def _run_one_active(
                                 force_segment_reason=fallback,
                             )
                             continue
-                        segments.record_limit(journal, sizes=sizes)
+                        segments.record_limit(input_journal, sizes=sizes)
                         terminal_code = DevTerminal.LIMIT_REACHED
                         terminal_message = "fresh public state exceeds segment request size limit"
                         break
                     _build_model_input(
-                        journal=journal, artifact_store=artifact_store, context=context,
-                        latest_tool_results=latest_tool_results, context_policy=segments.POLICY,
+                        journal=input_journal, artifact_store=artifact_store, context=context,
+                        latest_tool_results=input_results, context_policy=segments.POLICY,
                         planning_policy=request.planning_policy,
                         agent_policy=request.agent_policy,
                         segment_boundary_policy=request.segment_boundary_policy,
@@ -4733,7 +4762,7 @@ def _run_one_active(
                 request_payload["parallel_tool_calls"] = True
                 request_payload["tool_choice"] = "required"
                 boundary, bundle = native_compaction.prepared_input(
-                    journal, artifact_store, turn_payload, request_payload, policy_transition,
+                    input_journal, artifact_store, turn_payload, request_payload, policy_transition,
                 )
                 turn_payload = bundle["turn"]
                 model_input = _load_active_model_input(
@@ -4745,19 +4774,20 @@ def _run_one_active(
                 schemas = bundle["request"]["tools"]
                 policy_transition = bundle["transition"]
                 prepared_count = native_compaction.count_prepared(
-                    journal, boundary, bundle, openai_adapter, deadline, active_elapsed_ms,
+                    input_journal, boundary, bundle, openai_adapter, deadline, active_elapsed_ms,
                 )
                 counters.input_count_calls = _restore_counters(journal).input_count_calls
                 if (request.context_policy == segments.POLICY
                         and prepared_count[1] > segments.MAX_INPUT_TOKENS):
-                    binding, _ = segments.active(journal, artifact_store)
-                    if segments.is_fresh(journal, binding):
+                    binding, _ = segments.active(input_journal, artifact_store)
+                    if segments.is_fresh(input_journal, binding):
                         handoff = segments.load_binding(binding, artifact_store)
-                        fallback = _segment_size_fallback(handoff, latest_tool_results)
+                        fallback = _segment_size_fallback(handoff, input_results)
                         if fallback:
                             _build_model_input(
-                                journal=journal, artifact_store=artifact_store, context=context,
-                                latest_tool_results=latest_tool_results,
+                                journal=input_journal, artifact_store=artifact_store,
+                                context=context,
+                                latest_tool_results=input_results,
                                 context_policy=segments.POLICY,
                                 planning_policy=request.planning_policy,
                                 agent_policy=request.agent_policy,
@@ -4766,13 +4796,13 @@ def _run_one_active(
                                 force_segment_reason=fallback,
                             )
                             continue
-                        segments.record_limit(journal, input_tokens=prepared_count[1])
+                        segments.record_limit(input_journal, input_tokens=prepared_count[1])
                         terminal_code = DevTerminal.LIMIT_REACHED
                         terminal_message = "fresh public state exceeds segment input token limit"
                         break
                     _build_model_input(
-                        journal=journal, artifact_store=artifact_store, context=context,
-                        latest_tool_results=latest_tool_results, context_policy=segments.POLICY,
+                        journal=input_journal, artifact_store=artifact_store, context=context,
+                        latest_tool_results=input_results, context_policy=segments.POLICY,
                         planning_policy=request.planning_policy,
                         agent_policy=request.agent_policy,
                         segment_boundary_policy=request.segment_boundary_policy,
@@ -4834,7 +4864,7 @@ def _run_one_active(
                 stop_remaining = True
                 break
         if request.context_policy == segments.POLICY:
-            segments.commit(journal, artifact_store)
+            segments.commit(input_journal, artifact_store)
         journal.append("turn_started", turn_payload)
         if policy_transition is not None:
             journal.append(
@@ -4845,6 +4875,8 @@ def _run_one_active(
         if request.provider == "mock":
             assert mock_adapter is not None
             counters.model_calls += 1
+            if extension is not None:
+                extension.dispatched(turn_payload)
             try:
                 mock_context = (canonical_json(thin_policy.project_state(
                     json.loads(context), "thin")) if request.agent_policy == "thin" else context)
@@ -4940,12 +4972,15 @@ def _run_one_active(
             admission = cost_ledger.admit(
                 input_tokens,
                 desired_output_ceiling=request.max_output_tokens,
-                future_cost_reserve_nanos=(
+                future_cost_reserve_nanos=max(
                     policy.completion_cost["future_cost_reserve_nanos"]
-                    if policy.completion_cost is not None else 0
+                    if policy.completion_cost is not None else 0,
+                    extension.cost_reserve() if extension is not None else 0,
                 ),
             )
             if admission is None:
+                if extension is not None and extension.cost_limited(input_tokens):
+                    continue
                 terminal_code = DevTerminal.COST_CAP_REACHED
                 terminal_message = (
                     "provider request plus future completion reserve cannot fit the remaining cap"
@@ -4985,6 +5020,8 @@ def _run_one_active(
                 },
             )
             counters.model_calls += 1
+            if extension is not None:
+                extension.dispatched(turn_payload)
             try:
                 raw_turn = openai_adapter.execute_request(
                     request_payload,
@@ -5189,7 +5226,9 @@ def _run_one_active(
             deadline.check()
             gateway.record_working_notes_update(turn.tool_calls, turn_id=turn_id)
             _record_planning_decision(
-                request.planning_policy, journal=journal, gateway=gateway,
+                request.planning_policy,
+                journal=extension.plan_journal if extension is not None else journal,
+                gateway=gateway,
                 calls=turn.tool_calls, turn_id=turn_id,
             )
             results = gateway.execute_batch(turn.tool_calls)

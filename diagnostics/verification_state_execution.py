@@ -25,6 +25,10 @@ AUDIT = "run_dev_verificationstateaudit43"
 ASSESSMENT = "run_dev_verificationstateassessment43"
 
 
+def worker_initializer(arm):
+    return off.initialize_off_worker if arm == "A" else parallel_dev_batch.initialize_worker
+
+
 def authorize(digest, authorization):
     assigned = panel.allocation(authorization.get("repeat_per_arm"))
     require(authorization == {
@@ -67,8 +71,7 @@ def collect(root, digest, authorization, rates):
                 label = row["row_id"]
                 attempted.append(label)
                 journal.append("row_admission_started", {"row_id": label, "arm": row["arm"]})
-                initializer = (off.initialize_off_worker if row["arm"] == "A"
-                               else parallel_dev_batch.initialize_worker)
+                initializer = worker_initializer(row["arm"])
                 wave = parallel_dev_batch.run_parallel_rows(
                     [row], total_cap=panel.ROW_CAP, workers=1, journal=journal,
                     after_row=existing.due_receipts, initializer=initializer)

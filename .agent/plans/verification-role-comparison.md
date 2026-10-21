@@ -1,7 +1,7 @@
 # Same-context verification versus an independent verifier
 
-Status: specification only, 2026-10-21. The phase controller, independent-context
-adapter and grading extensions below are not implemented or locally validated.
+Status: diagnostic executor implemented, 2026-10-21; local validation described
+in [implementation record](../../docs/history/2026-10-21-verification-role-executor.md).
 No execution packet is frozen and no paid work is authorized. Previous allocations
 are closed. Every proposed run remains official=false and claim-ineligible.
 
@@ -182,7 +182,7 @@ packet differences; live trajectories can diverge and are not paired eviction te
 | Serial order | A1 B1 B2 A2 A3 B3; no concurrent rows |
 | New spending cap | USD 0.88/row, 2.64/arm, 5.28 allocation-wide |
 | Local assessment cap | Twelve caller checks, six native evaluations; one worker |
-| Proposed preparation/execution roots | C:/pt/verification-role48 / C:/pt/verification-role48-live |
+| Proposed preparation/execution roots | C:/pt/verification-role49 / C:/pt/verification-role49-live |
 
 Use the previously prepared public source
 C:/pt/ld20p01/s/13/prepared-source.json and dependency manifest
@@ -329,3 +329,35 @@ implemented and tested before their names can be advertised as runnable.
 Only then request exact approval for the frozen task/model/credential file, six
 rows and USD 5.28 cap. This document supplies no approval and no provider operation
 is part of its preparation.
+
+## Implemented interfaces and remaining preparation
+
+`diagnostics.verification_role_panel` implements `capture`, `freeze`, and
+`validate`; `diagnostics.verification_role_execution` implements `collect`,
+`export`, `seal`, and `assess`. Run either module with `--help` for arguments.
+The role-specific discriminator is `verification-role-comparison-v1`; the old
+verification-state packet cannot authorize this executor. Only collection can
+dispatch a provider, after exact fresh approval and the existing admission gates.
+
+The executor reuses the existing loop, one ledger/deadline/action namespace, and
+the serial allocation/stop/seal/assessment paths. Two journal read projections
+select native histories; writes still use one original hash chain. Report receipts
+are real idempotent actions. Verification history searches, including exact-ID
+pages, expose public observations with repair annotations removed in both arms.
+No default CLI policy or prompt changes when the diagnostic is unassigned.
+
+The validation JSON additionally requires `verification_role.contract_hash` from
+`verification_role.contract()` and file references for `same_snapshot_capture`,
+`historical_packet_replay`, and `resource_feasibility`. Each receipt identifies its
+`gate`, `passed: true`, the same contract hash, final `head`, `runtime_hash`, and
+`implementation`, zero `provider_calls` and `input_count_calls`, plus nonempty
+hash-bound `evidence` files. These operator-reviewed receipts must establish the
+corresponding freeze gates above; placeholder or earlier-commit validation is
+insufficient. Ordinary focused/quick/full XML receipts are also required. The
+executor does not manufacture qualification from its implementation tests.
+
+Those task-specific capture/replay/funding receipts and a frozen six-row packet
+remain preparation work. In the local smoke trajectory, the unchanged result
+rule resets A at verification entry too. Its common state then resembles B's
+fresh entry. Qualification must measure actual retained-history differences;
+an arm label alone is not evidence that the intended contrast was delivered.
