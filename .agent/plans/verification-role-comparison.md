@@ -1,13 +1,15 @@
 # Same-context verification versus an independent verifier
 
-Status: return-delivery defect repaired locally, 2026-10-21. Same-checkpoint
-contrast survives; final execution qualification and freeze remain pending. See
+Status: final qualification and conditional packet freeze, 2026-10-21.
+Read `C:/pt/verification-role51/closeout.json` and its validated `manifest.json`
+for execution readiness; this prose never grants paid authorization. See
 the [return fix](../../docs/history/2026-10-21-verification-role-return-fix.md) and
 the earlier [qualification](../../docs/history/2026-10-21-verification-role-qualification.md).
 The [implementation record](../../docs/history/2026-10-21-verification-role-executor.md)
 remains the earlier local implementation evidence.
-No execution packet is frozen and no paid work is authorized. Previous allocations
-are closed. Every proposed run remains official=false and claim-ineligible.
+Create that packet only after all final-commit gates pass. No paid work is
+authorized; previous allocations are closed. Every run remains official=false
+and claim-ineligible.
 
 ## Question and evidence
 
@@ -186,7 +188,7 @@ packet differences; live trajectories can diverge and are not paired eviction te
 | Serial order | A1 B1 B2 A2 A3 B3; no concurrent rows |
 | New spending cap | USD 0.88/row, 2.64/arm, 5.28 allocation-wide |
 | Local assessment cap | Twelve caller checks, six native evaluations; one worker |
-| Proposed preparation/execution roots | C:/pt/verification-role49 / C:/pt/verification-role49-live |
+| Preparation/execution roots | C:/pt/verification-role51 / C:/pt/verification-role51-live |
 
 Use the previously prepared public source
 C:/pt/ld20p01/s/13/prepared-source.json and dependency manifest
@@ -380,4 +382,5 @@ Local fixtures now deliver both probe bodies in A and B. Historical entry contra
 source displacement, phase split and budgets remain unchanged. These checks do not
 establish model uptake or repair success. Complete the final-implementation full
 suite and hash-bound execution qualification before freezing or requesting paid
-approval. No new paid allocation or executable manifest was created.
+approval. The external closeout records whether those gates passed and a packet
+was frozen; a frozen packet still has `paid_authorized=false`.
