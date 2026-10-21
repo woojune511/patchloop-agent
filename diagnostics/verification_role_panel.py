@@ -39,6 +39,7 @@ def allocation(repeat_per_arm):
 def bindings():
     repo = repository_root()
     names = [SPEC, "tests/test_verification_role.py", "tests/test_verification_role_grading.py",
+             "tests/test_verification_role_qualification.py",
              "tests/test_verification_state_grading.py", "tests/quick.txt"]
     names += [p.relative_to(repo).as_posix() for p in (repo / "diagnostics").rglob("*.py")]
     return {name: prior.file_ref(repo / name)["hash"] for name in sorted(names)}

@@ -1952,6 +1952,7 @@ def _build_model_input(
     force_segment_reason: str | None = None,
     segment_boundary_policy: segments.BoundaryPolicy = segments.DEFAULT_BOUNDARY_POLICY,
     history_search_policy: history_search.Policy = "none",
+    additional_public_exchanges: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     """Append the latest exchange to the exact saved active-episode history."""
     events = journal.events()
@@ -1965,6 +1966,7 @@ def _build_model_input(
                 force_reason=force_segment_reason,
                 boundary_policy=segment_boundary_policy,
                 history_search_policy=history_search_policy,
+                additional_public_exchanges=additional_public_exchanges,
             )
         except (OSError, KeyError, TypeError, ValueError, ContractError, RecoveryError) as exc:
             raise _ProviderContinuationError("segmented public handoff is invalid") from exc
@@ -2079,6 +2081,7 @@ def _build_segmented_model_input(
     boundary_policy: segments.BoundaryPolicy = segments.DEFAULT_BOUNDARY_POLICY,
     agent_policy="current",
     history_search_policy: history_search.Policy = "none",
+    additional_public_exchanges=None,
 ):
     """A public, explicitly lossy handoff; never splice or fabricate native history."""
     events = journal.events()
@@ -2131,6 +2134,10 @@ def _build_segmented_model_input(
             state.get("working_notes", {}).get("open_question"), events, ids,
             diff_hash=state["current_diff"]["patch_hash"],
         )
+        if not omit_optional:
+            present = ids | {i["call_id"] for i in optional}
+            optional += [i for i in additional_public_exchanges or []
+                         if i["call_id"] not in present]
         if optional:
             base.append(SEGMENT_RULES.archive(exchanges=optional))
         manifest_view = _segment_current_view(copy.deepcopy(state), base[3:], latest_results,
@@ -2168,6 +2175,15 @@ def _build_segmented_model_input(
                     json.loads(item["output"]), history=[*previous[3:], *added[:position]],
                     admission=admissions.get(item["call_id"]), archive_kind=PUBLIC_EVIDENCE_KIND,
                 ))}
+        # Selected public evidence from another native stream is quoted data.
+        # It neither joins that stream's continuation nor forces a new segment.
+        if additional_public_exchanges:
+            present = {i["call_id"] for i in public_exchanges(
+                [*previous[3:], *added], archive_kind=PUBLIC_EVIDENCE_KIND,
+            ) if i.get("type") == "function_call_output"}
+            extra = [i for i in additional_public_exchanges if i["call_id"] not in present]
+            if extra:
+                added.append(SEGMENT_RULES.archive(exchanges=extra))
     history = [*previous[3:], *added]
     state = json.loads(context)  # Always use current facts, not an old handoff's controls.
     if planning_policy != "none":
@@ -4584,6 +4600,8 @@ def _run_one_active(
                 if isinstance(mutation_evidence, dict):
                     projected_spans.append(mutation_evidence)
             context_artifact = artifact_store.put_text(context, "application/json")
+            additional_public_exchanges = (extension.public_evidence(context_payload)
+                                           if extension is not None else None)
             model_input = _build_model_input(
                 journal=input_journal,
                 artifact_store=artifact_store,
@@ -4594,6 +4612,7 @@ def _run_one_active(
                 agent_policy=request.agent_policy,
                 segment_boundary_policy=request.segment_boundary_policy,
                 history_search_policy=request.history_search_policy,
+                additional_public_exchanges=additional_public_exchanges,
             )
             model_input_text = canonical_json(model_input)
             model_input_artifact = artifact_store.put_text(
@@ -4728,6 +4747,7 @@ def _run_one_active(
                                 segment_boundary_policy=request.segment_boundary_policy,
                                 history_search_policy=request.history_search_policy,
                                 force_segment_reason=fallback,
+                                additional_public_exchanges=additional_public_exchanges,
                             )
                             continue
                         segments.record_limit(input_journal, sizes=sizes)
@@ -4742,6 +4762,7 @@ def _run_one_active(
                         segment_boundary_policy=request.segment_boundary_policy,
                         history_search_policy=request.history_search_policy,
                         force_segment_reason="+".join(reasons),
+                        additional_public_exchanges=additional_public_exchanges,
                     )
                     continue
             except (OSError, KeyError, TypeError, ValueError, ContractError, RecoveryError) as exc:
@@ -4794,6 +4815,7 @@ def _run_one_active(
                                 segment_boundary_policy=request.segment_boundary_policy,
                                 history_search_policy=request.history_search_policy,
                                 force_segment_reason=fallback,
+                                additional_public_exchanges=additional_public_exchanges,
                             )
                             continue
                         segments.record_limit(input_journal, input_tokens=prepared_count[1])
@@ -4808,6 +4830,7 @@ def _run_one_active(
                         segment_boundary_policy=request.segment_boundary_policy,
                         history_search_policy=request.history_search_policy,
                         force_segment_reason="input_tokens",
+                        additional_public_exchanges=additional_public_exchanges,
                     )
                     continue
                 prior_preparation = next((e["payload"] for e in journal.events()

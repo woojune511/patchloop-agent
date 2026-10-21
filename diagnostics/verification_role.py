@@ -13,7 +13,7 @@ from unittest.mock import patch
 
 from diagnostics.positive_verification_panel import require
 from patchloop.contracts import Artifact
-from patchloop.dev import history_evidence, runner, tools, working_plan
+from patchloop.dev import evidence_focus, history_evidence, runner, tools, working_plan
 from patchloop.dev.contracts import FinishIntent
 from patchloop.dev.conversation import reconstruct_state
 from patchloop.dev.state import DevJournal
@@ -49,6 +49,7 @@ def contract():
     return {"comparison": "verification-role-v1", "phases": copy.deepcopy(LIMITS),
             "instruction_hash": sha256_json(INSTRUCTION), "report_chars": 1500,
             "references": 2, "context": "existing-segments-per-native-stream",
+            "return_evidence": "selected-public-exchanges-v1",
             "cost": "single-ledger-per-call-admission-with-phase-reservations",
             "carry": "unused-resources-to-final-only", "resume": False}
 
@@ -340,6 +341,20 @@ class VerificationRun:
             "Uncertainty is allowed. Public assessment, not a task submission.")
         return [*schemas, schema]
 
+    def public_evidence(self, state):
+        """Quote only the current pair's observations excluded by the native view."""
+        if self.arm != "B" or self.phase != "final":
+            return []
+        events = [e for e, phase, _ in phased_events(self.journal.events()) if phase == "verify"]
+        exchanges = evidence_focus.optional_exchanges(
+            state.get("working_notes", {}).get("open_question"), events,
+            diff_hash=state["current_diff"]["patch_hash"],
+        )
+        for item in exchanges:
+            if item["type"] == "function_call_output":
+                item["output"] = canonical_json(observed_result(json.loads(item["output"])))
+        return exchanges
+
     def dispatched(self, turn):
         artifact = Artifact.model_validate(turn["model_input_artifact"])
         items = json.loads(self.store.read_bytes(artifact))
@@ -375,7 +390,9 @@ class VerificationGateway(_BASE_GATEWAY):
         assessment = FinishIntent.model_validate(arguments).assessment
         if self.current_diff_hash != self.run_extension.pinned_diff:
             raise RecoveryError("verification candidate changed before report")
-        references = self.focus_source_references()
+        question = self.working_notes().get("open_question")
+        references = (copy.deepcopy(question["evidence"]) if evidence_focus.priority_status(
+            question, self.current_diff_hash) == "eligible" else [])
         require(len(references) <= 2, "verification must share two reference slots")
         return {"assessment": assessment, "reviewed_diff_hash": self.current_diff_hash,
                 "references": references, "interpretation_status": "model_authored_unverified",

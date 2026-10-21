@@ -1,8 +1,9 @@
 # Same-context verification versus an independent verifier
 
-Status: qualification blocked, 2026-10-21. Same-checkpoint contrast survives, but
-B drops selected public probe bodies on return to repair; see the
-[qualification record](../../docs/history/2026-10-21-verification-role-qualification.md).
+Status: return-delivery defect repaired locally, 2026-10-21. Same-checkpoint
+contrast survives; final execution qualification and freeze remain pending. See
+the [return fix](../../docs/history/2026-10-21-verification-role-return-fix.md) and
+the earlier [qualification](../../docs/history/2026-10-21-verification-role-qualification.md).
 The [implementation record](../../docs/history/2026-10-21-verification-role-executor.md)
 remains the earlier local implementation evidence.
 No execution packet is frozen and no paid work is authorized. Previous allocations
@@ -366,8 +367,17 @@ envelope and cannot resume. Three historical entry pairs preserve native-history
 contrast, common public state and identical schemas. Minimum-path funding is not
 useful-output or candidate-availability evidence.
 
-The return-delivery fixture fails qualification for B: two selected public probe
-receipts become incomplete despite fitting the existing limits. A retains both.
-Do not freeze or request paid approval until the two-reference public return path
-is repaired and requalified. Keep the phase split, boundary policy and total budget
-unchanged. No new paid allocation or executable manifest was created.
+The repaired return path quotes only the current question's selected verifier
+exchanges, with action/input/diff provenance, outside native continuation. Both
+arms' reports bind source and tool-result references in the existing two slots.
+No repair segment is forced: a continuing segment appends missing public quotes;
+a normal fresh segment includes them as optional evidence. Only measured overflow
+can omit them through the existing fallback, leaving delivery explicitly incomplete.
+Verifier native continuation, unselected exchanges and owned note/plan envelopes
+remain excluded from B's repair input. An edit expires selection priority as before.
+
+Local fixtures now deliver both probe bodies in A and B. Historical entry contrast,
+source displacement, phase split and budgets remain unchanged. These checks do not
+establish model uptake or repair success. Complete the final-implementation full
+suite and hash-bound execution qualification before freezing or requesting paid
+approval. No new paid allocation or executable manifest was created.
