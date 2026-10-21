@@ -69,7 +69,7 @@ B's retained current failure; USD 0.04019910. Keep 24k; no adoption or paid foll
 [Verification](history/2026-10-20-regression-contract-repair.md): full suite
 5,463 passed/20 skipped at `5bd4c26c`; no paid run.
 [State A/B](history/2026-10-20-verification-state-reduced-results.md): R 0/3 both.
-[Probe binding](history/2026-10-21-probe-purpose.md): local only; uptake untested.
+[Probe A/B](../.agent/plans/probe-purpose-comparison.md): preparing; unapproved.
 
 See [panel contract](../.agent/current-dev20.md); prior panels closed.
 

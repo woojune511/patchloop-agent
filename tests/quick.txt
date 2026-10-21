@@ -7,6 +7,7 @@ tests/test_dev_history_search.py
 tests/test_evidence_recovery.py
 tests/test_verification_scope_state.py
 tests/test_probe_purpose.py
+tests/test_probe_purpose_comparison.py
 tests/test_verification_state_comparison.py
 tests/test_verification_state_grading.py
 tests/test_probe_action_comparison.py::test_control_changes_only_replay_schema_and_rejects_unoffered_mode
