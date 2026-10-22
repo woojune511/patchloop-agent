@@ -1,6 +1,6 @@
 # History
 
-- [Calls](2026-10-22-probe-call.md), [A/B](2026-10-22-probe-invocation-qualification.md).
+- [Calls](2026-10-22-probe-call.md), [A/B](2026-10-22-probe-invocation-results.md).
 - [Roles](2026-10-22-verification-role-results.md).
 - [Binding](2026-10-21-probe-purpose.md).
 - [Dev20](2026-10-16-mini-swe-dev20-results.md).

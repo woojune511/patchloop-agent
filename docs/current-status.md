@@ -68,9 +68,9 @@ bound probe unused, B1 FAIL. Rejected-batch size handoffs
 repair A/B 0/3; final unsupported claims 2/2 and 3/3 among claims. A1 unsubmitted.
 Reports delivered 6/6; original-caller verification still missing. No adoption.
 
-[Caller linkage](history/2026-10-22-probe-call.md): local only.
-[OFF/ON](history/2026-10-22-probe-invocation-qualification.md): same-context phases,
-3/arm, USD 5.28; packet requires final-commit checks. Live NOT_RUN; no authorization.
+[Linkage](history/2026-10-22-probe-invocation-results.md): closed 4/6, USD 1.943574.
+Submitted repairs 0/3; ON use 0/2; unsupported final claims A 1/2, B 1/1.
+A3/B3 NOT_RUN: source drift. Delivery audit needs repair. No adoption.
 
 See [panel contract](../.agent/current-dev20.md); prior panels closed.
 
