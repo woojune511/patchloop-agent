@@ -74,6 +74,10 @@ A3/B3 NOT_RUN: source drift. Delivery audit needs repair. No adoption.
 
 See [panel contract](../.agent/current-dev20.md); prior panels closed.
 
+[Helper trace](history/2026-10-22-helper-path-results.md): new information, no repair
+in A1/B1/B2; USD 1.06856430. Other three NOT_RUN after a concurrent docs commit.
+Partial comparison; no adoption or rerun.
+
 Portfolio v1 [remeasurement](history/2026-10-06-portfolio-dev20-results.md) closed at
 9/20 versus historical 10/20, all evaluations agreeing; USD 3.46111455, 102m19s.
 The 11/20 threshold failed; test300 remains unprepared and unauthorized. The
@@ -140,17 +144,15 @@ and panel ledger remain implemented. Earlier Darts/MontePy observations and
 operator corrections are separate from this panel's fresh control rows; see the
 comparison record. Mock safety NOT_RUN remains separate from live safety PASS.
 
-[Mock profiling](history/2026-09-30-journal-read-profile.md) did not justify a journal
-cache. [Projection tests](../tests/test_model_view_fields.py) cover the compact public
-view; [completion arithmetic](../patchloop/dev/completion_budget.py) preserves resume
-identity. These local results do not establish live performance.
+[Mock profiling](history/2026-09-30-journal-read-profile.md): no journal cache.
+[Projection](../tests/test_model_view_fields.py) and
+[completion](../patchloop/dev/completion_budget.py): local checks only.
 
 [Development review](history/2026-09-30-development-review.md): repeated ablations closed.
 
-[Journal](../tests/test_dev_state.py) and [admission](../tests/test_visible_check_ids.py)
-tests cover record integrity and unique check IDs. [Paths](../tests/test_repository_paths.py),
-[repair verification](../tests/test_repair_verification.py) and
-[line feedback](../tests/test_execution_feedback_paths.py) preserve unusual filenames.
+[Journal](../tests/test_dev_state.py), [admission](../tests/test_visible_check_ids.py),
+[paths](../tests/test_repository_paths.py), [verification](../tests/test_repair_verification.py)
+and [feedback](../tests/test_execution_feedback_paths.py): local reliability checks.
 [Panel costs](../tests/test_dev_probe_panel.py) count compaction once;
 [evaluation recovery](../tests/test_dev_evaluation_resume.py) verifies evidence files.
 [Schema tests](../tests/test_replacement_schema.py) cover intent bounds and legacy fields.

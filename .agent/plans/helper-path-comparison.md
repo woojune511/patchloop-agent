@@ -1,7 +1,7 @@
 # Helper-path information at the saved Astroid failure
 
 Date: 2026-10-22. Origin: ARS experiment-agent / run, code_plan_v1.
-Status: preparation; no new diagnostic or paid outcome yet.
+Status: closed; see [results](../../docs/history/2026-10-22-helper-path-results.md).
 The user explicitly requested execution of the preceding two-stage design.
 This authorizes the four public diagnostics and, only after their information and
 compatibility gates pass, the six specified continuations. Prior allocations remain closed.

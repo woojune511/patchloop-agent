@@ -1,5 +1,6 @@
 # History
 
+- [Helpers](2026-10-22-helper-path-results.md).
 - [Calls](2026-10-22-probe-call.md), [A/B](2026-10-22-probe-invocation-results.md).
 - [Roles](2026-10-22-verification-role-results.md).
 - [Binding](2026-10-21-probe-purpose.md).
@@ -67,14 +68,14 @@
 - [Differences](2026-09-27-anyio-benchmark-differences.md).
 - [Caller scope](2026-09-27-caller-support-scope.md).
 - [Caller cancel](2026-09-27-caller-cancel-preservation.md).
-- [Cleanup results](2026-09-27-cleanup-information-results.md).
-- [Cleanup prep](2026-09-27-cleanup-information-preparation.md).
+- [Cleanup](2026-09-27-cleanup-information-results.md).
+- [Prep](2026-09-27-cleanup-information-preparation.md).
 - [Cancellation](2026-09-27-anyio-cleanup-cancellation.md).
-- [Caller results](2026-09-27-caller-information-results.md).
-- [Caller information](2026-09-27-caller-information.md).
+- [Results](2026-09-27-caller-information-results.md).
+- [Information](2026-09-27-caller-information.md).
 - [Caller state](2026-09-27-anyio-caller-state.md).
-- [Checkpoint results](2026-09-27-checkpoint-live-results.md).
-- [Live checkpoint](2026-09-27-checkpoint-live-preparation.md).
+- [Checkpoint](2026-09-27-checkpoint-live-results.md).
+- [Prep](2026-09-27-checkpoint-live-preparation.md).
 - [Continuation](2026-09-27-checkpoint-continuation.md).
 - [Mutation checkpoint](2026-09-27-mutation-advice-checkpoint.md).
 - [AnyIO](2026-09-27-anyio-fresh-solve.md).
