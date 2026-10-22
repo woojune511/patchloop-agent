@@ -44,12 +44,15 @@ limits, added-case replay budgets, recovery and context delivery. CLI mock smoke
 reached isolated evaluation PASS with safety NOT_RUN and unverified delivery.
 These are scripted protocol controls, not evidence of better LLM repairs.
 
-The [fresh Astroid pilot](history/2026-10-22-original-case-live-results.md) acquired
-zero original cases; regression PASS accompanied original-caller and acceptance
-failure. The unresolved question is whether bounded acquisition yields faithful
-cases and repairs within the same live budget. Mapping/expectations remain
-model-authored and unverified. All paid allocations are closed; no follow-up is
-queued or authorized. See the [protocol](../.agent/plans/original-obligation.md).
+The [bounded-acquisition live pilot](history/2026-10-22-original-obligation-live-results.md)
+retained an unverified obligation in all 34 dispatched contexts but acquired no
+original case: two quote-contract rejections consumed its reserved attempts.
+A later helper probe failed setup. One unchecked edit remained when cost admission
+stopped the run at USD 0.866304600; no finish, submission or evaluation occurred.
+Thus live delivery/replay and repair benefit remain unverified. Keep the flag off
+by default. Resolve requirement/caller/oracle binding and funded verification as
+separate local questions before another paid comparison. All allocations are
+closed; no follow-up is queued. See the [protocol](../.agent/plans/original-obligation.md).
 
 ## Supporting evidence
 

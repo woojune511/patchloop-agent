@@ -1,6 +1,6 @@
 # History
 
-- [Obligation](2026-10-22-original-obligation.md)
+- [Local](2026-10-22-original-obligation.md), [live](2026-10-22-original-obligation-live-results.md)
 - [Live case](2026-10-22-original-case-live-results.md)
 - [Case finish](2026-10-22-finish-reproduction-results.md)
 - [Helpers](2026-10-22-helper-path-results.md)
