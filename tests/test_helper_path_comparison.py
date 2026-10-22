@@ -6,7 +6,7 @@ import pytest
 
 from diagnostics import helper_path_comparison as comparison
 from patchloop.errors import ContractError
-from patchloop.util import canonical_json
+from patchloop.util import canonical_json, sha256_bytes
 
 
 def request():
@@ -49,3 +49,37 @@ def test_fixed_order_and_no_inherited_budget_refill():
     from decimal import Decimal
 
     assert comparison.ROW_CAP + Decimal("0.37263270") == Decimal("0.88")
+
+
+def test_clean_runtime_drift_between_rows_stops_before_next_fork(monkeypatch, tmp_path):
+    root = tmp_path / "live"
+    fixed = {"result_root": str(root), "head": "original", "runtime_hash": "original"}
+    current = dict(fixed)
+    plan = {**fixed, "first_request_hashes": {"A": "a", "B": "b"}}
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(canonical_json(plan), encoding="utf-8")
+    monkeypatch.setattr(comparison, "controls", lambda _: dict(current))
+    monkeypatch.setattr(comparison, "clean", lambda: None)
+    monkeypatch.setattr(comparison.common, "check_environment", lambda *_: {"status": "READY"})
+    monkeypatch.setattr(comparison, "evidence", lambda: ({}, {}))
+    monkeypatch.setattr(comparison, "source", lambda: None)
+    forks = []
+
+    def fork(*args, **kwargs):
+        forks.append(args[3])
+        return SimpleNamespace()
+
+    def run(*args):
+        current.update(head="different-clean-commit", runtime_hash="different-runtime")
+        return {"row": args[5], "status": "EXECUTED", "billing_known": True,
+                "stop_remaining": False}
+
+    monkeypatch.setattr(comparison.exposure, "_fork", fork)
+    monkeypatch.setattr(comparison, "run_branch", run)
+    comparison.collect(manifest, sha256_bytes(manifest.read_bytes()))
+    result = json.loads((root / "result.json").read_bytes())
+    assert forks == ["A"]
+    assert result["rows"][0]["status"] == "EXECUTED"
+    assert result["rows"][1]["status"] == "NOT_RUN"
+    assert result["rows"][1]["reason"] == "execution controls changed"
+    assert all(r["status"] == "NOT_RUN" for r in result["rows"][1:])

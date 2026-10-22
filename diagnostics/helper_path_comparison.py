@@ -163,6 +163,8 @@ def clean():
 
 def preflight(plan):
     clean()
+    require({k: v for k, v in plan.items() if k not in ("first_request_hashes", "preparation_root")}
+            == controls(Path(plan["result_root"])), "execution controls changed")
     return common.check_environment(plan, ENV)
 
 
@@ -283,8 +285,6 @@ def collect(manifest, approved_hash):
     require(sha256_bytes(raw) == approved_hash, "manifest changed")
     plan = json.loads(raw)
     root = Path(plan["result_root"])
-    require({k: v for k, v in plan.items() if k not in ("first_request_hashes", "preparation_root")}
-            == controls(root), "execution controls changed")
     require(preflight(plan)["status"] == "READY", "preflight not ready")
     require(not root.exists(), "comparison is single use")
     root.mkdir()
@@ -306,7 +306,8 @@ def collect(manifest, approved_hash):
                 value = run_branch(branch, additions[label[0]], group, journal, store, label,
                                    plan["first_request_hashes"][label[0]])
             except Exception as exc:
-                value = {"row": label, "status": "COLLECTOR_FAILED",
+                value = {"row": label,
+                    "status": "NOT_RUN" if branch is None else "COLLECTOR_FAILED",
                     "error_type": type(exc).__name__,
                     "reason": str(exc), "stop_remaining": True, "billing_known": branch is None
                     or runner._provider_usage_failure(branch.journal) is None}
