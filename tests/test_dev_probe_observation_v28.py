@@ -205,7 +205,12 @@ def test_submission_requires_judgment_without_a_separate_probe_or_review_action(
     guidance = runner._completion_guidance(snapshot, policy)
     assert guidance["submission_ready"] and guidance["next_action"] is None
     assert "before deciding whether the task is complete" in guidance["message"].lower()
-    assert "finish_task with your assessment" in guidance["message"]
+    if FROZEN_ARM is None:
+        assert "Call finish_task to return the candidate" in guidance["message"]
+        assert "assessment of evidence and remaining gaps" in guidance["message"]
+        assert "Missing original evidence returns unverified_delivery" in guidance["message"]
+    else:
+        assert "finish_task with your assessment" in guidance["message"]
     assert ("run_probe" in guidance["message"]) is probe_available
     assert len(canonical_json(guidance)) < 650
 

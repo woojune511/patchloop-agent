@@ -23,11 +23,12 @@ record_observation(value)
 
 
 def execute(root, *, implementation="return False", source=SOURCE, entrypoint="public_api.entry",
-            content="fixture", flag="1", mode="stable"):
+            content="fixture", flag="1", mode="stable", channel=probe_invocation.CHANNEL,
+            parameters="path, flag"):
     root.mkdir(parents=True)
     (root / "input.txt").write_text(content, encoding="utf-8")
     (root / "_impl.py").write_text(
-        "def actual(path, flag):\n    " + implementation + "\n", encoding="utf-8")
+        f"def actual({parameters}):\n    " + implementation + "\n", encoding="utf-8")
     (root / "public_api.py").write_text(
         "from _impl import actual as entry\n"
         "class Public:\n    def __init__(self, value):\n        self.value = value\n",
@@ -35,7 +36,7 @@ def execute(root, *, implementation="return False", source=SOURCE, entrypoint="p
     binding = {
         "case_id": "sha256:" + "c" * 64, "program_hash": sha256_bytes(source.encode()),
         "root_action_id": "before", "definition": {"entrypoint": entrypoint,
-        "expected_json": "true", "observation_channel": probe_invocation.CHANNEL},
+        "expected_json": "true", "observation_channel": channel},
     }
     wrapped = reproduction.program(source, binding)
     assert len(wrapped) <= PROBE_SOURCE_LIMIT_CHARS

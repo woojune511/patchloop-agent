@@ -80,11 +80,15 @@ def test_guidance_preserves_exact_edit_and_optional_note_wire_contracts():
         "smallest sufficient unique exact anchor",
         "evidence_currency=current" if JUDGMENT else "status=current",
         "never certify", "Source changes can expire notes",
-        "public input" if FROZEN_ARM else "original input/path/outcome",
+        "public input" if FROZEN_ARM else "original public call and failure",
         "Updates are optional",
         "Use concern_id=null for a distinct concern",
     ):
         assert instruction in DEV_SYSTEM_PROMPT
+    if FROZEN_ARM is None:
+        assert "helpers/suite PASS cannot replace the reported behavior" in DEV_SYSTEM_PROMPT
+        assert "Skipped checks remain unperformed" in DEV_SYSTEM_PROMPT
+        assert "Missing original evidence returns unverified_delivery" in DEV_SYSTEM_PROMPT
     assert dev_tool_surface_hash() != (
         "sha256:6671634f44eb187dd5631bfbcd4788df848b9933906436c0388ee68e80d59ab7"
     )

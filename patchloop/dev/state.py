@@ -33,7 +33,8 @@ _UNIQUE_ACTION_EVENTS = {
     "probe_recheck_started", "probe_recheck_finished", "probe_recheck_skipped",
 }
 _UNIQUE_RUN_EVENTS = {"manifest_recorded", "submission_recorded", "evaluator_finished",
-                      "context_window_activated", "repair_delivered"}
+                      "context_window_activated", "repair_delivered",
+                      "original_obligation_registered", "original_acquisition_released"}
 
 
 @contextmanager

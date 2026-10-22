@@ -252,8 +252,8 @@ def marker(binding):
 def program(source, binding):
     trace = _TRACE
     channel = binding["definition"].get("observation_channel")
-    if channel == probe_invocation.CHANNEL:
-        trace = probe_invocation.OBSERVER
+    if probe_invocation.supports(channel):
+        trace = probe_invocation.observer(channel)
     elif channel == OBSERVATION_CHANNEL:
         # Keep the legacy wrapper byte-for-byte for old declaration/action replays.
         trace = trace.replace("_pr_rows = []", _RECORD + "\n_pr_rows = []", 1).replace(
@@ -276,8 +276,8 @@ def compare(output, binding):
     result["stderr"] = "\n".join(part for part in stderr.split("\n") if not part.startswith(prefix))
     trace = {"calls": [], "incomplete": True}
     channel = binding["definition"].get("observation_channel")
-    invoked = channel == probe_invocation.CHANNEL
-    recorded = channel in {OBSERVATION_CHANNEL, probe_invocation.CHANNEL}
+    invoked = probe_invocation.supports(channel)
+    recorded = invoked or channel == OBSERVATION_CHANNEL
     if len(frames) == 1:
         try:
             candidate = json.loads(frames[0][len(prefix) :])
@@ -289,7 +289,8 @@ def compare(output, binding):
                 and isinstance(candidate["calls"], list)
                 and len(candidate["calls"]) <= 4
                 and all(
-                    probe_invocation.valid_call(c, binding["definition"]["entrypoint"])
+                    probe_invocation.valid_call(c, binding["definition"]["entrypoint"],
+                                                channel=channel)
                     if invoked else isinstance(c, dict)
                     and set(c) == {"entrypoint", "arguments", "cwd", "sys_path"}
                     and c["entrypoint"] == binding["definition"]["entrypoint"]
@@ -330,7 +331,7 @@ def compare(output, binding):
     if not trace["calls"] or trace["incomplete"]:
         reason = "declared_call_unobserved_or_incomplete"
     if invoked:
-        trace.update(binding_method=probe_invocation.CHANNEL,
+        trace.update(binding_method=channel,
                      execution_environment=probe_invocation.environment(result))
     result["reproduction"] = {
         "binding": binding,
@@ -468,7 +469,7 @@ def review(events, current_diff, *, public_task=None):
                 return None
             trace = row["call_observation"]
             link = (probe_invocation.summary(trace)
-                    if trace.get("binding_method") == probe_invocation.CHANNEL else {
+                    if probe_invocation.supports(trace.get("binding_method")) else {
                         "status": "incomplete" if trace["incomplete"] else
                         "called" if trace["calls"] else "not_called",
                         "call_count": len(trace["calls"]), "binding_method": "legacy_name_trace",
@@ -532,7 +533,7 @@ def review(events, current_diff, *, public_task=None):
 def call_identity(trace):
     """Allow a fresh scratch cwd, preserving path relationships and all observed values."""
 
-    if trace.get("binding_method") == probe_invocation.CHANNEL:
+    if probe_invocation.supports(trace.get("binding_method")):
         # Python equality merges True/1/1.0; those are different call inputs.
         return sha256_json(probe_invocation.conditions(trace))
 

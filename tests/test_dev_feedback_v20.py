@@ -229,8 +229,8 @@ def test_guidance_prioritizes_reusable_facts_without_growing_the_system_prompt()
     assert "headers do not establish behavior of unread return paths" in DEV_SYSTEM_PROMPT
     assert "note_id=null creates a distinct interpretation" in DEV_SYSTEM_PROMPT
     if FROZEN_ARM is None:
-        assert "first investigate the original call" in DEV_SYSTEM_PROMPT
-        assert "a helper is a separate diagnosis" in DEV_SYSTEM_PROMPT
+        assert "Investigate the original public call and failure" in DEV_SYSTEM_PROMPT
+        assert "helpers are separate diagnoses" in DEV_SYSTEM_PROMPT
     else:
         assert "experiment on the current candidate" in DEV_SYSTEM_PROMPT
     assert "not confirmation of the note's prose" in DEV_SYSTEM_PROMPT

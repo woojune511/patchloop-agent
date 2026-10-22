@@ -5,7 +5,8 @@ import copy
 
 from patchloop.util import canonical_json, sha256_json
 
-CHANNEL = "invoke-declared-call-v1"
+LEGACY_CHANNEL = "invoke-declared-call-v1"
+CHANNEL = "invoke-declared-call-v2"
 
 # Runs inside the existing probe sandbox and counts toward its 8,000 source chars.
 # In-process diagnostic feedback is not an attestation against a hostile program.
@@ -134,12 +135,37 @@ finally:
 '''
 
 
-def valid_call(call, entrypoint):
-    return (isinstance(call, dict) and set(call) == {
+OBSERVER_V2 = OBSERVER.replace(
+    '           "arguments": _pr_value(',
+    '           "argv": _pr_value(_pr_sys.argv),\n           "arguments": _pr_value(', 1,
+)
+
+
+def supports(channel):
+    return channel in (LEGACY_CHANNEL, CHANNEL)
+
+
+def observer(channel):
+    """Select exact saved v1 bytes or the argv-bound observer for fresh cases."""
+    return {LEGACY_CHANNEL: OBSERVER, CHANNEL: OBSERVER_V2}[channel]
+
+
+def valid_call(call, entrypoint, *, channel=None):
+    # Preserve the two-argument reader for existing v1 observations. Known bindings
+    # pass their channel explicitly so a v2 row cannot silently omit argv.
+    if channel is None:
+        channel = CHANNEL if isinstance(call, dict) and "argv" in call else LEGACY_CHANNEL
+    fields = {
         "entrypoint", "resolved_entrypoint", "arguments", "cwd", "sys_path", "start_cwd",
         "inputs", "environment", "outcome"}
+    if channel == CHANNEL:
+        fields.add("argv")
+    return (supports(channel) and isinstance(call, dict) and set(call) == fields
         and call["entrypoint"] == entrypoint and isinstance(call["resolved_entrypoint"], str)
         and isinstance(call["arguments"], dict)
+        and (channel == LEGACY_CHANNEL or isinstance(call["argv"], list)
+             and len(call["argv"]) <= 16
+             and all(type(arg) is str and len(arg) <= 256 for arg in call["argv"]))
         and all(isinstance(call[k], str) for k in ("cwd", "start_cwd"))
         and isinstance(call["sys_path"], list)
         and all(isinstance(p, str) for p in call["sys_path"])

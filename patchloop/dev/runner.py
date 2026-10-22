@@ -289,6 +289,8 @@ def _model_hash(request: RunRequest, pricing: ModelPricing | None) -> str:
                if request.probe_policy != "none" else {}),
             **({"probe_recheck_contract": probe_recheck.contract()}
                if request.probe_recheck != "none" else {}),
+            **({"reproduction_acquisition": request.reproduction_acquisition}
+               if request.reproduction_acquisition != "none" else {}),
             "transport_max_retries": 0 if request.provider == "openai" else None,
             "service_tier": "default",
             "api_base_url": "https://api.openai.com/v1",
@@ -597,15 +599,25 @@ def _completion_guidance(
     needs_mutation = policy.workflow_gate == "needs_mutation" or any(
         row["status"] == "FAIL" for row in snapshot.visible_check_status
     ) or (snapshot.completion_verification or {}).get("status") == "refuted"
-    if snapshot.ready_to_submit and "finish_task" in allowed:
+    if policy.workflow_gate == "needs_original_reproduction":
+        stage = "needs_original_reproduction"
+        next_action = {"tool": "run_probe"} if "run_probe" in allowed else None
+        message = (
+            "Investigate the original public caller before editing. Use an original_requirement "
+            "probe on the unchanged base, preserving its actual arguments, cwd, fixtures and "
+            "environment; a helper or normal-only PASS does not reproduce the reported failure. "
+            "This stage is bounded by two original attempts or six investigation actions and "
+            "the shared completion budget. Release without a failure keeps verification unmet."
+        )
+    elif snapshot.ready_to_submit and "finish_task" in allowed:
         stage = "ready_to_submit"
         message = (
             "Current required checks pass; this establishes eligibility, not correctness. "
             "Before deciding whether the task is complete, revisit unfinished verification "
             "plans and unsupported public requirements. Continue if an available action "
-            "could resolve a material gap. Only if you judge complete, call finish_task with "
-            "your assessment explaining why evidence suffices and remaining gaps do not "
-            "affect completion. Edits require fresh checks and reassessment. "
+            "could resolve a material gap. Call finish_task to return the candidate with an "
+            "assessment of evidence and remaining gaps. Missing original evidence returns "
+            "unverified_delivery, not verified completion. Edits require fresh checks. "
         )
         if "run_probe" in allowed:
             message += (
@@ -650,7 +662,7 @@ def _completion_guidance(
     return {
         "diff_hash": snapshot.diff.patch_hash,
         "stage": stage,
-        "submission_ready": (snapshot.ready_to_submit
+        "submission_ready": (snapshot.ready_to_submit and "finish_task" in allowed
                              and (snapshot.completion_verification or {}).get("status")
                              != "refuted"),
         "next_action": next_action,
@@ -881,6 +893,10 @@ def _tool_policy(
         and remaining_tool_actions >= mutation_budget.protected_tool_actions
     )
     allowed = {"stop_task"}
+    obligation = verification.get("original_obligation", {})
+    probe_budget = (completion_budget(replace(
+        completion_state, reproduction_case_count=completion_state.reproduction_case_count + 1,
+    )) if obligation.get("stage") == "pending" else budget)
     available_check_ids = unrun_checks
     check_successor_reserve = max(0, (
         budget.protected if protected_completion_possible else budget.minimum
@@ -929,8 +945,8 @@ def _tool_policy(
             allowed.add("run_check")
         if (
             getattr(gateway, "probe_sandbox", None) is not None
-            and remaining_model_calls - 1 >= budget.protected
-            and remaining_tool_actions - 1 >= budget.protected_tool_actions
+            and remaining_model_calls - 1 >= probe_budget.protected
+            and remaining_tool_actions - 1 >= probe_budget.protected_tool_actions
         ):
             allowed.add("run_probe")
         if (
@@ -945,6 +961,15 @@ def _tool_policy(
         if inspection_allowed
         else 0
     )
+    if obligation.get("stage") == "pending":
+        workflow_gate = "needs_original_reproduction"
+        allowed.intersection_update({"stop_task", "read_file", "search_files", "run_probe",
+                                     history_search.TOOL})
+        mutation_allowed = mutation_protected_completion_possible = False
+        max_parallel_reads = min(max_parallel_reads, max(
+            0, obligation["max_investigation_actions"] - obligation["investigation_actions"],
+        ))
+        available_check_ids = ()
     exploration_state = (
         "last_opportunity"
         if inspection_allowed and exploration_capacity == 1
@@ -1029,8 +1054,10 @@ def _tool_policy(
                 optional_mutation_protected_calls
                 if mutation_protected_completion_possible else optional_mutation_completion_calls
             ) - 1)
-        if {"run_probe", "run_tests", history_search.TOOL} & allowed:
+        if {"run_tests", history_search.TOOL} & allowed:
             successors.append(budget.protected)
+        if "run_probe" in allowed:
+            successors.append(probe_budget.protected)
         if "run_check" in allowed:
             successors.append(check_successor_reserve)
         future_calls = max(successors)
@@ -1318,7 +1345,7 @@ def _protocol_correction(
         actions.append(
             "Before finish_task, judge the current evidence against public requirements "
             "and unfinished verification plans; justify remaining gaps in the assessment. "
-            "Submit only if you judge the task complete."
+            "Missing original evidence returns unverified_delivery."
         )
     if "run_probe" in allowed:
         actions.append(
@@ -2930,6 +2957,7 @@ def _terminal(
     run_age_seconds: int | None = None,
     completion_horizon: dict[str, Any] | None = None,
     delivery: dict[str, Any] | None = None,
+    verification_metadata: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     existing = journal.terminal()
     if existing is None:
@@ -2964,6 +2992,10 @@ def _terminal(
         }
         if delivery is not None:
             payload["delivery"] = delivery
+        if verification_metadata is not None:
+            from patchloop.repair import delivery_metadata
+
+            payload.update(delivery_metadata(verification_metadata))
         if completion_horizon is not None:
             payload["completion_horizon"] = completion_horizon
         segment_events = [e for e in journal.events() if e["event_type"] == segments.EVENT]
@@ -3000,6 +3032,8 @@ def _terminal(
 
 
 def _public_result(run_id: str, terminal_payload: dict[str, Any]) -> dict[str, Any]:
+    from patchloop.repair import delivery_metadata
+
     result = {
         "schema_version": "dev-run-v1",
         "official": False,
@@ -3014,6 +3048,7 @@ def _public_result(run_id: str, terminal_payload: dict[str, Any]) -> dict[str, A
     }
     if "delivery" in terminal_payload:
         result["delivery"] = terminal_payload["delivery"]
+    result.update(delivery_metadata(terminal_payload))
     if "completion_horizon" in terminal_payload:
         result["completion_horizon"] = terminal_payload["completion_horizon"]
     if "input_count_failure" in terminal_payload:
@@ -3103,6 +3138,7 @@ def _run_envelope(
         agent_policy=request.agent_policy,
         probe_policy=request.probe_policy,
         context_policy=request.context_policy,
+        reproduction_acquisition=request.reproduction_acquisition,
         retained_source_chars=request.retained_source_chars,
         completion_cost_policy=request.completion_cost_policy,
         completion_cost_contract=(completion_cost_contract()
@@ -3792,6 +3828,12 @@ def _finish_evaluation_metadata(
 ) -> _OneRunResult:
     """The same metadata-only tail serves normal completion and crash recovery."""
 
+    from patchloop.repair import recorded_delivery_metadata
+
+    verification = recorded_delivery_metadata(
+        journal.events(), patch_hash=completion.artifacts["submitted_patch"].content_hash,
+    )
+
     provenance = completion.artifacts["terminal_provenance"]
     store.write_text_immutable(
         store.root / "runs" / journal.run_id / "terminal-provenance.json",
@@ -3802,16 +3844,25 @@ def _finish_evaluation_metadata(
         cost_ledger=cost_ledger, cost_start_nanos=cost_start_nanos, hashes=hashes,
         evaluator=completion.summary.model_dump(), artifacts=completion.artifact_hashes,
         message=completion.message, active_elapsed_ms=completion.active_elapsed_ms,
+        verification_metadata=verification,
     )
     return _OneRunResult(_public_result(journal.run_id, terminal), completion.stop_remaining)
 
 
 def _finish_repair_metadata(*, journal, delivery, counters, cost_ledger,
                             cost_start_nanos, hashes):
+    from patchloop.repair import delivery_metadata, recorded_delivery_metadata
+
+    verification = recorded_delivery_metadata(
+        journal.events(), patch_hash=delivery["patch"]["content_hash"],
+    )
+    if delivery_metadata(delivery) != verification:
+        raise RecoveryError("repair delivery verification differs from its successful finish")
     terminal = _terminal(
         journal=journal, terminal=DevTerminal.PATCH_READY, counters=counters,
         cost_ledger=cost_ledger, cost_start_nanos=cost_start_nanos, hashes=hashes,
         delivery=delivery, active_elapsed_ms=delivery["active_elapsed_ms"],
+        verification_metadata=verification,
         artifacts={"submitted_patch": delivery["patch"]["content_hash"],
                    "public_verification": delivery["public_verification"]["content_hash"]},
     )
@@ -4337,6 +4388,7 @@ def _run_one_active(
         probe_sandbox=probe_sandbox,
         probe_policy=request.probe_policy,
         retained_source_chars=request.retained_source_chars,
+        reproduction_acquisition=request.reproduction_acquisition,
         agent_policy=request.agent_policy,
         history_search_policy=request.history_search_policy,
     )
@@ -4667,6 +4719,18 @@ def _run_one_active(
             cost_ledger=cost_ledger,
             completion_cost_policy=request.completion_cost_policy,
         )
+        if ((snapshot.completion_verification or {}).get("original_obligation", {}).get("stage")
+                == "pending" and "run_probe" not in policy.allowed_tools):
+            # The phase cannot consume the protected repair/check/return path.
+            # Persist this release only on the real loop, never a forecast preview.
+            gateway.release_original_acquisition("completion_budget")
+            snapshot = gateway.state_snapshot(projection=projection)
+            policy = _tool_policy(
+                gateway, counters, request.limits, snapshot=snapshot,
+                repair_inspection_policy=request.repair_inspection_policy,
+                repair_recheck=request.repair_recheck, cost_ledger=cost_ledger,
+                completion_cost_policy=request.completion_cost_policy,
+            )
         if not policy.completion_possible:
             terminal_completion_horizon = _completion_horizon_payload(
                 gateway,
@@ -4788,8 +4852,8 @@ def _run_one_active(
                         "Return the current patch and public verification records after all "
                         "required visible checks pass on this diff and you review the public "
                         "requirements against observed evidence, including unfinished "
-                        "verification plans. Call only if you judge the task complete; justify "
-                        "remaining gaps in your assessment. Independent acceptance is NOT_RUN; "
+                        "verification plans. Describe remaining gaps; missing original evidence "
+                        "returns unverified_delivery. Independent acceptance is NOT_RUN; "
                         "regression PASS alone does not prove the reported problem is fixed."
                     )
         turn_payload = {

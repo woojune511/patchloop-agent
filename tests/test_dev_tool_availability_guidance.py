@@ -123,9 +123,11 @@ def test_actual_inputs_explain_source_edit_check_submit_transitions(
     system = inputs[-1][0]["content"]
     if FROZEN_ARM is None:
         normalized = " ".join(system.split())
-        assert "Skipped/rejected checks remain unperformed." in normalized
-        assert "cite current-diff results or specific source inference" in normalized
-        assert "explain remaining gaps." in normalized
+        assert "Skipped checks remain unperformed." in normalized
+        assert "Finish assessment cites current evidence/inference and gaps." in normalized
+        assert "original_obligation retains unmet task verification." in normalized
+        assert "Missing original evidence returns unverified_delivery" in normalized
+        assert "independent evaluation is separate." in normalized
         assert "finish_task automatically replays stale invocation-bound cases" in normalized
     else:
         assert "Skipped/rejected verification remains unperformed." in system

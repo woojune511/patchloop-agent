@@ -1,8 +1,7 @@
 # Run and validate
 
-Current operating instructions for `dev-head`. Read [current status](current-status.md)
-for the selected baseline and open question. Read only the relevant
-[internal guide](../.agent/guide.md) section for implementation contracts.
+Use [current status](current-status.md) for the baseline/open question and the
+[guide](../.agent/guide.md) for implementation contracts.
 Past commands, approvals, results and diagnostic narratives are searchable through
 [the history index](history/README.md); they are not current run authorization.
 
@@ -82,6 +81,8 @@ model and invocation-wide cost cap. See the [small example](../examples/repair/R
 OpenAI needs an existing digest-pinned image; mock uses trusted local checks.
 The shared loop preserves costs, edit limits, tool restrictions and recovery.
 `PATCH_READY` returns a patch plus public receipts, with acceptance `NOT_RUN`.
+The public repair path currently has no probes, so its explicit delivery state is
+`unverified_delivery`; this is not a verified repair claim.
 It neither changes the original checkout nor applies/opens a PR for its patch.
 No hidden/reference material is needed; `dev` admission remains unchanged.
 Paid repair requires approval of this exact public request, credential, repeats and
@@ -229,26 +230,27 @@ sandbox limits; the model cannot supply command flags. See the
 and remain optional: they supply no required-check credit. Missing nodes,
 collection errors and incomplete execution do not establish behavior correctness.
 
-The coding agent receives registered public tools, never unrestricted shell access.
-`finish_task` requires a non-empty current diff, every registered visible check
-passing on that exact diff, no non-ignored untracked files, and a nonblank agent
-`assessment` of up to 1,500 characters. After PASS, the agent reviews the public
-requirements, patch, evidence and remaining uncertainties before deciding to submit.
-The assessment connects public requirements to observed evidence and accounts for
-unfinished verification plans, including skipped/rejected checks. It explains what
-evidence addresses their purpose or why a remaining gap does not affect completion;
-listing a limitation alone is insufficient. A material gap that an available action
-could resolve calls for continued work. Regression PASS alone does not prove the
-reported problem is fixed. This is agent judgment, not a new semantic gate or hidden
-success guarantee. Further edits require fresh checks and reassessment.
-Finish automatically replays stale invocation-bound public cases and baseline
-controls through the probe sandbox. Forecasts reserve their action slots; recovery
-reuses deterministic IDs under the solver deadline, without another model call.
-Current mismatch/conflict rejects finish; absent/incomplete evidence stays unverified.
-`submission_verification` records case evidence separately from agent assessment;
-it does not certify requirement mapping or task accuracy. Historical PASS,
-probe execution and notes do not provide current check credit. A diagnostic probe
-does not replace a registered check. `stop_task` ends without submission/evaluation.
+Registered tools never expose unrestricted shell. `finish_task` needs a non-empty
+tracked diff, no untracked files, all required checks passing on that diff, and an
+assessment (1–1,500 characters) connecting evidence to requirements and remaining
+gaps. Resolve material gaps when feasible; edits require fresh checks. Regression
+PASS, notes and probes do not establish task coverage or replace required checks.
+Finish replays stale original cases and controls with deterministic action IDs,
+within the solver budget and without another model call. Current mismatch/conflict
+rejects finish. `stop_task` abandons without submission/evaluation.
+
+For a selected runnable report, `--enable-probes --reproduction-acquisition bounded-v1`
+offers pre-edit investigation: two original attempts or six investigation actions,
+releasing earlier to preserve the protected completion budget (default `none`).
+Release leaves the task-bound obligation unmet. Helper/normal PASS cannot acquire
+the failure. Fresh caller receipts bind sys.argv, arguments, cwd and selected
+input/environment identities. See the [contract](../.agent/evidence-recovery.md).
+
+Finish, repair receipts and dev results expose `delivery_state`, `original_verification`
+and `submission_verification`. An unchanged-base failure plus current case support
+permits `cases_verified_delivery`; missing/incomplete evidence returns
+`unverified_delivery`. These judge selected cases, not semantic requirement coverage.
+Independent acceptance remains separate, even if PASS follows an unverified delivery.
 
 The content-addressed patch and manifest bind separate evaluation. Never return
 private specs, hidden checks, reference patches or evaluator details to the agent.

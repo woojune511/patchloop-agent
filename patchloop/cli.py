@@ -112,6 +112,11 @@ def dev(
     enable_probes: Annotated[
         bool, typer.Option("--enable-probes", help="Enable bounded clean-Python diagnostics.")
     ] = False,
+    reproduction_acquisition: Annotated[
+        Literal["none", "bounded-v1"], typer.Option(
+            "--reproduction-acquisition", help="Reserve bounded original-call investigation."
+        ),
+    ] = "none",
     probe_policy: Annotated[
         Literal["none", "cases-v1", "reference-cases-v1"],
         typer.Option("--probe-policy", help="Opt-in reusable reference/candidate experiments."),
@@ -193,6 +198,7 @@ def dev(
                 prepared_source=prepared_source,
                 prepared_probe_dependencies=prepared_probe_dependencies,
                 enable_probes=enable_probes,
+                reproduction_acquisition=reproduction_acquisition,
                 probe_policy=probe_policy,
                 repair_recheck=repair_recheck,
                 probe_recheck=probe_recheck,

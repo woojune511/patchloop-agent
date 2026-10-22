@@ -11,7 +11,7 @@ import copy
 from patchloop.dev import probe_invocation, probe_replay, reproduction
 from patchloop.dev.contracts import RequestedTool
 from patchloop.errors import ContractError, RecoveryError
-from patchloop.util import sha256_json
+from patchloop.util import sha256_bytes, sha256_json
 
 POLICY = "completion-reproduction-v1"
 DISPLAY_LIMIT = 3
@@ -42,10 +42,10 @@ def _healthy(result, observation):
         and output.get("setup_checks", {}).get("status") != "failed"
         and observation["comparison"] in {"matched", "mismatched"}
         and observation.get("reason") is None
-        and trace.get("binding_method") == probe_invocation.CHANNEL
+        and probe_invocation.supports(trace.get("binding_method"))
         and trace["calls"] and not trace["incomplete"]
         and all(probe_invocation.valid_call(call, observation["binding"]["definition"][
-            "entrypoint"]) for call in trace["calls"])
+            "entrypoint"], channel=trace.get("binding_method")) for call in trace["calls"])
     )
 
 
@@ -57,8 +57,8 @@ def _compact(row):
     return {
         "action_id": result["action_id"], "diff_hash": result["workspace_diff_hash"],
         "comparison": observation["comparison"], "reason": observation["reason"],
-        "execution_link": probe_invocation.summary(trace) if trace.get(
-            "binding_method") == probe_invocation.CHANNEL else {"status": "unbound_invocation"},
+        "execution_link": probe_invocation.summary(trace) if probe_invocation.supports(trace.get(
+            "binding_method")) else {"status": "unbound_invocation"},
     }
 
 
@@ -101,8 +101,8 @@ def review(events, current_diff, *, public_task=None, run_id):
         eligible = False
         if root is not None:
             root_reason = "baseline_not_healthy_invocation"
-            eligible = (binding["definition"].get("observation_channel")
-                        == probe_invocation.CHANNEL and _healthy(*root))
+            eligible = (probe_invocation.supports(binding["definition"].get("observation_channel"))
+                        and _healthy(*root))
             if eligible:
                 # Reuse the existing public program/receipt identity checks. Corrupt
                 # execution identities raise RecoveryError rather than receive credit.
@@ -171,6 +171,13 @@ def review(events, current_diff, *, public_task=None, run_id):
         if unverified or not items else "cases_verified",
         "current_diff_hash": current_diff, "case_count": len(items),
         "replayable_case_count": sum(item["replayable"] for item in items),
+        "baseline_failure_case_ids": [item["case_id"] for item in items
+                                      if item["replayable"] and item["baseline"]["diff_hash"]
+                                      == sha256_bytes(b"") and item["baseline"]["comparison"]
+                                      == "mismatched"],
+        "baseline_matched_count": sum(item["replayable"] and item["baseline"]["diff_hash"]
+                                      == sha256_bytes(b"") and item["baseline"]["comparison"]
+                                      == "matched" for item in items),
         "pending_count": len(pending), "failed_count": failed,
         "unestablished_count": sum(not item["replayable"] for item in items),
         "unverified_count": unverified, "pending_cases": pending,

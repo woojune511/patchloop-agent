@@ -5,12 +5,12 @@ from __future__ import annotations
 import copy
 import subprocess
 from pathlib import Path
-from types import SimpleNamespace
 
 import pytest
 from test_dev_context_v12 import note_call, source_note
 from test_dev_notes_lifecycle_v15 import _mutation, _read, _restart
 
+from patchloop.contracts import PublicTask
 from patchloop.dev.context import source_lines, valid_observed_span
 from patchloop.dev.contracts import DevLimits
 from patchloop.dev.state import DevJournal
@@ -39,12 +39,19 @@ def _gateway(
         ["-c", "user.name=Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "base"],
     ]:
         subprocess.run(["git", *args], cwd=workspace, check=True, capture_output=True)
-    public = SimpleNamespace(
-        constraints=SimpleNamespace(
-            additive_test_roots=[],
-            allowed_paths=["src.py"], forbidden_paths=[], max_diff_lines=50, max_changed_files=1,
-        ),
-        visible_checks=[],
+    public = PublicTask(
+        task_id="source-rebind-fixture", split="smoke",
+        repository={"url": str(workspace), "base_commit": "HEAD"},
+        issue={
+            "title": "Preserve observed source across exact edits",
+            "description": "Apply source replacements while preserving unchanged observed lines.",
+        },
+        constraints={
+            "additive_test_roots": [],
+            "allowed_paths": ["src.py"], "forbidden_paths": [],
+            "max_diff_lines": 50, "max_changed_files": 1,
+        },
+        visible_checks=[], test_suites=[],
     )
     return DevToolGateway(
         workspace=workspace, public_task=public, sandbox=None,

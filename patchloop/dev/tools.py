@@ -22,6 +22,7 @@ from patchloop.dev import (
     behavior_cases,
     evidence_focus,
     history_search,
+    original_obligation,
     probe_cases,
     probe_replay,
     reproduction,
@@ -363,9 +364,9 @@ def dev_tool_schemas(
                 "description": (
                     "After all required visible checks pass on the current diff, review the "
                     "public requirements, patch, evidence and remaining uncertainties. Submit "
-                    "only if you judge the task complete, with a concise public assessment "
-                    "connecting requirements to observed evidence and explaining why unfinished "
-                    "verification does not block completion. Regression PASS alone does not "
+                    "with a concise public assessment connecting requirements to observed "
+                    "evidence and listing unfinished verification. Missing original evidence "
+                    "returns unverified_delivery. Regression PASS alone does not "
                     "prove the reported problem is fixed. The host replays stale original-case "
                     "invocations before submission; current mismatch/conflict returns to repair. "
                     "Missing/incomplete evidence is labelled unverified. Public case support "
@@ -634,6 +635,7 @@ class DevToolGateway:
         deadline: ExecutionDeadline | None = None,
         probe_sandbox: DockerProbeSandbox | None = None,
         probe_policy: str = "none",
+        reproduction_acquisition: str = "none",
         retained_source_chars: RetainedSourceChars = RETAINED_SOURCE_CHARS,
         agent_policy: str = "current",
         history_search_policy: history_search.Policy = "none",
@@ -658,6 +660,9 @@ class DevToolGateway:
         if probe_policy not in {"none", *probe_cases.POLICIES}:
             raise ContractError("unknown probe policy")
         self.probe_policy = probe_policy
+        if reproduction_acquisition not in {"none", original_obligation.ACQUISITION}:
+            raise ContractError("unknown reproduction acquisition policy")
+        self.reproduction_acquisition = reproduction_acquisition
         self._lock = threading.RLock()
         self.spans: dict[str, dict[str, Any]] = {}
         self._observation_seq = 0
@@ -690,6 +695,10 @@ class DevToolGateway:
         self._next_working_note_id = 1
         self._legacy_working_note_ids: dict[str, str] = {}
         self._hydrate()
+        if reproduction_acquisition != "none":
+            original_obligation.ensure(journal, public_task, reproduction_acquisition)
+            if probe_sandbox is None:
+                original_obligation.release(journal, public_task, "probe_unavailable")
 
     def _hydrate(self) -> None:
         action_starts: dict[str, dict[str, Any]] = {}
@@ -2639,6 +2648,7 @@ class DevToolGateway:
         if pending is None:
             if call.name == "replace_text":
                 try:
+                    self._require_acquisition_released(baseline)
                     validated = self._validate_replacement_intent(call.arguments)
                     mutation_anchor_evidence_span_id = validated.anchor_evidence_span_id
                     candidate_summary = WorkspaceManager.preview_text_replacement(
@@ -3808,11 +3818,31 @@ class DevToolGateway:
             self.journal.events(), diff_hash, public_task=self.public_task,
             run_id=self.journal.run_id,
         )
-        return {key: value for key, value in review.items() if key != "pending_cases"}
+        return {
+            **{key: value for key, value in review.items() if key != "pending_cases"},
+            "original_obligation": original_obligation.review(
+                self.journal.events(), self.public_task, review,
+                acquisition=self.reproduction_acquisition,
+                probe_available=self.probe_sandbox is not None,
+            ),
+        }
+
+    def release_original_acquisition(self, reason: str) -> None:
+        original_obligation.release(self.journal, self.public_task, reason)
+
+    def _require_acquisition_released(self, diff_hash: str) -> None:
+        obligation = self.completion_verification(diff_hash=diff_hash)["original_obligation"]
+        if obligation["stage"] == "pending":
+            raise ContractError(
+                "Bounded original reproduction acquisition is pending; investigate the public "
+                "caller before editing or returning the patch.",
+                details={"original_verification": obligation},
+            )
 
     def _finish_task(self, arguments: dict[str, Any]) -> dict[str, Any]:
         intent = FinishIntent.model_validate(arguments)
         summary = self.current_diff
+        self._require_acquisition_released(summary.patch_hash)
         if not summary.patch:
             raise ContractError("cannot submit an empty diff")
         if summary.untracked_files:
@@ -3833,6 +3863,9 @@ class DevToolGateway:
         plan_review = submission_review(self.journal.events(), summary.patch_hash)
         return {
             "assessment": intent.assessment,
+            "delivery_state": ("cases_verified_delivery" if verification["original_obligation"][
+                "status"] == "verified" else "unverified_delivery"),
+            "original_verification": verification["original_obligation"],
             "submission_verification": verification,
             "reproduction_review": self.reproduction_review(diff_hash=summary.patch_hash),
             **({"plan_review": plan_review} if plan_review is not None else {}),

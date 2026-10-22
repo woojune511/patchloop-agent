@@ -74,7 +74,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     ),
     pytest.param(
         ("finish_task", "read_file", "replace_text", "run_probe", "search_files", "stop_task"),
-        "07cd04bf3e3c6af91e1220aa16bf7f4e475ad98f0216194e046dc390b13ffb68"
+        "1ccaff0aefc3b5243f915207c5c6a24fec6ed6c23db0ddfe8fca60ccdd8e21c2"
         if FROZEN_ARM is None else
         "b817201c9d1aa8432575b0c1b55015dc01bc08a2b002e3e2cc09ab13bfa229c6",
         id="names1-de57dc4e83f8b26994c5df5f659cc208bbd3b348233d0ad3640493ffd5b90bd3"
@@ -91,7 +91,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     pytest.param(
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task",
          "finish_task"),
-        "e049e9eacd01899a9a44b1ca55cb2188f9f24b775e493fe9a505c8d7922f6daf"
+        "b16d00a068fd9e990f451646789cce4005df65e0513f81f974fc5a67c7e567b5"
         if FROZEN_ARM is None else
         "6302bc9d248be03d6e1430f0102a0e5c00ecb7883c25d453945f979f21fd3af7",
         id="names3-53d8c9ffaa20544b633c883b1e40010113b680722f23caebeb0ef991f1738caa"
@@ -116,7 +116,7 @@ def test_surrounding_action_guidance_identity():
     # Current prose fits the original 8,000-character contract with scope separation.
     # Historical J0/J1 arms retain their exact earlier surrounding-guidance identities.
     assert hashlib.sha256(canonical_json([prefix, suffix]).encode()).hexdigest() == (
-        "a2d2172870f80e565b517e6f35f18e24e27b12d57157b3ac8d02fae0a5b9e637"
+        "f8ee16e1dfc810b8fbf3de578bc20ee2e67ae94e3f3f86f7bc3d205ce066619e"
         if FROZEN_ARM is None else
         "2d0a9063da8d508a3c1218903cae12e33aa5db97f4d5655ca645fd5d52dc1331"
         if JUDGMENT else "c6439ce32e7724ed5d4c08dc1f207186b45e34234947c2867d7a65f096ce10a3"
@@ -168,7 +168,7 @@ def test_guidance_identity_changes_without_changing_run_schema_or_limits():
     # Common action/probe guidance changes the overall surface identity;
     # argument and description identities remain independently pinned above.
     assert dev_tool_surface_hash() == (
-        "sha256:01d76283c59be555924e224a6f11c003bb8140ac496b030f4973da8c0e5b942a"
+        "sha256:862b09dac46cc9aa92dba9e0a88e6023392bb2af166ccd80e5bbbf47b36a91ea"
         if FROZEN_ARM is None else
         "sha256:57193859890419b79cb7f4927c37796d044bc4bf7159c51ddf17723849529e26"
     )

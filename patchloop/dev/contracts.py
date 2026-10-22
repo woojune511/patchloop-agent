@@ -125,8 +125,11 @@ def dev_tool_surface_hash(
             "mutation_anchor_guidance": "smallest-sufficient-exact-observed-text-v1",
             "public_check_failure_focus": "public-location-with-unknown-execution-boundary-v2",
             "public_failure_guidance": "diff-currency-and-actual-action-space-v1",
-            "completion_guidance": "current-diff-public-reproduction-v7",
+            "completion_guidance": "original-obligation-explicit-delivery-v8",
             "completion_reproduction": "invocation-bound-cases-before-finish-v1",
+            "original_obligation": "task-bound-base-failure-and-current-replay-v1",
+            "original_acquisition": "opt-in-two-attempt-six-action-protected-budget-v1",
+            "public_invocation": "argv-bound-v2-legacy-v1-replay",
             "public_failure_recurrence": "semantic-site-with-raw-fallback-v1",
             "causal_revision_guidance": "advisory-hypothesis-review-v2",
             "failed_check_repair_action_space": "budget-only-public-inspection-v2",
@@ -452,6 +455,9 @@ class RunRequest(StrictModel):
     prepared_source: Path | None = None
     prepared_probe_dependencies: Path | None = None
     enable_probes: bool = False
+    reproduction_acquisition: Literal["none", "bounded-v1"] = Field(
+        default="none", exclude_if=lambda value: value == "none",
+    )
     probe_policy: Literal["none", "cases-v1", "reference-cases-v1"] = "none"
     probe_recheck: Literal["none", "saved-program-v1"] = Field(
         default="none", exclude_if=lambda value: value == "none",
@@ -495,6 +501,8 @@ class RunRequest(StrictModel):
             raise ValueError("--segment-boundary-policy size-only-v1 requires segmented-v1")
         if self.prepared_probe_dependencies is not None and not self.enable_probes:
             raise ValueError("--prepared-probe-dependencies requires --enable-probes")
+        if self.reproduction_acquisition != "none" and not self.enable_probes:
+            raise ValueError("--reproduction-acquisition requires --enable-probes")
         if self.probe_policy != "none" and not self.enable_probes:
             raise ValueError("--probe-policy cases-v1 requires --enable-probes")
         if self.probe_recheck != "none" and (
@@ -605,6 +613,9 @@ class RunEnvelope(StrictModel):
     )
     probe_policy: Literal["none", "cases-v1", "reference-cases-v1"] = "none"
     compaction_contract: dict[str, Any] | None = None
+    reproduction_acquisition: Literal["none", "bounded-v1"] = Field(
+        default="none", exclude_if=lambda value: value == "none",
+    )
     probe_image_digest: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
     probe_profile_hash: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
     model: str
@@ -645,6 +656,8 @@ class RunEnvelope(StrictModel):
             raise ValueError("probe recheck requires cases-v1")
         if self.probe_policy != "none" and self.probe_image_digest is None:
             raise ValueError("probe cases require enabled probe identities")
+        if self.reproduction_acquisition != "none" and self.probe_image_digest is None:
+            raise ValueError("reproduction acquisition requires enabled probes")
         if self.planning_policy != "none" and self.context_policy not in {
             "append-v1", "segmented-v1",
         }:

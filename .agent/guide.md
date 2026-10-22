@@ -45,7 +45,8 @@ a different runtime.
 ## Loop and mutation contract
 
 Only mutable `dev-head` runs, always `official=false`.
-Gates: `needs_mutation`, `needs_visible_checks`, and `ready_to_submit`.
+Gates: `needs_mutation`, `needs_visible_checks`, `ready_to_submit`, and opt-in
+`needs_original_reproduction`.
 Gates and resource horizons expose registered tools, never unrestricted shell.
 
 `replace_text` uses `TextReplacementIntent` and `CausalRevision`. Project public
@@ -83,6 +84,14 @@ See [evidence recovery](evidence-recovery.md) for opt-in source restoration and
 fixed probe comparisons.
 Finish replays stale invocation-bound cases. Current mismatch/conflict blocks;
 missing/incomplete evidence stays unverified. Mapping remains model-authored.
+`original_obligation.py` retains the public-task obligation separately from cases.
+`--reproduction-acquisition bounded-v1` requires probes and offers at most two
+original attempts or six investigation actions before edits; the protected completion
+budget can release it earlier. Releases preserve unmet verification. Journal roots,
+action identities and release receipts survive recovery; forecasts never write them.
+Only an unchanged-base failure plus comparable current support permits
+`cases_verified_delivery`; otherwise finish returns `unverified_delivery`.
+Delivery, selected-case verification and independent acceptance stay separate.
 After edits, required checks need fresh PASS; probes give no check credit.
 Preserve pre-state, candidate and incremental patch identities on replay.
 Visible-check IDs must be unique at task admission.
@@ -194,20 +203,8 @@ experimental context and historical plans; current source/status take precedence
   [setup](probe-setup.md), [dependencies](prepared-probe-dependencies.md), [threads](probe-threads.md).
 - Public test selection: [registered pytest suites](selected-tests.md).
 - Current dev20 capability and task parallelism: [bounded panel](current-dev20.md).
-- Discovery diagnostics: [counterexamples](counterexample-discovery.md),
-  [task-first discovery](task-first-discovery.md), [construction links](construction-links.md),
-  [frozen expectations](frozen-probe-expectation.md), [profile scope](profile-scope-diagnostic.md).
-- Completion diagnostics: [status-only](completion-status-diagnostic.md),
-  [mutation checkpoint](mutation-advice-checkpoint.md),
-  [offline continuation](checkpoint-continuation.md), [live collector](checkpoint-comparison.md),
-  [caller state](caller-state-probe.md), [caller information](caller-information.md),
-  [cleanup](cleanup-probe.md), [closure sampler](closure-policy-sampler.md),
-  [selected probe replay](selected-probe-continuation.md).
-- Candidate comparison: [independent candidate](independent-candidate.md), an
-  opt-in public alternative in the ordinary seeded repair loop.
-- Search context: [declaration context](declaration-context.md), opt-in bounded
-  declaration/documentation expansion in the first tool batch; the separate
-  [checkpoint sampler](declaration-checkpoint.md) retains a saved first decision prefix.
+- Closed discovery, completion and candidate experiments remain indexed in
+  [history](../docs/history/README.md); their detailed contracts remain under `.agent/`.
 
 Public [repair and repair-verify](../examples/repair/README.md) return public evidence,
 acceptance `NOT_RUN`. Verification compares unchanged submitted tests without a model.

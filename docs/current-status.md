@@ -24,25 +24,32 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-[Original-case completion](history/2026-10-22-finish-reproduction-results.md) is
-implemented in dev-head. It retains all invocation-bound public cases, replays
-stale cases before finish, rejects current comparable mismatch/conflict, and labels
-absent/incomplete evidence unverified. Plans, helper success and regression PASS
-cannot close an original case. Current source and [protocol](../.agent/plans/finish-reproduction.md)
-define the bounded mechanism.
+[Original obligation and delivery](history/2026-10-22-original-obligation.md) are
+implemented in dev-head. A public-task obligation survives plan/helper changes.
+Opt-in `--reproduction-acquisition bounded-v1` requires probes and offers two
+original attempts or six investigation actions before edits, releasing earlier
+to preserve the protected completion budget. Only an unchanged-base failure
+acquires original evidence. Normal/helper PASS and stage release leave it unmet.
+The flag defaults to `none`; selected live settings have not changed.
 
-Local scripted controls passed 8/8; they establish bounded case retention/replay,
-not an LLM repair improvement. The [fresh Astroid pilot](history/2026-10-22-original-case-live-results.md)
-acquired zero original cases and submitted with verification `unverified`.
-Regression PASS did not resolve the original caller: independent acceptance and
-the public failure input failed; the normal input passed. No automatic replay or
-finish rejection occurred, so recovery after rejection remains untested live.
+Finish retains/replays acquired cases and rejects current mismatch/conflict.
+Fresh invocation receipts also bind sys.argv, preserving legacy replay bytes.
+Missing/incomplete original evidence returns `unverified_delivery`; verified
+selected cases return `cases_verified_delivery`. Independent acceptance stays
+separate and cannot upgrade missing original verification.
 
-The active unresolved boundary is acquiring a faithful original caller case and
-representing submissions without one. Requirement mapping and expected outputs
-remain unverified; helper coverage is not caller coverage. Keep the implemented
-mechanism at its tested scope. The one-run allocation is closed; no paid follow-up
-is queued or authorized.
+Final local controls passed 8/8, with matching paired patch hashes and zero
+duplicate-finish probe executions. Focused tests cover malformed requests, phase
+limits, added-case replay budgets, recovery and context delivery. CLI mock smoke
+reached isolated evaluation PASS with safety NOT_RUN and unverified delivery.
+These are scripted protocol controls, not evidence of better LLM repairs.
+
+The [fresh Astroid pilot](history/2026-10-22-original-case-live-results.md) acquired
+zero original cases; regression PASS accompanied original-caller and acceptance
+failure. The unresolved question is whether bounded acquisition yields faithful
+cases and repairs within the same live budget. Mapping/expectations remain
+model-authored and unverified. All paid allocations are closed; no follow-up is
+queued or authorized. See the [protocol](../.agent/plans/original-obligation.md).
 
 ## Supporting evidence
 

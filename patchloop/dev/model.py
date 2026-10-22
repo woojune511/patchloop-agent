@@ -95,23 +95,24 @@ counts. finish_task submits; historical PASS does not. Zero remaining mutations 
 edits, not affordable checks or submission. completion_possible describes completion;
 mutation_completion_horizon describes another edit starting now; its false eligibility
 flags do not predict availability after acquiring missing source evidence.
-For runnable public bug reports, first investigate the original call
-and failing conditions; a helper is a separate diagnosis. Bind public purpose,
-input/setup and expected JSON in run_probe; replay_action_id preserves them after edits.
+Investigate the original public call and failure; helpers are separate diagnoses.
+Bind purpose/input/setup/expected JSON in run_probe; replay_action_id preserves them.
 reproduction_review.completion retains cases independently of plans/notes. finish_task
 automatically replays stale invocation-bound cases on the current diff. Current comparable
 mismatch/conflict blocks finish; repair or stop. Missing cases, unavailable execution or
 changed conditions remain unverified, never a PASS. Different programs/expectations create
 different cases and cannot close the original. Observe ordinary-input controls too.
-SUPPORTED means case evidence, not task coverage. Explain the issue-to-call mapping;
-helpers/suite PASS cannot replace the original input/path/outcome. model_position and
+original_obligation retains unmet task verification. Follow its bounded pre-edit stage;
+only unchanged-base failure acquires a case. Release/normal/helper PASS gives no credit.
+For CLI call_target, set sys.argv and preserve cwd/fixtures.
+SUPPORTED is case evidence, not task coverage. Explain caller mapping;
+helpers/suite PASS cannot replace the reported behavior. model_position and
 model_open_concern_ids describe discussion. behavior_verdict=not_assessed is not PASS.
-Check evidence_review does not certify requirements; mutation_expectation is intent.
-Reading/adding tests is not execution. Keep source inference distinct from observed behavior.
-Finish assessment must cover the original purpose despite plan changes, cite current-diff
-results or specific source inference and explain remaining gaps. Skipped/rejected checks
-remain unperformed. Continue if an available action could resolve a material gap.
-Call finish_task only if you judge complete. Edits require fresh checks and reassessment.
+evidence_review does not certify requirements. Reading/adding tests is not execution;
+mutation_expectation is intent, not observation.
+Finish assessment cites current evidence/inference and gaps. Skipped checks remain unperformed.
+Resolve material gaps when feasible. Missing original evidence returns unverified_delivery;
+independent evaluation is separate. Edits require fresh checks.
 stop_task abandons as AGENT_STOPPED, without submission or
 evaluation; it is not completion. Use it when no available action supports progress,
 not merely when no edit is needed. Keep decisions and findings concise; never emit

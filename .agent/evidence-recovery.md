@@ -43,11 +43,14 @@ Null is only for replay. The choice remains model-authored, not certified covera
 For original-requirement probes, invoke the declared callable through injected
 `call_target(args=[...], kwargs={...}, input_paths=[...], environment_keys=[...])`.
 It resolves the public import path, including aliases and constructors, and calls
-that target with the supplied arguments. It records arguments, cwd, sys.path,
+that target with the supplied arguments. Fresh v2 calls record actual sys.argv,
+arguments, cwd, sys.path,
 Python/platform, selected environment value hashes and selected fixture-content
 hashes immediately before the call. Select fixture roots, not implementation
 files: a changed candidate must be allowed to produce a different result.
 Empty selections do not certify that external inputs or environment are irrelevant.
+Set sys.argv before invoking a CLI callable that reads it. Changed argv prevents
+comparison. Saved v1 programs retain their exact wrapper and replay behavior.
 
 Then call the injected `record_observation(value)` exactly once with the actual
 JSON-compatible result, at most 2,048 UTF-8 bytes, after all selected target calls.
@@ -141,6 +144,24 @@ invalidates its currency. Child start/finish receipts restore action accounting.
 The public view shows three cases plus counts; execution uses the complete set.
 `submission_verification` accompanies the free-text assessment without replacing
 the separate private evaluation or certifying semantic requirement coverage.
+
+`completion.original_obligation` binds the full public task independently of case
+selection and plan replacement. Opt-in `--reproduction-acquisition bounded-v1`
+records its immutable root before investigation, with at most two original attempts
+or six read/search/probe actions. Rejected edits and replayed action IDs do not
+consume that allowance. Only a healthy mismatch on the unchanged base acquires a
+failure; normal-only matches remain `not_reproduced`. Missing/invalid observations
+are `setup_blocked`, without attributing the failure to infrastructure. No attempt
+is `not_attempted`. The stage releases at its bound or when probes/protected budget
+are unavailable; this does not discharge the obligation. Direct mutation/finish
+cannot bypass a pending stage, and pending actions recover before the next turn.
+
+Finish returns `cases_verified_delivery` only with that baseline failure and all
+selected current cases supported. Missing/incomplete evidence returns the patch as
+`unverified_delivery`, with `original_verification` and `submission_verification`.
+The durable finish determines this outcome on recovery; independent evaluator PASS
+cannot upgrade it. The acquisition flag defaults to `none` for bounded comparisons.
+Its 2/6 limits are provisional resource bounds, not measured optimal settings.
 
 Even `mismatch_to_match` means only that declared experiment changed as expected.
 The issue-to-entrypoint mapping and expected value are model-authored, and a

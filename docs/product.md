@@ -58,14 +58,17 @@ from the current workspace and durable public check evidence. It does not requir
 a separate planning phase. Submission requires a non-empty diff, no non-ignored
 untracked files, all required checks passing against that exact diff, and the agent's
 explicit submission assessment. After PASS, the agent reviews the public requirements,
-patch, evidence and remaining uncertainties before judging the task complete.
+patch, evidence and remaining uncertainties before returning the candidate.
 Further edits require fresh checks and reassessment; no extra review call is required.
 
 Mutation performs an exact text replacement in an allowed existing tracked file.
 The gateway validates the anchor against observed current source and enforces the
 complete diff's scope. Read, search, mutation, check, finish, and unsuccessful-stop
 operations are constrained by the tool contract and remaining resources. Optional
-public probes provide diagnostic observations and confer no submission credit.
+public probes provide observations and do not replace required checks.
+An optional bounded acquisition stage preserves an unmet public-task obligation
+before edits. Returned patches explicitly distinguish `unverified_delivery` from
+verified selected cases; independent acceptance remains separate.
 Tasks can also register a pytest suite for bounded selection of existing public
 test files or node IDs. This lets the agent reuse repository regression tests;
 these optional results do not replace required checks or establish full coverage.

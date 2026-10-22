@@ -144,8 +144,12 @@ def test_original_purpose_reaches_finish_without_forcing_another_check(
     from repair_mechanism_expectations import FROZEN_ARM, JUDGMENT
     if JUDGMENT:
         if FROZEN_ARM is None:
-            assert "helpers/suite PASS cannot replace the original input/path/outcome" in system
-            assert "the original purpose despite plan changes, cite current-diff results" in system
+            assert "Investigate the original public call and failure" in system
+            assert "helpers/suite PASS cannot replace the reported behavior" in system
+            assert "completion retains cases independently of plans/notes" in system
+            assert "Finish assessment cites current evidence/inference and gaps" in system
+            assert "Skipped checks remain unperformed" in system
+            assert "Missing original evidence returns unverified_delivery" in system
         else:
             assert "Suite PASS or another path's success cannot replace that purpose" in system
             assert "the original purpose despite plan changes: cite current-diff results" in system
