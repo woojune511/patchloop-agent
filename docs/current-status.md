@@ -1,6 +1,6 @@
 # Current status
 
-Updated: 2026-10-21. Current decisions; runtime source owns behavior.
+Updated: 2026-10-22. Current decisions; runtime source owns behavior.
 Historical reports are evidence, not an active queue.
 
 ## Product and working baseline
@@ -67,9 +67,9 @@ B's retained current failure; USD 0.04019910. Keep 24k; no adoption or paid foll
 [Probe A/B](history/2026-10-21-probe-purpose-results.md): closed, USD 1.97877345;
 bound probe unused, B1 FAIL. Rejected-batch size handoffs
 [fixed locally](../tests/test_dev_segment_rejection.py); no paid rerun.
-[Role preparation](../.agent/plans/verification-role-comparison.md): return fixed.
-Validation/packet: `C:/pt/verification-role51`; validated manifest required.
-USD 0.88/row unchanged. No paid authorization.
+[Role A/B](history/2026-10-22-verification-role-results.md): closed, USD 3.19329735;
+repair A/B 0/3; final unsupported claims 2/2 and 3/3 among claims. A1 unsubmitted.
+Reports delivered 6/6; original-caller verification still missing. No adoption.
 
 See [panel contract](../.agent/current-dev20.md); prior panels closed.
 

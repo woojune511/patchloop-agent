@@ -1,5 +1,6 @@
 # History
 
+- [Roles](2026-10-22-verification-role-results.md).
 - [Probe binding](2026-10-21-probe-purpose.md).
 - [Dev20](2026-10-16-mini-swe-dev20-results.md).
 - [Completion](2026-10-16-mini-swe-completion-results.md).
