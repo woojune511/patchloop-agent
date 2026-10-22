@@ -1,5 +1,6 @@
 # History
 
+- [Live case](2026-10-22-original-case-live-results.md).
 - [Case finish](2026-10-22-finish-reproduction-results.md).
 - [Helpers](2026-10-22-helper-path-results.md).
 - [Calls](2026-10-22-probe-call.md), [A/B](2026-10-22-probe-invocation-results.md).
@@ -52,13 +53,13 @@
 - [Verification](2026-10-01-verification-selection-comparison.md).
 - [Patches](2026-09-30-submitted-patch-review.md).
 - [Replay](2026-09-30-probe-replay-comparison.md).
-- [Basic/current](2026-09-28-basic-current-baseline-comparison.md).
+- [Baseline](2026-09-28-basic-current-baseline-comparison.md).
 - [Construction](2026-09-28-probe-construction-analysis.md).
 - [Toqito](2026-09-28-toqito-public-validation.md); [mechanism](2026-09-28-general-failure-mechanism.md).
 - [Funding](2026-09-28-minimum-completion-funding.md).
-- [Pilot](2026-09-28-original-pilot-results.md); [budget audit](2026-09-28-completion-budget-audit.md).
-- [Probe capacity](2026-09-27-installed-probe-capacity.md).
-- [Wheel admission](2026-09-27-generated-wheel-admission.md).
+- [Pilot](2026-09-28-original-pilot-results.md); [Budget](2026-09-28-completion-budget-audit.md).
+- [Capacity](2026-09-27-installed-probe-capacity.md).
+- [Wheels](2026-09-27-generated-wheel-admission.md).
 - [OpenBLAS](2026-09-27-probe-openblas-default.md); [PICOS](2026-09-27-picos-wheel-build.md).
 - [Readiness](2026-09-27-original-pilot-readiness.md).
 - [Packages](2026-09-27-original-pilot-packages.md).
@@ -68,17 +69,17 @@
 - [Benchmark](2026-09-27-original-benchmark-preparation.md).
 - [Differences](2026-09-27-anyio-benchmark-differences.md).
 - [Caller scope](2026-09-27-caller-support-scope.md).
-- [Caller cancel](2026-09-27-caller-cancel-preservation.md).
+- [Cancel](2026-09-27-caller-cancel-preservation.md).
 - [Cleanup](2026-09-27-cleanup-information-results.md).
 - [Prep](2026-09-27-cleanup-information-preparation.md).
 - [Cancellation](2026-09-27-anyio-cleanup-cancellation.md).
 - [Results](2026-09-27-caller-information-results.md).
 - [Information](2026-09-27-caller-information.md).
-- [Caller state](2026-09-27-anyio-caller-state.md).
+- [State](2026-09-27-anyio-caller-state.md).
 - [Checkpoint](2026-09-27-checkpoint-live-results.md).
 - [Prep](2026-09-27-checkpoint-live-preparation.md).
 - [Continuation](2026-09-27-checkpoint-continuation.md).
-- [Mutation checkpoint](2026-09-27-mutation-advice-checkpoint.md).
+- [Mutation](2026-09-27-mutation-advice-checkpoint.md).
 - [AnyIO](2026-09-27-anyio-fresh-solve.md).
 - [B1 deletion](2026-09-27-anyio-b1-branch-deletion.md).
 - [Links](2026-09-27-anyio-evidence-action-link.md).
@@ -98,6 +99,6 @@
 - [Candidates](2026-09-26-independent-candidate-comparison.md).
 - [Diagnostic](2026-09-26-diagnostic-claims-verification.md).
 - [Finish](2026-09-26-completion-status-comparison.md).
-- [First input](2026-09-26-completion-status-diagnostic.md).
+- [Input](2026-09-26-completion-status-diagnostic.md).
 - [Scope](2026-09-26-verification-scope-audit.md).
 - [Paired](2026-09-26-paired-reference-comparison.md).

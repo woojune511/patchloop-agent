@@ -31,17 +31,18 @@ absent/incomplete evidence unverified. Plans, helper success and regression PASS
 cannot close an original case. Current source and [protocol](../.agent/plans/finish-reproduction.md)
 define the bounded mechanism.
 
-The fixed local CSV comparison passed 8/8 protocol controls at USD 0: the same
-wrong comment-only patch submitted with the rule OFF and was rejected with it ON;
-a correct repair and normal-input control passed. Missing/incomplete original cases
-still allowed explicitly unverified submissions. This is scripted mechanical
-validation, not an LLM repair improvement. Independent acceptance in that comparison
-was NOT_RUN; isolated mock evaluation is separate evidence.
+Local scripted controls passed 8/8; they establish bounded case retention/replay,
+not an LLM repair improvement. The [fresh Astroid pilot](history/2026-10-22-original-case-live-results.md)
+acquired zero original cases and submitted with verification `unverified`.
+Regression PASS did not resolve the original caller: independent acceptance and
+the public failure input failed; the normal input passed. No automatic replay or
+finish rejection occurred, so recovery after rejection remains untested live.
 
-The unresolved questions are whether an agent acquires a valid original caller
-case itself, whether it repairs after rejection, and whether lost time or a wrong
-model-authored expectation outweighs the benefit. Requirement mapping and expected
-outputs are not independently certified. No paid follow-up is queued or authorized.
+The active unresolved boundary is acquiring a faithful original caller case and
+representing submissions without one. Requirement mapping and expected outputs
+remain unverified; helper coverage is not caller coverage. Keep the implemented
+mechanism at its tested scope. The one-run allocation is closed; no paid follow-up
+is queued or authorized.
 
 ## Supporting evidence
 
@@ -68,5 +69,5 @@ submission, independent task acceptance and safety are separate. Mock safety is 
 
 Do not start Docker Desktop or pull/build evaluator images automatically. Preserve
 exact recovery identities, zero SDK retries and stop-all on count/transport/billing
-uncertainty. Linux CI, live execution of the new completion mechanism, and general
-improvement are unverified.
+uncertainty. Linux CI, live replay/rejection of an acquired original case, and
+general improvement are unverified.
