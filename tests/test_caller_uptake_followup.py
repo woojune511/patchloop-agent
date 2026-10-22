@@ -6,6 +6,8 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from test_caller_uptake import CALLER_EXECUTION_COMMIT
+from test_verification_state_comparison import frozen_prompt
 
 from diagnostics import caller_uptake as panel
 from diagnostics import caller_uptake_execution as execution
@@ -89,7 +91,9 @@ def saved_fixture(tmp_path, monkeypatch, *, tests_only=False, stop=None):
         path = source / (case + ".py")
         path.write_text(case)
         programs[case] = panel.file_ref(path)
-    packet = {"live_root": str(state), "head": "original-head", "invariants": panel.invariants(),
+    with frozen_prompt(CALLER_EXECUTION_COMMIT):
+        invariants = panel.invariants()
+    packet = {"live_root": str(state), "head": "original-head", "invariants": invariants,
         "native_input": {"instance_id": "fixture", "rows": programs["missing"]},
         "programs": programs, "environments": {"B": {"dependencies": {"path": "deps"}}},
         "rows": [{"row_id": label, "request": request.model_dump(mode="json")}

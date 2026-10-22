@@ -130,6 +130,7 @@ class DevGatewayStateSnapshot:
     remaining_visible_check_ids: tuple[str, ...]
     unrun_visible_check_ids: tuple[str, ...]
     ready_to_submit: bool
+    completion_verification: dict[str, Any] | None = None
 
 
 def _public_turn_decision_schema(mode: str) -> dict[str, Any]:
@@ -365,7 +366,10 @@ def dev_tool_schemas(
                     "only if you judge the task complete, with a concise public assessment "
                     "connecting requirements to observed evidence and explaining why unfinished "
                     "verification does not block completion. Regression PASS alone does not "
-                    "prove the reported problem is fixed. This submits for independent evaluation."
+                    "prove the reported problem is fixed. The host replays stale original-case "
+                    "invocations before submission; current mismatch/conflict returns to repair. "
+                    "Missing/incomplete evidence is labelled unverified. Public case support "
+                    "does not certify requirements. This submits for independent evaluation."
                 ),
                 "strict": True,
                 "parameters": {
@@ -2524,6 +2528,7 @@ class DevToolGateway:
             remaining_visible_check_ids=remaining,
             unrun_visible_check_ids=unrun,
             ready_to_submit=ready,
+            completion_verification=self.completion_verification(diff_hash=summary.patch_hash),
         )
 
     def execute_batch(self, calls: list[RequestedTool]) -> list[DevToolResult]:
@@ -3791,7 +3796,19 @@ class DevToolGateway:
                 self.requires_alternative = True
 
     def reproduction_review(self, *, diff_hash: str) -> dict[str, Any]:
-        return reproduction.review(self.journal.events(), diff_hash, public_task=self.public_task)
+        return {
+            **reproduction.review(self.journal.events(), diff_hash, public_task=self.public_task),
+            "completion": self.completion_verification(diff_hash=diff_hash),
+        }
+
+    def completion_verification(self, *, diff_hash: str) -> dict[str, Any]:
+        from patchloop.dev import completion_reproduction
+
+        review = completion_reproduction.review(
+            self.journal.events(), diff_hash, public_task=self.public_task,
+            run_id=self.journal.run_id,
+        )
+        return {key: value for key, value in review.items() if key != "pending_cases"}
 
     def _finish_task(self, arguments: dict[str, Any]) -> dict[str, Any]:
         intent = FinishIntent.model_validate(arguments)
@@ -3804,11 +3821,19 @@ class DevToolGateway:
             )
         if not self.visible_checks_pass(diff_hash=summary.patch_hash):
             raise ContractError("all visible checks must pass against the current diff")
+        verification = self.completion_verification(diff_hash=summary.patch_hash)
+        if verification["status"] in {"pending", "refuted"}:
+            raise ContractError(
+                "Original-case verification is " + verification["status"]
+                + "; a helper or regression PASS cannot close it.",
+                details={"submission_verification": verification},
+            )
         from patchloop.dev.working_plan import submission_review
 
         plan_review = submission_review(self.journal.events(), summary.patch_hash)
         return {
             "assessment": intent.assessment,
+            "submission_verification": verification,
             "reproduction_review": self.reproduction_review(diff_hash=summary.patch_hash),
             **({"plan_review": plan_review} if plan_review is not None else {}),
             "patch": summary.patch,

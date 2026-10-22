@@ -6,7 +6,7 @@ import json
 import httpx
 import pytest
 from pydantic import ValidationError
-from repair_mechanism_expectations import JUDGMENT
+from repair_mechanism_expectations import FROZEN_ARM, JUDGMENT
 from test_dev_planning import call, request
 from test_dev_runner import _crash_journal_once, _enveloped_run_id, _SimulatedCrash
 from test_dev_segments import assert_submitted, configured, records
@@ -53,6 +53,8 @@ def record(journal, text, *, turn="t1", calls=None, diff="d1", gate="needs_mutat
 def test_old_contract_and_schema_unchanged_new_guidance_is_task_independent(tmp_path, monkeypatch):
     assert plans.instructions() == plans.INSTRUCTIONS
     assert dev_tool_surface_hash(planning_policy=plans.POLICY) == (
+        "sha256:caee44cf0764f75307134fc1a9bbd2905741c42de5ac93a2cf725e970c6562d9"
+        if FROZEN_ARM is None else
         "sha256:b1a9019f91a6bfe219714658b96300c9fce579ac3bc2e85a88ce9c5eaa115d5d"
         if JUDGMENT else
         "sha256:3c227b45fea8344f56ec7dcc73e60627c1f407bc2dd548a6a4860c3697dd24d1"

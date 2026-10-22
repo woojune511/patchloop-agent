@@ -228,7 +228,11 @@ def test_guidance_prioritizes_reusable_facts_without_growing_the_system_prompt()
     assert "another edit can use independent current evidence" in DEV_SYSTEM_PROMPT
     assert "headers do not establish behavior of unread return paths" in DEV_SYSTEM_PROMPT
     assert "note_id=null creates a distinct interpretation" in DEV_SYSTEM_PROMPT
-    assert "experiment on the current candidate" in DEV_SYSTEM_PROMPT
+    if FROZEN_ARM is None:
+        assert "first investigate the original call" in DEV_SYSTEM_PROMPT
+        assert "a helper is a separate diagnosis" in DEV_SYSTEM_PROMPT
+    else:
+        assert "experiment on the current candidate" in DEV_SYSTEM_PROMPT
     assert "not confirmation of the note's prose" in DEV_SYSTEM_PROMPT
     note_id = memory_update_schema()["properties"]["findings"]["items"]["properties"]["note_id"]
     assert "refines the same interpretation even if citations change" in note_id["description"]

@@ -66,7 +66,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
 @pytest.mark.parametrize(("names", "expected"), [
     pytest.param(
         ("read_file", "run_check", "run_probe", "search_files", "stop_task"),
-        "e7bffecc38c1ed9e2f419d801ed9c8b4ca47fd627a831ff1c159b364cf85dee6"
+        "0beb16f4893416f04d4da05608ee84c9911ef14c42a808b85e5649586176f73f"
         if FROZEN_ARM is None else
         "544c19f4d8e63f8a8810efe1dd4cd0adf3dee51cdb0145a4509de554027739c2",
         id="names0-99567faf1ea920a9157e5ea6618c5d43e7d56e441820be941403a025d9b2abe9"
@@ -74,7 +74,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     ),
     pytest.param(
         ("finish_task", "read_file", "replace_text", "run_probe", "search_files", "stop_task"),
-        "424a7d18f5374263a613b0f500450d8abf6a9f1820aeac2f5e23de3ed825ad39"
+        "07cd04bf3e3c6af91e1220aa16bf7f4e475ad98f0216194e046dc390b13ffb68"
         if FROZEN_ARM is None else
         "b817201c9d1aa8432575b0c1b55015dc01bc08a2b002e3e2cc09ab13bfa229c6",
         id="names1-de57dc4e83f8b26994c5df5f659cc208bbd3b348233d0ad3640493ffd5b90bd3"
@@ -82,7 +82,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     ),
     pytest.param(
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task"),
-        "3bc3edd1e1d15974d4282384b6135489fe36e7a439a8e16e4eb2618351ea7628"
+        "5956cb4a4b4fb26695ebc08df323ad3b6bda6c134ad92095581cf836511d61fb"
         if FROZEN_ARM is None else
         "310f8ec3dd129c93fb10c2a0589decf38eb09ce60e395ef906ac814e399e5139",
         id="names2-923a71312af5fa8d677ce72762b2f045a47ff2ebc4e084caaf1f57a2c11e7032"
@@ -91,7 +91,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     pytest.param(
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task",
          "finish_task"),
-        "013571e7178d174b1dc07b7bb412719953ace133dee7f85e5558818c1e51848a"
+        "e049e9eacd01899a9a44b1ca55cb2188f9f24b775e493fe9a505c8d7922f6daf"
         if FROZEN_ARM is None else
         "6302bc9d248be03d6e1430f0102a0e5c00ecb7883c25d453945f979f21fd3af7",
         id="names3-53d8c9ffaa20544b633c883b1e40010113b680722f23caebeb0ef991f1738caa"
@@ -99,8 +99,8 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     ),
 ])
 def test_descriptions_outside_memory_and_schema_order_are_unchanged(names, expected):
-    # Pin current invocation guidance; preserve case IDs and historical removal arms.
-    # OFF still has the prior four digests; only run_probe.description changed.
+    # Pin current invocation/finish guidance; preserve case IDs and historical removal arms.
+    # OFF still has the prior four digests; argument shapes remain independently pinned.
     tools = dev_tool_schemas(finish_enabled="finish_task" in names, allowed_tools=names)
     tools = _legacy_compression_surface(tools)
     for tool in tools:
@@ -116,7 +116,7 @@ def test_surrounding_action_guidance_identity():
     # Current prose fits the original 8,000-character contract with scope separation.
     # Historical J0/J1 arms retain their exact earlier surrounding-guidance identities.
     assert hashlib.sha256(canonical_json([prefix, suffix]).encode()).hexdigest() == (
-        "43fba7474f0abb96ea0dde12645f4c4e91757b45d6bfb26f49aa967a2c1cd050"
+        "a2d2172870f80e565b517e6f35f18e24e27b12d57157b3ac8d02fae0a5b9e637"
         if FROZEN_ARM is None else
         "2d0a9063da8d508a3c1218903cae12e33aa5db97f4d5655ca645fd5d52dc1331"
         if JUDGMENT else "c6439ce32e7724ed5d4c08dc1f207186b45e34234947c2867d7a65f096ce10a3"
@@ -168,6 +168,8 @@ def test_guidance_identity_changes_without_changing_run_schema_or_limits():
     # Common action/probe guidance changes the overall surface identity;
     # argument and description identities remain independently pinned above.
     assert dev_tool_surface_hash() == (
+        "sha256:01d76283c59be555924e224a6f11c003bb8140ac496b030f4973da8c0e5b942a"
+        if FROZEN_ARM is None else
         "sha256:57193859890419b79cb7f4927c37796d044bc4bf7159c51ddf17723849529e26"
     )
     assert DEV_RUN_SCHEMA == "dev-run-v1"

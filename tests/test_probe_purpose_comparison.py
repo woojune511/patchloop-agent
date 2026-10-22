@@ -15,6 +15,7 @@ from test_dev_probe_action_replay import restore
 from test_dev_probe_cases import TEXT, ExecutingProbe, mock_request
 from test_dev_tools import mutation_call, read_calls
 from test_probe_purpose import probe
+from test_verification_state_comparison import frozen_prompt
 from test_verification_state_grading import event, reviewed_row
 
 from diagnostics import probe_purpose_control as control
@@ -22,11 +23,11 @@ from diagnostics import probe_purpose_execution as execution
 from diagnostics import probe_purpose_grading as grading
 from diagnostics import probe_purpose_panel as panel
 from diagnostics import verification_state_execution as shared
-from patchloop.dev import reproduction, runner
+from patchloop.dev import model, reproduction, runner
 from patchloop.dev import tools as tools_module
 from patchloop.dev.contracts import DEV_READ_TOOLS, DEV_SINGLE_ACTION_TOOLS, DevModelTurn
 from patchloop.dev.conversation import assemble_model_input
-from patchloop.dev.model import DEV_SYSTEM_PROMPT, MockDevAdapter
+from patchloop.dev.model import MockDevAdapter
 from patchloop.dev.tools import dev_tool_schemas
 from patchloop.errors import ContractError, RecoveryError
 from patchloop.util import sha256_json
@@ -37,11 +38,13 @@ def no_network(monkeypatch):
     def forbidden(*args, **kwargs):
         pytest.fail("comparison preparation must not use provider/network")
     monkeypatch.setattr("socket.socket.connect", forbidden)
+    with frozen_prompt(control.BASE):
+        yield
 
 
-def test_control_is_exact_prior_schema_and_only_probe_surface_changes():
+def historical_schema(ref):
     source = subprocess.check_output([
-        "git", "show", control.LEGACY + ":patchloop/dev/reproduction.py",
+        "git", "show", ref + ":patchloop/dev/reproduction.py",
     ], text=True)
     tree = ast.parse(source)
     assignments = [n for n in tree.body if isinstance(n, ast.Assign)
@@ -49,18 +52,29 @@ def test_control_is_exact_prior_schema_and_only_probe_surface_changes():
                            for t in n.targets)]
     old = {}
     exec(compile(ast.Module(body=assignments, type_ignores=[]), "old-guidance", "exec"), old)
-    assert old["DESCRIPTION"] == control.LEGACY_DESCRIPTION
     function = next(n for n in ast.parse(subprocess.check_output([
-        "git", "show", control.LEGACY + ":patchloop/dev/tools.py",
+        "git", "show", ref + ":patchloop/dev/tools.py",
     ], text=True)).body if isinstance(n, ast.FunctionDef) and n.name == "dev_tool_schemas")
     scope = dict(vars(tools_module))
     scope["reproduction"] = SimpleNamespace(
-        schema=reproduction.schema, DESCRIPTION=old["DESCRIPTION"])
+        schema=reproduction.schema, purpose_schema=reproduction.purpose_schema,
+        DESCRIPTION=old["DESCRIPTION"])
     exec(compile(ast.Module(body=[function], type_ignores=[]), "old-schema", "exec"), scope)
-    schemas = dev_tool_schemas(finish_enabled=True, allowed_tools=["run_probe", "finish_task"])
+    return scope["dev_tool_schemas"], old["DESCRIPTION"]
+
+
+def test_control_is_exact_prior_schema_and_only_probe_surface_changes(monkeypatch):
+    legacy_schema, legacy_description = historical_schema(control.LEGACY)
+    base_schema, base_description = historical_schema(control.BASE)
+    assert legacy_description == control.LEGACY_DESCRIPTION
+    # The closed comparison's common finish prose predates finish-time replay.
+    # Exercise its actual BASE/LEGACY inputs, not a projection of today's finish tool.
+    monkeypatch.setattr(reproduction, "DESCRIPTION", base_description)
+    monkeypatch.setattr(runner, "dev_tool_schemas", base_schema)
+    schemas = base_schema(finish_enabled=True, allowed_tools=["run_probe", "finish_task"])
     before = copy.deepcopy(schemas)
     a = control.project_tools(schemas, "A")
-    assert a == scope["dev_tool_schemas"](
+    assert a == legacy_schema(
         finish_enabled=True, allowed_tools=["run_probe", "finish_task"])
     # Cover the distinct pinned schema configurations in the fast regression suite.
     for options in (
@@ -72,9 +86,9 @@ def test_control_is_exact_prior_schema_and_only_probe_surface_changes():
         {"allowed_tools": DEV_READ_TOOLS | DEV_SINGLE_ACTION_TOOLS,
          "check_ids": ["first", "second"]},
     ):
-        current = dev_tool_schemas(finish_enabled=True, **options)
+        current = base_schema(finish_enabled=True, **options)
         restored = control.project_tools(current, "A")
-        legacy = scope["dev_tool_schemas"](finish_enabled=True, **options)
+        legacy = legacy_schema(finish_enabled=True, **options)
         assert json.dumps(restored) == json.dumps(legacy)  # Includes field order.
     assert schemas == before == control.project_tools(schemas, "B")
     assert [t for t in a if t["name"] != "run_probe"] == [
@@ -86,7 +100,7 @@ def test_control_is_exact_prior_schema_and_only_probe_surface_changes():
     with control.assigned("A"):
         assert runner.dev_tool_schemas(
             finish_enabled=True, allowed_tools=["run_probe", "finish_task"]) == a
-        assert DEV_SYSTEM_PROMPT == runner.DEV_SYSTEM_PROMPT
+        assert model.DEV_SYSTEM_PROMPT == runner.DEV_SYSTEM_PROMPT
         assert reproduction.review([], "D1")["required"]["status"] == "UNKNOWN"
     assert len(current_probe["parameters"]["required"]) == len(old_probe["parameters"]["required"])
     with pytest.raises(RuntimeError), control.assigned("A"):

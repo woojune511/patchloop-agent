@@ -87,13 +87,13 @@ bound. Arbitrary object state, external effects and unselected inputs/environmen
 remain unverified; in-process feedback is not an attestation. The adapter and
 authored program together must fit the unchanged 8,000-character source limit;
 the larger adapter leaves less authoring space. Sandbox/output/deadline limits
-remain unchanged. No extra probe or tool call is automatically dispatched.
+remain unchanged. Completion-time replays below use the same public execution path.
 
 Replay using the original `action_id`, with question/source/purpose null.
 The existing replay path keeps the exact program and binding across edits and
 restart. Receipts distinguish authored `source_hash` from the actual
 `execution_source_hash`. A completed same-action retry returns its receipt rather
-than executing again. No automatic probe or extra finish gate is added.
+than executing again. Completion-time replay also reuses this identity contract.
 
 ## Separate observations from task acceptance
 
@@ -126,7 +126,21 @@ recent probe bodies and the unsuccessful-observation catalog remain separate.
 Concern `model_position` and `model_open_concern_ids` in the model view describe
 discussion only. Resolve/dismiss and plan edits never write computed evidence
 state. Durable concern operations and receipts retain their original schema for
-recovery. No new completion gate or automatic probe is added.
+recovery. These model-authored concerns do not gate completion.
+
+`reproduction_review.completion` separately retains every first case binding from
+the full journal. A healthy invocation-bound root is mechanically replayable;
+this is not certification that it reproduces the reported bug. At finish, stale
+cases (including matched baseline controls) run through ordinary budgeted probe
+actions. A helper/new case cannot close an older one. Same-case current mismatch
+or conflict rejects finish; absent cases and incomplete/unavailable observations
+remain explicitly unverified. The gateway also checks this state, so a direct or
+recovered finish cannot bypass it. Deterministic child IDs bind run/case/root/diff;
+a finished or durably skipped attempt is not retried on that diff. Another edit
+invalidates its currency. Child start/finish receipts restore action accounting.
+The public view shows three cases plus counts; execution uses the complete set.
+`submission_verification` accompanies the free-text assessment without replacing
+the separate private evaluation or certifying semantic requirement coverage.
 
 Even `mismatch_to_match` means only that declared experiment changed as expected.
 The issue-to-entrypoint mapping and expected value are model-authored, and a

@@ -42,7 +42,8 @@ DESCRIPTION = (
     "expectation; neither proves that your chosen call represents the public requirement. "
     + REPLAY_DESCRIPTION + " Changing them creates a different experiment, not resolution "
     "of the old one. reproduction_review separates helpers, unobserved calls, changed setup "
-    "and same-reproduction comparisons. No extra probe or submission gate is imposed."
+    "and same-reproduction comparisons. At finish the host replays stale invocation-bound "
+    "cases; current comparable mismatch/conflict blocks submission. Unknown remains unverified."
 )
 
 OBSERVATION_CHANNEL = "record-observation-v1"
@@ -524,7 +525,7 @@ def review(events, current_diff, *, public_task=None):
         "SUPPORTED/REFUTED concern a declared experiment, not the original task. UNKNOWN scope "
         "requires connecting the public issue to actual inputs, setup and observations. "
         "Helper/suite PASS and model dismissal cannot close it. "
-        "Submission eligibility is unchanged.",
+        "The separate completion projection controls replay and comparable-case failure at finish.",
     }
 
 

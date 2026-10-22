@@ -6,7 +6,7 @@ import copy
 import httpx
 import pytest
 from pydantic import ValidationError
-from repair_mechanism_expectations import JUDGMENT
+from repair_mechanism_expectations import FROZEN_ARM, JUDGMENT
 from test_dev_planning import call, request
 from test_dev_runner import _crash_journal_once, _enveloped_run_id, _SimulatedCrash
 from test_dev_segments import assert_submitted, configured, records
@@ -67,6 +67,16 @@ def test_timing_only_identity_and_schema_contrast(tmp_path, monkeypatch):
              if JUDGMENT else
              "sha256:f4fe1472f3e1df939225db449b565b60ec2a8e38621d678bcde8de33eb17a625"),
     }
+    if FROZEN_ARM is None:
+        old_hashes = {
+            "none": "sha256:01d76283c59be555924e224a6f11c003bb8140ac496b030f4973da8c0e5b942a",
+            plans.POLICY:
+                "sha256:caee44cf0764f75307134fc1a9bbd2905741c42de5ac93a2cf725e970c6562d9",
+            plans.EVIDENCE_POLICY:
+                "sha256:02ab844d9413f27af617c2ccf09082ff2af9aea3421d23f824121a15ed6f69b1",
+            plans.ASSUMPTION_POLICY:
+                "sha256:35aeeb6e1f08a26886218a646582d076a622313cab9a22405e14abd7fb40642a",
+        }
     assert {p: dev_tool_surface_hash(planning_policy=p) for p in old_hashes} == old_hashes
     old, new = plans.instructions(), plans.instructions(POLICY)
     assert old.partition("State the required behavior")[2] == new.partition(

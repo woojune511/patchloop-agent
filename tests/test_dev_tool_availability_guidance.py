@@ -7,6 +7,7 @@ from types import SimpleNamespace
 
 import httpx
 import pytest
+from repair_mechanism_expectations import FROZEN_ARM
 from test_dev_feedback_integration_v18 import _context
 from test_dev_mutation_attempt_budget import _state
 from test_dev_notes_lifecycle_v15 import _gateway, _mutation, _read, _restart
@@ -120,10 +121,17 @@ def test_actual_inputs_explain_source_edit_check_submit_transitions(
     assert "check_result" in final["working_plan"]["review_request"]["reasons"]
     assert "unfinished verification" in final["completion_guidance"]["message"]
     system = inputs[-1][0]["content"]
-    assert "Skipped/rejected verification remains unperformed." in system
-    assert "listing a limitation is insufficient" in system
+    if FROZEN_ARM is None:
+        normalized = " ".join(system.split())
+        assert "Skipped/rejected checks remain unperformed." in normalized
+        assert "cite current-diff results or specific source inference" in normalized
+        assert "explain remaining gaps." in normalized
+        assert "finish_task automatically replays stale invocation-bound cases" in normalized
+    else:
+        assert "Skipped/rejected verification remains unperformed." in system
+        assert "listing a limitation is insufficient" in system
+        assert "This judgment needs no separate call or mandatory experiment." in system
     assert "Keep unfinished verification" in system
-    assert "This judgment needs no separate call or mandatory experiment." in system
     results = [e["payload"]["result"] for e in journal.events()
                if e["event_type"] == "action_finished"]
     assert {result["tool"] for result in results[:2]} == {"search_files", "read_file"}

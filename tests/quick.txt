@@ -8,6 +8,9 @@ tests/test_dev_history_search.py
 tests/test_evidence_recovery.py
 tests/test_verification_scope_state.py
 tests/test_probe_purpose.py
+tests/test_completion_reproduction.py
+tests/test_finish_reproduction_budget.py
+tests/test_finish_reproduction.py::test_original_failure_is_not_closed_by_helper_and_regression_pass
 tests/test_probe_invocation.py
 tests/test_probe_invocation_comparison.py
 tests/test_probe_invocation_grading.py

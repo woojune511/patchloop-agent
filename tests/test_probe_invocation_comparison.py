@@ -11,6 +11,7 @@ from test_dev_tools import mutation_call, read_calls
 from test_evidence_recovery import intent
 from test_probe_purpose import probe
 from test_verification_role import report
+from test_verification_state_comparison import frozen_prompt, legacy_function
 
 from diagnostics import probe_invocation_control as control
 from diagnostics import probe_invocation_execution as execution
@@ -31,11 +32,18 @@ from patchloop.util import sha256_bytes
 OFF_SOURCE = (
     f"from mini_data_utils.csvlite import parse_rows\nrecord_observation(parse_rows({TEXT!r}))"
 )
+ON_REVIEW_COMMIT = "1b7d53c713bb956234834779324c533cfd5a74e1"
 
 
 @pytest.fixture(autouse=True)
 def offline(monkeypatch):
     monkeypatch.setattr("socket.socket.connect", lambda *a, **k: pytest.fail("offline only"))
+    # Retain the closed treatment's review prose while current completion is tested separately.
+    monkeypatch.setattr(control, "_REVIEW", legacy_function(
+        "patchloop/dev/reproduction.py", "review", dict(vars(reproduction)), ref=ON_REVIEW_COMMIT,
+    ))
+    with frozen_prompt(control.BASE):
+        yield
 
 
 def test_off_executes_legacy_channel_and_restores_scope(gateway_factory):
@@ -65,7 +73,8 @@ def test_off_executes_legacy_channel_and_restores_scope(gateway_factory):
         after = gateway.execute(probe(gateway.public_task, "after", replay="original"))
         assert after.output["reproduction"]["comparison"] == "matched"
         review = gateway.reproduction_review(diff_hash=gateway.current_diff_hash)
-        assert review == baseline["review"](
+        # The gateway's new completion projection is outside this historical comparison.
+        assert {k: v for k, v in review.items() if k != "completion"} == baseline["review"](
             journal.events(), gateway.current_diff_hash, public_task=gateway.public_task
         )
         assert after.output["execution_source_hash"] == sha256_bytes(wrapped.encode())

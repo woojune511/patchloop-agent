@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 from decimal import Decimal
 
 import pytest
+from test_verification_state_comparison import frozen_prompt
 
 from diagnostics import verification_state_execution as execution
 from diagnostics import verification_state_grading as grading
@@ -315,7 +316,8 @@ def test_reduced_manifest_rejects_changed_roster_caps_or_spec(monkeypatch, tmp_p
     assert validate(packet)["total_cap_usd"] == "5.28"
     requests = [r["request"] for r in packet["rows"]]
     assert all(r["max_cost_usd"] == "0.88" and r["repeat"] == 1 for r in requests)
-    assert len(requests) == 6 and panel.prior.invariants()["references"] == 2
+    with frozen_prompt():
+        assert len(requests) == 6 and panel.prior.invariants()["references"] == 2
     for field, value in (
         ("repeat_per_arm", 6), ("order", list(panel.ORDER)),
         ("row_cap_usd", "0.89"), ("arm_cap_usd", "5.28"), ("total_cap_usd", "10.56"),

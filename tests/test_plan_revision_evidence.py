@@ -141,11 +141,15 @@ def test_original_purpose_reaches_finish_without_forcing_another_check(
         assert plan["last_change"]["interpretation_status"] == "model_authored_unverified"
     # Assert delivery at the actual finish boundary, not just the prompt constant.
     system = " ".join(items[0]["content"].split())
-    from repair_mechanism_expectations import JUDGMENT
+    from repair_mechanism_expectations import FROZEN_ARM, JUDGMENT
     if JUDGMENT:
-        assert "Suite PASS or another path's success cannot replace that purpose" in system
+        if FROZEN_ARM is None:
+            assert "helpers/suite PASS cannot replace the original input/path/outcome" in system
+            assert "the original purpose despite plan changes, cite current-diff results" in system
+        else:
+            assert "Suite PASS or another path's success cannot replace that purpose" in system
+            assert "the original purpose despite plan changes: cite current-diff results" in system
         assert "make verification conditional on a suite failure" in system
-        assert "the original purpose despite plan changes: cite current-diff results" in system
         assert "Label source inference and tie it to specific current source" in system
         assert "leaving unexecuted behavior unverified" in system
     else:

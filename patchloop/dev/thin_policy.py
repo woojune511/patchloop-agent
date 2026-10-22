@@ -58,7 +58,8 @@ Otherwise explain what evidence meets the planned check's purpose or why the gap
 does not affect completion; listing a limitation is insufficient.
 Call finish_task only if you judge it complete. Its assessment must connect requirements
 to evidence and account for unfinished verification. Edits require fresh checks and
-reassessment. This judgment needs no separate call or mandatory experiment.
+reassessment. The host replays stale original-case invocations before finish;
+current mismatch/conflict blocks submission, while unknown stays unverified.
 finish_task submits the current candidate. stop_task abandons without submission.
 Keep any public statements concise. Never emit raw chain-of-thought. Private
 tests, reference patches and evaluator details are unavailable.

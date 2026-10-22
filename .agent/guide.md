@@ -81,9 +81,10 @@ Latest predecessor/reason stays visible; see [planning](planning-experiment.md).
 Check PASS alone certifies no requirement coverage. Label source inference.
 See [evidence recovery](evidence-recovery.md) for opt-in source restoration and
 fixed probe comparisons.
-No extra action/check required. After edits, require fresh PASS.
-Optional tests/probes give no required-check credit. Preserve pre-state,
-submitted-candidate and incremental patch identities; replay retains action-time identities.
+Finish replays stale invocation-bound cases. Current mismatch/conflict blocks;
+missing/incomplete evidence stays unverified. Mapping remains model-authored.
+After edits, required checks need fresh PASS; probes give no check credit.
+Preserve pre-state, candidate and incremental patch identities on replay.
 Visible-check IDs must be unique at task admission.
 Advisory line feedback decodes those paths and binds script filenames at launch,
 preserving arguments and tracking across chdir.
@@ -99,16 +100,15 @@ hard tool restrictions from advisory progress signals or task-specific failure p
 
 ## Context and recovery
 
-Project explicit public fields with their order and nested rules. Separate current
-evidence, history and unverified notes; delivery does not imply use.
-working_notes.verification.observations keeps six unsuccessful executions plus
-omission count, action/input/diff IDs and execution flags, not bug verdicts.
+Project only explicit public fields; separate current evidence, history and notes.
+The six retained unsuccessful executions keep identities, flags and omission count.
 PASS cannot erase them; edits make them historical. Null concern ID creates; an ID
-updates. Immutable evidence_action_id requires an unsuccessful
-observation; null means hypothesis only. Operator feedback is never an observation.
-Model `model_position`/`model_open_concern_ids` describe discussion. Independent
-`reproduction_review` computes case evidence; requirement mapping stays unverified.
+updates. Bound evidence requires an unsuccessful observation; null means hypothesis.
+Operator feedback is never an observation; delivery does not imply use.
+Model positions describe discussion. `reproduction_review` computes case evidence;
+requirement mapping stays unverified.
 Plans/concerns cannot close it or gate finish. See [scope](evidence-recovery.md).
+Completion retains all cases beyond the three-case display, independently of plans.
 
 Latest observations must reach the next request. `--retained-source-chars` selects
 24,000 (default) or 48,000 previously observed characters; complete lines only, no

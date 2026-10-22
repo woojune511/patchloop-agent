@@ -7,7 +7,7 @@ import json
 import httpx
 import pytest
 from pydantic import ValidationError
-from repair_mechanism_expectations import JUDGMENT
+from repair_mechanism_expectations import FROZEN_ARM, JUDGMENT
 from test_dev_planning import call, request
 from test_dev_runner import _crash_journal_once, _enveloped_run_id, _SimulatedCrash
 from test_dev_segments import assert_submitted, configured, records
@@ -54,6 +54,14 @@ def test_instruction_only_contrast_preserves_old_identities_and_schemas(tmp_path
              if JUDGMENT else
              "sha256:257b19af0efbdc70b7b6129c21d59e593cf9ea70df351cb5d23f03d7ac8bbd19"),
     }
+    if FROZEN_ARM is None:
+        old_hashes = {
+            "none": "sha256:01d76283c59be555924e224a6f11c003bb8140ac496b030f4973da8c0e5b942a",
+            plans.POLICY:
+                "sha256:caee44cf0764f75307134fc1a9bbd2905741c42de5ac93a2cf725e970c6562d9",
+            plans.EVIDENCE_POLICY:
+                "sha256:02ab844d9413f27af617c2ccf09082ff2af9aea3421d23f824121a15ed6f69b1",
+        }
     assert {p: dev_tool_surface_hash(planning_policy=p) for p in old_hashes} == old_hashes
     old = plans.instructions(plans.EVIDENCE_POLICY)
     assert plans.instructions(POLICY) == old + "\n\n" + plans.EDIT_ASSUMPTION_GUIDANCE

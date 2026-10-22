@@ -171,6 +171,7 @@ def test_guidance_is_advisory_and_recommends_only_an_offered_action(
     snapshot = SimpleNamespace(
         diff=SimpleNamespace(patch_hash="current"), ready_to_submit=gate == "ready_to_submit",
         visible_check_status=tuple({"check_id": "contract", "status": s} for s in statuses),
+        completion_verification=None,
     )
     policy = SimpleNamespace(
         workflow_gate=gate, allowed_tools=frozenset(allowed), check_ids=("contract",),

@@ -6,6 +6,8 @@ import copy
 import json
 import multiprocessing
 import subprocess
+from contextlib import contextmanager
+from unittest.mock import patch
 
 import httpx
 import pytest
@@ -34,10 +36,27 @@ def no_provider(monkeypatch):
     monkeypatch.setattr(httpx.HTTPTransport, "handle_request", forbidden)
     monkeypatch.setattr(httpx.AsyncHTTPTransport, "handle_async_request", forbidden)
     monkeypatch.setattr(runner, "load_exact_openai_api_key", forbidden)
+    with frozen_prompt():
+        yield
 
 
-def legacy_function(path, name, namespace):
-    text = subprocess.check_output(["git", "show", off.LEGACY + ":" + path], text=True)
+@contextmanager
+def frozen_prompt(ref=off.BASE):
+    """Supply the closed comparison's public input without changing its drift guard."""
+    source = subprocess.check_output([
+        "git", "show", ref + ":patchloop/dev/model.py",
+    ], text=True)
+    assignment = next(n for n in ast.parse(source).body if isinstance(n, ast.Assign)
+                      and any(getattr(t, "id", "") == "DEV_SYSTEM_PROMPT" for t in n.targets))
+    prompt = ast.literal_eval(assignment.value)
+    with (patch.object(model, "DEV_SYSTEM_PROMPT", prompt),
+          patch.object(runner, "DEV_SYSTEM_PROMPT", prompt),
+          patch.object(off, "_ON_PROMPT", prompt)):
+        yield prompt
+
+
+def legacy_function(path, name, namespace, *, ref=off.LEGACY):
+    text = subprocess.check_output(["git", "show", ref + ":" + path], text=True)
     node = next(n for n in ast.parse(text).body
                 if isinstance(n, ast.FunctionDef) and n.name == name)
     exec(compile(ast.Module(body=[node], type_ignores=[]), path, "exec"), namespace)
@@ -150,7 +169,7 @@ def test_off_no_probe_inclusion_and_exception_restore(gateway_factory, smoke_pac
 
 
 def _child_arm(queue, arm):
-    with off.assigned(arm):
+    with frozen_prompt(), off.assigned(arm):
         queue.put({"prompt": model.DEV_SYSTEM_PROMPT,
                    "review": reproduction.review([], "D1")})
 
@@ -168,6 +187,12 @@ def test_spawned_off_cannot_contaminate_on():
         assert ("required" in value["review"]) is (arm == "B")
         queue.close()
     assert off.prompt("B") == model.DEV_SYSTEM_PROMPT
+
+
+def test_closed_prompt_guard_still_rejects_drift(monkeypatch):
+    monkeypatch.setattr(off, "_ON_PROMPT", off.prompt("B") + "\n")
+    with pytest.raises(ContractError, match="base prompt changed"):
+        off.prompt("B")
 
 
 def test_initial_pair_rejects_unassigned_schema_time_and_budget_changes():

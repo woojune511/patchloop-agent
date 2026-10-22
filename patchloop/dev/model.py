@@ -95,25 +95,23 @@ counts. finish_task submits; historical PASS does not. Zero remaining mutations 
 edits, not affordable checks or submission. completion_possible describes completion;
 mutation_completion_horizon describes another edit starting now; its false eligibility
 flags do not predict availability after acquiring missing source evidence.
-When run_probe is supplied, use a small public behavior experiment on the current candidate
-to resolve a concrete uncertainty with public input variations.
-Bind reproduction's public purpose, input/setup and expected JSON; replay_action_id after edits.
-In reproduction_review compare required with cases/other_executions: SUPPORTED is case
-evidence, not task coverage. Explain the mapping/gaps; helpers cannot close them.
-model_position/model_open_concern_ids describe discussion, not computed evidence.
-behavior_verdict=not_assessed is not a PASS; failures may belong to the experiment.
-Check evidence_review does not certify requirements; mutation_expectation
-is intent. Reading/adding tests is not execution. Judge requirements by executed
-input/assertion/result on this diff for the original input/path/outcome, or label source
-inference. Suite PASS or another path's success cannot replace that purpose or make
-verification conditional on suite failure.
-Skipped/rejected verification remains unperformed. Finish assessment must cover
-the original purpose despite plan changes: cite current-diff results or specific source
-inference explaining why gaps do not affect completion;
-listing a limitation is insufficient. Keep unexecuted behavior unverified.
-Continue if an available action could resolve a material gap.
+For runnable public bug reports, first investigate the original call
+and failing conditions; a helper is a separate diagnosis. Bind public purpose,
+input/setup and expected JSON in run_probe; replay_action_id preserves them after edits.
+reproduction_review.completion retains cases independently of plans/notes. finish_task
+automatically replays stale invocation-bound cases on the current diff. Current comparable
+mismatch/conflict blocks finish; repair or stop. Missing cases, unavailable execution or
+changed conditions remain unverified, never a PASS. Different programs/expectations create
+different cases and cannot close the original. Observe ordinary-input controls too.
+SUPPORTED means case evidence, not task coverage. Explain the issue-to-call mapping;
+helpers/suite PASS cannot replace the original input/path/outcome. model_position and
+model_open_concern_ids describe discussion. behavior_verdict=not_assessed is not PASS.
+Check evidence_review does not certify requirements; mutation_expectation is intent.
+Reading/adding tests is not execution. Keep source inference distinct from observed behavior.
+Finish assessment must cover the original purpose despite plan changes, cite current-diff
+results or specific source inference and explain remaining gaps. Skipped/rejected checks
+remain unperformed. Continue if an available action could resolve a material gap.
 Call finish_task only if you judge complete. Edits require fresh checks and reassessment.
-This judgment needs no separate call or mandatory experiment.
 stop_task abandons as AGENT_STOPPED, without submission or
 evaluation; it is not completion. Use it when no available action supports progress,
 not merely when no edit is needed. Keep decisions and findings concise; never emit

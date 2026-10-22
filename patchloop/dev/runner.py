@@ -29,6 +29,7 @@ from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import Artifact, ModelConfig, RunManifest, VerdictState
 from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
 from patchloop.dev import (
+    completion_reproduction,
     evidence_focus,
     history_search,
     native_compaction,
@@ -595,7 +596,7 @@ def _completion_guidance(
     )
     needs_mutation = policy.workflow_gate == "needs_mutation" or any(
         row["status"] == "FAIL" for row in snapshot.visible_check_status
-    )
+    ) or (snapshot.completion_verification or {}).get("status") == "refuted"
     if snapshot.ready_to_submit and "finish_task" in allowed:
         stage = "ready_to_submit"
         message = (
@@ -609,6 +610,11 @@ def _completion_guidance(
         if "run_probe" in allowed:
             message += (
                 "Use run_probe when it could change this judgment."
+            )
+        if (snapshot.completion_verification or {}).get("pending_count", 0):
+            message += (
+                " Submitting automatically replays stale original-requirement cases. "
+                "A current comparable mismatch returns to repair; unknown remains unverified."
             )
     elif needs_mutation:
         if "replace_text" in allowed:
@@ -644,7 +650,9 @@ def _completion_guidance(
     return {
         "diff_hash": snapshot.diff.patch_hash,
         "stage": stage,
-        "submission_ready": snapshot.ready_to_submit,
+        "submission_ready": (snapshot.ready_to_submit
+                             and (snapshot.completion_verification or {}).get("status")
+                             != "refuted"),
         "next_action": next_action,
         "message": message,
     }
@@ -715,6 +723,11 @@ def _tool_policy(
         ready_to_submit = snapshot.ready_to_submit
         has_current_mutation_evidence = bool(snapshot.mutation_evidence_paths)
     workflow_gate = _workflow_gate(summary, ready_to_submit=ready_to_submit)
+    verification = (snapshot.completion_verification or {}) if snapshot is not None else {}
+    original_case_failed = verification.get("status") == "refuted"
+    if original_case_failed:
+        workflow_gate = "needs_mutation"
+        ready_to_submit = False
     current_check_failed = any(row["status"] == "FAIL" for row in visible_status)
     declared_check_ids = tuple(
         row["check_id"]
@@ -751,7 +764,9 @@ def _tool_policy(
         0, limits.max_accepted_mutations - gateway.accepted_mutations
     )
     mutation_capacity = remaining_mutations > 0 and not summary.untracked_files
-    requires_mutation = workflow_gate == "needs_mutation" or current_check_failed
+    requires_mutation = (
+        workflow_gate == "needs_mutation" or current_check_failed or original_case_failed
+    )
     repair_read_credit = (
         current_check_failed
         and counters.failed_check_pending
@@ -776,6 +791,8 @@ def _tool_policy(
         repair_read_credit=repair_read_credit,
         automatic_recheck=repair_recheck,
         current_recheck_eligible=current_recheck_eligible,
+        reproduction_case_count=verification.get("replayable_case_count", 0),
+        pending_reproduction_count=verification.get("pending_count", 0),
     )
     budget = completion_budget(completion_state)
     completion_possible = (
@@ -869,7 +886,7 @@ def _tool_policy(
         budget.protected if protected_completion_possible else budget.minimum
     ) - 1)
     if completion_possible:
-        if ready_to_submit:
+        if ready_to_submit and not original_case_failed:
             allowed.add("finish_task")
         if inspection_allowed:
             allowed.update({"read_file", "search_files"})
@@ -999,7 +1016,12 @@ def _tool_policy(
         inspection_reserve_tool_actions=inspection_tool_floor,
     )
     if funded_calls is not None:
-        successors = [0]  # finish/stop have no subsequent provider call.
+        successors = [0]  # Stop and a successful finish need no subsequent call.
+        if ("finish_task" in allowed and verification.get("pending_count", 0)
+                and protected_completion_possible):
+            # The final public replay may reject this finish. Preserve the same
+            # funded recovery reported by the model/action forecast.
+            successors.append(budget.protected - 1)
         if inspection_allowed:
             successors.append(inspection_floor)
         if mutation_allowed:
@@ -3131,7 +3153,10 @@ def _restore_counters(journal: DevJournal) -> _RunCounters:
             len(event["payload"].get("tool_calls", []))
             for event in events
             if event["event_type"] == "tool_batch_started"
-        ) + sum(event["event_type"] in {"repair_recheck_started", "probe_recheck_started"}
+        ) + sum(event["event_type"] in {
+                    "repair_recheck_started", "probe_recheck_started",
+                    "completion_reproduction_started",
+                }
                 for event in events),
         input_count_calls=sum(event["event_type"] == "input_count_started" for event in events),
         compaction_calls=sum(event["event_type"] == "compaction_started" for event in events),
@@ -3144,10 +3169,14 @@ def _restore_counters(journal: DevJournal) -> _RunCounters:
             action_results[result.action_id] = result
         elif event["event_type"] in {
             "tool_batch_finished", "repair_recheck_finished", "probe_recheck_finished",
+            "completion_reproduction_finished",
         }:
             action_ids = (
                 [event["payload"]["action_id"]]
-                if event["event_type"] in {"repair_recheck_finished", "probe_recheck_finished"}
+                if event["event_type"] in {
+                    "repair_recheck_finished", "probe_recheck_finished",
+                    "completion_reproduction_finished",
+                }
                 else event["payload"].get("action_ids", [])
             )
             if not isinstance(action_ids, list) or not action_ids:
@@ -3603,6 +3632,106 @@ def _run_probe_recheck(
     if terminal is None and result.status == "failed":
         return DevTerminal.TASK_FAILED, "probe recheck gateway action failed"
     return terminal, message
+
+
+class _CompletionVerificationAbort(Exception):
+    def __init__(self, terminal: DevTerminal, message: str):
+        super().__init__(message)
+        self.terminal = terminal
+
+
+def _execute_completion_batch(
+    *, calls: list[RequestedTool], journal: DevJournal, gateway: DevToolGateway,
+    counters: _RunCounters, active_elapsed_ms: Callable[[], int],
+) -> list[DevToolResult]:
+    """Replay public cases before finish, as independently recoverable tool actions.
+
+    The caller has already counted the native batch. Children are not invented
+    model function calls; their observations are projected from the journal.
+    """
+    if len(calls) != 1 or calls[0].name != "finish_task":
+        return gateway.execute_batch(calls)
+    events = journal.events()
+    # Let the gateway verify input identity and replay before touching deadlines.
+    if any(e["event_type"] == "action_finished"
+           and e["payload"]["result"]["action_id"] == calls[0].action_id for e in events):
+        return gateway.execute_batch(calls)
+    if not gateway.ready_to_submit():
+        return gateway.execute_batch(calls)
+    diff_hash = gateway.current_diff_hash
+    state = completion_reproduction.review(
+        events, diff_hash, public_task=gateway.public_task, run_id=journal.run_id,
+    )
+    # Reconcile started children even when a durable action result already changed
+    # the projection to SUPPORTED/UNKNOWN before its completion marker was written.
+    starts = {e["payload"]["action_id"]: e["payload"] for e in events
+              if e["event_type"] == "completion_reproduction_started"}
+    finished = {e["payload"]["action_id"] for e in events
+                if e["event_type"] == "completion_reproduction_finished"}
+    # A crash after the child marker but before abort handling must preserve a
+    # terminal cleanup/deadline result, even though the replay is already settled.
+    selected = [value for key, value in starts.items()
+                if key not in finished or value["candidate_diff_hash"] == diff_hash]
+    selected.extend(state["pending_cases"])
+    handled = set()
+    for case in selected:
+        call = completion_reproduction.replay_call(
+            journal.run_id, case["case_id"], case["root_action_id"], diff_hash,
+        )
+        if call.action_id in handled:
+            continue
+        handled.add(call.action_id)
+        identity = {
+            "action_id": call.action_id, "case_id": case["case_id"],
+            "root_action_id": case["root_action_id"], "candidate_diff_hash": diff_hash,
+        }
+        receipts = {e["event_type"]: e["payload"] for e in journal.events()
+                    if e["event_type"] in {
+                        "completion_reproduction_started", "completion_reproduction_finished",
+                        "completion_reproduction_skipped",
+                    } and e["payload"].get("action_id") == call.action_id}
+        if case.get("candidate_diff_hash", diff_hash) != diff_hash or any(
+            receipt.get(key) != value for receipt in receipts.values()
+            for key, value in identity.items()
+        ):
+            raise RecoveryError("completion reproduction identity changed")
+        if "completion_reproduction_skipped" in receipts:
+            if len(receipts) != 1:
+                raise RecoveryError("skipped completion reproduction has execution receipts")
+            continue
+        replay = journal.action_result(
+            call.action_id, sha256_json({"tool": call.name, "arguments": call.arguments}),
+        )
+        if "completion_reproduction_finished" in receipts and replay is None:
+            raise RecoveryError("completed reproduction is missing its action result")
+        if "completion_reproduction_started" not in receipts:
+            reason = (
+                "tool_action_limit" if counters.tool_actions >= gateway.limits.max_tool_actions
+                else "probe_unavailable" if gateway.probe_sandbox is None else None
+            )
+            if reason:
+                journal.append("completion_reproduction_skipped", {
+                    **identity, "reason": reason, "status": "NOT_RUN",
+                    "active_elapsed_ms": active_elapsed_ms(),
+                })
+                continue
+            if gateway.deadline is not None:
+                gateway.deadline.check()
+            journal.append("completion_reproduction_started", {
+                **identity, "origin": "harness", "active_elapsed_ms": active_elapsed_ms(),
+            })
+            counters.tool_actions += 1
+        result = replay if replay is not None else gateway.execute(call)
+        if "completion_reproduction_finished" not in receipts:
+            journal.append("completion_reproduction_finished", {
+                **identity, "status": result.status,
+                "active_elapsed_ms": active_elapsed_ms(),
+            })
+            _update_inspection_counters(counters, [result], gateway)
+        terminal, message = _batch_execution_abort([result])
+        if terminal is not None:
+            raise _CompletionVerificationAbort(terminal, message or "public replay aborted")
+    return gateway.execute_batch(calls)
 
 
 def _record_planning_decision(
@@ -4422,7 +4551,13 @@ def _run_one_active(
                                 request.planning_policy, journal=journal, gateway=gateway,
                                 calls=pending_calls, turn_id=pending_turn_id,
                             )
-                            recovered_results = gateway.execute_batch(pending_calls)
+                            recovered_results = _execute_completion_batch(
+                                calls=pending_calls, journal=journal, gateway=gateway,
+                                counters=counters, active_elapsed_ms=active_elapsed_ms,
+                            )
+                        except _CompletionVerificationAbort as exc:
+                            terminal_code, terminal_message = exc.terminal, str(exc)
+                            stop_remaining = exc.terminal == DevTerminal.TASK_FAILED
                         except ExecutionDeadlineExceeded:
                             terminal_code = DevTerminal.LIMIT_REACHED
                             terminal_message = "active deadline exhausted before recovered action"
@@ -5254,7 +5389,14 @@ def _run_one_active(
                 gateway=gateway,
                 calls=turn.tool_calls, turn_id=turn_id,
             )
-            results = gateway.execute_batch(turn.tool_calls)
+            results = _execute_completion_batch(
+                calls=turn.tool_calls, journal=journal, gateway=gateway, counters=counters,
+                active_elapsed_ms=active_elapsed_ms,
+            )
+        except _CompletionVerificationAbort as exc:
+            terminal_code, terminal_message = exc.terminal, str(exc)
+            stop_remaining = exc.terminal == DevTerminal.TASK_FAILED
+            break
         except ExecutionDeadlineExceeded:
             terminal_code = DevTerminal.LIMIT_REACHED
             terminal_message = "active deadline exhausted before tool execution"

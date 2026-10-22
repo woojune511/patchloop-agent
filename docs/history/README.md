@@ -1,5 +1,6 @@
 # History
 
+- [Case finish](2026-10-22-finish-reproduction-results.md).
 - [Helpers](2026-10-22-helper-path-results.md).
 - [Calls](2026-10-22-probe-call.md), [A/B](2026-10-22-probe-invocation-results.md).
 - [Roles](2026-10-22-verification-role-results.md).
@@ -80,15 +81,15 @@
 - [Mutation checkpoint](2026-09-27-mutation-advice-checkpoint.md).
 - [AnyIO](2026-09-27-anyio-fresh-solve.md).
 - [B1 deletion](2026-09-27-anyio-b1-branch-deletion.md).
-- [AnyIO links](2026-09-27-anyio-evidence-action-link.md).
-- [Final probe scope](2026-09-27-anyio-final-probe-scope.md).
-- [Process audit](2026-09-27-anyio-observation-process-audit.md).
+- [Links](2026-09-27-anyio-evidence-action-link.md).
+- [Scope](2026-09-27-anyio-final-probe-scope.md).
+- [Audit](2026-09-27-anyio-observation-process-audit.md).
 - [Comparison](2026-09-27-anyio-observation-repair-comparison.md).
 - [Observation](2026-09-27-anyio-failure-observation.md).
-- [Probe readiness](2026-09-27-anyio-probe-readiness.md).
-- [Planning OFF](2026-09-27-planning-off-regression.md).
+- [Ready](2026-09-27-anyio-probe-readiness.md).
+- [OFF](2026-09-27-planning-off-regression.md).
 - [Timing](2026-09-27-after-source-planning-comparison.md).
-- [After source](2026-09-26-after-source-planning.md).
+- [Source](2026-09-26-after-source-planning.md).
 - [ON/OFF](2026-09-26-planning-off-comparison.md).
 - [Declaration](2026-09-26-declaration-checkpoint-comparison.md).
 - [Decision](2026-09-26-declaration-checkpoint-sampler.md).

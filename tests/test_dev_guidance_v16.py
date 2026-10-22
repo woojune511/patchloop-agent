@@ -55,7 +55,7 @@ def test_current_citation_does_not_claim_semantic_revalidation_after_edit(tmp_pa
 
 
 def test_guidance_preserves_exact_edit_and_optional_note_wire_contracts():
-    from repair_mechanism_expectations import JUDGMENT
+    from repair_mechanism_expectations import FROZEN_ARM, JUDGMENT
     schemas = dev_tool_schemas(finish_enabled=True)
     edit = next(schema for schema in schemas if schema["name"] == "replace_text")
     old_text = edit["parameters"]["properties"]["old_text"]
@@ -79,7 +79,8 @@ def test_guidance_preserves_exact_edit_and_optional_note_wire_contracts():
     for instruction in (
         "smallest sufficient unique exact anchor",
         "evidence_currency=current" if JUDGMENT else "status=current",
-        "never certify", "Source changes can expire notes", "public input",
+        "never certify", "Source changes can expire notes",
+        "public input" if FROZEN_ARM else "original input/path/outcome",
         "Updates are optional",
         "Use concern_id=null for a distinct concern",
     ):

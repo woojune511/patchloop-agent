@@ -241,7 +241,12 @@ listing a limitation alone is insufficient. A material gap that an available act
 could resolve calls for continued work. Regression PASS alone does not prove the
 reported problem is fixed. This is agent judgment, not a new semantic gate or hidden
 success guarantee. Further edits require fresh checks and reassessment.
-No separate review call or mandatory probe is added. Historical PASS,
+Finish automatically replays stale invocation-bound public cases and baseline
+controls through the probe sandbox. Forecasts reserve their action slots; recovery
+reuses deterministic IDs under the solver deadline, without another model call.
+Current mismatch/conflict rejects finish; absent/incomplete evidence stays unverified.
+`submission_verification` records case evidence separately from agent assessment;
+it does not certify requirement mapping or task accuracy. Historical PASS,
 probe execution and notes do not provide current check credit. A diagnostic probe
 does not replace a registered check. `stop_task` ends without submission/evaluation.
 

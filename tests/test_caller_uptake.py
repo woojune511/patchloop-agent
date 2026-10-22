@@ -7,6 +7,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from test_verification_state_comparison import frozen_prompt
 
 from diagnostics import caller_uptake as panel
 from diagnostics import caller_uptake_execution as execution
@@ -15,6 +16,8 @@ from diagnostics import caller_uptake_prepare as preparation
 from patchloop.artifacts import ArtifactStore
 from patchloop.errors import ContractError
 from patchloop.util import canonical_json, sha256_bytes, sha256_json
+
+CALLER_EXECUTION_COMMIT = "0500869de1843fcd8146d1f668df15979fd3cac3"
 
 
 def public_receipt(case="missing"):
@@ -150,7 +153,8 @@ def test_requests_keep_exact_budget_order_and_only_dependency_location_differs(t
     assert len(requests) == 12 and sum(r.max_cost_usd for r in requests) == panel.CAP
     data = [r.model_dump(exclude={"state_root", "prepared_probe_dependencies"}) for r in requests]
     assert all(r == data[0] for r in data)
-    assert panel.invariants()["references"] == 2
+    with frozen_prompt(CALLER_EXECUTION_COMMIT):
+        assert panel.invariants()["references"] == 2
     assert requests[0].evaluation_reserve_seconds == 330
 
 

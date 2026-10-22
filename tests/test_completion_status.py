@@ -34,6 +34,7 @@ def test_only_completion_advice_changes(stage, allowed, failed):
         diff=SimpleNamespace(patch_hash="current-diff"),
         ready_to_submit=stage == "ready_to_submit",
         visible_check_status=[{"status": "FAIL" if failed else "NOT_RUN"}],
+        completion_verification=None,
     )
     policy = SimpleNamespace(
         allowed_tools=allowed, workflow_gate="needs_visible_checks", check_ids=("public-check",),

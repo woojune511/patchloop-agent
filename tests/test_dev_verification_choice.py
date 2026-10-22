@@ -23,6 +23,7 @@ def _guidance(mutation, offered, *, ready=True):
     snapshot = SimpleNamespace(
         diff=SimpleNamespace(patch_hash="current"), ready_to_submit=ready,
         visible_check_status=({"check_id": "public", "status": "PASS" if ready else "NOT_RUN"},),
+        completion_verification=None,
     )
     policy = SimpleNamespace(
         workflow_gate="ready_to_submit" if ready else "needs_visible_checks",

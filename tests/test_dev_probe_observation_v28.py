@@ -199,6 +199,7 @@ def test_submission_requires_judgment_without_a_separate_probe_or_review_action(
     snapshot = SimpleNamespace(
         diff=SimpleNamespace(patch_hash="current"), ready_to_submit=True,
         visible_check_status=({"check_id": "public", "status": "PASS"},),
+        completion_verification=None,
     )
     policy = SimpleNamespace(workflow_gate="ready_to_submit", allowed_tools=allowed)
     guidance = runner._completion_guidance(snapshot, policy)
@@ -222,7 +223,11 @@ def test_experiment_guidance_is_generic_optional_and_uses_existing_inputs():
         assert "For helper probes, state the expected observation" in schema["description"]
         assert "record_observation(value) exactly once" in schema["description"]
     assert set(schema["parameters"]["properties"]) == expected
-    assert "This judgment needs no separate call or mandatory experiment" in DEV_SYSTEM_PROMPT
+    if FROZEN_ARM is None:
+        assert "automatically replays stale invocation-bound cases" in DEV_SYSTEM_PROMPT
+        assert "remain unverified, never a PASS" in DEV_SYSTEM_PROMPT
+    else:
+        assert "This judgment needs no separate call or mandatory experiment" in DEV_SYSTEM_PROMPT
     assert len(DEV_SYSTEM_PROMPT) <= 8007
     for task_specific in ("pyfakefs", "makedirs", "0o700", "ENOTDIR"):
         assert task_specific not in schema["description"] + DEV_SYSTEM_PROMPT
