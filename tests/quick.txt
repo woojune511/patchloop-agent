@@ -9,6 +9,8 @@ tests/test_evidence_recovery.py
 tests/test_verification_scope_state.py
 tests/test_probe_purpose.py
 tests/test_probe_invocation.py
+tests/test_probe_invocation_comparison.py
+tests/test_probe_invocation_grading.py
 tests/test_probe_purpose_comparison.py
 tests/test_thin_policy_gateway.py::test_default_serialization_and_schema_identities_remain_exact
 tests/test_dev_recheck_feedback_v25.py::test_feedback_changes_preserve_wire_limits_and_bounded_prompt

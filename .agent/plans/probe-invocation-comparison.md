@@ -1,6 +1,7 @@
 # Executable caller linkage OFF/ON on Astroid-1333
 
-Status: specification prepared, 2026-10-22. **Not executable, not frozen, not paid-authorized.**
+Status: implementation prepared, 2026-10-22. **No paid authorization.**
+The executable packet is valid only with its final-commit qualification receipts and manifest hash.
 This is a fresh proposed allocation; all prior allocations remain closed. This
 document authorizes no provider/counting call, assessment or experiment resume.
 
@@ -223,10 +224,9 @@ UNKNOWN bills stay separate from this proposed new allocation.
 
 ## Provider-free implementation and freeze gates
 
-This turn prepares only the specification. The comparison-specific OFF adapter,
-controller composition, grader extensions and executable packet remain unimplemented.
-Do not run the old role executor with A/B labels: that would also change architecture.
-Before a later request to freeze an execution packet:
+The diagnostic adapter, same-context controller composition and public grader are
+implemented. The old role executor remains a different experiment. Packet freeze
+requires all of the following evidence at the final implementation commit:
 
 1. Implement the minimal diagnostic adapter: A restores the pinned description,
    fresh observation channel and exact prior review; B uses the current implementation.
@@ -261,9 +261,42 @@ Before a later request to freeze an execution packet:
    phase/invariant hashes, input/displacement/resource evidence, six row requests,
    order/caps, environment, operator-only assessment identities and validation receipts.
 
-The final implementation commit, adapter/grader hashes and executable manifest
-remain TBD; the product-change commit is not an execution qualification. Create a
-distinct comparison discriminator so an old role/state packet cannot authorize it.
-Keep generated state external in append-only hash-chained `dev-run-v1` journals.
-No new CLI is advertised as runnable until implemented and tested. Only after
-freeze/revalidation would exact approval for six rows and USD 5.28 be requested.
+The final implementation commit, adapter/grader hashes and all validation receipts
+are bound by `C:/pt/probe-invocation53/manifest.json`. A missing or rejected packet
+is not qualified. Schema `probe-invocation-comparison-v1` cannot accept an old role
+or state allocation. Generated state stays in external hash-chained journals.
+
+Implemented interfaces (repository virtualenv Python; all preparation is offline):
+
+- `python -m diagnostics.probe_invocation_panel capture --root <packet> --arm A|B`
+- `python -m diagnostics.probe_invocation_qualification --manifest <role51-manifest>`
+  `--audit <role51-audit-public> --annotations <sealed-public-annotations>`
+  `--output <fresh-output> --tokenizer-package <local> --tokenizer-cache <local>`
+- `python -m diagnostics.probe_invocation_panel freeze --root <packet>`
+  `--live C:/pt/probe-invocation53-live --validation <validation.json> --repeat-per-arm 3`
+- `python -m diagnostics.probe_invocation_panel validate --root <packet> --hash <digest>`
+- The separate `diagnostics.probe_invocation_execution` interface has `collect`,
+  `export`, `seal`, `assess`. Collect requires a new exact human authorization and
+  fresh price review. It is NOT_RUN in this preparation.
+
+Public annotations retain the existing role report/claim rubric and add an
+`invocation` block: assigned arm; exact `opportunities()` and `inventory()` values;
+resource feasibility for every offer; semantic `original_scope` with caller,
+arguments, inputs, environment, countercondition and expectation; optional measured
+pairs; subsequent action/application quotes and scope; ordered causal breaks.
+`U_attempt` counts attempted original verification including rejected selections;
+`invocation_expression` separately records a parsed `call_target` call, not a string.
+`U_bound` is B-only mechanical execution, never a semantic scope verdict.
+`delivery_inventory()` distinguishes missing, body, summary, stale and restored
+receipts even when the model does not use them. Empty application/pair lists mean
+no observed supported use/pair; they cannot manufacture a favorable screen.
+
+The additional 91 local-token guidance overhead can trigger an existing size
+handoff near 60k. Replay records both the unchanged-input contrast and a separate
+bounded size-transition sensitivity, with lost/gained line ranges and receipts.
+It does not force a transition before the live counter actually reaches the limit.
+Saved-count anchored estimates use the cached tokenizer and an empirical margin;
+they are not provider counts or a guarantee of model behavior. Only exact dispatch
+counting enforces the unchanged live limit. See the
+[qualification follow-up](../../docs/history/2026-10-22-probe-invocation-qualification.md).
+Only after packet freeze/revalidation would exact paid approval be requested.

@@ -1,26 +1,26 @@
 # History
 
-- [Calls](2026-10-22-probe-call.md).
+- [Calls](2026-10-22-probe-call.md), [A/B](2026-10-22-probe-invocation-qualification.md).
 - [Roles](2026-10-22-verification-role-results.md).
-- [Probe binding](2026-10-21-probe-purpose.md).
+- [Binding](2026-10-21-probe-purpose.md).
 - [Dev20](2026-10-16-mini-swe-dev20-results.md).
-- [Completion](2026-10-16-mini-swe-completion-results.md).
-- [PatchLoop](2026-10-16-patchloop-mini-dev20-results.md).
+- [Finish](2026-10-16-mini-swe-completion-results.md).
+- [Loop](2026-10-16-patchloop-mini-dev20-results.md).
 - [Gap](2026-10-16-assessment-gap-comparison-results.md), [exit audit](2026-10-16-assessment-gap-exit-analysis.md).
-- [Plan grounds](2026-10-16-plan-grounds.md).
+- [Plans](2026-10-16-plan-grounds.md).
 - [Callers](2026-10-18-caller-check.md), [D/E](2026-10-16-output-stop.md).
 - [Host stop](2026-10-16-host-plan-stop.md).
 - [Probe](2026-10-15-pre-edit-probe.md).
 - [Uptake](2026-10-15-uptake-grade.md).
 - [isort I4](2026-10-16-isort-requirement-audit.md).
-- [Hypotheses](2026-10-15-hypothesis-comparison.md).
-- [Navigation](2026-10-08-failure-navigation.md).
-- [Retention](2026-10-06-source-retention-results.md), [cap](2026-10-06-cost-cap-continuation-results.md).
-- [Diagnosis](2026-10-07-public-verification-failure-diagnosis.md).
+- [Ideas](2026-10-15-hypothesis-comparison.md).
+- [Paths](2026-10-08-failure-navigation.md).
+- [Keep](2026-10-06-source-retention-results.md), [cap](2026-10-06-cost-cap-continuation-results.md).
+- [Audit](2026-10-07-public-verification-failure-diagnosis.md).
 - [Closure](2026-10-06-verification-closure-results.md).
 - [Dev20](2026-10-06-current-dev20-results.md).
 - [Prep](2026-10-05-portfolio-preparation.md), [results](2026-10-06-portfolio-dev20-results.md).
-- [Corrections](2026-10-05-click-feedback-results.md), [review](2026-10-05-original-patch-review.md).
+- [Fixes](2026-10-05-click-feedback-results.md), [review](2026-10-05-original-patch-review.md).
 - [Three uses](2026-10-05-three-public-repair-uses.md).
 - [Verification](2026-10-05-repair-verification.md).
 - [Dotenv](2026-10-05-dotenv-public-repair.md).
@@ -95,7 +95,7 @@
 - [Interpretation](2026-09-26-first-interpretation-audit.md).
 - [Candidates](2026-09-26-independent-candidate-comparison.md).
 - [Diagnostic](2026-09-26-diagnostic-claims-verification.md).
-- [Completion](2026-09-26-completion-status-comparison.md).
+- [Finish](2026-09-26-completion-status-comparison.md).
 - [First input](2026-09-26-completion-status-diagnostic.md).
 - [Scope](2026-09-26-verification-scope-audit.md).
 - [Paired](2026-09-26-paired-reference-comparison.md).
