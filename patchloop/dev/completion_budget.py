@@ -124,3 +124,29 @@ def mutation_attempt_budget(state: CompletionState) -> CompletionBudget:
     return completion_budget(replace(
         state, requires_mutation=True, anchor_available=True, repair_read_credit=False,
     ))
+
+
+def minimum_successor_calls(state: CompletionState, tool: str) -> int:
+    """Bound successful successor model calls for an already eligible action.
+
+    This is separate from physical model/tool admission and its protected recovery
+    paths. A required source read must acquire its missing anchor; checks, edits
+    and finish replays must succeed. Otherwise the runner reassesses the new state
+    without a monetary recovery guarantee. Host replays consume tools, not calls.
+    """
+    if tool in {"finish_task", "stop_task"}:
+        return 0
+    if tool in {"read_file", "search_files"}:
+        return completion_budget(replace(state, anchor_available=True)).minimum
+    if tool in {"search_history", "run_probe", "run_tests"}:
+        return completion_budget(state).minimum
+    if tool == "replace_text":
+        return mutation_attempt_budget(state).minimum - 1
+    if tool == "run_check":
+        if state.requires_mutation:
+            # A diagnostic PASS cannot satisfy checks invalidated by the future
+            # edit. It may also retire the failure that qualified for automatic
+            # recheck, so do not carry that old credit into its successor.
+            return completion_budget(replace(state, current_recheck_eligible=False)).minimum
+        return max(0, completion_budget(state).minimum - 1)
+    raise ValueError(f"unknown completion successor tool: {tool}")

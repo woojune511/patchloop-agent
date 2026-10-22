@@ -19,14 +19,31 @@ DEFAULT_OUTPUT_CEILING = 25_000
 MINIMUM_OUTPUT_CEILING = 128
 # Both registered GPT-5.4 snapshots support this maximum (reviewed 2026-09-24).
 MAX_OUTPUT_CEILING = 128_000
-CompletionCostPolicy = Literal["per-call-v1", "completion-reserve-v1"]
+CompletionCostPolicy = Literal["per-call-v1", "completion-reserve-v1", "completion-minimum-v1"]
 DEFAULT_COMPLETION_COST_POLICY = "per-call-v1"
 COMPLETION_RESERVE_POLICY = "completion-reserve-v1"
+COMPLETION_MINIMUM_POLICY = "completion-minimum-v1"
 PRICING_SOURCE = "https://developers.openai.com/api/docs/pricing"
 PRICING_VERIFIED_ON = "2026-09-15"
 
 
-def completion_cost_contract() -> dict[str, object]:
+def completion_cost_contract(
+    policy: CompletionCostPolicy = COMPLETION_RESERVE_POLICY,
+) -> dict[str, object]:
+    if policy == COMPLETION_MINIMUM_POLICY:
+        return {
+            "policy": COMPLETION_MINIMUM_POLICY,
+            "future_input_tokens": segments.MAX_INPUT_TOKENS,
+            "future_output_tokens": MINIMUM_OUTPUT_CEILING,
+            "pricing": "uncached-input-and-minimum-output",
+            "horizon": "minimum-success-path-and-independent-model-tool-slots-v1",
+            "reservation": "largest-offered-action-minimum-successor-v1",
+            "release": "exact-count-for-ready-finish-with-no-successor",
+            "limit": "Successful actions only. Minimum admission; useful output, failure "
+            "recovery and task success are not guaranteed.",
+        }
+    if policy != COMPLETION_RESERVE_POLICY:
+        raise ValueError("completion cost policy has no reservation contract")
     return {
         "policy": COMPLETION_RESERVE_POLICY,
         "future_input_tokens": segments.MAX_INPUT_TOKENS,

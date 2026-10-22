@@ -43,6 +43,7 @@ from patchloop.dev.compaction import CompactionAdapter
 from patchloop.dev.completion_budget import (
     CompletionState,
     completion_budget,
+    minimum_successor_calls,
     mutation_attempt_budget,
 )
 from patchloop.dev.context import SourceProjection, build_observed_source_index
@@ -75,6 +76,7 @@ from patchloop.dev.conversation import (
     validate_model_input,
 )
 from patchloop.dev.cost import (
+    COMPLETION_MINIMUM_POLICY,
     COMPLETION_RESERVE_POLICY,
     DEFAULT_COMPLETION_COST_POLICY,
     DEFAULT_OUTPUT_CEILING,
@@ -275,8 +277,10 @@ def _model_hash(request: RunRequest, pricing: ModelPricing | None) -> str:
             **({"evaluation_reserve_seconds": request.evaluation_reserve_seconds}
                if isinstance(request, DevRunRequest)
                and request.evaluation_reserve_seconds else {}),
-            **({"completion_cost_contract": completion_cost_contract()}
-               if request.completion_cost_policy == COMPLETION_RESERVE_POLICY else {}),
+            **({"completion_cost_contract": completion_cost_contract(
+                request.completion_cost_policy,
+            )}
+               if request.completion_cost_policy != DEFAULT_COMPLETION_COST_POLICY else {}),
             **({"repair_inspection_policy": request.repair_inspection_policy}
                if request.repair_inspection_policy != "protected-v1" else {}),
             **({"segment_contract": segments.contract(
@@ -606,8 +610,10 @@ def _completion_guidance(
             "Investigate the original public caller before editing. Use an original_requirement "
             "probe on the unchanged base, preserving its actual arguments, cwd, fixtures and "
             "environment; a helper or normal-only PASS does not reproduce the reported failure. "
-            "This stage is bounded by two original attempts or six investigation actions and "
-            "the shared completion budget. Release without a failure keeps verification unmet."
+            "Request rejection is not an execution: correct the primary probe request error. "
+            "This stage permits two actual original dispatches, at most two rejected requests "
+            "and six investigation actions, within the shared completion budget. "
+            "Release without a failure keeps verification unmet."
         )
     elif snapshot.ready_to_submit and "finish_task" in allowed:
         stage = "ready_to_submit"
@@ -762,7 +768,8 @@ def _tool_policy(
     remaining_model_calls = max(0, limits.max_model_calls - counters.model_calls)
     cost_unit = 0
     funded_calls = None
-    if completion_cost_policy == COMPLETION_RESERVE_POLICY and cost_ledger is not None:
+    if (completion_cost_policy in {COMPLETION_RESERVE_POLICY, COMPLETION_MINIMUM_POLICY}
+            and cost_ledger is not None):
         cost_unit = cost_ledger.future_call_reservation_nanos()
         funded_calls = (
             cost_ledger.remaining_nanos // cost_unit
@@ -770,7 +777,10 @@ def _tool_policy(
         )
         # No future input must be funded once only the final decision remains.
         # Let exact counting admit a cheaper ready request below the input bound.
-        remaining_model_calls = min(remaining_model_calls, max(int(ready_to_submit), funded_calls))
+        if completion_cost_policy == COMPLETION_RESERVE_POLICY:
+            remaining_model_calls = min(
+                remaining_model_calls, max(int(ready_to_submit), funded_calls),
+            )
     remaining_tool_actions = max(0, limits.max_tool_actions - counters.tool_actions)
     remaining_mutations = max(
         0, limits.max_accepted_mutations - gateway.accepted_mutations
@@ -970,6 +980,38 @@ def _tool_policy(
             0, obligation["max_investigation_actions"] - obligation["investigation_actions"],
         ))
         available_check_ids = ()
+    minimum_cost_successors = None
+    if completion_cost_policy == COMPLETION_MINIMUM_POLICY and funded_calls is not None:
+        # Keep physical model/action recovery slots independent of money. Offer
+        # only actions whose successful minimum successor can be funded, then
+        # reserve the largest successor before the unknown action is generated.
+        minimum_cost_successors = {
+            tool: minimum_successor_calls(completion_state, tool) for tool in allowed
+        }
+        allowed = {
+            tool for tool in allowed
+            if tool in {"finish_task", "stop_task"}
+            or funded_calls >= 1 + minimum_cost_successors[tool]
+        }
+        completion_possible = completion_possible and (
+            funded_calls >= budget.minimum or "finish_task" in allowed
+        )
+        protected_completion_possible &= completion_possible
+        if not completion_possible:
+            allowed = {"stop_task"}
+        inspection_allowed = "read_file" in allowed
+        mutation_allowed = "replace_text" in allowed
+        mutation_protected_completion_possible &= mutation_allowed
+        if "run_check" not in allowed:
+            available_check_ids = ()
+        if not inspection_allowed:
+            max_parallel_reads = exploration_capacity = 0
+        else:
+            inspection_model_slack = min(
+                inspection_model_slack,
+                funded_calls - minimum_cost_successors["read_file"],
+            )
+            exploration_capacity = min(exploration_capacity, inspection_model_slack)
     exploration_state = (
         "last_opportunity"
         if inspection_allowed and exploration_capacity == 1
@@ -1040,7 +1082,26 @@ def _tool_policy(
         optional_mutation_protected_tool_actions=mutation_budget.protected_tool_actions,
         inspection_reserve_tool_actions=inspection_tool_floor,
     )
-    if funded_calls is not None:
+    if funded_calls is not None and minimum_cost_successors is not None:
+        future_calls = max(minimum_cost_successors[tool] for tool in allowed)
+        policy = replace(policy, completion_cost={
+            "policy": completion_cost_policy,
+            "future_input_tokens": segments.MAX_INPUT_TOKENS,
+            "future_output_tokens": completion_cost_contract(
+                COMPLETION_MINIMUM_POLICY,
+            )["future_output_tokens"],
+            "per_call_reservation_nanos": cost_unit,
+            "funded_calls": funded_calls,
+            "admitted_call_slots": max(int("finish_task" in allowed), funded_calls),
+            "future_calls_reserved": future_calls,
+            "future_cost_reserve_nanos": future_calls * cost_unit,
+            "basis": "largest_offered_action_minimum_successor",
+            "recovery_scope": "Protected forecasts retain model/tool slots; money reserves only "
+                              "successful minimum successors, not failure recovery.",
+            "limit": "Successful actions only. Minimum output admission; useful output and task "
+                     "success are not guaranteed.",
+        })
+    elif funded_calls is not None:
         successors = [0]  # Stop and a successful finish need no subsequent call.
         if ("finish_task" in allowed and verification.get("pending_count", 0)
                 and protected_completion_possible):
@@ -2455,18 +2516,6 @@ def _build_latest_exchange(
             }
             for call in calls
         ]
-    note_update = next(
-        (event["payload"] for event in reversed(events)
-         if event["event_type"] == "working_notes_updated"
-         and event["payload"].get("turn_id") == turn_id),
-        None,
-    )
-    note_receipt = note_update.get("receipt") if note_update is not None else None
-    plan_receipt = next((event["payload"]["receipt"] for event in reversed(events)
-                         if event["event_type"] == working_plan.EVENT
-                         and event["payload"].get("turn_id") == turn_id), None)
-    notes = current_payload.get("working_notes", {})
-    lifecycle = (notes.get("last_source_lifecycle") or {}) if isinstance(notes, dict) else {}
     output_items = []
     for action_id in action_ids:
         public_result = project_inspection_result(
@@ -2474,39 +2523,8 @@ def _build_latest_exchange(
             native_action_ids=action_ids,
         )
         public_result = project_probe_result(public_result)
-        note_owner = isinstance(note_receipt, dict) and note_receipt.get("action_id") == action_id
-        expiry_owner = (
-            public_result.get("tool") == "replace_text"
-            and public_result.get("status") == "succeeded"
-            and lifecycle.get("trigger_action_id") == action_id
-            and bool(lifecycle.get("expired_notes"))
-        )
-        if note_owner:
-            # An annotation can fail while the actual action succeeds. Preserve
-            # both outcomes; never rewrite the action status or prior call arguments.
-            public_result["memory_update_result"] = note_receipt
-            if isinstance(notes, dict):
-                notes["last_update_result"] = {
-                    "turn_id": turn_id,
-                    "action_id": action_id,
-                    "delivery": "preceding_function_call_output",
-                }
-                notes.pop("last_update_diagnostics", None)
-        if isinstance(plan_receipt, dict) and plan_receipt.get("action_id") == action_id:
-            public_result["plan_update_result"] = plan_receipt
-        if isinstance(notes, dict) and (note_owner or expiry_owner):
-            # Source expiry belongs to the mutation even without a new annotation.
-            # Never attach a historical expiry to an unrelated later read/check.
-            public_result["working_notes_after_batch"] = {
-                "scope": "after_completed_tool_batch",
-                "turn_id": turn_id,
-                "diff_hash": current_payload.get("current_diff", {}).get("patch_hash"),
-                "available_note_ids": notes.get("available_note_ids", []),
-                "expired_notes": (
-                    lifecycle.get("expired_notes", [])
-                    if lifecycle.get("trigger_action_id") == action_id else []
-                ),
-            }
+        # Optional annotation outcomes remain in current notes/plan state. They
+        # cannot obscure the actual action result or change earlier native items.
         output_items.append({
             "type": "function_call_output",
             "call_id": action_id,
@@ -3141,9 +3159,10 @@ def _run_envelope(
         reproduction_acquisition=request.reproduction_acquisition,
         retained_source_chars=request.retained_source_chars,
         completion_cost_policy=request.completion_cost_policy,
-        completion_cost_contract=(completion_cost_contract()
-                                  if request.completion_cost_policy == COMPLETION_RESERVE_POLICY
-                                  else None),
+        completion_cost_contract=(
+            completion_cost_contract(request.completion_cost_policy)
+            if request.completion_cost_policy != DEFAULT_COMPLETION_COST_POLICY else None
+        ),
         segment_boundary_policy=request.segment_boundary_policy,
         segment_contract=(segments.contract(
             request.segment_boundary_policy, agent_policy=request.agent_policy)

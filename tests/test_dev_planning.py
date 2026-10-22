@@ -243,6 +243,7 @@ def test_native_plan_delivery_and_mock_end_to_end(tmp_path, policy):
     store = ArtifactStore(tmp_path / "artifacts")
     previous = None
     plans_seen = []
+    receipts_seen = []
     for event in events:
         if event["event_type"] != "turn_started":
             continue
@@ -255,6 +256,7 @@ def test_native_plan_delivery_and_mock_end_to_end(tmp_path, policy):
         if policy != "none":
             assert context["working_plan"]["policy"] == policy
             plans_seen.append(context["working_plan"]["plan"])
+            receipts_seen.append(context["working_plan"]["last_update_result"])
         if previous:
             assert items[:len(previous)] == previous
         previous = items
@@ -265,7 +267,10 @@ def test_native_plan_delivery_and_mock_end_to_end(tmp_path, policy):
         assert all(p is not None for p in plans_seen[1:])
         outputs = [json.loads(i["output"]) for i in previous
                    if i.get("type") == "function_call_output"]
-        assert sum("plan_update_result" in r for r in outputs) == 3
+        assert not any("plan_update_result" in r for r in outputs)
+        durable = [event["payload"]["receipt"] for event in events
+                   if event["event_type"] == plans.EVENT]
+        assert receipts_seen == [None, *durable[:3]]
     else:
         assert not any(e["event_type"] == plans.EVENT for e in events)
 

@@ -89,8 +89,16 @@ def test_action_freezes_design_before_probe_and_replay_checks_it(gateway):
     original = backend.run_probe
 
     def observe(*args, **kwargs):
-        start = selected.journal.events()[-1]
-        assert start["event_type"] == "action_started"
+        events = selected.journal.events()
+        dispatch = events[-1]
+        assert dispatch["event_type"] == "probe_execution_started"
+        action_id = kwargs["execution_identity"]["action_id"]
+        assert dispatch["payload"]["action_id"] == action_id
+        start = next(event for event in reversed(events)
+                     if event["event_type"] == "action_started"
+                     and event["payload"]["action_id"] == action_id)
+        assert start["sequence"] < dispatch["sequence"]
+        assert start["payload"]["input_hash"] == dispatch["payload"]["input_hash"]
         assert start["payload"]["arguments"]["comparison"] == design()
         assert "expected_json" not in kwargs and "comparison" not in kwargs
         return original(*args, **kwargs)

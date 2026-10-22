@@ -96,7 +96,8 @@ def test_row27_cross_diff_false_summary_keeps_each_cited_failure_beside_the_note
     ]
     outputs = [json.loads(item["output"]) for item in items
                if item.get("type") == "function_call_output"]
-    assert sum("memory_update_result" in result for result in outputs) == 1
+    assert not any("memory_update_result" in result for result in outputs)
+    assert public["working_notes"]["last_update_result"] == payload["receipt"]
     assert "stdout" not in json.dumps(finding)
     assert "stderr" not in json.dumps(finding)
     before = gateway.journal.path.read_bytes()

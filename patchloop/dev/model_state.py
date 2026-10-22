@@ -181,6 +181,9 @@ def compact_model_state(
     if isinstance(notes, dict):
         # These constant explanations already appear in the fixed system prompt.
         notes.pop("interpretation", None)
+        if isinstance(notes.get("last_update_result"), dict):
+            # The complete optional receipt already carries its diagnostics.
+            notes.pop("last_update_diagnostics", None)
         verification = notes.get("verification", {})
         verification.pop("interpretation", None)
         for item in verification.get("items", []):

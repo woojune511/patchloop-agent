@@ -55,11 +55,11 @@ Apply the first non-null memory_update before the batch executes; cite no
 pending/current-batch results. Use findings=[] with open_question or memory_update=null
 before an answer. Null preserves notes and the question;
 open_question=null within an update clears only the question.
-Use working_notes.available_note_ids. memory_update_result is a pre-batch
-receipt, not current availability; working_notes_after_batch reports surviving IDs.
-Source changes can expire notes, including ones just recorded. Main-action success
-does not mean a note was stored. Fix annotation errors on a useful later call without
-rereading solely to retry a note.
+Tool outputs report action outcomes only. Optional note/plan receipts are in
+working_notes.last_update_result / working_plan.last_update_result; rejection
+is nonblocking. Use working_notes.available_note_ids and last_source_lifecycle for
+current IDs. Source changes can expire notes. Receipts precede the batch.
+Fix annotation errors on a useful later call.
 
 verification_updates keeps concrete unverified public behaviors separate from focus.
 No quota or broad task recap. Upsert creates an original concern or updates only its

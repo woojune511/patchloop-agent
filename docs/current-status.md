@@ -24,40 +24,40 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-[Original obligation and delivery](history/2026-10-22-original-obligation.md) are
-implemented in dev-head. A public-task obligation survives plan/helper changes.
-Opt-in `--reproduction-acquisition bounded-v1` requires probes and offers two
-original attempts or six investigation actions before edits, releasing earlier
-to preserve the protected completion budget. Only an unchanged-base failure
-acquires original evidence. Normal/helper PASS and stage release leave it unmet.
-The flag defaults to `none`; selected live settings have not changed.
+[Reproduction recovery and funding](history/2026-10-23-repro-recovery.md) separates
+primary action results from optional note/plan receipts and separates rejected
+requests from actual dispatch starts. Opt-in `--reproduction-acquisition bounded-v1`
+requires probes; its acquisition phase permits two dispatches, at most two original
+or unclassified request errors and six total investigation actions. Completion
+budgets can release it earlier. A durable backend
+return resumes without another execution; unknown dispatch outcomes stop.
 
-Finish retains/replays acquired cases and rejects current mismatch/conflict.
-Fresh invocation receipts also bind sys.argv, preserving legacy replay bytes.
-Missing/incomplete original evidence returns `unverified_delivery`; verified
-selected cases return `cases_verified_delivery`. Independent acceptance stays
-separate and cannot upgrade missing original verification.
+Opt-in `--completion-cost-policy completion-minimum-v1` requires segmented-v1.
+It keeps physical model/tool recovery slots, closes unaffordable actions and reserves
+their successful minimum check/finish successors before counting/dispatching the call.
+The 128-output-token future floor does not guarantee useful responses or failure recovery.
+Existing selected settings and defaults remain unchanged; all paid allocations are closed.
 
-Final local controls passed 8/8, with matching paired patch hashes and zero
-duplicate-finish probe executions. Focused tests cover malformed requests, phase
-limits, added-case replay budgets, recovery and context delivery. CLI mock smoke
-reached isolated evaluation PASS with safety NOT_RUN and unverified delivery.
-These are scripted protocol controls, not evidence of better LLM repairs.
+The public-task obligation survives plans and helper cases. Only an unchanged-base
+failure plus current comparable support permits `cases_verified_delivery`. Missing
+evidence returns `unverified_delivery`; current mismatch/conflict blocks finish.
+Independent acceptance cannot upgrade original verification. Invocation receipts bind
+sys.argv and preserve legacy replay bytes.
 
-The [bounded-acquisition live pilot](history/2026-10-22-original-obligation-live-results.md)
-retained an unverified obligation in all 34 dispatched contexts but acquired no
-original case: two quote-contract rejections consumed its reserved attempts.
-A later helper probe failed setup. One unchecked edit remained when cost admission
-stopped the run at USD 0.866304600; no finish, submission or evaluation occurred.
-Thus live delivery/replay and repair benefit remain unverified.
-The [trace diagnosis](history/2026-10-23-repro-budget.md) confirms that quote errors
-reached the model alongside separate note errors; the retry kept its purpose/program.
-Rejected admissions released acquisition while probes stayed available. Source-coverage
-warnings were advisory, and per-call cost admission left no funded verification request.
-Retention therefore worked without ensuring error recovery or completion funding.
-Keep the flag off by default. Resolve request/caller/oracle binding and funded
-verification as separate local questions before another paid comparison. All allocations
-are closed; no follow-up is queued. See the [protocol](../.agent/plans/original-obligation.md).
+Local controls exercise request correction, separate caps, interruption/replay,
+annotation isolation and virtual cost admission. Scripted virtual USD 0.30 controls
+reach check/finish with minimum-successor reservation; per-call admission stops early.
+Standard mock smoke reaches isolated evaluation PASS, safety NOT_RUN, unverified delivery.
+Focused controls: 65 PASS; quick suite: 312 PASS. Full coverage plus an unmodified
+short-path recheck: 5,742 PASS, 20 SKIP, no unresolved failures. One Windows temporary
+path failure remains in the initial full-run record. These controls do not show
+improved LLM repair.
+
+The [prior live diagnosis](history/2026-10-23-repro-budget.md) remains the observed
+failure: retained obligation, no acquired original case, unchecked edit and cost stop.
+Whether the model corrects the quote and faithfully binds the caller/arguments/oracle
+is unresolved. Live delivery/replay and repair benefit remain unverified. No follow-up
+paid run is queued or authorized.
 
 ## Supporting evidence
 

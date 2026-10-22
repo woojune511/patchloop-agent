@@ -9,7 +9,7 @@ Past commands, approvals, results and diagnostic narratives are searchable throu
 
 All generated state belongs outside the repository. Use short Windows paths:
 
-- `C:\pt\tmp\<unique-name>`: disposable test workspaces, one per process.
+- `C:\pt\tmp\<short-id>`: disposable test workspaces, one per process.
 - `C:\pt\validation\<unique-name>.xml`: retained reports outside test scratch.
 - `C:\patchloop-state`: durable runs, artifacts and managed workspaces.
 
@@ -25,7 +25,7 @@ Run focused tests, Ruff, the fast suite and mock smoke as relevant. Keep focused
 validation below two minutes. This test path needs no provider or Docker call.
 
 ```powershell
-$testId = 'pytest-' + [guid]::NewGuid().ToString('N').Substring(0, 8)
+$testId = 't' + [guid]::NewGuid().ToString('N').Substring(0, 8)
 $testRoot = Join-Path 'C:\pt\tmp' $testId
 $testReport = Join-Path 'C:\pt\validation' ($testId + '.xml')
 New-Item -ItemType Directory -Force -Path 'C:\pt\tmp', 'C:\pt\validation' | Out-Null
@@ -35,22 +35,15 @@ uv run --locked pytest tests -n 4 --dist loadfile --max-worker-restart 0 --durat
 # After pytest and its children exit, recycle only $testRoot.
 ```
 
-Replace `tests` with relevant files and omit `-n 4` for small focused checks. Keep
-runtime bytes unchanged while tests run. The full suite uses four pytest-xdist
-workers, groups each file on one worker, and disables automatic worker restarts.
-Workers receive separate basetemps beneath the invocation's fresh root. Independent
-invocations still need separate roots and disjoint selections. Record commands,
-results, reports and unexecuted checks;
-old suite totals do not verify a current change.
+For focused checks select relevant files and omit `-n 4`. Freeze runtime while testing.
+Full-suite workers keep files together, use separate basetemps and cannot restart.
+Independent invocations need separate roots. Record commands, results and unexecuted
+checks; old suite totals do not verify current changes.
 
-CI runs on pull requests and pushes to `main`, avoiding a second branch-push run
-for an open PR. Both Windows and Linux use Python 3.12 and the same complete suite
-with four file-grouped workers, followed by task validation and mock smoke. Ruff
-remains a separate step. The slowest 20 test phases appear in the log; JUnit reports
-are uploaded even after a failed test step and retained for 14 days. Dependency sync
-and command execution use `--locked`, so inconsistent project metadata and lockfile
-fail instead of being updated during validation. Parallel scheduling changes neither
-test selection nor the real-Docker opt-in boundary.
+CI runs on pull requests and `main`: Windows/Linux Python 3.12, four file-grouped
+workers, task validation, mock smoke and separate Ruff. Logs include the slowest 20
+phases; JUnit reports persist 14 days even on failure. `--locked` rejects metadata/lock
+drift. Parallel scheduling preserves test selection and the real-Docker opt-in boundary.
 
 ## Mock end-to-end
 
@@ -212,7 +205,12 @@ verified local copies without network/install. Add `--enable-probes
 [dependency contract](../.agent/prepared-probe-dependencies.md) before preparation.
 
 For other context, planning, cost or repair policies, read the relevant internal
-contract and CLI compatibility checks first. Reusable probe cases have a separate
+contract and CLI compatibility checks first. Opt-in `--completion-cost-policy
+completion-minimum-v1` requires segmented-v1 and reserves the successful minimum
+check/finish path behind each offered action. It closes unaffordable exploration
+before dispatch while retaining model/tool recovery slots. Its 128-token future
+output floor does not guarantee useful responses or failure recovery. Existing cost
+defaults remain unchanged. Reusable probe cases have a separate
 [case contract](../.agent/probe-cases.md). Optional `--probe-recheck saved-program-v1`
 requires enabled probes and `cases-v1`; it reruns the last saved program after edits
 within existing budgets and never gates submission. Defaults remain off; see the
@@ -240,8 +238,9 @@ within the solver budget and without another model call. Current mismatch/confli
 rejects finish. `stop_task` abandons without submission/evaluation.
 
 For a selected runnable report, `--enable-probes --reproduction-acquisition bounded-v1`
-offers pre-edit investigation: two original attempts or six investigation actions,
-releasing earlier to preserve the protected completion budget (default `none`).
+offers pre-edit investigation: two actual original dispatches, at most two rejected
+requests, and six total investigation actions. Rejected requests consume no execution
+attempt. It releases earlier to preserve completion budgets (default `none`).
 Release leaves the task-bound obligation unmet. Helper/normal PASS cannot acquire
 the failure. Fresh caller receipts bind sys.argv, arguments, cwd and selected
 input/environment identities. See the [contract](../.agent/evidence-recovery.md).
@@ -290,7 +289,6 @@ validation permits metadata-only completion, without loading credentials,
 recreating workspaces, preflighting Docker or rerunning evaluation. Exact-envelope
 and provider-uncertainty checks still apply.
 
-A completed probe uses ordinary replay. An interrupted probe without a durable
-result may rerun only after confirming cleanup of its exact owned container on
-the same bound snapshot; that is isolated recovery, not an exactly-once guarantee.
-Cleanup uncertainty stops execution.
+A completed probe uses ordinary replay. A fresh durable backend return resumes
+postprocessing without another execution. A dispatch without that receipt stops
+with execution uncertainty; it is never automatically repeated.

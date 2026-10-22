@@ -207,11 +207,15 @@ def test_second_admitted_original_is_pending_until_its_result_is_durable(acquire
         "action_id": "second-pending", "tool": "run_probe",
         "arguments": {"purpose": {"kind": "original_requirement"}},
         "baseline_diff_hash": obligation.EMPTY_DIFF,
+        "probe_request": {"policy": obligation.PROBE_STAGES, "status": "accepted",
+                          "kind": "original_requirement"},
     }})
     completion = gateway.completion_verification(diff_hash=gateway.current_diff_hash)
     interrupted = obligation.review(events, gateway.public_task, completion,
                                     acquisition=obligation.ACQUISITION)
-    assert interrupted["original_attempts"] == 2
+    assert interrupted["original_attempts"] == 1
+    assert interrupted["pending_original_requests"] == 1
+    assert interrupted["original_attempts_reserved"] == 1
     assert interrupted["stage"] == "pending" and interrupted["reason"] == "attempt_pending"
 
 

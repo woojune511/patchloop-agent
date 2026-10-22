@@ -201,12 +201,11 @@ def test_parallel_owner_receipt_delivery_and_restart_replay_are_exactly_once(tmp
         item["call_id"]: json.loads(item["output"])
         for item in model_input if item.get("type") == "function_call_output"
     }
-    assert outputs["owner"]["memory_update_result"] == payload["receipt"]
-    assert all("memory_update_result" not in outputs[owner] for owner in ["no-update", "ignored"])
+    assert all("memory_update_result" not in output for output in outputs.values())
     projected = input_context(model_input)["working_notes"]
     assert projected["verification"]["model_open_concern_ids"] == ["v1"]
-    assert projected["last_update_result"]["delivery"] == "preceding_function_call_output"
-    assert "verification" not in projected["last_update_result"]
+    assert projected["last_update_result"] == payload["receipt"]
+    assert projected["last_update_result"]["verification"]["available_concern_ids"] == ["v1"]
     echoed = {
         item["call_id"]: json.loads(item["arguments"])
         for item in model_input if item.get("type") == "function_call"
@@ -313,14 +312,11 @@ def test_mock_verification_annotations_keep_call_counts_and_native_delivery(tmp_
     assert updates[2]["receipt"]["verification"]["status"] == "rejected"
     assert updates[3]["verification_state"]["items"][0]["decision"]["outcome"] == "resolved"
     turns = [event["payload"] for event in events if event["event_type"] == "turn_started"]
-    for index, (turn, _receipt) in enumerate(zip(turns[1:], updates[:3], strict=True), start=1):
+    for turn, update in zip(turns[1:], updates[:3], strict=True):
         items = json.loads(Path(turn["model_input_artifact"]["path"]).read_text(encoding="utf-8"))
         outputs = [json.loads(item["output"]) for item in items
                    if item.get("type") == "function_call_output"]
-        receipts = [output["memory_update_result"] for output in outputs
-                    if "memory_update_result" in output]
-        assert receipts == [prior["receipt"] for prior in updates[:index]]
+        assert not any("memory_update_result" in output for output in outputs)
         notes = input_context(items)["working_notes"]
         assert notes["verification"]["model_open_concern_ids"] == ["v1"]
-        assert notes["last_update_result"]["delivery"] == "preceding_function_call_output"
-        assert "verification" not in notes["last_update_result"]
+        assert notes["last_update_result"] == update["receipt"]

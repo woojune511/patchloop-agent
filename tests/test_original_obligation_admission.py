@@ -117,6 +117,8 @@ def test_malformed_purpose_stays_a_recoverable_failure(gateway_factory, purpose)
     state = gateway.state_snapshot().completion_verification["original_obligation"]
     assert state["status"] == "unverified" and state["stage"] == "pending"
     assert state["original_attempts"] == 0 and state["investigation_actions"] == 1
+    assert state["request_errors"] == 1 and state["max_request_errors"] == 2
+    assert result.output["probe_stage"] == "preflight_rejected"
     assert state["baseline_failure_case_ids"] == []
     restored = restore(gateway)
     assert restored.state_snapshot().completion_verification["original_obligation"] == state

@@ -179,7 +179,7 @@ def test_question_before_observation_and_null_update_have_distinct_effects(sourc
     assert gateway.journal.path.read_bytes() == before
 
 
-def test_native_parallel_receipt_is_attached_once_without_echoing_annotation(
+def test_native_parallel_receipt_stays_in_state_without_echoing_annotation(
     source_gateway, tmp_path,
 ):
     gateway, _, _ = source_gateway
@@ -212,9 +212,7 @@ def test_native_parallel_receipt_is_attached_once_without_echoing_annotation(
         item["call_id"]: json.loads(item["output"])
         for item in model_input if item.get("type") == "function_call_output"
     }
-    assert outputs["owner"]["memory_update_result"] == payload["receipt"]
-    assert "memory_update_result" not in outputs["no-update"]
-    assert "memory_update_result" not in outputs["ignored"]
+    assert all("memory_update_result" not in output for output in outputs.values())
     for output in outputs.values():
         assert output["status"] == "succeeded"
         assert "memory_update" not in output["output"].get("inspection_intent", {})
@@ -227,13 +225,13 @@ def test_native_parallel_receipt_is_attached_once_without_echoing_annotation(
             call.turn_decision.model_dump(mode="json")
         )
     notes = input_context(model_input)["working_notes"]
+    assert notes["last_update_result"] == payload["receipt"]
     assert notes["last_update_result"]["action_id"] == "owner"
-    assert notes["last_update_result"]["delivery"] == "preceding_function_call_output"
-    assert "findings" not in notes["last_update_result"]
+    assert notes["last_update_result"]["findings"][0]["status"] == "rejected"
     assert "last_update_diagnostics" not in notes
 
 
-def test_mock_row_recovers_notes_via_native_receipts_without_extra_model_or_tool_calls(
+def test_mock_row_recovers_notes_via_state_receipts_without_extra_model_or_tool_calls(
     tmp_path: Path, monkeypatch,
 ):
     class NotingMock(MockDevAdapter):
@@ -272,15 +270,13 @@ def test_mock_row_recovers_notes_via_native_receipts_without_extra_model_or_tool
     inputs = [json.loads(Path(turn["model_input_artifact"]["path"]).read_text(encoding="utf-8"))
               for turn in turns]
     assert len(inputs) == 4
-    for index, (items, _payload) in enumerate(zip(inputs[1:], payloads, strict=True), start=1):
+    for items, payload in zip(inputs[1:], payloads, strict=True):
         outputs = [json.loads(item["output"]) for item in items
                    if item.get("type") == "function_call_output"]
-        receipts = [output["memory_update_result"] for output in outputs
-                    if "memory_update_result" in output]
-        assert receipts == [prior["receipt"] for prior in payloads[:index]]
+        assert not any("memory_update_result" in output for output in outputs)
         assert all(output["status"] == "succeeded" for output in outputs)
         notes = input_context(items)["working_notes"]
-        assert notes["last_update_result"]["delivery"] == "preceding_function_call_output"
+        assert notes["last_update_result"] == payload["receipt"]
         assert "last_update_diagnostics" not in notes
     final_notes = input_context(inputs[-1])["working_notes"]["findings"]
     assert [note["note_id"] for note in final_notes] == ["n1"]

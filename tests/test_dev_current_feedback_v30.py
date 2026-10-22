@@ -102,7 +102,10 @@ def test_old_receipt_is_referenced_only_after_exact_native_delivery(mismatch):
         assert "RECEIPT_BODY" not in canonical_json(notes)
         assert "last_update_diagnostics" not in notes
     else:
-        assert notes == state["working_notes"]  # No dangling or wrong-result reference.
+        # No dangling or wrong-result reference; only redundant diagnostics are omitted.
+        assert notes["last_update_result"] == receipt
+        assert notes == {key: value for key, value in state["working_notes"].items()
+                         if key != "last_update_diagnostics"}
     assert notes["available_note_ids"] == []
     assert notes["last_source_lifecycle"] == state["working_notes"]["last_source_lifecycle"]
     assert (state, history) == before
@@ -153,16 +156,15 @@ def test_unannotated_mutation_delivers_expiry_once_and_preserves_prior_receipt(
     assert items[:len(previous)] == previous
     native = _outputs(items)[edit.action_id]
     assert "memory_update_result" not in native
-    assert native["working_notes_after_batch"] == {
-        "scope": "after_completed_tool_batch", "turn_id": "turn-expire",
-        "diff_hash": gateway.current_diff_hash, "available_note_ids": [],
-        "expired_notes": [{"note_id": "n1", "reason": "source_changed"}],
-    }
+    assert "working_notes_after_batch" not in native
     assert "working_notes_after_batch" not in result.model_dump()
-    receipt_ref = input_context(items)["working_notes"]["last_update_result"]
-    assert receipt_ref == {"turn_id": "turn-create-note", "action_id": "create-note",
-                           "delivery": "preceding_function_call_output"}
-    assert _outputs(items)["create-note"]["memory_update_result"] == update["receipt"]
+    notes = input_context(items)["working_notes"]
+    assert notes["last_update_result"] == update["receipt"]
+    assert notes["available_note_ids"] == []
+    assert notes["last_source_lifecycle"]["trigger_action_id"] == edit.action_id
+    assert notes["last_source_lifecycle"]["expired_notes"] == [
+        {"note_id": "n1", "reason": "source_changed"}]
+    assert "memory_update_result" not in _outputs(items)["create-note"]
     saved = gateway.journal.path.read_bytes(), (gateway.workspace / "src.py").read_bytes()
     gateway = _restart(gateway)
     assert _input(gateway, [result], tmp_path, context=canonical) == items
@@ -174,7 +176,9 @@ def test_unannotated_mutation_delivers_expiry_once_and_preserves_prior_receipt(
     final = _input(gateway, [later], tmp_path)
     assert final[:len(items)] == items
     assert "working_notes_after_batch" not in _outputs(final)["later"]
-    assert input_context(final)["working_notes"]["last_update_result"] == receipt_ref
+    assert input_context(final)["working_notes"]["last_update_result"] == update["receipt"]
+    assert input_context(final)["working_notes"]["last_source_lifecycle"] == (
+        notes["last_source_lifecycle"])
     assert input_context(final)["working_notes"]["available_note_ids"] == []
 
 

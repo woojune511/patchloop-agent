@@ -184,9 +184,17 @@ def test_native_feedback_freeze_replay_and_conflict(frozen, monkeypatch):
 
     def run(probe, *args, **kwargs):
         assert "construction_links" not in kwargs
-        event = DevJournal(frozen.result, rollout.RUN_ID).events()[-1]
-        assert event["event_type"] == "action_started"
-        assert event["payload"]["arguments"]["construction_links"] == [annotation()]
+        events = DevJournal(frozen.result, rollout.RUN_ID).events()
+        dispatch = events[-1]
+        assert dispatch["event_type"] == "probe_execution_started"
+        action_id = kwargs["execution_identity"]["action_id"]
+        assert dispatch["payload"]["action_id"] == action_id
+        start = next(event for event in reversed(events)
+                     if event["event_type"] == "action_started"
+                     and event["payload"]["action_id"] == action_id)
+        assert start["sequence"] < dispatch["sequence"]
+        assert start["payload"]["input_hash"] == dispatch["payload"]["input_hash"]
+        assert start["payload"]["arguments"]["construction_links"] == [annotation()]
         return original(probe, *args, **kwargs)
 
     monkeypatch.setattr(MockProbe, "run_probe", run)

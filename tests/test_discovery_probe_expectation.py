@@ -146,8 +146,15 @@ def test_frozen_action_native_feedback_replay_and_conflict(frozen, monkeypatch):
     def run(probe, *args, **kwargs):
         assert "expected_json" not in kwargs
         events = DevJournal(frozen.result, rollout.RUN_ID).events()
-        start = events[-1]
-        assert start["event_type"] == "action_started"
+        dispatch = events[-1]
+        assert dispatch["event_type"] == "probe_execution_started"
+        action_id = kwargs["execution_identity"]["action_id"]
+        assert dispatch["payload"]["action_id"] == action_id
+        start = next(event for event in reversed(events)
+                     if event["event_type"] == "action_started"
+                     and event["payload"]["action_id"] == action_id)
+        assert start["sequence"] < dispatch["sequence"]
+        assert start["payload"]["input_hash"] == dispatch["payload"]["input_hash"]
         assert start["payload"]["arguments"]["expected_json"] == '{"value":0}'
         return original(probe, *args, **kwargs)
 

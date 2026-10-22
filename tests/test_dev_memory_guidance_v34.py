@@ -152,15 +152,23 @@ def test_compact_guidance_keeps_optional_evidence_lifecycle_and_concern_boundari
         "first non-null", "before the batch executes",
         "pending/current-batch results", "findings=[]", "memory_update=null",
         "Null preserves notes and the question", "clears only the question",
-        "working_notes.available_note_ids", "pre-batch\nreceipt, not current availability",
-        "working_notes_after_batch", "Source changes can expire notes",
-        "does not mean a note was stored", "without\nrereading solely to retry a note",
+        "working_notes.available_note_ids", "Source changes can expire notes",
         "No quota", "concern_id=null for a distinct concern", "Exact repeats do nothing",
         "already observed successful current-diff check/probe", "evidence_action_id",
         "Baseline evidence cannot\nvalidate a candidate", "Dismiss needs a reason",
         "Neither certifies semantic coverage", "after diff changes", "source-note expiry",
         "Use [] for no concern change", "do not mechanically gate actions or finish",
     ):
+        assert instruction in memory
+    feedback = (
+        ("Tool outputs report action outcomes only", "working_notes.last_update_result",
+         "working_plan.last_update_result", "is nonblocking", "last_source_lifecycle",
+         "Receipts precede the batch", "Fix annotation errors on a useful later call")
+        if FROZEN_ARM is None else
+        ("pre-batch\nreceipt, not current availability", "working_notes_after_batch",
+         "does not mean a note was stored", "without\nrereading solely to retry a note")
+    )
+    for instruction in feedback:
         assert instruction in memory
 
 

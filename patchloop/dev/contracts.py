@@ -495,7 +495,7 @@ class RunRequest(StrictModel):
             raise ValueError("--agent-policy thin requires --planning-policy none")
         if (self.completion_cost_policy != cost.DEFAULT_COMPLETION_COST_POLICY
                 and self.context_policy != segments.POLICY):
-            raise ValueError("--completion-cost-policy completion-reserve-v1 requires segmented-v1")
+            raise ValueError("--completion-cost-policy reservation requires segmented-v1")
         if (self.segment_boundary_policy != segments.DEFAULT_BOUNDARY_POLICY
                 and self.context_policy != segments.POLICY):
             raise ValueError("--segment-boundary-policy size-only-v1 requires segmented-v1")
@@ -643,9 +643,11 @@ class RunEnvelope(StrictModel):
             raise ValueError("history search requires segmented-v1 and current policy")
         if self.agent_policy == "thin" and self.planning_policy != "none":
             raise ValueError("thin policy forbids planning state")
-        if self.completion_cost_policy == cost.COMPLETION_RESERVE_POLICY:
+        if self.completion_cost_policy != cost.DEFAULT_COMPLETION_COST_POLICY:
             if (self.context_policy != segments.POLICY
-                    or self.completion_cost_contract != cost.completion_cost_contract()):
+                    or self.completion_cost_contract != cost.completion_cost_contract(
+                        self.completion_cost_policy,
+                    )):
                 raise ValueError("completion reserve requires segmented-v1 and its exact contract")
         elif self.completion_cost_contract is not None:
             raise ValueError("per-call cost policy has no completion reserve contract")

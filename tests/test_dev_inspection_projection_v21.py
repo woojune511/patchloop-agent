@@ -207,8 +207,8 @@ def test_parallel_native_receipt_cache_and_restart_preserve_originals(tmp_path):
         assert json.loads(native["arguments"]) == runner._provider_tool_arguments(call)
         assert json.dumps(items).count(call.turn_decision.basis) == 1
         assert json.dumps(items).count(call.turn_decision.evidence_goal) == 1
-    assert outputs["owner"]["memory_update_result"] == update["receipt"]
-    assert "memory_update_result" not in outputs["second"]
+    assert all("memory_update_result" not in output for output in outputs.values())
+    assert input_context(items)["working_notes"]["last_update_result"] == update["receipt"]
     for result in results:
         assert outputs[result.action_id]["output"]["spans"] == result.output["spans"]
         assert outputs[result.action_id]["output"]["evidence_gain"] == (

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import difflib
+import inspect
 import re
 import threading
 from collections.abc import Sequence
@@ -2643,6 +2644,25 @@ class DevToolGateway:
                 if (pending is not None
                         and pending.get("reproduction_binding") != reproduction_binding):
                     raise RecoveryError("pending reproduction differs from its admitted purpose")
+                execution_arguments = (
+                    {key: prepared_probe[key] for key in ("question", "python_source")}
+                    if prepared_probe is not None else probe_arguments
+                )
+                try:
+                    inspect.signature(self._run_probe).bind(
+                        **execution_arguments,
+                        execution_identity={"run_id": self.journal.run_id,
+                                            "action_id": call.action_id},
+                        reproduction_binding=reproduction_binding, input_hash=input_hash,
+                        legacy_pending=pending is not None and "probe_request" not in pending,
+                    )
+                except TypeError as exc:
+                    raise ContractError(f"invalid probe arguments: {exc}") from exc
+                self._probe_execution_source(
+                    question=execution_arguments["question"],
+                    python_source=execution_arguments["python_source"],
+                    reproduction_binding=reproduction_binding,
+                )
             except (PatchLoopError, ValidationError, ValueError) as exc:
                 preflight_error = exc
         if pending is None:
@@ -2676,6 +2696,12 @@ class DevToolGateway:
                        if "memory_update" in call.model_fields_set else {}),
                     "baseline_diff_hash": baseline,
                     "baseline_changed_files": baseline_summary.changed_files,
+                    **({"probe_request": {
+                        "policy": original_obligation.PROBE_STAGES,
+                        "status": "rejected" if preflight_error is not None else "accepted",
+                        "kind": original_obligation.request_kind(
+                            call.arguments, reproduction_binding),
+                    }} if call.name == "run_probe" else {}),
                     **({"reproduction_binding": reproduction_binding}
                        if reproduction_binding is not None else {}),
                     **({probe_binding_key: prepared_probe}
@@ -2781,6 +2807,8 @@ class DevToolGateway:
                        if prepared_probe is not None else probe_arguments),
                     execution_identity={"run_id": self.journal.run_id, "action_id": call.action_id},
                     reproduction_binding=reproduction_binding,
+                    input_hash=input_hash,
+                    legacy_pending=pending is not None and "probe_request" not in pending,
                 )
                 if prepared_probe is not None and prepared_probe["case"] is not None:
                     output["case_comparison"] = probe_cases.compare(prepared_probe["case"], output)
@@ -2879,6 +2907,13 @@ class DevToolGateway:
             failure_output = (
                 copy.deepcopy(exc.details) if isinstance(exc, PatchLoopError) else {}
             )
+            if call.name == "run_probe":
+                failure_output.setdefault(
+                    "probe_stage", "preflight_rejected" if preflight_error is not None
+                    and (pending is None or pending.get("probe_request", {}).get("status")
+                         == "rejected") else "recovery_rejected" if preflight_error is not None
+                    else "setup_unavailable" if self.probe_sandbox is None else "dispatch_failed",
+                )
             if call.name in READ_TOOLS:
                 failure_output["read_request_hash"] = read_request_hash
             elif call.name == "replace_text" and "mutation_failure" not in failure_output:
@@ -3679,12 +3714,11 @@ class DevToolGateway:
             )
         return output
 
-    def _run_probe(
-        self, question: str, python_source: str, *, execution_identity: dict[str, str],
+    @staticmethod
+    def _probe_execution_source(
+        question: str, python_source: str, *,
         reproduction_binding: dict[str, Any] | None = None,
-    ) -> dict[str, Any]:
-        if self.probe_sandbox is None:
-            raise ContractError("public probes are disabled for this run")
+    ) -> str:
         if not isinstance(question, str) or not 1 <= len(question) <= 500:
             raise ContractError("probe question must contain 1-500 characters")
         if not isinstance(python_source, str) or not 1 <= len(python_source) <= 8_000:
@@ -3693,19 +3727,70 @@ class DevToolGateway:
                             if reproduction_binding is not None else python_source)
         if len(execution_source) > 8_000:
             raise ContractError("probe plus reproduction observer exceeds the 8000-character limit")
+        return execution_source
+
+    def _run_probe(
+        self, question: str, python_source: str, *,
+        execution_identity: dict[str, str], input_hash: str,
+        reproduction_binding: dict[str, Any] | None = None, legacy_pending: bool = False,
+    ) -> dict[str, Any]:
+        if self.probe_sandbox is None:
+            raise ContractError("public probes are disabled for this run")
+        execution_source = self._probe_execution_source(
+            question, python_source, reproduction_binding=reproduction_binding,
+        )
         summary = self.current_diff
         baseline = summary.patch_hash
         targets = self._execution_targets(execution_identity, summary=summary)
-        output = self.probe_sandbox.run_probe(
-            self.workspace, question, execution_source,
-            deadline=self.deadline, execution_identity=execution_identity,
-            **({"execution_targets": targets}
-               if getattr(self.probe_sandbox, "supports_public_execution", False) else {}),
-        )
+        identity = {
+            "policy": original_obligation.PROBE_STAGES,
+            "action_id": execution_identity["action_id"], "input_hash": input_hash,
+            "execution_source_hash": sha256_bytes(execution_source.encode("utf-8")),
+            "baseline_diff_hash": baseline,
+        }
+        stages = {kind: [e["payload"] for e in self.journal.events()
+                         if e["event_type"] == kind
+                         and e["payload"].get("action_id") == execution_identity["action_id"]]
+                  for kind in ("probe_execution_started", "probe_execution_finished")}
+        started, returned = (stages[kind] for kind in stages)
+        if (started and started != [identity]) or len(returned) > 1 or (returned and (
+                not started or {k: returned[0].get(k) for k in identity} != identity)):
+            raise RecoveryError("probe execution receipt identity changed")
+        if legacy_pending or (started and not returned):
+            raise RecoveryError(
+                "probe dispatch has no durable result; do not execute this action again",
+                details={"probe_stage": "dispatch_pending", "execution_uncertain": True},
+            )
+        if returned:
+            output = copy.deepcopy(returned[0]["output"])
+        else:
+            self.journal.append("probe_execution_started", identity)
+            try:
+                output = self.probe_sandbox.run_probe(
+                    self.workspace, question, execution_source,
+                    deadline=self.deadline, execution_identity=execution_identity,
+                    **({"execution_targets": targets}
+                       if getattr(self.probe_sandbox, "supports_public_execution", False) else {}),
+                )
+            except (ExecutionDeadlineExceeded, GitExecutionUncertain):
+                raise
+            except (PatchLoopError, ValueError, OSError, RuntimeError) as exc:
+                # No returned receipt can establish whether execution or cleanup
+                # completed. Stop this run on the first call, not only on resume.
+                details = copy.deepcopy(exc.details) if isinstance(exc, PatchLoopError) else {}
+                raise RecoveryError(
+                    "probe backend did not return a durable execution result",
+                    details={**details, "probe_stage": "dispatch_pending",
+                             "execution_uncertain": True,
+                             "backend_error_type": type(exc).__name__,
+                             "backend_error_code": getattr(exc, "code", "TOOL_CONTRACT_ERROR")},
+                ) from exc
+            self.journal.append("probe_execution_finished", {**identity, "output": output})
         observed_diff_hash = WorkspaceManager.diff_summary(
             self.workspace, deadline=self._recovery_read_deadline(),
         ).patch_hash
-        receipt = {**output, "question": question, "diff_hash": baseline,
+        receipt = {**output, "probe_stage": "execution_returned",
+                   "question": question, "diff_hash": baseline,
                    "workspace_diff_hash": baseline,
                    "public_execution": output.get("public_execution") or public_feedback(
                        targets, reason="backend_or_command_unmeasured",

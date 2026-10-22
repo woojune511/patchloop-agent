@@ -76,25 +76,21 @@ def test_native_mutation_feedback_separates_update_receipt_from_current_ids(tmp_
     original_receipt = copy.deepcopy(payload["receipt"])
     items = _input(gateway, results, tmp_path)
     output = _outputs(items)[call.action_id]
-    assert output["memory_update_result"] == original_receipt
+    assert "memory_update_result" not in output
+    assert "working_notes_after_batch" not in output
     assert original_receipt["scope"] == "before_tool_batch"
     assert original_receipt["diff_hash_at_update"] == before_hash
     assert original_receipt["note_ids_after_update"] == ["n1"]
-    assert output["working_notes_after_batch"] == {
-        "scope": "after_completed_tool_batch", "turn_id": "turn-expire",
-        "diff_hash": gateway.current_diff_hash, "available_note_ids": [],
-        "expired_notes": [{"note_id": "n1", "reason": "source_changed"}],
-    }
     context = input_context(items)
     assert context["current_diff"]["patch_hash"] != before_hash
     assert context["working_notes"]["available_note_ids"] == []
-    assert context["working_notes"]["last_update_result"] == {
-        "turn_id": "turn-expire", "action_id": call.action_id,
-        "delivery": "preceding_function_call_output",
-    }
+    assert context["working_notes"]["last_update_result"] == original_receipt
+    lifecycle = context["working_notes"]["last_source_lifecycle"]
+    assert lifecycle["trigger_action_id"] == call.action_id
+    assert lifecycle["expired_notes"] == [{"note_id": "n1", "reason": "source_changed"}]
     assert "last_update_diagnostics" not in context["working_notes"]
     assert payload["receipt"] == original_receipt
-    assert sum("memory_update_result" in result for result in _outputs(items).values()) == 1
+    assert not any("memory_update_result" in result for result in _outputs(items).values())
 
 
 def test_parallel_first_owner_alone_gets_pre_and_post_batch_note_feedback(tmp_path):
@@ -109,13 +105,7 @@ def test_parallel_first_owner_alone_gets_pre_and_post_batch_note_feedback(tmp_pa
     payload, results = _completed_batch(gateway, calls, "parallel")
     items = _input(gateway, results, tmp_path)
     outputs = _outputs(items)
-    assert outputs["owner"]["memory_update_result"] == payload["receipt"]
-    assert outputs["owner"]["working_notes_after_batch"] == {
-        "scope": "after_completed_tool_batch", "turn_id": "parallel",
-        "diff_hash": gateway.current_diff_hash, "available_note_ids": ["n1"],
-        "expired_notes": [],
-    }
-    for action_id in ("without-update", "ignored"):
+    for action_id in ("without-update", "owner", "ignored"):
         assert "memory_update_result" not in outputs[action_id]
         assert "working_notes_after_batch" not in outputs[action_id]
     assert "ignored_additional_memory_updates" in {
@@ -123,6 +113,8 @@ def test_parallel_first_owner_alone_gets_pre_and_post_batch_note_feedback(tmp_pa
     }
     context = input_context(items)
     assert context["working_notes"]["available_note_ids"] == ["n1"]
+    assert context["working_notes"]["last_update_result"] == payload["receipt"]
+    assert context["working_notes"]["last_update_result"]["action_id"] == "owner"
     echoed = {
         item["call_id"]: json.loads(item["arguments"])["turn_decision"]
         for item in items if item.get("type") == "function_call"
@@ -144,11 +136,12 @@ def test_old_expiry_is_not_reported_as_an_unrelated_batch_lifecycle_event(tmp_pa
     payload, results = _completed_batch(gateway, [call], "later")
     items = _input(gateway, results, tmp_path)
     output = _outputs(items)[call.action_id]
-    assert output["memory_update_result"] == payload["receipt"]
-    assert output["working_notes_after_batch"]["expired_notes"] == []
-    assert output["working_notes_after_batch"]["available_note_ids"] == []
-    assert output["working_notes_after_batch"]["turn_id"] == "later"
+    assert "memory_update_result" not in output
+    assert "working_notes_after_batch" not in output
     context = input_context(items)
+    assert context["working_notes"]["last_update_result"] == payload["receipt"]
+    assert context["working_notes"]["last_update_result"]["turn_id"] == "later"
+    assert context["working_notes"]["available_note_ids"] == []
     assert context["working_notes"]["last_source_lifecycle"] == prior_lifecycle
 
     no_update = note_call("later-without-update", None)

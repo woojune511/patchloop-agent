@@ -1,6 +1,6 @@
 # History
 
-- [Obligation diagnosis](2026-10-23-repro-budget.md), with local/live evidence
+- [Recovery](2026-10-23-repro-recovery.md), with diagnosis and local/live evidence
 - [Live case](2026-10-22-original-case-live-results.md)
 - [Case finish](2026-10-22-finish-reproduction-results.md)
 - [Helpers](2026-10-22-helper-path-results.md)

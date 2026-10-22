@@ -5,14 +5,11 @@ current facts; source/tests own behavior. Read relevant sections only.
 
 ## Choosing the next improvement
 
-Start with an observed task-solving problem and public evidence. Separate the
-behavior from its suspected cause and alternatives. Choose the smallest diagnostic,
-correction, or simplification that resolves a useful uncertainty. Memory, planning,
-review, and new gates need a reason grounded in the problem; usage alone is not progress.
-Record significant completed investigations once in history: problem, evidence,
-hypothesis, change, result, and next question. Current status keeps only the active
-implication, unresolved question, and evidence pointers; replace stale statements.
-Comparisons answer causal questions when needed; routine fixes need no new process.
+Start from observed public failures; separate evidence, suspected causes and alternatives.
+Use the smallest diagnostic or change. Memory, planning and gates need demonstrated
+benefit. Record significant investigations once in history with problem, evidence,
+hypothesis, change, result and next question. Replace stale current status with the
+active decision and evidence links. Routine fixes need no comparison process.
 
 ## Source map
 
@@ -36,11 +33,8 @@ Comparisons answer causal questions when needed; routine fixes need no new proce
 Use public task inputs for agent work. Private task material and evaluator internals
 never enter coding-agent context, including through diagnostics or repair hints.
 
-Completion-budget forecasts take an immutable state snapshot and perform no I/O.
-The runner assembles that snapshot and owns tool admission; `dev/cost.py` owns
-provider cost admission. Keep arithmetic independent of journals, gateways and model
-calls. Refactors change runtime identity; exact-envelope resume must still reject
-a different runtime.
+Completion forecasts are pure snapshot arithmetic. The runner owns tool admission;
+`dev/cost.py` owns provider admission. Preserve exact-envelope runtime identity.
 
 ## Loop and mutation contract
 
@@ -49,10 +43,9 @@ Gates: `needs_mutation`, `needs_visible_checks`, `ready_to_submit`, and opt-in
 `needs_original_reproduction`.
 Gates and resource horizons expose registered tools, never unrestricted shell.
 
-`replace_text` uses `TextReplacementIntent` and `CausalRevision`. Project public
-fields explicitly; preserve required/null rules, keyword order, recovery defaults
-and absent-versus-explicit serialization. Keep recovery annotations unadvertised
-and cross-field/anchor/scope validation intact.
+`replace_text` uses `TextReplacementIntent` and `CausalRevision`. Preserve explicit
+public fields, required/null rules, keyword order, absent/default serialization,
+unadvertised recovery annotations, and cross-field/anchor/scope validation.
 
 Batch 1–4 `read_file`/`search_files` calls; other tools run singly.
 Opt-in history search: eight candidates, execution-only ranking, whole originals
@@ -85,10 +78,13 @@ fixed probe comparisons.
 Finish replays stale invocation-bound cases. Current mismatch/conflict blocks;
 missing/incomplete evidence stays unverified. Mapping remains model-authored.
 `original_obligation.py` retains the public-task obligation separately from cases.
-`--reproduction-acquisition bounded-v1` requires probes and offers at most two
-original attempts or six investigation actions before edits; the protected completion
-budget can release it earlier. Releases preserve unmet verification. Journal roots,
-action identities and release receipts survive recovery; forecasts never write them.
+`--reproduction-acquisition bounded-v1` requires probes. Before edits it permits two
+actual original dispatches, two rejected requests, and six total investigation actions;
+completion budgets can release it earlier. Rejected requests do not count as executions.
+Stage receipts distinguish accepted/rejected requests, dispatch and returned results.
+Legacy unknown dispatches reserve slots without becoming execution evidence. Releases
+preserve unmet verification. Journal roots and action/release identities survive recovery;
+forecasts never write them.
 Only an unchanged-base failure plus comparable current support permits
 `cases_verified_delivery`; otherwise finish returns `unverified_delivery`.
 Delivery, selected-case verification and independent acceptance stay separate.
@@ -124,6 +120,10 @@ Latest observations must reach the next request. `--retained-source-chars` selec
 unseen gaps. The setting binds model/envelope identity and resume. Native history
 and the separate 60,000-token segmented limit are unchanged. Result handoffs may
 discard older history below that limit. Run-local notes are not cross-run memory.
+Fresh native tool outputs contain only the primary action result. Note/plan update
+receipts stay in their separate current-state fields, including failures and note IDs.
+An annotation failure neither replaces an action error nor turns a successful action
+into a failure. Preserve legacy native outputs and their exact replay bytes.
 
 External state is append-only, hash-chained `dev-run-v1` JSONL with immutable envelopes.
 Preserve `action_id + input_hash`: replay completed mutations/checks, reject conflicting
@@ -150,8 +150,9 @@ A timely, bound `solver_finished` receipt permits recovery after the solver cuto
 with no new solver actions; see [current panel](current-dev20.md).
 After expiry permit only bounded metadata/reconciliation work. Unknown process or
 container cleanup stops execution/repetitions; preserve the original failure and typed
-cleanup evidence. Interrupted probes may rerun only on their bound snapshot after
-confirmed owned-container cleanup; this is not an exactly-once process guarantee.
+cleanup evidence. Fresh probe dispatches without a durable return receipt stop on
+uncertainty; never execute the same action again. Durable returns resume postprocessing
+without another backend call. A dispatch receipt is not proof of completed execution.
 
 ## Live, cost, and evaluation boundary
 
@@ -164,6 +165,12 @@ never start Docker Desktop or pull/build images automatically.
 
 Count actual input immediately before dispatch and reserve conservative input/output
 cost using reviewed prices. Cost admission may reduce the desired output ceiling.
+Opt-in `completion-minimum-v1` requires segmented-v1. First retain existing model/tool
+slot rules, then remove actions whose successful minimum successors cannot be funded.
+Reserve the largest offered successor at 60K uncached input plus 128 output per call;
+ready finish uses exact counting without a successor reserve. Rechecks/replays keep
+their real tool slots. This funds minimum admission, not useful output, failure recovery
+or correct repairs. `per-call-v1` and `completion-reserve-v1` retain their contracts.
 Use zero SDK retries; count, transport, billing, or cleanup uncertainty stops all
 remaining repetitions. Reservations are not billed usage; unknown usage is not zero.
 Panel usage restoration includes compaction and adds only the row's delta to shared cost.
@@ -212,24 +219,18 @@ Live repair requires exact public-request/cost approval; live dev requires dev-t
 
 ## Validation checklist
 
-Use the explicit quick selection below for routine validation; add focused tests
-for other changed owners. It covers contracts, journal recovery, cost reservations,
-history search and isolated mock smoke, not the whole repository. Keep regressions;
-run all tests for broad integration changes or an explicit request. Documentation-only
-changes need `tests/test_documentation_layout.py`. Aim for under two minutes.
-Freeze runtime during provenance checks. Use short, unique external basetemps;
-parallel runs need separate roots. Never sweep durable evidence or a parent directory.
+Use the quick selection plus changed-owner tests for routine validation; run the full
+suite for broad integration changes. Docs-only changes need `test_documentation_layout.py`.
+Keep focused validation under two minutes and freeze runtime during provenance checks.
+Use short unique external basetemps; never sweep durable evidence or a parent directory.
 
 ```powershell
 uv run ruff check patchloop tests
-uv run --locked pytest @tests/quick.txt --basetemp C:\pt\tmp\<unique-name>
+uv run --locked pytest @tests/quick.txt --basetemp C:\pt\tmp\<short-id>
 # Full regression when warranted:
-uv run --locked pytest tests -n 4 --dist loadfile --max-worker-restart 0 --basetemp C:\pt\tmp\<unique-name>
+uv run --locked pytest tests -n 4 --dist loadfile --max-worker-restart 0 --basetemp C:\pt\tmp\<short-id>
 ```
 
-The quick suite includes mock smoke. Full-suite workers keep each file together;
-worker crashes fail validation. Real-Docker tests require opt-in and existing images.
-Mock/local evidence does not prove live behavior.
-Before handoff check public/private boundaries, current links, external state, exact
-recovery identities, unrelated edits, and unchanged historical artifacts. Report what
-was implemented, locally tested, live-executed, and left `NOT_RUN` separately.
+Quick tests include mock smoke. Worker crashes fail validation. Docker tests require
+opt-in and existing images. Before handoff verify boundaries, links, recovery identities,
+unrelated edits and historical bytes. Separate local evidence from live and `NOT_RUN`.
