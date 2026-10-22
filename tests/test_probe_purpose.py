@@ -10,7 +10,7 @@ from test_dev_probe_cases import TEXT, ExecutingProbe, mock_request
 from test_dev_tools import mutation_call, read_calls
 from test_evidence_recovery import context, intent
 
-from patchloop.dev import reproduction, runner
+from patchloop.dev import probe_invocation, reproduction, runner
 from patchloop.dev.contracts import DevModelTurn, RequestedTool
 from patchloop.dev.conversation import assemble_model_input, reconstruct_state
 from patchloop.dev.history_evidence import separate
@@ -20,9 +20,8 @@ from patchloop.dev.state import DevJournal
 from patchloop.util import canonical_json, sha256_bytes
 
 SOURCE = (
-    "from mini_data_utils.csvlite import parse_rows\n"
     "print('progress before: not a JSON document', flush=True)\n"
-    f"record_observation(parse_rows({TEXT!r}))\n"
+    f"record_observation(call_target(args=[{TEXT!r}]))\n"
     "print('progress after', flush=True)\n"
 )
 
@@ -54,7 +53,10 @@ def test_same_action_binds_purpose_observation_and_replay_across_handoff(
     assert all(text in first.output["stdout"] for text in ("progress before", "progress after"))
     assert evidence["observed_json"] is not None
     assert evidence["binding"]["definition"]["observation_channel"] == (
-        reproduction.OBSERVATION_CHANNEL)
+        probe_invocation.CHANNEL)
+    actual = evidence["call_observation"]["calls"][0]
+    assert actual["entrypoint"] == intent(gateway.public_task)["entrypoint"]
+    assert actual["arguments"] == {"args": [TEXT], "kwargs": {}}
     assert gateway.reproduction_review(diff_hash=gateway.current_diff_hash)[
         "items"][0]["evidence"]["status"] == "REFUTED"
     gateway.execute_batch(read_calls())
@@ -69,6 +71,11 @@ def test_same_action_binds_purpose_observation_and_replay_across_handoff(
     assert current.execute(call).replayed and backend.calls == 2
     review = current.reproduction_review(diff_hash=current.current_diff_hash)
     assert review["items"][0]["evidence"]["status"] == "SUPPORTED"
+    assert review["items"][0]["comparison_status"] == "mismatch_to_match"
+    assert review["items"][0]["replay_action_id"] == "original"
+    for phase in ("baseline", "latest"):
+        assert review["items"][0][phase]["execution_link"]["status"] == "called"
+        assert "args" in review["items"][0][phase]["execution_link"]["actual_conditions"]
     assert review["required"]["status"] == "UNKNOWN"
     assert review["items"][0]["repair_success"] == "not_assessed"
     state = compact_model_state(context(current, smoke_package), [])
@@ -117,7 +124,7 @@ def test_logs_invalid_values_and_crashes_never_acquire_comparison_credit(
 ):
     gateway, _, _ = gateway_factory()
     gateway.probe_sandbox = ExecutingProbe()
-    source = f"from mini_data_utils.csvlite import parse_rows\nvalue=parse_rows({TEXT!r})\n{tail}"
+    source = f"value=call_target(args=[{TEXT!r}])\n{tail}"
     result = gateway.execute(probe(gateway.public_task, source=source))
     assert result.status == "succeeded", result
     observation = result.output["reproduction"]
@@ -142,8 +149,11 @@ def test_helper_and_missing_call_stay_unverified_and_output_limits_stay_in_force
         damaged = copy.deepcopy(valid.output)
         # Reattach the channel as it arrived from the sandbox, before host stripping.
         prefix = reproduction.marker(valid.output["reproduction"]["binding"])
-        trace = {**valid.output["reproduction"]["call_observation"], "observation": {
-            "count": 1, "json": valid.output["reproduction"]["observed_json"], "error": None}}
+        observed = valid.output["reproduction"]["call_observation"]
+        trace = {key: observed[key] for key in ("calls", "incomplete")}
+        trace["observation"] = {
+            "count": 1, "json": valid.output["reproduction"]["observed_json"], "error": None,
+            "call_count": len(observed["calls"])}
         damaged["stderr"] = prefix + json.dumps(trace)
         damaged[flag] = True
         judged = reproduction.compare(damaged, valid.output["reproduction"]["binding"])

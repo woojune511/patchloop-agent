@@ -40,8 +40,17 @@ therefore supplies its mapping and expectation in that same action. Missing or
 invalid mapping fields fail before execution; no separate registration is needed.
 Null is only for replay. The choice remains model-authored, not certified coverage.
 
-For original-requirement probes, call the injected `record_observation(value)`
-exactly once with the actual JSON-compatible result, at most 2,048 UTF-8 bytes.
+For original-requirement probes, invoke the declared callable through injected
+`call_target(args=[...], kwargs={...}, input_paths=[...], environment_keys=[...])`.
+It resolves the public import path, including aliases and constructors, and calls
+that target with the supplied arguments. It records arguments, cwd, sys.path,
+Python/platform, selected environment value hashes and selected fixture-content
+hashes immediately before the call. Select fixture roots, not implementation
+files: a changed candidate must be allowed to produce a different result.
+Empty selections do not certify that external inputs or environment are irrelevant.
+
+Then call the injected `record_observation(value)` exactly once with the actual
+JSON-compatible result, at most 2,048 UTF-8 bytes, after all selected target calls.
 Print progress normally. Stdout/stderr are logs, not the predicate's input; the
 recorded value travels with the bounded call-observation report. For example,
 record `{"has_error": actual_has_error}` and let the host compare it to the frozen
@@ -56,8 +65,10 @@ healthy process as a mismatching value; process success is not task success.
 The host binds the task, purpose, predicate, observation channel and authored
 program hash before execution. New purpose/predicate/program means a distinct case.
 Repeating an identical selection retains the original baseline identity.
-Unadvertised legacy `reproduction` arguments preserve prior action/recovery
-identities and their stdout comparator. Logs are never automatically converted
+New selections bind `invoke-declared-call-v1`. Existing `record-observation-v1`
+and legacy stdout bindings retain their exact wrappers on replay; they do not
+silently acquire the new linkage. Unadvertised legacy `reproduction` arguments
+preserve prior action/recovery identities. Logs are never automatically converted
 into declared cases, and old results are not regraded.
 
 The provider-facing schema omits only the entrypoint regex. Strict mode, required
@@ -67,13 +78,16 @@ returned a healthy response with this projection. It did not establish repair
 success or the provider's internal cause. The subsequent twelve-run comparison
 completed with settled billing, but accepted repairs remained A/B 0/6.
 
-For declared reproductions only, an in-process observer records up to four calls
-to the named Python entrypoint, bounded primitive arguments, cwd and sys.path.
-Unsupported/truncated arguments or absent calls prevent comparison. Receiver
-object state, arbitrary external effects and all environment variables are not
-certified. This is diagnostic feedback, not an attestation. The observer and
+The invocation adapter records at most four calls, four input roots and 16 selected
+environment names per call. A snapshot covers at most 64 entries/1 MiB in total;
+missing paths and directory contents are included. Symlinks, oversized/unsupported
+arguments, deferred async/generator execution, absent calls or an observation
+recorded before later calls prevent comparison. The report retains its 6,000-char
+bound. Arbitrary object state, external effects and unselected inputs/environment
+remain unverified; in-process feedback is not an attestation. The adapter and
 authored program together must fit the unchanged 8,000-character source limit;
-the existing sandbox/output/deadline limits still apply.
+the larger adapter leaves less authoring space. Sandbox/output/deadline limits
+remain unchanged. No extra probe or tool call is automatically dispatched.
 
 Replay using the original `action_id`, with question/source/purpose null.
 The existing replay path keeps the exact program and binding across edits and
@@ -92,12 +106,19 @@ their fixed program/predicate identity and baseline/latest result. Their separat
 arguments/setup: matched gives `SUPPORTED`, mismatched gives `REFUTED`, both give
 `CONFLICT`, and no comparable result gives `UNKNOWN`. A later success on the same
 snapshot cannot erase a failure; unrelated checks or changed inputs cannot close it.
-Edits make earlier observations historical. Fresh scratch cwd paths are normalized
-while preserving their relative relationships.
+Edits make earlier observations historical. New-channel pairs also require the
+same selected fixture contents/environment and host execution profile/dependencies.
+Fresh scratch and selected input roots are normalized while preserving relative
+relationships; argument types stay distinct. Return/exception changes are outcomes,
+not input drift. A matched value with changed conditions stays unpaired/UNKNOWN.
 
 The bounded view shows three cases, prioritizing conflict/refutation, plus counts
 for all case states and omitted cases. At most two witness action IDs per case
-identify the success/failure results. `other_executions` shows the latest three
+identify the success/failure results. Each case keeps a replay action ID and
+baseline/latest execution linkage. New receipts expose a bounded concrete-condition
+preview, condition hash and environment hash; omitted preview characters are counted.
+Legacy receipts expose only their weaker name-trace status/count.
+`other_executions` shows the latest three
 unbound diagnostics/checks with actual execution flags, scope and an omission count;
 zero exit and suite PASS do not acquire original-requirement coverage. Existing
 recent probe bodies and the unsuccessful-observation catalog remain separate.
@@ -114,8 +135,9 @@ remains `not_assessed`; private acceptance stays outside agent context. Declarat
 fields are excluded from evidence ranking and labelled as annotations in returned
 originals. The current review is mutable state, not an archived observation.
 
-Focused checks: `tests/test_probe_purpose.py`, `tests/test_evidence_recovery.py`,
-`tests/test_verification_scope_state.py`.
+Focused checks: `tests/test_probe_invocation.py`, `tests/test_probe_purpose.py`,
+`tests/test_evidence_recovery.py`, `tests/test_verification_scope_state.py`.
+[Executable caller binding](../docs/history/2026-10-22-probe-call.md).
 [Purpose and observation channel](../docs/history/2026-10-21-probe-purpose.md).
 [State separation and saved-log replay](../docs/history/2026-10-20-verification-state-separation.md).
 Diagnostic probe overrides must forward the host-bound `reproduction_binding`,

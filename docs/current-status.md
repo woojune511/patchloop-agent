@@ -25,12 +25,9 @@ See [implementation guide](../.agent/guide.md), [operations](operations.md),
 
 ## Active decision
 
-[PatchLoop dev20](history/2026-10-16-patchloop-mini-dev20-results.md): 8 PASS/10 FAIL/
-2 NOT_RUN at row cost caps; USD 7.01172285, cumulative USD 13.27841505.
-[Mini](history/2026-10-16-mini-swe-dev20-results.md): 10 PASS/5 FAIL/5 NOT_RUN.
-[Completion](history/2026-10-16-mini-swe-completion-results.md): 2 PASS/3 FAIL;
-mixed 12/20 is not uniform accuracy. Mini's SQL metadata mismatch limits comparison.
-Allocations closed; no paid follow-up or quality gain established.
+[PatchLoop dev20](history/2026-10-16-patchloop-mini-dev20-results.md),
+[Mini](history/2026-10-16-mini-swe-dev20-results.md) and
+[completion](history/2026-10-16-mini-swe-completion-results.md): closed; no quality claim.
 
 [C/D](history/2026-10-16-plan-grounds.md): closed, 0/8 each; USD 5.74993635.
 [Purpose](history/2026-10-16-output-stop.md): D 4/16; E NOT_RUN, USD 1.47315645.
@@ -70,6 +67,10 @@ bound probe unused, B1 FAIL. Rejected-batch size handoffs
 [Role A/B](history/2026-10-22-verification-role-results.md): closed, USD 3.19329735;
 repair A/B 0/3; final unsupported claims 2/2 and 3/3 among claims. A1 unsubmitted.
 Reports delivered 6/6; original-caller verification still missing. No adoption.
+
+[Caller linkage](history/2026-10-22-probe-call.md): declared targets are invoked;
+pairing checks observed arguments, fixture contents and environment. Handoffs
+retain actual scope. Local implementation only; model uptake/repair gains unmeasured.
 
 See [panel contract](../.agent/current-dev20.md); prior panels closed.
 

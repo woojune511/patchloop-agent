@@ -1,5 +1,6 @@
 # History
 
+- [Calls](2026-10-22-probe-call.md).
 - [Roles](2026-10-22-verification-role-results.md).
 - [Probe binding](2026-10-21-probe-purpose.md).
 - [Dev20](2026-10-16-mini-swe-dev20-results.md).
@@ -39,10 +40,10 @@
 - [Calibration](2026-10-02-swebench-lite-dev20-calibration.md).
 - [Inventory](2026-10-02-swebench-lite-dev20-inventory.md).
 - [Mini](2026-10-02-swebench-lite-mini-pilot.md).
-- [Lite preflight](2026-10-02-swebench-lite-preflight.md).
+- [Preflight](2026-10-02-swebench-lite-preflight.md).
 - [Public checks](2026-10-02-swebench-lite-public-checks.md).
-- [Darts close-out](2026-10-01-darts-decision-scope-closeout.md).
-- [Zero-width](2026-10-01-zero-width-ownership-diagnosis.md).
+- [Darts](2026-10-01-darts-decision-scope-closeout.md).
+- [Zero](2026-10-01-zero-width-ownership-diagnosis.md).
 - [Priorities](2026-10-01-failure-priority-review.md).
 - [PDM](2026-10-01-pdm-repair-observation.md).
 - [Guidance](2026-10-01-verification-guidance-baseline.md).
@@ -76,7 +77,7 @@
 - [Live checkpoint](2026-09-27-checkpoint-live-preparation.md).
 - [Continuation](2026-09-27-checkpoint-continuation.md).
 - [Mutation checkpoint](2026-09-27-mutation-advice-checkpoint.md).
-- [AnyIO fresh solves](2026-09-27-anyio-fresh-solve.md).
+- [AnyIO](2026-09-27-anyio-fresh-solve.md).
 - [B1 deletion](2026-09-27-anyio-b1-branch-deletion.md).
 - [AnyIO links](2026-09-27-anyio-evidence-action-link.md).
 - [Final probe scope](2026-09-27-anyio-final-probe-scope.md).

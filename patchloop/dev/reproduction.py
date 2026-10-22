@@ -11,6 +11,7 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from patchloop.dev import probe_invocation
 from patchloop.dev.probe_cases import observation_json
 from patchloop.errors import ContractError, RecoveryError
 from patchloop.util import sha256_bytes, sha256_json
@@ -25,12 +26,19 @@ DESCRIPTION = (
     "kind=original_requirement verifies a public requirement and must include its literal "
     "requirement_quote, fully qualified Python entrypoint, input_conditions, "
     "environment_conditions and expected_json in that same object. No separate declaration "
-    "step is needed. For original_requirement call record_observation(value) exactly once "
+    "step is needed. For original_requirement execute the declared entrypoint with injected "
+    "call_target(args=[...], kwargs={...}, input_paths=[...], environment_keys=[...]). It "
+    "resolves public aliases and constructors; do not replace it with a helper call. Select "
+    "fixture files/directories in input_paths, not candidate implementation files; select "
+    "relevant environment variable names in environment_keys. Empty lists mean no selected "
+    "external inputs/variables, not complete environment coverage. Then call "
+    "record_observation(value) exactly once "
     "with the actual JSON-compatible observation (at most 2048 UTF-8 bytes). Print progress "
     "normally: stdout/stderr are logs, never the comparison value. Report an observed bug "
     "as a value, not an assertion against expected behavior; the host compares it. Setup "
     "failures, crashes and incomplete observations remain unverified. "
-    "The harness observes the declared Python call and compares the recorded value with the frozen "
+    "The harness records actual arguments, input-content fingerprints and execution environment "
+    "at the call, and compares the recorded value with the frozen "
     "expectation; neither proves that your chosen call represents the public requirement. "
     + REPLAY_DESCRIPTION + " Changing them creates a different experiment, not resolution "
     "of the old one. reproduction_review separates helpers, unobserved calls, changed setup "
@@ -92,7 +100,7 @@ def selection(arguments):
         return None, None
     if not isinstance(purpose, dict) or purpose.get("kind") != "original_requirement":
         raise ContractError("probe purpose must be helper or original_requirement")
-    return {k: v for k, v in purpose.items() if k != "kind"}, OBSERVATION_CHANNEL
+    return {k: v for k, v in purpose.items() if k != "kind"}, probe_invocation.CHANNEL
 
 
 def bind(raw, public_task, source, action_id, *, replay=None, events=(),
@@ -242,7 +250,10 @@ def marker(binding):
 
 def program(source, binding):
     trace = _TRACE
-    if binding["definition"].get("observation_channel") == OBSERVATION_CHANNEL:
+    channel = binding["definition"].get("observation_channel")
+    if channel == probe_invocation.CHANNEL:
+        trace = probe_invocation.OBSERVER
+    elif channel == OBSERVATION_CHANNEL:
         # Keep the legacy wrapper byte-for-byte for old declaration/action replays.
         trace = trace.replace("_pr_rows = []", _RECORD + "\n_pr_rows = []", 1).replace(
             '{"calls": _pr_rows, "incomplete": _pr_more[0]}',
@@ -263,7 +274,9 @@ def compare(output, binding):
     frames = [part for part in stderr.split("\n") if part.startswith(prefix)]
     result["stderr"] = "\n".join(part for part in stderr.split("\n") if not part.startswith(prefix))
     trace = {"calls": [], "incomplete": True}
-    recorded = binding["definition"].get("observation_channel") == OBSERVATION_CHANNEL
+    channel = binding["definition"].get("observation_channel")
+    invoked = channel == probe_invocation.CHANNEL
+    recorded = channel in {OBSERVATION_CHANNEL, probe_invocation.CHANNEL}
     if len(frames) == 1:
         try:
             candidate = json.loads(frames[0][len(prefix) :])
@@ -275,7 +288,8 @@ def compare(output, binding):
                 and isinstance(candidate["calls"], list)
                 and len(candidate["calls"]) <= 4
                 and all(
-                    isinstance(c, dict)
+                    probe_invocation.valid_call(c, binding["definition"]["entrypoint"])
+                    if invoked else isinstance(c, dict)
                     and set(c) == {"entrypoint", "arguments", "cwd", "sys_path"}
                     and c["entrypoint"] == binding["definition"]["entrypoint"]
                     and isinstance(c["arguments"], dict)
@@ -291,7 +305,8 @@ def compare(output, binding):
     actual, reason = observation_json(result) if not recorded else (None, "missing_observation")
     if recorded:
         value = trace.get("observation")
-        if isinstance(value, dict) and set(value) == {"count", "json", "error"}:
+        fields = {"count", "json", "error"} | ({"call_count"} if invoked else set())
+        if isinstance(value, dict) and set(value) == fields:
             if (value["error"] or type(value["count"]) is not int
                     or value["count"] not in (0, 1)):
                 reason = "invalid_or_multiple_observations"
@@ -304,11 +319,18 @@ def compare(output, binding):
                     _, reason = observation_json({**result, "stdout": value["json"]})
             elif value["count"] == 1:
                 reason = "invalid_or_multiple_observations"
+            if invoked and value["count"] == 1 and not value["error"] and (
+                    type(value["call_count"]) is not int
+                    or value["call_count"] != len(trace["calls"])):
+                reason = "observation_not_after_target_calls"
         if result.get("setup_checks", {}).get("status") == "failed":
             reason = "setup_check_failed"
         trace = {key: trace[key] for key in ("calls", "incomplete")}
     if not trace["calls"] or trace["incomplete"]:
         reason = "declared_call_unobserved_or_incomplete"
+    if invoked:
+        trace.update(binding_method=probe_invocation.CHANNEL,
+                     execution_environment=probe_invocation.environment(result))
     result["reproduction"] = {
         "binding": binding,
         "call_observation": trace,
@@ -441,9 +463,17 @@ def review(events, current_diff, *, public_task=None):
                 )
 
         def compact(row):
-            return (
-                None if row is None else {k: v for k, v in row.items() if k != "call_observation"}
-            )
+            if row is None:
+                return None
+            trace = row["call_observation"]
+            link = (probe_invocation.summary(trace)
+                    if trace.get("binding_method") == probe_invocation.CHANNEL else {
+                        "status": "incomplete" if trace["incomplete"] else
+                        "called" if trace["calls"] else "not_called",
+                        "call_count": len(trace["calls"]), "binding_method": "legacy_name_trace",
+                    })
+            return {**{k: v for k, v in row.items() if k != "call_observation"},
+                    "execution_link": link}
 
         evidence = _case_evidence(case, current_diff)
         if evidence["status"] == "CONFLICT":
@@ -455,6 +485,7 @@ def review(events, current_diff, *, public_task=None):
                 "baseline": compact(base),
                 "latest": compact(latest),
                 "comparison_status": progress,
+                "replay_action_id": case["binding"]["root_action_id"],
                 "evidence": evidence,
                 "requirement_mapping": "model_authored_unverified",
                 "unverified_scope": [
@@ -499,6 +530,10 @@ def review(events, current_diff, *, public_task=None):
 
 def call_identity(trace):
     """Allow a fresh scratch cwd, preserving path relationships and all observed values."""
+
+    if trace.get("binding_method") == probe_invocation.CHANNEL:
+        # Python equality merges True/1/1.0; those are different call inputs.
+        return sha256_json(probe_invocation.conditions(trace))
 
     def relative(value, cwd):
         if isinstance(value, str) and (
