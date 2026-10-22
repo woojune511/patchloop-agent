@@ -68,9 +68,9 @@ bound probe unused, B1 FAIL. Rejected-batch size handoffs
 repair A/B 0/3; final unsupported claims 2/2 and 3/3 among claims. A1 unsubmitted.
 Reports delivered 6/6; original-caller verification still missing. No adoption.
 
-[Caller linkage](history/2026-10-22-probe-call.md): declared targets are invoked;
-pairing checks observed arguments, fixture contents and environment. Handoffs
-retain actual scope. Local implementation only; model uptake/repair gains unmeasured.
+[Caller linkage](history/2026-10-22-probe-call.md): local only.
+[OFF/ON plan](../.agent/plans/probe-invocation-comparison.md): same-context phases,
+3/arm, USD 5.28 total; separate uptake/judgment/repair. Not frozen or authorized.
 
 See [panel contract](../.agent/current-dev20.md); prior panels closed.
 
