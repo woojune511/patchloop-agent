@@ -79,7 +79,7 @@ for the specified mini snapshot. No provider generation or input counting occurr
 Preparation diagnostics and initial failures remain under
 `C:/pt/probe-invocation53-work`. Final qualification, focused/quick/full XML,
 source/environment bindings and `validation.json` belong to
-`C:/pt/probe-invocation53/final`. The final implementation commit is recorded in those
+`C:/pt/probe-invocation53/frozen`. The final implementation commit is recorded in those
 receipts and the immutable `manifest.json`; freeze rejects a different commit,
 changed implementation, missing qualification or changed skip set. A missing
 manifest means preparation is not complete. No results are borrowed from an old

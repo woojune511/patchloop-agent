@@ -262,7 +262,7 @@ requires all of the following evidence at the final implementation commit:
    order/caps, environment, operator-only assessment identities and validation receipts.
 
 The final implementation commit, adapter/grader hashes and all validation receipts
-are bound by `C:/pt/probe-invocation53/final/manifest.json`. A missing or rejected packet
+are bound by `C:/pt/probe-invocation53/frozen/manifest.json`. A missing or rejected packet
 is not qualified. Schema `probe-invocation-comparison-v1` cannot accept an old role
 or state allocation. Generated state stays in external hash-chained journals.
 
@@ -284,9 +284,11 @@ Public annotations retain the existing role report/claim rubric and add an
 resource feasibility for every offer; semantic `original_scope` with caller,
 arguments, inputs, environment, countercondition and expectation; optional measured
 pairs; subsequent action/application quotes and scope; ordered causal breaks.
-`U_attempt` counts attempted original verification including rejected selections;
-`invocation_expression` separately records a parsed `call_target` call, not a string.
-`U_bound` is B-only mechanical execution, never a semantic scope verdict.
+`U_attempt` follows the arm-specific definition above, including rejected programs.
+`invocation_expression` detects authored calls even in invalid syntax, excluding
+strings/comments; `original_selections` separately counts declared purposes.
+`U_bound` is B-only actual execution with complete conditions, independent of
+observation comparison and semantic scope; an early/missing observation earns no pair credit.
 `SUPPORTED_LIMITATION` credits correct use of a failed/limited caller observation
 to bound a conclusion or change a check, with explicit public quotes and a
 `not_task_success_evidence` assertion. It is included in `U_applied` but excluded

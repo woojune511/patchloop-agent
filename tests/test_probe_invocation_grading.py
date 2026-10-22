@@ -39,9 +39,9 @@ def attach(row, public, arm="B"):
     return row, public
 
 
-def public_probe(tmp_path):
+def public_probe(tmp_path, source=SOURCE):
     row, public = annotated("SUPPORTED_DIRECT")
-    observation = execute(tmp_path / "call", implementation="return True")
+    observation = execute(tmp_path / "call", implementation="return True", source=source)
     result = {
         "action_id": "original",
         "input_hash": "pending",
@@ -62,7 +62,7 @@ def public_probe(tmp_path):
         "name": "run_probe",
         "action_id": "original",
         "arguments": {
-            "python_source": SOURCE,
+            "python_source": source,
             "purpose": {"kind": "original_requirement", **observation["binding"]["definition"]},
         },
     }
@@ -133,14 +133,23 @@ def public_probe(tmp_path):
 def test_attempt_parser_excludes_comments_strings_and_retains_invalid_selection():
     assert not grading.has_invocation("# call_target()\ns='call_target()'")
     assert grading.has_invocation("call_target(args=[unknown])")
-    assert not grading.has_invocation("call_target(")
+    assert grading.has_invocation("call_target(")
+    assert not grading.has_invocation("def call_target(")
+    assert not grading.has_invocation("obj.call_target(")
+    assert not grading.has_invocation("# call_target(\ns = 'call_target('\n(")
     assert not grading.has_invocation(42)
 
 
-def test_rejected_probe_with_null_output_is_retained_as_an_attempt(tmp_path):
+@pytest.mark.parametrize("source,attempt", [("call_target(", "YES"), ("pass", "NO_OBSERVED")])
+def test_rejected_probe_with_null_output_is_retained_as_an_attempt(tmp_path, source, attempt):
     row, public = public_probe(tmp_path)
+    raw = public["events"][1]["payload"]["tool_calls"][0]
+    raw["arguments"]["python_source"] = source
     public["events"][2]["payload"]["result"].update(
-        status="failed", output=None, error={"code": "invalid_arguments", "message": "bad source"}
+        status="failed",
+        output=None,
+        input_hash=common.input_hash(raw),
+        error={"code": "invalid_arguments", "message": "bad source"},
     )
     row["public_hash"] = sha256_json(public)
     row["claims"][0].update(label="UNKNOWN", reason_kind="setup_uncertain", evidence=[])
@@ -149,9 +158,27 @@ def test_rejected_probe_with_null_output_is_retained_as_an_attempt(tmp_path):
     row["invocation"]["applications"] = []
     link = grading.validate_annotation(row, public)["invocation"]
     assert mechanical["admitted"] is False and mechanical["flags"]["exit_code"] is None
-    assert link["U_attempt"] == "YES" and link["U_bound"] == "NO_OBSERVED"
+    assert link["U_attempt"] == attempt and link["U_bound"] == "NO_OBSERVED"
+    assert link["original_selections"] == 1
+    assert len(link["attempt_chain"]) == (attempt == "YES")
+    assert not any(c["probe_executed"] for c in link["attempt_chain"])
     assert link["V_original"] == "NO_OBSERVED" and not link["faithful_linkage_use"]
     assert set(link["D"]) == {"OMITTED"}
+
+
+def test_complete_call_conditions_are_separate_from_observation_comparison(tmp_path):
+    source = "record_observation(True)\n" + SOURCE.replace("record_observation(value)", "")
+    row, public = public_probe(tmp_path, source)
+    probe = row["invocation"]["probes"][0]
+    assert probe["mechanical"]["bound"] is True
+    assert probe["mechanical"]["comparison"] == "not_compared"
+    probe["original_scope"] = "NO_OBSERVED"
+    row["invocation"]["applications"] = []
+    row["claims"][0].update(label="UNKNOWN", reason_kind="setup_uncertain", evidence=[])
+    link = grading.validate_annotation(row, public)["invocation"]
+    assert link["U_attempt"] == link["U_bound"] == "YES"
+    assert link["P_pair"] == link["V_original"] == link["U_applied"] == "NO_OBSERVED"
+    assert not link["faithful_linkage_use"]
 
 
 def test_linkage_and_supported_use_do_not_establish_baseline_or_repair(tmp_path):
@@ -160,6 +187,14 @@ def test_linkage_and_supported_use_do_not_establish_baseline_or_repair(tmp_path)
     link = value["invocation"]
     assert link["U_bound"] == link["V_original"] == link["U_applied"] == "YES"
     assert link["P_pair"] == "NO_OBSERVED" and link["faithful_linkage_use"]
+    assert link["attempt_chain"] == [
+        {
+            "probe": [2, "original"],
+            "probe_executed": True,
+            "result_delivered": True,
+            "supported_application": True,
+        }
+    ]
     # Direct execution support is independent of a missing before/after measurement.
     assert value["final_label"] == "SUPPORTED_DIRECT"
     for variant in (
@@ -380,14 +415,41 @@ def test_combined_screen_requires_use_repair_claims_and_complete_assessment():
                         "final_assessable": True,
                         "final_label": "SUPPORTED_DIRECT" if b else "UNSUPPORTED",
                         "invocation": {
+                            "E": "YES" if b else "UNKNOWN",
+                            "U_attempt": "YES",
                             "faithful_linkage_use": b,
                             "U_applied": "YES" if b else "NO_OBSERVED",
+                            "attempt_chain": [
+                                {
+                                    "probe": [2, "original"],
+                                    "probe_executed": True,
+                                    "result_delivered": b,
+                                    "supported_application": b,
+                                }
+                            ],
                         },
                     }
                 },
             }
         )
-    assert grading.aggregate(rows, order)["favorable_local_signal"]
+    result = grading.aggregate(rows, order)
+    assert result["favorable_local_signal"]
+    assert result["arms"]["A"]["invocation_denominators"]["U_attempt"]["exposed_feasible"] == {
+        "yes": 0,
+        "total": 0,
+    }
+    assert result["arms"]["B"]["invocation_denominators"]["U_attempt"]["exposed_feasible"] == {
+        "yes": 3,
+        "total": 3,
+    }
+    assert result["arms"]["A"]["conditional_probe_counts"]["execution_to_delivery"] == {
+        "yes": 0,
+        "total": 3,
+    }
+    assert result["arms"]["B"]["conditional_probe_counts"]["delivery_to_application"] == {
+        "yes": 3,
+        "total": 3,
+    }
     for variant in ("unknown", "silence", "no_use", "native_fail", "control_fail", "unassessed"):
         changed = copy.deepcopy(rows)
         for r in changed:

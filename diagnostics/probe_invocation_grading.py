@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import ast
+import io
 import json
+import tokenize
 from collections import Counter
 
 from diagnostics import probe_invocation_control as control
@@ -44,7 +46,21 @@ def has_invocation(source):
     try:
         tree = ast.parse(source or "")
     except (ValueError, SyntaxError):
-        return False
+        # A rejected, unfinished program can still contain an authored call.
+        # Tokenization excludes strings/comments without requiring valid syntax.
+        tokens = []
+        try:
+            for token in tokenize.generate_tokens(io.StringIO(source).readline):
+                if token.type in {tokenize.NAME, tokenize.OP}:
+                    tokens.append(token.string)
+        except (tokenize.TokenError, IndentationError, SyntaxError):
+            pass
+        return any(
+            token == "call_target"
+            and tokens[i + 1 : i + 2] == ["("]
+            and (i == 0 or tokens[i - 1] not in {"def", "."})
+            for i, token in enumerate(tokens)
+        )
     return any(
         isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id == "call_target"
         for n in ast.walk(tree)
@@ -116,7 +132,6 @@ def inventory(public):
             and calls
             and trace.get("incomplete") is False
             and all(probe_invocation.valid_call(c, definition.get("entrypoint")) for c in calls)
-            and repro.get("comparison") in {"matched", "mismatched"}
         )
         source = item["call"]["arguments"].get("python_source")
         rows.append(
@@ -466,6 +481,35 @@ def validate_annotation(row, public):
     )
     trace = delivery_inventory(public)
     started = summary["started"]
+    original_kinds = {"original_requirement", "legacy_original", "replay"}
+    attempts = []
+    for probe in probes:
+        key = probe["decision_sequence"], probe["action_id"]
+        selected = probe["selected_kind"] in original_kinds
+        attempted = (
+            selected and (probe["invocation_expression"] or probe["bound"])
+            if link["arm"] == "B"
+            else selected or scopes[key] == "YES"
+        )
+        if not attempted:
+            continue
+        receipt = items[key]["receipt"]
+        executed = bool(receipt and common.current_execution(receipt, items[key]["diff_hash"]))
+        delivered_result = executed and any(
+            tuple(t["probe"]) == key and t["delivery"] not in {"OMITTED", "NOT_AVAILABLE"}
+            for t in trace
+        )
+        attempts.append(
+            {
+                "probe": list(key),
+                "probe_executed": executed,
+                "result_delivered": delivered_result,
+                "supported_application": delivered_result
+                and any(
+                    k == key and v in {"SUPPORTED", "SUPPORTED_LIMITATION"} for k, v in applications
+                ),
+            }
+        )
     return {
         **summary,
         "invocation": {
@@ -474,19 +518,7 @@ def validate_annotation(row, public):
             else "UNKNOWN"
             if started
             else "NOT_RUN",
-            "U_attempt": "YES"
-            if any(
-                p["invocation_expression"]
-                or p["bound"]
-                or (
-                    p["selected_kind"] in {"original_requirement", "legacy_original", "replay"}
-                    or scopes[p["decision_sequence"], p["action_id"]] == "YES"
-                )
-                for p in probes
-            )
-            else "NO_OBSERVED"
-            if started
-            else "NOT_RUN",
+            "U_attempt": "YES" if attempts else "NO_OBSERVED" if started else "NOT_RUN",
             "U_bound": "NOT_APPLICABLE"
             if link["arm"] == "A"
             else "YES"
@@ -523,6 +555,8 @@ def validate_annotation(row, public):
             "supported_limitation_use": any(v == "SUPPORTED_LIMITATION" for _, v in applications),
             "breaks": link["breaks"],
             "probe_attempts": len(probes),
+            "attempt_chain": attempts,
+            "original_selections": sum(p["selected_kind"] in original_kinds for p in probes),
             "opportunities": len(feasibility),
         },
     }
@@ -537,6 +571,27 @@ def aggregate(rows, order):
         summary["invocation"] = {
             k: dict(Counter(v.get(k, "NOT_RUN") for v in links))
             for k in ("E", "U_attempt", "U_bound", "V_original", "P_pair", "U_applied")
+        }
+        feasible = [v for v in links if v.get("E") == "YES"]
+        summary["invocation_denominators"] = {
+            k: {
+                "assigned": {"yes": sum(v.get(k) == "YES" for v in links), "total": len(group)},
+                "exposed_feasible": {
+                    "yes": sum(v.get(k) == "YES" for v in feasible),
+                    "total": len(feasible),
+                },
+            }
+            for k in ("U_attempt", "U_bound", "V_original", "P_pair", "U_applied")
+            if arm == "B" or k != "U_bound"
+        }
+        chains = [c for v in links for c in v.get("attempt_chain", [])]
+        executed = sum(c["probe_executed"] for c in chains)
+        delivered = sum(c["result_delivered"] for c in chains)
+        applied = sum(c["supported_application"] for c in chains)
+        summary["conditional_probe_counts"] = {
+            "attempt_to_execution": {"yes": executed, "total": len(chains)},
+            "execution_to_delivery": {"yes": delivered, "total": executed},
+            "delivery_to_application": {"yes": applied, "total": delivered},
         }
         summary["faithful_linkage_use"] = sum(v.get("faithful_linkage_use", False) for v in links)
         summary["supported_limitation_use"] = sum(
