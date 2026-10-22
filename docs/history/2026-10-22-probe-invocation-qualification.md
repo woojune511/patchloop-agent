@@ -76,10 +76,20 @@ for the specified mini snapshot. No provider generation or input counting occurr
 
 ## Evidence and decision
 
+The first completed full suite at `5e89502f` had four stale guidance-digest
+expectations (5,565 passed, four failed, 20 skipped). A four-surface OFF/ON byte
+comparison confirmed that only `run_probe.description` changed, and OFF still
+matches every earlier digest. The current expected digests were updated while
+keeping all four case identities, exact-byte assertions and historical removal-arm
+expectations. The inexpensive entire guidance-contract file now runs in the quick
+suite. This changes no runtime behavior, limits or skip conditions. The failed
+full XML remains at `C:/pt/probe-invocation53/frozen/full-final.xml`; the diagnostic
+proof is `C:/pt/probe-invocation53-work/description-drift.json`.
+
 Preparation diagnostics and initial failures remain under
 `C:/pt/probe-invocation53-work`. Final qualification, focused/quick/full XML,
 source/environment bindings and `validation.json` belong to
-`C:/pt/probe-invocation53/frozen`. The final implementation commit is recorded in those
+`C:/pt/probe-invocation53/ready`. The final implementation commit is recorded in those
 receipts and the immutable `manifest.json`; freeze rejects a different commit,
 changed implementation, missing qualification or changed skip set. A missing
 manifest means preparation is not complete. No results are borrowed from an old

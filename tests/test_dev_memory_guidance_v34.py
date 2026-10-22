@@ -64,34 +64,43 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
 
 
 @pytest.mark.parametrize(("names", "expected"), [
-    (
+    pytest.param(
         ("read_file", "run_check", "run_probe", "search_files", "stop_task"),
-        "99567faf1ea920a9157e5ea6618c5d43e7d56e441820be941403a025d9b2abe9"
+        "e7bffecc38c1ed9e2f419d801ed9c8b4ca47fd627a831ff1c159b364cf85dee6"
         if FROZEN_ARM is None else
         "544c19f4d8e63f8a8810efe1dd4cd0adf3dee51cdb0145a4509de554027739c2",
+        id="names0-99567faf1ea920a9157e5ea6618c5d43e7d56e441820be941403a025d9b2abe9"
+        if FROZEN_ARM is None else None,
     ),
-    (
+    pytest.param(
         ("finish_task", "read_file", "replace_text", "run_probe", "search_files", "stop_task"),
-        "de57dc4e83f8b26994c5df5f659cc208bbd3b348233d0ad3640493ffd5b90bd3"
+        "424a7d18f5374263a613b0f500450d8abf6a9f1820aeac2f5e23de3ed825ad39"
         if FROZEN_ARM is None else
         "b817201c9d1aa8432575b0c1b55015dc01bc08a2b002e3e2cc09ab13bfa229c6",
+        id="names1-de57dc4e83f8b26994c5df5f659cc208bbd3b348233d0ad3640493ffd5b90bd3"
+        if FROZEN_ARM is None else None,
     ),
-    (
+    pytest.param(
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task"),
-        "923a71312af5fa8d677ce72762b2f045a47ff2ebc4e084caaf1f57a2c11e7032"
+        "3bc3edd1e1d15974d4282384b6135489fe36e7a439a8e16e4eb2618351ea7628"
         if FROZEN_ARM is None else
         "310f8ec3dd129c93fb10c2a0589decf38eb09ce60e395ef906ac814e399e5139",
+        id="names2-923a71312af5fa8d677ce72762b2f045a47ff2ebc4e084caaf1f57a2c11e7032"
+        if FROZEN_ARM is None else None,
     ),
-    (
+    pytest.param(
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task",
          "finish_task"),
-        "53d8c9ffaa20544b633c883b1e40010113b680722f23caebeb0ef991f1738caa"
+        "013571e7178d174b1dc07b7bb412719953ace133dee7f85e5558818c1e51848a"
         if FROZEN_ARM is None else
         "6302bc9d248be03d6e1430f0102a0e5c00ecb7883c25d453945f979f21fd3af7",
+        id="names3-53d8c9ffaa20544b633c883b1e40010113b680722f23caebeb0ef991f1738caa"
+        if FROZEN_ARM is None else None,
     ),
 ])
 def test_descriptions_outside_memory_and_schema_order_are_unchanged(names, expected):
-    # Pin current probe-purpose guidance; preserve immutable removal-arm snapshots.
+    # Pin current invocation guidance; preserve case IDs and historical removal arms.
+    # OFF still has the prior four digests; only run_probe.description changed.
     tools = dev_tool_schemas(finish_enabled="finish_task" in names, allowed_tools=names)
     tools = _legacy_compression_surface(tools)
     for tool in tools:

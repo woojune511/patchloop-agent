@@ -46,6 +46,7 @@ def bindings():
         "tests/test_probe_invocation_comparison.py",
         "tests/test_probe_invocation_grading.py",
         "tests/test_probe_invocation.py",
+        "tests/test_dev_memory_guidance_v34.py",
         "tests/test_probe_purpose.py",
         "tests/test_verification_role.py",
         "tests/test_verification_role_grading.py",
