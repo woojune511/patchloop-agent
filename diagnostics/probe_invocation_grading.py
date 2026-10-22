@@ -417,7 +417,7 @@ def validate_annotation(row, public):
         state = delivery(items[key], item)
         require(use["delivery"] == state, "delivery scope/currency differs")
         require(
-            use["judgment"] in {"SUPPORTED", "MISINTERPRETED", "UNKNOWN"},
+            use["judgment"] in {"SUPPORTED", "SUPPORTED_LIMITATION", "MISINTERPRETED", "UNKNOWN"},
             "application judgment required",
         )
         _semantic(use, events, before=item["decision_sequence"])
@@ -435,6 +435,17 @@ def validate_annotation(row, public):
             require(
                 not state.startswith("STALE_") or use.get("historical_only") is True,
                 "stale receipt cannot prove current task success",
+            )
+        elif use["judgment"] == "SUPPORTED_LIMITATION":
+            require(
+                use.get("scope_rationale") and use.get("not_task_success_evidence") is True,
+                "limitation use needs explicit scope and cannot certify task success",
+            )
+            require(
+                any(
+                    ref["sequence"] == items[key]["receipt"]["sequence"] for ref in use["evidence"]
+                ),
+                "limitation use must cite the actual receipt",
             )
         applications.append((key, use["judgment"]))
         delivered.append(state)
@@ -498,13 +509,14 @@ def validate_annotation(row, public):
             "application_delivery": dict(Counter(delivered)),
             "pairs": dict(Counter(pairs)),
             "U_applied": "YES"
-            if any(v == "SUPPORTED" for _, v in applications)
+            if any(v in {"SUPPORTED", "SUPPORTED_LIMITATION"} for _, v in applications)
             else "UNKNOWN"
             if any(v == "UNKNOWN" for _, v in applications)
             else "NO_OBSERVED"
             if started
             else "NOT_RUN",
             "faithful_linkage_use": faithful_use,
+            "supported_limitation_use": any(v == "SUPPORTED_LIMITATION" for _, v in applications),
             "breaks": link["breaks"],
             "probe_attempts": len(probes),
             "opportunities": len(feasibility),
@@ -523,6 +535,9 @@ def aggregate(rows, order):
             for k in ("E", "U_attempt", "U_bound", "V_original", "P_pair", "U_applied")
         }
         summary["faithful_linkage_use"] = sum(v.get("faithful_linkage_use", False) for v in links)
+        summary["supported_limitation_use"] = sum(
+            v.get("supported_limitation_use", False) for v in links
+        )
         summary["accepted_with_linkage_use"] = sum(
             r["accepted_repair"] and v.get("faithful_linkage_use", False)
             for r, v in zip(group, links, strict=True)

@@ -25,6 +25,10 @@ an intervening accepted edit, comparable conditions and both actual receipts;
 current validation without a baseline remains useful but is not a measured repair.
 Semantic mapping still requires quoted public evidence and explicit review. This
 is an audit with provenance checks, not an automatic semantic judge.
+Correctly using a limited or failed observation to revise the next check receives
+separate limitation-use credit. It cannot certify original-scope verification or
+qualify as faithful linkage in the adoption screen; rejecting all such use would
+hide an intervention that improves judgment without yet improving repair.
 
 ## Offline observations
 

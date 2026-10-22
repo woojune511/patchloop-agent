@@ -287,6 +287,10 @@ pairs; subsequent action/application quotes and scope; ordered causal breaks.
 `U_attempt` counts attempted original verification including rejected selections;
 `invocation_expression` separately records a parsed `call_target` call, not a string.
 `U_bound` is B-only mechanical execution, never a semantic scope verdict.
+`SUPPORTED_LIMITATION` credits correct use of a failed/limited caller observation
+to bound a conclusion or change a check, with explicit public quotes and a
+`not_task_success_evidence` assertion. It is included in `U_applied` but excluded
+from faithful-linkage and accepted-with-linkage screening counts.
 `delivery_inventory()` distinguishes missing, body, summary, stale and restored
 receipts even when the model does not use them. Empty application/pair lists mean
 no observed supported use/pair; they cannot manufacture a favorable screen.

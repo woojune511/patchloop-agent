@@ -169,6 +169,19 @@ def test_linkage_and_supported_use_do_not_establish_baseline_or_repair(tmp_path)
 def test_helper_mapping_and_legacy_missing_trace_are_not_automatic_verdicts(tmp_path):
     row, public = public_probe(tmp_path)
     row["invocation"]["probes"][0]["original_scope"] = "NO_OBSERVED"
+    limitation = copy.deepcopy(row)
+    use = limitation["invocation"]["applications"][0]
+    use.update(
+        judgment="SUPPORTED_LIMITATION",
+        not_task_success_evidence=True,
+        scope_rationale="Reviewer credits recognizing the helper-only scope, not original success.",
+    )
+    limited = grading.validate_annotation(limitation, public)["invocation"]
+    assert limited["U_applied"] == "YES" and limited["supported_limitation_use"]
+    assert not limited["faithful_linkage_use"]
+    use.pop("not_task_success_evidence")
+    with pytest.raises(ContractError, match="limitation"):
+        grading.validate_annotation(limitation, public)
     row["invocation"]["applications"] = []
     link = grading.validate_annotation(row, public)["invocation"]
     assert link["U_bound"] == "YES" and link["V_original"] == "NO_OBSERVED"
