@@ -39,6 +39,8 @@ BREAKS = {
 
 
 def has_invocation(source):
+    if not isinstance(source, str):
+        return False
     try:
         tree = ast.parse(source or "")
     except (ValueError, SyntaxError):
@@ -91,7 +93,7 @@ def inventory(public):
     for row in purpose.inventory(public):
         item = catalog[row["decision_sequence"], row["action_id"]]
         receipt = item["receipt"]
-        output = receipt["payload"]["result"].get("output", {}) if receipt else {}
+        output = (receipt["payload"]["result"].get("output") or {}) if receipt else {}
         repro = output.get("reproduction") or {}
         binding, trace = repro.get("binding", {}), repro.get("call_observation", {})
         definition = binding.get("definition", {})
@@ -173,6 +175,8 @@ def delivery(probe, item):
             return any(body(v) for v in node)
         if isinstance(node, dict):
             keys = ("action_id", "input_hash", "workspace_diff_hash", "status", "output")
+            if result.get("error") is not None:
+                keys += ("error",)
             if all(
                 k in node and canonical_json(node[k]) == canonical_json(result.get(k)) for k in keys
             ):
@@ -183,7 +187,7 @@ def delivery(probe, item):
     if body(wire["input"]):
         status = "BODY"
     else:
-        repro = result.get("output", {}).get("reproduction") or {}
+        repro = (result.get("output") or {}).get("reproduction") or {}
         for case in state.get("reproduction_review", {}).get("items", []):
             if case["case_id"] != repro.get("binding", {}).get("case_id"):
                 continue

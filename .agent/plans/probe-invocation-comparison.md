@@ -262,7 +262,7 @@ requires all of the following evidence at the final implementation commit:
    order/caps, environment, operator-only assessment identities and validation receipts.
 
 The final implementation commit, adapter/grader hashes and all validation receipts
-are bound by `C:/pt/probe-invocation53/manifest.json`. A missing or rejected packet
+are bound by `C:/pt/probe-invocation53/final/manifest.json`. A missing or rejected packet
 is not qualified. Schema `probe-invocation-comparison-v1` cannot accept an old role
 or state allocation. Generated state stays in external hash-chained journals.
 

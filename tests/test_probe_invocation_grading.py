@@ -134,6 +134,24 @@ def test_attempt_parser_excludes_comments_strings_and_retains_invalid_selection(
     assert not grading.has_invocation("# call_target()\ns='call_target()'")
     assert grading.has_invocation("call_target(args=[unknown])")
     assert not grading.has_invocation("call_target(")
+    assert not grading.has_invocation(42)
+
+
+def test_rejected_probe_with_null_output_is_retained_as_an_attempt(tmp_path):
+    row, public = public_probe(tmp_path)
+    public["events"][2]["payload"]["result"].update(
+        status="failed", output=None, error={"code": "invalid_arguments", "message": "bad source"}
+    )
+    row["public_hash"] = sha256_json(public)
+    row["claims"][0].update(label="UNKNOWN", reason_kind="setup_uncertain", evidence=[])
+    (mechanical,) = grading.inventory(public)
+    row["invocation"]["probes"][0].update(mechanical=mechanical, original_scope="NO_OBSERVED")
+    row["invocation"]["applications"] = []
+    link = grading.validate_annotation(row, public)["invocation"]
+    assert mechanical["admitted"] is False and mechanical["flags"]["exit_code"] is None
+    assert link["U_attempt"] == "YES" and link["U_bound"] == "NO_OBSERVED"
+    assert link["V_original"] == "NO_OBSERVED" and not link["faithful_linkage_use"]
+    assert set(link["D"]) == {"OMITTED"}
 
 
 def test_linkage_and_supported_use_do_not_establish_baseline_or_repair(tmp_path):

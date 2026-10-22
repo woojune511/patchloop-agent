@@ -13,7 +13,9 @@ without changing architecture, transitions, two references or total resources.
 `call_target` execution. Both select **role A, same-context verification**. Unit
 controls compare A against commit `50b91b5`, exercise actual before/after replay,
 check scope cleanup and prevent old comparison packets from passing qualification.
-The product runtime is unchanged by this diagnostic implementation.
+The product runtime is unchanged by this diagnostic implementation. Rejected probes
+remain attempted actions when no execution payload is returned; they receive no
+bound-call or original-scope success credit.
 
 The new public grader separates opportunity, attempts, mechanically bound calls,
 faithful original scope, measured pairs, delivery and supported subsequent use.
@@ -77,7 +79,7 @@ for the specified mini snapshot. No provider generation or input counting occurr
 Preparation diagnostics and initial failures remain under
 `C:/pt/probe-invocation53-work`. Final qualification, focused/quick/full XML,
 source/environment bindings and `validation.json` belong to
-`C:/pt/probe-invocation53`. The final implementation commit is recorded in those
+`C:/pt/probe-invocation53/final`. The final implementation commit is recorded in those
 receipts and the immutable `manifest.json`; freeze rejects a different commit,
 changed implementation, missing qualification or changed skip set. A missing
 manifest means preparation is not complete. No results are borrowed from an old
