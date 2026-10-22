@@ -1,6 +1,6 @@
 # Current status
 
-Updated: 2026-10-22. Runtime source owns behavior. Historical reports are evidence,
+Updated: 2026-10-23. Runtime source owns behavior. Historical reports are evidence,
 not an active queue.
 
 ## Product and working baseline
@@ -49,10 +49,15 @@ retained an unverified obligation in all 34 dispatched contexts but acquired no
 original case: two quote-contract rejections consumed its reserved attempts.
 A later helper probe failed setup. One unchecked edit remained when cost admission
 stopped the run at USD 0.866304600; no finish, submission or evaluation occurred.
-Thus live delivery/replay and repair benefit remain unverified. Keep the flag off
-by default. Resolve requirement/caller/oracle binding and funded verification as
-separate local questions before another paid comparison. All allocations are
-closed; no follow-up is queued. See the [protocol](../.agent/plans/original-obligation.md).
+Thus live delivery/replay and repair benefit remain unverified.
+The [trace diagnosis](history/2026-10-23-repro-budget.md) confirms that quote errors
+reached the model alongside separate note errors; the retry kept its purpose/program.
+Rejected admissions released acquisition while probes stayed available. Source-coverage
+warnings were advisory, and per-call cost admission left no funded verification request.
+Retention therefore worked without ensuring error recovery or completion funding.
+Keep the flag off by default. Resolve request/caller/oracle binding and funded
+verification as separate local questions before another paid comparison. All allocations
+are closed; no follow-up is queued. See the [protocol](../.agent/plans/original-obligation.md).
 
 ## Supporting evidence
 
