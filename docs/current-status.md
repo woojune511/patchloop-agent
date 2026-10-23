@@ -1,6 +1,6 @@
 # Current status
 
-Updated: 2026-10-23. Runtime source owns behavior. Historical reports are evidence,
+Updated: 2026-10-24. Runtime source owns behavior. Historical reports are evidence,
 not an active queue.
 
 ## Product and working baseline
@@ -32,12 +32,15 @@ request problem; durable receipts distinguish unchanged arguments, changed but
 invalid arguments, and a fully valid correction. Decision text grants no correction
 credit. Legacy admitted bindings and action recovery preserve their identities.
 
-The [closed live pilot](history/2026-10-23-oracle-live.md) reached edit/check/submit
-within USD 0.864747450 of USD 0.88, but failed acceptance and the public original
-condition. It repeated identical invalid arguments despite recognizing the quote
-error, executed no original caller, and modified a different branch from the
-observed failure. Regression PASS did not establish the requirement. That allocation
-is closed; this implementation is authorized local work, not another live run.
+The [new live pilot](history/2026-10-24-request-live.md) reached edit/check/submit
+at USD 0.876006900, but original acquisition and repair still failed. The model
+shortened its rejected request; host observer overhead left only 1,997 serialized
+source characters within the 8,000-character total bound, and the revision was
+still too large. Receipts correctly recorded a changed but invalid request and
+a later helper-purpose substitution. Both original requests were rejected before
+execution; the one helper execution failed. Regression PASS led to
+`unverified_delivery`; the public original condition and independent acceptance
+both failed, while the normal control passed. This allocation is closed.
 
 The verification workflow now uses a short quick selection plus a focused request
 selection. Full tests remain available; repeated A/B loops are outside routine quick
@@ -45,9 +48,10 @@ validation. Local request/recovery controls and isolated mock evaluation passed;
 see the implementation record for commands, measured times and split validation.
 
 Acquisition release, edit-time replay scheduling, cost reservations and completion
-semantics are unchanged. Request validity does not establish original-caller mapping
-or repair. The next question is whether simplified requests improve actual caller
-acquisition with a live model; later replay/budget changes remain separate. No
+semantics are unchanged. The next local design question is separating authored
+source limits from host observer overhead, or exposing the exact remaining
+serialized allowance. Reassess actual caller acquisition before later replay/budget
+changes; a valid request alone does not establish caller mapping or repair. No
 additional paid experiment or general improvement claim is authorized.
 
 ## Supporting evidence
