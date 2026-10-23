@@ -1,4 +1,4 @@
-FROM python:3.12-slim@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de
+FROM patchloop-probe-python312:security-20261023@sha256:3b37b00de42a063f990e9b55d3918bb0a64cf5ec533a79e9650ca3ce9ccbe3b1
 
 RUN useradd --create-home --uid 10001 sandbox
 COPY --chmod=0555 probe_runner.py /opt/patchloop/probe_runner.py

@@ -11,6 +11,12 @@ use that same target. The model's probe description reports the actual interpret
 Profiles preserve the existing process, network, memory, source and time limits.
 Image acquisition is never part of a run or dependency-preparation call.
 
+The 2026-10-23 security refresh changes the default and graphics image digests.
+Prepare new descriptors and run manifests for those profiles; never rewrite old
+descriptors or resume a run against a replacement image. The retained Python 3.9/3.10
+profiles are offline legacy environments, not supported internet-facing runtimes.
+See [image maintenance](../docker/README.md#certificate-maintenance).
+
 The graphics image contains only the public Python base and X11/OpenGL packages
 from `docker/probe-graphics.Dockerfile`. Its pinned digest, rather than a mutable
 tag or a repeat build, is execution authority. Generated-wheel receipts continue

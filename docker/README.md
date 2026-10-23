@@ -1,23 +1,51 @@
 # Optional public Python probes
 
 Active dev-head probes are enabled explicitly with `patchloop dev --enable-probes`.
-They use the fixed clean official Python image below, which must already exist locally:
+They use the reviewed public Python image below, which must already exist locally:
 
 ```text
-python@sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de
+patchloop-probe-python312@sha256:3b37b00de42a063f990e9b55d3918bb0a64cf5ec533a79e9650ca3ce9ccbe3b1
 ```
 
-`patchloop/sandbox/probes.py` owns this identity as `PROBE_IMAGE`. Preflight verifies
+`patchloop/probe_runtime.py` owns this identity; `patchloop/sandbox/probes.py` derives
+`PROBE_IMAGE` from it. Preflight verifies
 the exact local image and the trusted wrapper before execution. Docker records
 `name:tag@digest` as `name@digest` in `RepoDigests`; lookup and comparison ignore only
 the optional final-component tag, preserving the repository, registry port, and exact
 digest. The fixed probe image uses this canonical reference for execution too; the
-digest still pins the same reviewed Python 3.12-slim content.
+digest pins the reviewed Python 3.12-slim content plus security updates.
 PatchLoop never pulls
 or builds an image, starts Docker Desktop, or falls back to another image. The
 historical `patchloop-sandbox:py312` image and task evaluator images are not used by
-this capability. `Dockerfile.sandbox` remains a tracked historical image recipe;
-building it is unnecessary for the active probe path.
+this capability. `Dockerfile.sandbox` remains a compatibility recipe with the
+updated base; building it is unnecessary for the active probe path.
+
+## Certificate maintenance
+
+The 2026-10-23 base is built from `probe-python312.Dockerfile`. The official upstream
+3.12.15 image still had pip 25.0.1 despite its corrected OS certificate store. The
+recipe updates OS packages and installs the checksum-pinned pip 26.2.2 wheel both
+in site-packages and `ensurepip`. Updating only standalone certifi or OS certificates
+does not update pip's vendored bundle. See the [audit](../docs/history/2026-10-23-security.md).
+
+Maintenance is an operator action, never part of agent execution. For an authorized
+refresh, build with `--no-cache --pull=false --provenance=false --platform linux/amd64`
+and `--load`, using the `docker` directory as context. Build `probe-python312.Dockerfile`
+first, then `probe-graphics.Dockerfile`. The graphics recipe's tag plus digest lets
+BuildKit resolve the local curated base while retaining its content identity.
+Retain build metadata and inspect the actual output digest; a rebuild is not assumed
+byte-identical. Review and update the corresponding pins, inspect OS/pip/ensurepip
+trust, and verify probe isolation before preparing new runs. Do not automatically
+pull a missing evaluator image or replace old benchmark images.
+
+Python 3.9/3.10 profiles and historical task images retain their original bytes for
+offline compatibility. They contain outdated trust stores and unsupported runtimes:
+do not give them network access, credentials or host-writable mounts for general use.
+Existing network/process restrictions remain mandatory. Old prepared descriptors
+and run manifests are not valid for the refreshed Python 3.12 profiles; prepare new
+identities rather than rewriting historical evidence.
+
+## Execution boundary
 
 The host exports a separate current tracked public snapshot and mounts it read-only
 at `/workspace`. Git metadata, `.env*`, `.patchloop-hidden`, untracked files, symlinks,

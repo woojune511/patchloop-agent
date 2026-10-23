@@ -9,6 +9,7 @@ description = "Recoverable single coding agent for bounded repository repair"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+  "certifi>=2026.10.19",
   "httpx>=0.28,<1",
   "openai>=2.47,<3",
   "packaging>=24.2,<27",
@@ -19,7 +20,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-  "pytest>=8.4,<9",
+  "pytest>=9.0.3,<10",
   "pytest-xdist>=3.8,<4",
   "ruff>=0.12,<1",
 ]
@@ -29,6 +30,9 @@ patchloop = "patchloop.cli:app"
 
 [tool.hatch.build.targets.wheel]
 packages = ["patchloop"]
+
+[tool.uv]
+required-version = ">=0.13.5"
 
 [tool.pytest.ini_options]
 addopts = "-q -p no:cacheprovider"

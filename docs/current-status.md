@@ -63,6 +63,10 @@ follow-up implementation or additional paid run is authorized.
 
 ## Supporting evidence
 
+- [Security maintenance](history/2026-10-23-security.md): refreshed host dependencies
+  and public Python 3.12 images after the emSign incident. Old task/legacy images
+  remain offline-only. New runs need newly prepared identities; prior manifests
+  do not authorize execution against the updated runtime.
 - [Helper-path results](history/2026-10-22-helper-path-results.md): useful information,
   no repair in A1/B1/B2; partial comparison stopped on drift. Allocation closed.
 - [Invocation linkage](history/2026-10-22-probe-invocation-results.md): submitted

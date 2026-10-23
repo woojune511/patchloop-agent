@@ -32,10 +32,9 @@ from patchloop.sandbox.execution_feedback import (
 from patchloop.sandbox.runner import DockerSandbox
 from patchloop.util import sha256_bytes, sha256_json
 
-PROBE_IMAGE_DIGEST = "sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de"
-# This digest pins the reviewed Python 3.12-slim image. Use Docker's canonical
-# repository@digest name for lookup and execution, not a tag+digest alias.
-PROBE_IMAGE = "python@" + PROBE_IMAGE_DIGEST
+# The default and prepared-dependency paths share one reviewed public runtime.
+PROBE_IMAGE = runtime()[1]
+PROBE_IMAGE_DIGEST = PROBE_IMAGE.split("@", 1)[1]
 PROBE_TIMEOUT_SECONDS = 30
 # One trusted supervisor, one probe main thread, at most six worker threads.
 PROBE_PIDS_LIMIT = 8
