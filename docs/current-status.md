@@ -53,11 +53,22 @@ short-path recheck: 5,742 PASS, 20 SKIP, no unresolved failures. One Windows tem
 path failure remains in the initial full-run record. These controls do not show
 improved LLM repair.
 
-The [prior live diagnosis](history/2026-10-23-repro-budget.md) remains the observed
-failure: retained obligation, no acquired original case, unchecked edit and cost stop.
-Whether the model corrects the quote and faithfully binds the caller/arguments/oracle
-is unresolved. Live delivery/replay and repair benefit remain unverified. No follow-up
-paid run is queued or authorized.
+The [live recovery pilot](history/2026-10-23-repro-live.md) corrected a request-length
+error despite an annotation rejection and executed the original caller once. It
+observed F0010 but encoded that bug as the expected result, so the original obligation
+remained unverified. Quote-error recovery specifically remains untested.
+
+After 27 source inspections, financial admission closed inspection and retained two
+successor calls. The current response consumed its 20,440-token ceiling without a
+tool call. USD 0.091154050 remained, enough for two minimum calls while mutation/check/
+finish still needed three. Terminal: COST_CAP_REACHED; USD 0.788845950 spent; no edit,
+check, submission or assessment. Reservation worked arithmetically but did not secure
+progress or recovery from an incomplete response.
+
+The next question concerns failure-versus-desired oracle binding and recovery after
+a non-progress response under the same cap. This one bundled pilot supports no causal
+repair claim or default change. Live delivery/replay and repair benefit remain
+unverified; the allocation is closed and no follow-up paid run is authorized.
 
 ## Supporting evidence
 
