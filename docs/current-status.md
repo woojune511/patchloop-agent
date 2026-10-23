@@ -24,43 +24,35 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-[Failure oracles and correction funding](history/2026-10-23-oracles.md) address two
-gaps from the [closed pilot](history/2026-10-23-repro-live.md): the bug was encoded as
-the desired result, and an incomplete response exhausted its current allowance while
-only two minimum calls remained for a three-call completion path.
+[The live oracle/correction pilot](history/2026-10-23-oracle-live.md) reached edit,
+required check and submission within USD 0.864747450 of its USD 0.88 cap. It did not
+repair Astroid-1333: independent acceptance FAIL, public missing-initializer condition
+FAIL, present control PASS. Safety PASS is separate. The one-run allocation is closed.
 
-Fresh original purposes require distinct `reported_failure_json` and desired
-`expected_json`. Failure acquisition needs a healthy unchanged-base root matching
-the former and mismatching the latter. A third value cannot acquire the failure.
-Known preflight rejections leave no completion case; uncertain accepted execution
-remains unverified. Existing binding/replay identities and legacy rules are retained.
+A naturally incomplete first response spent its full 25,000 output tokens without
+action. The reserved correction received 25,000 and restored a valid tool-call shape,
+but its reproduction request was rejected. The same invalid quote/program was then
+repeated despite visible primary-error feedback: two request rejections, zero actual
+caller attempts. The declared failure/desired values were distinct, but execution
+and issue-to-caller mapping remain unverified.
 
-Opt-in `completion-recovery-v1` requires segmented-v1. In addition to successful
-minimum successors, it reserves one correction at 60K uncached input plus the
-requested output ceiling and one model slot. The first durable protocol correction
-consumes this run-wide credit; valid actions and restart never renew it. The correction
-requires the full output allowance. Other successors still have only 128-token minimum
-admission. Existing policies/defaults remain unchanged.
+The cost horizon retained edit/check/finish after 32 reads/searches. The submitted
+patch changed a successful file-lookup branch, while the public failure passes a
+missing initializer with `source=True` through the unchanged exception branch.
+Regression PASS did not establish the original requirement. The runtime correctly
+retained `unverified_delivery`, zero bound cases and the unresolved original obligation.
 
-The public-task obligation survives plans and helper cases. Only an acquired baseline
-failure plus current comparable support permits `cases_verified_delivery`. Missing
-evidence returns `unverified_delivery`; current mismatch/conflict blocks finish.
-Both oracles and the issue-to-caller mapping remain model-authored. Independent
-acceptance cannot upgrade original verification.
+[The implementation and local controls](history/2026-10-23-oracles.md) remain valid:
+separate reported-failure/desired oracles; rejected requests excluded from completion
+cases; one run-wide funded correction without renewal; comparable original evidence
+required for `cases_verified_delivery`. Other successors retain only minimum output
+admission. Completion-recovery-v1 remains opt-in; the general baseline is unchanged.
 
-Focused local controls: 35 PASS in 114.85 seconds. Under virtual USD 0.40, both policies
-reach scripted check/finish; the new policy increases correction output allowance
-from 128 to 25,000 while reducing the first call from 25,000 to 3,376. This proves
-allocation behavior, not useful model output. Standard mock smoke reaches isolated
-evaluation PASS, safety NOT_RUN, with unverified delivery. Quick selection: 335 PASS.
-Full local regression: 5,779 PASS, 20 SKIP, no failures; a subsequent legacy test-fixture
-correction passed its entire 13-case file with the same production runtime. Ruff
-passed. Commands, skip reasons and preserved earlier failures are in the linked report.
-
-The unresolved question is whether the fresh oracle pair is faithful to the public
-report and whether funded correction produces useful action in a real solve. No
-repair improvement, default adoption or fresh paid run is established or authorized.
-All previous allocations remain closed.
+The open question is why an unchanged invalid request was repeated after its error,
+then a repair selected for an unobserved input path. Request-construction friction
+and feedback use need a bounded diagnostic before another paid solve. This single
+exposed task with bundled changes establishes neither causal improvement nor
+generalization. No follow-up implementation or additional paid run is authorized.
 
 ## Supporting evidence
 

@@ -1,6 +1,6 @@
 # History
 
-- [Recovery](2026-10-23-repro-recovery.md), [live](2026-10-23-repro-live.md), [oracles](2026-10-23-oracles.md)
+- [Recovery](2026-10-23-repro-recovery.md), [live](2026-10-23-repro-live.md), [oracles](2026-10-23-oracles.md), [pilot](2026-10-23-oracle-live.md)
 - [Live case](2026-10-22-original-case-live-results.md)
 - [Case finish](2026-10-22-finish-reproduction-results.md)
 - [Helpers](2026-10-22-helper-path-results.md)
@@ -36,7 +36,7 @@
 - [Audit](2026-10-02-lite-final-verification-audit.md)
 - [Results](2026-10-02-lite-sql3-probe-results.md)
 - [Probes](2026-10-02-lite-probe-support.md)
-- Lite dev20: [results](2026-10-02-lite-dev20-results.md), [diagnosis](2026-10-02-lite-dev20-failure-diagnosis.md)
+- [Lite](2026-10-02-lite-dev20-results.md), [why](2026-10-02-lite-dev20-failure-diagnosis.md)
 - [Registration](2026-10-02-lite-dev20-registration.md)
 - [Checks](2026-10-02-lite-public-regressions.md)
 - [Validation](2026-10-02-lite-environment-validation.md)
@@ -73,9 +73,9 @@
 - [Cancel](2026-09-27-caller-cancel-preservation.md)
 - [Cleanup](2026-09-27-cleanup-information-results.md)
 - [Prep](2026-09-27-cleanup-information-preparation.md)
-- [Cancellation](2026-09-27-anyio-cleanup-cancellation.md)
+- [Cancel](2026-09-27-anyio-cleanup-cancellation.md)
 - [Results](2026-09-27-caller-information-results.md)
-- [Information](2026-09-27-caller-information.md)
+- [Info](2026-09-27-caller-information.md)
 - [State](2026-09-27-anyio-caller-state.md)
 - [Checkpoint](2026-09-27-checkpoint-live-results.md)
 - [Prep](2026-09-27-checkpoint-live-preparation.md)
