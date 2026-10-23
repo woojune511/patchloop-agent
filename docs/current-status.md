@@ -32,27 +32,29 @@ request problem; durable receipts distinguish unchanged arguments, changed but
 invalid arguments, and a fully valid correction. Decision text grants no correction
 credit. Legacy admitted bindings and action recovery preserve their identities.
 
-The [new live pilot](history/2026-10-24-request-live.md) reached edit/check/submit
-at USD 0.876006900, but original acquisition and repair still failed. The model
-shortened its rejected request; host observer overhead left only 1,997 serialized
-source characters within the 8,000-character total bound, and the revision was
-still too large. Receipts correctly recorded a changed but invalid request and
-a later helper-purpose substitution. Both original requests were rejected before
-execution; the one helper execution failed. Regression PASS led to
-`unverified_delivery`; the public original condition and independent acceptance
-both failed, while the normal control passed. This allocation is closed.
+The [closed live pilot](history/2026-10-24-request-live.md) exposed a host-size
+defect: observer overhead rejected both original requests despite a real source
+correction. Original acquisition and repair failed; the allocation is closed.
 
-The verification workflow now uses a short quick selection plus a focused request
-selection. Full tests remain available; repeated A/B loops are outside routine quick
-validation. Local request/recovery controls and isolated mock evaluation passed;
-see the implementation record for commands, measured times and split validation.
+The [size repair](history/2026-10-24-size.md) separates the unchanged 8,000-character
+authored allowance from an 8,000-character host observer allowance. Serialized
+execution has a derived, bounded transport allowance in both launcher and reader.
+Saved observer/program bytes and replay identities are preserved. The v3 probe
+profile and v50 tool contract identify the change; old manifests cannot authorize
+execution against it. Both frozen rejected requests now pass local size admission
+without source edits. This is not execution, caller acquisition or repair evidence.
+
+Routine verification uses the short quick selection plus changed-owner cases.
+The size repair has 242 distinct local tests passing across a 55.19-second combined
+run and a 1.05-second identity-pin recheck, including isolated mock evaluation.
+See its record for split-validation details. Full tests remain available; repeated
+A/B loops are outside routine quick validation.
 
 Acquisition release, edit-time replay scheduling, cost reservations and completion
-semantics are unchanged. The next local design question is separating authored
-source limits from host observer overhead, or exposing the exact remaining
-serialized allowance. Reassess actual caller acquisition before later replay/budget
-changes; a valid request alone does not establish caller mapping or repair. No
-additional paid experiment or general improvement claim is authorized.
+semantics are unchanged. The next unresolved question is whether a newly admitted
+request executes the original caller and acquires its reported failure. Reassess
+that before later replay/budget changes. No additional paid experiment or general
+improvement claim is authorized.
 
 ## Supporting evidence
 

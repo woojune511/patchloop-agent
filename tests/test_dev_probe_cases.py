@@ -122,7 +122,7 @@ def test_case_policy_extends_current_probe_schema_without_changing_prompt():
         "sha256:be1012933d3448903e70edb181c229547f0f8c5e9f285f159e50e7582b825a2e"
     )
     assert dev_tool_surface_hash() == (
-        "sha256:3b64963d2ac06ecbe500c66081c44d17fa7acf6e77793d040e1583adec42e374"
+        "sha256:68df06f9b7c945d3211dbf925e9addd9504f600be5acffb585c796b771385eb7"
         if FROZEN_ARM is None else
         "sha256:57193859890419b79cb7f4927c37796d044bc4bf7159c51ddf17723849529e26"
     )

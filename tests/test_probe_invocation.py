@@ -9,7 +9,7 @@ import sys
 import pytest
 
 from patchloop.dev import probe_invocation, reproduction
-from patchloop.sandbox.probes import PROBE_SOURCE_LIMIT_CHARS
+from patchloop.probe_limits import EXECUTION_LIMIT_CHARS
 from patchloop.util import sha256_bytes
 
 SOURCE = '''import os, json
@@ -39,7 +39,7 @@ def execute(root, *, implementation="return False", source=SOURCE, entrypoint="p
         "expected_json": "true", "observation_channel": channel},
     }
     wrapped = reproduction.program(source, binding)
-    assert len(wrapped) <= PROBE_SOURCE_LIMIT_CHARS
+    assert len(wrapped) <= EXECUTION_LIMIT_CHARS
     process = subprocess.run(
         [sys.executable, "-X", "utf8", "-c", wrapped], cwd=root,
         env={**os.environ, "MODE": mode, "FLAG": flag, "PYTHONPATH": str(root)},

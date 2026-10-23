@@ -17,6 +17,7 @@ import time
 from pathlib import Path, PurePosixPath
 from typing import BinaryIO
 
+from patchloop import probe_limits
 from patchloop.contracts import ProbeDependencyIdentity
 from patchloop.deadline import ExecutionDeadline
 from patchloop.errors import ContractError
@@ -41,8 +42,6 @@ PROBE_PIDS_LIMIT = 8
 # Keep OpenBLAS imports within the single-CPU probe's existing thread budget.
 PROBE_THREAD_ENV = {"OPENBLAS_NUM_THREADS": "1"}
 PROBE_OUTPUT_LIMIT_BYTES = 12_000
-PROBE_SOURCE_LIMIT_CHARS = 8_000
-PROBE_SOURCE_LIMIT_BYTES = 32_000
 _SNAPSHOT_LIMIT_BYTES = 128 * 1024 * 1024
 _CLEANUP_SECONDS = 5.0
 _WRAPPER = Path(__file__).resolve().parents[2] / "docker" / "probe_runner.py"
@@ -54,7 +53,7 @@ def probe_profile(dependencies: ProbeDependencyIdentity | None = None) -> dict[s
     if dependencies is not None and dependencies.python != python:
         raise ContractError("probe interpreter and prepared dependencies differ")
     return {
-        "version": "docker-python-probe-v2",
+        "version": "docker-python-probe-v3",
         "image": image,
         "image_digest": image.rsplit("@", 1)[1],
         "wrapper_hash": sha256_bytes(_WRAPPER.read_bytes()),
@@ -76,8 +75,12 @@ def probe_profile(dependencies: ProbeDependencyIdentity | None = None) -> dict[s
         "entrypoint": "/usr/local/bin/python",
         "working_directory": "/tmp",
         "source_mount": "/workspace:readonly",
-        "source_limit_chars": PROBE_SOURCE_LIMIT_CHARS,
-        "source_limit_bytes": PROBE_SOURCE_LIMIT_BYTES,
+        "source_limit_chars": probe_limits.SOURCE_LIMIT_CHARS,
+        "source_limit_bytes": probe_limits.SOURCE_LIMIT_BYTES,
+        "observer_limit_chars": probe_limits.OBSERVER_LIMIT_CHARS,
+        "observer_limit_bytes": probe_limits.OBSERVER_LIMIT_BYTES,
+        "execution_limit_chars": probe_limits.EXECUTION_LIMIT_CHARS,
+        "execution_limit_bytes": probe_limits.EXECUTION_LIMIT_BYTES,
         "timeout_seconds": PROBE_TIMEOUT_SECONDS,
         "output_limit_bytes": PROBE_OUTPUT_LIMIT_BYTES,
         "snapshot": ("tracked-public-source-roots-generated-v3" if dependencies is not None
@@ -355,8 +358,10 @@ class DockerProbeSandbox:
         source = python_source.encode("utf-8")
         if not question or len(question) > 500:
             raise ContractError("probe question must contain 1 to 500 characters")
-        if not source or len(python_source) > 8000 or len(source) > 32000:
-            raise ContractError("probe Python source exceeds its bounded input contract")
+        # The registered gateway bounds authored input before adding its observer.
+        if (not source or len(python_source) > probe_limits.EXECUTION_LIMIT_CHARS
+                or len(source) > probe_limits.EXECUTION_LIMIT_BYTES):
+            raise ContractError("probe execution program exceeds its bounded transport contract")
         if deadline:
             deadline.check(reserve_seconds=_CLEANUP_SECONDS)
         if not self._verified:

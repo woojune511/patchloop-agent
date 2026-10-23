@@ -11,6 +11,7 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+from patchloop import probe_limits
 from patchloop.dev import probe_invocation, probe_requests
 from patchloop.dev.probe_cases import observation_json
 from patchloop.errors import ContractError, RecoveryError
@@ -179,7 +180,7 @@ def bind(raw, public_task, source, action_id, *, replay=None, events=(),
         return copy.deepcopy(binding)
     if raw is None:
         return None
-    if not isinstance(source, str) or not 1 <= len(source) <= 8_000:
+    if not isinstance(source, str) or not 1 <= len(source) <= probe_limits.SOURCE_LIMIT_CHARS:
         raise probe_requests.error("probe source must contain 1-8000 characters", "/python_source")
     paired = isinstance(raw, dict) and "reported_failure_json" in raw
     legacy = isinstance(raw, dict) and "requirement_quote" in raw
@@ -329,10 +330,17 @@ def program(source, binding):
         trace = trace.replace("_pr_rows = []", _RECORD + "\n_pr_rows = []", 1).replace(
             '{"calls": _pr_rows, "incomplete": _pr_more[0]}',
             '{"calls": _pr_rows, "incomplete": _pr_more[0], "observation": _pr_observation}', 1)
-    return (
+    prefix = (
         f"_pr_target = {binding['definition']['entrypoint']!r}\n"
-        f"_pr_marker = {marker(binding)!r}\n_pr_source = {source!r}\n" + trace
+        f"_pr_marker = {marker(binding)!r}\n_pr_source = "
     )
+    suffix = "\n" + trace
+    observer = prefix + suffix
+    if (len(observer) > probe_limits.OBSERVER_LIMIT_CHARS
+            or len(observer.encode("utf-8")) > probe_limits.OBSERVER_LIMIT_BYTES):
+        raise ContractError("host reproduction observer exceeds its separate size limit")
+    # Preserve rendered bytes and execution hashes for existing bindings/replays.
+    return prefix + repr(source) + suffix
 
 
 def compare(output, binding):

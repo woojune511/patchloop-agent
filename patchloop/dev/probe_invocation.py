@@ -8,7 +8,7 @@ from patchloop.util import canonical_json, sha256_json
 LEGACY_CHANNEL = "invoke-declared-call-v1"
 CHANNEL = "invoke-declared-call-v2"
 
-# Runs inside the existing probe sandbox and counts toward its 8,000 source chars.
+# Runs inside the probe sandbox with a separate host observer source budget.
 # In-process diagnostic feedback is not an attestation against a hostile program.
 OBSERVER = '''import os as _pr_os, sys as _pr_sys, json as _pr_json
 import importlib as _pr_import, hashlib as _pr_hash, inspect as _pr_inspect

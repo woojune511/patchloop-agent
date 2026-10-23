@@ -15,7 +15,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from patchloop import probe_callers
+from patchloop import probe_callers, probe_limits
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import PublicTask, RegisteredCheck
 from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
@@ -471,7 +471,8 @@ def dev_tool_schemas(
                 "properties": {
                     "question": {"type": ["string", "null"], "minLength": 1, "maxLength": 500},
                     "python_source": {
-                        "type": ["string", "null"], "minLength": 1, "maxLength": 8_000,
+                        "type": ["string", "null"], "minLength": 1,
+                        "maxLength": probe_limits.SOURCE_LIMIT_CHARS,
                     },
                     "replay_action_id": {
                         "type": ["string", "null"], "minLength": 1, "maxLength": 500,
@@ -3743,16 +3744,12 @@ class DevToolGateway:
     ) -> str:
         if not isinstance(question, str) or not 1 <= len(question) <= 500:
             raise probe_requests.error("probe question must contain 1-500 characters", "/question")
-        if not isinstance(python_source, str) or not 1 <= len(python_source) <= 8_000:
+        if (not isinstance(python_source, str)
+                or not 1 <= len(python_source) <= probe_limits.SOURCE_LIMIT_CHARS):
             raise probe_requests.error("probe source must contain 1-8000 characters",
                                        "/python_source")
-        execution_source = (reproduction.program(python_source, reproduction_binding)
-                            if reproduction_binding is not None else python_source)
-        if len(execution_source) > 8_000:
-            raise probe_requests.error(
-                "probe plus reproduction observer exceeds the 8000-character limit",
-                "/python_source")
-        return execution_source
+        return (reproduction.program(python_source, reproduction_binding)
+                if reproduction_binding is not None else python_source)
 
     def _run_probe(
         self, question: str, python_source: str, *,

@@ -61,6 +61,18 @@ completed action recovery still uses `action_id + input_hash` without redispatch
 Correction is request validity only, never execution or requirement verification.
 Existing request/attempt limits, acquisition release and completion policy remain.
 
+Authored `python_source` retains its 8,000-character allowance for both purposes.
+Host reproduction instrumentation (including fixed headers) has a separate
+8,000-character / 32,000-byte bound. Exceeding that bound reports a host observer
+error, not a request to shorten `/python_source`. Serialized execution allows
+88,002 characters / 112,002 UTF-8 bytes: `repr(source)` can expand each character
+to ten ASCII characters plus two quotes, followed by the bounded observer.
+The gateway checks authored input; the sandbox and standalone reader bound the
+composed program. The v3 probe profile records all limits. Observer/program bytes
+and saved binding hashes remain unchanged; existing manifests cannot silently
+switch runtime/profile identities. Local size admission is not target execution
+or original-requirement acquisition; see the [size repair](../docs/history/2026-10-24-size.md).
+
 For original-requirement probes, invoke the declared callable through injected
 `call_target(args=[...], kwargs={...}, input_paths=[...], environment_keys=[...])`.
 It resolves the public import path, including aliases and constructors, and calls

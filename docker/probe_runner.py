@@ -16,6 +16,8 @@ from contextlib import suppress
 TIMEOUT_EXIT_CODE = 124
 CHILD_RESERVED_EXIT_CODE = 125
 INPUT_TIMEOUT_SECONDS = 5
+# Standalone container copy of probe_limits.EXECUTION_LIMIT_BYTES; tested together.
+EXECUTION_LIMIT_BYTES = 112_002
 _PR_SET_NO_NEW_PRIVS = 38
 _PR_SET_SECCOMP = 22
 _SECCOMP_MODE_FILTER = 2
@@ -61,9 +63,9 @@ def _read_source() -> bytes:
     signal.signal(signal.SIGALRM, _input_timeout)
     signal.setitimer(signal.ITIMER_REAL, INPUT_TIMEOUT_SECONDS)
     try:
-        source = sys.stdin.buffer.read(32_001)
-        if len(source) > 32_000:
-            raise ValueError("probe source exceeds 32000 bytes")
+        source = sys.stdin.buffer.read(EXECUTION_LIMIT_BYTES + 1)
+        if len(source) > EXECUTION_LIMIT_BYTES:
+            raise ValueError(f"probe execution program exceeds {EXECUTION_LIMIT_BYTES} bytes")
         return source
     except _InputTimeout:
         os.write(

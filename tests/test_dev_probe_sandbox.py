@@ -12,6 +12,7 @@ import pytest
 
 from patchloop.deadline import ExecutionDeadline
 from patchloop.errors import ContractError
+from patchloop.probe_limits import EXECUTION_LIMIT_BYTES, EXECUTION_LIMIT_CHARS
 from patchloop.sandbox import probes
 from patchloop.util import sha256_bytes, sha256_json
 
@@ -113,7 +114,11 @@ def test_snapshot_rejects_tracked_symlinks_before_read(monkeypatch, tmp_path):
         probes._snapshot(tmp_path, tmp_path / "exported", None)
 
 
-def test_probe_runs_snapshot_with_fixed_policy_and_no_worktree_write(monkeypatch, public_repo):
+@pytest.mark.parametrize("source", ["print(2)", "#" * EXECUTION_LIMIT_CHARS],
+                         ids=["short", "transport-bound"])
+def test_probe_runs_snapshot_with_fixed_policy_and_no_worktree_write(
+    monkeypatch, public_repo, source,
+):
     sandbox = backend(monkeypatch)
     commands = []
     mounts = []
@@ -136,13 +141,15 @@ def test_probe_runs_snapshot_with_fixed_policy_and_no_worktree_write(monkeypatch
     monkeypatch.setenv("SECRET_API_KEY", "never inherited")
     monkeypatch.setenv("OPENBLAS_NUM_THREADS", "64")
     mock_launch(monkeypatch, launch)
-    result = sandbox.run_probe(public_repo, "observe value", "print(2)", deadline=None,
+    result = sandbox.run_probe(public_repo, "observe value", source, deadline=None,
                                execution_identity={"run_id": "run1", "action_id": "a1"})
     assert result["status"] == "passed"
     assert result["stdout"] == "ok\n"
     assert result["snapshot_hash"]
     assert result["execution_policy_hash"] == sha256_json(result["execution_policy"])
-    assert result["execution_policy"]["version"] == "docker-python-probe-v2"
+    assert result["execution_policy"]["version"] == "docker-python-probe-v3"
+    assert result["source_hash"] == sha256_bytes(source.encode())
+    assert result["execution_policy"]["execution_limit_bytes"] == EXECUTION_LIMIT_BYTES
     assert result["execution_policy"]["thread_policy"] == "same-process-pthreads-only-v1"
     assert result["execution_policy"]["pids_limit"] == 8
     assert result["execution_policy"]["thread_environment"] == {"OPENBLAS_NUM_THREADS": "1"}
@@ -157,6 +164,35 @@ def test_probe_runs_snapshot_with_fixed_policy_and_no_worktree_write(monkeypatch
     assert len(mounts) == 2 and all(item.endswith(",readonly") for item in mounts)
     assert (public_repo / "module.py").read_bytes() == before
     assert not list(public_repo.glob("*probe*"))
+
+
+@pytest.mark.parametrize("source", [
+    "#" * (EXECUTION_LIMIT_CHARS + 1),
+    "\U0001f642" * (EXECUTION_LIMIT_BYTES // 4 + 1),
+], ids=["character-overflow", "byte-overflow"])
+def test_execution_transport_rejects_overflow_before_preflight_or_launch(tmp_path, source):
+    with pytest.raises(ContractError, match="execution program.*transport"):
+        probes.DockerProbeSandbox().run_probe(
+            tmp_path, "observe", source, deadline=None, execution_identity={})
+
+
+def test_standalone_input_reader_accepts_exact_transport_bound_and_stops_at_overflow(monkeypatch):
+    wrapper = runpy.run_path(str(probes._WRAPPER))
+    assert wrapper["EXECUTION_LIMIT_BYTES"] == EXECUTION_LIMIT_BYTES
+    signals = wrapper["signal"]
+    monkeypatch.setattr(signals, "SIGALRM", 14, raising=False)
+    monkeypatch.setattr(signals, "ITIMER_REAL", 0, raising=False)
+    monkeypatch.setattr(signals, "signal", lambda *args: None)
+    monkeypatch.setattr(signals, "setitimer", lambda *args: None, raising=False)
+    for size in (EXECUTION_LIMIT_BYTES, EXECUTION_LIMIT_BYTES + 1):
+        stream = io.TextIOWrapper(io.BytesIO(b"#" * size))
+        monkeypatch.setattr(wrapper["sys"], "stdin", stream)
+        if size == EXECUTION_LIMIT_BYTES:
+            assert wrapper["_read_source"]() == b"#" * size
+        else:
+            with pytest.raises(ValueError, match="execution program exceeds"):
+                wrapper["_read_source"]()
+        stream.close()
 
 
 def test_output_flood_is_bounded_and_kills_owned_process(monkeypatch, public_repo):

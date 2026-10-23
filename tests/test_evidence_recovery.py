@@ -260,8 +260,8 @@ def test_reproduction_schema_public_quote_and_original_source_limit(gateway_fact
     call = probe(gateway.public_task)
     call.arguments["reproduction"]["requirement_quote"] = "not in the public task"
     assert gateway.execute(call).status == "failed"
-    oversized = gateway.execute(probe(gateway.public_task, "oversized", source="#" + "a" * 7998))
-    assert oversized.status == "failed" and "8000-character" in oversized.message
+    oversized = gateway.execute(probe(gateway.public_task, "oversized", source="#" + "a" * 8_000))
+    assert oversized.status == "failed" and "1-8000 characters" in oversized.message
     assert backend.calls == 0
 
 

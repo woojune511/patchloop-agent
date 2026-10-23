@@ -52,7 +52,8 @@ def test_same_action_binds_purpose_observation_and_replay_across_handoff(
 ):
     gateway, journal, workspace = gateway_factory()
     backend = gateway.probe_sandbox = ExecutingProbe()
-    first = gateway.execute(probe(gateway.public_task))
+    source = SOURCE + "\n#" + "x" * (8_000 - len(SOURCE) - 2)
+    first = gateway.execute(probe(gateway.public_task, source=source))
     assert first.status == "succeeded", first
     evidence = first.output["reproduction"]
     assert evidence["comparison"] == "mismatched"
@@ -72,8 +73,9 @@ def test_same_action_binds_purpose_observation_and_replay_across_handoff(
     after = current.execute(call)
     assert after.output["reproduction"]["comparison"] == "matched"
     assert after.output["reproduction"]["binding"] == evidence["binding"]
-    assert after.output["source_hash"] == sha256_bytes(SOURCE.encode())
+    assert after.output["source_hash"] == sha256_bytes(source.encode())
     assert backend.sources[0] == backend.sources[1]
+    assert len(backend.sources[0]) > 8_000
     assert current.execute(call).replayed and backend.calls == 2
     review = current.reproduction_review(diff_hash=current.current_diff_hash)
     assert review["items"][0]["evidence"]["status"] == "SUPPORTED"
@@ -88,7 +90,7 @@ def test_same_action_binds_purpose_observation_and_replay_across_handoff(
     handoff = assemble_model_input(system_prompt="fixed", state=state, history=[],
                                    context_policy="segmented-v1")
     assert reconstruct_state(handoff)["reproduction_review"] == review
-    original_arguments = probe(gateway.public_task).arguments
+    original_arguments = probe(gateway.public_task, source=source).arguments
     split = separate({"call": {"tool": "run_probe", "arguments": original_arguments},
                       "result": first.model_dump(mode="json")})
     assert "/call/arguments/purpose" in split["annotations"]
@@ -171,8 +173,8 @@ def test_helper_and_missing_call_stay_unverified_and_output_limits_stay_in_force
     judged = reproduction.compare(damaged, valid.output["reproduction"]["binding"])
     assert judged["reproduction"]["comparison"] == "not_compared"
     assert judged["reproduction"]["reason"] == "setup_check_failed"
-    huge = gateway.execute(probe(gateway.public_task, "huge", source="#" + "x" * 7998))
-    assert huge.status == "failed" and "8000-character" in huge.message
+    huge = gateway.execute(probe(gateway.public_task, "huge", source="#" + "x" * 8_000))
+    assert huge.status == "failed" and "1-8000 characters" in huge.message
     assert backend.calls == 3
 
 
