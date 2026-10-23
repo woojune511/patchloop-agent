@@ -128,7 +128,7 @@ def test_optional_note_rejection_does_not_replace_primary_result(
         if primary == "run_probe":
             assert outcome["status"] == "failed" and outcome["error_code"] == "CONTRACT_ERROR"
             assert outcome["message"] == (
-                "reproduction requirement_quote must occur in the public issue")
+                "omit requirement_quote; the host binds the complete public issue")
             assert outcome["output"] == result.output
         else:
             assert outcome["status"] == "succeeded" and outcome["error_code"] is None

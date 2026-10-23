@@ -218,7 +218,7 @@ def test_completion_descriptions_preserve_tool_order_and_current_input_shapes():
         return value
 
     assert sha256_json(without_descriptions(schemas)) == (
-        "sha256:0529bfd766b2294f464dca56a8c12f6dd5a2aed027c12329e972974d1d381ed6"
+        "sha256:3b830a03b74b1db245ef22a1af88bd74bf99bfa68df9979fa123c6056d12e378"
         if FROZEN_ARM is None else
         "sha256:99d8179c31989d8d5caabaed81902ce9d2a8fad60af8caf594f685122e9beeac"
     )

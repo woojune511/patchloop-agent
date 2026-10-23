@@ -81,9 +81,11 @@ missing/incomplete evidence stays unverified. Mapping remains model-authored.
 actual original dispatches, two rejected requests, and six total investigation actions;
 completion budgets can release it earlier. Rejected requests do not count as executions.
 Stage receipts distinguish accepted/rejected requests, dispatch and returned results.
-Fresh original purposes bind distinct failure/desired JSON values. Acquisition needs
-both comparisons on the unchanged base. Rejections create no case; uncertainty stays
-unverified. See [oracle and replay contract](evidence-recovery.md).
+Fresh original purposes bind the host-owned public issue identity and distinct
+failure/desired JSON; no quotation is generated. Acquisition needs both comparisons
+on the unchanged base. Rejections create no case; uncertainty stays unverified.
+Field-based correction receipts certify request validity only; see the
+[request, oracle and replay contract](evidence-recovery.md).
 Legacy unknown dispatches reserve slots without becoming execution evidence. Releases
 preserve unmet verification. Journal roots and action/release identities survive recovery;
 forecasts never write them.
@@ -194,14 +196,9 @@ execution, distinct from exit 1 for a completed wrong-answer result.
 
 ## Defaults and optional diagnostics
 
-CLI defaults differ from the selected working baseline in current status. Defaults:
-medium reasoning, 25,000 desired output tokens, append-v1 context, planning none,
-probes OFF, probe-policy none, repair-recheck OFF, protected-v1 inspection,
-result-or-size-v1 segment boundaries, and per-call-v1 cost admission.
-Limits are 40 model calls, 100 tool actions, 4 accepted mutations, and 1,800 seconds;
-repeat defaults to 1 (maximum 6). Verify exact options in `DevRunRequest` and CLI.
-The reviewed full GPT-5.4 snapshot requires segmented-v1 and its counted input bound.
-Choosing a baseline or reading a diagnostic never authorizes a live run or changes defaults.
+CLI defaults are defined by `DevRunRequest` and differ from the selected baseline
+in current status. The reviewed full GPT-5.4 snapshot requires segmented-v1 and its
+counted input bound. Reading diagnostics never authorizes live work or changes defaults.
 
 Read optional implementation notes only when changing that feature. They contain
 experimental context and historical plans; current source/status take precedence:
@@ -221,14 +218,17 @@ Live repair requires exact public-request/cost approval; live dev requires dev-t
 
 ## Validation checklist
 
-Use the quick selection plus changed-owner tests for routine validation; run the full
-suite for broad integration changes. Docs-only changes need `test_documentation_layout.py`.
+Use quick plus changed-owner tests; slow A/B matrices stay in owner/full suites.
+Run full regression for broad integration changes. Quick includes isolated mock
+smoke; do not repeat it separately. Docs-only: `test_documentation_layout.py`.
 Keep focused validation under two minutes and freeze runtime during provenance checks.
 Use short unique external basetemps; never sweep durable evidence or a parent directory.
 
 ```powershell
 uv run ruff check patchloop tests
 uv run --locked pytest @tests/quick.txt --basetemp C:\pt\tmp\<short-id>
+# Changed owner: request construction/correction (short local selection)
+uv run --locked pytest @tests/request-correction.txt --basetemp C:\pt\tmp\<other-id>
 # Full regression when warranted:
 uv run --locked pytest tests -n 4 --dist loadfile --max-worker-restart 0 --basetemp C:\pt\tmp\<short-id>
 ```

@@ -35,7 +35,8 @@ def no_network(monkeypatch):
 
 
 def original_intent(task, **changes):
-    return {**intent(task), "reported_failure_json": json.dumps(REPORTED_FAILURE), **changes}
+    fields = {key: value for key, value in intent(task).items() if key != "requirement_quote"}
+    return {**fields, "reported_failure_json": json.dumps(REPORTED_FAILURE), **changes}
 
 
 def probe(task, action="original", *, source=SOURCE, replay=None):

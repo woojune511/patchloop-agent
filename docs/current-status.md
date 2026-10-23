@@ -24,42 +24,31 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-[The live oracle/correction pilot](history/2026-10-23-oracle-live.md) reached edit,
-required check and submission within USD 0.864747450 of its USD 0.88 cap. It did not
-repair Astroid-1333: independent acceptance FAIL, public missing-initializer condition
-FAIL, present control PASS. Safety PASS is separate. The one-run allocation is closed.
+[Request construction and correction](history/2026-10-23-requests.md)
+implements the first step after the [request audit](history/2026-10-23-request.md).
+Fresh original probes no longer generate a literal quotation: the host binds the
+complete public task and issue-content identities. Field diagnostics identify the
+request problem; durable receipts distinguish unchanged arguments, changed but
+invalid arguments, and a fully valid correction. Decision text grants no correction
+credit. Legacy admitted bindings and action recovery preserve their identities.
 
-A naturally incomplete first response spent its full 25,000 output tokens without
-action. The reserved correction received 25,000 and restored a valid tool-call shape,
-but its reproduction request was rejected. The same invalid quote/program was then
-repeated despite visible primary-error feedback: two request rejections, zero actual
-caller attempts. The declared failure/desired values were distinct, but execution
-and issue-to-caller mapping remain unverified.
+The [closed live pilot](history/2026-10-23-oracle-live.md) reached edit/check/submit
+within USD 0.864747450 of USD 0.88, but failed acceptance and the public original
+condition. It repeated identical invalid arguments despite recognizing the quote
+error, executed no original caller, and modified a different branch from the
+observed failure. Regression PASS did not establish the requirement. That allocation
+is closed; this implementation is authorized local work, not another live run.
 
-The cost horizon retained edit/check/finish after 32 reads/searches. The submitted
-patch changed a successful file-lookup branch, while the public failure passes a
-missing initializer with `source=True` through the unchanged exception branch.
-Regression PASS did not establish the original requirement. The runtime correctly
-retained `unverified_delivery`, zero bound cases and the unresolved original obligation.
+The verification workflow now uses a short quick selection plus a focused request
+selection. Full tests remain available; repeated A/B loops are outside routine quick
+validation. Local request/recovery controls and isolated mock evaluation passed;
+see the implementation record for commands, measured times and split validation.
 
-[The implementation and local controls](history/2026-10-23-oracles.md) remain valid:
-separate reported-failure/desired oracles; rejected requests excluded from completion
-cases; one run-wide funded correction without renewal; comparable original evidence
-required for `cases_verified_delivery`. Other successors retain only minimum output
-admission. Completion-recovery-v1 remains opt-in; the general baseline is unchanged.
-
-[Request analysis](history/2026-10-23-request.md) found that the retry explicitly
-recognized the quote error but sent identical tool arguments. A pure local binding
-control rejected the original and backslash-only variants, and accepted an exact
-public quote with all other arguments fixed. This establishes a request-correction
-gap, not successful caller execution. Two rejected requests released acquisition;
-unverified submission remained allowed by design.
-
-The open question is how to turn a recognized contract error into corrected arguments
-and obtain actual caller evidence before selecting a repair. Interface simplification
-or field-specific correction remain candidates, not adopted interventions. One exposed
-task and bundled changes establish no causal improvement or generalization. No
-follow-up implementation or additional paid run is authorized.
+Acquisition release, edit-time replay scheduling, cost reservations and completion
+semantics are unchanged. Request validity does not establish original-caller mapping
+or repair. The next question is whether simplified requests improve actual caller
+acquisition with a live model; later replay/budget changes remain separate. No
+additional paid experiment or general improvement claim is authorized.
 
 ## Supporting evidence
 

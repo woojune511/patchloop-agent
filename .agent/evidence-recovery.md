@@ -33,14 +33,33 @@ claim is made that the rest of a future request will remain unchanged.
 ## Bind a selected original-requirement probe in the same action
 
 Every fresh `run_probe` selects `purpose`: `{"kind":"helper"}` for exploration,
-or an object with `kind="original_requirement"`, a literal `requirement_quote`,
-fully qualified Python `entrypoint`, `input_conditions`, `environment_conditions`,
+or an object with `kind="original_requirement"`, fully qualified Python `entrypoint`,
+`input_conditions`, `environment_conditions`,
 `reported_failure_json` and `expected_json`. Both values are bounded strict JSON:
 the former describes the reported buggy result, the latter the desired result after
 repair. Their canonical values must differ. The same action binds both values and
 the mapping; neither value certifies semantic requirement coverage. Missing or
 invalid mapping fields fail before execution; no separate registration is needed.
 Null is only for replay. The choice remains model-authored, not certified coverage.
+
+Fresh original purposes omit `requirement_quote`. The host binds the full current
+public task hash and an `issue` reference with the exact issue-content hash; the
+already supplied public task owns the source text. No selected quotation or fuzzy
+text match gates execution. Admitted legacy quotation-bearing definitions retain
+their exact identity and program on recovery/replay.
+
+Fresh request admission stores `probe_request.validation` and returns the same
+`request_validation` receipt with the primary result. `invalid_fields` identifies
+the failing paths and constraints. The latest rejected fresh request in the same
+task is compared using actual argument values, excluding action IDs and decisions.
+`unchanged` means identical arguments; `invalid` means changed arguments still fail
+preflight; `corrected` requires a changed error field and full preflight success.
+Switching from original purpose to helper is `different_purpose`, not correction.
+An accepted request closes that chain even if execution later fails. Replay and
+uncertain recovery are excluded. The admission receipt survives crashes unchanged;
+completed action recovery still uses `action_id + input_hash` without redispatch.
+Correction is request validity only, never execution or requirement verification.
+Existing request/attempt limits, acquisition release and completion policy remain.
 
 For original-requirement probes, invoke the declared callable through injected
 `call_target(args=[...], kwargs={...}, input_paths=[...], environment_keys=[...])`.
@@ -71,7 +90,7 @@ healthy process as a mismatching value; process success is not task success.
 The host binds the task, purpose, predicate, observation channel and authored
 program hash before execution. New purpose/predicate/program means a distinct case.
 Repeating an identical selection retains the original baseline identity.
-New selections bind `invoke-declared-call-v1`. Existing `record-observation-v1`
+New selections bind `invoke-declared-call-v2`. Existing `record-observation-v1`
 and legacy stdout bindings retain their exact wrappers on replay; they do not
 silently acquire the new linkage. Unadvertised legacy `reproduction` arguments
 preserve prior action/recovery identities. Logs are never automatically converted

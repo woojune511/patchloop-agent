@@ -69,13 +69,13 @@ def test_timing_only_identity_and_schema_contrast(tmp_path, monkeypatch):
     }
     if FROZEN_ARM is None:
         old_hashes = {
-            "none": "sha256:862b09dac46cc9aa92dba9e0a88e6023392bb2af166ccd80e5bbbf47b36a91ea",
+            "none": "sha256:3b64963d2ac06ecbe500c66081c44d17fa7acf6e77793d040e1583adec42e374",
             plans.POLICY:
-                "sha256:5713def1c6da7bf9578bccdecac5ef4000350030de74f9c795086ba9c3296870",
+                "sha256:493adda0808c8e43999f20bd4a2d21cff38bb13e74d017f258efa64cc748a155",
             plans.EVIDENCE_POLICY:
-                "sha256:0ce605d0fbcaad7ec6a09b8496c3eacb2d4ac214f0fc0fad04403a5d1c393e3d",
+                "sha256:eae8f10dbc38e01edf27e81319252e826b4872d74fa9568f723b57bd134cd621",
             plans.ASSUMPTION_POLICY:
-                "sha256:a64b7a8d95e3c1081090f7cd88131dc1193971d30669c10f27eecbc9c4ac9e16",
+                "sha256:1410317a2e1aed43c428302ba54f9bf7d7436fbdedb629190bc38913f14fe987",
         }
     assert {p: dev_tool_surface_hash(planning_policy=p) for p in old_hashes} == old_hashes
     old, new = plans.instructions(), plans.instructions(POLICY)

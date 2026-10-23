@@ -26,6 +26,7 @@ from patchloop.dev import (
     original_obligation,
     probe_cases,
     probe_replay,
+    probe_requests,
     reproduction,
     requirement_reference,
 )
@@ -2591,6 +2592,7 @@ class DevToolGateway:
         candidate_summary: DiffSummary | None = None
         prepared_probe: dict[str, Any] | None = None
         reproduction_binding: dict[str, Any] | None = None
+        request_validation: dict[str, Any] | None = None
         probe_arguments = {key: value for key, value in call.arguments.items()
                            if key not in {"replay_action_id", "reproduction", "purpose"}}
         replay_probe = (
@@ -2632,7 +2634,7 @@ class DevToolGateway:
                 selected, observation_channel = (
                     reproduction.selection(call.arguments, allow_legacy=True)
                     if (legacy_binding is not None
-                        and "reported_failure_json" not in legacy_binding["definition"])
+                        and "requirement_quote" in legacy_binding["definition"])
                     else reproduction.selection(call.arguments)
                 )
                 if selected is not None and any(
@@ -2671,6 +2673,15 @@ class DevToolGateway:
                 )
             except (PatchLoopError, ValidationError, ValueError) as exc:
                 preflight_error = exc
+        if call.name == "run_probe" and "purpose" in call.arguments:
+            request_validation = (
+                copy.deepcopy(pending.get("probe_request", {}).get("validation"))
+                if pending is not None else probe_requests.review(
+                    call.arguments, preflight_error, self.journal.events(),
+                    public_task_hash=sha256_json(self.public_task.model_dump(mode="json")),
+                    kind=original_obligation.request_kind(call.arguments, reproduction_binding),
+                )
+            )
         if pending is None:
             if call.name == "replace_text":
                 try:
@@ -2707,6 +2718,7 @@ class DevToolGateway:
                         "status": "rejected" if preflight_error is not None else "accepted",
                         "kind": original_obligation.request_kind(
                             call.arguments, reproduction_binding),
+                        **({"validation": request_validation} if request_validation else {}),
                     }} if call.name == "run_probe" else {}),
                     **({"reproduction_binding": reproduction_binding}
                        if reproduction_binding is not None else {}),
@@ -2895,6 +2907,8 @@ class DevToolGateway:
                     output["mutation"]["behavior_cases"] = behavior_cases.project(
                         mutation_behavior_cases, self.public_task,
                     )
+            if request_validation is not None:
+                output["request_validation"] = request_validation
             result = DevToolResult(
                 action_id=call.action_id,
                 input_hash=input_hash,
@@ -2914,6 +2928,8 @@ class DevToolGateway:
                 copy.deepcopy(exc.details) if isinstance(exc, PatchLoopError) else {}
             )
             if call.name == "run_probe":
+                if request_validation is not None:
+                    failure_output["request_validation"] = request_validation
                 failure_output.setdefault(
                     "probe_stage", "preflight_rejected" if preflight_error is not None
                     and (pending is None or pending.get("probe_request", {}).get("status")
@@ -3726,13 +3742,16 @@ class DevToolGateway:
         reproduction_binding: dict[str, Any] | None = None,
     ) -> str:
         if not isinstance(question, str) or not 1 <= len(question) <= 500:
-            raise ContractError("probe question must contain 1-500 characters")
+            raise probe_requests.error("probe question must contain 1-500 characters", "/question")
         if not isinstance(python_source, str) or not 1 <= len(python_source) <= 8_000:
-            raise ContractError("probe source must contain 1-8000 characters")
+            raise probe_requests.error("probe source must contain 1-8000 characters",
+                                       "/python_source")
         execution_source = (reproduction.program(python_source, reproduction_binding)
                             if reproduction_binding is not None else python_source)
         if len(execution_source) > 8_000:
-            raise ContractError("probe plus reproduction observer exceeds the 8000-character limit")
+            raise probe_requests.error(
+                "probe plus reproduction observer exceeds the 8000-character limit",
+                "/python_source")
         return execution_source
 
     def _run_probe(

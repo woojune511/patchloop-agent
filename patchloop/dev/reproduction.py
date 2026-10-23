@@ -9,9 +9,9 @@ from __future__ import annotations
 import copy
 import json
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from patchloop.dev import probe_invocation
+from patchloop.dev import probe_invocation, probe_requests
 from patchloop.dev.probe_cases import observation_json
 from patchloop.errors import ContractError, RecoveryError
 from patchloop.util import sha256_bytes, sha256_json
@@ -23,8 +23,9 @@ REPLAY_DESCRIPTION = (
 
 DESCRIPTION = (
     "Choose purpose for each new probe: {kind: helper} explores a helper or uncertain path; "
-    "kind=original_requirement verifies a public requirement and must include its literal "
-    "requirement_quote, fully qualified Python entrypoint, input_conditions, "
+    "kind=original_requirement binds the complete current public issue automatically; "
+    "do not copy a requirement quote. Include a fully qualified Python entrypoint, "
+    "input_conditions, "
     "environment_conditions, reported_failure_json and expected_json in that same object. "
     "reported_failure_json is the reported buggy result; expected_json is the desired result "
     "after repair. Both must be strict JSON and must differ. Observing an arbitrary mismatch "
@@ -40,6 +41,8 @@ DESCRIPTION = (
     "normally: stdout/stderr are logs, never the comparison value. Report an observed bug "
     "as a value, not an assertion against expected behavior; the host compares it. Setup "
     "failures, crashes and incomplete observations remain unverified. "
+    "On preflight rejection, correct the named invalid_fields in the actual arguments with a "
+    "new action_id. A changed explanation is not a correction; full preflight must pass. "
     "The harness records actual arguments, input-content fingerprints and execution environment "
     "at the call, and compares the recorded value with the frozen "
     "expectation; neither proves that your chosen call represents the public requirement. "
@@ -52,10 +55,9 @@ DESCRIPTION = (
 OBSERVATION_CHANNEL = "record-observation-v1"
 
 
-class Intent(BaseModel):
+class CallIntent(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
 
-    requirement_quote: str = Field(min_length=1, max_length=600)
     entrypoint: str = Field(
         min_length=3, max_length=200, pattern=r"^[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)+$"
     )
@@ -64,7 +66,13 @@ class Intent(BaseModel):
     expected_json: str = Field(min_length=1, max_length=2048)
 
 
-class OriginalIntent(Intent):
+class Intent(CallIntent):
+    """Legacy quotation-bearing binding; retained for exact recovery/replay."""
+
+    requirement_quote: str = Field(min_length=1, max_length=600)
+
+
+class OriginalIntent(CallIntent):
     """Fresh purposes distinguish the reported bug from the desired repaired result."""
 
     expected_json: str = Field(min_length=1, max_length=2048,
@@ -73,6 +81,10 @@ class OriginalIntent(Intent):
         min_length=1, max_length=2048,
         description="Reported buggy observed result before the repair; differs from expected_json.",
     )
+
+
+class LegacyOriginalIntent(OriginalIntent):
+    requirement_quote: str = Field(min_length=1, max_length=600)
 
 
 def schema():
@@ -109,19 +121,28 @@ def selection(arguments, *, allow_legacy=False):
     if "purpose" not in arguments:
         return arguments.get("reproduction"), None
     if "reproduction" in arguments:
-        raise ContractError("use purpose, not both purpose and legacy reproduction")
+        raise probe_requests.error("use purpose, not both purpose and legacy reproduction",
+                                   "/reproduction")
     purpose = arguments["purpose"]
     if purpose is None:
         if not (arguments.get("replay_action_id") or arguments.get("case_id")):
-            raise ContractError("a new probe must select helper or original_requirement purpose")
+            raise probe_requests.error(
+                "a new probe must select helper or original_requirement purpose", "/purpose")
         return None, None
     if purpose == {"kind": "helper"}:
         return None, None
     if not isinstance(purpose, dict) or purpose.get("kind") != "original_requirement":
-        raise ContractError("probe purpose must be helper or original_requirement")
+        raise probe_requests.error("probe purpose must be helper or original_requirement",
+                                   "/purpose")
     if not allow_legacy and "reported_failure_json" not in purpose:
-        raise ContractError("original_requirement requires reported_failure_json for the reported "
-                            "bug and expected_json for the desired repaired result")
+        raise probe_requests.error(
+            "original_requirement requires reported_failure_json for the reported "
+            "bug and expected_json for the desired repaired result",
+            "/purpose/reported_failure_json")
+    if not allow_legacy and "requirement_quote" in purpose:
+        raise probe_requests.error(
+            "omit requirement_quote; the host binds the complete public issue",
+            "/purpose/requirement_quote")
     return {k: v for k, v in purpose.items() if k != "kind"}, probe_invocation.CHANNEL
 
 
@@ -159,33 +180,50 @@ def bind(raw, public_task, source, action_id, *, replay=None, events=(),
     if raw is None:
         return None
     if not isinstance(source, str) or not 1 <= len(source) <= 8_000:
-        raise ContractError("probe source must contain 1-8000 characters")
+        raise probe_requests.error("probe source must contain 1-8000 characters", "/python_source")
     paired = isinstance(raw, dict) and "reported_failure_json" in raw
-    intent = (OriginalIntent if paired else Intent).model_validate(raw)
+    legacy = isinstance(raw, dict) and "requirement_quote" in raw
+    intent_type = (LegacyOriginalIntent if legacy else OriginalIntent) if paired else Intent
+    try:
+        intent = intent_type.model_validate(raw)
+    except ValidationError as exc:
+        if observation_channel != probe_invocation.CHANNEL:
+            raise
+        raise ContractError("invalid original_requirement fields", details={
+            "invalid_fields": probe_requests.fields(exc, prefix="/purpose"),
+        }) from exc
     task = public_task.model_dump(mode="json")
-    if not any(intent.requirement_quote in task["issue"][key] for key in ("title", "description")):
+    if legacy and not any(intent.requirement_quote in task["issue"][key]
+                          for key in ("title", "description")):
         raise ContractError("reproduction requirement_quote must occur in the public issue")
     expected, reason = observation_json(
         {"status": "passed", "exit_code": 0, "stdout": intent.expected_json}
     )
     if expected is None:
-        raise ContractError(
-            "reproduction expected_json must be bounded strict JSON: " + str(reason)
+        raise probe_requests.error(
+            "reproduction expected_json must be bounded strict JSON: " + str(reason),
+            "/purpose/expected_json" if observation_channel == probe_invocation.CHANNEL
+            else "/reproduction/expected_json",
         )
     failure = None
     if paired:
         failure, reason = observation_json(
             {"status": "passed", "exit_code": 0, "stdout": intent.reported_failure_json})
         if failure is None:
-            raise ContractError("reproduction reported_failure_json must be bounded strict JSON: "
-                                + str(reason))
+            raise probe_requests.error(
+                "reproduction reported_failure_json must be bounded strict JSON: " + str(reason),
+                "/purpose/reported_failure_json")
         if failure == expected:
-            raise ContractError("reported_failure_json and desired expected_json must differ")
+            raise probe_requests.error(
+                "reported_failure_json and desired expected_json must differ",
+                "/purpose/reported_failure_json", "/purpose/expected_json")
     definition = {
         **intent.model_dump(),
         "expected_json": expected,
         **({"reported_failure_json": failure} if paired else {}),
         "public_task_hash": sha256_json(task),
+        **({"requirement_source": {"field": "issue", "issue_hash": sha256_json(task["issue"])}}
+           if not legacy else {}),
         **({"observation_channel": observation_channel} if observation_channel else {}),
     }
     program_hash = sha256_bytes(source.encode("utf-8"))

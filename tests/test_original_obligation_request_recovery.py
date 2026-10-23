@@ -46,6 +46,9 @@ def test_quote_rejection_keeps_original_execution_allowance_for_corrected_reques
     assert rejected_state["stage"] == "pending" and rejected_state["status"] == "unverified"
     assert gateway.probe_sandbox.calls == 0
     corrected = gateway.execute(probe(gateway.public_task, "corrected"))
+    correction = corrected.output["request_validation"]["correction"]
+    assert correction["status"] == "corrected"
+    assert correction["changed_error_fields"] == ["/purpose/requirement_quote"]
     assert corrected.output["probe_stage"] == "execution_returned"
     assert corrected.output["reproduction"]["comparison"] == "mismatched"
     state = view(gateway)
@@ -57,8 +60,11 @@ def test_quote_rejection_keeps_original_execution_allowance_for_corrected_reques
 
 def test_two_request_errors_release_without_execution_or_original_evidence(gateway):
     calls = [bad_quote(gateway, f"bad-{index}") for index in range(obligation.MAX_REQUEST_ERRORS)]
+    calls[-1].turn_decision.basis = "I corrected the rejected request."
     for call in calls:
-        assert gateway.execute(call).output["probe_stage"] == "preflight_rejected"
+        result = gateway.execute(call)
+        assert result.output["probe_stage"] == "preflight_rejected"
+    assert result.output["request_validation"]["correction"]["status"] == "unchanged"
     state = view(gateway)
     assert state["stage"] == "released" and state["reason"] == "request_error_limit"
     assert state["acquisition_status"] == "request_blocked"

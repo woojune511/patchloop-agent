@@ -188,9 +188,12 @@ def test_legacy_reproduction_serialization_and_replay_remain_unchanged(gateway):
     assert "declared_failure_comparison" not in replay.output["reproduction"]
 
 
-def test_old_accepted_pending_purpose_recovers_exact_binding_and_program(gateway):
+@pytest.mark.parametrize("paired", [False, True])
+def test_old_accepted_pending_purpose_recovers_exact_binding_and_program(gateway, paired):
     call = probe(gateway.public_task)
-    call.arguments["purpose"].pop("reported_failure_json")
+    if not paired:
+        call.arguments["purpose"].pop("reported_failure_json")
+    call.arguments["purpose"]["requirement_quote"] = gateway.public_task.issue.title
     raw = {key: value for key, value in call.arguments["purpose"].items() if key != "kind"}
     binding = reproduction.bind(raw, gateway.public_task, SOURCE, call.action_id,
                                 observation_channel=probe_invocation.CHANNEL)
@@ -217,7 +220,7 @@ def test_old_accepted_pending_purpose_recovers_exact_binding_and_program(gateway
     result = restore(gateway).execute(call)
     assert result.status == "succeeded", result
     assert canonical_json(result.output["reproduction"]["binding"]) == old_bytes
-    assert "declared_failure_comparison" not in result.output["reproduction"]
+    assert ("declared_failure_comparison" in result.output["reproduction"]) == paired
     assert gateway.probe_sandbox.sources == [program]
     assert view(gateway)["stage"] == "acquired"  # Preserve the old mismatch semantics.
     assert restore(gateway).execute(call).replayed and gateway.probe_sandbox.calls == 1
