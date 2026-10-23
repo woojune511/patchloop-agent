@@ -2628,7 +2628,13 @@ class DevToolGateway:
                 preflight_error = exc
         if call.name == "run_probe" and preflight_error is None:
             try:
-                selected, observation_channel = reproduction.selection(call.arguments)
+                legacy_binding = (pending or {}).get("reproduction_binding")
+                selected, observation_channel = (
+                    reproduction.selection(call.arguments, allow_legacy=True)
+                    if (legacy_binding is not None
+                        and "reported_failure_json" not in legacy_binding["definition"])
+                    else reproduction.selection(call.arguments)
+                )
                 if selected is not None and any(
                     call.arguments.get(k)
                     for k in ("case_id", "reference_action_id", "save_program")

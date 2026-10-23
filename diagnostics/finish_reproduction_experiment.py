@@ -41,6 +41,7 @@ EXPECTATIONS = {
 }
 TEXT = 'h,v\n"first\nsecond",x\n'
 EXPECTED = [["h", "v"], ["first\nsecond", "x"]]
+REPORTED_FAILURE = [["h", "v"], ["first"], ['second"', "x"]]
 NORMAL = "name,age\nAda,36"
 NORMAL_EXPECTED = [["name", "age"], ["Ada", "36"]]
 TOTAL_SECONDS = 180
@@ -66,6 +67,8 @@ def original_case(task, *, normal=False):
             "input_conditions": "Normal two-column CSV." if normal else "Quoted embedded newline.",
             "environment_conditions": "Current workspace parser with normal import defaults.",
             "expected_json": canonical_json(expected),
+            # The normal control declares an absent failure and must not acquire it.
+            "reported_failure_json": canonical_json([] if normal else REPORTED_FAILURE),
         },
     }, "verify")
 

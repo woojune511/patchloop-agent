@@ -8,7 +8,7 @@ import pytest
 from test_dev_probe_cases import TEXT, ExecutingProbe, mock_request
 from test_dev_runner import _crash_journal_once, _enveloped_run_id, _SimulatedCrash
 from test_dev_tools import mutation_call, read_calls
-from test_probe_purpose import probe
+from test_probe_purpose import REPORTED_FAILURE, probe
 
 from patchloop.dev import runner
 from patchloop.dev.contracts import DevModelTurn, PublicTurnDecision, RequestedTool
@@ -34,6 +34,9 @@ def original_with_control(task):
     call = probe(task, source=source)
     call.arguments["purpose"]["expected_json"] = json.dumps([
         [["h", "v"], ["first\nsecond", "x"]], [["h", "v"], ["a", "b"]],
+    ])
+    call.arguments["purpose"]["reported_failure_json"] = json.dumps([
+        REPORTED_FAILURE, [["h", "v"], ["a", "b"]],
     ])
     return call
 

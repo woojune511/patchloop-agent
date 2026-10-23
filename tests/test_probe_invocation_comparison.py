@@ -6,10 +6,10 @@ import json
 import subprocess
 
 import pytest
+from test_dev_probe_action_replay import restore
 from test_dev_probe_cases import TEXT, ExecutingProbe, mock_request
 from test_dev_tools import mutation_call, read_calls
-from test_evidence_recovery import intent
-from test_probe_purpose import probe
+from test_probe_purpose import original_intent, probe
 from test_verification_role import report
 from test_verification_state_comparison import frozen_prompt, legacy_function
 
@@ -20,14 +20,14 @@ from diagnostics import probe_invocation_qualification as qualification
 from diagnostics import verification_role as role
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import Artifact
-from patchloop.dev import reproduction, runner, segments
+from patchloop.dev import original_obligation, reproduction, runner, segments
 from patchloop.dev.contracts import DevLimits, DevModelTurn, RequestedTool
 from patchloop.dev.conversation import SEGMENT_RULES, assemble_model_input, reconstruct_state
 from patchloop.dev.model import MockDevAdapter
 from patchloop.dev.state import DevJournal
 from patchloop.errors import ContractError
 from patchloop.runtime import repository_root
-from patchloop.util import sha256_bytes
+from patchloop.util import sha256_bytes, sha256_json
 
 OFF_SOURCE = (
     f"from mini_data_utils.csvlite import parse_rows\nrecord_observation(parse_rows({TEXT!r}))"
@@ -83,6 +83,38 @@ def test_off_executes_legacy_channel_and_restores_scope(gateway_factory):
         raise RuntimeError("cleanup")
     assert original == (reproduction.DESCRIPTION, reproduction.selection, reproduction.review)
     assert role._ACTIVE is False
+
+
+def test_off_old_pending_purpose_preserves_channel_binding_and_once_execution(gateway_factory):
+    gateway, journal, workspace = gateway_factory()
+    backend = gateway.probe_sandbox = ExecutingProbe()
+    call = probe(gateway.public_task, source=OFF_SOURCE)
+    call.arguments["purpose"].pop("reported_failure_json")
+    with control.assigned("A"):
+        with pytest.raises(ContractError, match="reported_failure_json"):
+            reproduction.selection(call.arguments)
+        raw, channel = reproduction.selection(call.arguments, allow_legacy=True)
+        assert channel == reproduction.OBSERVATION_CHANNEL
+        binding = reproduction.bind(raw, gateway.public_task, OFF_SOURCE, call.action_id,
+                                    observation_channel=channel)
+        decision = call.turn_decision.model_dump(mode="json")
+        input_hash = sha256_json({"tool": call.name, "arguments": call.arguments,
+                                  "turn_decision": decision})
+        journal.append("action_started", {
+            "action_id": call.action_id, "input_hash": input_hash, "tool": call.name,
+            "arguments": call.arguments, "turn_decision": decision,
+            "baseline_diff_hash": gateway.current_diff_hash, "reproduction_binding": binding,
+            "probe_request": {"policy": original_obligation.PROBE_STAGES,
+                              "status": "accepted", "kind": "original_requirement"},
+        })
+        current = restore(gateway, journal, workspace, gateway.public_task, backend)
+        result = current.execute(call)
+        assert result.status == "succeeded", result
+        observed = result.output["reproduction"]
+        assert observed["binding"] == binding and observed["comparison"] == "mismatched"
+        assert "declared_failure_comparison" not in observed
+        assert backend.sources == [reproduction.program(OFF_SOURCE, binding)]
+        assert current.execute(call).replayed and backend.calls == 1
 
 
 @pytest.mark.parametrize("arm", ["A", "B"])
@@ -239,7 +271,7 @@ def test_capacity_supports_original_and_countercondition(gateway_factory):
     gateway, _, _ = gateway_factory()
     gateway.probe_sandbox = ExecutingProbe()
     definition, channel = reproduction.selection(
-        {"purpose": {"kind": "original_requirement", **intent(gateway.public_task)}}
+        {"purpose": {"kind": "original_requirement", **original_intent(gateway.public_task)}}
     )
     binding = reproduction.bind(
         definition, gateway.public_task, source, "capacity", observation_channel=channel

@@ -24,51 +24,43 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-[Reproduction recovery and funding](history/2026-10-23-repro-recovery.md) separates
-primary action results from optional note/plan receipts and separates rejected
-requests from actual dispatch starts. Opt-in `--reproduction-acquisition bounded-v1`
-requires probes; its acquisition phase permits two dispatches, at most two original
-or unclassified request errors and six total investigation actions. Completion
-budgets can release it earlier. A durable backend
-return resumes without another execution; unknown dispatch outcomes stop.
+[Failure oracles and correction funding](history/2026-10-23-oracles.md) address two
+gaps from the [closed pilot](history/2026-10-23-repro-live.md): the bug was encoded as
+the desired result, and an incomplete response exhausted its current allowance while
+only two minimum calls remained for a three-call completion path.
 
-Opt-in `--completion-cost-policy completion-minimum-v1` requires segmented-v1.
-It keeps physical model/tool recovery slots, closes unaffordable actions and reserves
-their successful minimum check/finish successors before counting/dispatching the call.
-The 128-output-token future floor does not guarantee useful responses or failure recovery.
-Existing selected settings and defaults remain unchanged; all paid allocations are closed.
+Fresh original purposes require distinct `reported_failure_json` and desired
+`expected_json`. Failure acquisition needs a healthy unchanged-base root matching
+the former and mismatching the latter. A third value cannot acquire the failure.
+Known preflight rejections leave no completion case; uncertain accepted execution
+remains unverified. Existing binding/replay identities and legacy rules are retained.
 
-The public-task obligation survives plans and helper cases. Only an unchanged-base
+Opt-in `completion-recovery-v1` requires segmented-v1. In addition to successful
+minimum successors, it reserves one correction at 60K uncached input plus the
+requested output ceiling and one model slot. The first durable protocol correction
+consumes this run-wide credit; valid actions and restart never renew it. The correction
+requires the full output allowance. Other successors still have only 128-token minimum
+admission. Existing policies/defaults remain unchanged.
+
+The public-task obligation survives plans and helper cases. Only an acquired baseline
 failure plus current comparable support permits `cases_verified_delivery`. Missing
 evidence returns `unverified_delivery`; current mismatch/conflict blocks finish.
-Independent acceptance cannot upgrade original verification. Invocation receipts bind
-sys.argv and preserve legacy replay bytes.
+Both oracles and the issue-to-caller mapping remain model-authored. Independent
+acceptance cannot upgrade original verification.
 
-Local controls exercise request correction, separate caps, interruption/replay,
-annotation isolation and virtual cost admission. Scripted virtual USD 0.30 controls
-reach check/finish with minimum-successor reservation; per-call admission stops early.
-Standard mock smoke reaches isolated evaluation PASS, safety NOT_RUN, unverified delivery.
-Focused controls: 65 PASS; quick suite: 312 PASS. Full coverage plus an unmodified
-short-path recheck: 5,742 PASS, 20 SKIP, no unresolved failures. One Windows temporary
-path failure remains in the initial full-run record. These controls do not show
-improved LLM repair.
+Focused local controls: 35 PASS in 114.85 seconds. Under virtual USD 0.40, both policies
+reach scripted check/finish; the new policy increases correction output allowance
+from 128 to 25,000 while reducing the first call from 25,000 to 3,376. This proves
+allocation behavior, not useful model output. Standard mock smoke reaches isolated
+evaluation PASS, safety NOT_RUN, with unverified delivery. Quick selection: 335 PASS.
+Full local regression: 5,779 PASS, 20 SKIP, no failures; a subsequent legacy test-fixture
+correction passed its entire 13-case file with the same production runtime. Ruff
+passed. Commands, skip reasons and preserved earlier failures are in the linked report.
 
-The [live recovery pilot](history/2026-10-23-repro-live.md) corrected a request-length
-error despite an annotation rejection and executed the original caller once. It
-observed F0010 but encoded that bug as the expected result, so the original obligation
-remained unverified. Quote-error recovery specifically remains untested.
-
-After 27 source inspections, financial admission closed inspection and retained two
-successor calls. The current response consumed its 20,440-token ceiling without a
-tool call. USD 0.091154050 remained, enough for two minimum calls while mutation/check/
-finish still needed three. Terminal: COST_CAP_REACHED; USD 0.788845950 spent; no edit,
-check, submission or assessment. Reservation worked arithmetically but did not secure
-progress or recovery from an incomplete response.
-
-The next question concerns failure-versus-desired oracle binding and recovery after
-a non-progress response under the same cap. This one bundled pilot supports no causal
-repair claim or default change. Live delivery/replay and repair benefit remain
-unverified; the allocation is closed and no follow-up paid run is authorized.
+The unresolved question is whether the fresh oracle pair is faithful to the public
+report and whether funded correction produces useful action in a real solve. No
+repair improvement, default adoption or fresh paid run is established or authorized.
+All previous allocations remain closed.
 
 ## Supporting evidence
 

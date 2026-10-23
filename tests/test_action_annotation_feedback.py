@@ -90,6 +90,7 @@ def _bad_note_call(primary):
             "kind": "original_requirement", "requirement_quote": "Invented public quotation.",
             "entrypoint": "src.public_call", "input_conditions": "No arguments.",
             "environment_conditions": "Current working tree.", "expected_json": "1",
+            "reported_failure_json": "0",
         },
     }, turn_decision={
         "mode": "verify", "basis": "Exercise the reported caller.", "memory_update": update,

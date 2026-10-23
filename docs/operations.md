@@ -1,9 +1,8 @@
 # Run and validate
 
-Use [current status](current-status.md) for the baseline/open question and the
-[guide](../.agent/guide.md) for implementation contracts.
-Past commands, approvals, results and diagnostic narratives are searchable through
-[the history index](history/README.md); they are not current run authorization.
+See [status](current-status.md) for baseline/questions, [guide](../.agent/guide.md)
+for contracts and [history](history/README.md) for past evidence. Historical approvals
+do not authorize current runs.
 
 ## State and temporary workspaces
 
@@ -13,11 +12,10 @@ All generated state belongs outside the repository. Use short Windows paths:
 - `C:\pt\validation\<unique-name>.xml`: retained reports outside test scratch.
 - `C:\patchloop-state`: durable runs, artifacts and managed workspaces.
 
-After a test process and its children exit, retain its report and recycle only its
-exact temporary directory. Keep failed-test scratch while diagnosis needs it.
-Do not sweep a parent directory, empty the Recycle Bin automatically, or infer
-disposability from names such as `test` or `tmp`. Preserve existing run, preparation,
-analysis and experiment paths and bytes.
+After tests and children exit, retain reports and recycle only that exact temporary
+directory. Preserve failed-test scratch until diagnosis ends. Never sweep parents,
+empty the Recycle Bin automatically or infer disposability from names. Preserve all
+existing run, preparation, analysis and experiment bytes.
 
 ## Local verification
 
@@ -40,10 +38,9 @@ Full-suite workers keep files together, use separate basetemps and cannot restar
 Independent invocations need separate roots. Record commands, results and unexecuted
 checks; old suite totals do not verify current changes.
 
-CI runs on pull requests and `main`: Windows/Linux Python 3.12, four file-grouped
-workers, task validation, mock smoke and separate Ruff. Logs include the slowest 20
-phases; JUnit reports persist 14 days even on failure. `--locked` rejects metadata/lock
-drift. Parallel scheduling preserves test selection and the real-Docker opt-in boundary.
+CI: PRs/`main`, Windows/Linux Python 3.12, four file-grouped workers, task validation,
+mock smoke and Ruff. Logs retain 20 slowest phases; JUnit persists 14 days even on failure.
+`--locked` rejects lock drift. Parallelism preserves selection and Docker opt-in.
 
 ## Mock end-to-end
 
@@ -206,11 +203,13 @@ verified local copies without network/install. Add `--enable-probes
 
 For other context, planning, cost or repair policies, read the relevant internal
 contract and CLI compatibility checks first. Opt-in `--completion-cost-policy
-completion-minimum-v1` requires segmented-v1 and reserves the successful minimum
-check/finish path behind each offered action. It closes unaffordable exploration
-before dispatch while retaining model/tool recovery slots. Its 128-token future
-output floor does not guarantee useful responses or failure recovery. Existing cost
-defaults remain unchanged. Reusable probe cases have a separate
+completion-minimum-v1` requires segmented-v1: retain recovery slots and reserve
+successful minimum check/finish successors before dispatch. `completion-recovery-v1`
+reserves one model slot and one run-wide correction at 60K input + requested output.
+Its first durable correction consumes the credit; restart/valid actions cannot renew
+it. Neither policy guarantees useful responses or repair; tool failures/unknown billing
+are outside correction funding. Defaults remain unchanged. See the [guide](../.agent/guide.md).
+Reusable probe cases have a separate
 [case contract](../.agent/probe-cases.md). Optional `--probe-recheck saved-program-v1`
 requires enabled probes and `cases-v1`; it reruns the last saved program after edits
 within existing budgets and never gates submission. Defaults remain off; see the
@@ -237,13 +236,16 @@ Finish replays stale original cases and controls with deterministic action IDs,
 within the solver budget and without another model call. Current mismatch/conflict
 rejects finish. `stop_task` abandons without submission/evaluation.
 
-For a selected runnable report, `--enable-probes --reproduction-acquisition bounded-v1`
-offers pre-edit investigation: two actual original dispatches, at most two rejected
-requests, and six total investigation actions. Rejected requests consume no execution
-attempt. It releases earlier to preserve completion budgets (default `none`).
-Release leaves the task-bound obligation unmet. Helper/normal PASS cannot acquire
-the failure. Fresh caller receipts bind sys.argv, arguments, cwd and selected
+`--enable-probes --reproduction-acquisition bounded-v1` permits two original dispatches,
+two rejected requests and six total investigations before edits; requests are not
+executions. Completion budgets can release it earlier (default `none`). Release or
+helper/normal PASS cannot discharge the obligation. Caller receipts bind sys.argv,
+arguments, cwd and selected
 input/environment identities. See the [contract](../.agent/evidence-recovery.md).
+Fresh original purposes bind distinct failure/desired JSON values. Acquisition needs
+a healthy unchanged-base failure match and desired mismatch. Third values stay
+unverified; mapping remains model-authored. Rejected requests create no case; accepted
+uncertain executions remain unverified.
 
 Finish, repair receipts and dev results expose `delivery_state`, `original_verification`
 and `submission_verification`. An unchanged-base failure plus current case support

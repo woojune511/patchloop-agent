@@ -13,6 +13,7 @@ from types import SimpleNamespace
 import pytest
 from test_dev_probe_action_replay import restore
 from test_dev_probe_cases import TEXT, ExecutingProbe, mock_request
+from test_dev_runner import _crash_journal_once, _SimulatedCrash
 from test_dev_tools import mutation_call, read_calls
 from test_probe_purpose import probe
 from test_verification_state_comparison import frozen_prompt
@@ -138,12 +139,38 @@ def selected_probe(task, arm, *, replay=False):
     if arm == "A":
         purpose = call.arguments.pop("purpose")
         call.arguments["reproduction"] = (
-            {k: v for k, v in purpose.items() if k != "kind"} if purpose else None)
+            {k: v for k, v in purpose.items() if k not in {"kind", "reported_failure_json"}}
+            if purpose else None)
         if not replay:
             call.arguments["python_source"] = (
                 "import json\nfrom mini_data_utils.csvlite import parse_rows\n"
                 f"print(json.dumps(parse_rows({TEXT!r})))")
     return call
+
+
+def test_off_pending_legacy_request_preserves_binding_and_once_execution(
+    gateway_factory, monkeypatch,
+):
+    with control.assigned("A"):
+        gateway, journal, workspace = gateway_factory()
+        backend = gateway.probe_sandbox = ExecutingProbe()
+        call = selected_probe(gateway.public_task, "A")
+        reproduction.Intent.model_validate(call.arguments["reproduction"])
+        assert reproduction.selection(call.arguments, allow_legacy=True) == (
+            call.arguments["reproduction"], None)
+        _crash_journal_once(monkeypatch, event_type="action_started", when="after")
+        with pytest.raises(_SimulatedCrash):
+            gateway.execute(call)
+        binding = journal.events()[-1]["payload"]["reproduction_binding"]
+        assert backend.calls == 0 and "reported_failure_json" not in binding["definition"]
+        current = restore(gateway, journal, workspace, gateway.public_task, backend)
+        result = current.execute(call)
+        assert result.status == "succeeded", result
+        observed = result.output["reproduction"]
+        assert observed["binding"] == binding and observed["comparison"] == "mismatched"
+        assert "declared_failure_comparison" not in observed
+        assert backend.sources == [reproduction.program(call.arguments["python_source"], binding)]
+        assert current.execute(call).replayed and backend.calls == 1
 
 
 @pytest.mark.parametrize("arm", ["A", "B"])

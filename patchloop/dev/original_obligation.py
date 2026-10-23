@@ -107,8 +107,9 @@ def review(events, public_task, completion, *, acquisition="none", probe_availab
                   and row.get("baseline_diff_hash") == EMPTY_DIFF for row in starts.values())
     roots = completion.get("baseline_failure_case_ids", [])
     matched = completion.get("baseline_matched_count", 0)
+    observed = completion.get("baseline_observed_count", 0)
     acquisition_status = ("acquired" if roots else "setup_blocked" if not probe_available
-                          else "not_reproduced" if matched
+                          else "not_reproduced" if matched or observed
                           else "setup_blocked" if attempts or legacy
                           else "request_blocked" if request_errors else "not_attempted")
     reason = ("baseline_failure_observed" if roots else releases[0]["reason"] if releases

@@ -24,6 +24,7 @@ SOURCE = (
     f"record_observation(call_target(args=[{TEXT!r}]))\n"
     "print('progress after', flush=True)\n"
 )
+REPORTED_FAILURE = [["h", "v"], ["first"], ['second"', "x"]]
 
 
 @pytest.fixture(autouse=True)
@@ -33,11 +34,15 @@ def no_network(monkeypatch):
     monkeypatch.setattr("socket.socket.connect", forbidden)
 
 
+def original_intent(task, **changes):
+    return {**intent(task), "reported_failure_json": json.dumps(REPORTED_FAILURE), **changes}
+
+
 def probe(task, action="original", *, source=SOURCE, replay=None):
     return RequestedTool(name="run_probe", action_id=action, arguments={
         "question": None if replay else "Does the public parser preserve quoted newlines?",
         "python_source": None if replay else source, "replay_action_id": replay,
-        "purpose": None if replay else {"kind": "original_requirement", **intent(task)},
+        "purpose": None if replay else {"kind": "original_requirement", **original_intent(task)},
     }, turn_decision={"mode": "verify", "basis": "Check the original public requirement."})
 
 
@@ -94,10 +99,12 @@ def test_purpose_requires_complete_public_mapping_before_execution(gateway_facto
     backend = gateway.probe_sandbox = ExecutingProbe()
     purposes = [
         None, {"kind": "original_requirement"}, {"kind": "helper", "expected_json": "true"},
-        {"kind": "original_requirement", **intent(gateway.public_task, entrypoint="not qualified")},
         {"kind": "original_requirement",
-         **intent(gateway.public_task, requirement_quote="invented")},
-        {"kind": "original_requirement", **intent(gateway.public_task, expected_json='{"x":NaN}')},
+         **original_intent(gateway.public_task, entrypoint="not qualified")},
+        {"kind": "original_requirement",
+         **original_intent(gateway.public_task, requirement_quote="invented")},
+        {"kind": "original_requirement",
+         **original_intent(gateway.public_task, expected_json='{"x":NaN}')},
     ]
     for n, purpose in enumerate(purposes):
         call = probe(gateway.public_task, f"bad-{n}")

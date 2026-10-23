@@ -25,7 +25,10 @@ DESCRIPTION = (
     "Choose purpose for each new probe: {kind: helper} explores a helper or uncertain path; "
     "kind=original_requirement verifies a public requirement and must include its literal "
     "requirement_quote, fully qualified Python entrypoint, input_conditions, "
-    "environment_conditions and expected_json in that same object. No separate declaration "
+    "environment_conditions, reported_failure_json and expected_json in that same object. "
+    "reported_failure_json is the reported buggy result; expected_json is the desired result "
+    "after repair. Both must be strict JSON and must differ. Observing an arbitrary mismatch "
+    "does not reproduce the declared failure. No separate declaration "
     "step is needed. For original_requirement execute the declared entrypoint with injected "
     "call_target(args=[...], kwargs={...}, input_paths=[...], environment_keys=[...]). It "
     "resolves public aliases and constructors; do not replace it with a helper call. Select "
@@ -61,6 +64,17 @@ class Intent(BaseModel):
     expected_json: str = Field(min_length=1, max_length=2048)
 
 
+class OriginalIntent(Intent):
+    """Fresh purposes distinguish the reported bug from the desired repaired result."""
+
+    expected_json: str = Field(min_length=1, max_length=2048,
+                               description="Desired observed result after the repair.")
+    reported_failure_json: str = Field(
+        min_length=1, max_length=2048,
+        description="Reported buggy observed result before the repair; differs from expected_json.",
+    )
+
+
 def schema():
     result = Intent.model_json_schema()
     result.pop("title", None)
@@ -72,7 +86,11 @@ def schema():
 
 
 def purpose_schema():
-    original = schema()["anyOf"][0]
+    original = OriginalIntent.model_json_schema()
+    original.pop("title", None)
+    for item in original["properties"].values():
+        item.pop("title", None)
+    del original["properties"]["entrypoint"]["pattern"]
     original["properties"] = {
         "kind": {"type": "string", "enum": ["original_requirement"]},
         **original["properties"],
@@ -86,7 +104,7 @@ def purpose_schema():
     ], "description": "Select helper or original_requirement; null only when replaying."}
 
 
-def selection(arguments):
+def selection(arguments, *, allow_legacy=False):
     """Fresh purposes bind in the same action; old arguments keep their recovery identity."""
     if "purpose" not in arguments:
         return arguments.get("reproduction"), None
@@ -101,6 +119,9 @@ def selection(arguments):
         return None, None
     if not isinstance(purpose, dict) or purpose.get("kind") != "original_requirement":
         raise ContractError("probe purpose must be helper or original_requirement")
+    if not allow_legacy and "reported_failure_json" not in purpose:
+        raise ContractError("original_requirement requires reported_failure_json for the reported "
+                            "bug and expected_json for the desired repaired result")
     return {k: v for k, v in purpose.items() if k != "kind"}, probe_invocation.CHANNEL
 
 
@@ -139,7 +160,8 @@ def bind(raw, public_task, source, action_id, *, replay=None, events=(),
         return None
     if not isinstance(source, str) or not 1 <= len(source) <= 8_000:
         raise ContractError("probe source must contain 1-8000 characters")
-    intent = Intent.model_validate(raw)
+    paired = isinstance(raw, dict) and "reported_failure_json" in raw
+    intent = (OriginalIntent if paired else Intent).model_validate(raw)
     task = public_task.model_dump(mode="json")
     if not any(intent.requirement_quote in task["issue"][key] for key in ("title", "description")):
         raise ContractError("reproduction requirement_quote must occur in the public issue")
@@ -150,9 +172,19 @@ def bind(raw, public_task, source, action_id, *, replay=None, events=(),
         raise ContractError(
             "reproduction expected_json must be bounded strict JSON: " + str(reason)
         )
+    failure = None
+    if paired:
+        failure, reason = observation_json(
+            {"status": "passed", "exit_code": 0, "stdout": intent.reported_failure_json})
+        if failure is None:
+            raise ContractError("reproduction reported_failure_json must be bounded strict JSON: "
+                                + str(reason))
+        if failure == expected:
+            raise ContractError("reported_failure_json and desired expected_json must differ")
     definition = {
         **intent.model_dump(),
         "expected_json": expected,
+        **({"reported_failure_json": failure} if paired else {}),
         "public_task_hash": sha256_json(task),
         **({"observation_channel": observation_channel} if observation_channel else {}),
     }
@@ -352,6 +384,10 @@ def compare(output, binding):
         "A baseline mismatch is not automatically the reported failure. Declared setup/entrypoint "
         "may not represent the public task; in-process feedback is not an attestation.",
     }
+    if "reported_failure_json" in binding["definition"]:
+        result["reproduction"]["declared_failure_comparison"] = (
+            "not_compared" if reason else "matched"
+            if actual == binding["definition"]["reported_failure_json"] else "mismatched")
     return result
 
 
@@ -431,6 +467,8 @@ def review(events, current_diff, *, public_task=None):
             "comparison": repro["comparison"],
             "reason": repro["reason"],
             "call_observation": repro["call_observation"],
+            **({"declared_failure_comparison": repro["declared_failure_comparison"]}
+               if "declared_failure_comparison" in repro else {}),
         }
         case = cases.setdefault(
             binding["case_id"], {

@@ -19,10 +19,13 @@ DEFAULT_OUTPUT_CEILING = 25_000
 MINIMUM_OUTPUT_CEILING = 128
 # Both registered GPT-5.4 snapshots support this maximum (reviewed 2026-09-24).
 MAX_OUTPUT_CEILING = 128_000
-CompletionCostPolicy = Literal["per-call-v1", "completion-reserve-v1", "completion-minimum-v1"]
+CompletionCostPolicy = Literal[
+    "per-call-v1", "completion-reserve-v1", "completion-minimum-v1", "completion-recovery-v1",
+]
 DEFAULT_COMPLETION_COST_POLICY = "per-call-v1"
 COMPLETION_RESERVE_POLICY = "completion-reserve-v1"
 COMPLETION_MINIMUM_POLICY = "completion-minimum-v1"
+COMPLETION_RECOVERY_POLICY = "completion-recovery-v1"
 PRICING_SOURCE = "https://developers.openai.com/api/docs/pricing"
 PRICING_VERIFIED_ON = "2026-09-15"
 
@@ -30,6 +33,24 @@ PRICING_VERIFIED_ON = "2026-09-15"
 def completion_cost_contract(
     policy: CompletionCostPolicy = COMPLETION_RESERVE_POLICY,
 ) -> dict[str, object]:
+    if policy == COMPLETION_RECOVERY_POLICY:
+        return {
+            "policy": COMPLETION_RECOVERY_POLICY,
+            "future_input_tokens": segments.MAX_INPUT_TOKENS,
+            "future_output_tokens": MINIMUM_OUTPUT_CEILING,
+            "pricing": "uncached-input-and-minimum-output",
+            "horizon": "minimum-success-path-and-one-protocol-correction-v1",
+            "reservation": "largest-offered-action-minimum-successor-plus-one-correction-v1",
+            "correction_credits_per_run": 1,
+            "correction_output_tokens": "invocation-max-output-tokens",
+            "correction_consumption": "first-durable-protocol-correction-never-renewed",
+            "correction_model_calls": 1,
+            "correction_tool_actions": 0,
+            "release": "first-protocol-correction-or-terminal",
+            "limit": "One protocol correction receives the requested output ceiling; valid "
+            "response and task success are not guaranteed. Tool failures and unknown billing "
+            "are not covered. Other successors retain minimum output admission only.",
+        }
     if policy == COMPLETION_MINIMUM_POLICY:
         return {
             "policy": COMPLETION_MINIMUM_POLICY,
@@ -116,12 +137,14 @@ class DevCostLedger:
     def remaining_nanos(self) -> int:
         return max(0, self.cap_nanos - self.spent_nanos)
 
-    def future_call_reservation_nanos(self) -> int:
-        """A segmented request's input bound plus the existing output admission floor."""
+    def future_call_reservation_nanos(
+        self, *, output_ceiling: int = MINIMUM_OUTPUT_CEILING,
+    ) -> int:
+        """Price the segmented input bound and a specified output allowance."""
         return _token_cost_nanos(
             segments.MAX_INPUT_TOKENS, self.pricing.input_per_million_usd, round_up=True,
         ) + _token_cost_nanos(
-            MINIMUM_OUTPUT_CEILING, self.pricing.output_per_million_usd, round_up=True,
+            output_ceiling, self.pricing.output_per_million_usd, round_up=True,
         )
 
     def admit(

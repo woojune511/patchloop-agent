@@ -77,9 +77,11 @@ from patchloop.dev.conversation import (
 )
 from patchloop.dev.cost import (
     COMPLETION_MINIMUM_POLICY,
+    COMPLETION_RECOVERY_POLICY,
     COMPLETION_RESERVE_POLICY,
     DEFAULT_COMPLETION_COST_POLICY,
     DEFAULT_OUTPUT_CEILING,
+    MINIMUM_OUTPUT_CEILING,
     PRICING_SOURCE,
     PRICING_VERIFIED_ON,
     DevCostLedger,
@@ -162,6 +164,7 @@ class _RunCounters:
     tool_actions: int = 0
     input_count_calls: int = 0
     protocol_recoveries: int = 0
+    protocol_corrections_total: int = 0
     inspection_turns_at_diff: int = 0
     failed_mutation_repair_turns: int = 0
     failed_mutation_pending: bool = False
@@ -721,6 +724,7 @@ def _tool_policy(
     repair_recheck: bool = False,
     cost_ledger: DevCostLedger | None = None,
     completion_cost_policy: str = DEFAULT_COMPLETION_COST_POLICY,
+    desired_output_ceiling: int = DEFAULT_OUTPUT_CEILING,
     _preview_inspection: bool = True,
     _cost_call_limit: int | None = None,
 ) -> _ToolPolicy:
@@ -768,11 +772,31 @@ def _tool_policy(
     remaining_model_calls = max(0, limits.max_model_calls - counters.model_calls)
     cost_unit = 0
     funded_calls = None
-    if (completion_cost_policy in {COMPLETION_RESERVE_POLICY, COMPLETION_MINIMUM_POLICY}
+    correction_cost = correction_reserve = correction_current_premium = 0
+    correction_available = correction_pending = False
+    correction_model_reserve = 0
+    if (completion_cost_policy in {
+            COMPLETION_RESERVE_POLICY, COMPLETION_MINIMUM_POLICY, COMPLETION_RECOVERY_POLICY,
+        }
             and cost_ledger is not None):
         cost_unit = cost_ledger.future_call_reservation_nanos()
+        if completion_cost_policy == COMPLETION_RECOVERY_POLICY:
+            correction_cost = cost_ledger.future_call_reservation_nanos(
+                output_ceiling=desired_output_ceiling,
+            )
+            correction_available = (
+                limits.max_protocol_recoveries > 0 and counters.protocol_corrections_total == 0
+            )
+            correction_pending = (
+                counters.protocol_corrections_total == 1 and counters.protocol_recoveries > 0
+            )
+            correction_reserve = correction_cost if correction_available else 0
+            correction_current_premium = correction_cost - cost_unit if correction_pending else 0
+            correction_model_reserve = int(correction_available)
+            remaining_model_calls = max(0, remaining_model_calls - correction_model_reserve)
         funded_calls = (
-            cost_ledger.remaining_nanos // cost_unit
+            max(0, cost_ledger.remaining_nanos - correction_reserve - correction_current_premium)
+            // cost_unit
             if _cost_call_limit is None else _cost_call_limit
         )
         # No future input must be funded once only the final decision remains.
@@ -981,7 +1005,8 @@ def _tool_policy(
         ))
         available_check_ids = ()
     minimum_cost_successors = None
-    if completion_cost_policy == COMPLETION_MINIMUM_POLICY and funded_calls is not None:
+    if (completion_cost_policy in {COMPLETION_MINIMUM_POLICY, COMPLETION_RECOVERY_POLICY}
+            and funded_calls is not None):
         # Keep physical model/action recovery slots independent of money. Offer
         # only actions whose successful minimum successor can be funded, then
         # reserve the largest successor before the unknown action is generated.
@@ -1094,13 +1119,31 @@ def _tool_policy(
             "funded_calls": funded_calls,
             "admitted_call_slots": max(int("finish_task" in allowed), funded_calls),
             "future_calls_reserved": future_calls,
-            "future_cost_reserve_nanos": future_calls * cost_unit,
+            "future_cost_reserve_nanos": future_calls * cost_unit + correction_reserve,
             "basis": "largest_offered_action_minimum_successor",
             "recovery_scope": "Protected forecasts retain model/tool slots; money reserves only "
                               "successful minimum successors, not failure recovery.",
             "limit": "Successful actions only. Minimum output admission; useful output and task "
                      "success are not guaranteed.",
         })
+        if completion_cost_policy == COMPLETION_RECOVERY_POLICY:
+            policy.completion_cost.update({
+                "basis": "largest_offered_action_minimum_successor_plus_one_correction",
+                "correction_credits_remaining": int(correction_available),
+                "correction_pending": correction_pending,
+                "correction_output_ceiling": desired_output_ceiling,
+                "correction_call_cost_nanos": correction_cost,
+                "correction_cost_reserved_nanos": correction_reserve,
+                "correction_model_calls_reserved": correction_model_reserve,
+                "current_minimum_output_ceiling": (
+                    desired_output_ceiling if correction_pending else MINIMUM_OUTPUT_CEILING
+                ),
+                "recovery_scope": "One protocol correction per run at the requested output "
+                                  "ceiling, never renewed by valid actions. No tool-failure or "
+                                  "unknown-billing retry funding.",
+                "limit": "The correction has an output allowance, not a guarantee of a valid "
+                         "response. Other successors retain minimum output admission only.",
+            })
     elif funded_calls is not None:
         successors = [0]  # Stop and a successful finish need no subsequent call.
         if ("finish_task" in allowed and verification.get("pending_count", 0)
@@ -1145,6 +1188,10 @@ def _tool_policy(
                 counters,
                 model_calls=counters.model_calls + 1,
                 tool_actions=counters.tool_actions + 1,
+                protocol_recoveries=(
+                    0 if completion_cost_policy == COMPLETION_RECOVERY_POLICY
+                    else counters.protocol_recoveries
+                ),
                 failed_check_repair_read_used=(
                     counters.failed_check_repair_read_used or counters.failed_check_pending
                 ),
@@ -1155,6 +1202,7 @@ def _tool_policy(
             repair_recheck=repair_recheck,
             cost_ledger=cost_ledger,
             completion_cost_policy=completion_cost_policy,
+            desired_output_ceiling=desired_output_ceiling,
             _preview_inspection=False,
             _cost_call_limit=(max(0, funded_calls - 1) if funded_calls is not None else None),
         )
@@ -1269,7 +1317,11 @@ def _completion_horizon_payload(
     if (policy.completion_cost is not None
             and policy.completion_cost["admitted_call_slots"] < policy.minimum_completion_calls):
         blocking_resources.append("cost")
-    if remaining_model_calls < policy.minimum_completion_calls:
+    correction_model_reserve = (
+        policy.completion_cost.get("correction_model_calls_reserved", 0)
+        if policy.completion_cost is not None else 0
+    )
+    if remaining_model_calls < policy.minimum_completion_calls + correction_model_reserve:
         blocking_resources.append("model_calls")
     if remaining_tool_actions < policy.minimum_completion_tool_actions:
         blocking_resources.append("tool_actions")
@@ -3216,6 +3268,9 @@ def _restore_counters(journal: DevJournal) -> _RunCounters:
         input_count_calls=sum(event["event_type"] == "input_count_started" for event in events),
         compaction_calls=sum(event["event_type"] == "compaction_started" for event in events),
         protocol_recoveries=consecutive_protocol_recoveries,
+        protocol_corrections_total=sum(
+            event["event_type"] == "protocol_correction" for event in events
+        ),
     )
     action_results: dict[str, DevToolResult] = {}
     for event in events:
@@ -3659,6 +3714,7 @@ def _run_probe_recheck(
             repair_inspection_policy=request.repair_inspection_policy,
             repair_recheck=request.repair_recheck,
             cost_ledger=cost_ledger, completion_cost_policy=request.completion_cost_policy,
+            desired_output_ceiling=request.max_output_tokens,
         )
         if "run_probe" not in policy.allowed_tools:
             journal.append("probe_recheck_skipped", {
@@ -4539,12 +4595,14 @@ def _run_one_active(
                     )
                 else:
                     counters.protocol_recoveries += 1
+                    counters.protocol_corrections_total += 1
                     next_policy = _tool_policy(
                         gateway, counters, request.limits,
                         repair_inspection_policy=request.repair_inspection_policy,
                         repair_recheck=request.repair_recheck,
                         cost_ledger=cost_ledger,
                         completion_cost_policy=request.completion_cost_policy,
+                        desired_output_ceiling=request.max_output_tokens,
                     )
                     correction = _protocol_correction(
                         turn_id=pending_turn_id,
@@ -4574,12 +4632,14 @@ def _run_one_active(
                         terminal_message = str(exc)
                     else:
                         counters.protocol_recoveries += 1
+                        counters.protocol_corrections_total += 1
                         next_policy = _tool_policy(
                             gateway, counters, request.limits,
                             repair_inspection_policy=request.repair_inspection_policy,
                             repair_recheck=request.repair_recheck,
                             cost_ledger=cost_ledger,
                             completion_cost_policy=request.completion_cost_policy,
+                            desired_output_ceiling=request.max_output_tokens,
                         )
                         correction = _protocol_correction(
                             turn_id=pending_turn_id,
@@ -4737,6 +4797,7 @@ def _run_one_active(
             repair_recheck=request.repair_recheck,
             cost_ledger=cost_ledger,
             completion_cost_policy=request.completion_cost_policy,
+            desired_output_ceiling=request.max_output_tokens,
         )
         if ((snapshot.completion_verification or {}).get("original_obligation", {}).get("stage")
                 == "pending" and "run_probe" not in policy.allowed_tools):
@@ -4749,6 +4810,7 @@ def _run_one_active(
                 repair_inspection_policy=request.repair_inspection_policy,
                 repair_recheck=request.repair_recheck, cost_ledger=cost_ledger,
                 completion_cost_policy=request.completion_cost_policy,
+                desired_output_ceiling=request.max_output_tokens,
             )
         if not policy.completion_possible:
             terminal_completion_horizon = _completion_horizon_payload(
@@ -5213,6 +5275,11 @@ def _run_one_active(
             admission = cost_ledger.admit(
                 input_tokens,
                 desired_output_ceiling=request.max_output_tokens,
+                minimum_output_ceiling=(
+                    policy.completion_cost.get("current_minimum_output_ceiling",
+                                               MINIMUM_OUTPUT_CEILING)
+                    if policy.completion_cost is not None else MINIMUM_OUTPUT_CEILING
+                ),
                 future_cost_reserve_nanos=max(
                     policy.completion_cost["future_cost_reserve_nanos"]
                     if policy.completion_cost is not None else 0,
@@ -5399,12 +5466,14 @@ def _run_one_active(
                 )
                 break
             counters.protocol_recoveries += 1
+            counters.protocol_corrections_total += 1
             next_policy = _tool_policy(
                 gateway, counters, request.limits,
                 repair_inspection_policy=request.repair_inspection_policy,
                 repair_recheck=request.repair_recheck,
                 cost_ledger=cost_ledger,
                 completion_cost_policy=request.completion_cost_policy,
+                desired_output_ceiling=request.max_output_tokens,
             )
             correction = _protocol_correction(
                 turn_id=turn_id,
@@ -5434,12 +5503,14 @@ def _run_one_active(
                 terminal_message = str(exc)
                 break
             counters.protocol_recoveries += 1
+            counters.protocol_corrections_total += 1
             next_policy = _tool_policy(
                 gateway, counters, request.limits,
                 repair_inspection_policy=request.repair_inspection_policy,
                 repair_recheck=request.repair_recheck,
                 cost_ledger=cost_ledger,
                 completion_cost_policy=request.completion_cost_policy,
+                desired_output_ceiling=request.max_output_tokens,
             )
             correction = _protocol_correction(
                 turn_id=turn_id,

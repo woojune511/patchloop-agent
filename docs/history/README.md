@@ -1,6 +1,6 @@
 # History
 
-- [Recovery](2026-10-23-repro-recovery.md), [live](2026-10-23-repro-live.md)
+- [Recovery](2026-10-23-repro-recovery.md), [live](2026-10-23-repro-live.md), [oracles](2026-10-23-oracles.md)
 - [Live case](2026-10-22-original-case-live-results.md)
 - [Case finish](2026-10-22-finish-reproduction-results.md)
 - [Helpers](2026-10-22-helper-path-results.md)
@@ -26,7 +26,7 @@
 - [Prep](2026-10-05-portfolio-preparation.md), [results](2026-10-06-portfolio-dev20-results.md)
 - [Fixes](2026-10-05-click-feedback-results.md), [review](2026-10-05-original-patch-review.md)
 - [Three uses](2026-10-05-three-public-repair-uses.md)
-- [Verification](2026-10-05-repair-verification.md)
+- [Checks](2026-10-05-repair-verification.md)
 - [Dotenv](2026-10-05-dotenv-public-repair.md)
 - [Click](2026-10-05-click-public-repair.md)
 - [Repair](2026-10-05-public-repair.md)
@@ -51,7 +51,7 @@
 - [Priorities](2026-10-01-failure-priority-review.md)
 - [PDM](2026-10-01-pdm-repair-observation.md)
 - [Guidance](2026-10-01-verification-guidance-baseline.md)
-- [Verification](2026-10-01-verification-selection-comparison.md)
+- [Checks](2026-10-01-verification-selection-comparison.md)
 - [Patches](2026-09-30-submitted-patch-review.md)
 - [Replay](2026-09-30-probe-replay-comparison.md)
 - [Baseline](2026-09-28-basic-current-baseline-comparison.md)

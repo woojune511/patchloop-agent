@@ -34,9 +34,11 @@ claim is made that the rest of a future request will remain unchanged.
 
 Every fresh `run_probe` selects `purpose`: `{"kind":"helper"}` for exploration,
 or an object with `kind="original_requirement"`, a literal `requirement_quote`,
-fully qualified Python `entrypoint`, `input_conditions`, `environment_conditions`
-and bounded strict `expected_json`. Choosing original-requirement verification
-therefore supplies its mapping and expectation in that same action. Missing or
+fully qualified Python `entrypoint`, `input_conditions`, `environment_conditions`,
+`reported_failure_json` and `expected_json`. Both values are bounded strict JSON:
+the former describes the reported buggy result, the latter the desired result after
+repair. Their canonical values must differ. The same action binds both values and
+the mapping; neither value certifies semantic requirement coverage. Missing or
 invalid mapping fields fail before execution; no separate registration is needed.
 Null is only for replay. The choice remains model-authored, not certified coverage.
 
@@ -56,8 +58,9 @@ Then call the injected `record_observation(value)` exactly once with the actual
 JSON-compatible result, at most 2,048 UTF-8 bytes, after all selected target calls.
 Print progress normally. Stdout/stderr are logs, not the predicate's input; the
 recorded value travels with the bounded call-observation report. For example,
-record `{"has_error": actual_has_error}` and let the host compare it to the frozen
-expectation instead of asserting expected behavior before reporting anything.
+record `{"has_error": actual_has_error}` and let the host compare it separately to
+the frozen failure value and desired expectation. `comparison` still describes the
+desired result; `declared_failure_comparison` describes the authored failure value.
 
 Missing, duplicate, invalid or oversized observations cannot compare. A recorded
 value remains visible if the process subsequently fails, but failed execution,
@@ -131,8 +134,10 @@ discussion only. Resolve/dismiss and plan edits never write computed evidence
 state. Durable concern operations and receipts retain their original schema for
 recovery. These model-authored concerns do not gate completion.
 
-`reproduction_review.completion` separately retains every first case binding from
-the full journal. A healthy invocation-bound root is mechanically replayable;
+`reproduction_review.completion` separately retains every admitted first case binding
+from the full journal. Known preflight rejections stay in request/recovery accounting
+but cannot create completion cases. Accepted uncertain and legacy unknown requests
+remain unverified. A healthy invocation-bound root is mechanically replayable;
 this is not certification that it reproduces the reported bug. At finish, stale
 cases (including matched baseline controls) run through ordinary budgeted probe
 actions. A helper/new case cannot close an older one. Same-case current mismatch
@@ -149,8 +154,10 @@ the separate private evaluation or certifying semantic requirement coverage.
 selection and plan replacement. Opt-in `--reproduction-acquisition bounded-v1`
 records its immutable root before investigation, with at most two original attempts
 or six read/search/probe actions. Rejected edits and replayed action IDs do not
-consume that allowance. Only a healthy mismatch on the unchanged base acquires a
-failure; normal-only matches remain `not_reproduced`. Missing/invalid observations
+consume that allowance. A fresh paired case acquires a failure only when a healthy
+unchanged-base execution matches the declared failure and mismatches the desired
+result. A third value or an already-correct result remains `not_reproduced`.
+Legacy bindings retain their original acquisition rules. Missing/invalid observations
 are `setup_blocked`, without attributing the failure to infrastructure. No attempt
 is `not_attempted`. The stage releases at its bound or when probes/protected budget
 are unavailable; this does not discharge the obligation. Direct mutation/finish
@@ -164,13 +171,14 @@ cannot upgrade it. The acquisition flag defaults to `none` for bounded compariso
 Its 2/6 limits are provisional resource bounds, not measured optimal settings.
 
 Even `mismatch_to_match` means only that declared experiment changed as expected.
-The issue-to-entrypoint mapping and expected value are model-authored, and a
-baseline JSON mismatch need not reproduce the reported bug. `repair_success`
+The issue-to-entrypoint mapping and both comparison values are model-authored; even
+a declared failure match does not certify the reported bug. `repair_success`
 remains `not_assessed`; private acceptance stays outside agent context. Declaration
 fields are excluded from evidence ranking and labelled as annotations in returned
 originals. The current review is mutable state, not an archived observation.
 
-Focused checks: `tests/test_probe_invocation.py`, `tests/test_probe_purpose.py`,
+Focused checks: `tests/test_reproduction_oracles.py`,
+`tests/test_probe_invocation.py`, `tests/test_probe_purpose.py`,
 `tests/test_evidence_recovery.py`, `tests/test_verification_scope_state.py`.
 [Executable caller binding](../docs/history/2026-10-22-probe-call.md).
 [Purpose and observation channel](../docs/history/2026-10-21-probe-purpose.md).

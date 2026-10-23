@@ -47,6 +47,14 @@ def observation(events, action, diff, *, comparison="matched", change=None):
     result["workspace_diff_hash"] = result["output"]["diff_hash"] = diff
     value = result["output"]["reproduction"]
     value["comparison"] = comparison
+    definition = value["binding"]["definition"]
+    if comparison == "matched":
+        value["observed_json"] = definition["expected_json"]
+    if "reported_failure_json" in definition:
+        value["declared_failure_comparison"] = (
+            "mismatched" if comparison == "matched" else "matched")
+        if comparison == "mismatched":
+            value["observed_json"] = definition["reported_failure_json"]
     if action.startswith("completion-reproduction-"):
         result["input_hash"] = sha256_json({"tool": "run_probe", "arguments": {
             "question": None, "python_source": None,
@@ -105,6 +113,7 @@ def test_plan_assessment_helper_and_new_requirement_do_not_close_original(origin
         e["payload"]["result"]["output"]["reproduction"]["observed_json"]
         for e in journal.events() if e["event_type"] == "action_finished"
         and e["payload"]["result"]["action_id"] == "original")
+    changed.arguments["purpose"]["reported_failure_json"] = "null"
     assert gateway.execute(changed).output["reproduction"]["comparison"] == "matched"
     events = journal.events() + [{"event_type": "model_plan_changed", "payload": {
         "plan": "Only helper work remains.", "assessment": "Everything is complete."}}]
@@ -156,6 +165,7 @@ def test_case_display_limit_does_not_limit_replay_obligations_or_omit_controls(o
     for number in range(4):
         call = probe(gateway.public_task, f"control-{number}", source=SOURCE + f"\n# {number}")
         call.arguments["purpose"]["expected_json"] = expected
+        call.arguments["purpose"]["reported_failure_json"] = "null"
         assert gateway.execute(call).output["reproduction"]["comparison"] == "matched"
     result = project(gateway, journal, diff="D1")
     assert len(result["cases"]) == 3 and result["omitted_count"] == 2

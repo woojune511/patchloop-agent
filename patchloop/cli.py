@@ -152,7 +152,10 @@ def dev(
         typer.Option("--history-search", help="Search already delivered public run evidence."),
     ] = "none",
     completion_cost_policy: Annotated[
-        Literal["per-call-v1", "completion-reserve-v1", "completion-minimum-v1"],
+        Literal[
+            "per-call-v1", "completion-reserve-v1", "completion-minimum-v1",
+            "completion-recovery-v1",
+        ],
         typer.Option("--completion-cost-policy",
                      help="Opt-in future-call cost reservation; requires segmented-v1."),
     ] = "per-call-v1",

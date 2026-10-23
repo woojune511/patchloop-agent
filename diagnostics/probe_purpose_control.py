@@ -61,10 +61,10 @@ def assigned(arm):
     _ACTIVE = True
     schemas, selection = runner.dev_tool_schemas, reproduction.selection
 
-    def legacy_selection(arguments):
+    def legacy_selection(arguments, *, allow_legacy=False):
         require("purpose" not in arguments and "reproduction" in arguments,
                 "control requires its offered reproduction input")
-        return selection(arguments)
+        return selection(arguments, allow_legacy=allow_legacy)
 
     try:
         if arm == "B":

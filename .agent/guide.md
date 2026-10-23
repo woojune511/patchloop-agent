@@ -1,15 +1,14 @@
-# Internal implementation guide
+# Implementation guide
 
-Companion to [AGENTS.md](../AGENTS.md). [Status](../docs/current-status.md) owns
-current facts; source/tests own behavior. Read relevant sections only.
+See [AGENTS.md](../AGENTS.md) and [status](../docs/current-status.md).
+Source/tests own behavior. Read relevant sections only.
 
 ## Choosing the next improvement
 
-Start from observed public failures; separate evidence, suspected causes and alternatives.
-Use the smallest diagnostic or change. Memory, planning and gates need demonstrated
-benefit. Record significant investigations once in history with problem, evidence,
-hypothesis, change, result and next question. Replace stale current status with the
-active decision and evidence links. Routine fixes need no comparison process.
+Start from public failures; separate evidence, causes and alternatives. Use the smallest
+diagnostic/change. Record significant investigations once in history: problem, evidence,
+hypothesis, change, result, next question. Current status holds only active decisions
+and evidence links. Routine fixes need no comparison.
 
 ## Source map
 
@@ -33,7 +32,7 @@ active decision and evidence links. Routine fixes need no comparison process.
 Use public task inputs for agent work. Private task material and evaluator internals
 never enter coding-agent context, including through diagnostics or repair hints.
 
-Completion forecasts are pure snapshot arithmetic. The runner owns tool admission;
+Completion forecasts are pure. The runner owns tool admission;
 `dev/cost.py` owns provider admission. Preserve exact-envelope runtime identity.
 
 ## Loop and mutation contract
@@ -82,6 +81,9 @@ missing/incomplete evidence stays unverified. Mapping remains model-authored.
 actual original dispatches, two rejected requests, and six total investigation actions;
 completion budgets can release it earlier. Rejected requests do not count as executions.
 Stage receipts distinguish accepted/rejected requests, dispatch and returned results.
+Fresh original purposes bind distinct failure/desired JSON values. Acquisition needs
+both comparisons on the unchanged base. Rejections create no case; uncertainty stays
+unverified. See [oracle and replay contract](evidence-recovery.md).
 Legacy unknown dispatches reserve slots without becoming execution evidence. Releases
 preserve unmet verification. Journal roots and action/release identities survive recovery;
 forecasts never write them.
@@ -115,15 +117,12 @@ requirement mapping stays unverified.
 Plans/concerns cannot close it or gate finish. See [scope](evidence-recovery.md).
 Completion retains all cases beyond the three-case display, independently of plans.
 
-Latest observations must reach the next request. `--retained-source-chars` selects
-24,000 (default) or 48,000 previously observed characters; complete lines only, no
-unseen gaps. The setting binds model/envelope identity and resume. Native history
-and the separate 60,000-token segmented limit are unchanged. Result handoffs may
-discard older history below that limit. Run-local notes are not cross-run memory.
-Fresh native tool outputs contain only the primary action result. Note/plan update
-receipts stay in their separate current-state fields, including failures and note IDs.
-An annotation failure neither replaces an action error nor turns a successful action
-into a failure. Preserve legacy native outputs and their exact replay bytes.
+Deliver latest observations. `--retained-source-chars`: 24,000 (default) or 48,000
+observed characters, complete lines without unseen gaps; binds model/envelope/resume.
+Native history and the 60,000-token segmented limit are unchanged; result handoffs
+may discard older history sooner. Notes are run-local. Fresh native outputs contain
+only primary results; note/plan receipts have separate state fields. Annotation
+failures cannot change action outcomes. Preserve legacy outputs/replay bytes.
 
 External state is append-only, hash-chained `dev-run-v1` JSONL with immutable envelopes.
 Preserve `action_id + input_hash`: replay completed mutations/checks, reject conflicting
@@ -163,14 +162,17 @@ Runtime/lock inputs and the selected task package must be tracked and HEAD-clean
 of repository/evaluator subprocess environments. Inspect existing local images;
 never start Docker Desktop or pull/build images automatically.
 
-Count actual input immediately before dispatch and reserve conservative input/output
-cost using reviewed prices. Cost admission may reduce the desired output ceiling.
-Opt-in `completion-minimum-v1` requires segmented-v1. First retain existing model/tool
-slot rules, then remove actions whose successful minimum successors cannot be funded.
-Reserve the largest offered successor at 60K uncached input plus 128 output per call;
-ready finish uses exact counting without a successor reserve. Rechecks/replays keep
-their real tool slots. This funds minimum admission, not useful output, failure recovery
-or correct repairs. `per-call-v1` and `completion-reserve-v1` retain their contracts.
+Count actual input immediately before dispatch; reserve conservative reviewed cost.
+Admission may reduce output. Opt-in `completion-minimum-v1` requires segmented-v1:
+retain model/tool slot rules, close unaffordable actions, reserve the largest offered
+successful successor at 60K uncached input + 128 output per call. Ready finish uses
+exact counting without successor reserve. Rechecks/replays retain real tool slots.
+Opt-in `completion-recovery-v1` reserves one model slot and one run-wide correction
+at 60K input + the requested output ceiling, with no extra tool slot. The first durable
+protocol correction consumes it and requires that full output allowance. Valid actions
+and restart never renew it. Tool failures and unknown billing are excluded. Minimum
+admission and funded correction do not guarantee useful output or repair. Existing
+policies/defaults retain their contracts.
 Use zero SDK retries; count, transport, billing, or cleanup uncertainty stops all
 remaining repetitions. Reservations are not billed usage; unknown usage is not zero.
 Panel usage restoration includes compaction and adds only the row's delta to shared cost.

@@ -44,8 +44,8 @@ def previous_view(review):
     return value
 
 
-def selection(arguments):
-    raw, channel = _SELECTION(arguments)
+def selection(arguments, *, allow_legacy=False):
+    raw, channel = _SELECTION(arguments, allow_legacy=allow_legacy)
     return raw, reproduction.OBSERVATION_CHANNEL if channel == probe_invocation.CHANNEL else channel
 
 

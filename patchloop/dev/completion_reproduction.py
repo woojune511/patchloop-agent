@@ -57,6 +57,8 @@ def _compact(row):
     return {
         "action_id": result["action_id"], "diff_hash": result["workspace_diff_hash"],
         "comparison": observation["comparison"], "reason": observation["reason"],
+        **({"declared_failure_comparison": observation["declared_failure_comparison"]}
+           if "declared_failure_comparison" in observation else {}),
         "execution_link": probe_invocation.summary(trace) if probe_invocation.supports(trace.get(
             "binding_method")) else {"status": "unbound_invocation"},
     }
@@ -71,17 +73,25 @@ def review(events, current_diff, *, public_task=None, run_id):
     retrying. A new diff makes that case pending again.
     """
     cases, completed_actions, attempts = {}, {}, {}
+    rejected = {event["payload"]["action_id"] for event in events
+                if event["event_type"] == "action_started"
+                and event["payload"].get("tool") == "run_probe"
+                and event["payload"].get("probe_request", {}).get("status") == "rejected"}
     for event in events:
         kind, payload = event["event_type"], event["payload"]
         if kind in {"completion_reproduction_finished", "completion_reproduction_skipped"}:
             attempts.setdefault(payload["action_id"], []).append({"kind": kind, **payload})
         if kind == "action_started" and payload.get("tool") == "run_probe":
+            if payload["action_id"] in rejected:
+                continue
             binding = payload.get("reproduction_binding")
             if binding is not None:
                 cases.setdefault(binding["case_id"], {"binding": binding, "rows": []})
         elif kind == "action_finished":
             result = payload["result"]
             completed_actions[result["action_id"]] = result
+            if result["action_id"] in rejected:
+                continue
             observation = (result.get("output") or {}).get("reproduction")
             if result.get("tool") != "run_probe" or observation is None:
                 continue
@@ -146,11 +156,22 @@ def review(events, current_diff, *, public_task=None, run_id):
                   else root_reason if not eligible else "automatic_attempt_unverified"
                   if settled else "no_comparable_current_observation")
         witnesses = {row[1]["comparison"]: row[0]["action_id"] for row in comparable}
+        paired = "reported_failure_json" in binding["definition"]
+        original_failure = bool(
+            eligible and root[0]["workspace_diff_hash"] == sha256_bytes(b"")
+            and root[1]["comparison"] == "mismatched"
+            and (not paired or root[1].get("declared_failure_comparison") == "matched"))
         items.append({
             "case_id": case_id, "root_action_id": root_id,
             "purpose": copy.deepcopy(binding["definition"]),
             "baseline": _compact(root), "latest": _compact(rows[-1] if rows else None),
             "status": state, "replayable": bool(eligible), "auto_action_id": call.action_id,
+            **({"baseline_acquisition": {
+                "status": "qualified" if original_failure else "unverified",
+                "reason": "matched_declared_failure_on_unchanged_base" if original_failure
+                else "reported_failure_not_established_on_unchanged_base",
+                "requirement_mapping": "model_authored_unverified",
+            }} if paired else {}),
             "evidence": {"status": evidence, "reason": reason,
                          "evidence_action_ids": list(witnesses.values())},
             "automatic_attempt": {
@@ -174,10 +195,15 @@ def review(events, current_diff, *, public_task=None, run_id):
         "baseline_failure_case_ids": [item["case_id"] for item in items
                                       if item["replayable"] and item["baseline"]["diff_hash"]
                                       == sha256_bytes(b"") and item["baseline"]["comparison"]
-                                      == "mismatched"],
+                                      == "mismatched" and (
+                                          "baseline_acquisition" not in item
+                                          or item["baseline_acquisition"]["status"]
+                                          == "qualified")],
         "baseline_matched_count": sum(item["replayable"] and item["baseline"]["diff_hash"]
                                       == sha256_bytes(b"") and item["baseline"]["comparison"]
                                       == "matched" for item in items),
+        "baseline_observed_count": sum(item["replayable"] and item["baseline"]["diff_hash"]
+                                       == sha256_bytes(b"") for item in items),
         "pending_count": len(pending), "failed_count": failed,
         "unestablished_count": sum(not item["replayable"] for item in items),
         "unverified_count": unverified, "pending_cases": pending,

@@ -90,7 +90,7 @@ def test_default_serialization_and_schema_identities_remain_exact():
         allowed_tools=list(MODES),
     )
     assert sha256_json(schemas) == (
-        "sha256:dac6aa484bb7716a51f4fb3098b2f8b63e77b37f48b8e14b108cf9ea0f152c53"
+        "sha256:af111db628c979d55063e84dd17b4675d9361b4210a69549334a4e45d7fb2594"
         if FROZEN_ARM is None else
         "sha256:9757e80d1590c5274966a80011a24ed12e08340d23d2e202f0f099ea1be47955"
     )
