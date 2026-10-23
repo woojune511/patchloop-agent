@@ -48,11 +48,18 @@ cases; one run-wide funded correction without renewal; comparable original evide
 required for `cases_verified_delivery`. Other successors retain only minimum output
 admission. Completion-recovery-v1 remains opt-in; the general baseline is unchanged.
 
-The open question is why an unchanged invalid request was repeated after its error,
-then a repair selected for an unobserved input path. Request-construction friction
-and feedback use need a bounded diagnostic before another paid solve. This single
-exposed task with bundled changes establishes neither causal improvement nor
-generalization. No follow-up implementation or additional paid run is authorized.
+[Request analysis](history/2026-10-23-request.md) found that the retry explicitly
+recognized the quote error but sent identical tool arguments. A pure local binding
+control rejected the original and backslash-only variants, and accepted an exact
+public quote with all other arguments fixed. This establishes a request-correction
+gap, not successful caller execution. Two rejected requests released acquisition;
+unverified submission remained allowed by design.
+
+The open question is how to turn a recognized contract error into corrected arguments
+and obtain actual caller evidence before selecting a repair. Interface simplification
+or field-specific correction remain candidates, not adopted interventions. One exposed
+task and bundled changes establish no causal improvement or generalization. No
+follow-up implementation or additional paid run is authorized.
 
 ## Supporting evidence
 
