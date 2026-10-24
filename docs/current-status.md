@@ -51,10 +51,14 @@ The [fresh live pilot](history/2026-10-25-original-feedback-live.md) stopped wit
 INCOMPLETE_RESPONSE before any tool action: the initial response and one protocol
 correction each exhausted a full 25,000-token output allowance. Cost was USD
 0.235849950 of 1.20; reproduction, repair, feedback uptake and acceptance were
-not assessed. That allocation is closed. This does not establish a regression in
-the new mechanisms or support increasing the invocation cap. The immediate
-unresolved question is how to obtain the first bounded valid tool response;
-stable original-call repair and use of pre-submission feedback remain unmeasured.
+not assessed. That allocation is closed. The [first-action audit](history/2026-10-25-first-action-analysis.md)
+found reasoning used 97.296% of output; a size handoff dropped continuation, while
+correction retained the same generation settings and tools. Response 2 contained
+a function_call item,
+but incomplete-response handling retained no arguments or item completion status.
+The next diagnostic should isolate first-action scope; no new paid comparison is
+authorized. This does not establish a regression in the new mechanisms. Stable
+original-call repair and use of pre-submission feedback remain unmeasured.
 The [operator oracle experiment](history/2026-10-24-oracle.md) remains separate.
 
 ## Supporting evidence
