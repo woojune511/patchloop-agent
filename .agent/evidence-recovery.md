@@ -95,6 +95,9 @@ subprocess output and streams retained before the call remain unobserved. The
 shared capture budget is 4,096 UTF-8 bytes across all calls and both streams.
 Truncation, stream replacement and deferred execution remain incomplete.
 SystemExit is an observed outcome; a nonzero code can be the reported bug.
+`outcome="returned"` describes execution, not task success. `exit_code=null`
+means no SystemExit code was observed, not zero. Choose the diagnostic channel
+from public behavior and inspect both captured streams; do not assume stderr.
 Unexpected exceptions prevent comparison. An intended exception observation may
 declare exact classes, e.g. `expected_exceptions=(ValueError,)` when creating the
 adapter; declaring a base class does not allow arbitrary subclass failures.
@@ -103,20 +106,34 @@ Then call the injected `record_observation(value)` exactly once with the actual
 JSON-compatible result, at most 2,048 UTF-8 bytes, after all selected target calls.
 Print progress normally. Whole-probe logs are not automatically parsed; explicitly
 derive the value from the target's return, captured diagnostics or intended
-exception. The value travels with the bounded call-observation report. For example,
-record `{"has_error": actual_has_error}` and let the host compare it separately to
-the frozen failure value and desired expectation. `comparison` still describes the
-desired result; `declared_failure_comparison` describes the authored failure value.
+exception. Keep raw logs, exception metadata and execution outcome in the separate
+call receipt unless they are part of the required behavior. Use one extractor for
+the failing input and a normal-input control before and after repair. Prefer a
+small stable value, for example failure `{"bug_has_error":true,"control_has_error":false}`
+and desired `{"bug_has_error":false,"control_has_error":false}`, recording those
+same keys from the actual calls. `comparison` describes the desired result;
+`declared_failure_comparison` describes the authored failure value.
 
 Select observable properties that distinguish the public failure from the desired
 behavior, including any control. A clean exit or absence of every diagnostic is
 part of the oracle only when the public requirement calls for it. Preserve other
 diagnostics in logs. Derive values from completed, interpretable target results;
 missing output and unexpected invocation/setup/parse failures must leave the
-observation incomplete, never become a false/no-error value. The v52 tool guidance
-describes this choice; the host still uses exact frozen JSON equality and does not
-certify the model's semantic mapping. Correcting a predicate creates a new case;
-prior mismatches retain their original verdict.
+observation incomplete, never become a false/no-error value. The v53 tool guidance
+describes this choice. Healthy v3 receipts include `comparison_feedback` for
+`desired` and, when declared, `declared_failure`. Each lists missing/extra/type/value
+differences at JSON Pointer paths (empty path means the root), at most eight rows,
+160 characters per path and 2,048 UTF-8 bytes per declaration. Truncated paths and
+omitted rows are explicit. Values remain in `binding.definition` and `observed_json`.
+Feedback is absent when comparison is unavailable. Legacy v1/v2 receipts and all
+observer bytes remain unchanged; durable old results are not recomputed.
+
+The host still uses exact frozen JSON equality, including scalar types, and does
+not certify the selected channel, control or semantic mapping. There is no new
+same-shape admission gate: some legitimate failures change shape after repair.
+Correcting a predicate creates a new case; prior mismatches retain their verdict.
+A desired match from an empty wrong channel cannot acquire a differing declared
+original failure. Field feedback does not infer the right channel or repair it.
 
 Missing, duplicate, invalid or oversized observations cannot compare. A recorded
 value remains visible if the process subsequently fails, but failed execution,

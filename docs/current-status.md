@@ -1,6 +1,6 @@
 # Current status
 
-Updated: 2026-10-24. Runtime source owns behavior. Historical reports are evidence,
+Updated: 2026-10-25. Runtime source owns behavior. Historical reports are evidence,
 not an active queue.
 
 ## Product and working baseline
@@ -30,30 +30,30 @@ The [size repair](history/2026-10-24-size.md) separates 8,000-character authored
 host observer allowances while preserving bounded transport and replay identities.
 The [call adapter and capture](history/2026-10-24-capture.md) now use native Python
 argument syntax and expose each call's return value, stdout/stderr and outcome.
-Fresh cases use invocation v3 / tool contract v52. Truncated or unexpected results
+Fresh cases use invocation v3 / tool contract v53. Truncated or unexpected results
 remain unverified; old v1/v2 programs replay exact bytes. Frozen comparisons,
 original-failure acquisition and completion semantics are unchanged.
 
-The [fresh invocation pilot](history/2026-10-24-invoke-live.md) is closed. One
-Astroid-1333 solve on gpt-5.4-mini-2026-03-17 used correct list arguments and captured
-the actual F0010 stdout diagnostic. It nevertheless failed original-case
-acquisition: the model checked stderr and recorded a different JSON shape from
-both frozen expectations. It did not construct a normal-input control.
+The closed [invocation pilot](history/2026-10-24-invoke-live.md) used correct list
+arguments and captured F0010 on stdout, but checked stderr, mixed execution metadata
+into a different observation shape and omitted a normal-input control. Original-case
+acquisition failed. After 27 further inspections and no edit, the run ended
+COST_CAP_REACHED. Independent acceptance/safety and post-submission checks are NOT_RUN.
 
-After that probe, 27 reads/searches produced no edit. Two responses exhausted their
-admitted output ceilings; the second occurred after inspection tools closed.
-The run ended COST_CAP_REACHED after 436.434 seconds and USD 0.788843550 settled
-cost, within the USD 0.88 cap. No patch, required check or finish occurred.
-Independent acceptance/safety and both post-submission public checks are NOT_RUN;
-the assessment launcher stopped at its stop_remaining guard before any check.
+The [observation-contract fix](history/2026-10-25-observation.md) separates small
+comparison values from existing call diagnostics in tool guidance, clarifies
+channel/outcome/exit-code interpretation, and adds bounded field differences to
+healthy v3 comparison receipts. It retains exact frozen equality and unverified
+results for incomplete observations. A mismatch is explained, never auto-corrected;
+there is no universal same-shape gate or new exploration/budget policy.
 
-The local four-condition result and this single live use support argument/capture
-availability, not faithful predicate construction or repair gain. The first
-unresolved stage is mapping the captured result into consistent failure/desired
-values with a control; the later evidence-to-edit transition also failed. Funding
-reserves did not ensure a valid final action. No new remedy or paid allocation is
-selected. The [operator oracle experiment](history/2026-10-24-oracle.md) remains
-separate; historical observations and submissions are never regraded.
+The local quick/owner selection passed 271 distinct cases, including isolated mock
+evaluation, after one obsolete wording assertion was updated and rerun. Its final
+35 observation controls passed; Ruff passed. Faithful live predicate/control
+construction and repair gain remain unverified. The evidence-to-edit failure is open;
+funding reserves did not ensure a valid final action. No paid allocation is open.
+The [operator oracle experiment](history/2026-10-24-oracle.md) remains separate;
+historical observations and submissions are never regraded.
 
 ## Supporting evidence
 

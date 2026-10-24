@@ -66,7 +66,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
 @pytest.mark.parametrize(("names", "expected"), [
     pytest.param(
         ("read_file", "run_check", "run_probe", "search_files", "stop_task"),
-        "deea895c762dfb7f8e456ef24ab4ddd67e19709ab0bc179268b9c580932b5b9c"
+        "4194eecb21529d52ec0f7bf5da16acb46286e5d1ed94c2acf432c2aa4bcf2641"
         if FROZEN_ARM is None else
         "544c19f4d8e63f8a8810efe1dd4cd0adf3dee51cdb0145a4509de554027739c2",
         id="names0-99567faf1ea920a9157e5ea6618c5d43e7d56e441820be941403a025d9b2abe9"
@@ -74,7 +74,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     ),
     pytest.param(
         ("finish_task", "read_file", "replace_text", "run_probe", "search_files", "stop_task"),
-        "241416ffbfbee15bcdbcfe2725e55eb9b90478d27002d1d0c0756bb150e1d241"
+        "af0bdf3e9cf0629042cefa1146c25a3c02763317718966a698368c432ace02e6"
         if FROZEN_ARM is None else
         "b817201c9d1aa8432575b0c1b55015dc01bc08a2b002e3e2cc09ab13bfa229c6",
         id="names1-de57dc4e83f8b26994c5df5f659cc208bbd3b348233d0ad3640493ffd5b90bd3"
@@ -82,7 +82,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     ),
     pytest.param(
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task"),
-        "b285111a75a8246c6902b5a40ca4a9f5f9b26e6edcdb8b6ce746b9d891ec87aa"
+        "7aef7c78b1b67b282c40966c7bf7b3230b82b65267bb90edc99db9fad6583bf5"
         if FROZEN_ARM is None else
         "310f8ec3dd129c93fb10c2a0589decf38eb09ce60e395ef906ac814e399e5139",
         id="names2-923a71312af5fa8d677ce72762b2f045a47ff2ebc4e084caaf1f57a2c11e7032"
@@ -91,7 +91,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     pytest.param(
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task",
          "finish_task"),
-        "651716ae108245997b56eac3ebf902099168faeb4b50e4f9c6a0cb6db634827c"
+        "71a54ecc92623d75e87304078b13e04a94f91c7551e73c264ac31d98d577e2eb"
         if FROZEN_ARM is None else
         "6302bc9d248be03d6e1430f0102a0e5c00ecb7883c25d453945f979f21fd3af7",
         id="names3-53d8c9ffaa20544b633c883b1e40010113b680722f23caebeb0ef991f1738caa"
@@ -176,7 +176,7 @@ def test_guidance_identity_changes_without_changing_run_schema_or_limits():
     # Common action/probe guidance changes the overall surface identity;
     # argument and description identities remain independently pinned above.
     assert dev_tool_surface_hash() == (
-        "sha256:78596d415c33301b290d84f8573f413fd6eeac7081342543b15c84f74b7bbe37"
+        "sha256:449b83d7cf6b86ad00b108e6ba8e1c097ef51b4084e8a4b6bf03987e7edb68a6"
         if FROZEN_ARM is None else
         "sha256:57193859890419b79cb7f4927c37796d044bc4bf7159c51ddf17723849529e26"
     )

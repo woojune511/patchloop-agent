@@ -57,6 +57,7 @@ def test_same_action_binds_purpose_observation_and_replay_across_handoff(
     assert first.status == "succeeded", first
     evidence = first.output["reproduction"]
     assert evidence["comparison"] == "mismatched"
+    assert evidence["comparison_feedback"]["declared_failure"]["differences"] == []
     assert all(text in first.output["stdout"] for text in ("progress before", "progress after"))
     assert evidence["observed_json"] is not None
     assert evidence["binding"]["definition"]["observation_channel"] == (
@@ -72,11 +73,13 @@ def test_same_action_binds_purpose_observation_and_replay_across_handoff(
     call = probe(gateway.public_task, "recheck", replay="original")
     after = current.execute(call)
     assert after.output["reproduction"]["comparison"] == "matched"
+    assert after.output["reproduction"]["comparison_feedback"]["desired"]["differences"] == []
     assert after.output["reproduction"]["binding"] == evidence["binding"]
     assert after.output["source_hash"] == sha256_bytes(source.encode())
     assert backend.sources[0] == backend.sources[1]
     assert len(backend.sources[0]) > 8_000
     assert current.execute(call).replayed and backend.calls == 2
+    assert current.execute(call).output == after.output
     review = current.reproduction_review(diff_hash=current.current_diff_hash)
     assert review["items"][0]["evidence"]["status"] == "SUPPORTED"
     assert review["items"][0]["comparison_status"] == "mismatch_to_match"

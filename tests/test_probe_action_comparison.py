@@ -14,7 +14,7 @@ from test_observation_comparison import source as source  # noqa: F401
 from diagnostics import probe_action_comparison as diagnostic
 from diagnostics.checkpoint_continuation import ScriptedClient
 from diagnostics.declaration_checkpoint import Source
-from patchloop.dev import runner
+from patchloop.dev import reproduction, runner
 from patchloop.dev.contracts import RequestedTool
 from patchloop.dev.model import MOCK_MUTATIONS
 from patchloop.dev.state import DevJournal
@@ -64,7 +64,8 @@ def test_control_changes_only_replay_schema_and_rejects_unoffered_mode():
     # OFF removes replay guidance only, retaining the same strict reproduction input.
     assert a["parameters"]["properties"]["purpose"] == (
         b["parameters"]["properties"]["purpose"])
-    assert "neither proves" in a["description"]
+    assert reproduction.DESCRIPTION.replace(" " + reproduction.REPLAY_DESCRIPTION, "") in (
+        a["description"])
     assert "replay_action_id" in b["parameters"]["required"]
     assert diagnostic.project_tools(schemas, "B") == schemas
     with diagnostic.surface("A"), pytest.raises(ContractError, match="not offered"):

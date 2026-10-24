@@ -11,7 +11,14 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, model_serializer, model_validator
 
 from patchloop.contracts import Artifact, ProbeDependencyIdentity
-from patchloop.dev import check_review, cost, history_search, probe_cases, segments
+from patchloop.dev import (
+    check_review,
+    cost,
+    history_search,
+    probe_cases,
+    probe_comparison,
+    segments,
+)
 from patchloop.dev.context import RETAINED_SOURCE_CHARS, RetainedSourceChars
 from patchloop.util import sha256_json
 
@@ -60,7 +67,7 @@ def dev_tool_surface_hash(
         })
     base = sha256_json(
         {
-            "schema_version": "dev-tool-surface-v52",
+            "schema_version": "dev-tool-surface-v53",
             "submission_assessment": "required-nonblank-current-diff-plan-review-v2",
             "selected_public_tests": "registered-pytest-tracked-targets-optional-v1",
             "segmented_context": segments.contract(),
@@ -131,6 +138,11 @@ def dev_tool_surface_hash(
             "original_acquisition": "opt-in-two-attempt-six-action-protected-budget-v1",
             "public_invocation": "python-call-stream-capture-v3-legacy-v1-v2-replay",
             "public_invocation_capture_bounds": [4096, 10000],
+            "reproduction_comparison_feedback": "v3-healthy-frozen-json-field-differences-v1",
+            "reproduction_comparison_feedback_bounds": [
+                probe_comparison.MAX_DIFFERENCES, probe_comparison.MAX_PATH_CHARS,
+                probe_comparison.MAX_FEEDBACK_BYTES,
+            ],
             "original_request_source": "host-full-public-task-and-issue-hash-v1",
             "probe_request_correction": "field-diagnostics-actual-arguments-preflight-receipt-v1",
             "probe_source_budget": "authored-8000-observer-8000-repr-transport-v1",

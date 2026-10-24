@@ -72,6 +72,8 @@ def test_missing_or_unexpected_evidence_cannot_become_a_no_error_value(
     source = f"call = observed_target({settings})()\nrecord_observation(True)"
     result = current(tmp_path, source, implementation, parameters="")
     assert result["comparison"] == expected, result
+    if expected == "not_compared":
+        assert "comparison_feedback" not in result
     if "SystemExit" in implementation:
         assert result["call_observation"]["calls"][0]["exit_code"] == 7
     if "5000" in implementation:
@@ -133,6 +135,7 @@ def test_reader_enforces_capture_health_even_if_report_incomplete_flag_is_false(
               "stderr": reproduction.marker(result["binding"]) + json.dumps(trace)}
     compared = reproduction.compare(output, result["binding"])["reproduction"]
     assert compared["comparison"] == "not_compared"
+    assert "comparison_feedback" not in compared
 
 
 def test_new_observer_fits_existing_budget_and_old_bytes_remain_frozen():

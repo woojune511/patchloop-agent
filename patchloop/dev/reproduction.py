@@ -12,7 +12,7 @@ import json
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from patchloop import probe_limits
-from patchloop.dev import probe_call_capture, probe_invocation, probe_requests
+from patchloop.dev import probe_call_capture, probe_comparison, probe_invocation, probe_requests
 from patchloop.dev.probe_cases import observation_json
 from patchloop.errors import ContractError, RecoveryError
 from patchloop.util import sha256_bytes, sha256_json
@@ -30,7 +30,12 @@ DESCRIPTION = (
     "environment_conditions, reported_failure_json and expected_json in that same object. "
     "reported_failure_json is the reported buggy result; expected_json is the desired result "
     "after repair. Both must be strict JSON and must differ. Choose observable properties "
-    "that distinguish the reported failure from the desired behavior, including any control. "
+    "that distinguish the reported failure from the desired behavior. Use one extractor for "
+    "the failing input and a normal-input control, before and after repair. Prefer small stable "
+    "values, e.g. failure={bug_has_error:true,control_has_error:false} and "
+    "desired={bug_has_error:false,control_has_error:false}, recorded with those same keys. "
+    "Keep raw logs and call metadata in the separate call receipt, not in comparison values "
+    "unless the requirement concerns them. "
     "Require a clean exit or absence of all diagnostics only when the public requirement "
     "requires it; keep unrelated diagnostics in logs. Derive each value from completed, "
     "interpretable target results. Missing output or an unexpected invocation/setup/parse "
@@ -45,7 +50,10 @@ DESCRIPTION = (
     "relevant environment variable names in environment_keys. Empty lists mean no selected "
     "external inputs/variables, not complete environment coverage. call.value is the return "
     "value; call.stdout/stderr are bounded per-call Python streams, not repr(value). "
-    "Inspect call.outcome, capture_status, exception and exit_code; SystemExit is recorded. "
+    "Choose the diagnostic channel from public behavior and inspect both captured streams; "
+    "do not assume stderr. call.outcome='returned' means the callable returned, not task success. "
+    "call.exit_code is the observed SystemExit code; null means no exit code, never zero. "
+    "Inspect capture_status and exception before extracting values. "
     "Unexpected exceptions make comparison unavailable. Only for an intended exception "
     "observation, declare exact classes with expected_exceptions=(ValueError,) "
     "in observed_target. This is "
@@ -60,8 +68,10 @@ DESCRIPTION = (
     "On preflight rejection, correct the named invalid_fields in the actual arguments with a "
     "new action_id. A changed explanation is not a correction; full preflight must pass. "
     "The harness records actual arguments, input-content fingerprints and execution environment "
-    "at the call, and compares the recorded value with the frozen "
-    "expectation; neither proves that your chosen call represents the public requirement. "
+    "at the call, and compares the recorded value with both frozen declarations. "
+    "comparison_feedback lists bounded JSON Pointer differences (missing/extra/type/value); "
+    "values remain in binding.definition and observed_json. It never changes declarations "
+    "or certifies the selected channel, control or public-requirement mapping. "
     + REPLAY_DESCRIPTION + " Changing them creates a different experiment, not resolution "
     "of the old one. reproduction_review separates helpers, unobserved calls, changed setup "
     "and same-reproduction comparisons. At finish the host replays stale invocation-bound "
@@ -452,6 +462,13 @@ def compare(output, binding):
         result["reproduction"]["declared_failure_comparison"] = (
             "not_compared" if reason else "matched"
             if actual == binding["definition"]["reported_failure_json"] else "mismatched")
+    if reason is None and channel == probe_invocation.CHANNEL:
+        result["reproduction"]["comparison_feedback"] = {
+            role: probe_comparison.differences(binding["definition"][field], actual)
+            for role, field in (("desired", "expected_json"),
+                                ("declared_failure", "reported_failure_json"))
+            if field in binding["definition"]
+        }
     return result
 
 

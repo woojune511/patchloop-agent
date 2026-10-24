@@ -24,7 +24,7 @@ record_observation(value)
 
 def execute(root, *, implementation="return False", source=SOURCE, entrypoint="public_api.entry",
             content="fixture", flag="1", mode="stable", channel=probe_invocation.ARGV_CHANNEL,
-            parameters="path, flag"):
+            parameters="path, flag", expected_json="true", reported_failure_json=None):
     root.mkdir(parents=True)
     (root / "input.txt").write_text(content, encoding="utf-8")
     (root / "_impl.py").write_text(
@@ -36,8 +36,10 @@ def execute(root, *, implementation="return False", source=SOURCE, entrypoint="p
     binding = {
         "case_id": "sha256:" + "c" * 64, "program_hash": sha256_bytes(source.encode()),
         "root_action_id": "before", "definition": {"entrypoint": entrypoint,
-        "expected_json": "true", "observation_channel": channel},
+        "expected_json": expected_json, "observation_channel": channel},
     }
+    if reported_failure_json is not None:
+        binding["definition"]["reported_failure_json"] = reported_failure_json
     wrapped = reproduction.program(source, binding)
     assert len(wrapped) <= EXECUTION_LIMIT_CHARS
     process = subprocess.run(
@@ -70,6 +72,7 @@ def test_public_alias_and_same_conditions_pair_across_scratch_paths(tmp_path):
     after = execute(tmp_path / "after", implementation="return True")
     assert before["comparison"] == "mismatched", before
     assert after["comparison"] == "matched", after
+    assert "comparison_feedback" not in before  # Legacy v2 receipt shape stays unchanged.
     actual = before["call_observation"]["calls"][0]
     assert actual["entrypoint"] == "public_api.entry"
     assert actual["resolved_entrypoint"] == "_impl.actual"
