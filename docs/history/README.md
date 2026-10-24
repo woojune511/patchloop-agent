@@ -1,6 +1,6 @@
 # History
 
-- [Observation contract](2026-10-25-observation.md)
+- [Observation contract](2026-10-25-observation.md), [live](2026-10-25-observation-live.md)
 - [2026-10-24 investigations](2026-10-24/README.md)
 - [Requests](2026-10-23-requests.md), [CVE](2026-10-23-security.md)
 - [Retry](2026-10-23-repro-recovery.md), [live](2026-10-23-repro-live.md), [oracles](2026-10-23-oracles.md), [pilot](2026-10-23-oracle-live.md), [audit](2026-10-23-request.md)

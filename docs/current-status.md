@@ -47,11 +47,24 @@ healthy v3 comparison receipts. It retains exact frozen equality and unverified
 results for incomplete observations. A mismatch is explained, never auto-corrected;
 there is no universal same-shape gate or new exploration/budget policy.
 
-The local quick/owner selection passed 271 distinct cases, including isolated mock
-evaluation, after one obsolete wording assertion was updated and rerun. Its final
-35 observation controls passed; Ruff passed. Faithful live predicate/control
-construction and repair gain remain unverified. The evidence-to-edit failure is open;
-funding reserves did not ensure a valid final action. No paid allocation is open.
+The [fresh observation pilot](history/2026-10-25-observation-live.md) is closed.
+It observed F0010 on the failing call and not on the control, with a small consistent
+JSON value. The host qualified original-failure acquisition; field feedback reached
+the next actual model request. This sample supports observation construction, not
+the usefulness of feedback for correcting a malformed predicate: none occurred.
+
+Nineteen subsequent inspections produced no edit, although mutation was offered
+from model call 4. Calls 1, 22 and 23 exhausted their output ceilings without a tool
+call; the last occurred after inspection closed. The run ended INCOMPLETE_RESPONSE
+after 517.658 seconds at USD 0.788844900 of its USD 0.88 cap. Candidate replay,
+required checks, submission, independent acceptance/safety and post-submission
+public checks are NOT_RUN. This was not a COST_CAP_REACHED terminal.
+
+The first unresolved executed stage is now evidence-to-edit. Cross-execution
+condition stability also remains untested: the probe used a random temporary cwd,
+HOME pointing there and no selected input fingerprints. One exposed-task sample
+does not establish repair gain or a causal effect. No new remedy or paid allocation
+is selected; prior local 271-case split validation and 35 observation controls stand.
 The [operator oracle experiment](history/2026-10-24-oracle.md) remains separate;
 historical observations and submissions are never regraded.
 
