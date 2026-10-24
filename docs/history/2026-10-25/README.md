@@ -1,0 +1,5 @@
+# 2026-10-25 investigations
+
+- [Observation contract and local validation](../2026-10-25-observation.md)
+- [Fresh observation pilot](../2026-10-25-observation-live.md)
+- [Cap-only fresh solve](../2026-10-25-budget-live.md)

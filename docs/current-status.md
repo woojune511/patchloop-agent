@@ -25,47 +25,50 @@ and [evidence boundaries](evidence.md).
 ## Active decision
 
 [Request correction](history/2026-10-23-requests.md) binds public task/issue identity
-and credits correction only after actual argument changes pass full preflight.
-The [size repair](history/2026-10-24-size.md) separates 8,000-character authored and
-host observer allowances while preserving bounded transport and replay identities.
-The [call adapter and capture](history/2026-10-24-capture.md) now use native Python
-argument syntax and expose each call's return value, stdout/stderr and outcome.
-Fresh cases use invocation v3 / tool contract v53. Truncated or unexpected results
-remain unverified; old v1/v2 programs replay exact bytes. Frozen comparisons,
-original-failure acquisition and completion semantics are unchanged.
-
-The closed [invocation pilot](history/2026-10-24-invoke-live.md) used correct list
-arguments and captured F0010 on stdout, but checked stderr, mixed execution metadata
-into a different observation shape and omitted a normal-input control. Original-case
-acquisition failed. After 27 further inspections and no edit, the run ended
-COST_CAP_REACHED. Independent acceptance/safety and post-submission checks are NOT_RUN.
+and credits correction only after changed arguments pass full preflight. The
+[size repair](history/2026-10-24-size.md) separates authored and host observer
+allowances. The [call adapter/capture](history/2026-10-24-capture.md) uses native
+Python arguments and per-call return/stdout/stderr/outcome receipts. Fresh cases
+use invocation v3 / tool contract v53; old v1/v2 programs retain exact bytes.
 
 The [observation-contract fix](history/2026-10-25-observation.md) separates small
-comparison values from existing call diagnostics in tool guidance, clarifies
-channel/outcome/exit-code interpretation, and adds bounded field differences to
-healthy v3 comparison receipts. It retains exact frozen equality and unverified
-results for incomplete observations. A mismatch is explained, never auto-corrected;
-there is no universal same-shape gate or new exploration/budget policy.
+comparison values from diagnostic metadata, clarifies channel/outcome semantics
+and supplies bounded field differences for healthy v3 comparisons. Strict frozen
+equality and unverified results for incomplete observations remain unchanged.
+Its local evidence is 271 selected passes in split validation, including 35
+observation controls, plus Ruff and isolated mock evaluation.
 
-The [fresh observation pilot](history/2026-10-25-observation-live.md) is closed.
-It observed F0010 on the failing call and not on the control, with a small consistent
-JSON value. The host qualified original-failure acquisition; field feedback reached
-the next actual model request. This sample supports observation construction, not
-the usefulness of feedback for correcting a malformed predicate: none occurred.
+The [observation pilot](history/2026-10-25-observation-live.md) acquired a faithful
+failure/control but made no edit after 19 inspections. Three responses exhausted
+their output limits; the final two allowances were admission-reduced. It ended
+INCOMPLETE_RESPONSE at USD 0.788844900 of its USD 0.88 cap, without submission.
 
-Nineteen subsequent inspections produced no edit, although mutation was offered
-from model call 4. Calls 1, 22 and 23 exhausted their output ceilings without a tool
-call; the last occurred after inspection closed. The run ended INCOMPLETE_RESPONSE
-after 517.658 seconds at USD 0.788844900 of its USD 0.88 cap. Candidate replay,
-required checks, submission, independent acceptance/safety and post-submission
-public checks are NOT_RUN. This was not a COST_CAP_REACHED terminal.
+The [cap-only pilot](history/2026-10-25-budget-live.md) changed the invocation cap
+to USD 1.20 with identical runtime/task/model/policies and a fresh run. All 30
+model calls received 25,000 output tokens; no response was incomplete. After 24
+inspections it made a source edit and a helper regression test, passed the public
+regression (1,232 passed, 69 skipped, 15 xfailed), and submitted. Cost was USD
+0.821097150 over 655.403 seconds. These are two single stochastic samples on an
+exposed task; cap-induced improvement and generalization remain unestablished.
 
-The first unresolved executed stage is now evidence-to-edit. Cross-execution
-condition stability also remains untested: the probe used a random temporary cwd,
-HOME pointing there and no selected input fingerprints. One exposed-task sample
-does not establish repair gain or a causal effect. No new remedy or paid allocation
-is selected; prior local 271-case split validation and 35 observation controls stand.
-The [operator oracle experiment](history/2026-10-24-oracle.md) remains separate;
+The submitted patch still produced F0010 on the original failing input. Separate
+frozen public checks returned failure-input FAIL / normal-control PASS; registered
+independent acceptance was FAIL and safety PASS. Terminal: EVALUATOR_FAIL. This
+is progress to submission, not a successful repair. The allocation is closed;
+unused budget does not authorize another solve or a default cap increase.
+
+The first unresolved repair question is whether the helper-based hypothesis
+changes the original caller's failing path before finish. Automatic replay ran
+inside the final finish request, with no later model turn to use its failure or
+changed-line feedback. Its launch-thread collector did not observe the newly
+added resolution branch; this is bounded line evidence, not full branch coverage.
+
+Completion also stayed unverified: normalized caller arguments and selected input
+content matched, but random HOME/PYLINTHOME hashes and the host line-tracing argv
+changed call identity. Keep repair correctness and this comparability defect
+separate; delivery was correctly labeled unverified_delivery, not cases_verified.
+No runtime fix or further paid run has been selected. The
+[operator oracle experiment](history/2026-10-24-oracle.md) remains separate;
 historical observations and submissions are never regraded.
 
 ## Supporting evidence
