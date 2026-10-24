@@ -1,6 +1,6 @@
 # History
 
-- [Live](2026-10-24-request-live.md), [Size](2026-10-24-size.md), [Run](2026-10-24-run.md), [Oracle](2026-10-24-oracle.md), [Repair](2026-10-24-repair-live.md), [I/O](2026-10-24-capture.md)
+- [2026-10-24 investigations](2026-10-24/README.md)
 - [Requests](2026-10-23-requests.md), [CVE](2026-10-23-security.md)
 - [Retry](2026-10-23-repro-recovery.md), [live](2026-10-23-repro-live.md), [oracles](2026-10-23-oracles.md), [pilot](2026-10-23-oracle-live.md), [audit](2026-10-23-request.md)
 - [Case](2026-10-22-original-case-live-results.md), [Finish](2026-10-22-finish-reproduction-results.md), [Help](2026-10-22-helper-path-results.md)

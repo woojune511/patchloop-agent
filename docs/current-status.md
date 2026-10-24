@@ -34,20 +34,26 @@ Fresh cases use invocation v3 / tool contract v52. Truncated or unexpected resul
 remain unverified; old v1/v2 programs replay exact bytes. Frozen comparisons,
 original-failure acquisition and completion semantics are unchanged.
 
-The preceding [repair pilot](history/2026-10-24-repair-live.md) failed original
-acquisition and repair: a string was passed where pylint expected a list, and the
-model searched the returned object instead of emitted diagnostics. The new local
-four-condition experiment held the unchanged Astroid base, fixtures and predicate
-fixed. Only correct arguments plus consuming captured output distinguished the
-declared failure from the normal control. Four Docker probes completed in 44.608
-seconds with complete capture and confirmed cleanup; provider calls/cost were zero.
+The [fresh invocation pilot](history/2026-10-24-invoke-live.md) is closed. One
+Astroid-1333 solve on gpt-5.4-mini-2026-03-17 used correct list arguments and captured
+the actual F0010 stdout diagnostic. It nevertheless failed original-case
+acquisition: the model checked stderr and recorded a different JSON shape from
+both frozen expectations. It did not construct a normal-input control.
 
-This supports the local calling/observation mechanism. It does not establish that
-the model will choose the correct arguments or predicate, acquire the failure or
-repair the task. The adapter checks Python binding, not semantic input validity.
-Autonomous uptake and repair remain the next unresolved question; no fresh paid
-run is authorized by these local results. The [operator oracle experiment](history/2026-10-24-oracle.md)
-remains separate. Prior mismatches and submitted repairs are never regraded.
+After that probe, 27 reads/searches produced no edit. Two responses exhausted their
+admitted output ceilings; the second occurred after inspection tools closed.
+The run ended COST_CAP_REACHED after 436.434 seconds and USD 0.788843550 settled
+cost, within the USD 0.88 cap. No patch, required check or finish occurred.
+Independent acceptance/safety and both post-submission public checks are NOT_RUN;
+the assessment launcher stopped at its stop_remaining guard before any check.
+
+The local four-condition result and this single live use support argument/capture
+availability, not faithful predicate construction or repair gain. The first
+unresolved stage is mapping the captured result into consistent failure/desired
+values with a control; the later evidence-to-edit transition also failed. Funding
+reserves did not ensure a valid final action. No new remedy or paid allocation is
+selected. The [operator oracle experiment](history/2026-10-24-oracle.md) remains
+separate; historical observations and submissions are never regraded.
 
 ## Supporting evidence
 
