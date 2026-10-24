@@ -21,7 +21,7 @@ from patchloop.util import canonical_json, sha256_bytes
 
 SOURCE = (
     "print('progress before: not a JSON document', flush=True)\n"
-    f"record_observation(call_target(args=[{TEXT!r}]))\n"
+    f"record_observation(observed_target()({TEXT!r}).value)\n"
     "print('progress after', flush=True)\n"
 )
 REPORTED_FAILURE = [["h", "v"], ["first"], ['second"', "x"]]
@@ -134,7 +134,7 @@ def test_logs_invalid_values_and_crashes_never_acquire_comparison_credit(
 ):
     gateway, _, _ = gateway_factory()
     gateway.probe_sandbox = ExecutingProbe()
-    source = f"value=call_target(args=[{TEXT!r}])\n{tail}"
+    source = f"value=observed_target()({TEXT!r}).value\n{tail}"
     result = gateway.execute(probe(gateway.public_task, source=source))
     assert result.status == "succeeded", result
     observation = result.output["reproduction"]

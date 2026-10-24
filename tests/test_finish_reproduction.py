@@ -27,8 +27,8 @@ def no_network(monkeypatch):
 def original_with_control(task):
     control = "h,v\na,b\n"
     source = (
-        f"original = call_target(args=[{TEXT!r}])\n"
-        f"control = call_target(args=[{control!r}])\n"
+        f"original = observed_target()({TEXT!r}).value\n"
+        f"control = observed_target()({control!r}).value\n"
         "record_observation([original, control])\n"
     )
     call = probe(task, source=source)

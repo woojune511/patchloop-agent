@@ -104,7 +104,7 @@ changed conditions remain unverified, never a PASS. Different programs/expectati
 different cases and cannot close the original. Observe ordinary-input controls too.
 original_obligation retains unmet task verification. Follow its bounded pre-edit stage;
 only unchanged-base failure acquires a case. Release/normal/helper PASS gives no credit.
-For CLI call_target, set sys.argv and preserve cwd/fixtures.
+For CLI observed_target, set sys.argv and preserve cwd/fixtures.
 SUPPORTED is case evidence, not task coverage. Explain caller mapping;
 helpers/suite PASS cannot replace the reported behavior. model_position and
 model_open_concern_ids describe discussion. behavior_verdict=not_assessed is not PASS.

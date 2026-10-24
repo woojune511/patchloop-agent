@@ -1,0 +1,161 @@
+"""Current per-call Python-stream capture; legacy observer programs remain frozen."""
+
+from __future__ import annotations
+
+CHANNEL = "invoke-declared-call-v3"
+CAPTURE_BYTES = 4096
+REPORT_BYTES = 10000
+
+# Composed with the existing snapshot/resolver and observation framing. These
+# streams observe this Python process only, not native fd writes or subprocesses.
+CALLS = '''from types import SimpleNamespace as _pr_Result
+_pr_remaining = [4096]
+class _pr_Stream:
+    def __init__(self):
+        self.parts, self.truncated = [], False
+    def write(self, text):
+        raw = text.encode("utf-8")
+        kept = raw[:_pr_remaining[0]].decode("utf-8", "ignore")
+        if kept:
+            self.parts.append(kept)
+        _pr_remaining[0] -= len(kept.encode("utf-8"))
+        self.truncated |= len(raw) != len(kept.encode("utf-8"))
+        return len(text)
+    def flush(self):
+        pass
+    def isatty(self):
+        return False
+    @property
+    def encoding(self):
+        return "utf-8"
+
+def observed_target(*, input_paths=(), environment_keys=(), expected_exceptions=()):
+    if (type(input_paths) not in (list, tuple) or len(input_paths) > 4
+            or type(environment_keys) not in (list, tuple) or len(environment_keys) > 16
+            or any(type(k) is not str for k in environment_keys)
+            or type(expected_exceptions) is not tuple or len(expected_exceptions) > 4
+            or any(not isinstance(t, type) or not issubclass(t, Exception)
+                   for t in expected_exceptions)):
+        _pr_more[0] = True
+        raise ValueError("invalid observed_target settings")
+    input_paths, environment_keys = tuple(input_paths), tuple(environment_keys)
+    def invoke(*args, **kwargs):
+        if len(_pr_rows) >= 4:
+            _pr_more[0] = True
+            raise ValueError("call limit")
+        target = _pr_resolve()
+        row = {"entrypoint": _pr_target,
+            "resolved_entrypoint": getattr(target, "__module__", "") + "." +
+                                   getattr(target, "__qualname__", ""),
+            "argv": _pr_value(_pr_sys.argv),
+            "arguments": _pr_value({"args": list(args), "kwargs": kwargs}),
+            "cwd": _pr_os.getcwd(), "sys_path": list(_pr_sys.path), "start_cwd": _pr_start,
+            "inputs": [], "environment": {"python": list(_pr_sys.version_info[:3]),
+            "platform": _pr_sys.platform, "variables": {}}, "outcome": "incomplete",
+            "call_id": "call-" + str(len(_pr_rows)+1), "bound_parameters": None,
+            "exception_policy": [t.__module__ + "." + t.__qualname__ for t in expected_exceptions],
+            "capture": {"scope": "python-streams", "status": "incomplete",
+                        "stdout": "", "stderr": ""},
+            "exception": None, "exit_code": None}
+        _pr_rows.append(row)
+        try:
+            budget = [64, 1048576]
+            row["inputs"] = [_pr_snapshot(_pr_os.path.abspath(p), budget) for p in input_paths]
+            row["environment"]["variables"] = {k: (None if k not in _pr_os.environ else
+                _pr_hash.sha256(_pr_os.environ[k].encode()).hexdigest()) for k in environment_keys}
+            try:
+                signature = _pr_inspect.signature(target)
+            except (ValueError, TypeError):
+                signature = None
+            if signature is not None:
+                row["bound_parameters"] = _pr_value(dict(signature.bind(*args, **kwargs).arguments))
+        except (OSError, ValueError, TypeError):
+            _pr_more[0] = True
+            raise
+        out, err = _pr_Stream(), _pr_Stream()
+        old = _pr_sys.stdout, _pr_sys.stderr
+        value, error = None, None
+        _pr_sys.stdout, _pr_sys.stderr = out, err
+        try:
+            value = target(*args, **kwargs)
+            row["outcome"] = "returned"
+            if any(check(value) for check in (_pr_inspect.isawaitable, _pr_inspect.isgenerator,
+                                             _pr_inspect.isasyncgen)):
+                _pr_more[0] = True
+        except BaseException as caught:
+            error = caught
+            row["exception"] = {"type": type(caught).__module__ + "." + type(caught).__qualname__,
+                                "message": str(caught)[:256]}
+            row["outcome"] = "system_exit" if isinstance(caught, SystemExit) else "raised"
+            if isinstance(caught, SystemExit):
+                row["exit_code"] = _pr_value(caught.code)
+            elif type(caught) not in expected_exceptions:
+                _pr_more[0] = True
+        finally:
+            altered = _pr_sys.stdout is not out or _pr_sys.stderr is not err
+            _pr_sys.stdout, _pr_sys.stderr = old
+            state = ("incomplete" if altered else
+                     "truncated" if out.truncated or err.truncated else "complete")
+            row["capture"].update(status=state, stdout="".join(out.parts),
+                                  stderr="".join(err.parts))
+            _pr_more[0] |= state != "complete"
+        if error is not None and not isinstance(error, (Exception, SystemExit)):
+            raise error
+        return _pr_Result(value=value, stdout=row["capture"]["stdout"],
+            stderr=row["capture"]["stderr"], outcome=row["outcome"],
+            capture_status=row["capture"]["status"], exception=row["exception"],
+            exit_code=row["exit_code"], call_id=row["call_id"])
+    return invoke
+'''
+
+
+def observer(legacy):
+    """Keep v1/v2 exact; replace only the call implementation for fresh v3 cases."""
+    prefix, rest = legacy.split("def call_target(", 1)
+    suffix = "def record_observation(" + rest.split("def record_observation(", 1)[1]
+    suffix = suffix.replace("if len(report) > 6000:",
+                            'if len(report.encode("utf-8")) > 10000:', 1)
+    # UTF-8, rather than ASCII escapes, lets bounded captured diagnostics fit the
+    # existing 12K process-output limit. Oversized reports remain incomplete.
+    suffix = suffix.replace("ensure_ascii=True, allow_nan=False",
+                            "ensure_ascii=False, allow_nan=False")
+    # Compact only fixed host indentation, never authored source or legacy bytes.
+    # All block indents in these fixed fragments are multiples of four spaces;
+    # continuation indentation inside parentheses has no semantic significance.
+    return "\n".join(" " * ((len(line) - len(line.lstrip())) // 4) + line.lstrip()
+                     for line in (prefix + CALLS + suffix).splitlines() if line.strip()) + "\n"
+
+
+def valid(call):
+    capture = call.get("capture")
+    error = call.get("exception")
+    return (
+        isinstance(call.get("call_id"), str)
+        and call["call_id"] in {f"call-{i}" for i in range(1, 5)}
+        and (call.get("bound_parameters") is None or isinstance(call["bound_parameters"], dict))
+        and isinstance(call.get("exception_policy"), list)
+        and len(call["exception_policy"]) <= 4
+        and all(isinstance(item, str) for item in call["exception_policy"])
+        and (error is None or isinstance(error, dict) and set(error) == {"type", "message"}
+             and all(isinstance(value, str) for value in error.values()))
+        and (call.get("exit_code") is None or type(call["exit_code"]) in (str, int))
+        and isinstance(capture, dict)
+        and set(capture) == {"scope", "status", "stdout", "stderr"}
+        and capture["scope"] == "python-streams"
+        and capture["status"] in {"complete", "incomplete", "truncated"}
+        and all(isinstance(capture[key], str) for key in ("stdout", "stderr"))
+        and sum(len(capture[key].encode("utf-8")) for key in ("stdout", "stderr")) <= CAPTURE_BYTES
+    )
+
+
+def incomplete(calls):
+    """Known missing capture or unexpected exceptions never gain equality credit."""
+    return (len({call["call_id"] for call in calls}) != len(calls)
+            or sum(len(call["capture"][key].encode("utf-8"))
+                   for call in calls for key in ("stdout", "stderr")) > CAPTURE_BYTES
+            or any(call["capture"]["status"] != "complete"
+                   or call["outcome"] == "incomplete"
+                   or call["outcome"] == "raised" and (
+                       not call["exception"]
+                       or call["exception"]["type"] not in call["exception_policy"])
+                   for call in calls))

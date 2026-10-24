@@ -60,7 +60,7 @@ def dev_tool_surface_hash(
         })
     base = sha256_json(
         {
-            "schema_version": "dev-tool-surface-v51",
+            "schema_version": "dev-tool-surface-v52",
             "submission_assessment": "required-nonblank-current-diff-plan-review-v2",
             "selected_public_tests": "registered-pytest-tracked-targets-optional-v1",
             "segmented_context": segments.contract(),
@@ -129,7 +129,8 @@ def dev_tool_surface_hash(
             "completion_reproduction": "invocation-bound-cases-before-finish-v1",
             "original_obligation": "task-bound-base-failure-and-current-replay-v1",
             "original_acquisition": "opt-in-two-attempt-six-action-protected-budget-v1",
-            "public_invocation": "argv-bound-v2-legacy-v1-replay",
+            "public_invocation": "python-call-stream-capture-v3-legacy-v1-v2-replay",
+            "public_invocation_capture_bounds": [4096, 10000],
             "original_request_source": "host-full-public-task-and-issue-hash-v1",
             "probe_request_correction": "field-diagnostics-actual-arguments-preflight-receipt-v1",
             "probe_source_budget": "authored-8000-observer-8000-repr-transport-v1",

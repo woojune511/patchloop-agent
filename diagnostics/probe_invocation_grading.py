@@ -117,7 +117,8 @@ def inventory(public):
         bound = bool(
             receipt
             and common.current_execution(receipt, item["diff_hash"])
-            and trace.get("binding_method") == probe_invocation.CHANNEL
+            # This historical grading protocol stays pinned to its v2 channel.
+            and trace.get("binding_method") == probe_invocation.ARGV_CHANNEL
             and isinstance(trace.get("execution_environment"), dict)
             and all(
                 trace["execution_environment"].get(k) is not None

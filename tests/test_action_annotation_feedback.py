@@ -84,7 +84,7 @@ def _bad_note_call(primary):
         return note_call("primary", update)
     return RequestedTool(name="run_probe", action_id="primary", arguments={
         "question": "Does the original caller return the requested value?",
-        "python_source": "record_observation(call_target())",
+        "python_source": "record_observation(observed_target()().value)",
         "replay_action_id": None,
         "purpose": {
             "kind": "original_requirement", "requirement_quote": "Invented public quotation.",

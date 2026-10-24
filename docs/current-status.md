@@ -28,34 +28,26 @@ and [evidence boundaries](evidence.md).
 and credits correction only after actual argument changes pass full preflight.
 The [size repair](history/2026-10-24-size.md) separates 8,000-character authored and
 host observer allowances while preserving bounded transport and replay identities.
-The current v51 guidance asks for discriminating observations and keeps unexpected
-execution unverified. Frozen comparison and completion semantics are unchanged.
+The [call adapter and capture](history/2026-10-24-capture.md) now use native Python
+argument syntax and expose each call's return value, stdout/stderr and outcome.
+Fresh cases use invocation v3 / tool contract v52. Truncated or unexpected results
+remain unverified; old v1/v2 programs replay exact bytes. Frozen comparisons,
+original-failure acquisition and completion semantics are unchanged.
 
-The [fresh repair pilot](history/2026-10-24-repair-live.md) is closed. One Astroid-1333
-solve on gpt-5.4-mini-2026-03-17 cost USD 0.525472350 in 432.812 seconds, within the
-USD 0.88 cap. A missing program was corrected to a valid 2,450-character request,
-which executed. The old host-size rejection did not recur in that request.
+The preceding [repair pilot](history/2026-10-24-repair-live.md) failed original
+acquisition and repair: a string was passed where pylint expected a list, and the
+model searched the returned object instead of emitted diagnostics. The new local
+four-condition experiment held the unchanged Astroid base, fixtures and predicate
+fixed. Only correct arguments plus consuming captured output distinguished the
+declared failure from the normal control. Four Docker probes completed in 44.608
+seconds with complete capture and confirmed cleanup; provider calls/cost were zero.
 
-Original acquisition and repair still failed. The model passed a string instead
-of a command-argument list to pylint and searched the returned object for errors
-emitted on stdout. Both faulty base/candidate observations matched the desired JSON;
-neither established the declared base failure. Automatic replay and public
-regression PASS therefore retained `unverified_delivery`. Independent acceptance
-failed, safety passed, and the frozen public missing-init/control checks were
-FAIL/PASS. The missing-init case analyzed the child but retained F0010.
-
-The first unresolved stage is faithful call/observation construction, not execution
-size or exhausted completion funding. The next small diagnostic should distinguish
-argument-shape guidance from diagnostic-capture problems before adding another
-prompt/tool/gate. No remedy or new live run is selected. One exposed-task sample
-does not estimate quality or establish a causal effect of the guidance.
-
-The [operator oracle experiment](history/2026-10-24-oracle.md) remains separate:
-two operator-corrected programs acquired their declared failures on the unchanged
-base; it did not establish autonomous repair. Prior mismatches are never regraded.
-Its runtime validation passed 237 distinct repository cases, including isolated
-mock evaluation, plus 35 operator-predicate cases. Routine verification remains
-quick plus changed-owner cases; this execution closeout changes documentation only.
+This supports the local calling/observation mechanism. It does not establish that
+the model will choose the correct arguments or predicate, acquire the failure or
+repair the task. The adapter checks Python binding, not semantic input validity.
+Autonomous uptake and repair remain the next unresolved question; no fresh paid
+run is authorized by these local results. The [operator oracle experiment](history/2026-10-24-oracle.md)
+remains separate. Prior mismatches and submitted repairs are never regraded.
 
 ## Supporting evidence
 

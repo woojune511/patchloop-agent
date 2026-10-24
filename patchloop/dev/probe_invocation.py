@@ -3,10 +3,12 @@ from __future__ import annotations
 
 import copy
 
+from patchloop.dev import probe_call_capture
 from patchloop.util import canonical_json, sha256_json
 
 LEGACY_CHANNEL = "invoke-declared-call-v1"
-CHANNEL = "invoke-declared-call-v2"
+ARGV_CHANNEL = "invoke-declared-call-v2"
+CHANNEL = probe_call_capture.CHANNEL
 
 # Runs inside the probe sandbox with a separate host observer source budget.
 # In-process diagnostic feedback is not an attestation against a hostile program.
@@ -142,24 +144,30 @@ OBSERVER_V2 = OBSERVER.replace(
 
 
 def supports(channel):
-    return channel in (LEGACY_CHANNEL, CHANNEL)
+    return channel in (LEGACY_CHANNEL, ARGV_CHANNEL, CHANNEL)
 
 
 def observer(channel):
-    """Select exact saved v1 bytes or the argv-bound observer for fresh cases."""
-    return {LEGACY_CHANNEL: OBSERVER, CHANNEL: OBSERVER_V2}[channel]
+    """Select frozen legacy bytes or bounded call capture for fresh cases."""
+    if channel == CHANNEL:
+        return probe_call_capture.observer(OBSERVER_V2)
+    return {LEGACY_CHANNEL: OBSERVER, ARGV_CHANNEL: OBSERVER_V2}[channel]
 
 
 def valid_call(call, entrypoint, *, channel=None):
     # Preserve the two-argument reader for existing v1 observations. Known bindings
     # pass their channel explicitly so a v2 row cannot silently omit argv.
     if channel is None:
-        channel = CHANNEL if isinstance(call, dict) and "argv" in call else LEGACY_CHANNEL
+        channel = (CHANNEL if isinstance(call, dict) and "capture" in call else
+                   ARGV_CHANNEL if isinstance(call, dict) and "argv" in call else LEGACY_CHANNEL)
     fields = {
         "entrypoint", "resolved_entrypoint", "arguments", "cwd", "sys_path", "start_cwd",
         "inputs", "environment", "outcome"}
-    if channel == CHANNEL:
+    if channel in (ARGV_CHANNEL, CHANNEL):
         fields.add("argv")
+    if channel == CHANNEL:
+        fields.update(("call_id", "bound_parameters", "exception_policy", "capture",
+                       "exception", "exit_code"))
     return (supports(channel) and isinstance(call, dict) and set(call) == fields
         and call["entrypoint"] == entrypoint and isinstance(call["resolved_entrypoint"], str)
         and isinstance(call["arguments"], dict)
@@ -174,7 +182,9 @@ def valid_call(call, entrypoint, *, channel=None):
                 and isinstance(p["path"], str) and isinstance(p["hash"], str)
                 and type(p["entries"]) is int for p in call["inputs"])
         and isinstance(call["environment"], dict)
-        and call["outcome"] in ("returned", "raised", "incomplete"))
+        and call["outcome"] in (("returned", "raised", "incomplete", "system_exit")
+                                if channel == CHANNEL else ("returned", "raised", "incomplete"))
+        and (channel != CHANNEL or probe_call_capture.valid(call)))
 
 
 def environment(output):
@@ -206,8 +216,9 @@ def conditions(trace):
 
         # A return/exception or a changed implementation is an outcome, not input
         # drift. The public callable selection, argument and setup identities remain.
-        for key in ("resolved_entrypoint", "outcome"):
-            row.pop(key)
+        for key in ("resolved_entrypoint", "bound_parameters", "outcome", "capture",
+                    "exception", "exit_code", "call_id"):
+            row.pop(key, None)
         calls.append(normalize(row))
     return {"calls": calls, "execution_environment": trace.get("execution_environment"),
             "incomplete": trace["incomplete"]}

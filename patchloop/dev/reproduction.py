@@ -12,7 +12,7 @@ import json
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from patchloop import probe_limits
-from patchloop.dev import probe_invocation, probe_requests
+from patchloop.dev import probe_call_capture, probe_invocation, probe_requests
 from patchloop.dev.probe_cases import observation_json
 from patchloop.errors import ContractError, RecoveryError
 from patchloop.util import sha256_bytes, sha256_json
@@ -37,15 +37,24 @@ DESCRIPTION = (
     "failure must not become a false/no-error value: leave the observation incomplete. "
     "Observing an arbitrary mismatch does not reproduce the declared failure. No separate "
     "declaration step is needed. For original_requirement execute the declared entrypoint "
-    "with injected call_target(args=[...], kwargs={...}, input_paths=[...], "
-    "environment_keys=[...]). It "
+    "by creating target=observed_target(input_paths=[...], environment_keys=[...]), "
+    "then calling it with ordinary Python arguments: call=target(['path'], option=False). "
+    "A list argument is passed once, without an adapter args=[...] container. It "
     "resolves public aliases and constructors; do not replace it with a helper call. Select "
     "fixture files/directories in input_paths, not candidate implementation files; select "
     "relevant environment variable names in environment_keys. Empty lists mean no selected "
-    "external inputs/variables, not complete environment coverage. Then call "
+    "external inputs/variables, not complete environment coverage. call.value is the return "
+    "value; call.stdout/stderr are bounded per-call Python streams, not repr(value). "
+    "Inspect call.outcome, capture_status, exception and exit_code; SystemExit is recorded. "
+    "Unexpected exceptions make comparison unavailable. Only for an intended exception "
+    "observation, declare exact classes with expected_exceptions=(ValueError,) "
+    "in observed_target. This is "
+    "not a general retry or error-ignore option. Direct fd/subprocess output is unobserved. "
+    "Then call "
     "record_observation(value) exactly once "
     "with the actual JSON-compatible observation (at most 2048 UTF-8 bytes). Print progress "
-    "normally: stdout/stderr are logs, never the comparison value. Report an observed bug "
+    "normally: probe logs are not auto-parsed; explicitly derive the observation from "
+    "the target's return value, captured diagnostics or intended exception. Report an observed bug "
     "as a value, not an assertion against expected behavior; the host compares it. Setup "
     "failures, crashes and incomplete observations remain unverified. "
     "On preflight rejection, correct the named invalid_fields in the actual arguments with a "
@@ -413,6 +422,9 @@ def compare(output, binding):
             reason = "setup_check_failed"
         trace = {key: trace[key] for key in ("calls", "incomplete")}
     if not trace["calls"] or trace["incomplete"]:
+        reason = "declared_call_unobserved_or_incomplete"
+    if channel == probe_invocation.CHANNEL and probe_call_capture.incomplete(trace["calls"]):
+        trace["incomplete"] = True
         reason = "declared_call_unobserved_or_incomplete"
     if invoked:
         trace.update(binding_method=channel,

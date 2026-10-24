@@ -23,7 +23,7 @@ record_observation(value)
 
 
 def execute(root, *, implementation="return False", source=SOURCE, entrypoint="public_api.entry",
-            content="fixture", flag="1", mode="stable", channel=probe_invocation.CHANNEL,
+            content="fixture", flag="1", mode="stable", channel=probe_invocation.ARGV_CHANNEL,
             parameters="path, flag"):
     root.mkdir(parents=True)
     (root / "input.txt").write_text(content, encoding="utf-8")

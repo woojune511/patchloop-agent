@@ -122,7 +122,8 @@ def test_shared_phase_before_after_and_two_reference_return(
     tmp_path, monkeypatch, smoke_package, arm
 ):
     # The model chooses the baseline; neither the controller nor the harness adds it.
-    source = OFF_SOURCE if arm == "A" else (f"record_observation(call_target(args=[{TEXT!r}]))")
+    source = (OFF_SOURCE if arm == "A" else
+              f"record_observation(observed_target()({TEXT!r}).value)")
 
     class Script(MockDevAdapter):
         baseline = False
@@ -265,8 +266,8 @@ def test_shared_phase_before_after_and_two_reference_return(
 def test_capacity_supports_original_and_countercondition(gateway_factory):
     # A meaningful original input and a normal-input control fit together.
     source = (
-        f"a=call_target(args=[{TEXT!r}])\n"
-        "b=call_target(args=['h,v\\na,b\\n'])\nrecord_observation([a,b])"
+        f"a=observed_target()({TEXT!r}).value\n"
+        "b=observed_target()('h,v\\na,b\\n').value\nrecord_observation([a,b])"
     )
     gateway, _, _ = gateway_factory()
     gateway.probe_sandbox = ExecutingProbe()

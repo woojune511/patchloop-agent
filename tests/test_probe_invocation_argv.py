@@ -31,7 +31,7 @@ def test_same_cli_argv_and_caught_system_exit_preserve_the_case(tmp_path):
     assert after["comparison"] == "matched", after
     for observation in (before, after):
         trace = observation["call_observation"]
-        assert trace["binding_method"] == probe_invocation.CHANNEL
+        assert trace["binding_method"] == probe_invocation.ARGV_CHANNEL
         call = trace["calls"][0]
         assert call["argv"] == ["pylint", "src/project"]
         assert call["arguments"] == {"args": [], "kwargs": {}}
@@ -76,14 +76,15 @@ def test_incomplete_or_non_string_argv_cannot_receive_comparison_credit(tmp_path
 def test_v2_requires_argv_and_v1_shape_stays_readable(tmp_path):
     result = cli(tmp_path / "run", code=0)
     call = result["call_observation"]["calls"][0]
-    assert probe_invocation.valid_call(call, "public_api.entry", channel=probe_invocation.CHANNEL)
+    assert probe_invocation.valid_call(
+        call, "public_api.entry", channel=probe_invocation.ARGV_CHANNEL)
     legacy = copy.deepcopy(call)
     legacy.pop("argv")
     assert probe_invocation.valid_call(legacy, "public_api.entry")
     assert probe_invocation.valid_call(
         legacy, "public_api.entry", channel=probe_invocation.LEGACY_CHANNEL)
     assert not probe_invocation.valid_call(
-        legacy, "public_api.entry", channel=probe_invocation.CHANNEL)
+        legacy, "public_api.entry", channel=probe_invocation.ARGV_CHANNEL)
     assert not probe_invocation.valid_call(
         call, "public_api.entry", channel=probe_invocation.LEGACY_CHANNEL)
 

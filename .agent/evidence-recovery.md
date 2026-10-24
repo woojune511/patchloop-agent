@@ -73,22 +73,37 @@ and saved binding hashes remain unchanged; existing manifests cannot silently
 switch runtime/profile identities. Local size admission is not target execution
 or original-requirement acquisition; see the [size repair](../docs/history/2026-10-24-size.md).
 
-For original-requirement probes, invoke the declared callable through injected
-`call_target(args=[...], kwargs={...}, input_paths=[...], environment_keys=[...])`.
-It resolves the public import path, including aliases and constructors, and calls
-that target with the supplied arguments. Fresh v2 calls record actual sys.argv,
-arguments, cwd, sys.path,
-Python/platform, selected environment value hashes and selected fixture-content
-hashes immediately before the call. Select fixture roots, not implementation
-files: a changed candidate must be allowed to produce a different result.
-Empty selections do not certify that external inputs or environment are irrelevant.
-Set sys.argv before invoking a CLI callable that reads it. Changed argv prevents
-comparison. Saved v1 programs retain their exact wrapper and replay behavior.
+For original-requirement probes, create the injected
+`target = observed_target(input_paths=[...], environment_keys=[...])`, then call
+it with ordinary Python arguments, for example `call = target(["src/project"],
+do_exit=False)`. There is no extra adapter argument container. It resolves the
+public path, including aliases and constructors, and binds an inspectable
+signature before invoking the callable. Binding checks Python argument placement;
+it cannot certify argument types or correspondence to the issue.
+
+Fresh v3 calls record raw arguments, bound parameter names, actual sys.argv, cwd,
+sys.path, Python/platform, selected environment value hashes and fixture-content
+hashes before execution. Select fixture roots, not implementation files. Empty
+selections do not certify external inputs or environment coverage. Set sys.argv
+before a CLI callable that reads it; changed argv prevents comparison. Raw inputs
+define comparison identity; bound parameter names and result fields do not.
+
+Each call returns `.value`, `.stdout`, `.stderr`, `.outcome`, `.capture_status`,
+`.exception`, `.exit_code` and `.call_id`. Capture isolates that call's Python
+streams from probe progress and other calls. Direct file-descriptor writes,
+subprocess output and streams retained before the call remain unobserved. The
+shared capture budget is 4,096 UTF-8 bytes across all calls and both streams.
+Truncation, stream replacement and deferred execution remain incomplete.
+SystemExit is an observed outcome; a nonzero code can be the reported bug.
+Unexpected exceptions prevent comparison. An intended exception observation may
+declare exact classes, e.g. `expected_exceptions=(ValueError,)` when creating the
+adapter; declaring a base class does not allow arbitrary subclass failures.
 
 Then call the injected `record_observation(value)` exactly once with the actual
 JSON-compatible result, at most 2,048 UTF-8 bytes, after all selected target calls.
-Print progress normally. Stdout/stderr are logs, not the predicate's input; the
-recorded value travels with the bounded call-observation report. For example,
+Print progress normally. Whole-probe logs are not automatically parsed; explicitly
+derive the value from the target's return, captured diagnostics or intended
+exception. The value travels with the bounded call-observation report. For example,
 record `{"has_error": actual_has_error}` and let the host compare it separately to
 the frozen failure value and desired expectation. `comparison` still describes the
 desired result; `declared_failure_comparison` describes the authored failure value.
@@ -98,7 +113,7 @@ behavior, including any control. A clean exit or absence of every diagnostic is
 part of the oracle only when the public requirement calls for it. Preserve other
 diagnostics in logs. Derive values from completed, interpretable target results;
 missing output and unexpected invocation/setup/parse failures must leave the
-observation incomplete, never become a false/no-error value. The v51 tool guidance
+observation incomplete, never become a false/no-error value. The v52 tool guidance
 describes this choice; the host still uses exact frozen JSON equality and does not
 certify the model's semantic mapping. Correcting a predicate creates a new case;
 prior mismatches retain their original verdict.
@@ -112,8 +127,9 @@ healthy process as a mismatching value; process success is not task success.
 The host binds the task, purpose, predicate, observation channel and authored
 program hash before execution. New purpose/predicate/program means a distinct case.
 Repeating an identical selection retains the original baseline identity.
-New selections bind `invoke-declared-call-v2`. Existing `record-observation-v1`
-and legacy stdout bindings retain their exact wrappers on replay; they do not
+New selections bind `invoke-declared-call-v3`. Existing invocation v1/v2,
+`record-observation-v1` and legacy stdout bindings retain their exact wrappers
+and APIs on replay; they do not
 silently acquire the new linkage. Unadvertised legacy `reproduction` arguments
 preserve prior action/recovery identities. Logs are never automatically converted
 into declared cases, and old results are not regraded.
@@ -129,12 +145,14 @@ The invocation adapter records at most four calls, four input roots and 16 selec
 environment names per call. A snapshot covers at most 64 entries/1 MiB in total;
 missing paths and directory contents are included. Symlinks, oversized/unsupported
 arguments, deferred async/generator execution, absent calls or an observation
-recorded before later calls prevent comparison. The report retains its 6,000-char
-bound. Arbitrary object state, external effects and unselected inputs/environment
-remain unverified; in-process feedback is not an attestation. The adapter and
-authored program together must fit the unchanged 8,000-character source limit;
-the larger adapter leaves less authoring space. Sandbox/output/deadline limits
-remain unchanged. Completion-time replays below use the same public execution path.
+recorded before later calls prevent comparison. The v3 report is bounded to 10,000
+UTF-8 bytes; v1/v2 retain their 6,000-character bound. Arbitrary object state,
+external effects and unselected inputs/environment remain unverified; in-process
+feedback is not an attestation. Authored source and host observer retain separate
+8,000-character allowances. Only fixed host indentation is compacted; authored
+and legacy bytes stay intact. Sandbox/output/deadline limits remain unchanged.
+See the [local four-condition result](../docs/history/2026-10-24-capture.md).
+Completion-time replays below use the same public execution path.
 
 Replay using the original `action_id`, with question/source/purpose null.
 The existing replay path keeps the exact program and binding across edits and
