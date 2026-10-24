@@ -41,8 +41,15 @@ authored allowance from an 8,000-character host observer allowance. Serialized
 execution has a derived, bounded transport allowance in both launcher and reader.
 Saved observer/program bytes and replay identities are preserved. The v3 probe
 profile and v50 tool contract identify the change; old manifests cannot authorize
-execution against it. Both frozen rejected requests now pass local size admission
-without source edits. This is not execution, caller acquisition or repair evidence.
+execution against it.
+
+The [frozen caller diagnostic](history/2026-10-24-run.md) executed both rejected
+requests unchanged, with zero model calls. Both reached `pylint.lint.Run`, reproduced
+F0010 on the missing-init fixture and avoided F0010 on the init-present control.
+Both nevertheless failed their declared JSON oracle: ordinary control lint
+warnings were summarized as `other_error`, while the failure value required `ok`.
+Caller/symptom reproduction is supported in this pinned environment; formal
+acquisition, repair and fresh-model uptake are not established. Allocation closed.
 
 Routine verification uses the short quick selection plus changed-owner cases.
 The size repair has 242 distinct local tests passing across a 55.19-second combined
@@ -51,10 +58,11 @@ See its record for split-validation details. Full tests remain available; repeat
 A/B loops are outside routine quick validation.
 
 Acquisition release, edit-time replay scheduling, cost reservations and completion
-semantics are unchanged. The next unresolved question is whether a newly admitted
-request executes the original caller and acquires its reported failure. Reassess
-that before later replay/budget changes. No additional paid experiment or general
-improvement claim is authorized.
+semantics are unchanged. The next question is an observation contract focused on
+the original F0010 condition, with other lint diagnostics and execution/setup
+failures kept separate. Preserve the frozen oracle mismatch; do not relabel it
+after observing the outcome or loosen completion to erase it. No further
+experiment or general improvement claim is authorized.
 
 ## Supporting evidence
 
