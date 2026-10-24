@@ -24,57 +24,38 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-[Request construction and correction](history/2026-10-23-requests.md)
-implements the first step after the [request audit](history/2026-10-23-request.md).
-Fresh original probes no longer generate a literal quotation: the host binds the
-complete public task and issue-content identities. Field diagnostics identify the
-request problem; durable receipts distinguish unchanged arguments, changed but
-invalid arguments, and a fully valid correction. Decision text grants no correction
-credit. Legacy admitted bindings and action recovery preserve their identities.
+[Request correction](history/2026-10-23-requests.md) binds public task/issue identity
+and credits correction only after actual argument changes pass full preflight.
+The [size repair](history/2026-10-24-size.md) separates 8,000-character authored and
+host observer allowances while preserving bounded transport and replay identities.
+The current v51 guidance asks for discriminating observations and keeps unexpected
+execution unverified. Frozen comparison and completion semantics are unchanged.
 
-The [closed live pilot](history/2026-10-24-request-live.md) exposed a host-size
-defect: observer overhead rejected both original requests despite a real source
-correction. Original acquisition and repair failed; the allocation is closed.
+The [fresh repair pilot](history/2026-10-24-repair-live.md) is closed. One Astroid-1333
+solve on gpt-5.4-mini-2026-03-17 cost USD 0.525472350 in 432.812 seconds, within the
+USD 0.88 cap. A missing program was corrected to a valid 2,450-character request,
+which executed. The old host-size rejection did not recur in that request.
 
-The [size repair](history/2026-10-24-size.md) separates the unchanged 8,000-character
-authored allowance from an 8,000-character host observer allowance. Serialized
-execution has a derived, bounded transport allowance in both launcher and reader.
-Saved observer/program bytes and replay identities are preserved. The v3 probe
-profile and its v50 tool contract identify the size change; old manifests cannot authorize
-execution against it.
+Original acquisition and repair still failed. The model passed a string instead
+of a command-argument list to pylint and searched the returned object for errors
+emitted on stdout. Both faulty base/candidate observations matched the desired JSON;
+neither established the declared base failure. Automatic replay and public
+regression PASS therefore retained `unverified_delivery`. Independent acceptance
+failed, safety passed, and the frozen public missing-init/control checks were
+FAIL/PASS. The missing-init case analyzed the child but retained F0010.
 
-The [frozen caller diagnostic](history/2026-10-24-run.md) executed both rejected
-requests unchanged, with zero model calls. Both reached `pylint.lint.Run`, reproduced
-F0010 on the missing-init fixture and avoided F0010 on the init-present control.
-Both nevertheless failed their declared JSON oracle: ordinary control lint
-warnings were summarized as `other_error`, while the failure value required `ok`.
-Caller/symptom reproduction is supported in this pinned environment; formal
-acquisition, repair and fresh-model uptake are not established. Allocation closed.
+The first unresolved stage is faithful call/observation construction, not execution
+size or exhausted completion funding. The next small diagnostic should distinguish
+argument-shape guidance from diagnostic-capture problems before adding another
+prompt/tool/gate. No remedy or new live run is selected. One exposed-task sample
+does not estimate quality or establish a causal effect of the guidance.
 
-The v51 guidance asks for observable properties that distinguish the public failure
-from the desired behavior. Unrelated diagnostics stay in logs; incomplete or
-unexpected execution cannot become a false/no-error result. Frozen equality,
-acquisition, replay, cost and completion semantics remain unchanged. The original
-two oracle mismatches remain closed evidence, never regraded.
-
-The [prospective oracle experiment](history/2026-10-24-oracle.md) executed two
-operator-corrected requests once each on the same unchanged Astroid base. Both
-matched their newly frozen failure JSON; both still mismatched the desired repaired
-result. Caller arguments, fixture hashes, source and observed environment match the
-prior requests. General control warnings remain logged. The supervised run took
-23.621 seconds, with zero model calls/cost. This local allocation is closed.
-
-The predicate correction is supported for these two saved programs on one exposed
-task. The generic guidance is implemented; whether a fresh model independently
-selects the right observation remains the next question. Repair, live acquisition,
-post-edit replay and independent acceptance were not tested by this experiment.
-
-Routine verification uses quick plus changed-owner cases. This guidance change
-has 237 distinct repository cases passing across a 63.49-second run and a 0.98-second
-six-snapshot recheck, including isolated mock evaluation; 35 operator-predicate
-cases pass separately in 0.07 seconds. Six initial failures were stale description
-hashes, updated with wire shapes and historical-arm values preserved. Full tests
-remain available; repeated A/B loops are outside routine quick validation.
+The [operator oracle experiment](history/2026-10-24-oracle.md) remains separate:
+two operator-corrected programs acquired their declared failures on the unchanged
+base; it did not establish autonomous repair. Prior mismatches are never regraded.
+Its runtime validation passed 237 distinct repository cases, including isolated
+mock evaluation, plus 35 operator-predicate cases. Routine verification remains
+quick plus changed-owner cases; this execution closeout changes documentation only.
 
 ## Supporting evidence
 
@@ -105,5 +86,6 @@ submission, independent task acceptance and safety are separate. Mock safety is 
 
 Do not start Docker Desktop or pull/build evaluator images automatically. Preserve
 exact recovery identities, zero SDK retries and stop-all on count/transport/billing
-uncertainty. Linux CI, live replay/rejection of an acquired original case, and
-general improvement are unverified.
+uncertainty. A live replay of an unacquired case is observed; replay/rejection after
+a faithfully acquired original failure, Linux CI and general improvement remain
+unverified.
