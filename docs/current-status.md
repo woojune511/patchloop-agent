@@ -57,14 +57,20 @@ unexpected execution cannot become a false/no-error result. Frozen equality,
 acquisition, replay, cost and completion semantics remain unchanged. The original
 two oracle mismatches remain closed evidence, never regraded.
 
-The user authorized implementation and the proposed local prospective replay.
-Preparation fixes two operator-corrected requests, each once on the same unchanged
-Astroid base, with zero model/evaluator calls, 30 seconds per probe and 120 active
-seconds overall. Only observation summarization, declared JSON and log ordering
-change. Results are pending; guidance uptake and repair remain unmeasured.
+The [prospective oracle experiment](history/2026-10-24-oracle.md) executed two
+operator-corrected requests once each on the same unchanged Astroid base. Both
+matched their newly frozen failure JSON; both still mismatched the desired repaired
+result. Caller arguments, fixture hashes, source and observed environment match the
+prior requests. General control warnings remain logged. The supervised run took
+23.621 seconds, with zero model calls/cost. This local allocation is closed.
+
+The predicate correction is supported for these two saved programs on one exposed
+task. The generic guidance is implemented; whether a fresh model independently
+selects the right observation remains the next question. Repair, live acquisition,
+post-edit replay and independent acceptance were not tested by this experiment.
 
 Routine verification uses quick plus changed-owner cases. This guidance change
-has 237 distinct repository cases passing across a 63.49-second run and a short
+has 237 distinct repository cases passing across a 63.49-second run and a 0.98-second
 six-snapshot recheck, including isolated mock evaluation; 35 operator-predicate
 cases pass separately in 0.07 seconds. Six initial failures were stale description
 hashes, updated with wire shapes and historical-arm values preserved. Full tests
