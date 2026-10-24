@@ -40,7 +40,7 @@ The [size repair](history/2026-10-24-size.md) separates the unchanged 8,000-char
 authored allowance from an 8,000-character host observer allowance. Serialized
 execution has a derived, bounded transport allowance in both launcher and reader.
 Saved observer/program bytes and replay identities are preserved. The v3 probe
-profile and v50 tool contract identify the change; old manifests cannot authorize
+profile and its v50 tool contract identify the size change; old manifests cannot authorize
 execution against it.
 
 The [frozen caller diagnostic](history/2026-10-24-run.md) executed both rejected
@@ -51,18 +51,24 @@ warnings were summarized as `other_error`, while the failure value required `ok`
 Caller/symptom reproduction is supported in this pinned environment; formal
 acquisition, repair and fresh-model uptake are not established. Allocation closed.
 
-Routine verification uses the short quick selection plus changed-owner cases.
-The size repair has 242 distinct local tests passing across a 55.19-second combined
-run and a 1.05-second identity-pin recheck, including isolated mock evaluation.
-See its record for split-validation details. Full tests remain available; repeated
-A/B loops are outside routine quick validation.
+The v51 guidance asks for observable properties that distinguish the public failure
+from the desired behavior. Unrelated diagnostics stay in logs; incomplete or
+unexpected execution cannot become a false/no-error result. Frozen equality,
+acquisition, replay, cost and completion semantics remain unchanged. The original
+two oracle mismatches remain closed evidence, never regraded.
 
-Acquisition release, edit-time replay scheduling, cost reservations and completion
-semantics are unchanged. The next question is an observation contract focused on
-the original F0010 condition, with other lint diagnostics and execution/setup
-failures kept separate. Preserve the frozen oracle mismatch; do not relabel it
-after observing the outcome or loosen completion to erase it. No further
-experiment or general improvement claim is authorized.
+The user authorized implementation and the proposed local prospective replay.
+Preparation fixes two operator-corrected requests, each once on the same unchanged
+Astroid base, with zero model/evaluator calls, 30 seconds per probe and 120 active
+seconds overall. Only observation summarization, declared JSON and log ordering
+change. Results are pending; guidance uptake and repair remain unmeasured.
+
+Routine verification uses quick plus changed-owner cases. This guidance change
+has 237 distinct repository cases passing across a 63.49-second run and a short
+six-snapshot recheck, including isolated mock evaluation; 35 operator-predicate
+cases pass separately in 0.07 seconds. Six initial failures were stale description
+hashes, updated with wire shapes and historical-arm values preserved. Full tests
+remain available; repeated A/B loops are outside routine quick validation.
 
 ## Supporting evidence
 

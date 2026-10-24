@@ -81,7 +81,7 @@ def test_default_serialization_and_schema_identities_remain_exact():
     )
     assert "memory_update" not in RequestedTool(name="read_file", action_id="x").model_dump()
     assert dev_tool_surface_hash() == (
-        "sha256:68df06f9b7c945d3211dbf925e9addd9504f600be5acffb585c796b771385eb7"
+        "sha256:7e96229acad6afaf7bf444e9438469eb96bbc4d70fd9e78b2e1d0374baa977aa"
         if FROZEN_ARM is None else
         "sha256:57193859890419b79cb7f4927c37796d044bc4bf7159c51ddf17723849529e26"
     )
@@ -90,7 +90,7 @@ def test_default_serialization_and_schema_identities_remain_exact():
         allowed_tools=list(MODES),
     )
     assert sha256_json(schemas) == (
-        "sha256:5db245bbb0f8566adc6fdf47afe8402cfd17374f4174e7782af2fcb941ef0fdf"
+        "sha256:385ae0e15a9ae5318b0f1477b667ef09837dc876119d4056b3c7cb21b2603ecb"
         if FROZEN_ARM is None else
         "sha256:9757e80d1590c5274966a80011a24ed12e08340d23d2e202f0f099ea1be47955"
     )

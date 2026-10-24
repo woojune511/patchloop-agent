@@ -93,6 +93,16 @@ record `{"has_error": actual_has_error}` and let the host compare it separately 
 the frozen failure value and desired expectation. `comparison` still describes the
 desired result; `declared_failure_comparison` describes the authored failure value.
 
+Select observable properties that distinguish the public failure from the desired
+behavior, including any control. A clean exit or absence of every diagnostic is
+part of the oracle only when the public requirement calls for it. Preserve other
+diagnostics in logs. Derive values from completed, interpretable target results;
+missing output and unexpected invocation/setup/parse failures must leave the
+observation incomplete, never become a false/no-error value. The v51 tool guidance
+describes this choice; the host still uses exact frozen JSON equality and does not
+certify the model's semantic mapping. Correcting a predicate creates a new case;
+prior mismatches retain their original verdict.
+
 Missing, duplicate, invalid or oversized observations cannot compare. A recorded
 value remains visible if the process subsequently fails, but failed execution,
 setup mismatch, timeout, truncation, uncertain cleanup or an unobserved declared
