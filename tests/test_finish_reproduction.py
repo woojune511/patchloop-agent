@@ -11,7 +11,7 @@ from test_dev_tools import mutation_call, read_calls
 from test_probe_purpose import REPORTED_FAILURE, probe
 
 from patchloop.dev import runner
-from patchloop.dev.contracts import DevModelTurn, PublicTurnDecision, RequestedTool
+from patchloop.dev.contracts import DevModelTurn, DevToolResult, PublicTurnDecision, RequestedTool
 from patchloop.dev.model import MockDevAdapter
 from patchloop.dev.state import DevJournal
 
@@ -108,7 +108,7 @@ def prepare(gateway_factory, *, original=True, correct=True):
     return gateway, journal, workspace, backend, change
 
 
-def test_original_failure_is_not_closed_by_helper_and_regression_pass(gateway_factory):
+def test_original_failure_is_not_closed_by_helper_and_regression_pass(gateway_factory, tmp_path):
     gateway, journal, _, backend, _ = prepare(gateway_factory, correct=False)
     helper = probe(gateway.public_task, "helper", source=(
         "from mini_data_utils.csvlite import parse_rows\n"
@@ -124,6 +124,13 @@ def test_original_failure_is_not_closed_by_helper_and_regression_pass(gateway_fa
     pending = gateway.execute(finish_call("without-replay"))
     assert pending.status == "failed"
     assert pending.output["submission_verification"]["status"] == "pending"
+    mutation = DevToolResult.model_validate(results_for(journal, "replace_text")[-1])
+    runner._run_original_recheck(
+        journal=journal, gateway=gateway, latest_results=[mutation],
+        counters=runner._restore_counters(journal), active_elapsed_ms=lambda: 15,
+        request=request(tmp_path).model_copy(update={"limits": gateway.limits}),
+    )
+    assert backend.calls == 3 and backend.sources[0] == backend.sources[-1]
     result, _ = finish(gateway)
     assert result.status == "failed"
     assert result.output["submission_verification"]["status"] == "refuted"
@@ -303,7 +310,8 @@ def test_correct_patch_and_normal_control_reach_isolated_evaluation(
     assert_full_loop(outcome, DevJournal(tmp_path, outcome["run_id"]), backend)
 
 
-@pytest.mark.parametrize("boundary", ["child_admitted", "child_result", "finish_result"])
+@pytest.mark.parametrize("boundary", ["mutation_result", "child_admitted", "child_result",
+                                      "child_finished", "finish_result"])
 def test_resume_never_reexecutes_a_durable_completion_replay(
     tmp_path, monkeypatch, smoke_package, boundary,
 ):
@@ -311,11 +319,17 @@ def test_resume_never_reexecutes_a_durable_completion_replay(
     req = request(tmp_path)
     if boundary == "child_admitted":
         _crash_journal_once(monkeypatch, event_type="completion_reproduction_started", when="after")
+    elif boundary == "child_finished":
+        _crash_journal_once(
+            monkeypatch, event_type="completion_reproduction_finished", when="after",
+        )
     else:
         def selected(payload):
             result = payload.get("result", {})
             if boundary == "finish_result":
                 return result.get("tool") == "finish_task"
+            if boundary == "mutation_result":
+                return result.get("tool") == "replace_text"
             return result.get("tool") == "run_probe" and result.get("action_id") != "original"
 
         _crash_journal_once(

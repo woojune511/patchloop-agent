@@ -81,12 +81,22 @@ public path, including aliases and constructors, and binds an inspectable
 signature before invoking the callable. Binding checks Python argument placement;
 it cannot certify argument types or correspondence to the issue.
 
-Fresh v3 calls record raw arguments, bound parameter names, actual sys.argv, cwd,
+Fresh v4 calls record raw arguments, bound parameter names, actual sys.argv, cwd,
 sys.path, Python/platform, selected environment value hashes and fixture-content
 hashes before execution. Select fixture roots, not implementation files. Empty
 selections do not certify external inputs or environment coverage. Set sys.argv
 before a CLI callable that reads it; changed argv prevents comparison. Raw inputs
 define comparison identity; bound parameter names and result fields do not.
+
+V4 initializes target-visible `sys.argv` to `["<patchloop-reproduction>"]` before
+authored code, preventing host timeout/line-tracing parameters from leaking into
+the callable. Explicit authored argv still takes effect and remains compared.
+`reproduction_workspace()` exclusively creates `patchloop-case` under the fresh
+sandbox's initial cwd (`/tmp/patchloop-case` in Docker). Repeated helper calls in
+one execution return that newly created path; an occupied path raises without
+deleting or reusing it. Put fixture roots there and explicitly set HOME/cache
+environment variables when needed. The helper does not rewrite environment
+values: arbitrary random HOME/PYLINTHOME still produces a real identity mismatch.
 
 Each call returns `.value`, `.stdout`, `.stderr`, `.outcome`, `.capture_status`,
 `.exception`, `.exit_code` and `.call_id`. Capture isolates that call's Python
@@ -119,8 +129,8 @@ behavior, including any control. A clean exit or absence of every diagnostic is
 part of the oracle only when the public requirement calls for it. Preserve other
 diagnostics in logs. Derive values from completed, interpretable target results;
 missing output and unexpected invocation/setup/parse failures must leave the
-observation incomplete, never become a false/no-error value. The v53 tool guidance
-describes this choice. Healthy v3 receipts include `comparison_feedback` for
+observation incomplete, never become a false/no-error value. The v54 tool guidance
+describes this choice. Healthy v3/v4 receipts include `comparison_feedback` for
 `desired` and, when declared, `declared_failure`. Each lists missing/extra/type/value
 differences at JSON Pointer paths (empty path means the root), at most eight rows,
 160 characters per path and 2,048 UTF-8 bytes per declaration. Truncated paths and
@@ -144,7 +154,7 @@ healthy process as a mismatching value; process success is not task success.
 The host binds the task, purpose, predicate, observation channel and authored
 program hash before execution. New purpose/predicate/program means a distinct case.
 Repeating an identical selection retains the original baseline identity.
-New selections bind `invoke-declared-call-v3`. Existing invocation v1/v2,
+New selections bind `invoke-declared-call-v4`. Existing invocation v1/v2/v3,
 `record-observation-v1` and legacy stdout bindings retain their exact wrappers
 and APIs on replay; they do not
 silently acquire the new linkage. Unadvertised legacy `reproduction` arguments
@@ -214,7 +224,12 @@ recovery. These model-authored concerns do not gate completion.
 from the full journal. Known preflight rejections stay in request/recovery accounting
 but cannot create completion cases. Accepted uncertain and legacy unknown requests
 remain unverified. A healthy invocation-bound root is mechanically replayable;
-this is not certification that it reproduces the reported bug. At finish, stale
+this is not certification that it reproduces the reported bug. After an accepted
+edit, acquired original failures replay before the next model input. Selection
+uses all baseline-failure IDs, never the latest helper/saved program or the three
+displayed cases. Early replay is reserved completion work: no extra model call,
+and new work is deferred if the minimum check/return budget cannot fit. Already
+started children reconcile even if new admission closes. At finish, remaining stale
 cases (including matched baseline controls) run through ordinary budgeted probe
 actions. A helper/new case cannot close an older one. Same-case current mismatch
 or conflict rejects finish; absent cases and incomplete/unavailable observations
@@ -223,6 +238,14 @@ recovered finish cannot bypass it. Deterministic child IDs bind run/case/root/di
 a finished or durably skipped attempt is not retried on that diff. Another edit
 invalidates its currency. Child start/finish receipts restore action accounting.
 The public view shows three cases plus counts; execution uses the complete set.
+Each displayed case retains bounded current `observed_json` and execution status
+separately from comparability (`same`, `changed`, `unavailable`). Changed conditions
+list bounded JSON Pointer differences without exposing raw environment values.
+A bug-like observed value with changed conditions remains UNKNOWN; same-condition
+mismatch remains REFUTED. Native tool outputs contain only model-requested results;
+host child feedback comes from the journal projection. Protected tool forecasts
+include acquired-original replay costs on each accepted future repair, while
+monetary minimum admission still does not guarantee semantic failure recovery.
 `submission_verification` accompanies the free-text assessment without replacing
 the separate private evaluation or certifying semantic requirement coverage.
 

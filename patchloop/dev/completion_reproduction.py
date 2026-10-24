@@ -8,10 +8,10 @@ from __future__ import annotations
 
 import copy
 
-from patchloop.dev import probe_invocation, probe_replay, reproduction
+from patchloop.dev import probe_comparison, probe_invocation, probe_replay, reproduction
 from patchloop.dev.contracts import RequestedTool
 from patchloop.errors import ContractError, RecoveryError
-from patchloop.util import sha256_bytes, sha256_json
+from patchloop.util import canonical_json, sha256_bytes, sha256_json
 
 POLICY = "completion-reproduction-v1"
 DISPLAY_LIMIT = 3
@@ -49,7 +49,7 @@ def _healthy(result, observation):
     )
 
 
-def _compact(row):
+def _compact(row, *, include_observation=False):
     if row is None:
         return None
     result, observation = row
@@ -57,11 +57,22 @@ def _compact(row):
     return {
         "action_id": result["action_id"], "diff_hash": result["workspace_diff_hash"],
         "comparison": observation["comparison"], "reason": observation["reason"],
+        **({"observed_json": observation.get("observed_json")} if include_observation else {}),
+        "execution_status": result.get("output", {}).get("status"),
         **({"declared_failure_comparison": observation["declared_failure_comparison"]}
            if "declared_failure_comparison" in observation else {}),
         "execution_link": probe_invocation.summary(trace) if probe_invocation.supports(trace.get(
             "binding_method")) else {"status": "unbound_invocation"},
     }
+
+
+def _comparability(root, current, eligible):
+    if not eligible or current is None or not _healthy(*current):
+        return {"status": "unavailable", "differences": [], "omitted_count": 0}
+    baseline = probe_invocation.conditions(root[1]["call_observation"])
+    candidate = probe_invocation.conditions(current[1]["call_observation"])
+    feedback = probe_comparison.differences(canonical_json(baseline), canonical_json(candidate))
+    return {"status": "changed" if feedback["differences"] else "same", **feedback}
 
 
 def review(events, current_diff, *, public_task=None, run_id):
@@ -161,10 +172,14 @@ def review(events, current_diff, *, public_task=None, run_id):
             eligible and root[0]["workspace_diff_hash"] == sha256_bytes(b"")
             and root[1]["comparison"] == "mismatched"
             and (not paired or root[1].get("declared_failure_comparison") == "matched"))
+        current = next((row for row in reversed(rows)
+                        if row[0]["workspace_diff_hash"] == current_diff), None)
         items.append({
             "case_id": case_id, "root_action_id": root_id,
             "purpose": copy.deepcopy(binding["definition"]),
             "baseline": _compact(root), "latest": _compact(rows[-1] if rows else None),
+            "current": _compact(current, include_observation=True),
+            "comparability": _comparability(root, current, eligible),
             "status": state, "replayable": bool(eligible), "auto_action_id": call.action_id,
             **({"baseline_acquisition": {
                 "status": "qualified" if original_failure else "unverified",

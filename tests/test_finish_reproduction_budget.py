@@ -13,6 +13,19 @@ from patchloop.dev.cost import COMPLETION_RESERVE_POLICY
 from patchloop.dev.tools import DevGatewayStateSnapshot
 
 
+def test_protected_tools_include_original_replays_on_every_repaired_diff():
+    state = CompletionState(
+        check_count=2, remaining_check_count=2, unused_check_count=2,
+        unrun_recoverable_check=True, requires_mutation=True, anchor_available=True,
+        remaining_mutations=3, mutation_retry_available=False,
+        reproduction_case_count=3, pending_reproduction_count=3, early_reproduction_count=3,
+    )
+    budget = completion_budget(state)
+    # edit + 3 replays + 2 checks, twice(read + edit + 3 replays + 2 checks), finish.
+    assert budget.protected_tool_actions >= 6 + 2 * 7 + 1
+    assert budget.minimum == 4  # Host replay never consumes a model call.
+
+
 def snapshot(gateway, *, status="pending", case_count=1, pending_count=1):
     return DevGatewayStateSnapshot(
         diff=gateway.current_diff,

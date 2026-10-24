@@ -47,7 +47,14 @@ DESCRIPTION = (
     "A list argument is passed once, without an adapter args=[...] container. It "
     "resolves public aliases and constructors; do not replace it with a helper call. Select "
     "fixture files/directories in input_paths, not candidate implementation files; select "
-    "relevant environment variable names in environment_keys. Empty lists mean no selected "
+    "relevant environment variable names in environment_keys. For fixtures and HOME/cache "
+    "directories use root=Path(reproduction_workspace()): it creates the stable path "
+    "under the fresh sandbox cwd, fails if it already exists and shares it within this probe. "
+    "Create the needed children and set relevant environment variables explicitly; select "
+    "those inputs and variables for observation. Avoid random temporary paths for them. "
+    "The target starts with sys.argv=['<patchloop-reproduction>']; set explicit CLI argv "
+    "before calling a CLI that reads it. Host tracing options are not target arguments. "
+    "Empty lists mean no selected "
     "external inputs/variables, not complete environment coverage. call.value is the return "
     "value; call.stdout/stderr are bounded per-call Python streams, not repr(value). "
     "Choose the diagnostic channel from public behavior and inspect both captured streams; "
@@ -433,7 +440,8 @@ def compare(output, binding):
         trace = {key: trace[key] for key in ("calls", "incomplete")}
     if not trace["calls"] or trace["incomplete"]:
         reason = "declared_call_unobserved_or_incomplete"
-    if channel == probe_invocation.CHANNEL and probe_call_capture.incomplete(trace["calls"]):
+    if (channel in probe_invocation.CAPTURE_CHANNELS
+            and probe_call_capture.incomplete(trace["calls"])):
         trace["incomplete"] = True
         reason = "declared_call_unobserved_or_incomplete"
     if invoked:
@@ -462,7 +470,7 @@ def compare(output, binding):
         result["reproduction"]["declared_failure_comparison"] = (
             "not_compared" if reason else "matched"
             if actual == binding["definition"]["reported_failure_json"] else "mismatched")
-    if reason is None and channel == probe_invocation.CHANNEL:
+    if reason is None and channel in probe_invocation.CAPTURE_CHANNELS:
         result["reproduction"]["comparison_feedback"] = {
             role: probe_comparison.differences(binding["definition"][field], actual)
             for role, field in (("desired", "expected_json"),

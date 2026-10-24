@@ -25,6 +25,7 @@ class CompletionState:
     current_recheck_eligible: bool = False
     reproduction_case_count: int = 0
     pending_reproduction_count: int = 0
+    early_reproduction_count: int = 0
 
 
 @dataclass(frozen=True)
@@ -74,8 +75,8 @@ def completion_budget(state: CompletionState) -> CompletionBudget:
     )
     check_recovery_tools = future_failures * (state.check_count + 2)
     check_recovery = check_recovery_tools - future_failures * int(state.automatic_recheck)
-    # Public-case replay runs inside a requested finish, without another model
-    # call. An edit invalidates every case; otherwise only stale cases need work.
+    # Public-case replay runs after an edit or before finish, without another
+    # model call. An edit invalidates every case; otherwise only stale cases need work.
     reproduction_actions = (
         state.reproduction_case_count if state.requires_mutation
         else state.pending_reproduction_count
@@ -83,7 +84,8 @@ def completion_budget(state: CompletionState) -> CompletionBudget:
     protected = minimum + current_read + mutation_retry + check_recovery
     protected_tools = (minimum_tools + current_read + mutation_retry + check_recovery_tools
                        + (state.reproduction_case_count if future_failures
-                          else reproduction_actions))
+                          else reproduction_actions)
+                       + future_failures * state.early_reproduction_count)
     # A failed final replay consumes the finish request too. Protect one read,
     # repair, all checks, another replay and finish when an edit remains. Compare
     # against the check-failure path rather than reserving impossible extra edits.
@@ -99,7 +101,8 @@ def completion_budget(state: CompletionState) -> CompletionBudget:
                                                 - int(state.automatic_recheck)))
             protected_tools = max(
                 protected_tools, minimum_tools + current_read + replay_mutation_retry
-                + prior_failures * (state.check_count + 2) + first_replays
+                + prior_failures * (state.check_count + 2 + state.early_reproduction_count)
+                + first_replays
                 + recovery + state.reproduction_case_count,
             )
     return CompletionBudget(
@@ -111,7 +114,8 @@ def completion_budget(state: CompletionState) -> CompletionBudget:
         current_read_reserve=current_read,
         minimum_tool_actions=minimum_tools + reproduction_actions,
         protected_tool_actions=protected_tools,
-        check_recovery_tool_actions=check_recovery_tools,
+        check_recovery_tool_actions=(check_recovery_tools
+                                     + future_failures * state.early_reproduction_count),
     )
 
 

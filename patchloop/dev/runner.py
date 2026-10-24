@@ -839,6 +839,7 @@ def _tool_policy(
         current_recheck_eligible=current_recheck_eligible,
         reproduction_case_count=verification.get("replayable_case_count", 0),
         pending_reproduction_count=verification.get("pending_count", 0),
+        early_reproduction_count=len(verification.get("baseline_failure_case_ids", [])),
     )
     budget = completion_budget(completion_state)
     completion_possible = (
@@ -3769,6 +3770,20 @@ def _execute_completion_batch(
         return gateway.execute_batch(calls)
     if not gateway.ready_to_submit():
         return gateway.execute_batch(calls)
+    _replay_original_cases(
+        journal=journal, gateway=gateway, counters=counters,
+        active_elapsed_ms=active_elapsed_ms,
+    )
+    return gateway.execute_batch(calls)
+
+
+def _replay_original_cases(
+    *, journal: DevJournal, gateway: DevToolGateway, counters: _RunCounters,
+    active_elapsed_ms: Callable[[], int], acquired_only: bool = False,
+    admit_new: bool = True,
+) -> None:
+    """Share one case/candidate replay between early feedback and finish recovery."""
+    events = journal.events()
     diff_hash = gateway.current_diff_hash
     state = completion_reproduction.review(
         events, diff_hash, public_task=gateway.public_task, run_id=journal.run_id,
@@ -3783,7 +3798,9 @@ def _execute_completion_batch(
     # terminal cleanup/deadline result, even though the replay is already settled.
     selected = [value for key, value in starts.items()
                 if key not in finished or value["candidate_diff_hash"] == diff_hash]
-    selected.extend(state["pending_cases"])
+    acquired = set(state["baseline_failure_case_ids"])
+    selected.extend(case for case in state["pending_cases"]
+                    if not acquired_only or case["case_id"] in acquired)
     handled = set()
     for case in selected:
         call = completion_reproduction.replay_call(
@@ -3816,6 +3833,8 @@ def _execute_completion_batch(
         if "completion_reproduction_finished" in receipts and replay is None:
             raise RecoveryError("completed reproduction is missing its action result")
         if "completion_reproduction_started" not in receipts:
+            if not admit_new:
+                continue
             reason = (
                 "tool_action_limit" if counters.tool_actions >= gateway.limits.max_tool_actions
                 else "probe_unavailable" if gateway.probe_sandbox is None else None
@@ -3842,7 +3861,43 @@ def _execute_completion_batch(
         terminal, message = _batch_execution_abort([result])
         if terminal is not None:
             raise _CompletionVerificationAbort(terminal, message or "public replay aborted")
-    return gateway.execute_batch(calls)
+
+
+def _run_original_recheck(
+    *, journal: DevJournal, gateway: DevToolGateway, latest_results: list[DevToolResult],
+    counters: _RunCounters, active_elapsed_ms: Callable[[], int],
+    request: RunRequest, cost_ledger: DevCostLedger | None = None,
+) -> tuple[DevTerminal | None, str | None]:
+    """Deliver the acquired original's result after an edit, before model inference.
+
+    Helpers and the optional last-saved-program policy cannot replace this case.
+    A deferred early check stays pending for the existing finish fallback.
+    """
+    if len(latest_results) != 1:
+        return None, None
+    mutation = latest_results[0]
+    if mutation.tool != "replace_text" or mutation.status != "succeeded":
+        return None, None
+    if gateway.current_diff_hash != mutation.workspace_diff_hash:
+        raise ResumeContractMismatch("original recheck candidate differs from accepted mutation")
+    policy = _tool_policy(
+        gateway, counters, request.limits,
+        repair_inspection_policy=request.repair_inspection_policy,
+        repair_recheck=request.repair_recheck, cost_ledger=cost_ledger,
+        completion_cost_policy=request.completion_cost_policy,
+        desired_output_ceiling=request.max_output_tokens,
+    )
+    try:
+        _replay_original_cases(
+            journal=journal, gateway=gateway, counters=counters,
+            active_elapsed_ms=active_elapsed_ms, acquired_only=True,
+            # This is already reserved completion work, not an extra optional
+            # model probe. Reconcile durable children even when admission closes.
+            admit_new=policy.completion_possible,
+        )
+    except _CompletionVerificationAbort as exc:
+        return exc.terminal, str(exc)
+    return None, None
 
 
 def _record_planning_decision(
@@ -4735,6 +4790,24 @@ def _run_one_active(
             except RecoveryError as exc:
                 terminal_code, terminal_message = DevTerminal.TASK_FAILED, str(exc)
                 stop_remaining = True
+                break
+        if request.enable_probes:
+            try:
+                terminal_code, terminal_message = _run_original_recheck(
+                    journal=journal, gateway=gateway, latest_results=latest_tool_results,
+                    counters=counters, active_elapsed_ms=active_elapsed_ms,
+                    request=request, cost_ledger=cost_ledger,
+                )
+            except ExecutionDeadlineExceeded:
+                terminal_code = DevTerminal.LIMIT_REACHED
+                terminal_message = "active deadline exhausted during original recheck"
+            except GitExecutionUncertain:
+                raise
+            except Exception as exc:
+                terminal_code = DevTerminal.TASK_FAILED
+                terminal_message = f"original recheck failed: {type(exc).__name__}"
+            if terminal_code is not None:
+                stop_remaining = terminal_code == DevTerminal.TASK_FAILED
                 break
         if request.repair_recheck:
             try:

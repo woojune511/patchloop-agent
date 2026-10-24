@@ -12,9 +12,9 @@ from patchloop.dev import probe_call_capture, probe_invocation, reproduction
 from patchloop.util import sha256_bytes
 
 
-def current(root, source, implementation, **kwargs):
+def current(root, source, implementation, *, channel=probe_invocation.CHANNEL, **kwargs):
     return execute(root / "execution", source=source, implementation=implementation,
-                   channel=probe_invocation.CHANNEL, **kwargs)
+                   channel=channel, **kwargs)
 
 
 def test_native_arguments_bind_and_capture_the_two_calls_separately(tmp_path):
@@ -124,9 +124,10 @@ record_observation("F0010" not in call.stdout)
     assert review(before, changed)["evidence"]["status"] == "UNKNOWN"
 
 
-def test_reader_enforces_capture_health_even_if_report_incomplete_flag_is_false(tmp_path):
+@pytest.mark.parametrize("channel", probe_invocation.CAPTURE_CHANNELS)
+def test_reader_enforces_capture_health_even_if_report_incomplete_flag_is_false(tmp_path, channel):
     result = current(tmp_path, "observed_target()()\nrecord_observation(True)",
-                     "return None", parameters="")
+                     "return None", parameters="", channel=channel)
     call = result["call_observation"]["calls"][0]
     call["capture"]["status"] = "truncated"
     trace = {"calls": [call], "incomplete": False,
@@ -147,7 +148,7 @@ def test_new_observer_fits_existing_budget_and_old_bytes_remain_frozen():
     suffix = suffix.replace("ensure_ascii=True, allow_nan=False",
                             "ensure_ascii=False, allow_nan=False")
     assert ast.dump(ast.parse(prefix + probe_call_capture.CALLS + suffix)) == ast.dump(
-        ast.parse(probe_invocation.observer(probe_invocation.CHANNEL)))
+        ast.parse(probe_invocation.observer(probe_invocation.CAPTURE_CHANNEL)))
     binding = {"case_id": "sha256:" + "c" * 64, "definition": {
         "entrypoint": "x." + "a" * 198, "observation_channel": probe_invocation.CHANNEL}}
     assert len(reproduction.program("", binding)) - len(repr("")) <= 8000

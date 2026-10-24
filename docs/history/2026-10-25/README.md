@@ -3,3 +3,4 @@
 - [Observation contract and local validation](../2026-10-25-observation.md)
 - [Fresh observation pilot](../2026-10-25-observation-live.md)
 - [Cap-only fresh solve](../2026-10-25-budget-live.md)
+- [Stable invocation and early original feedback](../2026-10-25-original-feedback.md)

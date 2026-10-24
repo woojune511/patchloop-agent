@@ -126,6 +126,33 @@ def observer(legacy):
                      for line in (prefix + CALLS + suffix).splitlines() if line.strip()) + "\n"
 
 
+def stable_observer(legacy):
+    """Fresh v4 launch state; v3's observer and saved program bytes stay exact."""
+    setup = '''_pr_start = _pr_os.getcwd()
+_pr_sys.argv=["<patchloop-reproduction>"]
+_pr_work=[]
+def reproduction_workspace():
+ if not _pr_work:
+  p=_pr_os.path.join(_pr_start,"patchloop-case")
+  _pr_os.mkdir(p)
+  _pr_work.append(p)
+ return _pr_work[0]
+'''
+    source = observer(legacy).replace("_pr_start = _pr_os.getcwd()\n", setup, 1)
+    # A sandbox starts with a fresh writable cwd. Exclusive mkdir never reuses
+    # or deletes someone else's directory; repeat calls in this execution share
+    # only the directory just created here. Authored argv overrides remain real.
+    # Shorten fixed private symbols to retain the existing 8K observer allowance.
+    for old, new in (
+        ("_pr_observation", "_pr_obs"), ("_pr_remaining", "_pr_left"),
+        ("_pr_inspect", "_pr_i"), ("_pr_value", "_pr_v"),
+        ("_pr_rows", "_pr_r"), ("_pr_more", "_pr_m"),
+        ("_pr_Stream", "_pr_S"), ("_pr_json", "_pr_j"),
+    ):
+        source = source.replace(old, new)
+    return source
+
+
 def valid(call):
     capture = call.get("capture")
     error = call.get("exception")

@@ -8,7 +8,9 @@ from patchloop.util import canonical_json, sha256_json
 
 LEGACY_CHANNEL = "invoke-declared-call-v1"
 ARGV_CHANNEL = "invoke-declared-call-v2"
-CHANNEL = probe_call_capture.CHANNEL
+CAPTURE_CHANNEL = probe_call_capture.CHANNEL
+CHANNEL = "invoke-declared-call-v4"
+CAPTURE_CHANNELS = (CAPTURE_CHANNEL, CHANNEL)
 
 # Runs inside the probe sandbox with a separate host observer source budget.
 # In-process diagnostic feedback is not an attestation against a hostile program.
@@ -144,12 +146,14 @@ OBSERVER_V2 = OBSERVER.replace(
 
 
 def supports(channel):
-    return channel in (LEGACY_CHANNEL, ARGV_CHANNEL, CHANNEL)
+    return channel in (LEGACY_CHANNEL, ARGV_CHANNEL, *CAPTURE_CHANNELS)
 
 
 def observer(channel):
     """Select frozen legacy bytes or bounded call capture for fresh cases."""
     if channel == CHANNEL:
+        return probe_call_capture.stable_observer(OBSERVER_V2)
+    if channel == CAPTURE_CHANNEL:
         return probe_call_capture.observer(OBSERVER_V2)
     return {LEGACY_CHANNEL: OBSERVER, ARGV_CHANNEL: OBSERVER_V2}[channel]
 
@@ -163,9 +167,9 @@ def valid_call(call, entrypoint, *, channel=None):
     fields = {
         "entrypoint", "resolved_entrypoint", "arguments", "cwd", "sys_path", "start_cwd",
         "inputs", "environment", "outcome"}
-    if channel in (ARGV_CHANNEL, CHANNEL):
+    if channel in (ARGV_CHANNEL, *CAPTURE_CHANNELS):
         fields.add("argv")
-    if channel == CHANNEL:
+    if channel in CAPTURE_CHANNELS:
         fields.update(("call_id", "bound_parameters", "exception_policy", "capture",
                        "exception", "exit_code"))
     return (supports(channel) and isinstance(call, dict) and set(call) == fields
@@ -183,8 +187,9 @@ def valid_call(call, entrypoint, *, channel=None):
                 and type(p["entries"]) is int for p in call["inputs"])
         and isinstance(call["environment"], dict)
         and call["outcome"] in (("returned", "raised", "incomplete", "system_exit")
-                                if channel == CHANNEL else ("returned", "raised", "incomplete"))
-        and (channel != CHANNEL or probe_call_capture.valid(call)))
+                               if channel in CAPTURE_CHANNELS
+                               else ("returned", "raised", "incomplete"))
+        and (channel not in CAPTURE_CHANNELS or probe_call_capture.valid(call)))
 
 
 def environment(output):

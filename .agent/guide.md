@@ -74,8 +74,9 @@ Latest predecessor/reason stays visible; see [planning](planning-experiment.md).
 Check PASS alone certifies no requirement coverage. Label source inference.
 See [evidence recovery](evidence-recovery.md) for opt-in source restoration and
 fixed probe comparisons.
-Finish replays stale invocation-bound cases. Current mismatch/conflict blocks;
-missing/incomplete evidence stays unverified. Mapping remains model-authored.
+Replay acquired originals after edits, before inference; reuse receipts at finish.
+Known failure blocks; missing/incomplete evidence stays unverified. See linked
+contract for v4 identity and budget bounds.
 `original_obligation.py` retains the public-task obligation separately from cases.
 `--reproduction-acquisition bounded-v1` requires probes. Before edits it permits two
 actual original dispatches, two rejected requests, and six total investigation actions;

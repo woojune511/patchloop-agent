@@ -24,52 +24,34 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-[Request correction](history/2026-10-23-requests.md) binds public task/issue identity
-and credits correction only after changed arguments pass full preflight. The
-[size repair](history/2026-10-24-size.md) separates authored and host observer
-allowances. The [call adapter/capture](history/2026-10-24-capture.md) uses native
-Python arguments and per-call return/stdout/stderr/outcome receipts. Fresh cases
-use invocation v3 / tool contract v53; old v1/v2 programs retain exact bytes.
+The [cap-only pilot](history/2026-10-25-budget-live.md) submitted a patch after
+public regression PASS, but the original failing input still produced F0010 and
+independent acceptance was FAIL. Replay occurred inside the final finish request,
+leaving no subsequent model turn. Host tracing argv and random HOME/PYLINTHOME
+hashes also made the otherwise matching target calls incomparable. That allocation
+is closed; its results and historical submissions remain unchanged.
 
-The [observation-contract fix](history/2026-10-25-observation.md) separates small
-comparison values from diagnostic metadata, clarifies channel/outcome semantics
-and supplies bounded field differences for healthy v3 comparisons. Strict frozen
-equality and unverified results for incomplete observations remain unchanged.
-Its local evidence is 271 selected passes in split validation, including 35
-observation controls, plus Ruff and isolated mock evaluation.
+The [original-feedback implementation](history/2026-10-25-original-feedback.md)
+addresses both mechanisms. Fresh invocation v4 / tool contract v54 clears host
+launch arguments before authored setup and offers a fresh stable fixture workspace.
+Explicit CLI arguments and selected environment/input identities are still checked;
+HOME/cache variables must be set explicitly using the stable workspace when needed.
+Exact invocation v1/v2/v3 programs and observer bytes remain replayable.
 
-The [observation pilot](history/2026-10-25-observation-live.md) acquired a faithful
-failure/control but made no edit after 19 inspections. Three responses exhausted
-their output limits; the final two allowances were admission-reduced. It ended
-INCOMPLETE_RESPONSE at USD 0.788844900 of its USD 0.88 cap, without submission.
+After each accepted edit, acquired original cases replay before the next model
+input, using the same case/diff child IDs as the finish fallback. The completion
+view retains current observations and condition differences separately. Comparable
+failure blocks finish; missing or incomparable evidence remains unverified.
+Scheduling uses already reserved completion actions and reconciles started children
+even after admission closes. Tool forecasts include replay on each future repair;
+minimum monetary admission does not promise recovery from a semantic repair failure.
 
-The [cap-only pilot](history/2026-10-25-budget-live.md) changed the invocation cap
-to USD 1.20 with identical runtime/task/model/policies and a fresh run. All 30
-model calls received 25,000 output tokens; no response was incomplete. After 24
-inspections it made a source edit and a helper regression test, passed the public
-regression (1,232 passed, 69 skipped, 15 xfailed), and submitted. Cost was USD
-0.821097150 over 655.403 seconds. These are two single stochastic samples on an
-exposed task; cap-induced improvement and generalization remain unestablished.
-
-The submitted patch still produced F0010 on the original failing input. Separate
-frozen public checks returned failure-input FAIL / normal-control PASS; registered
-independent acceptance was FAIL and safety PASS. Terminal: EVALUATOR_FAIL. This
-is progress to submission, not a successful repair. The allocation is closed;
-unused budget does not authorize another solve or a default cap increase.
-
-The first unresolved repair question is whether the helper-based hypothesis
-changes the original caller's failing path before finish. Automatic replay ran
-inside the final finish request, with no later model turn to use its failure or
-changed-line feedback. Its launch-thread collector did not observe the newly
-added resolution branch; this is bounded line evidence, not full branch coverage.
-
-Completion also stayed unverified: normalized caller arguments and selected input
-content matched, but random HOME/PYLINTHOME hashes and the host line-tracing argv
-changed call identity. Keep repair correctness and this comparability defect
-separate; delivery was correctly labeled unverified_delivery, not cases_verified.
-No runtime fix or further paid run has been selected. The
-[operator oracle experiment](history/2026-10-24-oracle.md) remains separate;
-historical observations and submissions are never regraded.
+Local four-condition controls and short owner validation support these mechanics.
+They do not establish that a live model will adopt the feedback or repair the
+exposed public task. The next unresolved question is whether a fresh solve uses
+stable setup and the pre-submission result to correct its original-call hypothesis.
+No new paid allocation or Docker execution is included in this implementation.
+The [operator oracle experiment](history/2026-10-24-oracle.md) remains separate.
 
 ## Supporting evidence
 

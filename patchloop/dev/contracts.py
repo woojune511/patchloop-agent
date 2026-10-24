@@ -67,7 +67,7 @@ def dev_tool_surface_hash(
         })
     base = sha256_json(
         {
-            "schema_version": "dev-tool-surface-v53",
+            "schema_version": "dev-tool-surface-v54",
             "submission_assessment": "required-nonblank-current-diff-plan-review-v2",
             "selected_public_tests": "registered-pytest-tracked-targets-optional-v1",
             "segmented_context": segments.contract(),
@@ -133,10 +133,11 @@ def dev_tool_surface_hash(
             "public_check_failure_focus": "public-location-with-unknown-execution-boundary-v2",
             "public_failure_guidance": "diff-currency-and-actual-action-space-v1",
             "completion_guidance": "original-obligation-explicit-delivery-v8",
-            "completion_reproduction": "invocation-bound-cases-before-finish-v1",
+            "completion_reproduction": "acquired-original-after-edit-shared-finish-replay-v2",
+            "completion_reproduction_feedback": "bounded-current-observation-comparability-v1",
             "original_obligation": "task-bound-base-failure-and-current-replay-v1",
             "original_acquisition": "opt-in-two-attempt-six-action-protected-budget-v1",
-            "public_invocation": "python-call-stream-capture-v3-legacy-v1-v2-replay",
+            "public_invocation": "python-call-stream-capture-v4-legacy-v1-v2-v3-replay",
             "public_invocation_capture_bounds": [4096, 10000],
             "reproduction_comparison_feedback": "v3-healthy-frozen-json-field-differences-v1",
             "reproduction_comparison_feedback_bounds": [
