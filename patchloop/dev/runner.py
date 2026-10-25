@@ -234,6 +234,7 @@ class _ToolPolicy:
     original_failure_diagnostic: dict[str, Any] | None = None
     observation_correction: dict[str, Any] | None = None
     repair_path_diagnosis: dict[str, Any] | None = None
+    helper_correction: dict[str, Any] | None = None
 
     @property
     def feedback_recovery_reserve_calls(self) -> int:
@@ -612,7 +613,23 @@ def _completion_guidance(
     needs_mutation = policy.workflow_gate == "needs_mutation" or any(
         row["status"] == "FAIL" for row in snapshot.visible_check_status
     ) or (snapshot.completion_verification or {}).get("status") == "refuted"
-    if policy.repair_path_diagnosis and policy.repair_path_diagnosis.get("blocked"):
+    if policy.helper_correction and policy.helper_correction.get("blocked"):
+        correction = policy.helper_correction
+        stage = policy.workflow_gate
+        next_action = ({"tool": "run_probe", "question": correction["question"],
+                        "purpose": {"kind": "helper"}, "replay_action_id": None}
+                       if "run_probe" in allowed else None)
+        message = (
+            "The helper source was rejected before execution. Fix its named source error, "
+            "keep the exact question, and submit changed python_source with a new action_id, "
+            "or stop. Use only helper APIs and an ordinary scratch directory. This one "
+            "correction uses existing completion resources; unrelated searches, reads and "
+            "project edits cannot consume it. A returned execution is diagnostic evidence, "
+            "not original-call verification. Rejection or an unavailable execution does not "
+            "renew the allowance; an unresolved or unaffordable correction returns "
+            "verification incomplete."
+        )
+    elif policy.repair_path_diagnosis and policy.repair_path_diagnosis.get("blocked"):
         diagnosis = policy.repair_path_diagnosis
         stage = policy.workflow_gate
         next_action = ({"tool": "run_probe", "replay_action_id": diagnosis["replay_action_id"],
@@ -792,6 +809,11 @@ def _tool_policy(
     path_available = bool(path_blocked and path_diagnosis.get("status") == "needs_path_diagnosis")
     path_preparation = bool(path_available and path_diagnosis.get("preparation_available")
                             and not _diagnostic_spent)
+    helper_fix = verification.get("helper_correction", {})
+    helper_blocked = bool(
+        helper_fix.get("blocked") and not observation_blocked and not path_blocked
+    )
+    helper_available = bool(helper_blocked and helper_fix.get("status") == "pending")
     original_case_failed = verification.get("status") == "refuted"
     diagnostic = verification.get("original_failure_diagnostic")
     diagnostic_available = bool(
@@ -904,6 +926,7 @@ def _tool_policy(
         path_preparation_available=path_preparation,
         path_request_correction_available=(path_available
                                            and not path_diagnosis.get("rejected_requests")),
+        helper_correction_pending=helper_available,
     )
     budget = completion_budget(completion_state)
     completion_possible = (
@@ -1119,6 +1142,19 @@ def _tool_policy(
                 inspection_model_slack = inspection_tool_slack = 1
                 inspection_floor = after_preparation.minimum
                 inspection_tool_floor = after_preparation.minimum_tool_actions
+    if helper_blocked:
+        workflow_gate = "needs_helper_correction"
+        allowed = {"stop_task"}
+        completion_possible &= (
+            helper_available and getattr(gateway, "probe_sandbox", None) is not None
+        )
+        mutation_allowed = mutation_protected_completion_possible = inspection_allowed = False
+        max_parallel_reads = exploration_capacity = 0
+        available_check_ids = ()
+        if completion_possible:
+            allowed.add("run_probe")
+            probe_floor = budget.minimum - 1
+            probe_tool_floor = budget.minimum_tool_actions - 1
     minimum_cost_successors = None
     if (completion_cost_policy in {COMPLETION_MINIMUM_POLICY, COMPLETION_RECOVERY_POLICY}
             and funded_calls is not None):
@@ -1155,7 +1191,7 @@ def _tool_policy(
     if diagnostic_relaxes_inspection and inspection_allowed:
         inspection_model_slack = min(inspection_model_slack, 1)
         inspection_tool_slack = min(inspection_tool_slack, 1)
-    if (observation_blocked or path_blocked) and "run_probe" not in allowed:
+    if (observation_blocked or path_blocked or helper_blocked) and "run_probe" not in allowed:
         workflow_gate = "verification_incomplete"
         completion_possible = protected_completion_possible = False
     exploration_state = (
@@ -1249,6 +1285,9 @@ def _tool_policy(
         repair_path_diagnosis=({**path_diagnosis, "offered_tools": sorted(allowed)}
                                if path_diagnosis.get("status") not in {None, "not_needed"}
                                and not observation_blocked else None),
+        helper_correction=({**helper_fix, "offered_tools": sorted(allowed),
+                            "uses_minimum_completion_reserve": "run_probe" in allowed}
+                           if helper_blocked else None),
     )
     if funded_calls is not None and minimum_cost_successors is not None:
         future_calls = max(minimum_cost_successors[tool] for tool in allowed)
@@ -1367,6 +1406,8 @@ def _repair_inspection_payload(policy: _ToolPolicy) -> dict[str, Any]:
         diagnostic["observation_correction"] = policy.observation_correction
     if policy.repair_path_diagnosis is not None:
         diagnostic["repair_path_diagnosis"] = policy.repair_path_diagnosis
+    if policy.helper_correction is not None:
+        diagnostic["helper_correction"] = policy.helper_correction
     if policy.repair_inspection_policy == "protected-v1":
         return diagnostic
     return {**diagnostic, "repair_inspection": {
@@ -5108,7 +5149,12 @@ def _run_one_active(
             )
             if policy.workflow_gate == "verification_incomplete":
                 terminal_code = DevTerminal.VERIFICATION_INCOMPLETE
-                if policy.repair_path_diagnosis and policy.repair_path_diagnosis.get("blocked"):
+                if policy.helper_correction and policy.helper_correction.get("blocked"):
+                    terminal_message = (
+                        "helper program correction is incomplete or cannot fit completion resources"
+                    )
+                    terminal_completion_horizon["helper_correction"] = policy.helper_correction
+                elif policy.repair_path_diagnosis and policy.repair_path_diagnosis.get("blocked"):
                     terminal_message = (
                         "call-path diagnosis is incomplete or cannot fit completion resources"
                     )
@@ -5936,12 +5982,18 @@ def _run_one_active(
                 }
                 terminal_code = DevTerminal.VERIFICATION_INCOMPLETE
             else:
-                diagnosis = gateway.completion_verification(diff_hash=last_diff).get(
-                    "repair_path", {})
+                verification = gateway.completion_verification(diff_hash=last_diff)
+                diagnosis = verification.get("repair_path", {})
                 if diagnosis.get("blocked"):
                     terminal_completion_horizon = {
                         **(terminal_completion_horizon or {}), "stop_cause": terminal_code.value,
                         "repair_path_diagnosis": diagnosis,
+                    }
+                    terminal_code = DevTerminal.VERIFICATION_INCOMPLETE
+                elif verification.get("helper_correction", {}).get("blocked"):
+                    terminal_completion_horizon = {
+                        **(terminal_completion_horizon or {}), "stop_cause": terminal_code.value,
+                        "helper_correction": verification["helper_correction"],
                     }
                     terminal_code = DevTerminal.VERIFICATION_INCOMPLETE
         terminal = _terminal(

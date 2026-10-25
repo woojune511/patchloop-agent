@@ -22,6 +22,8 @@ from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
 from patchloop.dev import (
     behavior_cases,
     evidence_focus,
+    helper_program,
+    helper_recovery,
     history_search,
     observation_correction,
     original_obligation,
@@ -467,6 +469,7 @@ def dev_tool_schemas(
                 "Compare actual input/output and relevant "
                 "line-entry ranges; missing observations are not proof of failure. "
                 "Results are diagnostics, not required visible-check verdicts. "
+                + helper_program.DESCRIPTION + " "
                 + probe_replay.DESCRIPTION + " " + reproduction.DESCRIPTION
                 + " When repair_path needs diagnosis, replay its original action with call_path. "
                 "Select the failing call, a focus function on its real path, and watched changed "
@@ -2632,13 +2635,26 @@ class DevToolGateway:
         }}
         path_request = call.arguments.get("call_path") if call.name == "run_probe" else None
         path_link = copy.deepcopy(pending.get("repair_path_link")) if pending is not None else None
+        helper_link = copy.deepcopy(pending.get("helper_recovery_link")) if pending else None
+        if pending and pending.get("helper_recovery_error"):
+            recorded_error = pending["helper_recovery_error"]
+            preflight_error = ContractError(recorded_error["message"],
+                                            details=copy.deepcopy(recorded_error["details"]))
         if pending is None:
-            path_state = self.completion_verification(diff_hash=baseline)["repair_path"]
+            verification = self.completion_verification(diff_hash=baseline)
+            path_state = verification["repair_path"]
             if path_state.get("blocked") and call.name != "stop_task":
                 # Record rejected requests too, without treating them as executions.
                 path_link = repair_path.link(path_state)
             try:
                 path_link = repair_path.validate(path_state, call.name, call.arguments)
+            except ContractError as exc:
+                preflight_error = exc
+            helper_state = verification["helper_correction"]
+            if helper_state.get("blocked") and call.name != "stop_task":
+                helper_link = helper_recovery.link(helper_state)
+            try:
+                helper_recovery.validate(helper_state, call.name, call.arguments)
             except ContractError as exc:
                 preflight_error = exc
         replay_probe = (
@@ -2735,6 +2751,10 @@ class DevToolGateway:
                     reproduction_binding=reproduction_binding,
                     call_path=path_request,
                 )
+                if (call.arguments.get("purpose") == {"kind": "helper"}
+                        and not replay_probe and not call.arguments.get("case_id")
+                        and (pending is None or "helper_program_error" in pending)):
+                    helper_program.validate(execution_arguments["python_source"])
             except (PatchLoopError, ValidationError, ValueError) as exc:
                 preflight_error = exc
         if call.name == "run_probe" and "purpose" in call.arguments:
@@ -2780,6 +2800,16 @@ class DevToolGateway:
                     "baseline_diff_hash": baseline,
                     "baseline_changed_files": baseline_summary.changed_files,
                     **({"repair_path_link": path_link} if path_link is not None else {}),
+                    **({"helper_recovery_link": helper_link} if helper_link is not None else {}),
+                    **({"helper_recovery_error": {
+                        "message": str(preflight_error),
+                        "details": copy.deepcopy(preflight_error.details),
+                    }} if helper_link is not None and isinstance(preflight_error, ContractError)
+                       else {}),
+                    **({"helper_program_error": copy.deepcopy(
+                        preflight_error.details["helper_program_error"])}
+                       if isinstance(preflight_error, ContractError)
+                       and "helper_program_error" in preflight_error.details else {}),
                     **({"probe_request": {
                         "policy": original_obligation.PROBE_STAGES,
                         "status": "rejected" if preflight_error is not None else "accepted",
@@ -2977,6 +3007,8 @@ class DevToolGateway:
                     )
             if request_validation is not None:
                 output["request_validation"] = request_validation
+            if helper_link is not None:
+                output["helper_recovery_link"] = copy.deepcopy(helper_link)
             if path_link is not None:
                 output["repair_path_link"] = copy.deepcopy(path_link)
                 if call.name == "replace_text":
@@ -2999,6 +3031,8 @@ class DevToolGateway:
             failure_output = (
                 copy.deepcopy(exc.details) if isinstance(exc, PatchLoopError) else {}
             )
+            if helper_link is not None:
+                failure_output["helper_recovery_link"] = copy.deepcopy(helper_link)
             if call.name == "run_probe":
                 if request_validation is not None:
                     failure_output["request_validation"] = request_validation
@@ -4017,6 +4051,7 @@ class DevToolGateway:
         return {
             **{key: value for key, value in review.items() if key != "pending_cases"},
             "repair_path": repair_path.review(self.journal.events(), diff_hash, review),
+            "helper_correction": helper_recovery.review(self.journal.events(), diff_hash),
             "original_obligation": original_obligation.review(
                 self.journal.events(), self.public_task, review,
                 acquisition=self.reproduction_acquisition,

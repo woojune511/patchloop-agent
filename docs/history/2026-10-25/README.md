@@ -16,3 +16,4 @@
 - [Original-call diagnosis, repair linkage and selected-test comparison](../2026-10-25-callpath-repair.md)
 - [Call-path pilot: original reproduced, no first repair](../2026-10-25-callpath-live.md)
 - [Helper failure and exploration closure before the first mutation](../2026-10-25-helper-stop-analysis.md)
+- [Helper API preflight and bounded same-question correction](../2026-10-25-helper-correction.md)

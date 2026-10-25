@@ -80,6 +80,12 @@ comparisons reserve two physical child executions plus completion capacity.
 
 ## Focused local verification
 
+[Helper program correction](helper-correction.md) reserves one model/probe action
+for the same question after a confirmed pre-dispatch source error before the first
+mutation. Only that corrected helper or stop is offered. It uses minimum successor
+funding without increasing caps or borrowing the protocol correction allowance.
+Returned diagnostics do not establish original-call or task correctness.
+
 [Observation correction](observation-judgment.md) adds one model/probe action before
 repair and one future corrected-case replay. It uses minimum successor funding,
 separate from the protocol correction allowance; unresolved or unfunded conflicts

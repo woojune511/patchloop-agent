@@ -37,6 +37,7 @@ class CompletionState:
     path_diagnosis_pending: bool = False
     path_preparation_available: bool = False
     path_request_correction_available: bool = False
+    helper_correction_pending: bool = False
 
 
 @dataclass(frozen=True)
@@ -124,7 +125,8 @@ def completion_budget(state: CompletionState) -> CompletionBudget:
                 + first_replays
                 + recovery + state.reproduction_case_count,
             )
-    diagnosis = int(state.observation_correction_pending) + int(state.path_diagnosis_pending)
+    diagnosis = (int(state.observation_correction_pending) + int(state.path_diagnosis_pending)
+                 + int(state.helper_correction_pending))
     preparation = int(state.path_diagnosis_pending and state.path_preparation_available)
     request_correction = int(
         state.path_diagnosis_pending and state.path_request_correction_available
@@ -169,6 +171,8 @@ def minimum_successor_calls(state: CompletionState, tool: str) -> int:
         return completion_budget(replace(state, observation_correction_pending=False)).minimum
     if tool == "run_probe" and state.path_diagnosis_pending:
         return completion_budget(replace(state, path_diagnosis_pending=False)).minimum
+    if tool == "run_probe" and state.helper_correction_pending:
+        return completion_budget(replace(state, helper_correction_pending=False)).minimum
     if tool in {"read_file", "search_files"}:
         return completion_budget(replace(state, anchor_available=True)).minimum
     if tool in {"search_history", "run_probe", "run_tests"}:

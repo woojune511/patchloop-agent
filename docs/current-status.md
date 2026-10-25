@@ -24,38 +24,30 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [new live pilot](history/2026-10-25-callpath-live.md) acquired the original
-F0010 failure but made no mutation. It spent USD1.050511650 in 650.323 seconds:
-31 model calls, 27 source inspections and two probes. The helper probe failed with
-NameError; that error and the original failure reached subsequent model inputs.
-After exploration closed, the ordinary response exhausted 40,000 output tokens
-and its single correction exhausted 25,000. Terminal: INCOMPLETE_RESPONSE.
-No submission, required checks or independent acceptance occurred. Allocation closed.
+The [helper correction](../.agent/helper-correction.md) now makes mode-specific APIs
+explicit and catches syntax/unbound original-only names before a fresh helper runs.
+Before the first accepted mutation, one same-question corrected source request can
+use existing minimum completion resources. Unrelated inspection cannot spend that
+opportunity; rejection or unaffordable correction returns verification incomplete.
+Returned execution remains diagnostic evidence, not original-call verification.
+The implementation deliberately does not infer pre-target failure from arbitrary
+runtime exceptions. Saved programs, exact action recovery and original-case replay
+keep their existing identities. No resource cap is increased.
 
-The [call-path mechanism](../.agent/repair-path.md) activates after a comparable
-failed mutation with unobserved changed lines. This run never reached that trigger:
-diagnostic request, execution, evidence-linked revision and paired selected tests
-were all NOT_EXERCISED. It neither validates nor rejects their repair benefit.
-The [implementation](history/2026-10-25-callpath-repair.md) retains its local evidence:
-54 core tests in 64.191 seconds and 318 quick tests in 67.612 seconds, including
-isolated mock evaluation. The selected task's pytest wrapper is also outside the
-new direct-pytest comparison contract; no comparison was attempted in this pilot.
+The [implementation record](history/2026-10-25-helper-correction.md) records 64 core
+tests in 23.548 seconds and 346 quick tests in 66.949 seconds, including isolated
+mock evaluation; Ruff passes. The saved failed source's line-8 unavailable API is
+rejected without executing the target. Actual model uptake and F0010 repair benefit remain
+unmeasured. The next evidence question is whether this bounded correction produces
+a usable diagnostic before the first repair under the same live limits.
 
-The [offline stop analysis](history/2026-10-25-helper-stop-analysis.md) found the
-NameError was visible in calls 26-31 and explicitly acknowledged. Calls 26-29 still
-offered run_probe, but the model spent those four opportunities on source inspections
-without new coverage. At call 30, physical model slots after protocol reservation
-equaled the protected completion budget (10); monetary minimum-successor capacity
-still permitted a probe. Both diagnostic exceptions require a prior mutation, so
-neither protected correction of this pre-mutation helper failure. The final 25K
-protocol correction retained only edit/stop and did not restore diagnostic capacity.
-
-The next question is how to make helper APIs clear and connect a confirmed pre-target
-program failure to a bounded corrected diagnostic before the first repair. Error
-delivery alone was insufficient; the model's internal cause and counterfactual repair
-gain remain unknown. Keep original-failure gating, [host judgment](../.agent/observation-judgment.md)
-and [completion reserves](../.agent/completion-resources.md). No runtime change,
-additional paid solve or cap increase follows from this analysis.
+The [previous live pilot](history/2026-10-25-callpath-live.md) reproduced F0010 but
+made no mutation before exhausting 40K normal and 25K correction output; allocation
+closed. The [audit](history/2026-10-25-helper-stop-analysis.md) found delivered error
+feedback and four available probe opportunities spent on source inspection. Thus
+the post-mutation [call-path mechanism](../.agent/repair-path.md) remains locally
+tested but NOT_EXERCISED by that live model. New runtime preparation and exact live
+authorization remain separate from this implementation's local validation.
 
 ## Supporting evidence
 
