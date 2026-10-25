@@ -36,15 +36,22 @@ Request-field errors retain field-specific correction; actual incomplete observa
 remains unverified. Run-global budgets and original verification are unchanged.
 Local mechanism controls and follow-up tests pass; final quick is 369 PASS in 81.14
 seconds, including isolated mock acceptance, with Ruff PASS. See the stage record
-for per-phase focused results and corrections. Live effectiveness is NOT_RUN.
+for per-phase focused results and corrections. Live diagnosis effectiveness remains
+unverified because the latest pilot never entered the changed stage.
 
-The [last live pilot](history/2026-10-26-diagnosis-mode-live.md) left F0010 unchanged
-after one edit and produced no diagnostic action in either normal or correction
-output. Its $0.999174600 allocation is closed. The [analysis](history/2026-10-26-diagnosis-mode-analysis.md)
-motivates reducing the remaining action-selection burden; it does not prove why
-generation stalled. The next unresolved question is whether the real model selects
-an informative enclosing caller, executes diagnosis and uses it to repair F0010.
-No live continuation is authorized by the local implementation request.
+The [latest live pilot](history/2026-10-26-diagnosis-stage-live.md) acquired the
+original F0010 on call 1, then made 27 read/search actions and one helper probe.
+No mutation was returned: calls 30/31 exhausted 30,704/25,000 output tokens with no
+action and ended INCOMPLETE_RESPONSE. The $1.078465800 allocation is closed.
+Host watch construction, compact diagnosis context and typed correction are
+NOT_EXERCISED, not live-negative results for those mechanisms.
+
+The active question is now the upstream transition from inspection to first repair:
+was the repair hypothesis unresolved, or was constructing the mutation too costly?
+Inspect saved public evidence and the mutation contract before another intervention
+or paid comparison. The [earlier diagnosis analysis](history/2026-10-26-diagnosis-mode-analysis.md)
+remains a hypothesis about action generation, not an established cause. No additional
+live run or continuation is authorized by these records.
 
 ## Supporting evidence
 
@@ -75,7 +82,6 @@ submission, independent task acceptance and safety are separate. Mock safety is 
 
 Do not start Docker Desktop or pull/build evaluator images automatically. Preserve
 exact recovery identities, zero SDK retries and stop-all on count/transport/billing
-uncertainty. The latest live run acquired the original failure and made one
-ineffective mutation; it returned no diagnostic action, and checks, finish and
-independent evaluation were NOT_RUN.
+uncertainty. The latest live run acquired the original failure but made no mutation;
+diagnosis was NOT_EXERCISED, and checks, finish and independent evaluation were NOT_RUN.
 Linux CI and general improvement remain unverified.
