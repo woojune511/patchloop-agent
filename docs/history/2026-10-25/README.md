@@ -15,3 +15,4 @@
 - [Call-path diagnosis: changed branches miss the failing input](../2026-10-25-judgment-callpath-analysis.md)
 - [Original-call diagnosis, repair linkage and selected-test comparison](../2026-10-25-callpath-repair.md)
 - [Call-path pilot: original reproduced, no first repair](../2026-10-25-callpath-live.md)
+- [Helper failure and exploration closure before the first mutation](../2026-10-25-helper-stop-analysis.md)

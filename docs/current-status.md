@@ -41,14 +41,21 @@ The [implementation](history/2026-10-25-callpath-repair.md) retains its local ev
 isolated mock evaluation. The selected task's pytest wrapper is also outside the
 new direct-pytest comparison contract; no comparison was attempted in this pilot.
 
-The active bottleneck is reaching an evidence-based first repair under the existing
-limits. The next question is whether a valid bounded diagnostic before that first
-repair can replace unproductive source exploration. After that, actual uptake of
-the conditional path diagnosis remains unresolved. The earlier [call-path audit](history/2026-10-25-judgment-callpath-analysis.md)
-still explains the previous four ineffective edits; this fresh trajectory failed
-at an earlier stage. Keep original-failure gating, [host judgment](../.agent/observation-judgment.md)
-and [completion reserves](../.agent/completion-resources.md), without inferring
-repair gain or increasing limits from unused budget.
+The [offline stop analysis](history/2026-10-25-helper-stop-analysis.md) found the
+NameError was visible in calls 26-31 and explicitly acknowledged. Calls 26-29 still
+offered run_probe, but the model spent those four opportunities on source inspections
+without new coverage. At call 30, physical model slots after protocol reservation
+equaled the protected completion budget (10); monetary minimum-successor capacity
+still permitted a probe. Both diagnostic exceptions require a prior mutation, so
+neither protected correction of this pre-mutation helper failure. The final 25K
+protocol correction retained only edit/stop and did not restore diagnostic capacity.
+
+The next question is how to make helper APIs clear and connect a confirmed pre-target
+program failure to a bounded corrected diagnostic before the first repair. Error
+delivery alone was insufficient; the model's internal cause and counterfactual repair
+gain remain unknown. Keep original-failure gating, [host judgment](../.agent/observation-judgment.md)
+and [completion reserves](../.agent/completion-resources.md). No runtime change,
+additional paid solve or cap increase follows from this analysis.
 
 ## Supporting evidence
 
