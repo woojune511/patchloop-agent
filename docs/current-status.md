@@ -31,23 +31,26 @@ request for recovery. Preparation availability now agrees with offered tools in
 both model-facing path states. Optional preparation does not inflate minimum
 completion; a required repair-anchor read is reserved once.
 
-Core local validation: 79 PASS in 42.671 seconds command wall time, Ruff PASS.
-Both saved rejected requests pass static admission with their function/field
-choices unchanged. A scripted tiny diagnosis, repair, original recheck, submission
-and isolated mock evaluation passes. Quick integration: 349 PASS in 79.522 seconds,
-including isolated mock evaluation. The record separates local mechanics from
-model effectiveness.
+Local evidence remains 79 focused PASS in 42.671 seconds, Ruff PASS, and 349 quick
+PASS in 79.522 seconds including isolated mock evaluation. Saved requests pass
+static construction, and a scripted tiny repair reaches isolated mock acceptance.
 
-The [latest live pilot](history/2026-10-25-helper-correction-live.md) remains
-VERIFICATION_INCOMPLETE: one mutation left F0010 unchanged, and two diagnostic
-requests were rejected before execution. It spent $0.979441500 of $1.20; that
-allocation is closed. It requested no helper, so [helper correction](../.agent/helper-correction.md)
-was NOT_EXERCISED. The new host construction has not had a live model pilot.
+The [new live pilot](history/2026-10-26-diagnosis-request-live.md) ended
+VERIFICATION_INCOMPLETE: one mutation left the original F0010 unchanged. The model
+selected symbolic functions/fields but populated question and purpose, which this
+mode requires to be null. Admission rejected the request before host construction;
+the error named replay/source instead of the offending fields. No path diagnostic
+executed. Both delivered path-preparation projections matched offered tools.
+It spent $1.059124500 of $1.20; that allocation is closed. Checks, submission and
+independent evaluation were NOT_RUN; helper correction was NOT_EXERCISED.
 
-The remaining question is whether the model selects an informative caller focus,
-uses the diagnostic output to revise its hypothesis, and repairs the original
-F0010 behavior within the same limits. Correct request construction does not prove
-those outcomes. No automatic continuation is authorized.
+The active question is how to make the pending-diagnosis request mode explicit and
+its rejection actionable: the delivered prose requires null fields, but the common
+schema still permits incompatible values. Two responses exhausted their funded
+output ceilings; the separate 25K correction returned the rejected request. The
+terminal cost reserve funded three of four minimum completion calls. This does not
+establish that a larger cap or valid admission would repair F0010. No automatic
+continuation is authorized.
 
 ## Supporting evidence
 
