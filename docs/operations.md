@@ -205,10 +205,10 @@ For other context, planning, cost or repair policies, read the relevant internal
 contract and CLI compatibility checks first. Opt-in `--completion-cost-policy
 completion-minimum-v1` requires segmented-v1: retain recovery slots and reserve
 successful minimum check/finish successors before dispatch. `completion-recovery-v1`
-reserves one model slot and one run-wide correction at 60K input + requested output.
-Its first durable correction consumes the credit; restart/valid actions cannot renew
-it. Neither policy guarantees useful responses or repair; tool failures/unknown billing
-are outside correction funding. Defaults remain unchanged. See the [guide](../.agent/guide.md).
+reserves one model slot and one correction at 60K input + output allowance. Set
+`--max-correction-output-tokens 25000` independently of `--max-output-tokens 40000`;
+omitting it preserves the coupled ceiling. The first correction consumes it;
+restart cannot renew it. No repair guarantee; see the [contract](../.agent/completion-resources.md).
 Reusable probe cases have a separate
 [case contract](../.agent/probe-cases.md). Optional `--probe-recheck saved-program-v1`
 requires enabled probes and `cases-v1`; it reruns the last saved program after edits

@@ -26,6 +26,10 @@ class CompletionState:
     reproduction_case_count: int = 0
     pending_reproduction_count: int = 0
     early_reproduction_count: int = 0
+    # The caller confirms healthy current evidence for every acquired original
+    # and that post-edit early execution is available. Missing/unknown evidence
+    # must retain the conservative finish-fallback forecast.
+    early_replay_reusable: bool = False
 
 
 @dataclass(frozen=True)
@@ -86,15 +90,23 @@ def completion_budget(state: CompletionState) -> CompletionBudget:
                        + (state.reproduction_case_count if future_failures
                           else reproduction_actions)
                        + future_failures * state.early_reproduction_count)
-    # A failed final replay consumes the finish request too. Protect one read,
-    # repair, all checks, another replay and finish when an edit remains. Compare
-    # against the check-failure path rather than reserving impossible extra edits.
+    # A deferred final replay consumes the finish request too. Healthy acquired
+    # originals instead run after the edit; their same-diff result is reused at
+    # finish, so that failure cannot consume an extra finish action. Keep the
+    # fallback for mixed, pending/deferred or otherwise unverified coverage.
+    early_failure = (
+        state.early_replay_reusable
+        and 0 < state.early_reproduction_count == state.reproduction_case_count
+        and state.pending_reproduction_count == 0
+    )
+    # Protect read, repair, checks and replay recovery when an edit remains.
+    # Compare against check failure instead of reserving impossible extra edits.
     spare_edits = state.remaining_mutations - int(state.requires_mutation)
     if spare_edits > 0 and state.reproduction_case_count:
         prior_failures = min(future_failures, spare_edits - 1)
         first_replays = state.reproduction_case_count if prior_failures else reproduction_actions
         if first_replays:
-            recovery = state.check_count + 3
+            recovery = state.check_count + 3 - int(early_failure)
             replay_mutation_retry = 2 * int(state.mutation_retry_available)
             protected = max(protected, minimum + current_read + replay_mutation_retry + recovery
                             + prior_failures * (state.check_count + 2

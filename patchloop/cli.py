@@ -93,6 +93,12 @@ def dev(
             help="Desired output cap per call, including reasoning; cost admission may lower it.",
         ),
     ] = DEFAULT_OUTPUT_CEILING,
+    max_correction_output_tokens: Annotated[
+        int | None, typer.Option(
+            "--max-correction-output-tokens", min=MINIMUM_OUTPUT_CEILING, max=MAX_OUTPUT_CEILING,
+            help="Independent protocol-correction cap; requires completion-recovery-v1.",
+        ),
+    ] = None,
     env_file: Annotated[
         Path | None,
         typer.Option("--env-file", exists=True, dir_okay=False),
@@ -195,6 +201,7 @@ def dev(
                 model=model,
                 reasoning_effort=reasoning_effort,
                 max_output_tokens=max_output_tokens,
+                max_correction_output_tokens=max_correction_output_tokens,
                 env_file=env_file,
                 max_cost_usd=_parse_cost(max_cost_usd),
                 repeat=repeat,

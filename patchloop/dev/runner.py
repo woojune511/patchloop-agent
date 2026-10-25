@@ -87,6 +87,7 @@ from patchloop.dev.cost import (
     DevCostLedger,
     ModelPricing,
     completion_cost_contract,
+    correction_output_ceiling,
     pricing_for_model,
 )
 from patchloop.dev.evaluation_completion import (
@@ -229,6 +230,7 @@ class _ToolPolicy:
     optional_mutation_completion_tool_actions: int = 0
     optional_mutation_protected_tool_actions: int = 0
     inspection_reserve_tool_actions: int = 0
+    original_failure_diagnostic: dict[str, Any] | None = None
 
     @property
     def feedback_recovery_reserve_calls(self) -> int:
@@ -282,6 +284,7 @@ def _model_hash(request: RunRequest, pricing: ModelPricing | None) -> str:
                and request.evaluation_reserve_seconds else {}),
             **({"completion_cost_contract": completion_cost_contract(
                 request.completion_cost_policy,
+                max_correction_output_tokens=request.max_correction_output_tokens,
             )}
                if request.completion_cost_policy != DEFAULT_COMPLETION_COST_POLICY else {}),
             **({"repair_inspection_policy": request.repair_inspection_policy}
@@ -725,8 +728,10 @@ def _tool_policy(
     cost_ledger: DevCostLedger | None = None,
     completion_cost_policy: str = DEFAULT_COMPLETION_COST_POLICY,
     desired_output_ceiling: int = DEFAULT_OUTPUT_CEILING,
+    max_correction_output_tokens: int | None = None,
     _preview_inspection: bool = True,
     _cost_call_limit: int | None = None,
+    _diagnostic_spent: bool = False,
 ) -> _ToolPolicy:
     if snapshot is None and isinstance(gateway, DevToolGateway):
         snapshot = gateway.state_snapshot()
@@ -747,6 +752,11 @@ def _tool_policy(
     workflow_gate = _workflow_gate(summary, ready_to_submit=ready_to_submit)
     verification = (snapshot.completion_verification or {}) if snapshot is not None else {}
     original_case_failed = verification.get("status") == "refuted"
+    diagnostic = verification.get("original_failure_diagnostic")
+    diagnostic_available = bool(
+        original_case_failed and diagnostic and diagnostic["status"] == "available"
+        and diagnostic["candidate_diff_hash"] == summary.patch_hash and not _diagnostic_spent
+    )
     if original_case_failed:
         workflow_gate = "needs_mutation"
         ready_to_submit = False
@@ -775,6 +785,9 @@ def _tool_policy(
     correction_cost = correction_reserve = correction_current_premium = 0
     correction_available = correction_pending = False
     correction_model_reserve = 0
+    correction_ceiling = correction_output_ceiling(
+        desired_output_ceiling, max_correction_output_tokens,
+    )
     if (completion_cost_policy in {
             COMPLETION_RESERVE_POLICY, COMPLETION_MINIMUM_POLICY, COMPLETION_RECOVERY_POLICY,
         }
@@ -782,7 +795,7 @@ def _tool_policy(
         cost_unit = cost_ledger.future_call_reservation_nanos()
         if completion_cost_policy == COMPLETION_RECOVERY_POLICY:
             correction_cost = cost_ledger.future_call_reservation_nanos(
-                output_ceiling=desired_output_ceiling,
+                output_ceiling=correction_ceiling,
             )
             correction_available = (
                 limits.max_protocol_recoveries > 0 and counters.protocol_corrections_total == 0
@@ -840,6 +853,10 @@ def _tool_policy(
         reproduction_case_count=verification.get("replayable_case_count", 0),
         pending_reproduction_count=verification.get("pending_count", 0),
         early_reproduction_count=len(verification.get("baseline_failure_case_ids", [])),
+        early_replay_reusable=bool(
+            verification.get("early_replay_reusable")
+            and getattr(gateway, "probe_sandbox", None) is not None
+        ),
     )
     budget = completion_budget(completion_state)
     completion_possible = (
@@ -886,6 +903,16 @@ def _tool_policy(
         released_check_recovery = inspection_budget.check_recovery_reserve
         inspection_floor -= released_check_recovery
         inspection_tool_floor -= inspection_budget.check_recovery_tool_actions
+    # A comparable original failure on this candidate earns one diagnostic turn.
+    # Spend speculative recovery only, retaining the real minimum repair/check/
+    # replay/finish path. The journal-derived credit is independent of restarts.
+    diagnostic_relaxes_inspection = diagnostic_available and (
+        remaining_model_calls - 1 < inspection_floor
+        or remaining_tool_actions - 1 < inspection_tool_floor
+    )
+    if diagnostic_relaxes_inspection:
+        inspection_floor = inspection_budget.minimum
+        inspection_tool_floor = inspection_budget.minimum_tool_actions
     inspection_tool_slack = remaining_tool_actions - inspection_tool_floor
     inspection_model_slack = remaining_model_calls - inspection_floor
     inspection_allowed = (
@@ -900,7 +927,7 @@ def _tool_policy(
     )
     # If only the best path is affordable, the one required anchor read is still
     # completion work. Extra parallel requests cannot spend unreserved headroom.
-    if required_inspection and not protected_completion_possible:
+    if (required_inspection and not protected_completion_possible) or diagnostic_relaxes_inspection:
         max_parallel_reads = min(max_parallel_reads, 1)
 
     # A discretionary edit can invalidate every current PASS. Its successful
@@ -931,7 +958,10 @@ def _tool_policy(
     obligation = verification.get("original_obligation", {})
     probe_budget = (completion_budget(replace(
         completion_state, reproduction_case_count=completion_state.reproduction_case_count + 1,
-    )) if obligation.get("stage") == "pending" else budget)
+    )) if obligation.get("stage") == "pending" or diagnostic_available else budget)
+    probe_floor = probe_budget.minimum if diagnostic_available else probe_budget.protected
+    probe_tool_floor = (probe_budget.minimum_tool_actions if diagnostic_available
+                        else probe_budget.protected_tool_actions)
     available_check_ids = unrun_checks
     check_successor_reserve = max(0, (
         budget.protected if protected_completion_possible else budget.minimum
@@ -980,8 +1010,8 @@ def _tool_policy(
             allowed.add("run_check")
         if (
             getattr(gateway, "probe_sandbox", None) is not None
-            and remaining_model_calls - 1 >= probe_budget.protected
-            and remaining_tool_actions - 1 >= probe_budget.protected_tool_actions
+            and remaining_model_calls - 1 >= probe_floor
+            and remaining_tool_actions - 1 >= probe_tool_floor
         ):
             allowed.add("run_probe")
         if (
@@ -996,6 +1026,8 @@ def _tool_policy(
         if inspection_allowed
         else 0
     )
+    if diagnostic_relaxes_inspection:
+        exploration_capacity = min(exploration_capacity, 1)
     if obligation.get("stage") == "pending":
         workflow_gate = "needs_original_reproduction"
         allowed.intersection_update({"stop_task", "read_file", "search_files", "run_probe",
@@ -1038,6 +1070,9 @@ def _tool_policy(
                 funded_calls - minimum_cost_successors["read_file"],
             )
             exploration_capacity = min(exploration_capacity, inspection_model_slack)
+    if diagnostic_relaxes_inspection and inspection_allowed:
+        inspection_model_slack = min(inspection_model_slack, 1)
+        inspection_tool_slack = min(inspection_tool_slack, 1)
     exploration_state = (
         "last_opportunity"
         if inspection_allowed and exploration_capacity == 1
@@ -1107,6 +1142,21 @@ def _tool_policy(
         optional_mutation_completion_tool_actions=mutation_budget.minimum_tool_actions,
         optional_mutation_protected_tool_actions=mutation_budget.protected_tool_actions,
         inspection_reserve_tool_actions=inspection_tool_floor,
+        original_failure_diagnostic=({
+            **diagnostic,
+            "offered_tools": sorted(allowed & {"read_file", "search_files", "run_probe"})
+            if diagnostic_available else [],
+            "uses_minimum_completion_reserve": bool(diagnostic_available and (
+                (diagnostic_relaxes_inspection and inspection_allowed)
+                or ("run_probe" in allowed and (
+                    remaining_model_calls - 1 < probe_budget.protected
+                    or remaining_tool_actions - 1 < probe_budget.protected_tool_actions
+                ))
+            )),
+            "limit": "One model diagnostic per refuted candidate may spend speculative "
+                     "recovery. The minimum repair, checks, replay and finish must still fit; "
+                     "a rejected diagnostic spends the opportunity too.",
+        } if diagnostic is not None else None),
     )
     if funded_calls is not None and minimum_cost_successors is not None:
         future_calls = max(minimum_cost_successors[tool] for tool in allowed)
@@ -1132,14 +1182,14 @@ def _tool_policy(
                 "basis": "largest_offered_action_minimum_successor_plus_one_correction",
                 "correction_credits_remaining": int(correction_available),
                 "correction_pending": correction_pending,
-                "correction_output_ceiling": desired_output_ceiling,
+                "correction_output_ceiling": correction_ceiling,
                 "correction_call_cost_nanos": correction_cost,
                 "correction_cost_reserved_nanos": correction_reserve,
                 "correction_model_calls_reserved": correction_model_reserve,
                 "current_minimum_output_ceiling": (
-                    desired_output_ceiling if correction_pending else MINIMUM_OUTPUT_CEILING
+                    correction_ceiling if correction_pending else MINIMUM_OUTPUT_CEILING
                 ),
-                "recovery_scope": "One protocol correction per run at the requested output "
+                "recovery_scope": "One protocol correction per run at the correction output "
                                   "ceiling, never renewed by valid actions. No tool-failure or "
                                   "unknown-billing retry funding.",
                 "limit": "The correction has an output allowance, not a guarantee of a valid "
@@ -1162,7 +1212,7 @@ def _tool_policy(
         if {"run_tests", history_search.TOOL} & allowed:
             successors.append(budget.protected)
         if "run_probe" in allowed:
-            successors.append(probe_budget.protected)
+            successors.append(probe_floor)
         if "run_check" in allowed:
             successors.append(check_successor_reserve)
         future_calls = max(successors)
@@ -1204,8 +1254,10 @@ def _tool_policy(
             cost_ledger=cost_ledger,
             completion_cost_policy=completion_cost_policy,
             desired_output_ceiling=desired_output_ceiling,
+            max_correction_output_tokens=max_correction_output_tokens,
             _preview_inspection=False,
             _cost_call_limit=(max(0, funded_calls - 1) if funded_calls is not None else None),
+            _diagnostic_spent=True,
         )
         policy = replace(
             policy,
@@ -1217,9 +1269,11 @@ def _tool_policy(
 
 
 def _repair_inspection_payload(policy: _ToolPolicy) -> dict[str, Any]:
+    diagnostic = ({"original_failure_diagnostic": policy.original_failure_diagnostic}
+                  if policy.original_failure_diagnostic is not None else {})
     if policy.repair_inspection_policy == "protected-v1":
-        return {}
-    return {"repair_inspection": {
+        return diagnostic
+    return {**diagnostic, "repair_inspection": {
         "policy": policy.repair_inspection_policy,
         "reserve_calls_after_inspection": policy.inspection_reserve_calls,
         "released_future_check_recovery_calls": policy.inspection_released_check_recovery_calls,
@@ -3213,7 +3267,10 @@ def _run_envelope(
         retained_source_chars=request.retained_source_chars,
         completion_cost_policy=request.completion_cost_policy,
         completion_cost_contract=(
-            completion_cost_contract(request.completion_cost_policy)
+            completion_cost_contract(
+                request.completion_cost_policy,
+                max_correction_output_tokens=request.max_correction_output_tokens,
+            )
             if request.completion_cost_policy != DEFAULT_COMPLETION_COST_POLICY else None
         ),
         segment_boundary_policy=request.segment_boundary_policy,
@@ -3228,6 +3285,7 @@ def _run_envelope(
         model=request.model,
         reasoning_effort=request.reasoning_effort,
         max_output_tokens=request.max_output_tokens,
+        max_correction_output_tokens=request.max_correction_output_tokens,
         credential_file_path_hash=_credential_file_path_hash(request),
         max_cost_nanos=cost_ledger.cap_nanos if cost_ledger else 0,
         cost_start_nanos=cost_start_nanos,
@@ -3716,6 +3774,7 @@ def _run_probe_recheck(
             repair_recheck=request.repair_recheck,
             cost_ledger=cost_ledger, completion_cost_policy=request.completion_cost_policy,
             desired_output_ceiling=request.max_output_tokens,
+            max_correction_output_tokens=request.max_correction_output_tokens,
         )
         if "run_probe" not in policy.allowed_tools:
             journal.append("probe_recheck_skipped", {
@@ -3886,6 +3945,7 @@ def _run_original_recheck(
         repair_recheck=request.repair_recheck, cost_ledger=cost_ledger,
         completion_cost_policy=request.completion_cost_policy,
         desired_output_ceiling=request.max_output_tokens,
+        max_correction_output_tokens=request.max_correction_output_tokens,
     )
     try:
         _replay_original_cases(
@@ -4092,6 +4152,8 @@ def _run_one(
                        else {}),
                     **({"max_output_tokens": request.max_output_tokens}
                        if request.max_output_tokens != DEFAULT_OUTPUT_CEILING else {}),
+                    **({"max_correction_output_tokens": request.max_correction_output_tokens}
+                       if request.max_correction_output_tokens is not None else {}),
                 },
             )
 
@@ -4658,6 +4720,7 @@ def _run_one_active(
                         cost_ledger=cost_ledger,
                         completion_cost_policy=request.completion_cost_policy,
                         desired_output_ceiling=request.max_output_tokens,
+                        max_correction_output_tokens=request.max_correction_output_tokens,
                     )
                     correction = _protocol_correction(
                         turn_id=pending_turn_id,
@@ -4695,6 +4758,7 @@ def _run_one_active(
                             cost_ledger=cost_ledger,
                             completion_cost_policy=request.completion_cost_policy,
                             desired_output_ceiling=request.max_output_tokens,
+                            max_correction_output_tokens=request.max_correction_output_tokens,
                         )
                         correction = _protocol_correction(
                             turn_id=pending_turn_id,
@@ -4871,6 +4935,7 @@ def _run_one_active(
             cost_ledger=cost_ledger,
             completion_cost_policy=request.completion_cost_policy,
             desired_output_ceiling=request.max_output_tokens,
+            max_correction_output_tokens=request.max_correction_output_tokens,
         )
         if ((snapshot.completion_verification or {}).get("original_obligation", {}).get("stage")
                 == "pending" and "run_probe" not in policy.allowed_tools):
@@ -4884,6 +4949,7 @@ def _run_one_active(
                 repair_recheck=request.repair_recheck, cost_ledger=cost_ledger,
                 completion_cost_policy=request.completion_cost_policy,
                 desired_output_ceiling=request.max_output_tokens,
+                max_correction_output_tokens=request.max_correction_output_tokens,
             )
         if not policy.completion_possible:
             terminal_completion_horizon = _completion_horizon_payload(
@@ -5069,6 +5135,13 @@ def _run_one_active(
             ],
             "active_elapsed_ms": int(elapsed_seconds * 1_000),
         }
+        current_output_ceiling = (
+            correction_output_ceiling(
+                request.max_output_tokens, request.max_correction_output_tokens,
+            )
+            if policy.completion_cost and policy.completion_cost.get("correction_pending")
+            else request.max_output_tokens
+        )
         prepared_count = None
         if request.context_policy == segments.POLICY:
             try:
@@ -5080,7 +5153,8 @@ def _run_one_active(
                     "model": request.model, "input": model_input, "tools": schemas,
                     "max_output_tokens": request.max_output_tokens,
                 })
-                request_payload.update(parallel_tool_calls=True, tool_choice="required")
+                request_payload.update(parallel_tool_calls=True, tool_choice="required",
+                                       max_output_tokens=current_output_ceiling)
                 sizes = segments.request_sizes(request_payload)
                 reasons = segments.size_reasons(sizes)
                 turn_payload["context_request_sizes"] = sizes
@@ -5135,6 +5209,7 @@ def _run_one_active(
                 )
                 request_payload["parallel_tool_calls"] = True
                 request_payload["tool_choice"] = "required"
+                request_payload["max_output_tokens"] = current_output_ceiling
                 boundary, bundle = native_compaction.prepared_input(
                     input_journal, artifact_store, turn_payload, request_payload, policy_transition,
                 )
@@ -5347,7 +5422,7 @@ def _run_one_active(
                 )
             admission = cost_ledger.admit(
                 input_tokens,
-                desired_output_ceiling=request.max_output_tokens,
+                desired_output_ceiling=current_output_ceiling,
                 minimum_output_ceiling=(
                     policy.completion_cost.get("current_minimum_output_ceiling",
                                                MINIMUM_OUTPUT_CEILING)
@@ -5547,6 +5622,7 @@ def _run_one_active(
                 cost_ledger=cost_ledger,
                 completion_cost_policy=request.completion_cost_policy,
                 desired_output_ceiling=request.max_output_tokens,
+                max_correction_output_tokens=request.max_correction_output_tokens,
             )
             correction = _protocol_correction(
                 turn_id=turn_id,
@@ -5584,6 +5660,7 @@ def _run_one_active(
                 cost_ledger=cost_ledger,
                 completion_cost_policy=request.completion_cost_policy,
                 desired_output_ceiling=request.max_output_tokens,
+                max_correction_output_tokens=request.max_correction_output_tokens,
             )
             correction = _protocol_correction(
                 turn_id=turn_id,

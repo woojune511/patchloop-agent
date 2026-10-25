@@ -99,14 +99,12 @@ Visible-check IDs must be unique at task admission.
 Advisory line feedback decodes those paths and binds script filenames at launch,
 preserving arguments and tracking across chdir.
 
-Reserve the minimum completion path and bounded recovery. Forecast model calls and
-tool actions separately: an eligible automatic required-check recheck costs zero
-model calls and one action. Share execution's current/healthy/registered eligibility
-in admission, successor and cost forecasts; retain all tool slots. Disabled recheck
-preserves the common counts.
-A failed check does not require another read when current edit evidence exists.
-Preserve the distinction between minimum and protected completion, and do not add
-hard tool restrictions from advisory progress signals or task-specific failure patterns.
+Reserve minimum completion and bounded recovery; count model calls and real tool
+actions separately. Healthy acquired originals replay early and reuse receipts at
+finish; pending/mixed/unknown cases keep fallback. A comparable current original
+failure permits one diagnostic using minimum completion reserves, consumed by the
+model batch even on rejection/replay. See [resource contract](completion-resources.md).
+Keep source anchors and fresh checks; advisory progress never creates hard gates.
 
 ## Context and recovery
 
@@ -170,12 +168,11 @@ Admission may reduce output. Opt-in `completion-minimum-v1` requires segmented-v
 retain model/tool slot rules, close unaffordable actions, reserve the largest offered
 successful successor at 60K uncached input + 128 output per call. Ready finish uses
 exact counting without successor reserve. Rechecks/replays retain real tool slots.
-Opt-in `completion-recovery-v1` reserves one model slot and one run-wide correction
-at 60K input + the requested output ceiling, with no extra tool slot. The first durable
-protocol correction consumes it and requires that full output allowance. Valid actions
-and restart never renew it. Tool failures and unknown billing are excluded. Minimum
-admission and funded correction do not guarantee useful output or repair. Existing
-policies/defaults retain their contracts.
+Opt-in `completion-recovery-v1` reserves one model slot and one correction at 60K
+input + `max_correction_output_tokens` (ordinary ceiling when omitted). Its first
+durable protocol correction consumes the full allowance; restart/valid actions
+never renew it. The explicit ceiling is contract-bound, independent of normal
+output. Tool failures/unknown billing are excluded; funding never proves repair.
 Use zero SDK retries; count, transport, billing, or cleanup uncertainty stops all
 remaining repetitions. Reservations are not billed usage; unknown usage is not zero.
 Panel usage restoration includes compaction and adds only the row's delta to shared cost.

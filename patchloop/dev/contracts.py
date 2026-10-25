@@ -461,6 +461,11 @@ class RunRequest(StrictModel):
         ge=cost.MINIMUM_OUTPUT_CEILING, le=cost.MAX_OUTPUT_CEILING, strict=True,
         exclude_if=lambda value: value == cost.DEFAULT_OUTPUT_CEILING,
     )
+    max_correction_output_tokens: int | None = Field(
+        default=None,
+        ge=cost.MINIMUM_OUTPUT_CEILING, le=cost.MAX_OUTPUT_CEILING, strict=True,
+        exclude_if=lambda value: value is None,
+    )
     env_file: Path | None = None
     max_cost_usd: Decimal | None = None
     repeat: int = Field(default=1, ge=1, le=6)
@@ -510,6 +515,12 @@ class RunRequest(StrictModel):
             raise ValueError("--history-search public-v1 requires segmented-v1 and current policy")
         if self.agent_policy == "thin" and self.planning_policy != "none":
             raise ValueError("--agent-policy thin requires --planning-policy none")
+        if (self.max_correction_output_tokens is not None
+                and self.completion_cost_policy != cost.COMPLETION_RECOVERY_POLICY):
+            raise ValueError(
+                "--max-correction-output-tokens requires --completion-cost-policy "
+                "completion-recovery-v1"
+            )
         if (self.completion_cost_policy != cost.DEFAULT_COMPLETION_COST_POLICY
                 and self.context_policy != segments.POLICY):
             raise ValueError("--completion-cost-policy reservation requires segmented-v1")
@@ -642,6 +653,11 @@ class RunEnvelope(StrictModel):
         ge=cost.MINIMUM_OUTPUT_CEILING, le=cost.MAX_OUTPUT_CEILING, strict=True,
         exclude_if=lambda value: value == cost.DEFAULT_OUTPUT_CEILING,
     )
+    max_correction_output_tokens: int | None = Field(
+        default=None,
+        ge=cost.MINIMUM_OUTPUT_CEILING, le=cost.MAX_OUTPUT_CEILING, strict=True,
+        exclude_if=lambda value: value is None,
+    )
     credential_file_path_hash: str | None = Field(
         default=None,
         pattern=r"^sha256:[0-9a-f]{64}$",
@@ -660,10 +676,14 @@ class RunEnvelope(StrictModel):
             raise ValueError("history search requires segmented-v1 and current policy")
         if self.agent_policy == "thin" and self.planning_policy != "none":
             raise ValueError("thin policy forbids planning state")
+        if (self.max_correction_output_tokens is not None
+                and self.completion_cost_policy != cost.COMPLETION_RECOVERY_POLICY):
+            raise ValueError("correction output allowance requires completion-recovery-v1")
         if self.completion_cost_policy != cost.DEFAULT_COMPLETION_COST_POLICY:
             if (self.context_policy != segments.POLICY
                     or self.completion_cost_contract != cost.completion_cost_contract(
                         self.completion_cost_policy,
+                        max_correction_output_tokens=self.max_correction_output_tokens,
                     )):
                 raise ValueError("completion reserve requires segmented-v1 and its exact contract")
         elif self.completion_cost_contract is not None:

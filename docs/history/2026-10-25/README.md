@@ -8,3 +8,4 @@
 - [First-action exhaustion and correction analysis](../2026-10-25-first-action-analysis.md)
 - [40K output pilot: comparable original failure after three edits](../2026-10-25-output40-live.md)
 - [40K diagnosis: ineffective edits and competing recovery reserves](../2026-10-25-output40-diagnosis.md)
+- [Reuse-aware completion reserves and bounded diagnosis](../2026-10-25-completion-resources.md)

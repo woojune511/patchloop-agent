@@ -30,9 +30,28 @@ PRICING_SOURCE = "https://developers.openai.com/api/docs/pricing"
 PRICING_VERIFIED_ON = "2026-09-15"
 
 
+def correction_output_ceiling(
+    max_output_tokens: int, max_correction_output_tokens: int | None = None,
+) -> int:
+    """Use an explicit correction allowance, or preserve the coupled legacy cap."""
+    return (
+        max_output_tokens if max_correction_output_tokens is None else max_correction_output_tokens
+    )
+
+
 def completion_cost_contract(
     policy: CompletionCostPolicy = COMPLETION_RESERVE_POLICY,
+    *,
+    max_correction_output_tokens: int | None = None,
 ) -> dict[str, object]:
+    if max_correction_output_tokens is not None:
+        if policy != COMPLETION_RECOVERY_POLICY:
+            raise ValueError("correction output allowance requires completion-recovery-v1")
+        if (
+            type(max_correction_output_tokens) is not int
+            or not MINIMUM_OUTPUT_CEILING <= max_correction_output_tokens <= MAX_OUTPUT_CEILING
+        ):
+            raise ValueError("correction output allowance must be an integer from 128 to 128000")
     if policy == COMPLETION_RECOVERY_POLICY:
         return {
             "policy": COMPLETION_RECOVERY_POLICY,
@@ -42,7 +61,10 @@ def completion_cost_contract(
             "horizon": "minimum-success-path-and-one-protocol-correction-v1",
             "reservation": "largest-offered-action-minimum-successor-plus-one-correction-v1",
             "correction_credits_per_run": 1,
-            "correction_output_tokens": "invocation-max-output-tokens",
+            "correction_output_tokens": (
+                "invocation-max-output-tokens"
+                if max_correction_output_tokens is None else max_correction_output_tokens
+            ),
             "correction_consumption": "first-durable-protocol-correction-never-renewed",
             "correction_model_calls": 1,
             "correction_tool_actions": 0,

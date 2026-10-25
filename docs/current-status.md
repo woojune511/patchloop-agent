@@ -24,52 +24,36 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [original-feedback implementation](history/2026-10-25-original-feedback.md)
-addresses late replay and host condition drift observed in the
-[cap-only pilot](history/2026-10-25-budget-live.md). Fresh invocation v4 / tool
-contract v54 clears host launch arguments before authored setup and offers a fresh
-stable fixture workspace.
-Explicit CLI arguments and selected environment/input identities are still checked;
-HOME/cache variables must be set explicitly using the stable workspace when needed.
-Exact invocation v1/v2/v3 programs and observer bytes remain replayable.
+The [40K pilot](history/2026-10-25-output40-live.md) acquired the original failure,
+made three edits and received comparable early replay after each. All retained
+F0010; regression checks, submission and independent evaluation were not reached.
+The [diagnosis](history/2026-10-25-output40-diagnosis.md) found that the protected
+physical-call horizon closed fresh diagnosis before the monetary stop, and the
+40K correction reserve left only two funded minimum calls where three were needed.
+Feedback delivery alone did not produce a discriminating observation or repair.
 
-After each accepted edit, acquired original cases replay before the next model
-input, using the same case/diff child IDs as the finish fallback. The completion
-view retains current observations and condition differences separately. Comparable
-failure blocks finish; missing or incomparable evidence remains unverified.
-Scheduling uses already reserved completion actions and reconciles started children
-even after admission closes. Tool forecasts include replay on each future repair;
-minimum monetary admission does not promise recovery from a semantic repair failure.
+The [resource follow-up](history/2026-10-25-completion-resources.md) implements:
 
-Local four-condition controls support these mechanics. After the
-[25K pilot](history/2026-10-25-original-feedback-live.md) stopped before any action,
-the user authorized one [40K-output pilot](history/2026-10-25-output40-live.md)
-with the run_probe recommendation and all other conditions, including USD 1.20,
-unchanged. It acquired the original failure and made three edits. Each received
-a comparable replay and retained F0010. Two replay results reached later model
-inputs, and the final edit explicitly revised its hypothesis after that feedback.
-No regression check, submission or independent evaluation occurred.
+- Reuse-aware forecasts: healthy acquired cases already settled on the current
+  diff omit the unreachable failed-finish call/action. Actual replay/check/edit
+  work remains; pending, mixed and unknown cases retain final fallback.
+- Independent correction output: optional `--max-correction-output-tokens` binds
+  a separate allowance under `completion-recovery-v1`. Omission preserves the old
+  coupled ceiling; explicit values are checked on resume.
+- One bounded diagnostic after comparable original failure on a candidate. It may
+  spend speculative recovery while retaining the minimum repair, checks, replay
+  and finish. Rejected/cached requests consume it; restart and same-diff replay
+  cannot renew it. A diagnostic probe budgets for a possible additional case.
 
-The 40K run cost USD 0.869725350 and stopped at COST_CAP_REACHED: after reserving
-USD 0.225 for the unused protocol correction, remaining money funded two minimum
-calls while the still-failing state required three. The first response completed
-in 19,265 output tokens, below the old ceiling; only the final edit response used
-more than 25K (34,882). The comparison cannot isolate a causal first-action gain.
-Stable replay and explicit feedback use are now observed in this sample, but
-repair remained refuted. The [follow-up diagnosis](history/2026-10-25-output40-diagnosis.md)
-finds no new discriminating probe after 27 source inspections. Source projection
-places the failing name/path lookup before the edited callback; internal caller
-values were not observed. All edit turns offered only replace_text/stop_task:
-the protected physical-call horizon had already closed diagnosis, before the
-final monetary stop. A smaller correction reserve would admit another minimum
-path at the frozen final state, not prove a repair or necessarily permit diagnosis.
-The forecast also retains failed-final-replay model calls without distinguishing
-healthy early replay whose receipt finish reuses; a tighter bound remains untested.
-Keep the runtime and general defaults unchanged. Next investigate caller-boundary
-values and the tradeoff between current-failure diagnosis and speculative recovery;
-output/correction allowance separation is a proposal, not a validated gain.
-The allocation is closed; unused money does not authorize another paid run.
-The [operator oracle experiment](history/2026-10-24-oracle.md) remains separate.
+The original invocation v4 identity and early feedback/reuse machinery remain in
+place. Current comparable failure still blocks finish; missing/incomparable
+observations remain unverified. See the [resource contract](../.agent/completion-resources.md).
+Local validation passed: 56 focused checks (45s), 12 final diagnostic checks (15s),
+305 quick checks (31s), Ruff and isolated mock evaluation. These establish local
+mechanics. Live repair gain, useful diagnosis and output sufficiency remain
+unverified. General output and
+cost-policy defaults are unchanged. All paid allocations are closed; no new paid
+run, continuation, cap increase or target evaluation is authorized by local tests.
 
 ## Supporting evidence
 

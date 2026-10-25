@@ -75,6 +75,38 @@ def _comparability(root, current, eligible):
     return {"status": "changed" if feedback["differences"] else "same", **feedback}
 
 
+def _failure_diagnostic(events, current_diff, failure_actions):
+    """One model diagnostic per refuted candidate, derived from durable starts.
+
+    Host replays do not spend this opportunity. A rejected model request does;
+    neither another replay nor restart can replenish it on the same diff.
+    """
+    first_failure = next((event for event in events
+                          if event["event_type"] == "action_finished"
+                          and event["payload"]["result"]["action_id"] in failure_actions), None)
+    if first_failure is None:
+        return None
+    # A batch start spends the slot even when its action is a cached replay or
+    # execution is interrupted before action_started. Only accepted candidates
+    # change the workspace; serial batches observe the last completed diff.
+    observed_diff, spent = None, None
+    for event in events:
+        if event["event_type"] == "action_finished":
+            observed_diff = event["payload"]["result"].get("workspace_diff_hash", observed_diff)
+        elif (event["event_type"] == "tool_batch_started"
+              and event["sequence"] > first_failure["sequence"]
+              and observed_diff == current_diff):
+            spent = next((call["action_id"] for call in event["payload"]["tool_calls"]
+                          if call["name"] in {"read_file", "search_files", "run_probe"}), None)
+            if spent is not None:
+                break
+    return {
+        "candidate_diff_hash": current_diff,
+        "failure_action_id": first_failure["payload"]["result"]["action_id"],
+        "status": "spent" if spent else "available", "spent_action_id": spent,
+    }
+
+
 def review(events, current_diff, *, public_task=None, run_id):
     """Project all bindings; only the display, never obligations, is bounded.
 
@@ -113,7 +145,8 @@ def review(events, current_diff, *, public_task=None, run_id):
                 case["rows"].append((result, observation))
 
     task_hash = sha256_json(public_task.model_dump(mode="json")) if public_task else None
-    items, pending = [], []
+    items, pending, failure_actions = [], [], set()
+    diagnostic_eligible = False
     for case_id, case in cases.items():
         binding, rows = case["binding"], case["rows"]
         root_id = binding["root_action_id"]
@@ -174,12 +207,17 @@ def review(events, current_diff, *, public_task=None, run_id):
             and (not paired or root[1].get("declared_failure_comparison") == "matched"))
         current = next((row for row in reversed(rows)
                         if row[0]["workspace_diff_hash"] == current_diff), None)
+        comparability = _comparability(root, current, eligible)
+        if original_failure and current_diff != sha256_bytes(b""):
+            failure_actions.update(row[0]["action_id"] for row in comparable
+                                   if row[1]["comparison"] == "mismatched")
+            diagnostic_eligible |= evidence == "REFUTED" and comparability["status"] == "same"
         items.append({
             "case_id": case_id, "root_action_id": root_id,
             "purpose": copy.deepcopy(binding["definition"]),
             "baseline": _compact(root), "latest": _compact(rows[-1] if rows else None),
             "current": _compact(current, include_observation=True),
-            "comparability": _comparability(root, current, eligible),
+            "comparability": comparability,
             "status": state, "replayable": bool(eligible), "auto_action_id": call.action_id,
             **({"baseline_acquisition": {
                 "status": "qualified" if original_failure else "unverified",
@@ -201,19 +239,23 @@ def review(events, current_diff, *, public_task=None, run_id):
     unverified = sum(item["status"] == "unverified" for item in items)
     priority = {"refuted": 0, "pending": 1, "unverified": 2, "verified": 3}
     items.sort(key=lambda item: priority[item["status"]])
+    acquired = [item["case_id"] for item in items
+                if item["replayable"] and item["baseline"]["diff_hash"] == sha256_bytes(b"")
+                and item["baseline"]["comparison"] == "mismatched"
+                and ("baseline_acquisition" not in item
+                     or item["baseline_acquisition"]["status"] == "qualified")]
     return {
         "policy": POLICY,
         "status": "refuted" if failed else "pending" if pending else "unverified"
         if unverified or not items else "cases_verified",
         "current_diff_hash": current_diff, "case_count": len(items),
         "replayable_case_count": sum(item["replayable"] for item in items),
-        "baseline_failure_case_ids": [item["case_id"] for item in items
-                                      if item["replayable"] and item["baseline"]["diff_hash"]
-                                      == sha256_bytes(b"") and item["baseline"]["comparison"]
-                                      == "mismatched" and (
-                                          "baseline_acquisition" not in item
-                                          or item["baseline_acquisition"]["status"]
-                                          == "qualified")],
+        "baseline_failure_case_ids": acquired,
+        "early_replay_reusable": bool(items) and len(acquired) == len(items) and all(
+            item["status"] in {"refuted", "verified"}
+            and item["evidence"]["status"] != "CONFLICT"
+            and item["comparability"]["status"] == "same" for item in items
+        ),
         "baseline_matched_count": sum(item["replayable"] and item["baseline"]["diff_hash"]
                                       == sha256_bytes(b"") and item["baseline"]["comparison"]
                                       == "matched" for item in items),
@@ -222,6 +264,10 @@ def review(events, current_diff, *, public_task=None, run_id):
         "pending_count": len(pending), "failed_count": failed,
         "unestablished_count": sum(not item["replayable"] for item in items),
         "unverified_count": unverified, "pending_cases": pending,
+        "original_failure_diagnostic": (
+            _failure_diagnostic(events, current_diff, failure_actions)
+            if diagnostic_eligible else None
+        ),
         "cases": items[:DISPLAY_LIMIT], "omitted_count": max(0, len(items) - DISPLAY_LIMIT),
         "requirement_mapping": "model_authored_unverified", "repair_success": "not_assessed",
         "interpretation": "Frozen public case evidence, not task correctness. Helper/check PASS, "
