@@ -24,30 +24,29 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [helper correction](../.agent/helper-correction.md) now makes mode-specific APIs
-explicit and catches syntax/unbound original-only names before a fresh helper runs.
-Before the first accepted mutation, one same-question corrected source request can
-use existing minimum completion resources. Unrelated inspection cannot spend that
-opportunity; rejection or unaffordable correction returns verification incomplete.
-Returned execution remains diagnostic evidence, not original-call verification.
-The implementation deliberately does not infer pre-target failure from arbitrary
-runtime exceptions. Saved programs, exact action recovery and original-case replay
-keep their existing identities. No resource cap is increased.
+The [latest live pilot](history/2026-10-25-helper-correction-live.md) ended
+VERIFICATION_INCOMPLETE: one accepted mutation after 28 source inspections left
+F0010 unchanged on a comparable original replay. Two call-path diagnostic requests
+were rejected before execution: first the wrong replay identity, then watched lines
+outside their selected function. The unsuccessful candidate was not submitted.
+Cost was $0.979441500 of $1.20; the unused allocation is closed.
 
-The [implementation record](history/2026-10-25-helper-correction.md) records 64 core
+The [helper correction](../.agent/helper-correction.md) clarifies APIs and gives one
+same-question correction for a confirmed preflight error before the first mutation.
+This run requested no helper, so its live correction mechanism was NOT_EXERCISED;
+absence of the previous NameError does not establish prevention or repair gain.
+The [implementation record](history/2026-10-25-helper-correction.md) retains 64 core
 tests in 23.548 seconds and 346 quick tests in 66.949 seconds, including isolated
-mock evaluation; Ruff passes. The saved failed source's line-8 unavailable API is
-rejected without executing the target. Actual model uptake and F0010 repair benefit remain
-unmeasured. The next evidence question is whether this bounded correction produces
-a usable diagnostic before the first repair under the same live limits.
+mock evaluation, plus Ruff PASS. No runtime change followed the pilot.
 
-The [previous live pilot](history/2026-10-25-callpath-live.md) reproduced F0010 but
-made no mutation before exhausting 40K normal and 25K correction output; allocation
-closed. The [audit](history/2026-10-25-helper-stop-analysis.md) found delivered error
-feedback and four available probe opportunities spent on source inspection. Thus
-the post-mutation [call-path mechanism](../.agent/repair-path.md) remains locally
-tested but NOT_EXERCISED by that live model. New runtime preparation and exact live
-authorization remain separate from this implementation's local validation.
+The active question is usable [call-path diagnosis](../.agent/repair-path.md):
+correct replay identity and current function/line constraints were not assembled
+into an executable request. After the first rejection, completion-horizon closure
+removed source preparation tools even though nested path state still reported a
+preparation allowance. The final stop was two rejected requests, with money and
+model slots remaining; the separate 25K protocol correction did return an action.
+Diagnosis request construction and the consistency of offered preparation resources
+need examination before another paid pilot. No automatic continuation is authorized.
 
 ## Supporting evidence
 
@@ -78,6 +77,6 @@ submission, independent task acceptance and safety are separate. Mock safety is 
 
 Do not start Docker Desktop or pull/build evaluator images automatically. Preserve
 exact recovery identities, zero SDK retries and stop-all on count/transport/billing
-uncertainty. The latest live run acquired the original failure but never mutated
-source; finish and independent evaluation were NOT_RUN.
+uncertainty. The latest live run acquired the original failure and made one
+ineffective mutation; checks, finish and independent evaluation were NOT_RUN.
 Linux CI and general improvement remain unverified.

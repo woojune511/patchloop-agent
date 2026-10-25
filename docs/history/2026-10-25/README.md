@@ -17,3 +17,4 @@
 - [Call-path pilot: original reproduced, no first repair](../2026-10-25-callpath-live.md)
 - [Helper failure and exploration closure before the first mutation](../2026-10-25-helper-stop-analysis.md)
 - [Helper API preflight and bounded same-question correction](../2026-10-25-helper-correction.md)
+- [Helper pilot: first repair, rejected call-path diagnosis](../2026-10-25-helper-correction-live.md)
