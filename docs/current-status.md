@@ -38,12 +38,14 @@ Live diagnosis admission, construction and execution were NOT_EXERCISED. Checks,
 submission and independent evaluation were NOT_RUN. Cost was $0.999174600 of $1.20
 in 773.569 seconds; the allocation is closed.
 
-The remaining bottleneck is action generation before diagnosis execution. Inspect
-the delivered state, selection requirements and resource allocation before another
-change or paid comparison. This single trajectory does not isolate the cause of
-output exhaustion or establish an optimal cap. Contract delivery and local mock
-completion do not establish useful diagnosis or F0010 repair. No automatic
-continuation is authorized.
+The [public request analysis](history/2026-10-26-diagnosis-mode-analysis.md) locates
+the remaining bottleneck before diagnostic action dispatch. The model still selects
+caller/watches and carries general decision metadata; the whole probe schema has
+7,158 compact JSON characters. The generic correction reached the model and retained
+opaque continuation; it did not narrow the diagnostic selection. Next consider a
+small stage-specific decision and context, preserving original verification.
+This is an untested design hypothesis. One trajectory does not isolate why generation
+stalled or establish an optimal cap. No automatic continuation is authorized.
 
 ## Supporting evidence
 
