@@ -101,11 +101,12 @@ def test_failure_credit_survives_restart_and_only_new_candidate_renews_it(gatewa
         "turn_id": "diagnostic-turn", "tool_calls": [call.model_dump(mode="json")],
         "active_elapsed_ms": 21,
     })
+    expected_status = "spent" if action == "rejected_probe" else "available"
     assert gateway.completion_verification(diff_hash=gateway.current_diff_hash)[
-        "original_failure_diagnostic"]["status"] == "spent"
+        "original_failure_diagnostic"]["status"] == expected_status
     result = gateway.execute(call)
     assert result.status == ("failed" if action == "rejected_probe" else "succeeded")
-    # Even the persisted start without its result has spent the opportunity.
+    # Preparation and probe starts persist independently even without a result.
     events = journal.events()
     start = next(e["sequence"] for e in events if e["event_type"] == "action_started"
                  and e["payload"]["action_id"] == call.action_id)
@@ -113,16 +114,20 @@ def test_failure_credit_survives_restart_and_only_new_candidate_renews_it(gatewa
         [e for e in events if e["sequence"] <= start], gateway.current_diff_hash,
         public_task=gateway.public_task, run_id=journal.run_id,
     )
-    assert partial["original_failure_diagnostic"]["status"] == "spent"
+    assert partial["original_failure_diagnostic"]["status"] == expected_status
     assert gateway.execute(call).replayed
     gateway = restore(gateway, journal, workspace, gateway.public_task, backend)
     repeated = replay()
     assert backend.calls == 2
-    assert repeated["original_failure_diagnostic"] == {**credit, "status": "spent",
-                                                       "spent_action_id": call.action_id}
+    assert repeated["original_failure_diagnostic"] == {
+        **credit, "status": expected_status,
+        "spent_action_id": call.action_id if action == "rejected_probe" else None,
+        "preparation_available": action != "read",
+        "preparation_action_id": call.action_id if action == "read" else None,
+    }
     # A newly requested replay on the same diff must not reset the first failure boundary.
     gateway.execute(probe(gateway.public_task, "repeat-original", replay="original"))
-    assert replay()["original_failure_diagnostic"]["status"] == "spent"
+    assert replay()["original_failure_diagnostic"]["status"] == expected_status
     old_diff = gateway.current_diff_hash
     mutate(gateway, correct=False, action="candidate-2")
     assert gateway.current_diff_hash != old_diff

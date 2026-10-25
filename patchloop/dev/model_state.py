@@ -163,6 +163,7 @@ def compact_model_state(
             "minimum_completion_tool_actions", "completion_budget_tool_actions",
             "protected_completion_possible", "mutation_completion_horizon", "exploration_state",
             "repair_inspection", "original_failure_diagnostic", "observation_correction",
+            "repair_path_diagnosis",
             "model_turns_available_for_exploration", "tool_actions_available_for_exploration",
             "closure_reason", "tools_closing_after_this_turn", "tool_closure_prediction_basis",
             "tool_policy_transition", "max_parallel_reads_this_turn",
@@ -234,7 +235,8 @@ def compact_model_state(
                     or (tool == "run_check"
                         and result["output"].get("check_id") != record.get("check_id"))):
                 continue
-            for field in ("stdout", "stderr", "execution_policy", "public_check_failure"):
+            for field in ("stdout", "stderr", "execution_policy", "public_check_failure",
+                          "call_path"):
                 record.pop(field, None)
             record["delivery"] = "preceding_function_call_output"
             if (tool == "run_probe" and isinstance(record.get("observation"), dict)

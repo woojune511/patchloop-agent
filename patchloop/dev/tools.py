@@ -28,6 +28,7 @@ from patchloop.dev import (
     probe_cases,
     probe_replay,
     probe_requests,
+    repair_path,
     reproduction,
     requirement_reference,
 )
@@ -80,6 +81,7 @@ from patchloop.dev.working_notes import (
 from patchloop.errors import ContractError, PatchLoopError, RecoveryError
 from patchloop.git_execution import GitExecutionUncertain, run_git
 from patchloop.repository import DiffSummary, WorkspaceManager
+from patchloop.sandbox import call_path_trace
 from patchloop.sandbox.execution_feedback import (
     MAX_FILES,
     MAX_LINES,
@@ -229,6 +231,7 @@ def dev_tool_schemas(
     finish_enabled: bool,
     check_ids: Sequence[str] = (),
     test_suite_ids: Sequence[str] = (),
+    test_comparison_enabled: bool = True,
     allowed_tools: Sequence[str] | None = None,
     read_paths: Sequence[str] = (),
     planning_policy: str = "none",
@@ -465,6 +468,10 @@ def dev_tool_schemas(
                 "line-entry ranges; missing observations are not proof of failure. "
                 "Results are diagnostics, not required visible-check verdicts. "
                 + probe_replay.DESCRIPTION + " " + reproduction.DESCRIPTION
+                + " When repair_path needs diagnosis, replay its original action with call_path. "
+                "Select the failing call, a focus function on its real path, and watched changed "
+                "lines. The host reports bounded inputs, returns/exceptions and branch entries. "
+                "Function entry alone is not changed-branch execution; unknown is not no-hit."
             ),
             "strict": True,
             "parameters": {
@@ -479,8 +486,10 @@ def dev_tool_schemas(
                         "type": ["string", "null"], "minLength": 1, "maxLength": 500,
                     },
                     "purpose": reproduction.purpose_schema(),
+                    "call_path": {"anyOf": [{"type": "null"}, call_path_trace.schema()]},
                 },
-                "required": ["question", "python_source", "replay_action_id", "purpose"],
+                "required": ["question", "python_source", "replay_action_id", "purpose",
+                             "call_path"],
                 "additionalProperties": False,
             },
         })
@@ -491,6 +500,8 @@ def dev_tool_schemas(
                     "cases never block finish or trigger automatic execution.", TOOL_DESCRIPTION,
                 )
     if test_suite_ids:
+        from patchloop.dev import test_comparison
+
         schemas.append({
             "type": "function", "name": "run_tests", "strict": True,
             "description": (
@@ -499,7 +510,11 @@ def dev_tool_schemas(
                 "suite's test_roots, e.g. test/test_api.py::test_case. "
                 "The task supplies the command, environment and limits; command flags and "
                 "directories are not targets. Results apply only to the selected tests on "
-                "this diff and never replace required run_check results."
+                "this diff and never replace required run_check results. Set comparison to "
+                "null for one execution, or compare identical selected test bytes against "
+                "original_base or the pre-state of a completed implementation mutation. "
+                "Comparison costs two isolated executions; PASS/PASS is non-discriminating "
+                "and even FAIL/PASS does not certify original-requirement coverage."
             ),
             "parameters": {
                 "type": "object", "additionalProperties": False,
@@ -508,8 +523,12 @@ def dev_tool_schemas(
                     "targets": {"type": "array", "minItems": 1, "maxItems": MAX_TARGETS,
                                 "items": {"type": "string", "minLength": 1,
                                           "maxLength": MAX_TARGET_CHARS}},
+                    "comparison": test_comparison.schema() if test_comparison_enabled else {
+                        "type": "null", "description": "Only a single selected-test execution "
+                        "fits the current completion reserve; set comparison to null.",
+                    },
                 },
-                "required": ["suite_id", "targets"],
+                "required": ["suite_id", "targets", "comparison"],
             },
         })
     if history_search_policy != "none":
@@ -2608,8 +2627,20 @@ class DevToolGateway:
         prepared_probe: dict[str, Any] | None = None
         reproduction_binding: dict[str, Any] | None = None
         request_validation: dict[str, Any] | None = None
-        probe_arguments = {key: value for key, value in call.arguments.items()
-                           if key not in {"replay_action_id", "reproduction", "purpose"}}
+        probe_arguments = {key: value for key, value in call.arguments.items() if key not in {
+            "replay_action_id", "reproduction", "purpose", "call_path",
+        }}
+        path_request = call.arguments.get("call_path") if call.name == "run_probe" else None
+        path_link = copy.deepcopy(pending.get("repair_path_link")) if pending is not None else None
+        if pending is None:
+            path_state = self.completion_verification(diff_hash=baseline)["repair_path"]
+            if path_state.get("blocked") and call.name != "stop_task":
+                # Record rejected requests too, without treating them as executions.
+                path_link = repair_path.link(path_state)
+            try:
+                path_link = repair_path.validate(path_state, call.name, call.arguments)
+            except ContractError as exc:
+                preflight_error = exc
         replay_probe = (
             call.name == "run_probe" and call.arguments.get("replay_action_id") is not None
         )
@@ -2651,6 +2682,11 @@ class DevToolGateway:
                 preflight_error = exc
         if call.name == "run_probe" and preflight_error is None:
             try:
+                if path_request is not None:
+                    path_request = call_path_trace.validate_request(path_request)
+                    source_preflight = getattr(self.probe_sandbox, "validate_call_path", None)
+                    if callable(source_preflight):
+                        source_preflight(self.workspace, path_request, deadline=self.deadline)
                 legacy_binding = (pending or {}).get("reproduction_binding")
                 selected, observation_channel = (
                     reproduction.selection(call.arguments, allow_legacy=True)
@@ -2685,6 +2721,7 @@ class DevToolGateway:
                 try:
                     inspect.signature(self._run_probe).bind(
                         **execution_arguments,
+                        **({"call_path": path_request} if path_request is not None else {}),
                         execution_identity={"run_id": self.journal.run_id,
                                             "action_id": call.action_id},
                         reproduction_binding=reproduction_binding, input_hash=input_hash,
@@ -2696,6 +2733,7 @@ class DevToolGateway:
                     question=execution_arguments["question"],
                     python_source=execution_arguments["python_source"],
                     reproduction_binding=reproduction_binding,
+                    call_path=path_request,
                 )
             except (PatchLoopError, ValidationError, ValueError) as exc:
                 preflight_error = exc
@@ -2711,6 +2749,8 @@ class DevToolGateway:
         if pending is None:
             if call.name == "replace_text":
                 try:
+                    if preflight_error is not None:
+                        raise preflight_error
                     self._require_acquisition_released(baseline)
                     validated = self._validate_replacement_intent(call.arguments)
                     mutation_anchor_evidence_span_id = validated.anchor_evidence_span_id
@@ -2739,6 +2779,7 @@ class DevToolGateway:
                        if "memory_update" in call.model_fields_set else {}),
                     "baseline_diff_hash": baseline,
                     "baseline_changed_files": baseline_summary.changed_files,
+                    **({"repair_path_link": path_link} if path_link is not None else {}),
                     **({"probe_request": {
                         "policy": original_obligation.PROBE_STAGES,
                         "status": "rejected" if preflight_error is not None else "accepted",
@@ -2849,6 +2890,7 @@ class DevToolGateway:
                 output = self._run_probe(
                     **({key: prepared_probe[key] for key in ("question", "python_source")}
                        if prepared_probe is not None else probe_arguments),
+                    **({"call_path": path_request} if path_request is not None else {}),
                     execution_identity={"run_id": self.journal.run_id, "action_id": call.action_id},
                     reproduction_binding=reproduction_binding,
                     input_hash=input_hash,
@@ -2935,6 +2977,10 @@ class DevToolGateway:
                     )
             if request_validation is not None:
                 output["request_validation"] = request_validation
+            if path_link is not None:
+                output["repair_path_link"] = copy.deepcopy(path_link)
+                if call.name == "replace_text":
+                    output["mutation"]["repair_path_link"] = copy.deepcopy(path_link)
             result = DevToolResult(
                 action_id=call.action_id,
                 input_hash=input_hash,
@@ -3679,6 +3725,10 @@ class DevToolGateway:
         check, targets = selected_check(
             suites[selection.suite_id], selection, self.workspace, self._tracked_path,
         )
+        if selection.comparison is not None:
+            from patchloop.dev import test_comparison
+
+            return test_comparison.run(self, selection, check, targets, execution_identity)
         output = self._execute_check(check, execution_identity=execution_identity)
         error = any(output.get(key) for key in (
             "timed_out", "deadline_exhausted", "cleanup_failed",
@@ -3766,6 +3816,7 @@ class DevToolGateway:
     def _probe_execution_source(
         question: str, python_source: str, *,
         reproduction_binding: dict[str, Any] | None = None,
+        call_path: dict[str, Any] | None = None,
     ) -> str:
         if not isinstance(question, str) or not 1 <= len(question) <= 500:
             raise probe_requests.error("probe question must contain 1-500 characters", "/question")
@@ -3773,18 +3824,23 @@ class DevToolGateway:
                 or not 1 <= len(python_source) <= probe_limits.SOURCE_LIMIT_CHARS):
             raise probe_requests.error("probe source must contain 1-8000 characters",
                                        "/python_source")
-        return (reproduction.program(python_source, reproduction_binding)
+        if call_path is not None and reproduction_binding is None:
+            raise ContractError("call_path must replay an invocation-bound original case")
+        return (reproduction.program(python_source, reproduction_binding,
+                                     call_path=call_path is not None)
                 if reproduction_binding is not None else python_source)
 
     def _run_probe(
         self, question: str, python_source: str, *,
         execution_identity: dict[str, str], input_hash: str,
         reproduction_binding: dict[str, Any] | None = None, legacy_pending: bool = False,
+        call_path: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         if self.probe_sandbox is None:
             raise ContractError("public probes are disabled for this run")
         execution_source = self._probe_execution_source(
             question, python_source, reproduction_binding=reproduction_binding,
+            call_path=call_path,
         )
         summary = self.current_diff
         baseline = summary.patch_hash
@@ -3794,6 +3850,7 @@ class DevToolGateway:
             "action_id": execution_identity["action_id"], "input_hash": input_hash,
             "execution_source_hash": sha256_bytes(execution_source.encode("utf-8")),
             "baseline_diff_hash": baseline,
+            **({"call_path_request_hash": sha256_json(call_path)} if call_path is not None else {}),
         }
         stages = {kind: [e["payload"] for e in self.journal.events()
                          if e["event_type"] == kind
@@ -3816,6 +3873,7 @@ class DevToolGateway:
                 output = self.probe_sandbox.run_probe(
                     self.workspace, question, execution_source,
                     deadline=self.deadline, execution_identity=execution_identity,
+                    **({"call_path_request": call_path} if call_path is not None else {}),
                     **({"execution_targets": targets}
                        if getattr(self.probe_sandbox, "supports_public_execution", False) else {}),
                 )
@@ -3847,6 +3905,12 @@ class DevToolGateway:
                 raise RecoveryError("reproduction execution program identity mismatch",
                                     details=receipt)
             receipt = reproduction.compare(receipt, reproduction_binding)
+        if call_path is not None:
+            receipt["call_path"] = {
+                **receipt.get("call_path", {"status": "unknown", "reason": "report_unavailable"}),
+                "raw_request_hash": sha256_json(call_path),
+                "candidate_diff_hash": baseline,
+            }
         receipt["verification_scope"] = (
             "declared_reproduction_mapping_unverified" if reproduction_binding
             else "helper_or_unbound_diagnostic"
@@ -3952,6 +4016,7 @@ class DevToolGateway:
         )
         return {
             **{key: value for key, value in review.items() if key != "pending_cases"},
+            "repair_path": repair_path.review(self.journal.events(), diff_hash, review),
             "original_obligation": original_obligation.review(
                 self.journal.events(), self.public_task, review,
                 acquisition=self.reproduction_acquisition,

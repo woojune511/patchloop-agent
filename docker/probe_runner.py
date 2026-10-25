@@ -210,7 +210,8 @@ def _flush_child_output(
                 flush()
 
 
-def _execute_child(code: object, collector=None, import_paths=None, setup=None) -> None:
+def _execute_child(code: object, collector=None, import_paths=None, setup=None,
+                   call_path=None) -> None:
     stdout = sys.stdout
     stderr = sys.stderr
     try:
@@ -227,14 +228,21 @@ def _execute_child(code: object, collector=None, import_paths=None, setup=None) 
         }
         if setup is not None:
             namespace["check_setup"] = setup.check
+        if call_path is not None:
+            namespace["_patchloop_call_path_begin"] = call_path.begin
+            namespace["_patchloop_call_path_end"] = call_path.end
         if collector is not None:
             collector.start()
         try:
             exec(code, namespace, namespace)
         finally:
             try:
-                if collector is not None:
-                    collector.finish()
+                try:
+                    if call_path is not None:
+                        call_path.finish()
+                finally:
+                    if collector is not None:
+                        collector.finish()
             finally:
                 if setup is not None:
                     setup.finish()
@@ -316,6 +324,12 @@ def main() -> int:
         # Load only the host-copied stdlib collector before exposing project imports.
         module = runpy.run_path(str(Path(__file__).with_name("line_trace.py")))
         collector = module["LineTrace"](json.loads(Path(sys.argv[2]).read_bytes()), "/workspace")
+    call_path = None
+    call_path_request = Path(__file__).with_name("call_path_request.json")
+    if call_path_request.is_file():
+        module = runpy.run_path(str(Path(__file__).with_name("call_path_trace.py")))
+        call_path = module["CallPathTrace"](
+            json.loads(call_path_request.read_bytes()), line_trace=collector)
 
     try:
         child_pid = os.fork()
@@ -323,7 +337,7 @@ def main() -> int:
         traceback.print_exc()
         return CHILD_RESERVED_EXIT_CODE
     if child_pid == 0:
-        _execute_child(code, collector, import_paths, setup)
+        _execute_child(code, collector, import_paths, setup, call_path)
     return _wait_for_child(child_pid, timeout_seconds)
 
 

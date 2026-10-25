@@ -45,7 +45,7 @@ transport and billing uncertainty retain the existing stop-all behavior.
 ## One diagnostic opportunity for a refuted candidate
 
 A nonempty candidate with a comparable current refutation of an acquired original
-case can spend one model diagnostic (`read_file`, `search_files` or `run_probe`)
+case can spend one preparation read/search and one model diagnostic probe
 using the minimum successful completion reserve. Baseline acquisition, a helper,
 old-diff failure or unknown/incomparable observation does not grant this credit.
 The actual minimum repair, fresh checks, original replays and finish must still
@@ -53,22 +53,30 @@ fit the remaining model calls, tool actions and selected cost-admission policy.
 No cap or mutation capacity is increased. A diagnostic probe reserves one possible additional case
 replay: a new binding can add work after the next edit.
 
-Only the one exceptional diagnostic uses the minimum path; normal protected
+Only these bounded exceptional actions use the minimum path; normal protected
 admission remains available when it already fits. An exceptional inspection has
 parallelism one and a last-opportunity warning. Spending speculative recovery
 means subsequent rejection/check/reproduction failure recovery is not guaranteed.
 The full protected forecast and its feasibility remain visible separately.
 
-Consumption is derived from the first model `tool_batch_started` containing a
-diagnostic after a qualifying failure on that diff. This includes rejected or
-cached requests and a crash before execution. Harness replay has no model batch
-and does not spend the credit. Repeated replay, new action IDs and restart cannot
-renew it. A new candidate requires its own comparable failure. Current failure
+Preparation and probe consumption are derived separately from the first model
+`tool_batch_started` after a qualifying failure on that diff. A read never consumes
+the probe slot. Probe batches include rejected/cached requests and interrupted
+execution. Harness replay has no model batch and does not spend this credit.
+Repeated replay, new action IDs and restart cannot renew it. A new candidate
+requires its own comparable failure. Current failure
 continues to block finish; offering diagnosis never grants verification credit.
 
 The public action horizon reports the candidate/failure IDs, spent action, offered
 diagnostic tools and whether minimum reserves are used. This is an opportunity,
 not a command to probe or evidence that useful diagnosis/repair will occur.
+
+The narrower [call-path diagnosis](repair-path.md) activates when a current
+implementation branch was measured as unobserved while the same original failure
+persists. It reserves the diagnostic in minimum completion, then separately
+protects preparation and one malformed-request correction. Here only a durable
+execution start consumes the single actual attempt. Optional selected-test
+comparisons reserve two physical child executions plus completion capacity.
 
 ## Focused local verification
 

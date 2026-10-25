@@ -35,6 +35,7 @@ from patchloop.dev import (
     native_compaction,
     probe_recheck,
     segments,
+    test_comparison,
     thin_policy,
     working_plan,
 )
@@ -232,6 +233,7 @@ class _ToolPolicy:
     inspection_reserve_tool_actions: int = 0
     original_failure_diagnostic: dict[str, Any] | None = None
     observation_correction: dict[str, Any] | None = None
+    repair_path_diagnosis: dict[str, Any] | None = None
 
     @property
     def feedback_recovery_reserve_calls(self) -> int:
@@ -602,7 +604,7 @@ def _completion_guidance(
     """Describe an offered next action, without executing it or changing admission."""
     allowed = policy.allowed_tools
     stage = "blocked"
-    next_action: dict[str, str] | None = None
+    next_action: dict[str, Any] | None = None
     message = (
         "No completion action is currently offered under the current state and budgets. "
         "stop_task abandons without submission or evaluation."
@@ -610,7 +612,22 @@ def _completion_guidance(
     needs_mutation = policy.workflow_gate == "needs_mutation" or any(
         row["status"] == "FAIL" for row in snapshot.visible_check_status
     ) or (snapshot.completion_verification or {}).get("status") == "refuted"
-    if policy.workflow_gate in {"needs_observation_correction", "verification_incomplete"}:
+    if policy.repair_path_diagnosis and policy.repair_path_diagnosis.get("blocked"):
+        diagnosis = policy.repair_path_diagnosis
+        stage = policy.workflow_gate
+        next_action = ({"tool": "run_probe", "replay_action_id": diagnosis["replay_action_id"],
+                        "call_path": {"call_id": diagnosis["call_id"]}}
+                       if "run_probe" in allowed else None)
+        message = (
+            "The same original failure persists and the modified branch was not observed. "
+            "Replay the frozen original program with call_path targeting the indicated call_id; "
+            "supply focus and watches for the actual caller and unobserved changed lines. "
+            "One preparation read, one actual diagnostic execution and one rejected-request "
+            "correction are bounded separately. Function entry, branch execution and behavior are "
+            "different observations. A complete diagnosis must inform causal_revision before "
+            "another repair; incomplete observation returns verification incomplete."
+        )
+    elif policy.workflow_gate in {"needs_observation_correction", "verification_incomplete"}:
         stage = policy.workflow_gate
         next_action = {"tool": "run_probe"} if "run_probe" in allowed else None
         message = (
@@ -770,11 +787,16 @@ def _tool_policy(
         observation_blocked and observation_fix.get("status") == "pending"
         and not observation_fix.get("pending_started")
     )
+    path_diagnosis = verification.get("repair_path", {})
+    path_blocked = bool(path_diagnosis.get("blocked") and not observation_blocked)
+    path_available = bool(path_blocked and path_diagnosis.get("status") == "needs_path_diagnosis")
+    path_preparation = bool(path_available and path_diagnosis.get("preparation_available")
+                            and not _diagnostic_spent)
     original_case_failed = verification.get("status") == "refuted"
     diagnostic = verification.get("original_failure_diagnostic")
     diagnostic_available = bool(
         original_case_failed and diagnostic and diagnostic["status"] == "available"
-        and diagnostic["candidate_diff_hash"] == summary.patch_hash and not _diagnostic_spent
+        and diagnostic["candidate_diff_hash"] == summary.patch_hash
     )
     if original_case_failed:
         workflow_gate = "needs_mutation"
@@ -878,6 +900,10 @@ def _tool_policy(
             and getattr(gateway, "probe_sandbox", None) is not None
         ),
         observation_correction_pending=observation_available,
+        path_diagnosis_pending=path_available,
+        path_preparation_available=path_preparation,
+        path_request_correction_available=(path_available
+                                           and not path_diagnosis.get("rejected_requests")),
     )
     budget = completion_budget(completion_state)
     completion_possible = (
@@ -927,7 +953,8 @@ def _tool_policy(
     # A comparable original failure on this candidate earns one diagnostic turn.
     # Spend speculative recovery only, retaining the real minimum repair/check/
     # replay/finish path. The journal-derived credit is independent of restarts.
-    diagnostic_relaxes_inspection = diagnostic_available and (
+    diagnostic_relaxes_inspection = (diagnostic_available and not _diagnostic_spent
+                                    and diagnostic.get("preparation_available", True)) and (
         remaining_model_calls - 1 < inspection_floor
         or remaining_tool_actions - 1 < inspection_tool_floor
     )
@@ -1069,6 +1096,29 @@ def _tool_policy(
         mutation_allowed = mutation_protected_completion_possible = inspection_allowed = False
         max_parallel_reads = exploration_capacity = 0
         available_check_ids = ()
+    elif path_blocked:
+        workflow_gate = "needs_path_diagnosis"
+        allowed = {"stop_task"}
+        completion_possible &= (
+            path_available and getattr(gateway, "probe_sandbox", None) is not None
+        )
+        mutation_allowed = mutation_protected_completion_possible = inspection_allowed = False
+        max_parallel_reads = exploration_capacity = 0
+        available_check_ids = ()
+        if completion_possible:
+            # The diagnostic is already in the minimum. Do not reserve it twice.
+            allowed.add("run_probe")
+            probe_floor = budget.minimum - 1
+            probe_tool_floor = budget.minimum_tool_actions - 1
+            after_preparation = completion_budget(replace(completion_state, anchor_available=True))
+            if (path_preparation and remaining_model_calls - 1 >= after_preparation.minimum
+                    and remaining_tool_actions - 1 >= after_preparation.minimum_tool_actions):
+                allowed.update({"read_file", "search_files"})
+                inspection_allowed = True
+                max_parallel_reads = exploration_capacity = 1
+                inspection_model_slack = inspection_tool_slack = 1
+                inspection_floor = after_preparation.minimum
+                inspection_tool_floor = after_preparation.minimum_tool_actions
     minimum_cost_successors = None
     if (completion_cost_policy in {COMPLETION_MINIMUM_POLICY, COMPLETION_RECOVERY_POLICY}
             and funded_calls is not None):
@@ -1105,7 +1155,7 @@ def _tool_policy(
     if diagnostic_relaxes_inspection and inspection_allowed:
         inspection_model_slack = min(inspection_model_slack, 1)
         inspection_tool_slack = min(inspection_tool_slack, 1)
-    if observation_blocked and "run_probe" not in allowed:
+    if (observation_blocked or path_blocked) and "run_probe" not in allowed:
         workflow_gate = "verification_incomplete"
         completion_possible = protected_completion_possible = False
     exploration_state = (
@@ -1188,14 +1238,17 @@ def _tool_policy(
                     or remaining_tool_actions - 1 < probe_budget.protected_tool_actions
                 ))
             )),
-            "limit": "One model diagnostic per refuted candidate may spend speculative "
-                     "recovery. The minimum repair, checks, replay and finish must still fit; "
-                     "a rejected diagnostic spends the opportunity too.",
+            "limit": "One preparation read and one model diagnostic per refuted candidate "
+                     "may spend speculative recovery. The minimum repair, checks, replay and "
+                     "finish must still fit; request correction for path diagnosis is separate.",
         } if diagnostic is not None else None),
         observation_correction=({
             **observation_fix, "offered_tools": sorted(allowed),
             "uses_minimum_completion_reserve": "run_probe" in allowed,
         } if observation_blocked else None),
+        repair_path_diagnosis=({**path_diagnosis, "offered_tools": sorted(allowed)}
+                               if path_diagnosis.get("status") not in {None, "not_needed"}
+                               and not observation_blocked else None),
     )
     if funded_calls is not None and minimum_cost_successors is not None:
         future_calls = max(minimum_cost_successors[tool] for tool in allowed)
@@ -1312,6 +1365,8 @@ def _repair_inspection_payload(policy: _ToolPolicy) -> dict[str, Any]:
                   if policy.original_failure_diagnostic is not None else {})
     if policy.observation_correction is not None:
         diagnostic["observation_correction"] = policy.observation_correction
+    if policy.repair_path_diagnosis is not None:
+        diagnostic["repair_path_diagnosis"] = policy.repair_path_diagnosis
     if policy.repair_inspection_policy == "protected-v1":
         return diagnostic
     return {**diagnostic, "repair_inspection": {
@@ -1429,7 +1484,7 @@ def _completion_horizon_payload(
     )
     current_check_failed = any(row["status"] == "FAIL" for row in visible_status)
     if (
-        (policy.workflow_gate == "needs_mutation" or current_check_failed)
+        (policy.workflow_gate in {"needs_mutation", "needs_path_diagnosis"} or current_check_failed)
         and gateway.accepted_mutations >= limits.max_accepted_mutations
     ):
         blocking_resources.append("accepted_mutations")
@@ -1564,7 +1619,9 @@ def _protocol_correction(
     if "run_tests" in allowed:
         actions.append(
             "Use run_tests to select public test files or node IDs from a registered suite; "
-            "selected tests do not replace required visible checks."
+            "comparison runs the same tests before and after the implementation change and "
+            "costs two tool executions. PASS/PASS does not distinguish the repair; selected "
+            "tests do not replace the original invocation or required visible checks."
         )
     if "stop_task" in allowed:
         actions.append(
@@ -1823,6 +1880,8 @@ def _build_context(
                     "stdout": result["output"].get("stdout", "")[-2_000:],
                     "stderr": result["output"].get("stderr", "")[-2_000:],
                     "message": result.get("message"),
+                    **({"call_path": result["output"]["call_path"]}
+                       if "call_path" in result["output"] else {}),
                 }),
             }
             for result in probes[-3:]
@@ -2892,7 +2951,8 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
             "action_id": result.action_id, "attempt": "selected_tests",
             "result": {key: result.output.get(key) for key in (
                 "suite_id", "targets", "diff_hash", "test_status", "exit_code",
-            )},
+            )} | ({"comparison": result.output["comparison"]}
+                  if "comparison" in result.output else {}),
             "next_question": (
                 "What do these selected public tests establish about this diff, and what "
                 "behavior remains untested? Setup or collection errors do not verify behavior."
@@ -3341,6 +3401,42 @@ def _validate_resume_envelope(actual: RunEnvelope, expected: RunEnvelope) -> Non
         raise ResumeContractMismatch("run configuration or runtime changed")
 
 
+def _comparison_extra_actions(events: list[dict[str, Any]]) -> int:
+    children: dict[str, set[str]] = {}
+    for event in events:
+        if event["event_type"] == "test_comparison_child_started":
+            payload = event["payload"]
+            children.setdefault(payload["identity"]["action_id"], set()).add(payload["action_id"])
+    # The native parent action already accounts for the first physical attempt.
+    return sum(max(0, len(ids) - 1) for ids in children.values())
+
+
+def _tool_action_count(events: list[dict[str, Any]]) -> int:
+    return (sum(len(event["payload"].get("tool_calls", [])) for event in events
+                if event["event_type"] == "tool_batch_started")
+            + sum(event["event_type"] in {
+                "repair_recheck_started", "probe_recheck_started",
+                "completion_reproduction_started",
+            } for event in events) + _comparison_extra_actions(events))
+
+
+def _batch_fits_tool_budget(calls, counters, limits, policy=None):
+    cost = sum(test_comparison.execution_cost(call.arguments) if call.name == "run_tests"
+               else 1 for call in calls)
+    # Comparison is optional work. Admit both children before dispatch while
+    # preserving the same completion reserve required to offer ordinary tests.
+    reserve = (policy.completion_budget_tool_actions
+               if any(call.name == "run_tests" and test_comparison.has_comparison(call.arguments)
+                      for call in calls) else 0)
+    return counters.tool_actions + cost + reserve <= limits.max_tool_actions
+
+
+def _test_comparison_enabled(policy, counters, limits):
+    return ("run_tests" in policy.allowed_tools
+            and limits.max_tool_actions - counters.tool_actions
+            >= policy.completion_budget_tool_actions + 2)
+
+
 def _restore_counters(journal: DevJournal) -> _RunCounters:
     events = journal.events()
     consecutive_protocol_recoveries = 0
@@ -3356,15 +3452,7 @@ def _restore_counters(journal: DevJournal) -> _RunCounters:
             }
             for event in events
         ),
-        tool_actions=sum(
-            len(event["payload"].get("tool_calls", []))
-            for event in events
-            if event["event_type"] == "tool_batch_started"
-        ) + sum(event["event_type"] in {
-                    "repair_recheck_started", "probe_recheck_started",
-                    "completion_reproduction_started",
-                }
-                for event in events),
+        tool_actions=_tool_action_count(events),
         input_count_calls=sum(event["event_type"] == "input_count_started" for event in events),
         compaction_calls=sum(event["event_type"] == "compaction_started" for event in events),
         protocol_recoveries=consecutive_protocol_recoveries,
@@ -3861,20 +3949,26 @@ def _execute_completion_batch(
     The caller has already counted the native batch. Children are not invented
     model function calls; their observations are projected from the journal.
     """
-    if len(calls) != 1 or calls[0].name != "finish_task":
+    before = _comparison_extra_actions(journal.events())
+    try:
+        if len(calls) != 1 or calls[0].name != "finish_task":
+            return gateway.execute_batch(calls)
+        events = journal.events()
+        # Let the gateway verify input identity and replay before touching deadlines.
+        if any(e["event_type"] == "action_finished"
+               and e["payload"]["result"]["action_id"] == calls[0].action_id for e in events):
+            return gateway.execute_batch(calls)
+        if not gateway.ready_to_submit():
+            return gateway.execute_batch(calls)
+        _replay_original_cases(
+            journal=journal, gateway=gateway, counters=counters,
+            active_elapsed_ms=active_elapsed_ms,
+        )
         return gateway.execute_batch(calls)
-    events = journal.events()
-    # Let the gateway verify input identity and replay before touching deadlines.
-    if any(e["event_type"] == "action_finished"
-           and e["payload"]["result"]["action_id"] == calls[0].action_id for e in events):
-        return gateway.execute_batch(calls)
-    if not gateway.ready_to_submit():
-        return gateway.execute_batch(calls)
-    _replay_original_cases(
-        journal=journal, gateway=gateway, counters=counters,
-        active_elapsed_ms=active_elapsed_ms,
-    )
-    return gateway.execute_batch(calls)
+    finally:
+        # Started children count even if no result returned. Finished-child reuse
+        # adds no new starts, including after a crash between result and parent.
+        counters.tool_actions += _comparison_extra_actions(journal.events()) - before
 
 
 def _replay_original_cases(
@@ -4815,12 +4909,24 @@ def _run_one_active(
                         journal.append("protocol_correction", correction)
                 else:
                     if not batch_started:
-                        if (
-                            counters.tool_actions + len(pending_calls)
-                            > request.limits.max_tool_actions
+                        recovery_policy = (_tool_policy(
+                            gateway, counters, request.limits,
+                            repair_inspection_policy=request.repair_inspection_policy,
+                            repair_recheck=request.repair_recheck, cost_ledger=cost_ledger,
+                            completion_cost_policy=request.completion_cost_policy,
+                            desired_output_ceiling=request.max_output_tokens,
+                            max_correction_output_tokens=request.max_correction_output_tokens,
+                            _preview_inspection=False,
+                        ) if any(call.name == "run_tests"
+                                 and test_comparison.has_comparison(call.arguments)
+                                 for call in pending_calls) else None)
+                        if not _batch_fits_tool_budget(
+                            pending_calls, counters, request.limits, recovery_policy,
                         ):
                             terminal_code = DevTerminal.LIMIT_REACHED
-                            terminal_message = "tool-action limit reached before recovered batch"
+                            terminal_message = (
+                                "recovered batch cannot fit tool actions and completion reserve"
+                            )
                         else:
                             journal.append(
                                 "tool_batch_started",
@@ -5002,12 +5108,20 @@ def _run_one_active(
             )
             if policy.workflow_gate == "verification_incomplete":
                 terminal_code = DevTerminal.VERIFICATION_INCOMPLETE
-                terminal_message = (
-                    "observation correction is unresolved or cannot fit completion resources"
-                )
-                terminal_completion_horizon["observation_correction"] = (
-                    policy.observation_correction
-                )
+                if policy.repair_path_diagnosis and policy.repair_path_diagnosis.get("blocked"):
+                    terminal_message = (
+                        "call-path diagnosis is incomplete or cannot fit completion resources"
+                    )
+                    terminal_completion_horizon["repair_path_diagnosis"] = (
+                        policy.repair_path_diagnosis
+                    )
+                else:
+                    terminal_message = (
+                        "observation correction is unresolved or cannot fit completion resources"
+                    )
+                    terminal_completion_horizon["observation_correction"] = (
+                        policy.observation_correction
+                    )
             elif "cost" in terminal_completion_horizon["blocking_resources"]:
                 terminal_code = DevTerminal.COST_CAP_REACHED
                 terminal_message = "completion cost reservation cannot fit the remaining cap"
@@ -5103,6 +5217,7 @@ def _run_one_active(
             finish_enabled="finish_task" in policy.allowed_tools,
             check_ids=policy.check_ids,
             test_suite_ids=[suite.id for suite in gateway.public_task.test_suites],
+            test_comparison_enabled=_test_comparison_enabled(policy, counters, request.limits),
             allowed_tools=policy.allowed_tools,
             read_paths=policy.targeted_read_paths,
             planning_policy=request.planning_policy,
@@ -5720,9 +5835,9 @@ def _run_one_active(
             )
             journal.append("protocol_correction", correction)
             continue
-        if counters.tool_actions + len(turn.tool_calls) > request.limits.max_tool_actions:
+        if not _batch_fits_tool_budget(turn.tool_calls, counters, request.limits, policy):
             terminal_code = DevTerminal.LIMIT_REACHED
-            terminal_message = "tool-action limit reached"
+            terminal_message = "requested batch cannot fit tool actions and completion reserve"
             break
         journal.append(
             "tool_batch_started",
@@ -5820,6 +5935,15 @@ def _run_one_active(
                     "observation_correction": unresolved,
                 }
                 terminal_code = DevTerminal.VERIFICATION_INCOMPLETE
+            else:
+                diagnosis = gateway.completion_verification(diff_hash=last_diff).get(
+                    "repair_path", {})
+                if diagnosis.get("blocked"):
+                    terminal_completion_horizon = {
+                        **(terminal_completion_horizon or {}), "stop_cause": terminal_code.value,
+                        "repair_path_diagnosis": diagnosis,
+                    }
+                    terminal_code = DevTerminal.VERIFICATION_INCOMPLETE
         terminal = _terminal(
             journal=journal,
             terminal=terminal_code or DevTerminal.TASK_FAILED,

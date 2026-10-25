@@ -21,9 +21,9 @@ from patchloop import probe_limits
 from patchloop.contracts import ProbeDependencyIdentity
 from patchloop.deadline import ExecutionDeadline
 from patchloop.errors import ContractError
-from patchloop.prepared_probe_dependencies import MOUNT, PreparedDependencies
+from patchloop.prepared_probe_dependencies import MOUNT, PreparedDependencies, read_descriptor
 from patchloop.probe_runtime import runtime
-from patchloop.sandbox import probe_setup
+from patchloop.sandbox import call_path_trace, probe_setup
 from patchloop.sandbox.execution_feedback import (
     TRACE_WRAPPER,
     ReportChannel,
@@ -58,6 +58,7 @@ def probe_profile(dependencies: ProbeDependencyIdentity | None = None) -> dict[s
         "image_digest": image.rsplit("@", 1)[1],
         "wrapper_hash": sha256_bytes(_WRAPPER.read_bytes()),
         "line_trace_hash": sha256_bytes(TRACE_WRAPPER.read_bytes()),
+        "call_path_trace_hash": sha256_bytes(call_path_trace.WRAPPER.read_bytes()),
         "setup_helper_hash": sha256_bytes(_SETUP_WRAPPER.read_bytes()),
         "setup_report_limit_bytes": probe_setup.MAX_REPORT_BYTES,
         "network": "none",
@@ -223,6 +224,15 @@ class _OutputCollector:
                 prefix=probe_setup.marker(setup_request), limit_bytes=probe_setup.MAX_REPORT_BYTES,
             ) if setup_request is not None else None
         )
+        self.call_path_channel = None
+        self.call_path_report = None
+
+    def enable_call_path(self, request: dict) -> None:
+        downstream = self.setup_channel or self.channel
+        self.call_path_channel = ReportChannel(
+            request, downstream.feed if downstream else lambda block: self._retain(block, "stderr"),
+            prefix=call_path_trace.marker(request), limit_bytes=call_path_trace.MAX_REPORT_BYTES,
+        )
 
     def _retain(self, block: bytes, name: str) -> None:
         with self.lock:
@@ -235,10 +245,12 @@ class _OutputCollector:
     def drain(self, stream: BinaryIO, name: str) -> None:
         try:
             while block := stream.read(4096):
-                channel = self.setup_channel or self.channel
+                channel = self.call_path_channel or self.setup_channel or self.channel
                 if name == "stderr" and channel is not None:
                     channel.feed(block)
-                    for report_channel in (self.setup_channel, self.channel):
+                    for report_channel in (
+                        self.call_path_channel, self.setup_channel, self.channel,
+                    ):
                         if report_channel is not None:
                             pending = (len(report_channel.pending)
                                        if report_channel.collecting else 0)
@@ -251,6 +263,8 @@ class _OutputCollector:
         except (OSError, ValueError):
             return
         finally:
+            if name == "stderr" and self.call_path_channel is not None:
+                self.call_path_report = self.call_path_channel.finish()
             if name == "stderr" and self.setup_channel is not None:
                 self.setup_report = self.setup_channel.finish()
             if name == "stderr" and self.channel is not None:
@@ -307,6 +321,63 @@ class DockerProbeSandbox:
         self._verified = True
         return self.identity
 
+    def validate_call_path(
+        self, workspace: Path, request: dict, *, deadline: ExecutionDeadline | None = None,
+    ) -> dict:
+        """Read-only request validation before the durable dispatch boundary.
+
+        Admit only requested tracked files that the later snapshot can export.
+        Dependency members are checked against their pinned prepared manifest and
+        current bytes. The actual launch independently rebinds the exported copy.
+        No temporary export, Docker access, or target Python execution occurs here.
+        """
+        try:
+            request = call_path_trace.validate_request(request)
+            targets = [request["focus"], *request["watches"]]
+            paths = {target["path"] for target in targets if target["origin"] == "workspace"}
+            roots = self.dependencies.identity.source_roots if self.dependencies else None
+            if any(not _is_public_path(path) or roots and "/" in path and not any(
+                path.startswith(f"{root}/") for root in roots
+            ) for path in paths):
+                raise ValueError("workspace target is outside the exported public source roots")
+            if paths:
+                timeout = deadline.bounded_timeout(10, reserve_seconds=5) if deadline else 10
+                listing = subprocess.run(
+                    ["git", "--literal-pathspecs", "ls-files", "--stage", "-z", "--",
+                     *sorted(paths)], cwd=workspace, capture_output=True,
+                    timeout=timeout, check=False,
+                )
+                if listing.returncode or len(listing.stdout) > 20_000:
+                    raise ValueError("cannot enumerate requested public tracked sources")
+                tracked = set()
+                for entry in listing.stdout.split(b"\0"):
+                    if not entry:
+                        continue
+                    metadata, path_bytes = entry.split(b"\t", 1)
+                    mode, _object_id, stage = metadata.decode("ascii").split()
+                    path = path_bytes.decode("utf-8")
+                    if (path not in paths or path in tracked or mode not in {"100644", "100755"}
+                            or stage != "0"):
+                        raise ValueError("call-path source must be a tracked regular public file")
+                    tracked.add(path)
+                if tracked != paths:
+                    raise ValueError("call-path workspace source is not tracked for export")
+            dependency_root, dependency_files = None, None
+            if self.dependencies is not None:
+                descriptor, identity = read_descriptor(self.dependencies.path)
+                if identity != self.dependencies.identity:
+                    raise ValueError("prepared dependency identity changed")
+                dependency_root = self.dependencies.path.parent / "site-packages"
+                dependency_files = descriptor["files"]
+            if deadline:
+                deadline.check(reserve_seconds=5)
+            return call_path_trace.bind_request(
+                request, workspace, dependency_root=dependency_root,
+                dependency_files=dependency_files,
+            )
+        except (ValueError, OSError, SyntaxError, subprocess.TimeoutExpired) as exc:
+            raise ContractError(f"invalid public call-path source request: {exc}") from exc
+
     @staticmethod
     def container_name(execution_identity: dict[str, str]) -> str:
         if not execution_identity:
@@ -354,6 +425,7 @@ class DockerProbeSandbox:
         deadline: ExecutionDeadline | None,
         execution_identity: dict[str, str],
         execution_targets: dict | None = None,
+        call_path_request: dict | None = None,
     ) -> dict[str, object]:
         source = python_source.encode("utf-8")
         if not question or len(question) > 500:
@@ -381,6 +453,7 @@ class DockerProbeSandbox:
                          "execution_identity_hash": sha256_json(execution_identity)}
         setup_request["request_hash"] = sha256_json(setup_request)
         collector = _OutputCollector(execution_targets, setup_request)
+        bound_call_path = None
         timed_out = False
         exit_code = None
         snapshot_hash = None
@@ -395,6 +468,7 @@ class DockerProbeSandbox:
                 snapshot.mkdir()
                 trusted.mkdir()
                 dependency_arguments = []
+                dependencies = None
                 if self.dependencies is not None:
                     dependencies = temporary_path / "dependencies"
                     dependencies.mkdir()
@@ -413,6 +487,25 @@ class DockerProbeSandbox:
                                           source_roots=(self.dependencies.identity.source_roots
                                                         if self.dependencies else None),
                                           dependencies=self.dependencies)
+                if call_path_request is not None:
+                    try:
+                        dependency_files = (read_descriptor(self.dependencies.path)[0]["files"]
+                                            if self.dependencies is not None else None)
+                        bound_call_path = call_path_trace.bind_request(
+                            call_path_request, snapshot, dependency_root=dependencies,
+                            dependency_files=dependency_files, snapshot_hash=snapshot_hash,
+                            execution_identity_hash=sha256_json(execution_identity),
+                        )
+                    except (ValueError, OSError, SyntaxError) as exc:
+                        raise ContractError("invalid public call-path source binding") from exc
+                    trace_source = call_path_trace.WRAPPER.read_bytes()
+                    if sha256_bytes(trace_source) != self._profile["call_path_trace_hash"]:
+                        raise ContractError("probe call-path collector changed before execution")
+                    (trusted / "call_path_trace.py").write_bytes(trace_source)
+                    (trusted / "call_path_request.json").write_text(
+                        json.dumps(bound_call_path), encoding="utf-8",
+                    )
+                    collector.enable_call_path(bound_call_path)
                 wrapper = _WRAPPER.read_bytes()
                 (trusted / "probe_runner.py").write_bytes(wrapper)
                 if sha256_bytes(wrapper) != self._profile["wrapper_hash"]:
@@ -544,6 +637,13 @@ class DockerProbeSandbox:
         )
         stdout_text, stderr_text = collector.public_text()
         return {
+            **({"call_path": call_path_trace.public_feedback(
+                bound_call_path,
+                collector.call_path_report if status in {"passed", "failed"} else None,
+            ) if bound_call_path is not None else {
+                "schema_version": "public-call-path-feedback-v1", "diagnostic_only": True,
+                "status": "unknown", "reason": "report_unavailable",
+            }} if call_path_request is not None else {}),
             "setup_checks": probe_setup.public_feedback(
                 setup_request, collector.setup_report if status in {"passed", "failed"} else None,
             ),

@@ -84,8 +84,8 @@ def _comparability(root, current, eligible):
 def _failure_diagnostic(events, current_diff, failure_actions):
     """One model diagnostic per refuted candidate, derived from durable starts.
 
-    Host replays do not spend this opportunity. A rejected model request does;
-    neither another replay nor restart can replenish it on the same diff.
+    Host replays do not spend this opportunity. Preparation and execution are
+    separate slots; neither another replay nor restart can replenish them.
     """
     first_failure = next((event for event in events
                           if event["event_type"] == "action_finished"
@@ -95,21 +95,25 @@ def _failure_diagnostic(events, current_diff, failure_actions):
     # A batch start spends the slot even when its action is a cached replay or
     # execution is interrupted before action_started. Only accepted candidates
     # change the workspace; serial batches observe the last completed diff.
-    observed_diff, spent = None, None
+    observed_diff, spent, preparation = None, None, None
     for event in events:
         if event["event_type"] == "action_finished":
             observed_diff = event["payload"]["result"].get("workspace_diff_hash", observed_diff)
         elif (event["event_type"] == "tool_batch_started"
               and event["sequence"] > first_failure["sequence"]
               and observed_diff == current_diff):
-            spent = next((call["action_id"] for call in event["payload"]["tool_calls"]
-                          if call["name"] in {"read_file", "search_files", "run_probe"}), None)
+            calls = event["payload"]["tool_calls"]
+            preparation = preparation or next((
+                call["action_id"] for call in calls if call["name"] in {"read_file", "search_files"}
+            ), None)
+            spent = next((call["action_id"] for call in calls if call["name"] == "run_probe"), None)
             if spent is not None:
                 break
     return {
         "candidate_diff_hash": current_diff,
         "failure_action_id": first_failure["payload"]["result"]["action_id"],
         "status": "spent" if spent else "available", "spent_action_id": spent,
+        "preparation_available": preparation is None, "preparation_action_id": preparation,
     }
 
 

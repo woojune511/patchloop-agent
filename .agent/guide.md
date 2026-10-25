@@ -102,9 +102,10 @@ preserving arguments and tracking across chdir.
 Reserve minimum completion and bounded recovery; count model calls and real tool
 actions separately. Healthy acquired originals replay early and reuse receipts at
 finish; pending/mixed/unknown cases keep fallback. A comparable current original
-failure permits one diagnostic using minimum completion reserves, consumed by the
-model batch even on rejection/replay. See [resource contract](completion-resources.md).
-Keep source anchors and fresh checks; advisory progress never creates hard gates.
+failure permits separate preparation and probe slots from minimum reserves;
+replay cannot renew them. See [resources](completion-resources.md).
+With measured unobserved changed lines, use [call-path diagnosis](repair-path.md)
+before another repair. Keep source anchors and fresh original/check results.
 
 ## Context and recovery
 

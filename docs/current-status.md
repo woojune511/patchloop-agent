@@ -24,47 +24,32 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [judgment pilot](history/2026-10-25-judgment-correction-live.md) ran once on
-Astroid-1333 with gpt-5.4-mini xhigh, normal output 40K, protocol correction 25K
-and the unchanged USD1.20 cap. It ended LIMIT_REACHED at four accepted mutations
-after 23 model calls, 26 actions, 18m05s and USD1.031992500. No submission or
-independent acceptance occurred; counting/billing are known and allocation closed.
+The [call-path investigation](history/2026-10-25-judgment-callpath-analysis.md)
+found that the four mutations in the last judgment pilot retained F0010 because
+the modified branches were not on the failing invocation's path. Other hits came
+from initialization/control; the helper assertion also passed on base source.
 
-The [call-path diagnosis](history/2026-10-25-judgment-callpath-analysis.md) explains
-why all four edits retained F0010 despite consistent judgments. Historical
-changed-line feedback already showed the repair branches were not observed, and
-that evidence reached the next model inputs. Three bounded local operator probes
-(30.817 seconds total, zero provider calls) matched the historical source snapshots
-and actual conditions. The failing directory raises during module-name/spec lookup
-before the changed branches; Pylint then selects the absent `__init__.py`. Other
-line hits came from checker initialization/control. Equivalent helper-test core
-assertions passed on both unchanged and final source.
+The [follow-up implementation](history/2026-10-25-callpath-repair.md) now connects
+that condition to bounded original-call observation before another repair. A
+complete diagnosis binds the prior prediction, candidate and source hashes to the
+next causal revision. Incomplete output stays unverified. Optional selected tests
+use identical bytes on before/after source and distinguish PASS/PASS from assertion
+fail-to-pass. Preparation, malformed-request correction, actual diagnosis and
+comparison children have separate durable resource/recovery handling.
 
-The four edits were three implementation changes and one test addition. A
-1,232-pass regression and one selected test passed after edit 2; final-diff
-regression is NOT_RUN and the original obligation remains refuted. The next
-diagnostic priority is actual name/search-root derivation and downstream file
-selection, with a test that discriminates unchanged and repaired original calls.
-No repair or runtime-policy change was made by the diagnosis.
+Local verification passed 54 core tests in 64.191 seconds and 318 quick tests in
+67.612 seconds, including isolated mock evaluation. The [contract](../.agent/repair-path.md)
+preserves the original failure obligation, required checks, external-state limits
+and current cost/output caps. No paid solve or Docker execution is part of this
+change. The unresolved question is live uptake: whether caller evidence leads to
+an original-call repair and a valid discriminating test under the same limits.
 
-The [judgment implementation](history/2026-10-25-judgment-correction.md) and
-[contract](../.agent/observation-judgment.md) remain. Host calculation was selected
-live, but no mismatch occurred: baseline correction, supersession, linked-note
-revalidation and their extra reserve remain locally tested only. Literal choice
-and requirement mapping remain model-authored; null rules retain legacy semantics.
-
-The [resource changes](history/2026-10-25-completion-resources.md) also remain.
-Call 22 exhausted its admitted 8,979 normal tokens. Reserved protocol correction
-used 13,265 of 25K tokens and generated edit 4, which still failed. Early replay was
-reusable; finish reuse and exceptional minimum-funded diagnosis were not exercised.
-See the [completion resource contract](../.agent/completion-resources.md).
-
-The [preceding pilot](history/2026-10-25-completion-resources-live.md) misclassified
-captured stdout and never edited. The current run establishes consistency and
-failure retention for its selected case, not causal repair gain. Local diagnosis
-now identifies branch non-reachability for the failing input; it does not verify
-a repair or reproduce the historical model trajectory. No further paid diagnostic,
-continuation or cap increase is authorized by the observed unused budget.
+The [judgment pilot](history/2026-10-25-judgment-correction-live.md) remains a failed
+local-development solve: no submission or independent acceptance, allocation
+closed. Host judgment consistency is not repair gain. [Judgment correction](../.agent/observation-judgment.md)
+and [completion reserves](../.agent/completion-resources.md) remain implemented;
+their local mechanism evidence is separate from live exercise. No continuation or
+cap increase follows from unused historical budget.
 
 ## Supporting evidence
 

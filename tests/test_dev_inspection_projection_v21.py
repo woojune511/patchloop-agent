@@ -251,7 +251,7 @@ def test_projection_preserves_current_ordered_tool_inputs_and_limits():
     # Ordered inputs include finish assessment and current purpose selection.
     encoded = json.dumps(structure(schemas), separators=(",", ":"), ensure_ascii=False).encode()
     assert hashlib.sha256(encoded).hexdigest() == (
-        "ddbbd6dfd426d2de6bb7604560274436b37b1105182fcca0ca9fbc138d604b76"
+        "c69dbaa7ea058c50c1913648924fabfdfe471754cce42b605c3a54eaa34c82cd"
         if FROZEN_ARM is None else
         "acdcc28623f92006faaa95a0c58015095e28b851093d0eb983e8d59bcd303222"
     )

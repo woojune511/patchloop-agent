@@ -224,7 +224,7 @@ def test_experiment_guidance_is_generic_optional_and_uses_existing_inputs():
         "question", "python_source", "replay_action_id", "turn_decision",
     }
     if FROZEN_ARM is None:
-        expected.add("purpose")
+        expected.update({"purpose", "call_path"})
         assert "For helper probes, state the expected observation" in schema["description"]
         assert "record_observation(value) exactly once" in schema["description"]
     assert set(schema["parameters"]["properties"]) == expected

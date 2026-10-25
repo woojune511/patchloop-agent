@@ -22,11 +22,11 @@ test_suites:
     command: [python, -m, pytest, -q]
 ```
 
-The model supplies only `suite_id` and 1–8 `targets` (each at most 500 characters),
+The model supplies `suite_id`, 1–8 `targets` (each at most 500 characters), and optional `comparison`,
 plus the ordinary action identity and verify-mode `turn_decision`:
 
 ```json
-{"suite_id":"public-pytest","targets":["tests/test_api.py::TestAPI::test_output"]}
+{"suite_id":"public-pytest","targets":["tests/test_api.py::TestAPI::test_output"],"comparison":null}
 ```
 
 Each target must name a tracked public `.py` file below a declared root and the
@@ -45,6 +45,15 @@ the upstream `not dbt` policy; the required check retains `test/rules`, while th
 optional suite accepts selections below `test`. The full tree is not a calibrated
 mandatory gate: an existing-reference compatibility control failed it. It carries
 no specific CLI node or evaluator hint. Setup failure exits before pytest with code 2.
+
+For a direct registered Python pytest command, `comparison` can select
+`{"baseline":"original_base","mutation_action_id":null}` or `before_mutation`
+with a completed implementation mutation ID. Two isolated executions use identical
+selected test bytes. Assertion fail-to-pass and `PASSED_BOTH` remain distinct;
+setup, collection and body errors give no original-repair credit. pytest-style
+unittest classes/methods and `unittest_*.py` selections are supported. See the
+[comparison, resource and recovery contract](repair-path.md). Ordinary selection
+retains its existing path when comparison is null/omitted.
 
 ## Additive test cases
 
@@ -97,6 +106,9 @@ Durable action results replay without test execution for the same
 diff, using the same execution identity and the existing owned-process/container
 cleanup protocol. This is not an exactly-once process guarantee. Normal runtime
 and task identity checks still reject incompatible run resumes.
+Comparison children instead require durable result receipts for reuse: a child
+start with no result stops as uncertain and is not rerun. The parent reserves
+both child executions before dispatch; recovery never charges finished reuse again.
 
 Source: `patchloop/dev/test_selection.py`, `patchloop/dev/tools.py`, and
 `patchloop/dev/runner.py`. Provider-free validation and claim boundaries are in

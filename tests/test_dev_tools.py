@@ -171,11 +171,11 @@ def test_mutation_tool_contract_is_one_exact_gateway_generated_replacement() -> 
     assert "binds observed evidence" in DEV_SYSTEM_PROMPT
     assert "do not supply evidence span IDs or a patch wrapper" in DEV_SYSTEM_PROMPT
     assert (
-        "Request either 1-4 read_file/search_files calls or exactly one other supplied tool."
+        "Request 1-4 read_file/search_files calls or one other supplied tool; never mix."
         if FROZEN_ARM is None else "Every response must request either"
     ) in DEV_SYSTEM_PROMPT
     assert (
-        "Each call needs bounded public turn_decision with mode\nmatching its tool family."
+        "Each call needs public turn_decision matching its tool family."
         if FROZEN_ARM is None else "Every call carries a bounded public turn_decision"
     ) in DEV_SYSTEM_PROMPT
     assert "memory_update" in DEV_SYSTEM_PROMPT

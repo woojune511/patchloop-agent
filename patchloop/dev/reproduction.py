@@ -375,7 +375,7 @@ def marker(binding):
     return "\x1ePATCHLOOP-REPRODUCTION:" + binding["case_id"] + ":"
 
 
-def program(source, binding):
+def program(source, binding, call_path=False):
     trace = _TRACE
     channel = binding["definition"].get("observation_channel")
     if probe_invocation.supports(channel):
@@ -385,6 +385,20 @@ def program(source, binding):
         trace = trace.replace("_pr_rows = []", _RECORD + "\n_pr_rows = []", 1).replace(
             '{"calls": _pr_rows, "incomplete": _pr_more[0]}',
             '{"calls": _pr_rows, "incomplete": _pr_more[0], "observation": _pr_observation}', 1)
+    if call_path:
+        if channel not in probe_invocation.CAPTURE_CHANNELS:
+            raise ContractError("call-path diagnosis requires a captured original invocation")
+        # These optional hooks surround only the actual invocation, after adapter
+        # setup and before the existing capture finally. Default observer bytes stay exact.
+        old = "   value = target(*args, **kwargs)"
+        new = ("   _patchloop_call_path_begin(row['call_id'])\n"
+               "   try:\n"
+               "    value = target(*args, **kwargs)\n"
+               "   finally:\n"
+               "    _patchloop_call_path_end(row['call_id'])")
+        if trace.count(old) != 1:
+            raise ContractError("call-path observer hook location is unavailable")
+        trace = trace.replace(old, new, 1)
     prefix = (
         f"_pr_target = {binding['definition']['entrypoint']!r}\n"
         f"_pr_marker = {marker(binding)!r}\n_pr_source = "

@@ -31,6 +31,8 @@ _UNIQUE_TURN_EVENTS = {
 _UNIQUE_ACTION_EVENTS = {
     "attempt_card", "repair_recheck_started", "repair_recheck_finished",
     "probe_recheck_started", "probe_recheck_finished", "probe_recheck_skipped",
+    "test_comparison_prepared", "test_comparison_child_started",
+    "test_comparison_child_finished", "test_comparison_finished",
 }
 _UNIQUE_RUN_EVENTS = {"manifest_recorded", "submission_recorded", "evaluator_finished",
                       "context_window_activated", "repair_delivered",

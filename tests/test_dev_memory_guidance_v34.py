@@ -53,7 +53,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     tools = _legacy_compression_surface(tools)
     encoded = json.dumps(_without_descriptions(tools), ensure_ascii=False, separators=(",", ":"))
     assert hashlib.sha256(encoded.encode()).hexdigest() == (
-        "bbf553e154157af73493b323cfce7d8f6f70596891de6fd4e00e5b7f7561bf5f"
+        "9086f10d005b06e9e0fedf3f317f81c2f225625d8bd706b80a8ebf92758039e5"
         if FROZEN_ARM is None else
         "e02c7ceb93201640950920b260422b0ae35fce974e3728b79e63345fb4bcf0e5"
     )
@@ -66,7 +66,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
 @pytest.mark.parametrize(("names", "expected"), [
     pytest.param(
         ("read_file", "run_check", "run_probe", "search_files", "stop_task"),
-        "9d1b7d18806cb9d88285176925b653ce832d89a8316dad8e42a2c2f86e8ed9d0"
+        "47d2c13fdcd804b33d69ab2023dd4048b17756aff10773c43ef4981e4cf2705f"
         if FROZEN_ARM is None else
         "544c19f4d8e63f8a8810efe1dd4cd0adf3dee51cdb0145a4509de554027739c2",
         id="names0-99567faf1ea920a9157e5ea6618c5d43e7d56e441820be941403a025d9b2abe9"
@@ -74,7 +74,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     ),
     pytest.param(
         ("finish_task", "read_file", "replace_text", "run_probe", "search_files", "stop_task"),
-        "ade5489c5e601469bc7fdf2e4d58ff3b515a8af3b669b0c3c1901929d61c91f2"
+        "c6f6b5436498c155edf8121243e42d6e324ed17bf3e2fd81754d52549a6abf61"
         if FROZEN_ARM is None else
         "b817201c9d1aa8432575b0c1b55015dc01bc08a2b002e3e2cc09ab13bfa229c6",
         id="names1-de57dc4e83f8b26994c5df5f659cc208bbd3b348233d0ad3640493ffd5b90bd3"
@@ -82,7 +82,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     ),
     pytest.param(
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task"),
-        "79bbdbec270758a5c264aa19525a82268092d485ac6b86bbf61d783cd93d9d50"
+        "cd8da41dbc06b5480e09e0ba0389475d83b1a0da258c3c51cc39446e384eb6c2"
         if FROZEN_ARM is None else
         "310f8ec3dd129c93fb10c2a0589decf38eb09ce60e395ef906ac814e399e5139",
         id="names2-923a71312af5fa8d677ce72762b2f045a47ff2ebc4e084caaf1f57a2c11e7032"
@@ -91,7 +91,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     pytest.param(
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task",
          "finish_task"),
-        "78930704798c380ca8072073066bf69c4fbcdfb811e1a20b8583ec178de8badb"
+        "59dc4f07e28e051c7d0a077cec2ee9aa539d1817adeaf1d626c6dd4c692300ad"
         if FROZEN_ARM is None else
         "6302bc9d248be03d6e1430f0102a0e5c00ecb7883c25d453945f979f21fd3af7",
         id="names3-53d8c9ffaa20544b633c883b1e40010113b680722f23caebeb0ef991f1738caa"
@@ -116,7 +116,7 @@ def test_surrounding_action_guidance_identity():
     # Current prose fits the original 8,000-character contract with scope separation.
     # Historical J0/J1 arms retain their exact earlier surrounding-guidance identities.
     assert hashlib.sha256(canonical_json([prefix, suffix]).encode()).hexdigest() == (
-        "7b4496f8a4ee1846f02f2295315072039ade89389323009f2722d313928f5861"
+        "168aeb83672184ef67a25b7b8e9443153935d379bc554adc4192495a4ac54c28"
         if FROZEN_ARM is None else
         "2d0a9063da8d508a3c1218903cae12e33aa5db97f4d5655ca645fd5d52dc1331"
         if JUDGMENT else "c6439ce32e7724ed5d4c08dc1f207186b45e34234947c2867d7a65f096ce10a3"
@@ -176,7 +176,7 @@ def test_guidance_identity_changes_without_changing_run_schema_or_limits():
     # Common action/probe guidance changes the overall surface identity;
     # argument and description identities remain independently pinned above.
     assert dev_tool_surface_hash() == (
-        "sha256:91b02c196c1580d16f859ba3cf4fbcf11be6d3c21b101f6e4ed6b533be2715c3"
+        "sha256:cb51a65c02044359360bcd9760c38e014e79fbb62a7835f5ac73db7b7a4c6276"
         if FROZEN_ARM is None else
         "sha256:57193859890419b79cb7f4927c37796d044bc4bf7159c51ddf17723849529e26"
     )

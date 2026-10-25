@@ -133,6 +133,31 @@ def _compare(results: list[dict], selectors: list[dict]) -> dict:
     return {"status": status, "tests": pairs}
 
 
+def compare_selected_observations(before: dict, after: dict, check_id: str) -> dict:
+    """Reuse phase/collection comparison without claiming original-bug coverage.
+
+    A body exception can be a broken test or invocation. Only an observed
+    assertion transition is positive test evidence here; original-call evidence
+    remains the responsibility of the independently bound reproduction contract.
+    """
+    rows = [{"phase": phase, "pytest": True, "check_id": check_id,
+             "observation": observation}
+            for phase, observation in (("base_with_tests", before), ("patched", after))]
+    result = _compare(rows, [])
+    exceptions = [phase.get("exception_type")
+                  for observation in (before, after)
+                  for test in observation.get("tests", [])
+                  for phase in test.get("phases", [])
+                  if phase.get("when") == "call" and phase.get("outcome") == "failed"]
+    if result["status"] == "OBSERVED_FAIL_THEN_PASS" and any(
+        exception != "builtins.AssertionError" for exception in exceptions
+    ):
+        result.update(status="INCONCLUSIVE", reason="unexpected_test_body_exception")
+    elif any(observation.get("status") == "NOT_COLLECTED" for observation in (before, after)):
+        result.update(status="NOT_COLLECTED", reason="selected tests were not fully collected")
+    return {**result, "requirement_fit": "UNVERIFIED", "original_requirement_credit": False}
+
+
 def _separate(manager, base, patched, paths, deadline):
     selectors, test_paths, implementation_paths = [], [], []
     for path in paths:
