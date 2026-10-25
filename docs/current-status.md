@@ -24,36 +24,37 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [40K pilot](history/2026-10-25-output40-live.md) acquired the original failure,
-made three edits and received comparable early replay after each. All retained
-F0010; regression checks, submission and independent evaluation were not reached.
-The [diagnosis](history/2026-10-25-output40-diagnosis.md) found that the protected
-physical-call horizon closed fresh diagnosis before the monetary stop, and the
-40K correction reserve left only two funded minimum calls where three were needed.
-Feedback delivery alone did not produce a discriminating observation or repair.
+The [resource pilot](history/2026-10-25-completion-resources-live.md) ran once with
+normal output 40K, independent correction 25K and the same USD1.20 cap. It ended
+INCOMPLETE_RESPONSE after 30 model calls, 28 actions and USD1.080337500, with no
+edits, regression checks, submission or independent acceptance.
 
-The [resource follow-up](history/2026-10-25-completion-resources.md) implements:
+Actual original-call stdout contained F0010. The authored probe checked stderr
+only and recorded false/false; the exact captures reached the next model input,
+but its public notes treated the failure as absent. Two original attempts ended
+without formal acquisition, followed by 26 source inspections. The final normal
+response exhausted its admitted 15,154 tokens; the reserved 25K correction then
+also exhausted without a tool call. Counting/billing were known; allocation closed.
 
-- Reuse-aware forecasts: healthy acquired cases already settled on the current
-  diff omit the unreachable failed-finish call/action. Actual replay/check/edit
-  work remains; pending, mixed and unknown cases retain final fallback.
-- Independent correction output: optional `--max-correction-output-tokens` binds
-  a separate allowance under `completion-recovery-v1`. Omission preserves the old
-  coupled ceiling; explicit values are checked on resume.
-- One bounded diagnostic after comparable original failure on a candidate. It may
-  spend speculative recovery while retaining the minimum repair, checks, replay
-  and finish. Rejected/cached requests consume it; restart and same-diff replay
-  cannot renew it. A diagnostic probe budgets for a possible additional case.
+The [resource follow-up](history/2026-10-25-completion-resources.md) and its
+[contract](../.agent/completion-resources.md) remain implemented: reuse-aware
+completion forecasts, an independent correction allowance and one bounded
+diagnostic after comparable original failure on a candidate. The separate
+correction reservation/dispatch was exercised. Reuse savings and the diagnostic
+opportunity were not exercised because no acquired failed candidate existed.
+The earlier [40K pilot](history/2026-10-25-output40-live.md) acquired a failure and
+made three ineffective edits; one stochastic trajectory per condition does not
+establish a causal regression or improvement.
 
-The original invocation v4 identity and early feedback/reuse machinery remain in
-place. Current comparable failure still blocks finish; missing/incomparable
-observations remain unverified. See the [resource contract](../.agent/completion-resources.md).
-Local validation passed: 56 focused checks (45s), 12 final diagnostic checks (15s),
-305 quick checks (31s), Ruff and isolated mock evaluation. These establish local
-mechanics. Live repair gain, useful diagnosis and output sufficiency remain
-unverified. General output and
-cost-policy defaults are unchanged. All paid allocations are closed; no new paid
-run, continuation, cap increase or target evaluation is authorized by local tests.
+Next question: how to check that an authored baseline observation agrees with
+captured diagnostic output before its interpretation drives repair planning.
+The current evidence distinguishes a predicate/channel error from lost capture;
+no corrective implementation or new paid run is implied. The original invocation
+v4 identity and finish gates remain: comparable failure blocks finish, and
+missing/incomparable evidence stays unverified. Local validation remains 56 focused
+checks (45s), 12 final diagnostic checks (15s), 305 quick checks (31s), Ruff and
+isolated mock evaluation. Live repair gain and useful diagnosis remain unverified;
+general output and cost-policy defaults are unchanged.
 
 ## Supporting evidence
 
@@ -84,6 +85,6 @@ submission, independent task acceptance and safety are separate. Mock safety is 
 
 Do not start Docker Desktop or pull/build evaluator images automatically. Preserve
 exact recovery identities, zero SDK retries and stop-all on count/transport/billing
-uncertainty. The latest live run observed comparable failure after an acquired
-original case; it did not reach finish or independent evaluation. Linux CI and
-general improvement remain unverified.
+uncertainty. The latest live run captured the original symptom but failed formal
+acquisition because of the authored predicate; it did not reach mutation, finish
+or independent evaluation. Linux CI and general improvement remain unverified.
