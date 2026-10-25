@@ -14,3 +14,4 @@
 - [Judgment pilot: consistent original failure, ineffective repairs](../2026-10-25-judgment-correction-live.md)
 - [Call-path diagnosis: changed branches miss the failing input](../2026-10-25-judgment-callpath-analysis.md)
 - [Original-call diagnosis, repair linkage and selected-test comparison](../2026-10-25-callpath-repair.md)
+- [Call-path pilot: original reproduced, no first repair](../2026-10-25-callpath-live.md)

@@ -24,32 +24,31 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [call-path investigation](history/2026-10-25-judgment-callpath-analysis.md)
-found that the four mutations in the last judgment pilot retained F0010 because
-the modified branches were not on the failing invocation's path. Other hits came
-from initialization/control; the helper assertion also passed on base source.
+The [new live pilot](history/2026-10-25-callpath-live.md) acquired the original
+F0010 failure but made no mutation. It spent USD1.050511650 in 650.323 seconds:
+31 model calls, 27 source inspections and two probes. The helper probe failed with
+NameError; that error and the original failure reached subsequent model inputs.
+After exploration closed, the ordinary response exhausted 40,000 output tokens
+and its single correction exhausted 25,000. Terminal: INCOMPLETE_RESPONSE.
+No submission, required checks or independent acceptance occurred. Allocation closed.
 
-The [follow-up implementation](history/2026-10-25-callpath-repair.md) now connects
-that condition to bounded original-call observation before another repair. A
-complete diagnosis binds the prior prediction, candidate and source hashes to the
-next causal revision. Incomplete output stays unverified. Optional selected tests
-use identical bytes on before/after source and distinguish PASS/PASS from assertion
-fail-to-pass. Preparation, malformed-request correction, actual diagnosis and
-comparison children have separate durable resource/recovery handling.
+The [call-path mechanism](../.agent/repair-path.md) activates after a comparable
+failed mutation with unobserved changed lines. This run never reached that trigger:
+diagnostic request, execution, evidence-linked revision and paired selected tests
+were all NOT_EXERCISED. It neither validates nor rejects their repair benefit.
+The [implementation](history/2026-10-25-callpath-repair.md) retains its local evidence:
+54 core tests in 64.191 seconds and 318 quick tests in 67.612 seconds, including
+isolated mock evaluation. The selected task's pytest wrapper is also outside the
+new direct-pytest comparison contract; no comparison was attempted in this pilot.
 
-Local verification passed 54 core tests in 64.191 seconds and 318 quick tests in
-67.612 seconds, including isolated mock evaluation. The [contract](../.agent/repair-path.md)
-preserves the original failure obligation, required checks, external-state limits
-and current cost/output caps. No paid solve or Docker execution is part of this
-change. The unresolved question is live uptake: whether caller evidence leads to
-an original-call repair and a valid discriminating test under the same limits.
-
-The [judgment pilot](history/2026-10-25-judgment-correction-live.md) remains a failed
-local-development solve: no submission or independent acceptance, allocation
-closed. Host judgment consistency is not repair gain. [Judgment correction](../.agent/observation-judgment.md)
-and [completion reserves](../.agent/completion-resources.md) remain implemented;
-their local mechanism evidence is separate from live exercise. No continuation or
-cap increase follows from unused historical budget.
+The active bottleneck is reaching an evidence-based first repair under the existing
+limits. The next question is whether a valid bounded diagnostic before that first
+repair can replace unproductive source exploration. After that, actual uptake of
+the conditional path diagnosis remains unresolved. The earlier [call-path audit](history/2026-10-25-judgment-callpath-analysis.md)
+still explains the previous four ineffective edits; this fresh trajectory failed
+at an earlier stage. Keep original-failure gating, [host judgment](../.agent/observation-judgment.md)
+and [completion reserves](../.agent/completion-resources.md), without inferring
+repair gain or increasing limits from unused budget.
 
 ## Supporting evidence
 
@@ -80,6 +79,6 @@ submission, independent task acceptance and safety are separate. Mock safety is 
 
 Do not start Docker Desktop or pull/build evaluator images automatically. Preserve
 exact recovery identities, zero SDK retries and stop-all on count/transport/billing
-uncertainty. The latest live run acquired the original failure and retained it
-through four ineffective edits; finish and independent evaluation were NOT_RUN.
+uncertainty. The latest live run acquired the original failure but never mutated
+source; finish and independent evaluation were NOT_RUN.
 Linux CI and general improvement remain unverified.
