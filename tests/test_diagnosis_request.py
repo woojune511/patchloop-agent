@@ -7,8 +7,9 @@ import pytest
 from test_dev_tools import mutation_call
 from test_repair_path_diagnosis import PATH, diagnosis, setup, state
 
-from patchloop.dev import diagnosis_request
+from patchloop.dev import diagnosis_request, probe_cases
 from patchloop.dev.tools import dev_tool_schemas
+from patchloop.errors import ContractError
 from patchloop.sandbox import call_path_trace as trace
 from patchloop.util import sha256_json
 
@@ -39,6 +40,77 @@ def test_model_schema_selects_functions_and_fields_without_host_coordinates():
     assert "lines" not in watch["properties"]
     assert properties["python_source"]["maxLength"] == 8000
     assert properties["replay_action_id"]["maxLength"] == 500  # Ordinary replay remains.
+    assert [tool] == dev_tool_schemas(
+        finish_enabled=False, allowed_tools={"run_probe"}, path_diagnosis_pending=False)
+
+
+@pytest.mark.parametrize("probe_policy", ["none", *sorted(probe_cases.POLICIES)])
+@pytest.mark.parametrize("agent_policy", ["current", "thin"])
+def test_pending_schema_allows_only_diagnostic_selection(probe_policy, agent_policy):
+    tool = dev_tool_schemas(
+        finish_enabled=False, allowed_tools={"run_probe"}, probe_policy=probe_policy,
+        agent_policy=agent_policy, path_diagnosis_pending=True,
+    )[0]
+    parameters = tool["parameters"]
+    properties = parameters["properties"]
+    for key in ("question", "python_source", "replay_action_id", "purpose"):
+        assert properties[key] == {"type": "null"}
+    assert properties["call_path"]["type"] == "object"
+    assert set(properties["call_path"]["required"]) == {"focus", "watches"}
+    decision = "turn_decision" if agent_policy == "current" else "memory_update"
+    assert set(parameters["required"]) == set(properties) == {
+        "question", "python_source", "replay_action_id", "purpose", "call_path", decision}
+    assert parameters["additionalProperties"] is False
+    assert len(tool["description"]) < 1_200
+    assert "observed_target" not in tool["description"]
+    assert "Choose purpose" not in tool["description"]
+
+
+@pytest.mark.parametrize(("key", "value", "required_value"), [
+    ("question", "Which caller reaches this branch?", "null"),
+    ("python_source", "print('new program')", "null"),
+    ("replay_action_id", "another-call", "null"),
+    ("purpose", {"kind": "helper"}, "null"),
+    ("reproduction", {}, "null"),
+    ("case_id", "case-1", "null"),
+    ("reference_action_id", "prior-call", "null"),
+    ("save_program", True, "false"),
+])
+def test_incompatible_fields_are_identified_before_source_construction(key, value, required_value):
+    def unexpected_preflight(*_args, **_kwargs):
+        pytest.fail("invalid fields must be rejected before source construction")
+
+    with pytest.raises(ContractError) as caught:
+        diagnosis_request.prepare({key: value}, {"status": "needs_path_diagnosis"},
+                                  None, unexpected_preflight)
+    fields = caught.value.details["invalid_fields"]
+    assert len(fields) == 1 and fields[0]["path"] == f"/{key}"
+    assert f"must be {required_value}" in fields[0]["requirement"]
+    assert f"/{key}" in str(caught.value)
+
+
+@pytest.mark.parametrize("probe_policy", ["none", *sorted(probe_cases.POLICIES)])
+def test_gateway_keeps_diagnosis_errors_before_other_probe_preparation(
+    gateway_factory, probe_policy,
+):
+    from test_probe_purpose import probe
+
+    gateway, _, _, backend = setup(gateway_factory)
+    gateway.probe_policy = probe_policy
+    call = symbolic(gateway, "incompatible-fields")
+    call.arguments.update(question="Which path ran?",
+                          purpose=probe(gateway.public_task).arguments["purpose"])
+    expected = ["/question", "/purpose"]
+    if probe_policy == "none":
+        call.arguments["replay_action_id"] = "unknown-root"
+        expected.insert(1, "/replay_action_id")
+    result = gateway.execute(call)
+    assert result.status == "failed" and result.output["probe_stage"] == "preflight_rejected"
+    assert [f["path"] for f in result.output["invalid_fields"]] == expected
+    assert all(path in result.message for path in expected)
+    assert backend.calls == 2 and state(gateway)["rejected_requests"] == 1
+    assert not state(gateway)["execution_attempted"]
+    assert gateway.execute(call).replayed and backend.calls == 2
 
 
 def static_fixture(tmp_path):
@@ -241,14 +313,30 @@ def test_scripted_diagnosis_repair_reaches_isolated_mock_evaluation(
         "watches": [{"origin": "workspace", "path": PATH, "function": "parse_rows",
                      "fields": ["text"]}],
     }
+    incompatible = selected.model_copy(deep=True, update={"action_id": "mixed-diagnosis"})
+    incompatible.arguments.update(
+        question="Which caller reaches the changed branch?",
+        purpose=probe(smoke_package.public).arguments["purpose"],
+    )
     steps = iter([read_calls()[1], diagnostic_probe(smoke_package.public, "original",
-                  corrected=True), wrong, selected, fixed])
+                  corrected=True), wrong, incompatible, selected, fixed])
 
     class ScriptedDiagnosis(MockDevAdapter):
         def next_turn(self, context, tools):
             call = next(steps, None)
             if call is not None:
                 assert call.name in {tool["name"] for tool in tools}
+                if call.name == "run_probe":
+                    properties = next(t for t in tools if t["name"] == "run_probe")[
+                        "parameters"]["properties"]
+                    if call.arguments.get("call_path"):
+                        # Deliberately bypass the provider schema once to exercise host
+                        # rejection, then correct just the two offending fields.
+                        assert properties["question"] == properties["purpose"] == {"type": "null"}
+                        assert properties["call_path"]["type"] == "object"
+                    else:
+                        assert properties["question"]["type"] == ["string", "null"]
+                        assert "anyOf" in properties["purpose"]
                 return DevModelTurn(tool_calls=[call])
             return super().next_turn(context, tools)
 
@@ -258,15 +346,32 @@ def test_scripted_diagnosis_repair_reaches_isolated_mock_evaluation(
     result = runner.run_dev(request)["runs"][0]
     assert result["terminal"] == "EVALUATOR_PASS", result
     assert backend.calls == 4
+    events = DevJournal(tmp_path, result["run_id"]).events()
     results = {event["payload"]["action_id"]: event["payload"]["result"]
-               for event in DevJournal(tmp_path, result["run_id"]).events()
+               for event in events
                if event["event_type"] == "action_finished"}
+    rejected = results["mixed-diagnosis"]
+    assert rejected["status"] == "failed"
+    validation = rejected["output"]["request_validation"]
+    assert [f["path"] for f in validation["invalid_fields"]] == ["/question", "/purpose"]
+    correction = results["host-diagnosis"]["output"]["request_validation"]["correction"]
+    assert correction == {"status": "corrected", "previous_action_id": "mixed-diagnosis",
+                          "changed_error_fields": ["/question", "/purpose"]}
+    starts = {e["payload"]["action_id"]: e["payload"] for e in events
+              if e["event_type"] == "action_started"}
+    assert starts["mixed-diagnosis"]["repair_path_link"] == starts["host-diagnosis"][
+        "repair_path_link"]
+    assert starts["mixed-diagnosis"]["arguments"] == incompatible.arguments
+    assert starts["host-diagnosis"]["arguments"] == selected.arguments
+    dispatched = [e["payload"]["action_id"] for e in events
+                  if e["event_type"] == "probe_execution_started"]
+    assert "mixed-diagnosis" not in dispatched and dispatched.count("host-diagnosis") == 1
     assert results["host-diagnosis"]["output"]["call_path"]["status"] == "complete"
     assert results["diagnosed-repair"]["output"]["mutation"]["repair_path_link"][
         "diagnosis_action_id"] == "host-diagnosis"
     replays = [r["output"]["reproduction"]["comparison"] for action, r in results.items()
                if action.startswith("completion-reproduction-")]
     assert replays == ["mismatched", "matched"]  # Fresh automatic checks; finish reuses success.
-    assert all(r["status"] == "succeeded" for r in results.values())
+    assert all(r["status"] == "succeeded" for a, r in results.items() if a != "mixed-diagnosis")
     assert result["evaluator"]["claim_eligible"] is False
     assert result["evaluator"]["safety_state"] == "NOT_RUN"

@@ -5326,6 +5326,7 @@ def _run_one_active(
             probe_policy=request.probe_policy,
             probe_recheck_policy=request.probe_recheck,
             probe_environment=getattr(gateway.probe_sandbox, "environment", None),
+            path_diagnosis_pending=policy.workflow_gate == "needs_path_diagnosis",
             history_search_policy=request.history_search_policy,
         )
         if extension is not None:

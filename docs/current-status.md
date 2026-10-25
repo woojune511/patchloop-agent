@@ -24,33 +24,31 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [diagnosis construction change](history/2026-10-26-diagnosis-request.md) moves
-original replay identity and bounded watch-line selection into the host. The model
-selects public functions/fields; the host freezes source hashes and the resolved
-request for recovery. Preparation availability now agrees with offered tools in
-both model-facing path states. Optional preparation does not inflate minimum
-completion; a required repair-anchor read is reserved once.
+The [diagnosis-mode change](history/2026-10-26-diagnosis-mode.md) projects the existing
+run_probe from the host workflow gate: pending diagnosis requires a symbolic
+call_path, with question/source/replay/purpose restricted to null. Its description
+covers only selecting public functions/fields. The host still binds the frozen
+original and current source. Exact invalid-field feedback is preserved through
+later preparation; request correction and actual execution remain separately bounded.
 
-Local evidence remains 79 focused PASS in 42.671 seconds, Ruff PASS, and 349 quick
-PASS in 79.522 seconds including isolated mock evaluation. Saved requests pass
-static construction, and a scripted tiny repair reaches isolated mock acceptance.
+Core local validation: 96 PASS in 45.373 seconds, Ruff PASS. The saved rejected
+request reports question/purpose precisely; clearing just those fields passes
+static construction. Nine ordinary-mode schemas are byte-identical to baseline.
+A scripted mixed-request rejection, correction, diagnosis, repair, original recheck
+and submission reaches isolated mock evaluation. Quick integration: 366 PASS in
+73.608 seconds, including isolated mock evaluation.
 
-The [new live pilot](history/2026-10-26-diagnosis-request-live.md) ended
-VERIFICATION_INCOMPLETE: one mutation left the original F0010 unchanged. The model
-selected symbolic functions/fields but populated question and purpose, which this
-mode requires to be null. Admission rejected the request before host construction;
-the error named replay/source instead of the offending fields. No path diagnostic
-executed. Both delivered path-preparation projections matched offered tools.
-It spent $1.059124500 of $1.20; that allocation is closed. Checks, submission and
-independent evaluation were NOT_RUN; helper correction was NOT_EXERCISED.
+The [last live pilot](history/2026-10-26-diagnosis-request-live.md), before this change,
+ended VERIFICATION_INCOMPLETE: one mutation left F0010 unchanged and its diagnostic
+request was rejected before construction. It spent $1.059124500 of $1.20; that
+allocation is closed. Checks, submission and independent evaluation were NOT_RUN.
+Both path-preparation projections matched offered tools; helper correction was
+NOT_EXERCISED. Current changes have not had a live model pilot.
 
-The active question is how to make the pending-diagnosis request mode explicit and
-its rejection actionable: the delivered prose requires null fields, but the common
-schema still permits incompatible values. Two responses exhausted their funded
-output ceilings; the separate 25K correction returned the rejected request. The
-terminal cost reserve funded three of four minimum completion calls. This does not
-establish that a larger cap or valid admission would repair F0010. No automatic
-continuation is authorized.
+The remaining question is whether the narrowed contract enables an informative
+diagnostic and an evidence-based repair within the existing limits. Static request
+admission, shorter descriptions and local mock completion do not establish model
+uptake, output-token savings or F0010 repair. No automatic continuation is authorized.
 
 ## Supporting evidence
 

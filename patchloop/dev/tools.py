@@ -241,6 +241,7 @@ def dev_tool_schemas(
     probe_policy: str = "none",
     probe_recheck_policy: str = "none",
     probe_environment: dict[str, Any] | None = None,
+    path_diagnosis_pending: bool = False,
     agent_policy: str = "current",
     history_search_policy: history_search.Policy = "none",
 ) -> list[dict[str, Any]]:
@@ -506,6 +507,8 @@ def dev_tool_schemas(
                 schemas[-1]["description"] = schemas[-1]["description"].replace(
                     "cases never block finish or trigger automatic execution.", TOOL_DESCRIPTION,
                 )
+        if path_diagnosis_pending:
+            schemas[-1] = diagnosis_request.tool_schema()
     if test_suite_ids:
         from patchloop.dev import test_comparison
 
@@ -2708,7 +2711,8 @@ class DevToolGateway:
                     call.arguments.get("requirement_ref"), self.public_task,
                 ) if "requirement_ref" in call.arguments else None
             )
-        if call.name == "run_probe" and (replay_probe or self.probe_policy in probe_cases.POLICIES):
+        if (call.name == "run_probe" and preflight_error is None
+                and (replay_probe or self.probe_policy in probe_cases.POLICIES)):
             try:
                 if (self.probe_policy == probe_cases.REFERENCE_POLICY
                         and "save_program" in call.arguments):

@@ -22,6 +22,13 @@ The host binds the pending original root and failing call from public receipts.
 At least one watch must intersect the refuted mutation's unobserved changed range.
 The original program, arguments, expected output and failure declaration stay fixed.
 
+At `needs_path_diagnosis`, the existing run_probe schema requires a non-null
+symbolic call_path and restricts question/python_source/replay_action_id/purpose
+to null. Its short description covers only this diagnostic selection; helper,
+new-original and saved-case creation instructions are absent. The host selects
+the mode from the workflow gate before counting/preparing the request. Other
+gates retain the ordinary schemas and turn-decision metadata is still attached.
+
 The host resolves unique functions with AST, then compiles public source without
 executing it to select up to 32 source lines in each function's own frame. Current
 changed lines take priority, then ascending remaining lines. Artificial compiler
@@ -35,6 +42,11 @@ One invalid request may be corrected; two rejected requests exhaust the bounded
 opportunity. A rejected request does not become an executed diagnostic. One
 dispatched attempt with unknown/incomplete output exhausts execution capacity.
 Restarts, another action ID and repeated original replays cannot refill it.
+Incompatible fields are returned as exact invalid_fields paths with their required
+null/false values. Later replay/case preparation cannot overwrite an existing
+preflight error. Existing correction receipts compare the named fields and retain
+the same pending case/candidate link; original program/oracle fields are never
+silently discarded or changed to admit a request.
 
 ## Observation and evidence linkage
 
