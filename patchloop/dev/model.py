@@ -78,8 +78,9 @@ A failure concerns its checked diff. Recheck a repair before assuming it persist
 another edit can use independent current evidence. Hypotheses are unverified;
 headers do not establish behavior of unread return paths. Repeated failures invite
 review; causal_revision is optional except after a required call-path diagnosis.
-For needs_path_diagnosis, use one preparation read if needed, then replay the original
-with call_path: failing call, actual caller focus, watched changed lines. Separate
+For needs_path_diagnosis, select caller/watch functions and fields in call_path;
+leave replay_action_id null. The host binds original call and lines. Read if offered.
+Separate
 initialization/control, function entry and branch execution; unknown is not no-hit.
 Connect the next edit's causal_revision to the completed diagnosis. It grants no repair credit.
 A source read is required for edit admission only when exact evidence is missing;

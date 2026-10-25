@@ -61,16 +61,25 @@ def test_control_changes_only_replay_schema_and_rejects_unoffered_mode():
     a = next(t for t in projected if t["name"] == "run_probe")
     b = next(t for t in schemas if t["name"] == "run_probe")
     assert "replay_action_id" not in canonical_json(a)
-    # OFF removes replay guidance only, retaining the same strict reproduction input.
+    assert "call_path" not in canonical_json(a)
+    assert "When repair_path needs diagnosis" not in a["description"]
+    # OFF removes explicit and host-bound replay, retaining strict fresh reproduction.
     assert a["parameters"]["properties"]["purpose"] == (
         b["parameters"]["properties"]["purpose"])
     assert reproduction.DESCRIPTION.replace(" " + reproduction.REPLAY_DESCRIPTION, "") in (
         a["description"])
     assert "replay_action_id" in b["parameters"]["required"]
+    assert "call_path" in b["parameters"]["required"]
     assert diagnostic.project_tools(schemas, "B") == schemas
-    with diagnostic.surface("A"), pytest.raises(ContractError, match="not offered"):
-        DevToolGateway.execute(None, RequestedTool(
-            name="run_probe", action_id="attempt", arguments={"replay_action_id": "old"}))
+    target = {"origin": "workspace", "path": "public.py", "function": "run"}
+    for arguments in (
+        {"replay_action_id": "old"},
+        {"replay_action_id": None,
+         "call_path": {"focus": target, "watches": [{**target, "fields": []}]}},
+    ):
+        with diagnostic.surface("A"), pytest.raises(ContractError, match="not offered"):
+            DevToolGateway.execute(None, RequestedTool(
+                name="run_probe", action_id="attempt", arguments=arguments))
 
 
 def test_preparation_has_identical_public_context_and_preserves_parent(prepared, source):

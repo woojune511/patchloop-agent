@@ -55,11 +55,25 @@ def test_diagnosis_preserves_edit_original_recheck_check_and_finish(short):
         assert policy.workflow_gate == "needs_path_diagnosis"
         guidance = runner._completion_guidance(state, policy)
         assert guidance["next_action"] == {
-            "tool": "run_probe", "replay_action_id": "original", "call_path": {"call_id": "call-1"},
+            "tool": "run_probe", "replay_action_id": None,
         }
+        assert "omit call_id and lines" in guidance["message"]
+        assert "No preparation read is offered" in guidance["message"]
+        review = {"completion": state.completion_verification}
         public = compact_model_state({
-            "action_horizon": runner._repair_inspection_payload(policy)}, [])
-        assert public["action_horizon"]["repair_path_diagnosis"] == policy.repair_path_diagnosis
+            "action_horizon": runner._repair_inspection_payload(policy),
+            "reproduction_review": runner._reproduction_review_resources(review, policy),
+        }, [])
+        path = public["action_horizon"]["repair_path_diagnosis"]
+        assert path == public["reproduction_review"]["completion"]["repair_path"]
+        assert path == policy.repair_path_diagnosis
+        assert path["preparation_allowance_available"] is True
+        assert path["preparation_available"] is False
+        assert path["preparation_required_for_completion"] is False
+        assert path["preparation_blocked_reason"] == "completion_horizon"
+        # Resource projection must not spend or rewrite the durable allowance.
+        assert state.completion_verification["repair_path"]["preparation_available"] is True
+        assert "preparation_allowance_available" not in review["completion"]["repair_path"]
 
 
 def test_single_preparation_leaves_actual_diagnostic_available_and_has_no_edit_bypass():
@@ -68,10 +82,79 @@ def test_single_preparation_leaves_actual_diagnostic_available_and_has_no_edit_b
     policy = runner._tool_policy(gateway, counters(model=5, tools=6), DevLimits(), snapshot=state)
     assert policy.allowed_tools == {"read_file", "search_files", "run_probe", "stop_task"}
     assert policy.max_parallel_reads == 1
+    assert policy.repair_path_diagnosis["preparation_available"] is True
+    assert policy.repair_path_diagnosis["preparation_blocked_reason"] is None
     assert set(policy.tools_closing_after_this_turn) == {"read_file", "search_files"}
     state.completion_verification["repair_path"]["preparation_available"] = False
     after = runner._tool_policy(gateway, counters(model=4, tools=5), DevLimits(), snapshot=state)
     assert after.allowed_tools == {"run_probe", "stop_task"}
+    assert after.repair_path_diagnosis["preparation_allowance_available"] is False
+    assert after.repair_path_diagnosis["preparation_available"] is False
+    assert after.repair_path_diagnosis["preparation_blocked_reason"] == "allowance_spent"
+
+
+@pytest.mark.parametrize("resource", [None, "model", "tool", "money"])
+def test_unused_optional_preparation_is_offered_only_when_each_resource_funds_it(resource):
+    gateway = Gateway(initial=False)
+    state = path_state(gateway)
+    policy = runner._tool_policy(
+        gateway, counters(model=4 if resource == "model" else 5,
+                          tools=5 if resource == "tool" else 6), DevLimits(), snapshot=state,
+        cost_ledger=ledger_for_slots(4 if resource == "money" else 5),
+        completion_cost_policy=COMPLETION_MINIMUM_POLICY, _preview_inspection=False,
+    )
+    assert "run_probe" in policy.allowed_tools
+    assert policy.minimum_completion_calls == 4
+    assert policy.repair_path_diagnosis["preparation_allowance_available"] is True
+    assert policy.repair_path_diagnosis["preparation_available"] is (resource is None)
+    assert ("read_file" in policy.allowed_tools) is (resource is None)
+    assert policy.repair_path_diagnosis["preparation_blocked_reason"] == (
+        "completion_horizon" if resource else None
+    )
+
+
+def test_observation_correction_precedence_does_not_project_an_available_preparation_read():
+    gateway = Gateway(initial=False)
+    state = path_state(gateway)
+    state.completion_verification["observation_correction"] = {
+        "blocked": True, "status": "pending", "pending_started": False,
+    }
+    policy = runner._tool_policy(
+        gateway, counters(model=30, tools=70), DevLimits(), snapshot=state,
+    )
+    assert policy.workflow_gate == "needs_observation_correction"
+    assert policy.repair_path_diagnosis is None
+    review = runner._reproduction_review_resources({
+        "completion": state.completion_verification,
+    }, policy)["completion"]["repair_path"]
+    assert review["preparation_allowance_available"] is True
+    assert review["preparation_available"] is False
+    assert review["preparation_blocked_reason"] == "needs_observation_correction"
+
+
+@pytest.mark.parametrize("short", [None, "model", "tool", "money"])
+def test_required_anchor_read_fits_once_in_minimum_path(short):
+    gateway = Gateway(initial=False, anchor=False)
+    state = path_state(gateway)
+    policy = runner._tool_policy(
+        gateway, counters(model=4 if short == "model" else 5,
+                          tools=5 if short == "tool" else 6), DevLimits(), snapshot=state,
+        cost_ledger=ledger_for_slots(4 if short == "money" else 5),
+        completion_cost_policy=COMPLETION_MINIMUM_POLICY, _preview_inspection=False,
+    )
+    assert policy.minimum_completion_calls == 5  # read, diagnosis, edit, check, finish
+    assert policy.minimum_completion_tool_actions == 6  # acquired original replay
+    assert policy.repair_path_diagnosis["preparation_required_for_completion"] is True
+    if short:
+        assert policy.allowed_tools == {"stop_task"}
+        assert policy.workflow_gate == "verification_incomplete"
+        assert policy.repair_path_diagnosis["preparation_available"] is False
+    else:
+        assert policy.allowed_tools == {"read_file", "search_files", "run_probe", "stop_task"}
+        assert policy.repair_path_diagnosis["preparation_available"] is True
+        assert policy.max_parallel_reads == 1
+        assert policy.required_inspection_for_completion
+        assert "counted once" in runner._completion_guidance(state, policy)["message"]
 
 
 @pytest.mark.parametrize("status", ["diagnosed", "verification_incomplete"])
@@ -87,11 +170,17 @@ def test_complete_path_releases_repair_but_unknown_observation_cannot(status):
         assert "modified branch" in runner._completion_guidance(state, policy)["message"]
 
 
-def test_diagnosis_budget_separates_execution_preparation_and_rejected_request_correction():
+@pytest.mark.parametrize("anchor,repair_read,extra", [
+    (True, False, 3), (False, False, 2), (True, True, 2),
+])
+def test_diagnosis_budget_separates_execution_preparation_and_rejected_request_correction(
+    anchor, repair_read, extra,
+):
     state = CompletionState(
         check_count=1, remaining_check_count=1, unused_check_count=0,
-        unrun_recoverable_check=False, requires_mutation=True, anchor_available=True,
+        unrun_recoverable_check=False, requires_mutation=True, anchor_available=anchor,
         remaining_mutations=1, mutation_retry_available=False, reproduction_case_count=1,
+        repair_read_credit=repair_read,
     )
     before = completion_budget(state)
     pending = replace(state, path_diagnosis_pending=True, path_preparation_available=True,
@@ -99,10 +188,10 @@ def test_diagnosis_budget_separates_execution_preparation_and_rejected_request_c
     after = completion_budget(pending)
     assert after.minimum == before.minimum + 1
     assert after.minimum_tool_actions == before.minimum_tool_actions + 1
-    assert after.protected == before.protected + 3
-    assert after.protected_tool_actions == before.protected_tool_actions + 3
+    assert after.protected == before.protected + extra
+    assert after.protected_tool_actions == before.protected_tool_actions + extra
     assert minimum_successor_calls(pending, "run_probe") == before.minimum
-    assert minimum_successor_calls(pending, "read_file") == after.minimum
+    assert minimum_successor_calls(pending, "read_file") == after.minimum - int(not anchor)
 
 
 def _comparison_call():

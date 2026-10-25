@@ -1,6 +1,6 @@
 # Current status
 
-Updated: 2026-10-25. Runtime source owns behavior. Historical reports are evidence,
+Updated: 2026-10-26. Runtime source owns behavior. Historical reports are evidence,
 not an active queue.
 
 ## Product and working baseline
@@ -24,29 +24,30 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [latest live pilot](history/2026-10-25-helper-correction-live.md) ended
-VERIFICATION_INCOMPLETE: one accepted mutation after 28 source inspections left
-F0010 unchanged on a comparable original replay. Two call-path diagnostic requests
-were rejected before execution: first the wrong replay identity, then watched lines
-outside their selected function. The unsuccessful candidate was not submitted.
-Cost was $0.979441500 of $1.20; the unused allocation is closed.
+The [diagnosis construction change](history/2026-10-26-diagnosis-request.md) moves
+original replay identity and bounded watch-line selection into the host. The model
+selects public functions/fields; the host freezes source hashes and the resolved
+request for recovery. Preparation availability now agrees with offered tools in
+both model-facing path states. Optional preparation does not inflate minimum
+completion; a required repair-anchor read is reserved once.
 
-The [helper correction](../.agent/helper-correction.md) clarifies APIs and gives one
-same-question correction for a confirmed preflight error before the first mutation.
-This run requested no helper, so its live correction mechanism was NOT_EXERCISED;
-absence of the previous NameError does not establish prevention or repair gain.
-The [implementation record](history/2026-10-25-helper-correction.md) retains 64 core
-tests in 23.548 seconds and 346 quick tests in 66.949 seconds, including isolated
-mock evaluation, plus Ruff PASS. No runtime change followed the pilot.
+Core local validation: 79 PASS in 42.671 seconds command wall time, Ruff PASS.
+Both saved rejected requests pass static admission with their function/field
+choices unchanged. A scripted tiny diagnosis, repair, original recheck, submission
+and isolated mock evaluation passes. Quick integration: 349 PASS in 79.522 seconds,
+including isolated mock evaluation. The record separates local mechanics from
+model effectiveness.
 
-The active question is usable [call-path diagnosis](../.agent/repair-path.md):
-correct replay identity and current function/line constraints were not assembled
-into an executable request. After the first rejection, completion-horizon closure
-removed source preparation tools even though nested path state still reported a
-preparation allowance. The final stop was two rejected requests, with money and
-model slots remaining; the separate 25K protocol correction did return an action.
-Diagnosis request construction and the consistency of offered preparation resources
-need examination before another paid pilot. No automatic continuation is authorized.
+The [latest live pilot](history/2026-10-25-helper-correction-live.md) remains
+VERIFICATION_INCOMPLETE: one mutation left F0010 unchanged, and two diagnostic
+requests were rejected before execution. It spent $0.979441500 of $1.20; that
+allocation is closed. It requested no helper, so [helper correction](../.agent/helper-correction.md)
+was NOT_EXERCISED. The new host construction has not had a live model pilot.
+
+The remaining question is whether the model selects an informative caller focus,
+uses the diagnostic output to revise its hypothesis, and repairs the original
+F0010 behavior within the same limits. Correct request construction does not prove
+those outcomes. No automatic continuation is authorized.
 
 ## Supporting evidence
 

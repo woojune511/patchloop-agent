@@ -13,13 +13,22 @@ Test additions cannot become the implementation hypothesis. Unknown line coverag
 does not trigger a fabricated no-hit. A helper, old candidate, changed call,
 conflicting judgment or different file hash cannot trigger the diagnosis.
 
-The current candidate then permits one preparation `read_file`/`search_files`,
-one `run_probe` replay of the frozen original, and stop. Repair, checks and tests
-wait for the diagnosis. `call_path` selects the host-identified failing `call_id`,
-a focus on its public caller path, and 1–4 watched functions; at least one watch
-must intersect the refuted mutation's unobserved changed range. The request has
-at most 32 lines and six named fields per watch. It cannot replace the original
-program, arguments, expected output or failure declaration.
+The current candidate permits one preparation `read_file`/`search_files` when
+offered, one `run_probe` replay of the frozen original, and stop. Repair, checks and
+tests wait for the diagnosis. Fresh `call_path` selects a public caller focus and
+1–4 watched functions with at most six named fields each. Set `replay_action_id`,
+`question`, `python_source` and `purpose` to null; do not supply `call_id` or lines.
+The host binds the pending original root and failing call from public receipts.
+At least one watch must intersect the refuted mutation's unobserved changed range.
+The original program, arguments, expected output and failure declaration stay fixed.
+
+The host resolves unique functions with AST, then compiles public source without
+executing it to select up to 32 source lines in each function's own frame. Current
+changed lines take priority, then ascending remaining lines. Artificial compiler
+locations and nested function bodies are excluded; omitted line counts are explicit.
+Selection describes the host compiler's line table, not a guarantee of line events
+on every target Python version. Function entry, selected line entry and correctness
+remain distinct. Source membership and hashes are bound before durable admission.
 
 Shapes and source membership/function/line ranges are checked before dispatch.
 One invalid request may be corrected; two rejected requests exhaust the bounded
@@ -73,9 +82,22 @@ passing, populate required-check credit, or replace original replay.
 
 Minimum completion includes the pending diagnostic once, followed by mutation,
 fresh required checks, original replay and finish. Protected capacity separately
-includes an available preparation read and request correction. Lack of capacity
+includes an optional preparation read and request correction. A read already
+reserved to acquire a missing repair anchor or for current repair is counted once.
+Optional preparation never inflates the minimum. Model-facing `preparation_available`
+means a read/search is actually offered after resource filtering, in both path-state
+locations. `preparation_allowance_available` separately retains the unspent durable
+slot; blocked reason and required-anchor status explain the difference. Lack of capacity
 or incomplete diagnosis returns `VERIFICATION_INCOMPLETE`. Ordinary normal and
 protocol-correction output ceilings and monetary accounting are unchanged.
+
+`action_started.diagnosis_request` freezes the root, candidate, canonical request,
+source hashes and line-selection policy. Raw `action_id + input_hash` stays bound
+to the model's original selection. Recovery reuses the frozen construction, rejects
+source drift and never recomputes coordinates. A durable rejected request cannot
+turn into a dispatch after interruption. Completed results replay; an uncertain
+dispatch does not retry. Legacy requests containing explicit call IDs/lines remain
+readable for recovery but are absent from the fresh model schema.
 
 A selected comparison reserves two physical executions and the protected
 completion successor before starting. If only one execution fits, the offered
@@ -86,6 +108,8 @@ count. Exact finished child CAS receipts are reused. A child start without a
 durable result is uncertain and is never redispatched; remaining phases stop.
 All generated snapshots, logs and receipts stay outside the repository.
 
-Run `uv run --locked pytest @tests/call-path-repair.txt --basetemp C:/pt/<unique>`
-for the core local controls, then quick once for integration and isolated mock
-evaluation. See the [implementation record](../docs/history/2026-10-25-callpath-repair.md).
+Run `uv run --locked pytest @tests/diagnosis-request.txt --basetemp C:/pt/<unique>`
+for core construction/recovery/resource controls, then quick once for integration
+and isolated mock evaluation. Use `tests/call-path-repair.txt` when changing the
+broader comparison mechanism. See the [construction record](../docs/history/2026-10-26-diagnosis-request.md)
+and [original implementation](../docs/history/2026-10-25-callpath-repair.md).

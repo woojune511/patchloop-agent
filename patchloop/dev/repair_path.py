@@ -129,7 +129,9 @@ def review(events, current_diff, completion):
     complete = False
     if diagnosis:
         trace = diagnosis.get("output", {}).get("call_path", {})
-        request = starts[diagnosis["action_id"]]["arguments"].get("call_path", {})
+        admission = starts[diagnosis["action_id"]]
+        request = (admission.get("diagnosis_request", {}).get("call_path")
+                   or admission["arguments"].get("call_path", {}))
         watched_hashes = {(w.get("path"), w.get("file_hash")) for w in trace.get("watches", [])}
         complete = bool(
             trace.get("status") == "complete" and trace.get("call_id") == call_id

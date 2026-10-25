@@ -53,7 +53,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     tools = _legacy_compression_surface(tools)
     encoded = json.dumps(_without_descriptions(tools), ensure_ascii=False, separators=(",", ":"))
     assert hashlib.sha256(encoded.encode()).hexdigest() == (
-        "9086f10d005b06e9e0fedf3f317f81c2f225625d8bd706b80a8ebf92758039e5"
+        "c1074dd1bb0921c46a87ac4f16ea3d500cdbec3473cbedc5fd93ba9ded2febad"
         if FROZEN_ARM is None else
         "e02c7ceb93201640950920b260422b0ae35fce974e3728b79e63345fb4bcf0e5"
     )
@@ -66,7 +66,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
 @pytest.mark.parametrize(("names", "expected"), [
     pytest.param(
         ("read_file", "run_check", "run_probe", "search_files", "stop_task"),
-        "32dd92d8f44d9e6a5dfa90b492f2fa8a4ba983109ec358ba798a0f54293585bf"
+        "8031b98c17207306c666a8a2ffd26e9d6e6cd9c48623788668fa5049f44d8f7a"
         if FROZEN_ARM is None else
         "544c19f4d8e63f8a8810efe1dd4cd0adf3dee51cdb0145a4509de554027739c2",
         id="names0-99567faf1ea920a9157e5ea6618c5d43e7d56e441820be941403a025d9b2abe9"
@@ -74,7 +74,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     ),
     pytest.param(
         ("finish_task", "read_file", "replace_text", "run_probe", "search_files", "stop_task"),
-        "39fdec8fecafb9afc98999d41a14d810183927160337fb5356074f30c74ec12d"
+        "262135ce35bdd3573ca7967f028fac30765718fb53d2afba30a99e11163f048e"
         if FROZEN_ARM is None else
         "b817201c9d1aa8432575b0c1b55015dc01bc08a2b002e3e2cc09ab13bfa229c6",
         id="names1-de57dc4e83f8b26994c5df5f659cc208bbd3b348233d0ad3640493ffd5b90bd3"
@@ -82,7 +82,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     ),
     pytest.param(
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task"),
-        "d1ffdd813504a3fe8ce7a4d1ec40d698d59a651c31c6729d26f20bbacc1b520c"
+        "b11e79d9b643373ca209b77a37643cbcdae287fa5f2e13b153985853d3284e74"
         if FROZEN_ARM is None else
         "310f8ec3dd129c93fb10c2a0589decf38eb09ce60e395ef906ac814e399e5139",
         id="names2-923a71312af5fa8d677ce72762b2f045a47ff2ebc4e084caaf1f57a2c11e7032"
@@ -91,7 +91,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     pytest.param(
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task",
          "finish_task"),
-        "82925b48de3681ff17a016c57763adc5ab4e9e85c6bbf5301593c8aad57ead77"
+        "3953763b522307f489f5d0f5d41ec76bc7ae1cf551a9887c6ec9a5e00603f062"
         if FROZEN_ARM is None else
         "6302bc9d248be03d6e1430f0102a0e5c00ecb7883c25d453945f979f21fd3af7",
         id="names3-53d8c9ffaa20544b633c883b1e40010113b680722f23caebeb0ef991f1738caa"
@@ -116,7 +116,7 @@ def test_surrounding_action_guidance_identity():
     # Current prose fits the original 8,000-character contract with scope separation.
     # Historical J0/J1 arms retain their exact earlier surrounding-guidance identities.
     assert hashlib.sha256(canonical_json([prefix, suffix]).encode()).hexdigest() == (
-        "168aeb83672184ef67a25b7b8e9443153935d379bc554adc4192495a4ac54c28"
+        "408868a488c3b120f7e3478aa6ea7102da9347bb34c9535562ee178620e4c467"
         if FROZEN_ARM is None else
         "2d0a9063da8d508a3c1218903cae12e33aa5db97f4d5655ca645fd5d52dc1331"
         if JUDGMENT else "c6439ce32e7724ed5d4c08dc1f207186b45e34234947c2867d7a65f096ce10a3"

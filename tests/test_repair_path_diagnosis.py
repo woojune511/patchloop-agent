@@ -33,9 +33,9 @@ class TracedProbe(FakeProbe):
     supports_public_execution = True
     unknown = False
 
-    def validate_call_path(self, workspace, request, *, deadline=None):
+    def validate_call_path(self, workspace, request, *, deadline=None, line_changes=None):
         del deadline
-        return call_path_trace.bind_request(request, workspace)
+        return call_path_trace.bind_request(request, workspace, line_changes=line_changes)
 
     def run_probe(self, workspace, question, python_source, *, deadline, execution_identity,
                   execution_targets=None, call_path_request=None):

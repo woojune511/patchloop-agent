@@ -21,6 +21,7 @@ from patchloop.contracts import PublicTask, RegisteredCheck
 from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
 from patchloop.dev import (
     behavior_cases,
+    diagnosis_request,
     evidence_focus,
     helper_program,
     helper_recovery,
@@ -471,9 +472,12 @@ def dev_tool_schemas(
                 "Results are diagnostics, not required visible-check verdicts. "
                 + helper_program.DESCRIPTION + " "
                 + probe_replay.DESCRIPTION + " " + reproduction.DESCRIPTION
-                + " When repair_path needs diagnosis, replay its original action with call_path. "
-                "Select the failing call, a focus function on its real path, and watched changed "
-                "lines. The host reports bounded inputs, returns/exceptions and branch entries. "
+                + " When repair_path needs diagnosis, set replay_action_id/question/python_source/"
+                "purpose to null and select call_path focus and watched public functions/fields. "
+                "The host binds the pending original call and current source hashes, selecting "
+                "up to 32 executable lines per function with changed lines first. Do not supply "
+                "call_id or line numbers. The host reports bounded inputs, returns/exceptions "
+                "and line entries. "
                 "Function entry alone is not changed-branch execution; unknown is not no-hit."
             ),
             "strict": True,
@@ -489,7 +493,7 @@ def dev_tool_schemas(
                         "type": ["string", "null"], "minLength": 1, "maxLength": 500,
                     },
                     "purpose": reproduction.purpose_schema(),
-                    "call_path": {"anyOf": [{"type": "null"}, call_path_trace.schema()]},
+                    "call_path": {"anyOf": [{"type": "null"}, call_path_trace.selection_schema()]},
                 },
                 "required": ["question", "python_source", "replay_action_id", "purpose",
                              "call_path"],
@@ -2635,6 +2639,20 @@ class DevToolGateway:
         }}
         path_request = call.arguments.get("call_path") if call.name == "run_probe" else None
         path_link = copy.deepcopy(pending.get("repair_path_link")) if pending is not None else None
+        path_admission = copy.deepcopy(pending.get("diagnosis_request")) if pending else None
+        probe_call_arguments = call.arguments
+        if path_admission is not None:
+            probe_call_arguments = diagnosis_request.arguments(call.arguments, path_admission)
+            path_request = probe_call_arguments["call_path"]
+            if path_admission["candidate_diff_hash"] != baseline:
+                preflight_error = RecoveryError("pending diagnosis no longer matches admitted diff")
+        if pending and path_link and pending.get("probe_request", {}).get("status") == "rejected":
+            error = pending.get("repair_path_error", {
+                "message": "previously rejected call-path request cannot dispatch during recovery",
+                "details": {},
+            })
+            preflight_error = ContractError(error["message"],
+                                            details=copy.deepcopy(error["details"]))
         helper_link = copy.deepcopy(pending.get("helper_recovery_link")) if pending else None
         if pending and pending.get("helper_recovery_error"):
             recorded_error = pending["helper_recovery_error"]
@@ -2647,8 +2665,17 @@ class DevToolGateway:
                 # Record rejected requests too, without treating them as executions.
                 path_link = repair_path.link(path_state)
             try:
-                path_link = repair_path.validate(path_state, call.name, call.arguments)
-            except ContractError as exc:
+                if call.name == "run_probe" and diagnosis_request.symbolic(path_request):
+                    path_admission = diagnosis_request.prepare(
+                        call.arguments, path_state, self.workspace,
+                        getattr(self.probe_sandbox, "validate_call_path", None),
+                        deadline=self.deadline,
+                    )
+                    probe_call_arguments = diagnosis_request.arguments(
+                        call.arguments, path_admission)
+                    path_request = probe_call_arguments["call_path"]
+                path_link = repair_path.validate(path_state, call.name, probe_call_arguments)
+            except (PatchLoopError, ValueError, OSError, SyntaxError) as exc:
                 preflight_error = exc
             helper_state = verification["helper_correction"]
             if helper_state.get("blocked") and call.name != "stop_task":
@@ -2658,7 +2685,7 @@ class DevToolGateway:
             except ContractError as exc:
                 preflight_error = exc
         replay_probe = (
-            call.name == "run_probe" and call.arguments.get("replay_action_id") is not None
+            call.name == "run_probe" and probe_call_arguments.get("replay_action_id") is not None
         )
         probe_binding_key = "probe_replay_request" if replay_probe else "probe_case_request"
         mutation_requirement_reference = None
@@ -2687,7 +2714,8 @@ class DevToolGateway:
                         and "save_program" in call.arguments):
                     raise ContractError("reference-cases-v1 does not expose save_program")
                 prepared_probe = (
-                    probe_replay.prepare(call.arguments, self.journal.events()) if replay_probe
+                    probe_replay.prepare(probe_call_arguments, self.journal.events())
+                    if replay_probe
                     else probe_cases.prepare(
                         probe_arguments, self.journal.events(), self.probe_policy,
                     )
@@ -2705,10 +2733,10 @@ class DevToolGateway:
                         source_preflight(self.workspace, path_request, deadline=self.deadline)
                 legacy_binding = (pending or {}).get("reproduction_binding")
                 selected, observation_channel = (
-                    reproduction.selection(call.arguments, allow_legacy=True)
+                    reproduction.selection(probe_call_arguments, allow_legacy=True)
                     if (legacy_binding is not None
                         and "requirement_quote" in legacy_binding["definition"])
-                    else reproduction.selection(call.arguments)
+                    else reproduction.selection(probe_call_arguments)
                 )
                 if selected is not None and any(
                     call.arguments.get(k)
@@ -2719,7 +2747,8 @@ class DevToolGateway:
                 reproduction_binding = reproduction.bind(
                     selected, self.public_task,
                     (prepared_probe or probe_arguments).get("python_source"), call.action_id,
-                    replay=call.arguments.get("replay_action_id"), events=self.journal.events(),
+                    replay=probe_call_arguments.get("replay_action_id"),
+                    events=self.journal.events(),
                     observation_channel=observation_channel,
                 )
                 if (pending is not None
@@ -2800,6 +2829,11 @@ class DevToolGateway:
                     "baseline_diff_hash": baseline,
                     "baseline_changed_files": baseline_summary.changed_files,
                     **({"repair_path_link": path_link} if path_link is not None else {}),
+                    **({"diagnosis_request": path_admission} if path_admission is not None else {}),
+                    **({"repair_path_error": {
+                        "message": str(preflight_error),
+                        "details": copy.deepcopy(getattr(preflight_error, "details", {})),
+                    }} if path_link is not None and preflight_error is not None else {}),
                     **({"helper_recovery_link": helper_link} if helper_link is not None else {}),
                     **({"helper_recovery_error": {
                         "message": str(preflight_error),
@@ -2934,6 +2968,8 @@ class DevToolGateway:
                         raise RecoveryError("replayed probe source differs from its bound program",
                                             details=output)
                     output["replayed_from"] = prepared_probe["replayed_from"]
+                if path_admission is not None:
+                    output["diagnosis_request"] = copy.deepcopy(path_admission)
                 evidence_cache_hit = False
             elif call.name == history_search.TOOL:
                 if self.history_search_policy != history_search.POLICY:
@@ -3026,7 +3062,8 @@ class DevToolGateway:
             )
         except (ExecutionDeadlineExceeded, GitExecutionUncertain):
             raise
-        except (PatchLoopError, ValidationError, ValueError, OSError, RuntimeError) as exc:
+        except (PatchLoopError, ValidationError, ValueError, OSError,
+                RuntimeError, SyntaxError) as exc:
             code = exc.code if isinstance(exc, PatchLoopError) else "TOOL_CONTRACT_ERROR"
             failure_output = (
                 copy.deepcopy(exc.details) if isinstance(exc, PatchLoopError) else {}

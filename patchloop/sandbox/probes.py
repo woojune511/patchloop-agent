@@ -323,6 +323,7 @@ class DockerProbeSandbox:
 
     def validate_call_path(
         self, workspace: Path, request: dict, *, deadline: ExecutionDeadline | None = None,
+        line_changes: list[dict] | None = None,
     ) -> dict:
         """Read-only request validation before the durable dispatch boundary.
 
@@ -373,7 +374,7 @@ class DockerProbeSandbox:
                 deadline.check(reserve_seconds=5)
             return call_path_trace.bind_request(
                 request, workspace, dependency_root=dependency_root,
-                dependency_files=dependency_files,
+                dependency_files=dependency_files, line_changes=line_changes,
             )
         except (ValueError, OSError, SyntaxError, subprocess.TimeoutExpired) as exc:
             raise ContractError(f"invalid public call-path source request: {exc}") from exc

@@ -127,7 +127,14 @@ def completion_budget(state: CompletionState) -> CompletionBudget:
             )
     diagnosis = (int(state.observation_correction_pending) + int(state.path_diagnosis_pending)
                  + int(state.helper_correction_pending))
-    preparation = int(state.path_diagnosis_pending and state.path_preparation_available)
+    # The same preparation read can acquire the required repair anchor or spend
+    # an already protected current repair read. Reserve it only once. Otherwise
+    # it remains optional: host-built path diagnostics need no extra source read.
+    preparation = int(
+        state.path_diagnosis_pending and state.path_preparation_available
+        and not (state.requires_mutation and not state.anchor_available)
+        and not current_read
+    )
     request_correction = int(
         state.path_diagnosis_pending and state.path_request_correction_available
     )

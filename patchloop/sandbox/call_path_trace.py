@@ -8,6 +8,7 @@ Like LineTrace, an in-process trace is diagnostic evidence, not an attestation.
 from __future__ import annotations
 
 import ast
+import dis
 import hashlib
 import json
 import math
@@ -15,6 +16,7 @@ import os
 import re
 import stat
 import sys
+import types
 from contextlib import suppress
 from pathlib import Path, PurePosixPath
 
@@ -69,6 +71,31 @@ def schema():
                                                      "items": {"type": "string"}}}}}}}
 
 
+def selection_schema():
+    """Fresh model requests select functions; replay IDs and lines are host-owned."""
+    result = schema()
+    del result["properties"]["call_id"]
+    result["required"].remove("call_id")
+    watch = result["properties"]["watches"]["items"]
+    del watch["properties"]["lines"]
+    watch["required"].remove("lines")
+    return result
+
+
+def selection_request(selection, call_id):
+    """Validate only the new symbolic shape, retaining the legacy wire validator."""
+    if type(selection) is not dict or set(selection) != {"focus", "watches"}:
+        raise ValueError("diagnosis selects focus and watches; the host supplies call identity")
+    watches = selection["watches"]
+    if (type(watches) is not list or any(type(w) is not dict
+            or set(w) != {"origin", "path", "function", "fields"} for w in watches)
+            or type(selection["focus"]) is not dict
+            or set(selection["focus"]) != {"origin", "path", "function"}):
+        raise ValueError("diagnosis selects public functions and fields, not line coordinates")
+    return validate_request({"call_id": call_id, "focus": selection["focus"],
+                             "watches": [{**w, "lines": []} for w in watches]})
+
+
 def validate_request(request):
     """Validate the raw, public request without reading any file; return a detached copy."""
     if (type(request) is not dict or set(request) != {"call_id", "focus", "watches"}
@@ -79,7 +106,9 @@ def validate_request(request):
         raise ValueError("invalid bounded call-path request")
     for index, target in enumerate([request["focus"], *request["watches"]]):
         expected = {"origin", "path", "function"} | ({"lines", "fields"} if index else set())
-        if type(target) is not dict or set(target) != expected:
+        if (type(target) is not dict or set(target) not in (expected, expected | {"file_hash"})
+                or "file_hash" in target and (type(target["file_hash"]) is not str
+                    or re.fullmatch(r"sha256:[0-9a-f]{64}", target["file_hash"]) is None)):
             raise ValueError("invalid call-path target fields")
         relative, function = target["path"], target["function"]
         if (type(target["origin"]) is not str
@@ -110,7 +139,7 @@ def validate_request(request):
     return json.loads(_json(request))
 
 
-def _function(raw, function):
+def _function_node(raw, function):
     matches = []
 
     def visit(node, prefix=""):
@@ -128,7 +157,11 @@ def _function(raw, function):
     visit(ast.parse(raw))
     if len(matches) != 1:
         raise ValueError("call-path function must resolve uniquely in bound public source")
-    node = matches[0]
+    return matches[0]
+
+
+def _function(raw, function):
+    node = _function_node(raw, function)
     start = min([node.lineno, *[item.lineno for item in node.decorator_list]])
     arguments = [*node.args.posonlyargs, *node.args.args, *node.args.kwonlyargs]
     if node.args.vararg:
@@ -139,8 +172,33 @@ def _function(raw, function):
             "parameters": [arg.arg for arg in arguments[:MAX_FIELDS]]}
 
 
+def _selected_lines(raw, function, identity, changes):
+    """Compile without execution; prioritize changed lines within the selected frame."""
+    name = _function_node(raw, function).name
+    matches = []
+
+    def visit(code):
+        if (code.co_name == name
+                and code.co_firstlineno in {identity["first_line"], identity["def_line"]}):
+            matches.append(code)
+        for value in code.co_consts:
+            if isinstance(value, types.CodeType):
+                visit(value)
+
+    visit(compile(raw, "<public-call-path-selection>", "exec", dont_inherit=True))
+    if len(matches) != 1:
+        raise ValueError("call-path executable function must resolve uniquely")
+    lines = sorted({line for _, line in dis.findlinestarts(matches[0])
+                    if line is not None and identity["def_line"] <= line <= identity["last_line"]
+                    and (line > identity["def_line"]
+                         or identity["def_line"] == identity["last_line"])})
+    priority = [line for line in lines if any(start <= line <= end for start, end in changes)]
+    chosen = sorted((priority + [line for line in lines if line not in priority])[:MAX_LINES])
+    return chosen, len(lines) - len(chosen)
+
+
 def bind_request(request, snapshot, *, dependency_root=None, dependency_files=None,
-                 snapshot_hash=None, execution_identity_hash=None):
+                 snapshot_hash=None, execution_identity_hash=None, line_changes=None):
     """Bind only exported regular public bytes or verified prepared dependency members."""
     request = validate_request(request)
     targets = []
@@ -164,13 +222,24 @@ def bind_request(request, snapshot, *, dependency_root=None, dependency_files=No
         if len(raw) > 2_000_000:
             raise ValueError("call-path source exceeds static binding limit")
         file_hash = _hash(raw)
+        if target.get("file_hash", file_hash) != file_hash:
+            raise ValueError("call-path source differs from its admitted bytes")
         if target["origin"] == "dependency" and dependency_files[target["path"]] != file_hash:
             raise ValueError("call-path dependency differs from prepared public bytes")
         identity = _function(raw, target["function"])
+        selection = {}
+        if index and line_changes is not None:
+            changes = [pair for change in line_changes
+                       if target["origin"] == "workspace" and change["path"] == target["path"]
+                       for pair in change["ranges"]]
+            lines, omitted = _selected_lines(raw, target["function"], identity, changes)
+            target = {**target, "lines": lines}
+            selection = {"line_selection": {"policy": "function-lines-v1",
+                                            "omitted_line_count": omitted}}
         if index and any(not identity["first_line"] <= line <= identity["last_line"]
                          for line in target["lines"]):
             raise ValueError("call-path watched line is outside the selected function")
-        targets.append({**target, **identity, "file_hash": file_hash,
+        targets.append({**target, **identity, **selection, "file_hash": file_hash,
                         "fields": target.get("fields", identity["parameters"]),
                         "lines": target.get("lines", [])})
     bound = {"schema_version": "public-call-path-request-v1", "call_id": request["call_id"],

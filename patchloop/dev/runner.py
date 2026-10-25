@@ -632,18 +632,31 @@ def _completion_guidance(
     elif policy.repair_path_diagnosis and policy.repair_path_diagnosis.get("blocked"):
         diagnosis = policy.repair_path_diagnosis
         stage = policy.workflow_gate
-        next_action = ({"tool": "run_probe", "replay_action_id": diagnosis["replay_action_id"],
-                        "call_path": {"call_id": diagnosis["call_id"]}}
+        next_action = ({"tool": "run_probe", "replay_action_id": None}
                        if "run_probe" in allowed else None)
         message = (
             "The same original failure persists and the modified branch was not observed. "
-            "Replay the frozen original program with call_path targeting the indicated call_id; "
-            "supply focus and watches for the actual caller and unobserved changed lines. "
-            "One preparation read, one actual diagnostic execution and one rejected-request "
-            "correction are bounded separately. Function entry, branch execution and behavior are "
+            "Set replay_action_id to null and supply call_path with focus and watches selecting "
+            "files, functions and fields. The host binds the original replay and executable "
+            "lines; omit call_id and lines. No source read is required to assemble those IDs "
+            "or line numbers. One optional preparation read, one actual diagnostic execution "
+            "and one rejected-request correction are bounded separately. "
+            "Function entry, branch execution and behavior are "
             "different observations. A complete diagnosis must inform causal_revision before "
             "another repair; incomplete observation returns verification incomplete."
         )
+        if diagnosis.get("preparation_available"):
+            message += (
+                " The offered preparation read can acquire the source anchor still required "
+                "for repair; that read is counted once in the minimum completion path."
+                if diagnosis.get("preparation_required_for_completion") else
+                " One preparation read is offered if it can resolve a concrete question."
+            )
+        else:
+            message += (
+                " No preparation read is offered this turn; an unused allowance does not "
+                "make a read available."
+            )
     elif policy.workflow_gate in {"needs_observation_correction", "verification_incomplete"}:
         stage = policy.workflow_gate
         next_action = {"tool": "run_probe"} if "run_probe" in allowed else None
@@ -1282,9 +1295,13 @@ def _tool_policy(
             **observation_fix, "offered_tools": sorted(allowed),
             "uses_minimum_completion_reserve": "run_probe" in allowed,
         } if observation_blocked else None),
-        repair_path_diagnosis=({**path_diagnosis, "offered_tools": sorted(allowed)}
-                               if path_diagnosis.get("status") not in {None, "not_needed"}
-                               and not observation_blocked else None),
+        repair_path_diagnosis=(
+            _repair_path_resources(
+                path_diagnosis, allowed, required_inspection=required_inspection,
+                closure_reason=closure_reason,
+            ) if path_diagnosis.get("status") not in {None, "not_needed"}
+            and not observation_blocked else None
+        ),
         helper_correction=({**helper_fix, "offered_tools": sorted(allowed),
                             "uses_minimum_completion_reserve": "run_probe" in allowed}
                            if helper_blocked else None),
@@ -1397,6 +1414,42 @@ def _tool_policy(
             ),
         )
     return policy
+
+
+def _repair_path_resources(
+    state: dict[str, Any], allowed_tools: set[str] | frozenset[str], *,
+    required_inspection: bool, closure_reason: str | None,
+) -> dict[str, Any]:
+    """Qualify the durable unused allowance against this turn's actual tool offer."""
+    allowance = bool(state.get("preparation_available"))
+    pending = state.get("status") == "needs_path_diagnosis" and bool(state.get("blocked"))
+    offered = bool(allowance and pending and {"read_file", "search_files"} & allowed_tools)
+    return {
+        **state,
+        "preparation_allowance_available": allowance,
+        "preparation_available": offered,
+        "preparation_required_for_completion": bool(pending and required_inspection),
+        "preparation_blocked_reason": (
+            None if offered else "diagnosis_unavailable" if not pending
+            else "allowance_spent" if not allowance else closure_reason or "workflow_gate"
+        ),
+        "offered_tools": sorted(allowed_tools),
+    }
+
+
+def _reproduction_review_resources(
+    review: dict[str, Any], policy: _ToolPolicy,
+) -> dict[str, Any]:
+    """Keep the duplicate model-facing path state consistent without changing its ledger."""
+    completion = review.get("completion", {})
+    path_state = completion.get("repair_path")
+    if not isinstance(path_state, dict) or "preparation_available" not in path_state:
+        return review
+    projected = policy.repair_path_diagnosis or _repair_path_resources(
+        path_state, policy.allowed_tools, required_inspection=False,
+        closure_reason=policy.workflow_gate,
+    )
+    return {**review, "completion": {**completion, "repair_path": projected}}
 
 
 def _repair_inspection_payload(policy: _ToolPolicy) -> dict[str, Any]:
@@ -1927,7 +1980,9 @@ def _build_context(
             }
             for result in probes[-3:]
         ]
-    payload["reproduction_review"] = gateway.reproduction_review(diff_hash=summary.patch_hash)
+    payload["reproduction_review"] = _reproduction_review_resources(
+        gateway.reproduction_review(diff_hash=summary.patch_hash), active_policy,
+    )
     # Construction is allowlist-based from ``package.public`` and public tool outputs;
     # private task fields are never accepted as context inputs.
     return json.dumps(
