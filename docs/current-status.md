@@ -56,10 +56,19 @@ calls while the still-failing state required three. The first response completed
 in 19,265 output tokens, below the old ceiling; only the final edit response used
 more than 25K (34,882). The comparison cannot isolate a causal first-action gain.
 Stable replay and explicit feedback use are now observed in this sample, but
-repair remained refuted. Keep the runtime and general defaults unchanged. The
-unresolved question is the interaction of lengthy inspection, expensive repair
-generation and completion reserves after an unsuccessful edit. The allocation is
-closed; no further paid run is authorized and unused money is not a new allocation.
+repair remained refuted. The [follow-up diagnosis](history/2026-10-25-output40-diagnosis.md)
+finds no new discriminating probe after 27 source inspections. Source projection
+places the failing name/path lookup before the edited callback; internal caller
+values were not observed. All edit turns offered only replace_text/stop_task:
+the protected physical-call horizon had already closed diagnosis, before the
+final monetary stop. A smaller correction reserve would admit another minimum
+path at the frozen final state, not prove a repair or necessarily permit diagnosis.
+The forecast also retains failed-final-replay model calls without distinguishing
+healthy early replay whose receipt finish reuses; a tighter bound remains untested.
+Keep the runtime and general defaults unchanged. Next investigate caller-boundary
+values and the tradeoff between current-failure diagnosis and speculative recovery;
+output/correction allowance separation is a proposal, not a validated gain.
+The allocation is closed; unused money does not authorize another paid run.
 The [operator oracle experiment](history/2026-10-24-oracle.md) remains separate.
 
 ## Supporting evidence
