@@ -11,3 +11,4 @@
 - [Reuse-aware completion reserves and bounded diagnosis](../2026-10-25-completion-resources.md)
 - [Resource pilot: captured F0010 misclassified before repair](../2026-10-25-completion-resources-live.md)
 - [Host diagnostic judgments and bounded baseline correction](../2026-10-25-judgment-correction.md)
+- [Judgment pilot: consistent original failure, ineffective repairs](../2026-10-25-judgment-correction-live.md)

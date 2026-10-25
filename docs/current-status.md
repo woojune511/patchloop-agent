@@ -24,42 +24,38 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [resource pilot](history/2026-10-25-completion-resources-live.md) ran once with
-normal output 40K, independent correction 25K and the same USD1.20 cap. It ended
-INCOMPLETE_RESPONSE after 30 model calls, 28 actions and USD1.080337500, with no
-edits, regression checks, submission or independent acceptance.
+The [judgment pilot](history/2026-10-25-judgment-correction-live.md) ran once on
+Astroid-1333 with gpt-5.4-mini xhigh, normal output 40K, protocol correction 25K
+and the unchanged USD1.20 cap. It ended LIMIT_REACHED at four accepted mutations
+after 23 model calls, 26 actions, 18m05s and USD1.031992500. No submission or
+independent acceptance occurred; counting/billing are known and allocation closed.
 
-Actual original-call stdout contained F0010. The authored probe checked stderr
-only and recorded false/false; the exact captures reached the next model input,
-but its public notes treated the failure as absent. Two original attempts ended
-without formal acquisition, followed by 26 source inspections. The final normal
-response exhausted its admitted 15,154 tokens; the reserved 25K correction then
-also exhausted without a tool call. Counting/billing were known; allocation closed.
+The first authored original probe used declared diagnostic rules and acquired the
+actual F0010 failure. Host/authored judgments agreed in all five probes: one
+baseline and four same-condition candidate replays. Every candidate still failed.
+The first three candidate failures reached the next dispatched model input; the
+last was followed by termination. The four edits were three implementation changes
+and one test addition. A 1,232-pass regression and one selected test passed after
+edit 2; final-diff regression is NOT_RUN and the original obligation remains refuted.
 
-The [resource follow-up](history/2026-10-25-completion-resources.md) and its
-[contract](../.agent/completion-resources.md) remain implemented: reuse-aware
-completion forecasts, an independent correction allowance and one bounded
-diagnostic after comparable original failure on a candidate. The separate
-correction reservation/dispatch was exercised. Reuse savings and the diagnostic
-opportunity were not exercised because no acquired failed candidate existed.
-The earlier [40K pilot](history/2026-10-25-output40-live.md) acquired a failure and
-made three ineffective edits; one stochastic trajectory per condition does not
-establish a causal regression or improvement.
+The [judgment implementation](history/2026-10-25-judgment-correction.md) and
+[contract](../.agent/observation-judgment.md) remain. Host calculation was selected
+live, but no mismatch occurred: baseline correction, supersession, linked-note
+revalidation and their extra reserve remain locally tested only. Literal choice
+and requirement mapping remain model-authored; null rules retain legacy semantics.
 
-The [judgment correction follow-up](history/2026-10-25-judgment-correction.md) now
-computes declared diagnostic-presence values from both per-call streams and
-compares them with authored values. A conflict permits one explicit unchanged-base
-correction before source repair, retaining the minimum correction/repair/check/
-replay/finish resources. Same-condition corrected failure replaces only the faulty
-judgment version; its receipts remain, and linked notes require revalidation.
-Failed/unaffordable correction returns VERIFICATION_INCOMPLETE. See the
-[contract](../.agent/observation-judgment.md).
+The [resource changes](history/2026-10-25-completion-resources.md) also remain.
+Call 22 exhausted its admitted 8,979 normal tokens. Reserved protocol correction
+used 13,265 of 25K tokens and generated edit 4, which still failed. Early replay was
+reusable; finish reuse and exceptional minimum-funded diagnosis were not exercised.
+See the [completion resource contract](../.agent/completion-resources.md).
 
-The initial scope is declared literal diagnostic rules, not arbitrary Python
-predicates or semantic public-task coverage. Separate setup-failed cases remain
-unverified. The original invocation v4 identity and finish gates remain; no output
-or cost default is raised. Local validation is recorded in the follow-up. Useful
-model uptake and live repair gain remain unverified. All paid allocations are closed.
+The [preceding pilot](history/2026-10-25-completion-resources-live.md) misclassified
+captured stdout and never edited. The current run establishes consistency and
+failure retention for its selected case, not causal repair gain. The unresolved
+question is whether the modified namespace/path helpers participate in the actual
+caller failure, or their result is ignored downstream. No further paid diagnostic,
+continuation or cap increase is authorized by the observed unused budget.
 
 ## Supporting evidence
 
@@ -90,6 +86,6 @@ submission, independent task acceptance and safety are separate. Mock safety is 
 
 Do not start Docker Desktop or pull/build evaluator images automatically. Preserve
 exact recovery identities, zero SDK retries and stop-all on count/transport/billing
-uncertainty. The latest live run captured the original symptom but failed formal
-acquisition because of the authored predicate; it did not reach mutation, finish
-or independent evaluation. Linux CI and general improvement remain unverified.
+uncertainty. The latest live run acquired the original failure and retained it
+through four ineffective edits; finish and independent evaluation were NOT_RUN.
+Linux CI and general improvement remain unverified.
