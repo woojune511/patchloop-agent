@@ -8,7 +8,8 @@ from test_dev_tools import mutation_call
 from test_repair_path_diagnosis import PATH, diagnosis, setup, state
 
 from patchloop.dev import diagnosis_request, probe_cases
-from patchloop.dev.tools import dev_tool_schemas
+from patchloop.dev.contracts import RequestedTool
+from patchloop.dev.tools import dev_tool_schemas, validate_tool_batch
 from patchloop.errors import ContractError
 from patchloop.sandbox import call_path_trace as trace
 from patchloop.util import sha256_json
@@ -28,6 +29,12 @@ def symbolic(gateway, action="symbolic-diagnosis"):
     for watch in call.arguments["call_path"]["watches"]:
         del watch["lines"]
     return call
+
+
+def focused(action="host-diagnosis", function="parse_rows"):
+    return RequestedTool(name="run_probe", action_id=action, preserve_annotation_presence=True,
+                         arguments={"focus": {"origin": "workspace", "path": PATH,
+                                               "function": function}})
 
 
 def test_model_schema_selects_functions_and_fields_without_host_coordinates():
@@ -53,17 +60,48 @@ def test_pending_schema_allows_only_diagnostic_selection(probe_policy, agent_pol
     )[0]
     parameters = tool["parameters"]
     properties = parameters["properties"]
-    for key in ("question", "python_source", "replay_action_id", "purpose"):
-        assert properties[key] == {"type": "null"}
-    assert properties["call_path"]["type"] == "object"
-    assert set(properties["call_path"]["required"]) == {"focus", "watches"}
-    decision = "turn_decision" if agent_policy == "current" else "memory_update"
-    assert set(parameters["required"]) == set(properties) == {
-        "question", "python_source", "replay_action_id", "purpose", "call_path", decision}
+    assert set(parameters["required"]) == set(properties) == {"focus"}
+    assert set(properties["focus"]["required"]) == {"origin", "path", "function"}
+    assert validate_tool_batch([focused()], agent_policy=agent_policy,
+                               path_diagnosis_pending=True) == "single_action"
     assert parameters["additionalProperties"] is False
     assert len(tool["description"]) < 1_200
     assert "observed_target" not in tool["description"]
     assert "Choose purpose" not in tool["description"]
+
+
+@pytest.mark.parametrize("extra", ["turn_decision", "memory_update", "question", "call_path"])
+def test_diagnosis_validator_matches_the_small_schema(extra):
+    call = focused()
+    if extra in {"turn_decision", "memory_update"}:
+        call = call.model_copy(update={extra: None})
+    else:
+        call.arguments[extra] = None
+    with pytest.raises(ContractError, match="diagnosis"):
+        validate_tool_batch([call], path_diagnosis_pending=True)
+    with pytest.raises(ContractError):
+        validate_tool_batch([focused()])  # General mode still requires a decision.
+
+
+def test_focus_field_errors_do_not_suggest_incompatible_legacy_nulls():
+    arguments = {**focused().arguments, "purpose": {"kind": "helper"}}
+    with pytest.raises(ContractError) as caught:
+        diagnosis_request.prepare(arguments, {"status": "needs_path_diagnosis"}, None, None)
+    assert caught.value.details["invalid_fields"] == [
+        {"path": "/purpose", "requirement": "only focus is accepted"}]
+
+
+@pytest.mark.parametrize("agent_policy", ["current", "thin"])
+def test_other_offered_diagnosis_tools_share_annotation_absence(agent_policy):
+    names = {"read_file", "search_files", "stop_task"}
+    tools = dev_tool_schemas(finish_enabled=False, allowed_tools=names,
+                             path_diagnosis_pending=True, agent_policy=agent_policy)
+    for tool in tools:
+        assert not {"turn_decision", "memory_update"} & set(tool["parameters"]["properties"])
+        call = RequestedTool(name=tool["name"], action_id=tool["name"],
+                             preserve_annotation_presence=True)
+        validate_tool_batch([call], allowed_tools=names, path_diagnosis_pending=True,
+                            agent_policy=agent_policy)
 
 
 @pytest.mark.parametrize(("key", "value", "required_value"), [
@@ -210,14 +248,31 @@ def test_symbolic_diagnosis_uses_original_root_and_retains_actual_trace(gateway_
     assert json.loads(result.output["reproduction"]["observed_json"])["bug_has_error"]
 
 
+def test_host_watches_follow_the_mutation_and_keep_raw_focus_identity(gateway_factory):
+    gateway, journal, _, backend = setup(gateway_factory)
+    call = focused()
+    raw = copy.deepcopy(call.arguments)
+    result = gateway.execute(call)
+    assert result.status == "succeeded", result
+    admission = result.output["diagnosis_request"]
+    assert admission["host_watches"]["watches"] == [
+        {"origin": "workspace", "path": PATH, "function": "parse_rows", "fields": ["text"]}]
+    assert admission["call_path"]["call_id"] == "call-1"
+    assert call.arguments == raw and state(gateway)["status"] == "diagnosed"
+    start = next(e["payload"] for e in journal.events() if e["event_type"] == "action_started"
+                 and e["payload"]["action_id"] == call.action_id)
+    assert start["arguments"] == raw and start["diagnosis_request"] == admission
+    assert gateway.execute(call).replayed and backend.calls == 3
+
+
 @pytest.mark.parametrize("boundary", ["admitted", "dispatched", "returned", "rejected"])
 def test_symbolic_recovery_preserves_admission_and_never_repeats_execution(
     gateway_factory, monkeypatch, boundary,
 ):
     gateway, journal, _, backend = setup(gateway_factory)
-    call = symbolic(gateway)
+    call = focused()
     if boundary == "rejected":
-        call.arguments["replay_action_id"] = "failed-current"
+        call.arguments["focus"]["function"] = "missing_function"
     append = journal.append
 
     def crash(kind, payload):
@@ -291,7 +346,6 @@ def test_scripted_diagnosis_repair_reaches_isolated_mock_evaluation(
     from test_dev_probe_cases import mock_request
     from test_dev_tools import read_calls
     from test_judgment_integration import diagnostic_probe
-    from test_probe_purpose import probe
     from test_repair_path_diagnosis import TracedProbe
 
     from patchloop.dev import runner
@@ -306,18 +360,8 @@ def test_scripted_diagnosis_repair_reaches_isolated_mock_evaluation(
         "        return []\n    rows: list[list[str]] = []")
     fixed = mutation_call(None, action_id="diagnosed-repair", alternative=True)
     fixed.arguments["old_text"] = wrong.arguments["new_text"]
-    selected = probe(smoke_package.public, "host-diagnosis", replay="original")
-    selected.arguments["replay_action_id"] = None
-    selected.arguments["call_path"] = {
-        "focus": {"origin": "workspace", "path": PATH, "function": "parse_rows"},
-        "watches": [{"origin": "workspace", "path": PATH, "function": "parse_rows",
-                     "fields": ["text"]}],
-    }
-    incompatible = selected.model_copy(deep=True, update={"action_id": "mixed-diagnosis"})
-    incompatible.arguments.update(
-        question="Which caller reaches the changed branch?",
-        purpose=probe(smoke_package.public).arguments["purpose"],
-    )
+    selected = focused()
+    incompatible = focused("mixed-diagnosis", "missing_function")
     steps = iter([read_calls()[1], diagnostic_probe(smoke_package.public, "original",
                   corrected=True), wrong, incompatible, selected, fixed])
 
@@ -329,11 +373,8 @@ def test_scripted_diagnosis_repair_reaches_isolated_mock_evaluation(
                 if call.name == "run_probe":
                     properties = next(t for t in tools if t["name"] == "run_probe")[
                         "parameters"]["properties"]
-                    if call.arguments.get("call_path"):
-                        # Deliberately bypass the provider schema once to exercise host
-                        # rejection, then correct just the two offending fields.
-                        assert properties["question"] == properties["purpose"] == {"type": "null"}
-                        assert properties["call_path"]["type"] == "object"
+                    if call.arguments.get("focus"):
+                        assert set(properties) == {"focus"}
                     else:
                         assert properties["question"]["type"] == ["string", "null"]
                         assert "anyOf" in properties["purpose"]
@@ -353,10 +394,10 @@ def test_scripted_diagnosis_repair_reaches_isolated_mock_evaluation(
     rejected = results["mixed-diagnosis"]
     assert rejected["status"] == "failed"
     validation = rejected["output"]["request_validation"]
-    assert [f["path"] for f in validation["invalid_fields"]] == ["/question", "/purpose"]
+    assert [f["path"] for f in validation["invalid_fields"]] == ["/focus"]
     correction = results["host-diagnosis"]["output"]["request_validation"]["correction"]
     assert correction == {"status": "corrected", "previous_action_id": "mixed-diagnosis",
-                          "changed_error_fields": ["/question", "/purpose"]}
+                          "changed_error_fields": ["/focus"]}
     starts = {e["payload"]["action_id"]: e["payload"] for e in events
               if e["event_type"] == "action_started"}
     assert starts["mixed-diagnosis"]["repair_path_link"] == starts["host-diagnosis"][

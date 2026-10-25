@@ -30,6 +30,7 @@ from patchloop.contracts import Artifact, ModelConfig, RunManifest, VerdictState
 from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
 from patchloop.dev import (
     completion_reproduction,
+    diagnosis_context,
     evidence_focus,
     history_search,
     native_compaction,
@@ -632,14 +633,14 @@ def _completion_guidance(
     elif policy.repair_path_diagnosis and policy.repair_path_diagnosis.get("blocked"):
         diagnosis = policy.repair_path_diagnosis
         stage = policy.workflow_gate
-        next_action = ({"tool": "run_probe", "replay_action_id": None}
+        next_action = ({"tool": "run_probe", "selection": "focus_only"}
                        if "run_probe" in allowed else None)
         message = (
             "The same original failure persists and the modified branch was not observed. "
-            "Set replay_action_id to null and supply call_path with focus and watches selecting "
-            "files, functions and fields. The host binds the original replay and executable "
-            "lines; omit call_id and lines. No source read is required to assemble those IDs "
-            "or line numbers. One optional preparation read, one actual diagnostic execution "
+            "Supply only focus selecting the enclosing public caller. The host selects "
+            "changed-function watches, parameter fields and executable lines, and binds "
+            "the original replay. Omit general plan/memory annotations. "
+            "One optional preparation read, one actual diagnostic execution "
             "and one rejected-request correction are bounded separately. "
             "Function entry, branch execution and behavior are "
             "different observations. A complete diagnosis must inform causal_revision before "
@@ -1722,7 +1723,7 @@ def _protocol_correction(
             "Use stop_task to abandon without submission or evaluation when no available "
             "action supports progress; it is not successful completion."
         )
-    return {
+    result = {
         "turn_id": turn_id,
         "code": code,
         "issue": issue,
@@ -1737,6 +1738,11 @@ def _protocol_correction(
             else None
         ),
     }
+    if policy.workflow_gate == "needs_path_diagnosis":
+        result["diagnosis_correction"] = diagnosis_context.correction(
+            code, issue, result["tool_contract_failure"])
+        result["message"] = result["diagnosis_correction"]["message"]
+    return result
 
 
 def _build_context(
@@ -1983,6 +1989,12 @@ def _build_context(
     payload["reproduction_review"] = _reproduction_review_resources(
         gateway.reproduction_review(diff_hash=summary.patch_hash), active_policy,
     )
+    if diagnosis_context.pending(payload):
+        payload["diagnosis_stage"] = diagnosis_context.packet(
+            active_policy.repair_path_diagnosis, journal.events(),
+            lambda path: gateway._tracked_path(path)[1].read_bytes())
+        if correction:
+            payload["protocol_correction"] = correction
     # Construction is allowlist-based from ``package.public`` and public tool outputs;
     # private task fields are never accepted as context inputs.
     return json.dumps(
@@ -1991,9 +2003,10 @@ def _build_context(
     )
 
 
-def _requested_tool_from_openai(call: Any, *, agent_policy: str = "current") -> RequestedTool:
+def _requested_tool_from_openai(call: Any, *, agent_policy: str = "current",
+                                path_diagnosis_pending: bool = False) -> RequestedTool:
     arguments = dict(call.arguments)
-    if agent_policy == "thin":
+    if agent_policy == "thin" or path_diagnosis_pending:
         annotations = {key: arguments.pop(key) for key in ("turn_decision", "memory_update")
                        if key in arguments}
         if "turn_decision" in annotations:
@@ -2004,7 +2017,8 @@ def _requested_tool_from_openai(call: Any, *, agent_policy: str = "current") -> 
         name=call.name,
         action_id=call.action_id,
         arguments=arguments,
-        **({"preserve_annotation_presence": True} if agent_policy == "thin" else {}),
+        **({"preserve_annotation_presence": True}
+           if agent_policy == "thin" or path_diagnosis_pending else {}),
         **annotations,
     )
 
@@ -2055,13 +2069,15 @@ def _tool_contract_failure(
     )
 
 
-def _turn_from_openai(turn: Any, *, agent_policy: str = "current") -> DevModelTurn:
+def _turn_from_openai(turn: Any, *, agent_policy: str = "current",
+                      path_diagnosis_pending: bool = False) -> DevModelTurn:
     calls: list[RequestedTool] = []
     conversion_error: str | None = None
     contract_failure: DevToolContractFailure | None = None
     for call in turn.tool_calls:
         try:
-            calls.append(_requested_tool_from_openai(call, agent_policy=agent_policy))
+            calls.append(_requested_tool_from_openai(
+                call, agent_policy=agent_policy, path_diagnosis_pending=path_diagnosis_pending))
         except (TypeError, ValueError, ValidationError) as exc:
             calls = []
             conversion_error = "invalid_dev_tool_contract"
@@ -2238,6 +2254,10 @@ def _model_error_issue(
 
 def _provider_tool_arguments(call: RequestedTool) -> dict[str, Any]:
     arguments = dict(call.arguments)
+    if call.preserve_annotation_presence and not (
+        {"turn_decision", "memory_update", "rejected_turn_decision"} & call.model_fields_set
+    ):
+        return arguments
     if "memory_update" in call.model_fields_set and "turn_decision" not in call.model_fields_set:
         arguments["memory_update"] = call.memory_update
         return arguments
@@ -2443,6 +2463,9 @@ def _build_model_input(
     )
     state = reference_native_sources(state, history, archive_kind=archive_kind)
     state = compact_model_state(state, history, archive_kind=archive_kind)
+    if diagnosis_context.pending(json.loads(context)):
+        state = compact_model_state(diagnosis_context.project(json.loads(context)), history,
+                                    archive_kind=archive_kind)
     return assemble_model_input(
         system_prompt=thin_policy.system_prompt(agent_policy, planning_policy),
         state=thin_policy.project_state(state, agent_policy), history=new_history,
@@ -2516,7 +2539,16 @@ def _build_segmented_model_input(
         journal=journal, artifact_store=store, context=context, latest_tool_results=latest_results,
     )
     reason = force_reason or segments.boundary_reason(journal, binding)
-    prompt = thin_policy.system_prompt(agent_policy, planning_policy, history_search_policy)
+    current = json.loads(context)
+    diagnosing = diagnosis_context.pending(current)
+    was_diagnosing = bool(handoff and diagnosis_context.pending(handoff["state"]))
+    if diagnosing != was_diagnosing:
+        reason = "path_diagnosis_entered" if diagnosing else "path_diagnosis_returned"
+    elif diagnosing and current.get("protocol_correction", {}).get(
+        "diagnosis_correction", {}).get("fresh_segment"):
+        reason = "path_diagnosis_no_action"
+    prompt = (diagnosis_context.SYSTEM_PROMPT if diagnosing else
+              thin_policy.system_prompt(agent_policy, planning_policy, history_search_policy))
     replace_pending = force_reason in {"omit_optional_evidence", "shrink_history_result"}
     old_manifest = handoff.get("evidence_manifest", {}) if handoff else {}
     omit_optional = force_reason == "omit_optional_evidence" or (
@@ -2542,12 +2574,17 @@ def _build_segmented_model_input(
             from patchloop.dev.history_evidence import overflow_result
 
             seed_results = [overflow_result(r) for r in latest_results]
-        base = _segment_public_base(prompt, state, seed_results, calls, agent_policy)
-        optional = [] if omit_optional else evidence_focus.optional_exchanges(
+        if diagnosing:
+            state = diagnosis_context.project(state)
+            base = segment_seed(prompt, state["public_task"], agent_policy=agent_policy,
+                                diagnosis=True)
+        else:
+            base = _segment_public_base(prompt, state, seed_results, calls, agent_policy)
+        optional = [] if omit_optional or diagnosing else evidence_focus.optional_exchanges(
             state.get("working_notes", {}).get("open_question"), events, ids,
             diff_hash=state["current_diff"]["patch_hash"],
         )
-        if not omit_optional:
+        if not omit_optional and not diagnosing:
             present = ids | {i["call_id"] for i in optional}
             optional += [i for i in additional_public_exchanges or []
                          if i["call_id"] not in present]
@@ -2590,7 +2627,7 @@ def _build_segmented_model_input(
                 ))}
         # Selected public evidence from another native stream is quoted data.
         # It neither joins that stream's continuation nor forces a new segment.
-        if additional_public_exchanges:
+        if additional_public_exchanges and not diagnosing:
             present = {i["call_id"] for i in public_exchanges(
                 [*previous[3:], *added], archive_kind=PUBLIC_EVIDENCE_KIND,
             ) if i.get("type") == "function_call_output"}
@@ -2599,7 +2636,7 @@ def _build_segmented_model_input(
                 added.append(SEGMENT_RULES.archive(exchanges=extra))
     history = [*previous[3:], *added]
     state = json.loads(context)  # Always use current facts, not an old handoff's controls.
-    if planning_policy != "none":
+    if planning_policy != "none" and not diagnosing:
         state["working_plan"] = working_plan.project(
             journal.events(), diff_hash=state["current_diff"]["patch_hash"],
             gate=state["workflow_gate"], policy=planning_policy,
@@ -2609,6 +2646,10 @@ def _build_segmented_model_input(
         "review_requested": fresh, "previous_reasoning_available": False,
         "interpretation": "public execution facts and unverified model-authored notes/plan",
     }
+    if diagnosing:
+        state = diagnosis_context.project(state)
+        state["segment_handoff"].update(
+            review_requested=False, interpretation="public original-call diagnosis only")
     view = _segment_current_view(state, history, latest_results, agent_policy)
     return assemble_model_input(
         system_prompt=prompt, state=thin_policy.project_state(view, agent_policy),
@@ -3096,8 +3137,12 @@ def _batch_attempt_card(
     if not calls or len(calls) != len(results):
         raise RecoveryError("completed tool batch cannot form one public attempt card")
     decisions: list[dict[str, Any] | None] = []
+    started = next((e["payload"] for e in gateway.journal.events()
+                    if e["event_type"] == "turn_started"
+                    and e["payload"]["turn_id"] == turn_id), {})
     for call in calls:
-        if call.turn_decision is None and "memory_update" not in call.model_fields_set:
+        if (call.turn_decision is None and "memory_update" not in call.model_fields_set
+                and started.get("workflow_gate") != "needs_path_diagnosis"):
             raise RecoveryError("completed tool batch is missing a public action decision")
         decisions.append(call.turn_decision.model_dump(mode="json")
                          if call.turn_decision is not None else None)
@@ -4039,6 +4084,7 @@ class _CompletionVerificationAbort(Exception):
 def _execute_completion_batch(
     *, calls: list[RequestedTool], journal: DevJournal, gateway: DevToolGateway,
     counters: _RunCounters, active_elapsed_ms: Callable[[], int],
+    path_diagnosis_pending: bool = False,
 ) -> list[DevToolResult]:
     """Replay public cases before finish, as independently recoverable tool actions.
 
@@ -4048,7 +4094,8 @@ def _execute_completion_batch(
     before = _comparison_extra_actions(journal.events())
     try:
         if len(calls) != 1 or calls[0].name != "finish_task":
-            return gateway.execute_batch(calls)
+            return gateway.execute_batch(calls, **(
+                {"path_diagnosis_pending": True} if path_diagnosis_pending else {}))
         events = journal.events()
         # Let the gateway verify input identity and replay before touching deadlines.
         if any(e["event_type"] == "action_finished"
@@ -4199,6 +4246,8 @@ def _record_planning_decision(
         return
     started = next(e["payload"] for e in reversed(journal.events())
                    if e["event_type"] == "turn_started" and e["payload"]["turn_id"] == turn_id)
+    if started["workflow_gate"] == "needs_path_diagnosis":
+        return
     working_plan.record(
         journal, calls, turn_id=turn_id, diff_hash=gateway.current_diff_hash,
         gate=started["workflow_gate"], policy=policy,
@@ -4974,6 +5023,8 @@ def _run_one_active(
                         max_parallel_reads=pending_max_parallel_reads,
                         allowed_tools=pending_allowed_tools,
                         allowed_read_paths=pending_targeted_read_paths,
+                        path_diagnosis_pending=(
+                            pending_started["workflow_gate"] == "needs_path_diagnosis"),
                     )
                 except ContractError as exc:
                     if counters.protocol_recoveries >= request.limits.max_protocol_recoveries:
@@ -5046,6 +5097,8 @@ def _run_one_active(
                             )
                             recovered_results = _execute_completion_batch(
                                 calls=pending_calls, journal=journal, gateway=gateway,
+                                path_diagnosis_pending=(
+                                    pending_started["workflow_gate"] == "needs_path_diagnosis"),
                                 counters=counters, active_elapsed_ms=active_elapsed_ms,
                             )
                         except _CompletionVerificationAbort as exc:
@@ -5242,6 +5295,9 @@ def _run_one_active(
                     issue=str(pending_correction.get("issue", pending_correction["message"])),
                     gateway=gateway,
                     policy=policy,
+                    tool_contract_failure=(DevToolContractFailure.model_validate(
+                        pending_correction["tool_contract_failure"])
+                        if pending_correction.get("tool_contract_failure") else None),
                 )
             context = _build_context(
                 package=package,
@@ -5755,7 +5811,9 @@ def _run_one_active(
                 terminal_message = f"provider dispatch failed: {type(exc).__name__}"
                 stop_remaining = True
                 break
-            turn = _turn_from_openai(raw_turn, agent_policy=request.agent_policy)
+            turn = _turn_from_openai(
+                raw_turn, agent_policy=request.agent_policy,
+                path_diagnosis_pending=policy.workflow_gate == "needs_path_diagnosis")
             try:
                 cost_nanos = cost_ledger.settle(
                     input_tokens=turn.input_tokens,
@@ -5911,6 +5969,7 @@ def _run_one_active(
                 max_parallel_reads=policy.max_parallel_reads,
                 allowed_tools=policy.allowed_tools,
                 allowed_read_paths=policy.targeted_read_paths,
+                path_diagnosis_pending=policy.workflow_gate == "needs_path_diagnosis",
             )
         except ContractError as exc:
             if counters.protocol_recoveries >= request.limits.max_protocol_recoveries:
@@ -5962,6 +6021,7 @@ def _run_one_active(
             results = _execute_completion_batch(
                 calls=turn.tool_calls, journal=journal, gateway=gateway, counters=counters,
                 active_elapsed_ms=active_elapsed_ms,
+                path_diagnosis_pending=policy.workflow_gate == "needs_path_diagnosis",
             )
         except _CompletionVerificationAbort as exc:
             terminal_code, terminal_message = exc.terminal, str(exc)

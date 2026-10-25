@@ -55,9 +55,9 @@ def test_diagnosis_preserves_edit_original_recheck_check_and_finish(short):
         assert policy.workflow_gate == "needs_path_diagnosis"
         guidance = runner._completion_guidance(state, policy)
         assert guidance["next_action"] == {
-            "tool": "run_probe", "replay_action_id": None,
+            "tool": "run_probe", "selection": "focus_only",
         }
-        assert "omit call_id and lines" in guidance["message"]
+        assert "Supply only focus" in guidance["message"]
         assert "No preparation read is offered" in guidance["message"]
         review = {"completion": state.completion_verification}
         public = compact_model_state({

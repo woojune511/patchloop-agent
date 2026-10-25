@@ -1,7 +1,6 @@
 tests/test_diagnosis_request.py
+tests/test_diagnosis_context.py
 tests/test_call_path_trace.py
 tests/test_repair_path_policy.py
 tests/test_dev_completion_resources.py
-tests/test_repair_path_diagnosis.py::test_rejected_request_can_be_corrected_without_an_execution
-tests/test_repair_path_diagnosis.py::test_finished_execution_recovers_without_duplicate_diagnosis
 tests/test_probe_action_comparison.py::test_control_changes_only_replay_schema_and_rejects_unoffered_mode

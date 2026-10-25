@@ -153,6 +153,8 @@ def review(events, public_task, completion, *, acquisition="none", probe_availab
 
 def request_kind(arguments, binding=None):
     """Classify declared intent without granting rejected/untyped requests evidence."""
+    if "focus" in arguments:
+        return "call_path_diagnosis"
     if binding is not None or arguments.get("reproduction") is not None:
         return "original_requirement"
     purpose = arguments.get("purpose")

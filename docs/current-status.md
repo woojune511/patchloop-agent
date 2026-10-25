@@ -24,28 +24,27 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-Retain the [diagnosis-mode contract fix](history/2026-10-26-diagnosis-mode.md): pending
-run_probe requires symbolic call_path and null question/source/replay/purpose;
-the host binds the original and source, and preserves exact invalid-field feedback.
-Local evidence remains 96 focused PASS, Ruff PASS and 366 quick PASS with isolated
-mock evaluation. Ordinary-mode schemas remain unchanged.
+Use the [focus-only diagnosis stage](history/2026-10-26-diagnosis-stage.md): the model
+selects the enclosing caller; the host derives watches/parameter fields from changed
+functions and binds the frozen original. Schema and validator omit all general
+decision/plan/memory annotations during this stage. The diagnostic probe schema is
+871 compact JSON characters; nine ordinary schema combinations remain byte-equivalent.
 
-The [new live pilot](history/2026-10-26-diagnosis-mode-live.md) ended
-VERIFICATION_INCOMPLETE after one accepted mutation left F0010 unchanged and changed
-lines unobserved. Both diagnosis turns received the correct 805-character contract,
-but returned no action after exhausting 16,380 normal and 25,000 correction tokens.
-Live diagnosis admission, construction and execution were NOT_EXERCISED. Checks,
-submission and independent evaluation were NOT_RUN. Cost was $0.999174600 of $1.20
-in 773.569 seconds; the allocation is closed.
+Diagnosis has a small public evidence view. Segmented-v1 enters/exits through an
+explicit handoff and uses a fresh compact segment for incomplete/no-tool corrections.
+Request-field errors retain field-specific correction; actual incomplete observation
+remains unverified. Run-global budgets and original verification are unchanged.
+Local mechanism controls and follow-up tests pass; final quick is 369 PASS in 81.14
+seconds, including isolated mock acceptance, with Ruff PASS. See the stage record
+for per-phase focused results and corrections. Live effectiveness is NOT_RUN.
 
-The [public request analysis](history/2026-10-26-diagnosis-mode-analysis.md) locates
-the remaining bottleneck before diagnostic action dispatch. The model still selects
-caller/watches and carries general decision metadata; the whole probe schema has
-7,158 compact JSON characters. The generic correction reached the model and retained
-opaque continuation; it did not narrow the diagnostic selection. Next consider a
-small stage-specific decision and context, preserving original verification.
-This is an untested design hypothesis. One trajectory does not isolate why generation
-stalled or establish an optimal cap. No automatic continuation is authorized.
+The [last live pilot](history/2026-10-26-diagnosis-mode-live.md) left F0010 unchanged
+after one edit and produced no diagnostic action in either normal or correction
+output. Its $0.999174600 allocation is closed. The [analysis](history/2026-10-26-diagnosis-mode-analysis.md)
+motivates reducing the remaining action-selection burden; it does not prove why
+generation stalled. The next unresolved question is whether the real model selects
+an informative enclosing caller, executes diagnosis and uses it to repair F0010.
+No live continuation is authorized by the local implementation request.
 
 ## Supporting evidence
 

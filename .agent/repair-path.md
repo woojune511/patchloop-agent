@@ -15,19 +15,22 @@ conflicting judgment or different file hash cannot trigger the diagnosis.
 
 The current candidate permits one preparation `read_file`/`search_files` when
 offered, one `run_probe` replay of the frozen original, and stop. Repair, checks and
-tests wait for the diagnosis. Fresh `call_path` selects a public caller focus and
-1–4 watched functions with at most six named fields each. Set `replay_action_id`,
-`question`, `python_source` and `purpose` to null; do not supply `call_id` or lines.
-The host binds the pending original root and failing call from public receipts.
+tests wait for the diagnosis. A fresh request supplies only `focus` (origin, path,
+function), selecting the public caller that encloses the suspected path. The host
+maps current unobserved changed ranges to their innermost unique Python function
+frames and selects their parameter names, up to four watches and six fields each.
+Module-level/ambiguous changes or exceeded bounds remain unavailable; the host does
+not guess a function or collect unrestricted locals. The host binds the pending
+original root and failing call from public receipts.
 At least one watch must intersect the refuted mutation's unobserved changed range.
 The original program, arguments, expected output and failure declaration stay fixed.
 
-At `needs_path_diagnosis`, the existing run_probe schema requires a non-null
-symbolic call_path and restricts question/python_source/replay_action_id/purpose
-to null. Its short description covers only this diagnostic selection; helper,
-new-original and saved-case creation instructions are absent. The host selects
-the mode from the workflow gate before counting/preparing the request. Other
-gates retain the ordinary schemas and turn-decision metadata is still attached.
+At `needs_path_diagnosis`, schema and validator both accept only focus for run_probe.
+All offered diagnosis tools omit turn_decision, plan and memory annotations, including
+the preparation read and stop. Explicit null annotations are rejected too. The parser,
+gateway batch validator and attempt card preserve this absence through recovery.
+The host selects the mode before count/preparation. Other gates retain ordinary
+schemas and annotations. A normal symbolic/explicit saved request remains recoverable.
 
 The host resolves unique functions with AST, then compiles public source without
 executing it to select up to 32 source lines in each function's own frame. Current
@@ -42,11 +45,35 @@ One invalid request may be corrected; two rejected requests exhaust the bounded
 opportunity. A rejected request does not become an executed diagnostic. One
 dispatched attempt with unknown/incomplete output exhausts execution capacity.
 Restarts, another action ID and repeated original replays cannot refill it.
-Incompatible fields are returned as exact invalid_fields paths with their required
-null/false values. Later replay/case preparation cannot overwrite an existing
+Incompatible selections are returned as exact invalid_fields paths. Legacy symbolic
+requests retain their null/false-field diagnostics. Later replay/case preparation cannot overwrite an existing
 preflight error. Existing correction receipts compare the named fields and retain
 the same pending case/candidate link; original program/oracle fields are never
 silently discarded or changed to admit a request.
+
+## Diagnosis input and correction
+
+The full public audit context stays in external CAS. The model's diagnosis view
+keeps the immutable task, original/current call observations and judgments, candidate
+patch, host watches, changed-file source, observed navigation headers, latest diagnostic
+or preparation results, offered tools, correction and remaining resources. General
+notes, plan and unrelated repair bookkeeping are absent. It reads no private evidence.
+
+For segmented-v1, entering/leaving diagnosis starts a public-evidence segment with
+the appropriate system prompt. Diagnosis seeds do not import old reasoning or
+note-selected exchanges. Leaving restores general repair context and the saved plan.
+No model plan review is recorded during diagnosis. Native continuations are validated
+before any boundary, and archived input artifacts remain linked for recovery.
+
+Output-incomplete/no-tool protocol corrections start a fresh compact diagnostic
+segment with the same original/candidate evidence. Request-shape errors correct only
+the named fields, without this forced boundary; source-binding rejection corrects
+focus through the existing rejected-request allowance. Actual unknown/incomplete trace
+does not earn another execution or release repair. Repeated no-action output exhausts
+the existing protocol allowance and cannot submit. No boundary renews money, output,
+model/action, preparation, request-correction or execution limits. Append/window modes
+receive the small current view and conditional annotation rule but preserve their
+native history; the fresh-segment behavior belongs to segmented-v1.
 
 ## Observation and evidence linkage
 
@@ -103,8 +130,9 @@ slot; blocked reason and required-anchor status explain the difference. Lack of 
 or incomplete diagnosis returns `VERIFICATION_INCOMPLETE`. Ordinary normal and
 protocol-correction output ceilings and monetary accounting are unchanged.
 
-`action_started.diagnosis_request` freezes the root, candidate, canonical request,
-source hashes and line-selection policy. Raw `action_id + input_hash` stays bound
+`action_started.diagnosis_request` freezes the root, candidate, host watch plan,
+canonical request, source hashes and line-selection policy. The execution adapter
+removes focus from its derived replay arguments only. Raw `action_id + input_hash` stays bound
 to the model's original selection. Recovery reuses the frozen construction, rejects
 source drift and never recomputes coordinates. A durable rejected request cannot
 turn into a dispatch after interruption. Completed results replay; an uncertain
@@ -121,7 +149,8 @@ durable result is uncertain and is never redispatched; remaining phases stop.
 All generated snapshots, logs and receipts stay outside the repository.
 
 Run `uv run --locked pytest @tests/diagnosis-request.txt --basetemp C:/pt/<unique>`
-for core construction/recovery/resource controls, then quick once for integration
+for core construction/context/correction/recovery/resource controls, then quick once for integration
 and isolated mock evaluation. Use `tests/call-path-repair.txt` when changing the
-broader comparison mechanism. See the [construction record](../docs/history/2026-10-26-diagnosis-request.md)
+broader comparison mechanism. See the [stage record](../docs/history/2026-10-26-diagnosis-stage.md),
+[construction record](../docs/history/2026-10-26-diagnosis-request.md)
 and [original implementation](../docs/history/2026-10-25-callpath-repair.md).

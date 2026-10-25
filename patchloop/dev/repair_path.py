@@ -93,7 +93,8 @@ def review(events, current_diff, completion):
         if base is None:
             continue
         for result in rows:
-            if starts.get(result["action_id"], {}).get("arguments", {}).get("call_path"):
+            start = starts.get(result["action_id"], {})
+            if start.get("diagnosis_request") or start.get("arguments", {}).get("call_path"):
                 continue
             if not _unchanged_failure(result, base, case["case_id"], current_diff):
                 continue

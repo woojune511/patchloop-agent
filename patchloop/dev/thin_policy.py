@@ -11,6 +11,8 @@ registered tools: investigate the relevant source, make a correct scoped repair,
 verify its behavior, and submit it. Each response requests either 1–4 supplied
 read_file/search_files calls or exactly one supplied action. Do not mix these
 shapes. Use only tools offered on the current turn.
+At needs_path_diagnosis use its small schema without any plan/memory annotation;
+run_probe selects only focus. General note instructions pause for that stage.
 
 Tool availability depends on current evidence and remaining budgets. Without
 current editable source evidence, replace_text is temporarily absent;

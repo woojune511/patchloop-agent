@@ -35,7 +35,7 @@ _MODEL_INPUT_FIELDS = frozenset({
     "change_review_request", "paired_observation", "followup_state_contract",
     "operator_caller_observation", "verification_scope_cue", "expectation_review",
     "operator_current_candidate_feedback", "supplied_public_case", "public_case_status",
-    "verification_phase",
+    "verification_phase", "diagnosis_stage",
 })
 
 

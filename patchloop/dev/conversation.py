@@ -72,7 +72,7 @@ SEGMENT_RULES = replace(WINDOW_RULES, mutable_fields=WINDOW_RULES.mutable_fields
     "working_plan", "segment_handoff", "current_public_failure", "pending_recheck",
     "last_successful_mutation", "last_failed_mutation", "recent_checks", "recent_probes",
     "latest_tool_results", "public_execution_summary", "repair_recheck", "probe_recheck",
-    "verification_phase",
+    "verification_phase", "diagnosis_stage",
 })
 
 
@@ -276,11 +276,16 @@ def assemble_model_input(
     ]
 
 
-def segment_seed(system_prompt: str, public_task: dict, *, agent_policy="current") -> list[dict]:
+def segment_seed(system_prompt: str, public_task: dict, *, agent_policy="current",
+                 diagnosis=False) -> list[dict]:
     """An explicit independent request for the unchanged task, not fake tool feedback."""
+    from patchloop.dev.diagnosis_context import SEGMENT_INSTRUCTIONS
+
+    instructions = (SEGMENT_INSTRUCTIONS if diagnosis else
+                    segments.segment_instructions(segments.INSTRUCTIONS, agent_policy))
     return [
         {"role": "system", "content": system_prompt + "\n" + CONVERSATION_INSTRUCTIONS
-         + "\n" + segments.segment_instructions(segments.INSTRUCTIONS, agent_policy)},
+         + "\n" + instructions},
         {"role": "developer", "content": canonical_json({"public_task": public_task})},
         dict(TASK_MESSAGE),
     ]

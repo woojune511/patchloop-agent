@@ -113,10 +113,10 @@ def test_descriptions_outside_memory_and_schema_order_are_unchanged(names, expec
 def test_surrounding_action_guidance_identity():
     from repair_mechanism_expectations import JUDGMENT
     prefix, _, suffix = _memory_block()
-    # Current prose fits the original 8,000-character contract with scope separation.
+    # Diagnosis pauses annotations; surrounding prose keeps the 8,000-character bound.
     # Historical J0/J1 arms retain their exact earlier surrounding-guidance identities.
     assert hashlib.sha256(canonical_json([prefix, suffix]).encode()).hexdigest() == (
-        "408868a488c3b120f7e3478aa6ea7102da9347bb34c9535562ee178620e4c467"
+        "68e9d1f55176d74f7cf292d6c7bd85c1d7406191401b9dd66f2a3f6329bef88e"
         if FROZEN_ARM is None else
         "2d0a9063da8d508a3c1218903cae12e33aa5db97f4d5655ca645fd5d52dc1331"
         if JUDGMENT else "c6439ce32e7724ed5d4c08dc1f207186b45e34234947c2867d7a65f096ce10a3"

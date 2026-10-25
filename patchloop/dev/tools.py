@@ -568,6 +568,9 @@ def dev_tool_schemas(
         if name not in enabled:
             continue
         parameters = schema["parameters"]
+        if path_diagnosis_pending:
+            projected.append(schema)
+            continue
         if agent_policy == "thin":
             parameters["properties"]["memory_update"] = memory_update_schema()
             parameters["required"].append("memory_update")
@@ -597,6 +600,7 @@ def validate_tool_batch(
     allowed_tools: set[str] | frozenset[str] | None = None,
     allowed_read_paths: Sequence[str] = (),
     agent_policy: str = "current",
+    path_diagnosis_pending: bool = False,
 ) -> str:
     """Return ``parallel_read`` or ``single_action``; reject every mixed shape."""
 
@@ -612,7 +616,14 @@ def validate_tool_batch(
         raise ContractError("model response requested a tool unavailable at the current gate")
     if agent_policy not in {"current", "thin"}:
         raise ContractError("unknown agent policy")
-    if agent_policy == "thin":
+    if path_diagnosis_pending:
+        if any({"turn_decision", "rejected_turn_decision", "memory_update"}
+               & call.model_fields_set for call in calls):
+            raise ContractError("diagnosis tools do not accept plan or memory annotations")
+        for call in calls:
+            if call.name == "run_probe":
+                diagnosis_request.validate_selection(call.arguments)
+    elif agent_policy == "thin":
         if any({"turn_decision", "rejected_turn_decision"} & call.model_fields_set
                for call in calls):
             raise ContractError("thin policy does not accept turn_decision")
@@ -634,7 +645,7 @@ def validate_tool_batch(
         "finish_task": "finish",
         "stop_task": "stop",
     }
-    if agent_policy == "current" and any(
+    if agent_policy == "current" and not path_diagnosis_pending and any(
         call.turn_decision.mode != expected_modes[call.name] for call in calls
     ):
         raise ContractError("turn_decision mode must match the requested tool family")
@@ -2586,10 +2597,12 @@ class DevToolGateway:
             completion_verification=self.completion_verification(diff_hash=summary.patch_hash),
         )
 
-    def execute_batch(self, calls: list[RequestedTool]) -> list[DevToolResult]:
+    def execute_batch(self, calls: list[RequestedTool], *,
+                      path_diagnosis_pending=False) -> list[DevToolResult]:
         shape = validate_tool_batch(
             calls, max_parallel_reads=self.limits.max_parallel_reads,
             agent_policy=self.agent_policy,
+            path_diagnosis_pending=path_diagnosis_pending,
         )
         if shape == "single_action":
             return [self.execute(calls[0])]
@@ -2668,11 +2681,16 @@ class DevToolGateway:
                 # Record rejected requests too, without treating them as executions.
                 path_link = repair_path.link(path_state)
             try:
-                if call.name == "run_probe" and diagnosis_request.symbolic(path_request):
+                if call.name == "run_probe" and (
+                    "focus" in call.arguments or diagnosis_request.symbolic(path_request)
+                    or (path_state.get("status") == "needs_path_diagnosis"
+                        and path_request is None)
+                ):
                     path_admission = diagnosis_request.prepare(
                         call.arguments, path_state, self.workspace,
                         getattr(self.probe_sandbox, "validate_call_path", None),
                         deadline=self.deadline,
+                        read_source=lambda path: self._tracked_path(path)[1].read_bytes(),
                     )
                     probe_call_arguments = diagnosis_request.arguments(
                         call.arguments, path_admission)
@@ -2790,7 +2808,8 @@ class DevToolGateway:
                     helper_program.validate(execution_arguments["python_source"])
             except (PatchLoopError, ValidationError, ValueError) as exc:
                 preflight_error = exc
-        if call.name == "run_probe" and "purpose" in call.arguments:
+        if call.name == "run_probe" and ("purpose" in call.arguments
+                                         or "focus" in call.arguments):
             request_validation = (
                 copy.deepcopy(pending.get("probe_request", {}).get("validation"))
                 if pending is not None else probe_requests.review(
@@ -2826,8 +2845,9 @@ class DevToolGateway:
                     "tool": call.name,
                     "arguments": call.arguments,
                     **({"turn_decision": turn_decision}
-                       if "memory_update" not in call.model_fields_set
-                       or "turn_decision" in call.model_fields_set else {}),
+                       if "turn_decision" in call.model_fields_set
+                       or (not call.preserve_annotation_presence
+                           and "memory_update" not in call.model_fields_set) else {}),
                     **({"memory_update": call.memory_update}
                        if "memory_update" in call.model_fields_set else {}),
                     "baseline_diff_hash": baseline,
