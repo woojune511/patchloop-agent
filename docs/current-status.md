@@ -30,13 +30,22 @@ and the unchanged USD1.20 cap. It ended LIMIT_REACHED at four accepted mutations
 after 23 model calls, 26 actions, 18m05s and USD1.031992500. No submission or
 independent acceptance occurred; counting/billing are known and allocation closed.
 
-The first authored original probe used declared diagnostic rules and acquired the
-actual F0010 failure. Host/authored judgments agreed in all five probes: one
-baseline and four same-condition candidate replays. Every candidate still failed.
-The first three candidate failures reached the next dispatched model input; the
-last was followed by termination. The four edits were three implementation changes
-and one test addition. A 1,232-pass regression and one selected test passed after
-edit 2; final-diff regression is NOT_RUN and the original obligation remains refuted.
+The [call-path diagnosis](history/2026-10-25-judgment-callpath-analysis.md) explains
+why all four edits retained F0010 despite consistent judgments. Historical
+changed-line feedback already showed the repair branches were not observed, and
+that evidence reached the next model inputs. Three bounded local operator probes
+(30.817 seconds total, zero provider calls) matched the historical source snapshots
+and actual conditions. The failing directory raises during module-name/spec lookup
+before the changed branches; Pylint then selects the absent `__init__.py`. Other
+line hits came from checker initialization/control. Equivalent helper-test core
+assertions passed on both unchanged and final source.
+
+The four edits were three implementation changes and one test addition. A
+1,232-pass regression and one selected test passed after edit 2; final-diff
+regression is NOT_RUN and the original obligation remains refuted. The next
+diagnostic priority is actual name/search-root derivation and downstream file
+selection, with a test that discriminates unchanged and repaired original calls.
+No repair or runtime-policy change was made by the diagnosis.
 
 The [judgment implementation](history/2026-10-25-judgment-correction.md) and
 [contract](../.agent/observation-judgment.md) remain. Host calculation was selected
@@ -52,9 +61,9 @@ See the [completion resource contract](../.agent/completion-resources.md).
 
 The [preceding pilot](history/2026-10-25-completion-resources-live.md) misclassified
 captured stdout and never edited. The current run establishes consistency and
-failure retention for its selected case, not causal repair gain. The unresolved
-question is whether the modified namespace/path helpers participate in the actual
-caller failure, or their result is ignored downstream. No further paid diagnostic,
+failure retention for its selected case, not causal repair gain. Local diagnosis
+now identifies branch non-reachability for the failing input; it does not verify
+a repair or reproduce the historical model trajectory. No further paid diagnostic,
 continuation or cap increase is authorized by the observed unused budget.
 
 ## Supporting evidence

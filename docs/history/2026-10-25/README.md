@@ -12,3 +12,4 @@
 - [Resource pilot: captured F0010 misclassified before repair](../2026-10-25-completion-resources-live.md)
 - [Host diagnostic judgments and bounded baseline correction](../2026-10-25-judgment-correction.md)
 - [Judgment pilot: consistent original failure, ineffective repairs](../2026-10-25-judgment-correction-live.md)
+- [Call-path diagnosis: changed branches miss the failing input](../2026-10-25-judgment-callpath-analysis.md)
