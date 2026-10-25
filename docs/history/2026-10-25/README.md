@@ -6,3 +6,4 @@
 - [Stable invocation and early original feedback](../2026-10-25-original-feedback.md)
 - [Original-feedback live pilot: incomplete responses before action](../2026-10-25-original-feedback-live.md)
 - [First-action exhaustion and correction analysis](../2026-10-25-first-action-analysis.md)
+- [40K output pilot: comparable original failure after three edits](../2026-10-25-output40-live.md)

@@ -24,16 +24,11 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [cap-only pilot](history/2026-10-25-budget-live.md) submitted a patch after
-public regression PASS, but the original failing input still produced F0010 and
-independent acceptance was FAIL. Replay occurred inside the final finish request,
-leaving no subsequent model turn. Host tracing argv and random HOME/PYLINTHOME
-hashes also made the otherwise matching target calls incomparable. That allocation
-is closed; its results and historical submissions remain unchanged.
-
 The [original-feedback implementation](history/2026-10-25-original-feedback.md)
-addresses both mechanisms. Fresh invocation v4 / tool contract v54 clears host
-launch arguments before authored setup and offers a fresh stable fixture workspace.
+addresses late replay and host condition drift observed in the
+[cap-only pilot](history/2026-10-25-budget-live.md). Fresh invocation v4 / tool
+contract v54 clears host launch arguments before authored setup and offers a fresh
+stable fixture workspace.
 Explicit CLI arguments and selected environment/input identities are still checked;
 HOME/cache variables must be set explicitly using the stable workspace when needed.
 Exact invocation v1/v2/v3 programs and observer bytes remain replayable.
@@ -46,19 +41,25 @@ Scheduling uses already reserved completion actions and reconciles started child
 even after admission closes. Tool forecasts include replay on each future repair;
 minimum monetary admission does not promise recovery from a semantic repair failure.
 
-Local four-condition controls and short owner validation support these mechanics.
-The [fresh live pilot](history/2026-10-25-original-feedback-live.md) stopped with
-INCOMPLETE_RESPONSE before any tool action: the initial response and one protocol
-correction each exhausted a full 25,000-token output allowance. Cost was USD
-0.235849950 of 1.20; reproduction, repair, feedback uptake and acceptance were
-not assessed. That allocation is closed. The [first-action audit](history/2026-10-25-first-action-analysis.md)
-found reasoning used 97.296% of output; a size handoff dropped continuation, while
-correction retained the same generation settings and tools. Response 2 contained
-a function_call item,
-but incomplete-response handling retained no arguments or item completion status.
-The next diagnostic should isolate first-action scope; no new paid comparison is
-authorized. This does not establish a regression in the new mechanisms. Stable
-original-call repair and use of pre-submission feedback remain unmeasured.
+Local four-condition controls support these mechanics. After the
+[25K pilot](history/2026-10-25-original-feedback-live.md) stopped before any action,
+the user authorized one [40K-output pilot](history/2026-10-25-output40-live.md)
+with the run_probe recommendation and all other conditions, including USD 1.20,
+unchanged. It acquired the original failure and made three edits. Each received
+a comparable replay and retained F0010. Two replay results reached later model
+inputs, and the final edit explicitly revised its hypothesis after that feedback.
+No regression check, submission or independent evaluation occurred.
+
+The 40K run cost USD 0.869725350 and stopped at COST_CAP_REACHED: after reserving
+USD 0.225 for the unused protocol correction, remaining money funded two minimum
+calls while the still-failing state required three. The first response completed
+in 19,265 output tokens, below the old ceiling; only the final edit response used
+more than 25K (34,882). The comparison cannot isolate a causal first-action gain.
+Stable replay and explicit feedback use are now observed in this sample, but
+repair remained refuted. Keep the runtime and general defaults unchanged. The
+unresolved question is the interaction of lengthy inspection, expensive repair
+generation and completion reserves after an unsuccessful edit. The allocation is
+closed; no further paid run is authorized and unused money is not a new allocation.
 The [operator oracle experiment](history/2026-10-24-oracle.md) remains separate.
 
 ## Supporting evidence
@@ -90,6 +91,6 @@ submission, independent task acceptance and safety are separate. Mock safety is 
 
 Do not start Docker Desktop or pull/build evaluator images automatically. Preserve
 exact recovery identities, zero SDK retries and stop-all on count/transport/billing
-uncertainty. A live replay of an unacquired case is observed; replay/rejection after
-a faithfully acquired original failure, Linux CI and general improvement remain
-unverified.
+uncertainty. The latest live run observed comparable failure after an acquired
+original case; it did not reach finish or independent evaluation. Linux CI and
+general improvement remain unverified.
