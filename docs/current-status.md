@@ -24,31 +24,26 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [diagnosis-mode change](history/2026-10-26-diagnosis-mode.md) projects the existing
-run_probe from the host workflow gate: pending diagnosis requires a symbolic
-call_path, with question/source/replay/purpose restricted to null. Its description
-covers only selecting public functions/fields. The host still binds the frozen
-original and current source. Exact invalid-field feedback is preserved through
-later preparation; request correction and actual execution remain separately bounded.
+Retain the [diagnosis-mode contract fix](history/2026-10-26-diagnosis-mode.md): pending
+run_probe requires symbolic call_path and null question/source/replay/purpose;
+the host binds the original and source, and preserves exact invalid-field feedback.
+Local evidence remains 96 focused PASS, Ruff PASS and 366 quick PASS with isolated
+mock evaluation. Ordinary-mode schemas remain unchanged.
 
-Core local validation: 96 PASS in 45.373 seconds, Ruff PASS. The saved rejected
-request reports question/purpose precisely; clearing just those fields passes
-static construction. Nine ordinary-mode schemas are byte-identical to baseline.
-A scripted mixed-request rejection, correction, diagnosis, repair, original recheck
-and submission reaches isolated mock evaluation. Quick integration: 366 PASS in
-73.608 seconds, including isolated mock evaluation.
+The [new live pilot](history/2026-10-26-diagnosis-mode-live.md) ended
+VERIFICATION_INCOMPLETE after one accepted mutation left F0010 unchanged and changed
+lines unobserved. Both diagnosis turns received the correct 805-character contract,
+but returned no action after exhausting 16,380 normal and 25,000 correction tokens.
+Live diagnosis admission, construction and execution were NOT_EXERCISED. Checks,
+submission and independent evaluation were NOT_RUN. Cost was $0.999174600 of $1.20
+in 773.569 seconds; the allocation is closed.
 
-The [last live pilot](history/2026-10-26-diagnosis-request-live.md), before this change,
-ended VERIFICATION_INCOMPLETE: one mutation left F0010 unchanged and its diagnostic
-request was rejected before construction. It spent $1.059124500 of $1.20; that
-allocation is closed. Checks, submission and independent evaluation were NOT_RUN.
-Both path-preparation projections matched offered tools; helper correction was
-NOT_EXERCISED. Current changes have not had a live model pilot.
-
-The remaining question is whether the narrowed contract enables an informative
-diagnostic and an evidence-based repair within the existing limits. Static request
-admission, shorter descriptions and local mock completion do not establish model
-uptake, output-token savings or F0010 repair. No automatic continuation is authorized.
+The remaining bottleneck is action generation before diagnosis execution. Inspect
+the delivered state, selection requirements and resource allocation before another
+change or paid comparison. This single trajectory does not isolate the cause of
+output exhaustion or establish an optimal cap. Contract delivery and local mock
+completion do not establish useful diagnosis or F0010 repair. No automatic
+continuation is authorized.
 
 ## Supporting evidence
 
@@ -80,5 +75,6 @@ submission, independent task acceptance and safety are separate. Mock safety is 
 Do not start Docker Desktop or pull/build evaluator images automatically. Preserve
 exact recovery identities, zero SDK retries and stop-all on count/transport/billing
 uncertainty. The latest live run acquired the original failure and made one
-ineffective mutation; checks, finish and independent evaluation were NOT_RUN.
+ineffective mutation; it returned no diagnostic action, and checks, finish and
+independent evaluation were NOT_RUN.
 Linux CI and general improvement remain unverified.
