@@ -85,8 +85,8 @@ Stage receipts distinguish accepted/rejected requests, dispatch and returned res
 Fresh original purposes bind the host-owned public issue identity and distinct
 failure/desired JSON; no quotation is generated. Acquisition needs both comparisons
 on the unchanged base. Rejections create no case; uncertainty stays unverified.
-Field-based correction receipts certify request validity only; see the
-[request, oracle and replay contract](evidence-recovery.md).
+Request correction certifies validity only; see [request/replay](evidence-recovery.md).
+Diagnostic conflicts use [one baseline judgment correction](observation-judgment.md).
 Legacy unknown dispatches reserve slots without becoming execution evidence. Releases
 preserve unmet verification. Journal roots and action/release identities survive recovery;
 forecasts never write them.

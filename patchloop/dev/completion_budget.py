@@ -30,6 +30,10 @@ class CompletionState:
     # and that post-edit early execution is available. Missing/unknown evidence
     # must retain the conservative finish-fallback forecast.
     early_replay_reusable: bool = False
+    # A known observation conflict must be corrected on the unchanged base
+    # before source repair. This is one real model request and probe execution,
+    # separate from protocol-response recovery.
+    observation_correction_pending: bool = False
 
 
 @dataclass(frozen=True)
@@ -118,14 +122,15 @@ def completion_budget(state: CompletionState) -> CompletionBudget:
                 + recovery + state.reproduction_case_count,
             )
     return CompletionBudget(
-        minimum=minimum,
-        protected=protected,
+        minimum=minimum + int(state.observation_correction_pending),
+        protected=protected + int(state.observation_correction_pending),
         future_check_failures=future_failures,
         mutation_retry_reserve=mutation_retry,
         check_recovery_reserve=check_recovery,
         current_read_reserve=current_read,
-        minimum_tool_actions=minimum_tools + reproduction_actions,
-        protected_tool_actions=protected_tools,
+        minimum_tool_actions=(minimum_tools + reproduction_actions
+                              + int(state.observation_correction_pending)),
+        protected_tool_actions=protected_tools + int(state.observation_correction_pending),
         check_recovery_tool_actions=(check_recovery_tools
                                      + future_failures * state.early_reproduction_count),
     )
@@ -152,6 +157,8 @@ def minimum_successor_calls(state: CompletionState, tool: str) -> int:
     """
     if tool in {"finish_task", "stop_task"}:
         return 0
+    if tool == "run_probe" and state.observation_correction_pending:
+        return completion_budget(replace(state, observation_correction_pending=False)).minimum
     if tool in {"read_file", "search_files"}:
         return completion_budget(replace(state, anchor_available=True)).minimum
     if tool in {"search_history", "run_probe", "run_tests"}:

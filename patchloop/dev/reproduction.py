@@ -12,7 +12,13 @@ import json
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from patchloop import probe_limits
-from patchloop.dev import probe_call_capture, probe_comparison, probe_invocation, probe_requests
+from patchloop.dev import (
+    probe_call_capture,
+    probe_comparison,
+    probe_invocation,
+    probe_judgment,
+    probe_requests,
+)
 from patchloop.dev.probe_cases import observation_json
 from patchloop.errors import ContractError, RecoveryError
 from patchloop.util import sha256_bytes, sha256_json
@@ -58,6 +64,14 @@ DESCRIPTION = (
     "external inputs/variables, not complete environment coverage. call.value is the return "
     "value; call.stdout/stderr are bounded per-call Python streams, not repr(value). "
     "Choose the diagnostic channel from public behavior and inspect both captured streams; "
+    "For diagnostic-presence booleans, include diagnostic_rules in purpose: "
+    "[{field: 'bug_has_error', call_id: 'call-1', contains: 'reported-code'}, ...]. "
+    "Each field is computed by the host from that call's complete stdout AND stderr. "
+    "The failure/desired objects must have exactly those boolean fields. Keep "
+    "record_observation consistent with this rule; null rules are for other observation kinds. "
+    "If judgment.status is conflict, fix the extractor on the unchanged base with "
+    "corrects_action_id pointing to that failed judgment; retain declarations, rules, "
+    "caller, inputs and environment. A new explanation or desired value cannot correct it. "
     "do not assume stderr. call.outcome='returned' means the callable returned, not task success. "
     "call.exit_code is the observed SystemExit code; null means no exit code, never zero. "
     "Inspect capture_status and exception before extracting values. "
@@ -114,6 +128,10 @@ class OriginalIntent(CallIntent):
         min_length=1, max_length=2048,
         description="Reported buggy observed result before the repair; differs from expected_json.",
     )
+    diagnostic_rules: list[probe_judgment.DiagnosticRule] | None = Field(
+        default=None, min_length=1, max_length=4,
+    )
+    corrects_action_id: str | None = Field(default=None, min_length=1, max_length=500)
 
 
 class LegacyOriginalIntent(OriginalIntent):
@@ -133,14 +151,18 @@ def schema():
 def purpose_schema():
     original = OriginalIntent.model_json_schema()
     original.pop("title", None)
+    original.pop("$defs", None)
     for item in original["properties"].values():
         item.pop("title", None)
     del original["properties"]["entrypoint"]["pattern"]
+    original["properties"]["diagnostic_rules"] = probe_judgment.rules_schema()
+    original["properties"]["corrects_action_id"].pop("default", None)
     original["properties"] = {
         "kind": {"type": "string", "enum": ["original_requirement"]},
         **original["properties"],
     }
-    original["required"] = ["kind", *original["required"]]
+    original["required"] = ["kind", *original["required"],
+                            "diagnostic_rules", "corrects_action_id"]
     return {"anyOf": [
         {"type": "object", "additionalProperties": False,
          "properties": {"kind": {"type": "string", "enum": ["helper"]}},
@@ -250,8 +272,9 @@ def bind(raw, public_task, source, action_id, *, replay=None, events=(),
             raise probe_requests.error(
                 "reported_failure_json and desired expected_json must differ",
                 "/purpose/reported_failure_json", "/purpose/expected_json")
+        probe_judgment.validate(intent.diagnostic_rules, expected, failure)
     definition = {
-        **intent.model_dump(),
+        **intent.model_dump(exclude_none=True),
         "expected_json": expected,
         **({"reported_failure_json": failure} if paired else {}),
         "public_task_hash": sha256_json(task),
@@ -447,10 +470,19 @@ def compare(output, binding):
     if invoked:
         trace.update(binding_method=channel,
                      execution_environment=probe_invocation.environment(result))
+    rules = binding["definition"].get("diagnostic_rules")
+    judgment = (probe_judgment.evaluate(rules, trace, actual, reason=reason)
+                if rules is not None else None)
+    if judgment is not None:
+        if judgment["status"] == "consistent":
+            actual = judgment["host_json"]
+        else:
+            reason = judgment["reason"]
     result["reproduction"] = {
         "binding": binding,
         "call_observation": trace,
         "observed_json": actual,
+        **({"judgment": judgment} if judgment is not None else {}),
         "comparison": (
             "not_compared"
             if reason

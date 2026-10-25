@@ -231,6 +231,7 @@ class _ToolPolicy:
     optional_mutation_protected_tool_actions: int = 0
     inspection_reserve_tool_actions: int = 0
     original_failure_diagnostic: dict[str, Any] | None = None
+    observation_correction: dict[str, Any] | None = None
 
     @property
     def feedback_recovery_reserve_calls(self) -> int:
@@ -609,7 +610,19 @@ def _completion_guidance(
     needs_mutation = policy.workflow_gate == "needs_mutation" or any(
         row["status"] == "FAIL" for row in snapshot.visible_check_status
     ) or (snapshot.completion_verification or {}).get("status") == "refuted"
-    if policy.workflow_gate == "needs_original_reproduction":
+    if policy.workflow_gate in {"needs_observation_correction", "verification_incomplete"}:
+        stage = policy.workflow_gate
+        next_action = {"tool": "run_probe"} if "run_probe" in allowed else None
+        message = (
+            "Captured target diagnostics contradict the authored observation. Correct only the "
+            "extractor in a fresh original probe and supply purpose.corrects_action_id from "
+            "observation_correction. Preserve rules, expected/failure values, caller, fixtures "
+            "and environment. Re-execute on the unchanged base; source repair waits for a "
+            "consistent same-condition original failure. One correction is allowed in this run; "
+            "a rejected or unsuccessful correction does not renew it. Unresolved or unaffordable "
+            "correction returns verification incomplete."
+        )
+    elif policy.workflow_gate == "needs_original_reproduction":
         stage = "needs_original_reproduction"
         next_action = {"tool": "run_probe"} if "run_probe" in allowed else None
         message = (
@@ -751,6 +764,12 @@ def _tool_policy(
         has_current_mutation_evidence = bool(snapshot.mutation_evidence_paths)
     workflow_gate = _workflow_gate(summary, ready_to_submit=ready_to_submit)
     verification = (snapshot.completion_verification or {}) if snapshot is not None else {}
+    observation_fix = verification.get("observation_correction", {})
+    observation_blocked = bool(observation_fix.get("blocked"))
+    observation_available = bool(
+        observation_blocked and observation_fix.get("status") == "pending"
+        and not observation_fix.get("pending_started")
+    )
     original_case_failed = verification.get("status") == "refuted"
     diagnostic = verification.get("original_failure_diagnostic")
     diagnostic_available = bool(
@@ -850,13 +869,15 @@ def _tool_policy(
         repair_read_credit=repair_read_credit,
         automatic_recheck=repair_recheck,
         current_recheck_eligible=current_recheck_eligible,
-        reproduction_case_count=verification.get("replayable_case_count", 0),
+        reproduction_case_count=(verification.get("replayable_case_count", 0)
+                                 + int(observation_available)),
         pending_reproduction_count=verification.get("pending_count", 0),
         early_reproduction_count=len(verification.get("baseline_failure_case_ids", [])),
         early_replay_reusable=bool(
             verification.get("early_replay_reusable")
             and getattr(gateway, "probe_sandbox", None) is not None
         ),
+        observation_correction_pending=observation_available,
     )
     budget = completion_budget(completion_state)
     completion_possible = (
@@ -1037,6 +1058,17 @@ def _tool_policy(
             0, obligation["max_investigation_actions"] - obligation["investigation_actions"],
         ))
         available_check_ids = ()
+    if observation_blocked:
+        workflow_gate = "needs_observation_correction"
+        allowed = {"stop_task"}
+        completion_possible &= (
+            observation_available and getattr(gateway, "probe_sandbox", None) is not None
+        )
+        if completion_possible:
+            allowed.add("run_probe")
+        mutation_allowed = mutation_protected_completion_possible = inspection_allowed = False
+        max_parallel_reads = exploration_capacity = 0
+        available_check_ids = ()
     minimum_cost_successors = None
     if (completion_cost_policy in {COMPLETION_MINIMUM_POLICY, COMPLETION_RECOVERY_POLICY}
             and funded_calls is not None):
@@ -1073,6 +1105,9 @@ def _tool_policy(
     if diagnostic_relaxes_inspection and inspection_allowed:
         inspection_model_slack = min(inspection_model_slack, 1)
         inspection_tool_slack = min(inspection_tool_slack, 1)
+    if observation_blocked and "run_probe" not in allowed:
+        workflow_gate = "verification_incomplete"
+        completion_possible = protected_completion_possible = False
     exploration_state = (
         "last_opportunity"
         if inspection_allowed and exploration_capacity == 1
@@ -1157,6 +1192,10 @@ def _tool_policy(
                      "recovery. The minimum repair, checks, replay and finish must still fit; "
                      "a rejected diagnostic spends the opportunity too.",
         } if diagnostic is not None else None),
+        observation_correction=({
+            **observation_fix, "offered_tools": sorted(allowed),
+            "uses_minimum_completion_reserve": "run_probe" in allowed,
+        } if observation_blocked else None),
     )
     if funded_calls is not None and minimum_cost_successors is not None:
         future_calls = max(minimum_cost_successors[tool] for tool in allowed)
@@ -1271,6 +1310,8 @@ def _tool_policy(
 def _repair_inspection_payload(policy: _ToolPolicy) -> dict[str, Any]:
     diagnostic = ({"original_failure_diagnostic": policy.original_failure_diagnostic}
                   if policy.original_failure_diagnostic is not None else {})
+    if policy.observation_correction is not None:
+        diagnostic["observation_correction"] = policy.observation_correction
     if policy.repair_inspection_policy == "protected-v1":
         return diagnostic
     return {**diagnostic, "repair_inspection": {
@@ -4959,7 +5000,15 @@ def _run_one_active(
                 policy,
                 snapshot=snapshot,
             )
-            if "cost" in terminal_completion_horizon["blocking_resources"]:
+            if policy.workflow_gate == "verification_incomplete":
+                terminal_code = DevTerminal.VERIFICATION_INCOMPLETE
+                terminal_message = (
+                    "observation correction is unresolved or cannot fit completion resources"
+                )
+                terminal_completion_horizon["observation_correction"] = (
+                    policy.observation_correction
+                )
+            elif "cost" in terminal_completion_horizon["blocking_resources"]:
                 terminal_code = DevTerminal.COST_CAP_REACHED
                 terminal_message = "completion cost reservation cannot fit the remaining cap"
                 stop_remaining = True
@@ -5751,6 +5800,26 @@ def _run_one_active(
         return _OneRunResult(_public_result(run_id, terminal), False)
 
     if finish_result is None:
+        # A physical/output limit can stop the loop before the next policy
+        # projection. Retain that stop cause while reporting the unresolved
+        # observation; transport/count/billing uncertainty keeps its own terminal.
+        if terminal_code in {
+            DevTerminal.LIMIT_REACHED, DevTerminal.COST_CAP_REACHED,
+            DevTerminal.INCOMPLETE_RESPONSE, DevTerminal.PROTOCOL_VIOLATION,
+        }:
+            from patchloop.dev import observation_correction
+
+            events = journal.events()
+            last_diff = next((e["payload"]["result"]["workspace_diff_hash"]
+                              for e in reversed(events) if e["event_type"] == "action_finished"),
+                             sha256_bytes(b""))
+            unresolved = observation_correction.review(events, last_diff)
+            if unresolved["blocked"]:
+                terminal_completion_horizon = {
+                    **(terminal_completion_horizon or {}), "stop_cause": terminal_code.value,
+                    "observation_correction": unresolved,
+                }
+                terminal_code = DevTerminal.VERIFICATION_INCOMPLETE
         terminal = _terminal(
             journal=journal,
             terminal=terminal_code or DevTerminal.TASK_FAILED,

@@ -72,6 +72,11 @@ not a command to probe or evidence that useful diagnosis/repair will occur.
 
 ## Focused local verification
 
+[Observation correction](observation-judgment.md) adds one model/probe action before
+repair and one future corrected-case replay. It uses minimum successor funding,
+separate from the protocol correction allowance; unresolved or unfunded conflicts
+return verification incomplete instead of releasing into source exploration.
+
 Run `uv run --locked pytest @tests/recovery-budget.txt --basetemp C:/pt/<unique>`.
 The selection uses pure path enumeration, exact boundary checks, local invocation
 fixtures and stubbed provider dispatch/recovery. It performs no paid generation

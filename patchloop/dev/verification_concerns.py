@@ -47,6 +47,10 @@ _FEEDBACK = {
     "verification_result_not_successful": (
         "Resolve requires a successful current-diff check or healthy probe."
     ),
+    "verification_judgment_unverified": (
+        "The probe observation conflicts with its captured evidence or is incomplete; "
+        "correct the judgment before using it to resolve this concern."
+    ),
 }
 
 
@@ -64,7 +68,7 @@ def _effective_status(item: dict[str, Any], diff_hash: str) -> str:
 
 
 def project_verification_concerns(
-    state: dict[str, Any], *, diff_hash: str,
+    state: dict[str, Any], *, diff_hash: str, judgment_updates: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Evidence currency is checked; the model's interpretation is not certified."""
 
@@ -90,6 +94,11 @@ def project_verification_concerns(
             )
             if decision["evidence"] is not None:
                 decision["evidence"]["currency"] = currency
+                update = (judgment_updates or {}).get(decision["evidence"].get("action_id"))
+                if update is not None:
+                    item["status"] = "unresolved"
+                    item["judgment_update"] = copy.deepcopy(update)
+                    decision["currency"] = "requires_revalidation"
     return {
         "items": items,
         "unresolved_ids": [item["concern_id"] for item in items if item["status"] == "unresolved"],
@@ -132,6 +141,9 @@ def _resolution_evidence(
     if result["tool"] in {"run_check", "run_tests"}:
         passed = output.get("passed") is True
     else:
+        judgment = output.get("reproduction", {}).get("judgment")
+        if judgment is not None and judgment.get("status") != "consistent":
+            return None, "verification_judgment_unverified"
         passed = (
             output.get("status") == "passed" and type(output.get("exit_code")) is int
             and output["exit_code"] == 0 and not output.get("truncated", False)

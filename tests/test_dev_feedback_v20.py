@@ -208,7 +208,7 @@ def test_probe_description_exposes_existing_capability_without_changing_wire_sha
     # Pin purpose selection as well as question references and tool order.
     encoded = json.dumps(structure(schemas), separators=(",", ":"), ensure_ascii=False).encode()
     assert hashlib.sha256(encoded).hexdigest() == (
-        "fad4c89e6ecc4c9ab2c4fac3eb9b78f692b376bdcecb376acefa5f1ee16b74ee"
+        "ddbbd6dfd426d2de6bb7604560274436b37b1105182fcca0ca9fbc138d604b76"
         if FROZEN_ARM is None else
         "acdcc28623f92006faaa95a0c58015095e28b851093d0eb983e8d59bcd303222"
     )

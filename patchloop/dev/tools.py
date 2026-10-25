@@ -23,6 +23,7 @@ from patchloop.dev import (
     behavior_cases,
     evidence_focus,
     history_search,
+    observation_correction,
     original_obligation,
     probe_cases,
     probe_replay,
@@ -2120,9 +2121,13 @@ class DevToolGateway:
         """Project advisory concerns without refreshing/expiring source observations."""
 
         current_hash = diff_hash if diff_hash is not None else self.current_diff_hash
+        judgment_updates = observation_correction.note_updates(
+            observation_correction.review(self.journal.events(), current_hash),
+        )
         view = project_verification_concerns(
             self._verification_state,
             diff_hash=current_hash,
+            judgment_updates=judgment_updates,
         )
         view["observations"] = project_verification_observations(
             [e["payload"]["result"] for e in self.journal.events()
@@ -2134,6 +2139,8 @@ class DevToolGateway:
         self._refresh_working_source_notes()
         current_hash = diff_hash if diff_hash is not None else self.current_diff_hash
         findings = copy.deepcopy(self._working_findings)
+        correction = observation_correction.review(self.journal.events(), current_hash)
+        judgment_updates = observation_correction.note_updates(correction)
         source_hashes: dict[str, str | None] = {}
         for finding in findings:
             current = True
@@ -2159,9 +2166,16 @@ class DevToolGateway:
                         )
             finding["status"] = "current" if current else "historical"
             finding["interpretation_status"] = "model_authored_unverified"
+            affected = [judgment_updates[e["action_id"]] for e in finding["evidence"]
+                        if e["kind"] == "tool_result" and e["action_id"] in judgment_updates]
+            if affected:
+                finding["status"] = "requires_revalidation"
+                finding["judgment_update"] = affected
         question = copy.deepcopy(self._working_open_question)
         if isinstance(question, dict):
             question["priority_status"] = evidence_focus.priority_status(question, current_hash)
+            if any(e.get("action_id") in judgment_updates for e in question.get("evidence", [])):
+                question["judgment_status"] = "requires_revalidation"
         return {
             "findings": findings,
             "available_note_ids": [finding["note_id"] for finding in findings],
@@ -2602,6 +2616,12 @@ class DevToolGateway:
         probe_binding_key = "probe_replay_request" if replay_probe else "probe_case_request"
         mutation_requirement_reference = None
         mutation_behavior_cases = None
+        correction = observation_correction.review(self.journal.events(), baseline)
+        if correction["blocked"] and call.name not in {"run_probe", "stop_task"}:
+            preflight_error = ContractError(
+                "Correct the contradictory observation before exploration, repair or finish.",
+                details={"observation_correction": correction},
+            )
         if call.name == "replace_text":
             mutation_behavior_cases = (
                 pending.get("mutation_behavior_cases") if pending is not None
@@ -2653,6 +2673,11 @@ class DevToolGateway:
                 if (pending is not None
                         and pending.get("reproduction_binding") != reproduction_binding):
                     raise RecoveryError("pending reproduction differs from its admitted purpose")
+                observation_correction.validate(
+                    reproduction_binding, (prepared_probe or probe_arguments).get("python_source"),
+                    self.journal.events(), current_diff=baseline, action_id=call.action_id,
+                    replay=replay_probe,
+                )
                 execution_arguments = (
                     {key: prepared_probe[key] for key in ("question", "python_source")}
                     if prepared_probe is not None else probe_arguments
@@ -3938,7 +3963,14 @@ class DevToolGateway:
         original_obligation.release(self.journal, self.public_task, reason)
 
     def _require_acquisition_released(self, diff_hash: str) -> None:
-        obligation = self.completion_verification(diff_hash=diff_hash)["original_obligation"]
+        verification = self.completion_verification(diff_hash=diff_hash)
+        correction = verification.get("observation_correction", {})
+        if correction.get("blocked"):
+            raise ContractError(
+                "Contradictory observation is unresolved; repair and submission remain unverified.",
+                details={"observation_correction": correction},
+            )
+        obligation = verification["original_obligation"]
         if obligation["stage"] == "pending":
             raise ContractError(
                 "Bounded original reproduction acquisition is pending; investigate the public "

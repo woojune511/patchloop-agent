@@ -123,6 +123,12 @@ def review(events, public_task, completion, *, acquisition="none", probe_availab
              or len(request_errors) >= MAX_REQUEST_ERRORS else "pending")
     status = ("refuted" if completion["status"] == "refuted" else "verified"
               if roots and completion["status"] == "cases_verified" else "unverified")
+    correction = completion.get("observation_correction", {})
+    if correction.get("blocked"):
+        status = "unverified"
+        stage = "needs_observation_correction"
+        acquisition_status = "judgment_conflict"
+        reason = correction["reason"]
     return {
         **identity, "status": status, "acquisition_policy": acquisition,
         "acquisition_status": acquisition_status, "stage": stage, "reason": reason,

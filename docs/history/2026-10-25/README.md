@@ -10,3 +10,4 @@
 - [40K diagnosis: ineffective edits and competing recovery reserves](../2026-10-25-output40-diagnosis.md)
 - [Reuse-aware completion reserves and bounded diagnosis](../2026-10-25-completion-resources.md)
 - [Resource pilot: captured F0010 misclassified before repair](../2026-10-25-completion-resources-live.md)
+- [Host diagnostic judgments and bounded baseline correction](../2026-10-25-judgment-correction.md)

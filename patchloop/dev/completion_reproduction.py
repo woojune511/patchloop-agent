@@ -8,7 +8,13 @@ from __future__ import annotations
 
 import copy
 
-from patchloop.dev import probe_comparison, probe_invocation, probe_replay, reproduction
+from patchloop.dev import (
+    observation_correction,
+    probe_comparison,
+    probe_invocation,
+    probe_replay,
+    reproduction,
+)
 from patchloop.dev.contracts import RequestedTool
 from patchloop.errors import ContractError, RecoveryError
 from patchloop.util import canonical_json, sha256_bytes, sha256_json
@@ -235,6 +241,10 @@ def review(events, current_diff, *, public_task=None, run_id):
             },
             "requirement_mapping": "model_authored_unverified", "repair_success": "not_assessed",
         })
+    correction = observation_correction.review(events, current_diff)
+    superseded = set(correction["superseded_case_ids"])
+    superseded_items = [item for item in items if item["case_id"] in superseded]
+    items = [item for item in items if item["case_id"] not in superseded]
     failed = sum(item["status"] == "refuted" for item in items)
     unverified = sum(item["status"] == "unverified" for item in items)
     priority = {"refuted": 0, "pending": 1, "unverified": 2, "verified": 3}
@@ -249,6 +259,12 @@ def review(events, current_diff, *, public_task=None, run_id):
         "status": "refuted" if failed else "pending" if pending else "unverified"
         if unverified or not items else "cases_verified",
         "current_diff_hash": current_diff, "case_count": len(items),
+        "observation_correction": correction,
+        "superseded_case_count": len(superseded_items),
+        "superseded_cases": [{"case_id": item["case_id"],
+                              "root_action_id": item["root_action_id"],
+                              "status": "superseded_judgment"}
+                             for item in superseded_items[:DISPLAY_LIMIT]],
         "replayable_case_count": sum(item["replayable"] for item in items),
         "baseline_failure_case_ids": acquired,
         "early_replay_reusable": bool(items) and len(acquired) == len(items) and all(

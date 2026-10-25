@@ -67,7 +67,7 @@ def dev_tool_surface_hash(
         })
     base = sha256_json(
         {
-            "schema_version": "dev-tool-surface-v54",
+            "schema_version": "dev-tool-surface-v55",
             "submission_assessment": "required-nonblank-current-diff-plan-review-v2",
             "selected_public_tests": "registered-pytest-tracked-targets-optional-v1",
             "segmented_context": segments.contract(),
@@ -146,6 +146,9 @@ def dev_tool_surface_hash(
             ],
             "original_request_source": "host-full-public-task-and-issue-hash-v1",
             "probe_request_correction": "field-diagnostics-actual-arguments-preflight-receipt-v1",
+            "probe_judgment": "captured-diagnostic-host-values-witnesses-v1",
+            "observation_correction": "one-fresh-baseline-same-conditions-supersession-v1",
+            "observation_correction_budget": "one-model-one-probe-plus-minimum-completion-v1",
             "probe_source_budget": "authored-8000-observer-8000-repr-transport-v1",
             "public_failure_recurrence": "semantic-site-with-raw-fallback-v1",
             "causal_revision_guidance": "advisory-hypothesis-review-v2",
@@ -156,6 +159,7 @@ def dev_tool_surface_hash(
             "observed_source_index": "delivered-lexical-headers-16-entries-4000-chars-v1",
             "tool_closure_warning": "actual-single-inspection-successor-conditional-v1",
             "working_notes": "stable-notes-diff-scoped-question-evidence-v5",
+            "judgment_note_currency": "conflicted-or-superseded-requires-revalidation-v1",
             "question_evidence": "two-role-refs-current-diff-countercheck-first-v2",
             "source_note_normalization": "shared-observation-lf-not-mutation-format-v1",
             "working_note_feedback": "action-bound-expiry-independent-of-annotation-v3",
@@ -215,6 +219,7 @@ class DevTerminal(StrEnum):
     COST_CAP_REACHED = "COST_CAP_REACHED"
     PROTOCOL_VIOLATION = "PROTOCOL_VIOLATION"
     INCOMPLETE_RESPONSE = "INCOMPLETE_RESPONSE"
+    VERIFICATION_INCOMPLETE = "VERIFICATION_INCOMPLETE"
     PROVIDER_CONTINUATION_ERROR = "PROVIDER_CONTINUATION_ERROR"
     PROVIDER_TIMEOUT_OR_UNKNOWN = "PROVIDER_TIMEOUT_OR_UNKNOWN"
     COUNT_TIMEOUT_OR_UNKNOWN = "COUNT_TIMEOUT_OR_UNKNOWN"

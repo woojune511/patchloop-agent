@@ -46,15 +46,20 @@ The earlier [40K pilot](history/2026-10-25-output40-live.md) acquired a failure 
 made three ineffective edits; one stochastic trajectory per condition does not
 establish a causal regression or improvement.
 
-Next question: how to check that an authored baseline observation agrees with
-captured diagnostic output before its interpretation drives repair planning.
-The current evidence distinguishes a predicate/channel error from lost capture;
-no corrective implementation or new paid run is implied. The original invocation
-v4 identity and finish gates remain: comparable failure blocks finish, and
-missing/incomparable evidence stays unverified. Local validation remains 56 focused
-checks (45s), 12 final diagnostic checks (15s), 305 quick checks (31s), Ruff and
-isolated mock evaluation. Live repair gain and useful diagnosis remain unverified;
-general output and cost-policy defaults are unchanged.
+The [judgment correction follow-up](history/2026-10-25-judgment-correction.md) now
+computes declared diagnostic-presence values from both per-call streams and
+compares them with authored values. A conflict permits one explicit unchanged-base
+correction before source repair, retaining the minimum correction/repair/check/
+replay/finish resources. Same-condition corrected failure replaces only the faulty
+judgment version; its receipts remain, and linked notes require revalidation.
+Failed/unaffordable correction returns VERIFICATION_INCOMPLETE. See the
+[contract](../.agent/observation-judgment.md).
+
+The initial scope is declared literal diagnostic rules, not arbitrary Python
+predicates or semantic public-task coverage. Separate setup-failed cases remain
+unverified. The original invocation v4 identity and finish gates remain; no output
+or cost default is raised. Local validation is recorded in the follow-up. Useful
+model uptake and live repair gain remain unverified. All paid allocations are closed.
 
 ## Supporting evidence
 

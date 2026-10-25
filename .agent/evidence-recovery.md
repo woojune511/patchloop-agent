@@ -138,10 +138,12 @@ omitted rows are explicit. Values remain in `binding.definition` and `observed_j
 Feedback is absent when comparison is unavailable. Legacy v1/v2 receipts and all
 observer bytes remain unchanged; durable old results are not recomputed.
 
-The host still uses exact frozen JSON equality, including scalar types, and does
-not certify the selected channel, control or semantic mapping. There is no new
+Declared diagnostic rules now use [host calculation and bounded correction](observation-judgment.md).
+Other observations retain exact frozen JSON equality, including scalar types;
+the host does not certify control or semantic mapping. There is no new
 same-shape admission gate: some legitimate failures change shape after repair.
-Correcting a predicate creates a new case; prior mismatches retain their verdict.
+Correcting a predicate creates a new case; prior receipts retain their verdict.
+Only verified same-condition judgment correction supersedes a conflicting case.
 A desired match from an empty wrong channel cannot acquire a differing declared
 original failure. Field feedback does not infer the right channel or repair it.
 
