@@ -69,13 +69,16 @@ not another prerequisite repair success. Information delivery is confirmed, but
 complete information sufficiency and model incapability are not. All paid allocations
 are closed; new execution needs a distinct exact scope.
 
-The [request-annotation comparison](history/2026-10-27-request-annotation-plan.md)
-is prepared and locally validated: same full evidence, source, model and opportunity
-policy; current required action commentary versus the existing thin annotation
-schema only. Edit/stop and operational tools remain identical. This is not the full
-thin policy. A/B each one run at USD 1.20 proposes a new USD 2.40 cap; paid execution
-is not yet authorized and no live result exists.
-Focused 61 and quick 472 tests passed; existing local image identities matched.
+The [request-annotation comparison](history/2026-10-27-request-annotation-results.md)
+is closed: same evidence/model/opportunity policy, one run per arm. A requested a
+probe without source and stopped without editing; B executed a probe and made one
+edit, but frozen original-call verification retained the same tokenizer exception.
+B's public regression also failed; no matching seed regression in this comparison
+establishes how many failures were newly introduced. Both final decision opportunities
+were preserved. All sixteen responses settled, total USD 0.228657450, no submission
+or independent acceptance. This is an action difference without repair success;
+retain production defaults. A fixed-request model-setting comparison is a next
+question, not an approved run. All allocations are closed.
 
 The [latest fresh-solve pilot](history/2026-10-26-target-exception-live.md) acquired the
 original/control, observed the pre-edit path and applied two failed edits. It stopped
