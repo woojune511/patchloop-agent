@@ -24,44 +24,39 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [closed live pilot](history/2026-10-26-trace-budget-live.md) delivered complete
-traces but retained F0010: spec.find_spec raised before the changed branch, then
-the model added an unexecuted test. It ended VERIFICATION_INCOMPLETE at $0.944915400
-within $1.20. The remaining two funded minimum calls could not cover four required
-calls; no output cap was exhausted. Complete observation did not establish useful
-repair revision. The prepared direct-API caller still has shell/venv equivalence
-limits, and changed caller conditions prevent causal historical comparisons.
+The [closed revision pilot](history/2026-10-26-repair-revision-live.md) completed
+one authorized Astroid-1333 solve with gpt-5.4-mini-2026-03-17 xhigh and unchanged
+40K/25K ceilings. Cost $1.199996700; 37 model calls, 39 actions, two source edits.
+Both traces were complete. After the first edit retained F0010, the second revised
+the mechanism using the observed import error and bound an original-effect prediction.
+This exercises source revision; it does not establish repair success.
 
-The [revision follow-up](history/2026-10-26-repair-revision.md) separates complete
-diagnosis collection from original-effect refutation. The next source edit supplies
-a small host-bound changed-observation prediction, checked during the already-required
-original replay. Prediction results never replace original verification or checks.
+The final original call raised FileNotFoundError instead of emitting F0010. The
+host kept the comparison and prediction unverified. The exception is present in
+the durable receipt but absent from final public inputs, which retained UNKNOWN
+and current_public_failure=null. Public regression passed 1,231 tests; that did
+not resolve the original failure. The last two responses exhausted their admitted
+4,677/4,157 output ceilings without calling finish. Terminal INCOMPLETE_RESPONSE;
+no submission or independent evaluation. Direct-API equivalence and changed fresh
+caller conditions still limit historical comparison.
 
-A test-only edit reserves a frozen comparison of the actually added/extended test
-before/after the diagnosed source edit, plus remaining source repair and completion.
-Strict additive-test receipt chains and unchanged captured failure/environment can
-reuse the old diagnosis with explicit historical diff/snapshot provenance. They do
-not produce a new current-snapshot trace or renew consumed diagnostic allowances.
-PASSED_BOTH and unverified comparison results cannot retire the original failure.
+The active problem is preserving unexpected target exceptions as actionable repair
+feedback instead of collapsing them into missing-observation UNKNOWN, while keeping
+verification and candidate-return eligibility distinct. Finalization context and
+completion funding also remain unresolved; another ceiling increase alone is not
+supported by this run. No new paid run is authorized.
 
-Local core: 68 PASS (37.93 s); quick: 377 PASS (36.34 s, four workers), including
-isolated mock evaluation; Ruff PASS. No provider generation or real container execution is part of
-this change. Normal output, action, mutation and monetary limits are unchanged;
-the unused protocol correction reserve remains reserved.
-
+The [revision contract](history/2026-10-26-repair-revision.md) retains host-bound
+predictions checked in original replay, additive-test comparison funding, and strict
+historical diagnosis reuse. A rejected directory-level test selection produced no
+paired execution; added-test/reuse behavior remains locally validated only.
+The [actual-task wrapper adapter](history/2026-10-26-repair-revision-live-plan.md)
+preserves the registered pytest copy wrapper and unchanged task bytes.
+Local core 68 PASS (37.93 s); wrapper/comparison 15 PASS (24.69 s); latest quick
+378 PASS (35.30 s), including isolated mock evaluation; Ruff PASS.
 The [collector](history/2026-10-26-trace-budget.md) and
-[first-repair path](history/2026-10-26-first-repair.md) retain their finite budgets,
-complete-coverage requirements and recovery identities. The next unresolved question
-is whether a real model revises its repair mechanism using the refutation and
-resolves F0010 within the unchanged limits. No new paid run is authorized.
-
-The [fresh pilot preparation](history/2026-10-26-repair-revision-live-plan.md) found
-that the actual task's public pytest copy wrapper was unsupported by paired
-comparison. The adapter now instruments its child pytest while preserving the
-registered wrapper's setup; task bytes are unchanged. Wrapper/comparison controls
-15 PASS (24.69 s), quick 378 PASS (35.30 s), Ruff PASS; no live target execution.
-The proposed new scope is Astroid-1333, gpt-5.4-mini-2026-03-17 xhigh, one run,
-40K/25K output ceilings and $1.20 total. Exact request approval remains pending.
+[first-repair path](history/2026-10-26-first-repair.md) retain their bounded coverage
+and recovery identities. No runtime change was made during this live closeout.
 
 ## Supporting evidence
 
@@ -92,7 +87,7 @@ submission, independent task acceptance and safety are separate. Mock safety is 
 
 Do not start Docker Desktop or pull/build evaluator images automatically. Preserve
 exact recovery identities, zero SDK retries and stop-all on count/transport/billing
-uncertainty. The latest live run made one source edit and one test-only edit but
-retained the original failure; checks, finish, frozen post-submission checks and
+uncertainty. The latest live run passed public regression but the original call
+raised a new exception. Paired tests, finish, frozen post-submission checks and
 independent evaluation were NOT_RUN.
 Linux CI and general improvement remain unverified.
