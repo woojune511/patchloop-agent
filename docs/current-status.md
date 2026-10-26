@@ -56,6 +56,10 @@ The frozen absolute-path call from /tmp differs from the issue's cwd/relative-CL
 steps; within-run identity does not establish that broader equivalence. This
 collector change preserves saved calls and does not silently rewrite that mapping.
 Any new paid pilot needs its own exact approved scope.
+The [new one-run proposal](history/2026-10-26-trace-budget-live-plan.md) keeps
+mini-xhigh, 40,000/25,000 output ceilings and a $1.20 invocation cap. It measures
+complete observation, public-evidence uptake and original-call repair separately;
+preparation does not authorize provider dispatch or reopen a prior allocation.
 
 ## Supporting evidence
 

@@ -13,3 +13,4 @@
 - [First-repair pilot: first edit reached, F0010 persists, traces truncated](../2026-10-26-first-repair-live.md)
 - [Trace-limit analysis: initialization consumes different caps; edit misses failing route](../2026-10-26-trace-limit-analysis.md)
 - [Separate call coverage, coalesced detail and complete-call diagnosis](../2026-10-26-trace-budget.md)
+- [Trace-budget live pilot: proposed fresh solve and measurement plan](../2026-10-26-trace-budget-live-plan.md)
