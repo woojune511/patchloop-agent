@@ -97,8 +97,11 @@ def selection_request(selection, call_id):
 
 
 def validate_request(request):
-    """Validate the raw, public request without reading any file; return a detached copy."""
-    if (type(request) is not dict or set(request) != {"call_id", "focus", "watches"}
+    """Validate public identities and optional host-only scope; return a detached copy."""
+    if (type(request) is not dict or set(request) not in (
+            {"call_id", "focus", "watches"}, {"call_id", "focus", "watches", "scope"})
+            or "scope" in request and (type(request["scope"]) is not str
+                                        or request["scope"] != "selected_call")
             or type(request["call_id"]) is not str
             or request["call_id"] not in {f"call-{i}" for i in range(1, 5)}
             or type(request["watches"]) is not list
@@ -243,6 +246,7 @@ def bind_request(request, snapshot, *, dependency_root=None, dependency_files=No
                         "fields": target.get("fields", identity["parameters"]),
                         "lines": target.get("lines", [])})
     bound = {"schema_version": "public-call-path-request-v1", "call_id": request["call_id"],
+             **({"scope": request["scope"]} if "scope" in request else {}),
              "focus": targets[0], "watches": targets[1:], "snapshot_hash": snapshot_hash,
              "execution_identity_hash": execution_identity_hash}
     return {**bound, "request_hash": _hash(_json(bound).encode())}
@@ -263,10 +267,11 @@ def _value(value):
 
 
 class CallPathTrace:
-    """Observe one call and only the subtree beneath its selected focus function."""
+    """Observe one call, optionally restricted to its selected focus subtree."""
 
     def __init__(self, request, roots=None, line_trace=None):
         self.request = request
+        self.selected_call_scope = request.get("scope") == "selected_call"
         self.roots = roots or {"workspace": "/workspace",
                                "dependency": "/opt/patchloop-dependencies"}
         self.targets = [request["focus"], *request["watches"]]
@@ -376,9 +381,10 @@ class CallPathTrace:
                            target["first_line"], target["def_line"]}]
             if 0 in matches:
                 self.focus_frames.add(key)
-        # Initialization and unrelated selected-call work retain LineTrace's
-        # observations above, but spend none of this focus-only allowance.
-        scoped = bool(self.focus_frames)
+        # Legacy focus scope excludes initialization/unrelated work. Host-selected
+        # call scope includes the entire begin/end window, even without a focus hit.
+        scoped = (self.selected and not self.ended and not self.closed
+                  if self.selected_call_scope else bool(self.focus_frames))
         if scoped:
             self.trace_events += 1
             if self.trace_events > MAX_TRACE_EVENTS:
@@ -408,7 +414,8 @@ class CallPathTrace:
             self.focus_frames.discard(key)
             self.delegates.pop(key, None)
         # Non-target frames still need return events to maintain nested focus state.
-        return (self.trace if self.focus_frames or key in self.frames or key in self.delegates
+        return (self.trace if (self.selected_call_scope and scoped) or self.focus_frames
+                or key in self.frames or key in self.delegates
                 else None)
 
     def finish(self):
@@ -418,9 +425,11 @@ class CallPathTrace:
         self._check_sources()
         reason = self.reason or ("call_not_observed" if not self.selected else
                                  "call_incomplete" if not self.ended else
-                                 "focus_not_observed" if not self.rows[0]["entries"] else None)
+                                 "focus_not_observed" if not self.selected_call_scope
+                                 and not self.rows[0]["entries"] else None)
         self.closed = True
         report = {"request_hash": self.request["request_hash"],
+                  **({"scope": self.request["scope"]} if "scope" in self.request else {}),
                   "status": "unknown" if reason else "complete", "reason": reason,
                   "rows": self.rows}
         raw = _json(report).encode()
@@ -436,6 +445,8 @@ def public_feedback(request, report=None):
     """Reconstruct identities and reject unbounded/foreign report data at the host."""
     targets = [request["focus"], *request["watches"]]
     valid = (type(report) is dict and report.get("request_hash") == request["request_hash"]
+             and ("scope" in report) == ("scope" in request)
+             and report.get("scope") == request.get("scope")
              and type(report.get("status")) is str
              and report.get("status") in {"complete", "unknown"}
              and type(report.get("rows")) is list and len(report["rows"]) == len(targets))
@@ -487,18 +498,22 @@ def public_feedback(request, report=None):
     except (TypeError, ValueError, OverflowError, RecursionError):
         valid = False
     complete = bool(valid and report["status"] == "complete" and not report.get("reason")
-                    and rows and rows[0]["entries"] > 0)
+                    and rows and (request.get("scope") == "selected_call"
+                                  or rows[0]["entries"] > 0))
     reason = None if complete else (
         report.get("reason") if valid and type(report.get("reason")) is str
         and report.get("reason") in _REASONS else
         "invalid_report" if report is not None else "report_unavailable")
     result = {"schema_version": "public-call-path-feedback-v1", "diagnostic_only": True,
-              "scope": "selected_call_focus_launch_thread", "call_id": request["call_id"],
+              "scope": ("selected_call_launch_thread" if request.get("scope") == "selected_call"
+                        else "selected_call_focus_launch_thread"), "call_id": request["call_id"],
               "request_hash": request["request_hash"], "snapshot_hash": request["snapshot_hash"],
               "execution_identity_hash": request["execution_identity_hash"],
               "status": "complete" if complete else "unknown", "reason": reason,
               "interpretation": "Bounded public function/line observations only; no-hit requires "
-              "complete selected-call/focus coverage. Other calls/threads are unmeasured. "
+              + ("complete selected-call coverage. Other calls/threads are unmeasured. "
+                 if request.get("scope") == "selected_call" else
+                 "complete selected-call/focus coverage. Other calls/threads are unmeasured. ") +
               "Line values precede execution; exceptions can be caught. Parent indexes identify "
               "the nearest bound ancestor. In-process observations are advisory, not semantic "
               "correctness or attestation."}

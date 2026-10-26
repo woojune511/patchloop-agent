@@ -218,14 +218,14 @@ def test_completion_descriptions_preserve_tool_order_and_current_input_shapes():
         return value
 
     assert sha256_json(without_descriptions(schemas)) == (
-        "sha256:2275f49266a03b13cbfbcb047021ab1af35516acddef3bd72cd0371bef7f4834"
+        "sha256:190f491e7139f5e270eaa62440df171129a23e1c88b9ed4a56ce774429570da1"
         if FROZEN_ARM is None else
         "sha256:99d8179c31989d8d5caabaed81902ce9d2a8fad60af8caf594f685122e9beeac"
     )
     assert [schema["name"] for schema in schemas] == [
         "search_files", "read_file", "run_check", "replace_text", "stop_task", "finish_task",
         "run_probe",
-    ]
+    ] + (["observe_original"] if FROZEN_ARM is None else [])
     descriptions = {schema["name"]: schema["description"] for schema in schemas}
     assert "without submission or evaluation" in descriptions["stop_task"]
     assert "not successful completion" in descriptions["stop_task"]

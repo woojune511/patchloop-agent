@@ -5,10 +5,8 @@ Source/tests own behavior. Read relevant sections only.
 
 ## Choosing the next improvement
 
-Start from public failures; separate evidence, causes and alternatives. Use the smallest
-diagnostic/change. Record significant investigations once in history: problem, evidence,
-hypothesis, change, result, next question. Current status holds only active decisions
-and evidence links. Routine fixes need no comparison.
+Diagnose public failures with bounded changes. Record significant investigations
+once in history; current status holds active decisions and evidence links.
 
 ## Source map
 
@@ -42,18 +40,18 @@ Gates: `needs_mutation`, `needs_visible_checks`, `ready_to_submit`, and opt-in
 `needs_original_reproduction`.
 Gates and resource horizons expose registered tools, never unrestricted shell.
 
-`replace_text` uses `TextReplacementIntent` and `CausalRevision`. Preserve explicit
-public fields, required/null rules, keyword order, absent/default serialization,
-unadvertised recovery annotations, and cross-field/anchor/scope validation.
+`TextReplacementIntent` preserves explicit/absent fields, legacy annotations,
+cross-field validation and exact anchor/scope admission.
 
 Batch 1–4 `read_file`/`search_files` calls; other tools run singly.
 Opt-in history search: eight candidates, execution-only ranking, whole originals
 within actual input limits. Only fresh-seed overflow uses 48k units; ID pages are
 48k too. Authored fields labelled, no source/PASS credit.
 A question may retain search results within its existing two handoff references.
-A bounded public `turn_decision` accompanies each default-policy call. Opt-in
-`--agent-policy thin --planning-policy none` replaces it with root nullable
-`memory_update`; see [contract](thin-policy-reference.md). Execution gates stay shared.
+Fresh edit/observation/stop requests omit decision/plan/memory annotations;
+see [small contracts](repair-path.md). Other calls use `turn_decision`, or nullable
+root `memory_update` with `--agent-policy thin --planning-policy none`;
+see [contract](thin-policy-reference.md). Execution gates stay shared.
 Notes/plans are unverified; never reasoning transcripts.
 One consecutive protocol/incomplete correction; reset on valid batches.
 
@@ -107,6 +105,8 @@ failure permits separate preparation and probe slots from minimum reserves;
 replay cannot renew them. See [resources](completion-resources.md).
 With measured unobserved changed lines, use [call-path diagnosis](repair-path.md)
 before another repair. Keep source anchors and fresh original/check results.
+Before the first edit, optional `observe_original` tests path premises on the frozen
+original. See [limits, evidence and recovery](repair-path.md); it grants no repair credit.
 
 ## Context and recovery
 

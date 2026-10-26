@@ -5,6 +5,40 @@ original-case completion gate. Provider/output/action/edit/wall limits stay fixe
 
 ## Trigger and sequence
 
+Before the first successful edit, `observe_original` is offered after an acquired
+unchanged-base original has a consistent failure and a distinct clean diagnostic
+control. The small request has `hypothesis` and 1-2 `candidates`, each selecting a
+public function and predicting entered/not_entered/returned/raised. The host binds
+the original root, failing call and current source; AST-selected parameters and
+executable lines are the only watched fields. The full frozen program (including
+control) runs unchanged. Tracing spans begin/end of the selected original call,
+so an unentered candidate is complete no-hit only if collection itself completed.
+Return/exception are trace events, not proof of normal return or escaped exception.
+
+`first_observation` binds hypothesis, selections, source/request/snapshot/execution
+identities and observed event predictions. A changed original result, invalid
+control/setup, partial trace or uncertainty is insufficient. One real execution
+is available; two rejected requests exhaust request correction. Admitted pending
+work reserves the same opportunity. Changing names or restarting never refills it.
+Direct supported editing remains available: these observations test a premise,
+not the repair. The next edit records the observation action/status in its receipt;
+after editing the observation is historical and the original must be replayed.
+
+Ordinary repair has a compact public view containing current source anchors,
+original observations, explicit unverified intent, last mutation/counterevidence,
+checks and real remaining budgets. General plan/note rewriting is not required.
+No-tool/incomplete correction starts a fresh compact segment with the same public
+evidence; request-field errors identify only the invalid fields. Anchor errors use
+the existing typed mutation failure and bounded source read. Audit state remains.
+
+The optional route adds one model call/tool action before the existing minimum
+edit/replay/check/finish route. Exploration preserves that slot using the maximum
+of existing protected slack and the optional route, not their sum. Cost admission
+also keeps it after reads, probes, tests and diagnostic checks. Two-child tests
+preserve it in both schema and batch admission, even after edit-retry protection
+is consumed. Mandatory correction takes precedence. Direct editing can skip it.
+Protocol correction keeps its existing run-global credit/output budget.
+
 `repair_path.review` derives state from immutable public receipts. It activates
 only for an acquired unchanged-base original, a healthy comparable current
 refutation with consistent host diagnostic judgment, and measured unobserved
@@ -97,7 +131,7 @@ execution identity, exported snapshot and watched file hashes. The result must
 still reproduce the same original failure. Current diagnosis state retains a
 bounded entry/exit summary and exact action reference across context changes;
 omitted events remain explicit. Full receipts remain in the public history.
-The next edit requires existing `causal_revision` fields and receives a host-owned
+The next edit expresses the revised mechanism in `hypothesis` and receives a host-owned
 link to the diagnosis. This refutes the previous predicted original-call effect;
 it does not prove an alternative mechanism or require every changed line to run.
 
@@ -154,3 +188,6 @@ and isolated mock evaluation. Use `tests/call-path-repair.txt` when changing the
 broader comparison mechanism. See the [stage record](../docs/history/2026-10-26-diagnosis-stage.md),
 [construction record](../docs/history/2026-10-26-diagnosis-request.md)
 and [original implementation](../docs/history/2026-10-25-callpath-repair.md).
+
+For the first-repair path use `tests/first-repair.txt`; quick includes representative
+controls. Local scripts do not establish model uptake or F0010 repair success.

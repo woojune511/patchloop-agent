@@ -248,10 +248,10 @@ def test_projection_preserves_current_ordered_tool_inputs_and_limits():
             return [structure(item) for item in value]
         return value
 
-    # Ordered inputs include finish assessment and current purpose selection.
+    # Ordered fresh inputs include minimal edit/stop and optional original observation.
     encoded = json.dumps(structure(schemas), separators=(",", ":"), ensure_ascii=False).encode()
     assert hashlib.sha256(encoded).hexdigest() == (
-        "233e58fccef53455d4e40b14df99484c5c16249de54a5dd197d33b4c5289fa2c"
+        "9fa45a1a5a7ab4a5648641b828b7e7478e052a85c73dd951ee9d6afe81517d23"
         if FROZEN_ARM is None else
         "acdcc28623f92006faaa95a0c58015095e28b851093d0eb983e8d59bcd303222"
     )

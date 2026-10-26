@@ -35,6 +35,7 @@ from patchloop.dev import (
     history_search,
     native_compaction,
     probe_recheck,
+    repair_context,
     segments,
     test_comparison,
     thin_policy,
@@ -158,6 +159,9 @@ from patchloop.util import canonical_json, sha256_bytes, sha256_json, utc_now
 from patchloop.verifier.core import EvaluationEngine
 
 _EVIDENCE_PLATEAU_WARNING_TURNS = 2
+_FIRST_OBSERVATION_EXPLORATION = frozenset({
+    "read_file", "search_files", "search_history", "run_probe", "run_tests", "run_check",
+})
 
 
 @dataclass
@@ -236,6 +240,7 @@ class _ToolPolicy:
     observation_correction: dict[str, Any] | None = None
     repair_path_diagnosis: dict[str, Any] | None = None
     helper_correction: dict[str, Any] | None = None
+    first_observation: dict[str, Any] | None = None
 
     @property
     def feedback_recovery_reserve_calls(self) -> int:
@@ -643,7 +648,7 @@ def _completion_guidance(
             "One optional preparation read, one actual diagnostic execution "
             "and one rejected-request correction are bounded separately. "
             "Function entry, branch execution and behavior are "
-            "different observations. A complete diagnosis must inform causal_revision before "
+            "different observations. A complete diagnosis must inform the next hypothesis before "
             "another repair; incomplete observation returns verification incomplete."
         )
         if diagnosis.get("preparation_available"):
@@ -710,6 +715,14 @@ def _completion_guidance(
                 "available anchor evidence does not establish a correct solution. "
                 "Submission waits for a scoped patch and its required visible checks."
             )
+            if "observe_original" in allowed:
+                next_action = {"tool": "observe_original"}
+                message += (
+                    " If the first repair premise is unresolved, select candidate functions "
+                    "and event predictions with observe_original. The host replays the frozen "
+                    "original; no helper program or invocation reconstruction is needed. "
+                    "A supported direct edit remains available."
+                )
         else:
             inspection = next(
                 (tool for tool in ("read_file", "search_files") if tool in allowed), None,
@@ -823,11 +836,15 @@ def _tool_policy(
     path_available = bool(path_blocked and path_diagnosis.get("status") == "needs_path_diagnosis")
     path_preparation = bool(path_available and path_diagnosis.get("preparation_available")
                             and not _diagnostic_spent)
+    first_observation = verification.get("first_observation", {})
+    first_available = bool(first_observation.get("available")
+                           and getattr(gateway, "probe_sandbox", None) is not None)
     helper_fix = verification.get("helper_correction", {})
     helper_blocked = bool(
         helper_fix.get("blocked") and not observation_blocked and not path_blocked
     )
     helper_available = bool(helper_blocked and helper_fix.get("status") == "pending")
+    first_available &= not (observation_blocked or path_blocked or helper_blocked)
     original_case_failed = verification.get("status") == "refuted"
     diagnostic = verification.get("original_failure_diagnostic")
     diagnostic_available = bool(
@@ -998,6 +1015,12 @@ def _tool_policy(
     if diagnostic_relaxes_inspection:
         inspection_floor = inspection_budget.minimum
         inspection_tool_floor = inspection_budget.minimum_tool_actions
+    # Preserve one optional original observation before exploration closes. This
+    # shares the existing protected slack, rather than adding a second reserve.
+    if first_available:
+        inspection_floor = max(inspection_floor, inspection_budget.minimum + 1)
+        inspection_tool_floor = max(
+            inspection_tool_floor, inspection_budget.minimum_tool_actions + 1)
     inspection_tool_slack = remaining_tool_actions - inspection_tool_floor
     inspection_model_slack = remaining_model_calls - inspection_floor
     inspection_allowed = (
@@ -1064,6 +1087,9 @@ def _tool_policy(
                 allowed.add(history_search.TOOL)
         if mutation_allowed:
             allowed.add("replace_text")
+        if (first_available and remaining_model_calls - 1 >= budget.minimum
+                and remaining_tool_actions - 1 >= budget.minimum_tool_actions):
+            allowed.add("observe_original")
         # On a baseline that already requires repair, a diagnostic check is
         # optional work and must leave the whole protected repair path intact.
         if requires_mutation:
@@ -1105,6 +1131,17 @@ def _tool_policy(
             and remaining_tool_actions - 1 >= budget.protected_tool_actions
         ):
             allowed.add("run_tests")
+
+    if first_available:
+        # A rejected first edit can consume mutation retry protection until the
+        # protected path equals the minimum. Every optional diagnostic must still
+        # leave the observation slot; reads already account for acquired anchors.
+        for tool in (_FIRST_OBSERVATION_EXPLORATION - {"read_file", "search_files"}) & allowed:
+            if (remaining_model_calls - 1 < budget.minimum + 1
+                    or remaining_tool_actions - 1 < budget.minimum_tool_actions + 1):
+                allowed.remove(tool)
+        if "run_check" not in allowed:
+            available_check_ids = ()
 
     exploration_capacity = (
         max(0, min(inspection_model_slack, inspection_tool_slack))
@@ -1178,6 +1215,9 @@ def _tool_policy(
         minimum_cost_successors = {
             tool: minimum_successor_calls(completion_state, tool) for tool in allowed
         }
+        if first_available:
+            for tool in _FIRST_OBSERVATION_EXPLORATION & allowed:
+                minimum_cost_successors[tool] += 1
         allowed = {
             tool for tool in allowed
             if tool in {"finish_task", "stop_task"}
@@ -1306,6 +1346,13 @@ def _tool_policy(
         helper_correction=({**helper_fix, "offered_tools": sorted(allowed),
                             "uses_minimum_completion_reserve": "run_probe" in allowed}
                            if helper_blocked else None),
+        first_observation=({**first_observation,
+                            "offered": "observe_original" in allowed,
+                            "minimum_route_calls": budget.minimum + 1,
+                            "minimum_route_tool_actions": budget.minimum_tool_actions + 1,
+                            "reservation": "shared_protected_slack_one_observation"}
+                           if first_observation.get("status") not in {None, "not_needed"}
+                           else None),
     )
     if funded_calls is not None and minimum_cost_successors is not None:
         future_calls = max(minimum_cost_successors[tool] for tool in allowed)
@@ -1362,6 +1409,8 @@ def _tool_policy(
             successors.append(budget.protected)
         if "run_probe" in allowed:
             successors.append(probe_floor)
+        if "observe_original" in allowed:
+            successors.append(budget.minimum)
         if "run_check" in allowed:
             successors.append(check_successor_reserve)
         future_calls = max(successors)
@@ -1462,6 +1511,8 @@ def _repair_inspection_payload(policy: _ToolPolicy) -> dict[str, Any]:
         diagnostic["repair_path_diagnosis"] = policy.repair_path_diagnosis
     if policy.helper_correction is not None:
         diagnostic["helper_correction"] = policy.helper_correction
+    if policy.first_observation is not None:
+        diagnostic["first_observation"] = policy.first_observation
     if policy.repair_inspection_policy == "protected-v1":
         return diagnostic
     return {**diagnostic, "repair_inspection": {
@@ -1742,6 +1793,11 @@ def _protocol_correction(
         result["diagnosis_correction"] = diagnosis_context.correction(
             code, issue, result["tool_contract_failure"])
         result["message"] = result["diagnosis_correction"]["message"]
+    elif policy.workflow_gate == "needs_mutation" and (
+            {"replace_text", "observe_original"} & allowed):
+        result["repair_correction"] = repair_context.correction(
+            code, issue, result["tool_contract_failure"])
+        result["message"] = result["repair_correction"]["message"]
     return result
 
 
@@ -1965,7 +2021,7 @@ def _build_context(
         probes = [
             event["payload"]["result"] for event in journal.events()
             if event["event_type"] == "action_finished"
-            and event["payload"]["result"]["tool"] == "run_probe"
+            and event["payload"]["result"]["tool"] in {"run_probe", "observe_original"}
         ]
         payload["recent_probes"] = [
             {
@@ -1995,6 +2051,11 @@ def _build_context(
             lambda path: gateway._tracked_path(path)[1].read_bytes())
         if correction:
             payload["protocol_correction"] = correction
+    if repair_context.pending(payload):
+        payload["repair_stage"] = repair_context.packet(
+            journal.events(), active_policy.first_observation or {})
+        if correction:
+            payload["protocol_correction"] = correction
     # Construction is allowlist-based from ``package.public`` and public tool outputs;
     # private task fields are never accepted as context inputs.
     return json.dumps(
@@ -2006,7 +2067,11 @@ def _build_context(
 def _requested_tool_from_openai(call: Any, *, agent_policy: str = "current",
                                 path_diagnosis_pending: bool = False) -> RequestedTool:
     arguments = dict(call.arguments)
-    if agent_policy == "thin" or path_diagnosis_pending:
+    small = call.name in {"replace_text", "stop_task", "observe_original"}
+    if small:
+        annotations = {key: arguments.pop(key) for key in ("turn_decision", "memory_update")
+                       if key in arguments}
+    elif agent_policy == "thin" or path_diagnosis_pending:
         annotations = {key: arguments.pop(key) for key in ("turn_decision", "memory_update")
                        if key in arguments}
         if "turn_decision" in annotations:
@@ -2018,7 +2083,7 @@ def _requested_tool_from_openai(call: Any, *, agent_policy: str = "current",
         action_id=call.action_id,
         arguments=arguments,
         **({"preserve_annotation_presence": True}
-           if agent_policy == "thin" or path_diagnosis_pending else {}),
+           if small or agent_policy == "thin" or path_diagnosis_pending else {}),
         **annotations,
     )
 
@@ -2254,6 +2319,8 @@ def _model_error_issue(
 
 def _provider_tool_arguments(call: RequestedTool) -> dict[str, Any]:
     arguments = dict(call.arguments)
+    if call.name in {"replace_text", "stop_task", "observe_original"}:
+        return _provider_rejected_call_arguments(call)
     if call.preserve_annotation_presence and not (
         {"turn_decision", "memory_update", "rejected_turn_decision"} & call.model_fields_set
     ):
@@ -2466,8 +2533,12 @@ def _build_model_input(
     if diagnosis_context.pending(json.loads(context)):
         state = compact_model_state(diagnosis_context.project(json.loads(context)), history,
                                     archive_kind=archive_kind)
+    elif repair_context.pending(json.loads(context)):
+        state = compact_model_state(repair_context.project(json.loads(context)), history,
+                                    archive_kind=archive_kind)
     return assemble_model_input(
-        system_prompt=thin_policy.system_prompt(agent_policy, planning_policy),
+        system_prompt=(repair_context.SYSTEM_PROMPT if repair_context.pending(json.loads(context))
+                       else thin_policy.system_prompt(agent_policy, planning_policy)),
         state=thin_policy.project_state(state, agent_policy), history=new_history,
         previous_input=previous_input, context_policy=context_policy,
         window=compact_window,
@@ -2541,13 +2612,22 @@ def _build_segmented_model_input(
     reason = force_reason or segments.boundary_reason(journal, binding)
     current = json.loads(context)
     diagnosing = diagnosis_context.pending(current)
+    repairing = repair_context.pending(current)
     was_diagnosing = bool(handoff and diagnosis_context.pending(handoff["state"]))
+    was_repairing = bool(handoff and repair_context.pending(handoff["state"]))
     if diagnosing != was_diagnosing:
         reason = "path_diagnosis_entered" if diagnosing else "path_diagnosis_returned"
     elif diagnosing and current.get("protocol_correction", {}).get(
         "diagnosis_correction", {}).get("fresh_segment"):
         reason = "path_diagnosis_no_action"
-    prompt = (diagnosis_context.SYSTEM_PROMPT if diagnosing else
+    elif repairing != was_repairing:
+        reason = "repair_stage_entered" if repairing else "repair_stage_returned"
+    elif repairing and current.get("protocol_correction", {}).get(
+        "repair_correction", {}).get("fresh_segment"):
+        reason = "repair_no_action"
+    compact_stage = diagnosing or repairing
+    prompt = (diagnosis_context.SYSTEM_PROMPT if diagnosing else repair_context.SYSTEM_PROMPT
+              if repairing else
               thin_policy.system_prompt(agent_policy, planning_policy, history_search_policy))
     replace_pending = force_reason in {"omit_optional_evidence", "shrink_history_result"}
     old_manifest = handoff.get("evidence_manifest", {}) if handoff else {}
@@ -2574,17 +2654,18 @@ def _build_segmented_model_input(
             from patchloop.dev.history_evidence import overflow_result
 
             seed_results = [overflow_result(r) for r in latest_results]
-        if diagnosing:
-            state = diagnosis_context.project(state)
+        if compact_stage:
+            state = (diagnosis_context.project(state) if diagnosing
+                     else repair_context.project(state))
             base = segment_seed(prompt, state["public_task"], agent_policy=agent_policy,
                                 diagnosis=True)
         else:
             base = _segment_public_base(prompt, state, seed_results, calls, agent_policy)
-        optional = [] if omit_optional or diagnosing else evidence_focus.optional_exchanges(
+        optional = [] if omit_optional or compact_stage else evidence_focus.optional_exchanges(
             state.get("working_notes", {}).get("open_question"), events, ids,
             diff_hash=state["current_diff"]["patch_hash"],
         )
-        if not omit_optional and not diagnosing:
+        if not omit_optional and not compact_stage:
             present = ids | {i["call_id"] for i in optional}
             optional += [i for i in additional_public_exchanges or []
                          if i["call_id"] not in present]
@@ -2627,7 +2708,7 @@ def _build_segmented_model_input(
                 ))}
         # Selected public evidence from another native stream is quoted data.
         # It neither joins that stream's continuation nor forces a new segment.
-        if additional_public_exchanges and not diagnosing:
+        if additional_public_exchanges and not compact_stage:
             present = {i["call_id"] for i in public_exchanges(
                 [*previous[3:], *added], archive_kind=PUBLIC_EVIDENCE_KIND,
             ) if i.get("type") == "function_call_output"}
@@ -2636,7 +2717,7 @@ def _build_segmented_model_input(
                 added.append(SEGMENT_RULES.archive(exchanges=extra))
     history = [*previous[3:], *added]
     state = json.loads(context)  # Always use current facts, not an old handoff's controls.
-    if planning_policy != "none" and not diagnosing:
+    if planning_policy != "none" and not compact_stage:
         state["working_plan"] = working_plan.project(
             journal.events(), diff_hash=state["current_diff"]["patch_hash"],
             gate=state["workflow_gate"], policy=planning_policy,
@@ -2650,6 +2731,10 @@ def _build_segmented_model_input(
         state = diagnosis_context.project(state)
         state["segment_handoff"].update(
             review_requested=False, interpretation="public original-call diagnosis only")
+    elif repairing:
+        state = repair_context.project(state)
+        state["segment_handoff"].update(
+            review_requested=False, interpretation="public repair evidence and explicit hypothesis")
     view = _segment_current_view(state, history, latest_results, agent_policy)
     return assemble_model_input(
         system_prompt=prompt, state=thin_policy.project_state(view, agent_policy),
@@ -2922,7 +3007,7 @@ def _deduplicate_native_state(
                     for key in ("stdout", "stderr", "public_check_failure", "execution_policy"):
                         check.pop(key, None)
                     check.update(reference)
-        if result.tool == "run_probe":
+        if result.tool in {"run_probe", "observe_original"}:
             for probe in payload.get("recent_probes", []):
                 if probe.get("action_id") == result.action_id:
                     probe.update(reference)
@@ -3095,7 +3180,7 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
                 "behavior remains untested? Setup or collection errors do not verify behavior."
             ),
         }
-    if result.tool == "run_probe":
+    if result.tool in {"run_probe", "observe_original"}:
         return {
             "action_id": result.action_id,
             "attempt": "probe",
@@ -3142,7 +3227,8 @@ def _batch_attempt_card(
                     and e["payload"]["turn_id"] == turn_id), {})
     for call in calls:
         if (call.turn_decision is None and "memory_update" not in call.model_fields_set
-                and started.get("workflow_gate") != "needs_path_diagnosis"):
+                and started.get("workflow_gate") != "needs_path_diagnosis"
+                and call.name not in {"replace_text", "stop_task", "observe_original"}):
             raise RecoveryError("completed tool batch is missing a public action decision")
         decisions.append(call.turn_decision.model_dump(mode="json")
                          if call.turn_decision is not None else None)
@@ -3566,7 +3652,7 @@ def _batch_fits_tool_budget(calls, counters, limits, policy=None):
                else 1 for call in calls)
     # Comparison is optional work. Admit both children before dispatch while
     # preserving the same completion reserve required to offer ordinary tests.
-    reserve = (policy.completion_budget_tool_actions
+    reserve = (_selected_test_reserve(policy)
                if any(call.name == "run_tests" and test_comparison.has_comparison(call.arguments)
                       for call in calls) else 0)
     return counters.tool_actions + cost + reserve <= limits.max_tool_actions
@@ -3575,7 +3661,13 @@ def _batch_fits_tool_budget(calls, counters, limits, policy=None):
 def _test_comparison_enabled(policy, counters, limits):
     return ("run_tests" in policy.allowed_tools
             and limits.max_tool_actions - counters.tool_actions
-            >= policy.completion_budget_tool_actions + 2)
+            >= _selected_test_reserve(policy) + 2)
+
+
+def _selected_test_reserve(policy):
+    return max(policy.completion_budget_tool_actions,
+               policy.minimum_completion_tool_actions
+               + int(bool(policy.first_observation and policy.first_observation.get("available"))))
 
 
 def _restore_counters(journal: DevJournal) -> _RunCounters:
@@ -4683,7 +4775,7 @@ def _probe_evidence(journal, artifact_store, run_id):
         })
         for event in journal.events()
         if event["event_type"] == "action_finished"
-        and event["payload"]["result"]["tool"] == "run_probe"
+        and event["payload"]["result"]["tool"] in {"run_probe", "observe_original"}
         and event["payload"]["result"]["output"].get("execution_policy") is not None
     ]
 

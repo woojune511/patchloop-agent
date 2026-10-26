@@ -35,7 +35,7 @@ _MODEL_INPUT_FIELDS = frozenset({
     "change_review_request", "paired_observation", "followup_state_contract",
     "operator_caller_observation", "verification_scope_cue", "expectation_review",
     "operator_current_candidate_feedback", "supplied_public_case", "public_case_status",
-    "verification_phase", "diagnosis_stage",
+    "verification_phase", "diagnosis_stage", "repair_stage", "repair_intent",
 })
 
 
@@ -163,7 +163,7 @@ def compact_model_state(
             "minimum_completion_tool_actions", "completion_budget_tool_actions",
             "protected_completion_possible", "mutation_completion_horizon", "exploration_state",
             "repair_inspection", "original_failure_diagnostic", "observation_correction",
-            "repair_path_diagnosis", "helper_correction",
+            "repair_path_diagnosis", "helper_correction", "first_observation",
             "model_turns_available_for_exploration", "tool_actions_available_for_exploration",
             "closure_reason", "tools_closing_after_this_turn", "tool_closure_prediction_basis",
             "tool_policy_transition", "max_parallel_reads_this_turn",

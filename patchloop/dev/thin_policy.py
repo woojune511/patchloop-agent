@@ -11,6 +11,7 @@ registered tools: investigate the relevant source, make a correct scoped repair,
 verify its behavior, and submit it. Each response requests either 1–4 supplied
 read_file/search_files calls or exactly one supplied action. Do not mix these
 shapes. Use only tools offered on the current turn.
+replace_text, stop_task and observe_original omit decision/plan/memory annotations.
 At needs_path_diagnosis use its small schema without any plan/memory annotation;
 run_probe selects only focus. General note instructions pause for that stage.
 
@@ -43,7 +44,7 @@ ranges rather than whole read/search results; do not invent counterchecks. Curre
 counterchecks precede primary refs after mutation anchors. After a diff change, priority
 is needs_refresh; refresh in an ordinary useful response if relevant, with no extra call.
 Evidence currency/delivery and closed_by_model do not certify behavior.
-memory_update is optional working data; null leaves it unchanged. Only the first
+Where offered, memory_update is optional working data; null leaves it unchanged. Only the first
 non-null update in a batch is processed before the actions. Cite already observed
 evidence, never pending results. Current source currency does not validate a
 note's interpretation. Annotation errors do not block the main action.
@@ -87,7 +88,7 @@ def contract() -> dict:
     return {
         "agent_policy": "thin",
         "prompt_hash": sha256_json(SYSTEM_PROMPT),
-        "wire": "required-nullable-root-memory-update-no-turn-decision-v1",
+        "wire": "root-memory-except-core-actions-no-turn-decision-v2",
         "projection": "named-policy-prose-only-v1",
         "segment_narration_removed_hash": sha256_json(_SEGMENT_NARRATION),
         "adapter": "actual-annotation-presence-bound-no-synthetic-decision-v1",

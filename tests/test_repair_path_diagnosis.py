@@ -144,9 +144,10 @@ def test_failed_repair_requires_path_then_links_next_hypothesis(gateway_factory)
     fixed.arguments["old_text"] = next(
         e["payload"]["arguments"]["new_text"] for e in journal.events()
         if e["event_type"] == "action_started" and e["payload"]["action_id"] == "wrong-repair")
-    missing = fixed.model_copy(deep=True, update={"action_id": "missing-revision"})
-    missing.arguments["causal_revision"] = None
+    missing = fixed.model_copy(deep=True, update={"action_id": "missing-hypothesis"})
+    missing.arguments["hypothesis"] = ""
     assert gateway.execute(missing).status == "failed"
+    fixed.arguments.pop("causal_revision")
     repaired = gateway.execute(fixed)
     assert repaired.status == "succeeded", repaired
     assert repaired.output["mutation"]["repair_path_link"]["diagnosis_action_id"] == (

@@ -1,4 +1,4 @@
-"""Memory compression preserves the wire; action guidance has its own identity."""
+"""Pin memory and unaffected wire values alongside the explicit small-core contract."""
 
 from __future__ import annotations
 
@@ -26,8 +26,24 @@ def _without_descriptions(value):
 
 def _memory_block():
     start = DEV_SYSTEM_PROMPT.index("memory_update retains")
-    end = DEV_SYSTEM_PROMPT.index("A mutation requires")
+    end = DEV_SYSTEM_PROMPT.index(
+        "A mutation sends only" if FROZEN_ARM is None else "A mutation requires")
     return DEV_SYSTEM_PROMPT[:start], DEV_SYSTEM_PROMPT[start:end], DEV_SYSTEM_PROMPT[end:]
+
+
+def _assert_small_core(tool):
+    fields = {
+        "replace_text": ["path", "old_text", "new_text", "occurrence", "hypothesis",
+                         "expected_behavior"],
+        "stop_task": ["reason_code", "summary"],
+    }
+    if FROZEN_ARM is not None or tool["name"] not in fields:
+        return False
+    parameters = tool["parameters"]
+    assert list(parameters["properties"]) == fields[tool["name"]]
+    assert parameters["required"] == fields[tool["name"]]
+    assert parameters["additionalProperties"] is False
+    return True
 
 
 def _legacy_compression_surface(tools):
@@ -49,16 +65,18 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
                        "run_probe", "finish_task", "stop_task"),
     )
     # Preserve object, tool, enum and required-field order, nullability and defaults.
-    # Pin primary/countercheck roles and current diagnostic judgment/correction inputs.
+    # Fresh edit/stop inputs omit annotations; all other wire values remain pinned.
     tools = _legacy_compression_surface(tools)
     encoded = json.dumps(_without_descriptions(tools), ensure_ascii=False, separators=(",", ":"))
     assert hashlib.sha256(encoded.encode()).hexdigest() == (
-        "c1074dd1bb0921c46a87ac4f16ea3d500cdbec3473cbedc5fd93ba9ded2febad"
+        "fce2a28600cd90d26b60e23475eebd3d2469277ab78223f736483523e9df1830"
         if FROZEN_ARM is None else
         "e02c7ceb93201640950920b260422b0ae35fce974e3728b79e63345fb4bcf0e5"
     )
     for tool in tools:
         assert tool["strict"] is True
+        if _assert_small_core(tool):
+            continue
         memory = tool["parameters"]["properties"]["turn_decision"]["properties"]["memory_update"]
         assert memory == memory_update_schema()
 
@@ -66,7 +84,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
 @pytest.mark.parametrize(("names", "expected"), [
     pytest.param(
         ("read_file", "run_check", "run_probe", "search_files", "stop_task"),
-        "8031b98c17207306c666a8a2ffd26e9d6e6cd9c48623788668fa5049f44d8f7a"
+        "5f1f45b46df85f8362fe9d3f2eecf6e7bbc3fe8e443c2388385859217c0cc987"
         if FROZEN_ARM is None else
         "544c19f4d8e63f8a8810efe1dd4cd0adf3dee51cdb0145a4509de554027739c2",
         id="names0-99567faf1ea920a9157e5ea6618c5d43e7d56e441820be941403a025d9b2abe9"
@@ -74,7 +92,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     ),
     pytest.param(
         ("finish_task", "read_file", "replace_text", "run_probe", "search_files", "stop_task"),
-        "262135ce35bdd3573ca7967f028fac30765718fb53d2afba30a99e11163f048e"
+        "1b31b43ef45dccd5c2f60aba9c4a950a5c824d6aa7683058a8802c398834d04a"
         if FROZEN_ARM is None else
         "b817201c9d1aa8432575b0c1b55015dc01bc08a2b002e3e2cc09ab13bfa229c6",
         id="names1-de57dc4e83f8b26994c5df5f659cc208bbd3b348233d0ad3640493ffd5b90bd3"
@@ -82,7 +100,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     ),
     pytest.param(
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task"),
-        "b11e79d9b643373ca209b77a37643cbcdae287fa5f2e13b153985853d3284e74"
+        "a5f1633669b87ee5dd33ea834bcbf12affdb7ba5932c68e5b6d726291f297c25"
         if FROZEN_ARM is None else
         "310f8ec3dd129c93fb10c2a0589decf38eb09ce60e395ef906ac814e399e5139",
         id="names2-923a71312af5fa8d677ce72762b2f045a47ff2ebc4e084caaf1f57a2c11e7032"
@@ -91,7 +109,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     pytest.param(
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task",
          "finish_task"),
-        "3953763b522307f489f5d0f5d41ec76bc7ae1cf551a9887c6ec9a5e00603f062"
+        "84dba7984a003c5d3f693b8e453c304bf2ca42906819f6612d64e2c842d8c95d"
         if FROZEN_ARM is None else
         "6302bc9d248be03d6e1430f0102a0e5c00ecb7883c25d453945f979f21fd3af7",
         id="names3-53d8c9ffaa20544b633c883b1e40010113b680722f23caebeb0ef991f1738caa"
@@ -99,11 +117,13 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     ),
 ])
 def test_descriptions_outside_memory_and_schema_order_are_unchanged(names, expected):
-    # Pin current invocation/finish guidance; preserve case IDs and historical removal arms.
+    # Pin current small-core/invocation guidance; preserve IDs and historical removal arms.
     # OFF still has the prior four digests; argument shapes remain independently pinned.
     tools = dev_tool_schemas(finish_enabled="finish_task" in names, allowed_tools=names)
     tools = _legacy_compression_surface(tools)
     for tool in tools:
+        if _assert_small_core(tool):
+            continue
         decision = tool["parameters"]["properties"]["turn_decision"]["properties"]
         decision["memory_update"] = _without_descriptions(decision["memory_update"])
     encoded = json.dumps(tools, ensure_ascii=False, separators=(",", ":"))
@@ -116,7 +136,7 @@ def test_surrounding_action_guidance_identity():
     # Diagnosis pauses annotations; surrounding prose keeps the 8,000-character bound.
     # Historical J0/J1 arms retain their exact earlier surrounding-guidance identities.
     assert hashlib.sha256(canonical_json([prefix, suffix]).encode()).hexdigest() == (
-        "68e9d1f55176d74f7cf292d6c7bd85c1d7406191401b9dd66f2a3f6329bef88e"
+        "514446988d0ff643bef9ad6966a5bb81ed41aba928bcfa685ca9f0703b1f0c9b"
         if FROZEN_ARM is None else
         "2d0a9063da8d508a3c1218903cae12e33aa5db97f4d5655ca645fd5d52dc1331"
         if JUDGMENT else "c6439ce32e7724ed5d4c08dc1f207186b45e34234947c2867d7a65f096ce10a3"
@@ -127,6 +147,11 @@ def test_guidance_is_bounded_in_characters_and_canonical_bytes_not_claimed_token
     _, memory, _ = _memory_block()
     # v33: 3,368 chars (including two trailing newlines), 7,965 total, 4,047 schema bytes.
     assert len(memory) <= 2400
+    if FROZEN_ARM is None:
+        # Changing the following action delimiter must not absorb or change the memory body.
+        assert hashlib.sha256(memory.encode()).hexdigest() == (
+            "2093928be3895d8d4656a4db099e9f0a7fb4f6f3416cef7539b30ab6f0f220c2"
+        )
     # Simplification stays within the original bounded prompt contract.
     assert len(DEV_SYSTEM_PROMPT) <= 8007
     # The two-reference question object adds wire structure; final request limits stay fixed.
@@ -176,7 +201,7 @@ def test_guidance_identity_changes_without_changing_run_schema_or_limits():
     # Common action/probe guidance changes the overall surface identity;
     # argument and description identities remain independently pinned above.
     assert dev_tool_surface_hash() == (
-        "sha256:cb51a65c02044359360bcd9760c38e014e79fbb62a7835f5ac73db7b7a4c6276"
+        "sha256:b3bf0277ccad71850e97a6c29dc46777e24cace0a8e44554fffaaa103065a827"
         if FROZEN_ARM is None else
         "sha256:57193859890419b79cb7f4927c37796d044bc4bf7159c51ddf17723849529e26"
     )

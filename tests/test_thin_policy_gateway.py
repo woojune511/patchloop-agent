@@ -81,7 +81,7 @@ def test_default_serialization_and_schema_identities_remain_exact():
     )
     assert "memory_update" not in RequestedTool(name="read_file", action_id="x").model_dump()
     assert dev_tool_surface_hash() == (
-        "sha256:cb51a65c02044359360bcd9760c38e014e79fbb62a7835f5ac73db7b7a4c6276"
+        "sha256:b3bf0277ccad71850e97a6c29dc46777e24cace0a8e44554fffaaa103065a827"
         if FROZEN_ARM is None else
         "sha256:57193859890419b79cb7f4927c37796d044bc4bf7159c51ddf17723849529e26"
     )
@@ -90,10 +90,20 @@ def test_default_serialization_and_schema_identities_remain_exact():
         allowed_tools=list(MODES),
     )
     assert sha256_json(schemas) == (
-        "sha256:a9a42632a40760e6bb40c969cd5895f7e4fd2f959bc4d5bd0f20481f59cf7ec2"
+        "sha256:8aa3b218b6a9beff57dc3d599c6cd2220c3167b299a7898384a2deb63d72353a"
         if FROZEN_ARM is None else
         "sha256:9757e80d1590c5274966a80011a24ed12e08340d23d2e202f0f099ea1be47955"
     )
+    if FROZEN_ARM is None:
+        minimal = {schema["name"]: schema["parameters"] for schema in schemas
+                   if schema["name"] in {"replace_text", "stop_task"}}
+        assert list(minimal["replace_text"]["properties"]) == [
+            "path", "old_text", "new_text", "occurrence", "hypothesis", "expected_behavior",
+        ]
+        assert list(minimal["stop_task"]["properties"]) == ["reason_code", "summary"]
+        for parameters in minimal.values():
+            assert parameters["required"] == list(parameters["properties"])
+            assert parameters["additionalProperties"] is False
     request = DevRunRequest(provider="mock", task=Path("public.yaml"), model="mock-dev")
     assert "agent_policy" not in request.model_dump(mode="json")
     thin = request.model_copy(update={"agent_policy": "thin"})
@@ -116,6 +126,9 @@ def test_thin_changes_only_annotation_schema(probe_policy):
     thin = dev_tool_schemas(**options, agent_policy="thin")
     assert [entry["name"] for entry in thin] == [entry["name"] for entry in current]
     for a, b in zip(current, thin, strict=True):
+        if FROZEN_ARM is None and a["name"] in {"replace_text", "stop_task"}:
+            assert a == b
+            continue
         decision = a["parameters"]["properties"].pop("turn_decision")
         a["parameters"]["required"].remove("turn_decision")
         annotation = b["parameters"]["properties"].pop("memory_update")

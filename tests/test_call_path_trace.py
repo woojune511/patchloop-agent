@@ -34,7 +34,7 @@ HELPER = """def helper(paths):
 """
 
 
-def fixture(tmp_path):
+def fixture(tmp_path, *, scope=None, candidate_focus=False):
     workspace, dependency = tmp_path / "workspace", tmp_path / "dependency"
     workspace.mkdir()
     dependency.mkdir()
@@ -44,6 +44,11 @@ def fixture(tmp_path):
         "origin": "dependency", "path": "caller.py", "function": "focus"},
         "watches": [{"origin": "workspace", "path": "helper.py", "function": "helper",
                      "lines": [2, 4, 5], "fields": ["paths", "selected"]}]}
+    if scope is not None:
+        request["scope"] = scope
+    if candidate_focus:
+        request["focus"] = {key: request["watches"][0][key]
+                            for key in ("origin", "path", "function")}
     bound = trace.bind_request(request, workspace, dependency_root=dependency,
                                dependency_files={"caller.py": sha256_bytes(CALLER.encode())},
                                snapshot_hash="snapshot", execution_identity_hash="execution")
@@ -78,8 +83,9 @@ def test_focus_separates_initialization_and_control_from_failing_call(tmp_path):
     assert feedback["watches"][0]["not_observed_lines"] == [2, 4, 5]
 
 
-def test_nested_values_parent_line_return_and_exception(tmp_path):
-    bound, ns, roots = fixture(tmp_path)
+@pytest.mark.parametrize("scope", [None, "selected_call"])
+def test_nested_values_parent_line_return_and_exception(tmp_path, scope):
+    bound, ns, roots = fixture(tmp_path, scope=scope)
     value = collector(bound, roots)
     value.begin("call-1")
     with pytest.raises(ValueError, match="failure"):
@@ -93,6 +99,124 @@ def test_nested_values_parent_line_return_and_exception(tmp_path):
     assert watched["events"][0]["parent_index"] == 0
     assert any(event.get("exception_type") == "ValueError" for event in watched["events"])
     assert any(event["values"].get("selected") == "raise" for event in watched["events"])
+
+
+@pytest.mark.parametrize("scope", [None, "selected_call"])
+@pytest.mark.parametrize("completed", [False, True])
+def test_candidate_no_hit_requires_complete_selected_call_window(tmp_path, scope, completed):
+    bound, ns, roots = fixture(tmp_path, scope=scope, candidate_focus=True)
+    value = collector(bound, roots)
+    ns["helper"](["before"])
+    value.begin("call-2")
+    ns["helper"](["other call"])
+    value.end("call-2")
+    value.begin("call-1")
+    assert ns["focus"](False, ["src/project"]) == "skip"
+    if completed:
+        value.end("call-1")
+        ns["helper"](["after"])
+    report = value.finish()
+    feedback = trace.public_feedback(bound, report)
+    complete = scope == "selected_call" and completed
+    assert feedback["status"] == ("complete" if complete else "unknown")
+    assert feedback["reason"] == (None if complete else
+                                  "focus_not_observed" if completed else "call_incomplete")
+    assert feedback["focus"]["entries"] == feedback["watches"][0]["entries"] == 0
+    assert feedback["watches"][0]["not_observed_lines"] == ([2, 4, 5] if complete else None)
+    assert feedback["watches"][0]["observation"] == ("not_observed" if complete else "unknown")
+    if scope is None:
+        assert "scope" not in bound and "scope" not in report
+        assert feedback["scope"] == "selected_call_focus_launch_thread"
+    else:
+        assert bound["scope"] == report["scope"] == "selected_call"
+        assert feedback["scope"] == "selected_call_launch_thread"
+
+
+def test_selected_call_captures_watches_before_focus_and_nested_entry_exit(tmp_path):
+    bound, ns, roots = fixture(tmp_path, scope="selected_call")
+    value = collector(bound, roots)
+    value.begin("call-1")
+    assert ns["run"](True) == "src/project"
+    value.end("call-1")
+    value.begin("call-2")
+    ns["run"](True)
+    value.end("call-2")
+    feedback = trace.public_feedback(bound, value.finish())
+    assert feedback["status"] == "complete"
+    events = feedback["watches"][0]["events"]
+    assert feedback["watches"][0]["entries"] == 2
+    entries = [item for item in events if item["event"] == "call"]
+    exits = [item for item in events if item["event"] == "return"]
+    assert [item["values"]["paths"] for item in entries] == [
+        ["initialization"], ["src/project"]]
+    assert [item["parent_index"] for item in entries] == [None, 0]
+    assert [item["values"]["selected"] for item in exits] == ["initialization", "src/project"]
+    assert [item["value"] for item in exits] == ["initialization", "src/project"]
+
+
+def test_selected_call_bounds_observations_without_changing_values(tmp_path):
+    bound, ns, roots = fixture(tmp_path, scope="selected_call")
+    value = collector(bound, roots)
+    paths = ["x" * 400] * 12
+    value.begin("call-1")
+    assert ns["focus"](True, paths) == "x" * 400
+    value.end("call-1")
+    feedback = trace.public_feedback(bound, value.finish())
+    assert feedback["status"] == "complete" and paths == ["x" * 400] * 12
+    events = feedback["watches"][0]["events"]
+    assert events[0]["values"]["paths"] == ["x" * 128 + "..."] * 8 + ["<remaining-items>"]
+    assert events[-1]["value"] == "x" * 128 + "..."
+
+
+@pytest.mark.parametrize("failure", ["missing_call", "drift", "limit", "trace_limit", "tamper"])
+def test_selected_call_gaps_and_bounds_stay_unknown(tmp_path, monkeypatch, failure):
+    bound, ns, roots = fixture(tmp_path, scope="selected_call", candidate_focus=True)
+    value = collector(bound, roots)
+    if failure != "missing_call":
+        value.begin("call-1")
+        if failure == "limit":
+            monkeypatch.setattr(trace, "MAX_EVENTS", 1)
+            ns["helper"](["src/project"])
+        else:
+            if failure == "trace_limit":
+                monkeypatch.setattr(trace, "MAX_TRACE_EVENTS", 1)
+            ns["focus"](False, ["src/project"])
+        if failure == "tamper":
+            saved = sys.gettrace()
+            sys.settrace(None)
+            sys.settrace(saved)
+        value.end("call-1")
+    if failure == "drift":
+        (roots["workspace"] / "helper.py").write_text(HELPER + "# changed\n")
+    feedback = trace.public_feedback(bound, value.finish())
+    assert feedback["status"] == "unknown"
+    assert feedback["watches"][0]["observation"] == "unknown"
+    assert feedback["watches"][0]["not_observed_lines"] is None
+
+
+def test_selected_call_scope_is_host_only_and_bound_to_report(tmp_path):
+    bound, ns, roots = fixture(tmp_path, scope="selected_call")
+    assert "scope" not in trace.schema()["properties"]
+    assert "scope" not in trace.selection_schema()["properties"]
+    raw = {"call_id": bound["call_id"], "scope": "selected_call",
+           "focus": {key: bound["focus"][key] for key in ("origin", "path", "function")},
+           "watches": [{key: bound["watches"][0][key]
+                        for key in ("origin", "path", "function", "lines", "fields")}]}
+    assert trace.validate_request(raw) == raw
+    for invalid in (None, False, "focus", "all_calls", []):
+        with pytest.raises(ValueError, match="request"):
+            trace.validate_request({**raw, "scope": invalid})
+    value = collector(bound, roots)
+    value.begin("call-1")
+    ns["focus"](False, [])
+    value.end("call-1")
+    report = value.finish()
+    for key, replacement in (("scope", None), ("scope", "focus"),
+                             ("request_hash", "sha256:" + "0" * 64)):
+        bad = {**report, key: replacement}
+        assert trace.public_feedback(bound, bad)["reason"] == "invalid_report"
+    del report["scope"]
+    assert trace.public_feedback(bound, report)["status"] == "unknown"
 
 
 @pytest.mark.parametrize("failure", [

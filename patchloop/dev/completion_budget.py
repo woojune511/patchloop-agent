@@ -182,7 +182,7 @@ def minimum_successor_calls(state: CompletionState, tool: str) -> int:
         return completion_budget(replace(state, helper_correction_pending=False)).minimum
     if tool in {"read_file", "search_files"}:
         return completion_budget(replace(state, anchor_available=True)).minimum
-    if tool in {"search_history", "run_probe", "run_tests"}:
+    if tool in {"search_history", "run_probe", "run_tests", "observe_original"}:
         return completion_budget(state).minimum
     if tool == "replace_text":
         return mutation_attempt_budget(state).minimum - 1

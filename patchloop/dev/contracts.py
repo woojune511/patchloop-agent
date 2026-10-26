@@ -26,8 +26,10 @@ DEV_RUN_SCHEMA = "dev-run-v1"
 DEV_RUNTIME_ID = "dev-head"
 DEV_READ_TOOLS = frozenset({"search_files", "read_file"})
 DEV_SINGLE_ACTION_TOOLS = frozenset({
-    "replace_text", "run_check", "run_tests", "run_probe", "finish_task", "stop_task",
+    "replace_text", "run_check", "run_tests", "run_probe", "observe_original",
+    "finish_task", "stop_task",
 })
+ANNOTATION_OPTIONAL_TOOLS = frozenset({"replace_text", "stop_task", "observe_original"})
 
 
 def dev_tool_surface_hash(
@@ -67,7 +69,7 @@ def dev_tool_surface_hash(
         })
     base = sha256_json(
         {
-            "schema_version": "dev-tool-surface-v56",
+            "schema_version": "dev-tool-surface-v57",
             "submission_assessment": "required-nonblank-current-diff-plan-review-v2",
             "selected_public_tests": "registered-pytest-same-test-before-after-optional-v2",
             "selected_test_comparison": "two-isolated-children-cas-no-uncertain-reexecution-v1",
@@ -89,7 +91,7 @@ def dev_tool_surface_hash(
             "native_mutation_output": "admitted-position-prior-body-references-v1",
             "mutation_rebind_reference_limit": 16,
             "mutation_projection": "no-obsolete-alternative-requirement-v1",
-            "stop_wire": "reason-and-summary-no-model-source-ids-v1",
+            "stop_wire": "reason-and-summary-no-annotations-v2",
             "public_execution_feedback": "current-diff-changed-python-launch-thread-lines-v1",
             "public_execution_feedback_bounds": [8, 256, 12_000],
             "public_execution_report_limit_bytes": 16_000,
@@ -113,9 +115,11 @@ def dev_tool_surface_hash(
                 "evidence_goal",
                 "memory_update",
             ],
+            "annotation_optional_tools": sorted(ANNOTATION_OPTIONAL_TOOLS),
+            "annotation_presence": "core-absent-null-and-legacy-value-preserved-v1",
             "parallel_read_decisions": "shared_inspect_mode_with_call_specific_rationale",
             "dynamic_workflow_tools": True,
-            "mutation_wire": "gateway-bound-exact-anchor-replacement-v2",
+            "mutation_wire": "six-fields-gateway-bound-exact-anchor-no-annotations-v3",
             "requirement_reference": "legacy-admission-and-replay-only-v3",
             "requirement_excerpt_limit": 600,
             "behavior_cases": "legacy-admission-and-replay-only-v2",
@@ -256,16 +260,16 @@ class TextReplacementIntent(StrictModel):
     occurrence: int = Field(default=1, ge=1, le=100)
     hypothesis: str = Field(min_length=1, max_length=1_500)
     expected_behavior: str = Field(min_length=1, max_length=1_500)
-    causal_revision: CausalRevision | None = None
     # Retained for old action/intent hashes and journal recovery. These annotations
     # are not advertised by the current provider schema; legacy parsing is nonblocking.
+    causal_revision: CausalRevision | None = None
     requirement_ref: Any = None
     behavior_cases: Any = None
 
     @model_serializer(mode="wrap")
     def preserve_optional_reference_wire(self, handler: Any) -> dict[str, Any]:
         result = handler(self)
-        for field in ("requirement_ref", "behavior_cases"):
+        for field in ("causal_revision", "requirement_ref", "behavior_cases"):
             if field not in self.model_fields_set:
                 result.pop(field, None)
         return result
@@ -350,7 +354,8 @@ class RequestedTool(StrictModel):
         if "rejected_turn_decision" not in self.model_fields_set:
             result.pop("rejected_turn_decision", None)
         has_wire_presence = (self.preserve_annotation_presence
-                             or "memory_update" in self.model_fields_set)
+                             or "memory_update" in self.model_fields_set
+                             or self.name in ANNOTATION_OPTIONAL_TOOLS)
         if "turn_decision" not in self.model_fields_set and has_wire_presence:
             result.pop("turn_decision", None)
         return result

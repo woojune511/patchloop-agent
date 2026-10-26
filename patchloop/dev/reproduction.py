@@ -564,11 +564,13 @@ def _unbound_execution(result, current_diff):
         "action_id": result["action_id"], "tool": result["tool"], "diff_hash": diff,
         "currency": "unknown" if diff is None else "current" if diff == current_diff
         else "historical",
-        "scope": "helper_or_unbound_diagnostic" if result["tool"] == "run_probe"
+        "scope": "helper_or_unbound_diagnostic"
+        if result["tool"] in {"run_probe", "observe_original"}
         else "registered_check" if result["tool"] == "run_check" else "selected_tests",
         "subject": str(output.get("question") or output.get("check_id")
                        or output.get("targets") or result["tool"])[:400],
-        "subject_role": "model_authored_question" if result["tool"] == "run_probe"
+        "subject_role": "model_authored_question"
+        if result["tool"] in {"run_probe", "observe_original"}
         else "executed_check_identifier",
         "execution": {
             "action_status": result.get("status"),
@@ -587,12 +589,12 @@ def review(events, current_diff, *, public_task=None):
         if event["event_type"] != "action_finished":
             continue
         result = event["payload"]["result"]
-        if result["tool"] not in {"run_probe", "run_check", "run_tests"}:
+        if result["tool"] not in {"run_probe", "observe_original", "run_check", "run_tests"}:
             continue
         repro = (result.get("output") or {}).get("reproduction")
         if repro is None:
             # Rejected declarations/replays are actions, not executed helpers.
-            helper_count += result["tool"] == "run_probe" and isinstance(
+            helper_count += result["tool"] in {"run_probe", "observe_original"} and isinstance(
                 (result.get("output") or {}).get("source_hash"), str)
             other_executions.append(_unbound_execution(result, current_diff))
             continue

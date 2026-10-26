@@ -147,7 +147,16 @@ def test_mutation_tool_contract_is_one_exact_gateway_generated_replacement() -> 
     assert "never provide diff syntax" in mutation["description"]
     assert "bounded post-image" in mutation["description"]
     assert "evidence_span_ids" not in mutation["parameters"]["properties"]
+    if FROZEN_ARM is None:
+        assert set(mutation["parameters"]["properties"]) == {
+            "path", "old_text", "new_text", "occurrence", "hypothesis", "expected_behavior",
+        }
+        assert set(stop["parameters"]["properties"]) == {"reason_code", "summary"}
     for schema in schemas:
+        if FROZEN_ARM is None and schema["name"] in {"replace_text", "stop_task"}:
+            assert not {"turn_decision", "memory_update", "causal_revision"} & set(
+                schema["parameters"]["properties"])
+            continue
         decision = schema["parameters"]["properties"]["turn_decision"]
         assert "turn_decision" in schema["parameters"]["required"]
         assert set(decision["required"]) == set(decision["properties"])
@@ -175,7 +184,7 @@ def test_mutation_tool_contract_is_one_exact_gateway_generated_replacement() -> 
         if FROZEN_ARM is None else "Every response must request either"
     ) in DEV_SYSTEM_PROMPT
     assert (
-        "Each call needs public turn_decision matching its tool family."
+        "Other tools carry public turn_decision matching their family."
         if FROZEN_ARM is None else "Every call carries a bounded public turn_decision"
     ) in DEV_SYSTEM_PROMPT
     assert "memory_update" in DEV_SYSTEM_PROMPT
@@ -183,7 +192,11 @@ def test_mutation_tool_contract_is_one_exact_gateway_generated_replacement() -> 
         "Coverage and commitment are advisory"
         if FROZEN_ARM is None else "Coverage and commitment signals are advisory"
     ) in DEV_SYSTEM_PROMPT
-    assert "causal_revision is optional" in DEV_SYSTEM_PROMPT
+    if FROZEN_ARM is None:
+        assert "causal_revision" not in DEV_SYSTEM_PROMPT
+        assert "connect the next mutation hypothesis" in DEV_SYSTEM_PROMPT
+    else:
+        assert "causal_revision is optional" in DEV_SYSTEM_PROMPT
     assert (
         "source read is required for edit admission only when exact evidence is missing"
         in DEV_SYSTEM_PROMPT

@@ -8,3 +8,4 @@
 - [Host watch construction and a compact diagnosis stage](../2026-10-26-diagnosis-stage.md)
 - [Live diagnosis-stage pilot: no first mutation, diagnosis not exercised](../2026-10-26-diagnosis-stage-live.md)
 - [First-mutation stall: unresolved evidence and repeated no-action generation](../2026-10-26-first-mutation-analysis.md)
+- [First-repair original observation and small requests](../2026-10-26-first-repair.md)

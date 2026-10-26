@@ -24,40 +24,35 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-Use the [focus-only diagnosis stage](history/2026-10-26-diagnosis-stage.md): the model
-selects the enclosing caller; the host derives watches/parameter fields from changed
-functions and binds the frozen original. Schema and validator omit all general
-decision/plan/memory annotations during this stage. The diagnostic probe schema is
-871 compact JSON characters; nine ordinary schema combinations remain byte-equivalent.
+Implement the [first-repair observation and small request path](history/2026-10-26-first-repair.md).
+After an acquired original failure and a distinct clean control, `observe_original`
+selects one or two candidate functions and event predictions. The host replays the
+frozen original program and derives parameter/line watches. Tracing covers the
+selected call window even if the candidate never enters. Complete no-hit and
+incomplete collection remain distinct; predictions test premises, not repairs.
 
-Diagnosis has a small public evidence view. Segmented-v1 enters/exits through an
-explicit handoff and uses a fresh compact segment for incomplete/no-tool corrections.
-Request-field errors retain field-specific correction; actual incomplete observation
-remains unverified. Run-global budgets and original verification are unchanged.
-Local mechanism controls and follow-up tests pass; final quick is 369 PASS in 81.14
-seconds, including isolated mock acceptance, with Ruff PASS. See the stage record
-for per-phase focused results and corrections. Live diagnosis effectiveness remains
-unverified because the latest pilot never entered the changed stage.
+Fresh `replace_text` uses six execution/intent fields; `stop_task` uses two.
+Neither requires decision/plan/memory metadata. Legacy explicit annotations remain
+recoverable. Ordinary repair has a small public evidence view; no-action correction
+starts a fresh compact segment with original observations, source anchors and the
+same budgets. Field/anchor errors retain typed correction. The existing post-edit
+path diagnosis links the next explicit hypothesis without duplicate causal_revision.
 
-The [latest live pilot](history/2026-10-26-diagnosis-stage-live.md) acquired the
-original F0010 on call 1, then made 27 read/search actions and one helper probe.
-No mutation was returned: calls 30/31 exhausted 30,704/25,000 output tokens with no
-action and ended INCOMPLETE_RESPONSE. The $1.078465800 allocation is closed.
-Host watch construction, compact diagnosis context and typed correction are
-NOT_EXERCISED, not live-negative results for those mechanisms.
+One pre-edit observation is optional. Exploration preserves its successful
+edit/replay/check/finish successor using existing protected slack, without adding
+it twice. Request rejection, actual dispatch, completed reuse and uncertainty have
+separate durable identities; restart or new action names do not renew allowances.
+The next mutation links its observation receipt, which becomes historical after edit.
 
-The [first-mutation analysis](history/2026-10-26-first-mutation-analysis.md) found
-that edits were available from call 3, while 25 of 27 inspections added new source
-lines without resolving the causal branch. The helper's fixture missed the lookup
-path; both inputs raised ImportError. The final correction retained the same public
-evidence and ordinary mutation schema, restarting after the encrypted-item limit.
-This supports an unresolved first-repair transition; it does not identify why the
-model generated only reasoning. Source anchors and correction funding were present.
-
-The next question is how to distinguish the first repair hypothesis using the
-original caller, and whether ordinary mutation/correction action construction needs
-simplification. Separate these hypotheses before increasing limits or adding rules.
-No additional live run or continuation is authorized by these records.
+Final focused/resource controls: 154 PASS in 18.68 s. Earlier quick: 363 PASS and 11
+old expectation/doc failures; those 11 pass after targeted fixes. A later audit fixed
+the last-observation reserve after a rejected edit, including diagnostic checks and
+two-child tests; the 154 controls verify that final runtime. Quick includes isolated
+mock acceptance. Ruff passes; see the record for phase identities. No live model run was made.
+The latest closed pilot still made zero edits; its diagnosis was NOT_EXERCISED.
+The unresolved question is whether this intervention lets the model turn an
+original-call observation into an effective first repair under the same limits.
+Local controls do not establish F0010 repair success or general improvement.
 
 ## Supporting evidence
 

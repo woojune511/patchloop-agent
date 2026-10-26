@@ -178,9 +178,9 @@ def validate(state, tool, arguments):
         if request is not None:
             raise ContractError("call_path requires a pending original-failure path diagnosis")
         if state.get("status") == "diagnosed" and tool == "replace_text":
-            if not arguments.get("causal_revision"):
+            if not arguments.get("hypothesis"):
                 raise ContractError("Revise the prior repair hypothesis using the completed "
-                                    "call-path diagnosis; provide causal_revision.")
+                                    "call-path diagnosis; provide hypothesis.")
             return {**link(state), "diagnosis_action_id": state["diagnosis_action_id"]}
         return None
     if tool == "stop_task":

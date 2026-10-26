@@ -128,13 +128,13 @@ def review(events, current_diff, *, public_task=None, run_id):
     cases, completed_actions, attempts = {}, {}, {}
     rejected = {event["payload"]["action_id"] for event in events
                 if event["event_type"] == "action_started"
-                and event["payload"].get("tool") == "run_probe"
+                and event["payload"].get("tool") in {"run_probe", "observe_original"}
                 and event["payload"].get("probe_request", {}).get("status") == "rejected"}
     for event in events:
         kind, payload = event["event_type"], event["payload"]
         if kind in {"completion_reproduction_finished", "completion_reproduction_skipped"}:
             attempts.setdefault(payload["action_id"], []).append({"kind": kind, **payload})
-        if kind == "action_started" and payload.get("tool") == "run_probe":
+        if kind == "action_started" and payload.get("tool") in {"run_probe", "observe_original"}:
             if payload["action_id"] in rejected:
                 continue
             binding = payload.get("reproduction_binding")
@@ -146,7 +146,7 @@ def review(events, current_diff, *, public_task=None, run_id):
             if result["action_id"] in rejected:
                 continue
             observation = (result.get("output") or {}).get("reproduction")
-            if result.get("tool") != "run_probe" or observation is None:
+            if result.get("tool") not in {"run_probe", "observe_original"} or observation is None:
                 continue
             binding = observation["binding"]
             case = cases.setdefault(binding["case_id"], {"binding": binding, "rows": []})

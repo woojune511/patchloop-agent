@@ -11,7 +11,8 @@ from patchloop.errors import ContractError
 DEV_SYSTEM_PROMPT = """You are PatchLoop dev-head, a constrained coding agent.
 Investigate the public task, edit, check behavior, and submit.
 Request 1-4 read_file/search_files calls or one other supplied tool; never mix.
-Each call needs public turn_decision matching its tool family.
+replace_text, stop_task and observe_original omit decision/plan/memory annotations.
+Other tools carry public turn_decision matching their family.
 Exception: needs_path_diagnosis omits all annotations; run_probe selects only focus.
 Parallel inspections may differ in basis/evidence_goal. evidence_goal names the
 inspection question, including negative searches/rereads; other modes use null.
@@ -63,10 +64,10 @@ concerns after diff changes; focus changes, unrelated fixes and source-note expi
 do not resolve them. Use [] for no concern change. Concerns and annotation errors
 do not mechanically gate actions or finish; no extra call is required.
 
-A mutation requires hypothesis, expected_behavior, and one exact old_text/new_text
-replacement in an allowed existing file. State the expected observable effect of
-the edit and preserve behavior outside the requested change. Expectations remain
-unverified until tested. The gateway binds observed evidence and constructs the
+A mutation sends only path, old_text, new_text, occurrence, hypothesis and expected_behavior.
+Use one exact replacement in an allowed existing file; state its expected effect
+and preserve other behavior. Expectations remain unverified until tested.
+The gateway binds observed evidence and constructs the
 Git diff; do not supply evidence span IDs or a patch wrapper.
 Use the smallest sufficient unique exact anchor. Avoid copying unchanged signatures or
 docstrings for an executable-line edit; preserve the observed line breaks exactly.
@@ -77,12 +78,11 @@ A prior rejected optional edit does not invalidate a visibly checked baseline.
 A failure concerns its checked diff. Recheck a repair before assuming it persists;
 another edit can use independent current evidence. Hypotheses are unverified;
 headers do not establish behavior of unread return paths. Repeated failures invite
-review; causal_revision is optional except after a required call-path diagnosis.
-For needs_path_diagnosis, select caller/watch functions and fields in call_path;
-leave replay_action_id null. The host binds original call and lines. Read if offered.
-Separate
-initialization/control, function entry and branch execution; unknown is not no-hit.
-Connect the next edit's causal_revision to the completed diagnosis. It grants no repair credit.
+review; connect the next mutation hypothesis to any required completed call-path diagnosis.
+For needs_path_diagnosis, select only focus; the host binds the original call, watches and lines.
+Read if offered. Separate initialization/control, function entry and branch execution;
+unknown is not no-hit.
+The completed diagnosis grants no repair credit.
 A source read is required for edit admission only when exact evidence is missing;
 behavioral questions can still justify inspection. No check is forced.
 
@@ -112,7 +112,7 @@ assertion fail-to-pass supports only that test. Setup/errors give no repair cred
 Finish assessment cites current evidence/inference and gaps. Skipped checks remain unperformed.
 Resolve material gaps when feasible. Missing original evidence returns unverified_delivery;
 independent evaluation is separate. Edits require fresh checks.
-stop_task abandons as AGENT_STOPPED, without submission or
+stop_task sends only reason_code and summary and abandons as AGENT_STOPPED, without submission or
 evaluation; it is not completion. Use it when no available action supports progress,
 not merely when no edit is needed. Keep decisions and findings concise; never emit
 raw chain-of-thought. Private tests, reference patches, and evaluator details are
@@ -172,19 +172,37 @@ class MockDevAdapter:
 
     def next_turn(self, context: str, tools: list[dict]) -> DevModelTurn:
         turn = self._next_action(context, tools)
+        fields_by_tool = {tool["name"]: tool["parameters"]["properties"] for tool in tools}
+        for index, call in enumerate(turn.tool_calls):
+            fields = fields_by_tool.get(call.name)
+            if fields is None:
+                continue
+            arguments = dict(call.arguments)
+            if call.name == "replace_text" and "causal_revision" not in fields:
+                arguments.pop("causal_revision", None)
+            if "turn_decision" in fields:
+                call.arguments = arguments
+            else:
+                turn.tool_calls[index] = RequestedTool(
+                    name=call.name, action_id=call.action_id, arguments=arguments,
+                    preserve_annotation_presence=True,
+                    **({"memory_update": call.actual_memory_update}
+                       if "memory_update" in fields else {}),
+                )
         payload = json.loads(context)
         planning = payload.get("working_plan")
-        if planning is not None:
-            for call in turn.tool_calls:
+        annotated = [call for call in turn.tool_calls if call.turn_decision is not None]
+        if planning is not None and annotated:
+            for call in annotated:
                 call.turn_decision.plan_update = None
                 call.turn_decision.plan_update_reason = None
             if planning["review_request"]["requested"]:
                 if planning["plan"] is not None:
-                    turn.tool_calls[0].turn_decision.plan_update_reason = (
+                    annotated[0].turn_decision.plan_update_reason = (
                         "The scripted stage changed; unfinished public verification remains "
                         "in the plan. Only already executed checks count as observations."
                     )
-                turn.tool_calls[0].turn_decision.plan_update = (
+                annotated[0].turn_decision.plan_update = (
                     "Goal: " + payload["public_task"]["issue"]["title"] + ". "
                     "Inspect the parser lifetime, make an exact small replacement, "
                     "verify the current diff with public checks, then submit. "
@@ -193,20 +211,15 @@ class MockDevAdapter:
                 )
                 if planning["policy"] in {"brief-evidence-v1", "brief-assumption-v1"}:
                     # Scripted public smoke data tests transport, not planning quality.
-                    turn.tool_calls[0].turn_decision.plan_update = (
+                    annotated[0].turn_decision.plan_update = (
                         "Behavior: " + payload["public_task"]["issue"]["title"] + ".\n"
                         "Evidence / open assumptions: Current stage: "
                         + payload["workflow_gate"] + ". Untested behavior remains open; "
                         "a public check establishes only the observed behavior.\n"
-                        "Next discriminating action: " + turn.tool_calls[0].name
+                        "Next discriminating action: " + annotated[0].name
                         + " for the next scripted public obligation; use results bound "
                         "to the current diff to decide whether to repair or submit."
                     )
-        if tools and "memory_update" in tools[0]["parameters"]["properties"]:
-            turn.tool_calls = [RequestedTool(
-                name=call.name, action_id=call.action_id, arguments=call.arguments,
-                memory_update=call.turn_decision.memory_update,
-            ) for call in turn.tool_calls]
         return turn
 
     def _next_action(self, context: str, tools: list[dict]) -> DevModelTurn:

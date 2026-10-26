@@ -7,7 +7,7 @@ from typing import Any
 
 def verification_observation(result: dict[str, Any]) -> dict[str, Any] | None:
     tool = result.get("tool")
-    if tool not in {"run_check", "run_tests", "run_probe"}:
+    if tool not in {"run_check", "run_tests", "run_probe", "observe_original"}:
         return None
     output = result.get("output", {})
     unhealthy = any(output.get(k, False) for k in (
@@ -15,7 +15,7 @@ def verification_observation(result: dict[str, Any]) -> dict[str, Any] | None:
     ))
     failed = (result.get("status") != "succeeded" or unhealthy
               or (tool in {"run_check", "run_tests"} and output.get("passed") is False)
-              or (tool == "run_probe" and (
+              or (tool in {"run_probe", "observe_original"} and (
                   output.get("status") == "failed"
                   or (type(output.get("exit_code")) is int and output["exit_code"] != 0))))
     if not failed:

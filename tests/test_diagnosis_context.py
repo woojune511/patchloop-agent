@@ -104,9 +104,10 @@ def test_diagnosis_stage_correction_and_return_preserve_budgets(
         assert views[index]["diagnosis_stage"]["host_watches"]["status"] == "ready"
         assert views[index]["diagnosis_stage"]["path"]["call_id"] == "call-1"
         assert len(views[index]["diagnosis_stage"]["observations"]) == 2
-    assert "working_plan" in returned and "diagnosis_stage" not in returned
-    assert returned["working_plan"]["plan"]["text"] == views[2]["working_plan"]["plan"]["text"]
-    assert returned["working_plan"]["plan"]["text"] not in canonical_json(inputs[3])
+    assert "repair_stage" in returned and "diagnosis_stage" not in returned
+    assert "working_plan" not in returned  # Ordinary repair now has its own compact view.
+    plan_text = "Observe original, diagnose the missed branch, repair and verify."
+    assert plan_text not in canonical_json(inputs[3])
     assert before["diagnosis_stage"] == corrected["diagnosis_stage"]
     assert corrected["remaining_budget"]["model_calls"] == before["remaining_budget"][
         "model_calls"] - 1
@@ -124,6 +125,8 @@ def test_diagnosis_stage_correction_and_return_preserve_budgets(
         assert corrected["segment_handoff"]["reason"] == "path_diagnosis_no_action"
         assert not any(i.get("type") == "reasoning" for i in inputs[4])
     journal, _ = records(request)
+    assert any(e["event_type"] == "working_plan_updated" and plan_text in canonical_json(
+        e["payload"]) for e in journal.events())  # Still durable, not fabricated or deleted.
     assert sum(e["event_type"] == "protocol_correction" for e in journal.events()) == 1
     assert not any(e["event_type"] == "working_plan_updated" and e["payload"].get("turn_id")
                    in {r["payload"]["turn_id"] for r in journal.events()

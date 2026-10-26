@@ -90,7 +90,7 @@ def probe_observation(result: dict[str, Any]) -> dict[str, Any]:
 
 def project_probe_result(result: dict[str, Any]) -> dict[str, Any]:
     """Relabel only the model view; durable execution receipts and their hashes stay exact."""
-    if result.get("tool") != "run_probe":
+    if result.get("tool") not in {"run_probe", "observe_original"}:
         return result
     projected = copy.deepcopy(result)
     projected["observation"] = probe_observation(result)

@@ -111,13 +111,14 @@ def review(events, current_diff):
     result_positions = {}
     for position, event in enumerate(events):
         payload = event["payload"]
-        if event["event_type"] == "action_started" and payload.get("tool") == "run_probe":
+        if event["event_type"] == "action_started" and payload.get("tool") in {
+                "run_probe", "observe_original"}:
             starts[payload["action_id"]] = payload
             if _target(payload):
                 attempts.append((position, payload))
         elif event["event_type"] == "action_finished":
             result = payload["result"]
-            if result.get("tool") == "run_probe":
+            if result.get("tool") in {"run_probe", "observe_original"}:
                 results[result["action_id"]] = result
                 result_positions[result["action_id"]] = position
                 if _is_conflict(result):
