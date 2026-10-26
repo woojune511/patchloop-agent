@@ -9,3 +9,4 @@
 - [Request annotation result: B reached an edit, neither arm repaired the original](../2026-10-27-request-annotation-results.md)
 - [Fixed-request model comparison: mini versus full with funded opportunities](../2026-10-27-model-setting-plan.md)
 - [Model comparison result: mini behavior improved; full missed stream encoding](../2026-10-27-model-setting-results.md)
+- [Saved mini verification: cache identity explained, isolated acceptance fails](../2026-10-27-mini-candidate-verification.md)

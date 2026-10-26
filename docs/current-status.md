@@ -86,10 +86,17 @@ changed after call-1, so strict case support remains false. Full supplied only t
 stream: tokenization passed, then the original call raised ValueError in Pylint's
 similarity checker for missing encoding. Its strict case support also remains false.
 All thirteen responses settled for USD 0.443923450 with no input/output/cost cutoff.
-Do not infer model superiority or independent acceptance. Preserve the mini candidate;
-next isolate fixture inputs from generated cache/output state and locally recalibrate
-seed/candidate original/control identity before another paid run. All allocations
-are closed. Production defaults stay unchanged.
+Do not infer model superiority from this pair. The [saved-mini verification](history/2026-10-27-mini-candidate-verification.md)
+then confirmed the identity difference was generated Pylint cache output inside
+the captured input root. With fixture inputs separated from cache, mini resolves
+the original F0010/exception and preserves the control with matching conditions.
+However, the public empty-file variant still emits C0112 and exit 16 instead of
+empty output. Separate isolated acceptance is FAIL; regression, scope and safety
+are PASS. The candidate is a partial repair, not an accepted solution. The private
+failure is not attributed to that public symptom. Next test and repair the public
+empty-output behavior through the complete caller; preserve old verdicts and fix
+input/output boundaries without weakening arbitrary identity checks. All paid
+allocations are closed. Production defaults stay unchanged.
 
 The [latest fresh-solve pilot](history/2026-10-26-target-exception-live.md) acquired the
 original/control, observed the pre-edit path and applied two failed edits. It stopped
