@@ -93,6 +93,35 @@ Only this one diagnosed comparison may use minimum reserves. A successful fresh
 original observation remains authoritative; a test-only PASS never supplies it.
 The unused protocol correction reserve is not released by this change.
 
+## Seeded diagnostic operator
+
+The separate `diagnostics/exception_frame_repair.py` operator has an opt-in
+`source-ready-opportunity-v1` profile. Its ordinary source-ready and information-pair
+profiles retain their existing requests. This diagnostic is not the ordinary runner.
+
+With a probe unused, optional inspections must leave two model responses and two
+tool actions for probe then edit/stop; after the probe they must leave one. Direct
+edit or stop remains available. A correction contributes its current response
+without spending another normal slot. The request's allowed tools, maximum read
+batch and response validator share the same immutable opportunity calculation.
+
+Cost admission reserves each offered successful normal successor at 60K uncached
+input plus 40K output, in addition to the unused 25K protocol correction. A correction
+releases only its own reservation and retains successor funding. If an inspection
+cannot fit, the operator removes reads and recounts the new request; if necessary
+it then removes the optional probe and recounts the edit/stop request. At most two
+such reductions occur per decision, without generation, renewed credit or retries
+after uncertain counting. Current normal output retains exact-count admission;
+correction output must fit in full. Count/dispatch identities record each reduction.
+The prepared first-request hash binds the initial counted request; a cost-narrowed
+first generation has its own recorded request hash and artifact.
+
+No quota, source evidence, host verification or provider setting is increased.
+Time limits, input limits, invalid responses, tool failure and repair correctness
+remain outside this successful-path opportunity guarantee. Fresh process restart
+cannot continue a collection: the operator requires a new result root and exact
+authorization; its diagnostic collection is not resumable.
+
 ## Focused local verification
 
 [Helper program correction](helper-correction.md) reserves one model/probe action

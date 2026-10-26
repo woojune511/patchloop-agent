@@ -59,10 +59,15 @@ public regression, submission or acceptance occurred.
 The diagnostic operator now checks exhausted action capacity before another count
 or generation and retains the adapter's sanitized usage evidence on uncertainty.
 This local fix prevents unusable dispatch; it does not repair Astroid or resolve
-historical billing. The remaining question is how to turn the available mechanism
-evidence into a targeted probe or edit. Do not infer model incapability or increase
-context/output solely from this run. New paid work needs a separate discriminating
-question and exact scope; all allocations are closed.
+historical billing. The [opportunity follow-up](history/2026-10-27-repair-opportunity.md)
+adds an opt-in diagnostic profile that preserves response/action/cost capacity for
+probe then edit/stop, using one policy for offered tools and admission. The old
+profiles and public source remain unchanged; this is a policy intervention whose
+live repair effect is unmeasured. Request-structure and model-setting comparisons
+are already warranted as questions. They need a common feasible action horizon,
+not another prerequisite repair success. Information delivery is confirmed, but
+complete information sufficiency and model incapability are not. All paid allocations
+are closed; new execution needs a distinct exact scope.
 
 The [latest fresh-solve pilot](history/2026-10-26-target-exception-live.md) acquired the
 original/control, observed the pre-edit path and applied two failed edits. It stopped

@@ -4,3 +4,4 @@
 - [Seeded information comparison: four-response cutoff before any repair](../2026-10-27-exception-frame-repair-live.md)
 - [Source-ready single repair: public source, eight responses and exact preparation](../2026-10-27-source-ready-repair-plan.md)
 - [Source-ready result: twelve inspections, no edit and unresolved usage](../2026-10-27-source-ready-repair-live.md)
+- [Repair opportunity: protected actions, responses and cost in the seeded operator](../2026-10-27-repair-opportunity.md)

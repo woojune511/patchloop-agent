@@ -27,7 +27,7 @@ from patchloop.contracts import Artifact, ModelConfig, PublicTask, TaskEnvironme
 from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
 from patchloop.dev import probe_invocation, runner
 from patchloop.dev.contracts import DevLimits, DevTerminal, DevToolResult, RequestedTool
-from patchloop.dev.cost import DevCostLedger, pricing_for_model
+from patchloop.dev.cost import MINIMUM_OUTPUT_CEILING, DevCostLedger, pricing_for_model
 from patchloop.dev.state import DevJournal
 from patchloop.dev.tools import DevToolGateway, dev_tool_schemas, validate_tool_batch
 from patchloop.environment import load_exact_openai_api_key
@@ -65,11 +65,49 @@ class RepairProfile:
     order: tuple[str, ...]
     normal_calls: int
     row_cap: Decimal
+    reserve_opportunity: bool = False
 
 
 DEFAULT_PROFILE = RepairProfile("initial-information-pair-v1", ("A", "B"), NORMAL_CALLS, ROW_CAP)
 SOURCE_READY_PROFILE = RepairProfile("source-ready-single-v1", ("B",), 8, CAP)
-PROFILES = {profile.name: profile for profile in (DEFAULT_PROFILE, SOURCE_READY_PROFILE)}
+OPPORTUNITY_PROFILE = RepairProfile("source-ready-opportunity-v1", ("B",), 8, CAP, True)
+PROFILES = {profile.name: profile for profile in (
+    DEFAULT_PROFILE, SOURCE_READY_PROFILE, OPPORTUNITY_PROFILE)}
+
+
+@dataclass(frozen=True)
+class RepairOpportunity:
+    """One request's offered actions and the successful successor it must fund."""
+
+    allowed: frozenset[str]
+    max_parallel_reads: int
+    successor_calls: int
+
+    def public(self):
+        return {"allowed_tools": sorted(self.allowed),
+                "max_parallel_reads": self.max_parallel_reads,
+                "reserved_successor_calls": self.successor_calls}
+
+
+def repair_opportunity(*, normal_remaining, tool_remaining, probe_used,
+                       correction=False, allow_inspection=True, allow_probe=True):
+    # A correction can perform the failed turn's action without spending another
+    # normal response. Neither it nor a read renews any action/probe allowance.
+    responses = normal_remaining + int(correction)
+    if responses < 1 or tool_remaining < 1:
+        return RepairOpportunity(frozenset(), 0, 0)
+    protected = 1 if probe_used else 2
+    reads = (min(4, max(0, tool_remaining - protected))
+             if allow_inspection and responses > protected else 0)
+    allowed = {"replace_text", "stop_task"}
+    successors = 0
+    if not probe_used and allow_probe and responses >= 2 and tool_remaining >= 2:
+        allowed.add("run_probe")
+        successors = 1
+    if reads:
+        allowed.update({"read_file", "search_files"})
+        successors = protected
+    return RepairOpportunity(frozenset(allowed), reads, successors)
 
 
 def selected_profile(name):
@@ -231,11 +269,11 @@ def load_calibration(path: Path, digest: str):
 
 
 def request_payload(common, arm, *, history=(), remaining=None, correction=None, probe_used=False,
-                    profile=DEFAULT_PROFILE, source_packet=None):
+                    profile=DEFAULT_PROFILE, source_packet=None, opportunity=None):
     require(arm in profile.order, "unknown arm for repair profile")
     initial = strip_frames(common) if arm == "A" else copy.deepcopy(common)
     prompt, focus = PROMPT, []
-    if profile == SOURCE_READY_PROFILE:
+    if profile != DEFAULT_PROFILE:
         require(source_packet is not None, "source-ready profile needs a source packet")
         prompt = PROMPT.replace("four normal", "eight normal").replace(
             "Inspect current source with registered reads before editing.",
@@ -249,10 +287,20 @@ def request_payload(common, arm, *, history=(), remaining=None, correction=None,
             "source_packet": source_packet})}]
     items = [{"role": "system", "content": prompt}, *focus,
              {"role": "user", "content": canonical_json(initial)}, *copy.deepcopy(history)]
+    if profile.reserve_opportunity:
+        remaining = remaining if remaining is not None else {
+            "normal_calls": profile.normal_calls, "tool_actions": TOOL_ACTIONS,
+            "diagnostic_probes": 1, "accepted_mutations": 1,
+            "cost_nanos": int(profile.row_cap * 1_000_000_000)}
+        opportunity = opportunity or repair_opportunity(
+            normal_remaining=remaining["normal_calls"], tool_remaining=remaining["tool_actions"],
+            probe_used=probe_used, correction=correction is not None)
     if remaining is not None or correction is not None:
         items.append({"role": "developer", "content": canonical_json({
-            "remaining": remaining, "protocol_correction": correction})})
-    allowed = TOOLS - {"run_probe"} if probe_used else TOOLS
+            "remaining": remaining, "protocol_correction": correction,
+            **({"opportunity": opportunity.public()} if opportunity else {})})})
+    allowed = (opportunity.allowed if opportunity else
+               (TOOLS - {"run_probe"} if probe_used else TOOLS))
     schemas = dev_tool_schemas(finish_enabled=False, allowed_tools=allowed,
                                probe_environment=common.get("probe_environment"))
     # A non-SDK inert client makes request construction incapable of network access.
@@ -306,7 +354,7 @@ def prepare(calibration: Path, calibration_hash: str, output: Path, result_root:
             "interpretation": (
                 "Source-ready conditional repair opportunity at one fixed candidate; "
                 "not a controlled information comparison, fresh solve, ordinary runner completion, "
-                "acceptance or generalization." if profile == SOURCE_READY_PROFILE else
+                "acceptance or generalization." if profile != DEFAULT_PROFILE else
                 "Initial-information effect at one fixed candidate; not fresh solve, "
                 "ordinary runner completion, acceptance or generalization.")}
     output.mkdir()
@@ -329,7 +377,7 @@ def validate(manifest: Path, digest: str):
             and plan["runtime_hash"] == runtime_content_hash(), "prepared implementation changed")
     profile = selected_profile(plan["profile"])
     require(plan["source_helper_hash"] == (
-        source_helper_hash() if profile == SOURCE_READY_PROFILE else None),
+        source_helper_hash() if profile != DEFAULT_PROFILE else None),
         "prepared source helper changed")
     loaded = load_calibration(Path(plan["calibration"]), plan["calibration_hash"])
     packet = load_source_packet(loaded, profile, plan["calibration_hash"], plan["source_packet"],
@@ -407,44 +455,80 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
         if timeout <= 0:
             terminal = "MODEL_TIME_LIMIT"
             break
-        payload = request_payload(loaded.common, arm, history=history,
-                                  remaining=None if first else {
-                                      "normal_calls": profile.normal_calls - normal,
-                                      "tool_actions": TOOL_ACTIONS - actions,
-                                      "diagnostic_probes": 1 - probes, "accepted_mutations": 1,
-                                      "cost_nanos": ledger.remaining_nanos},
-                                  correction=correction, probe_used=bool(probes),
-                                  profile=profile, source_packet=source_packet)
-        if first:
-            require(sha256_json(payload) == first_hash, "first input differs from preparation")
-        first = False
-        request_hash = sha256_json(payload)
-        count_id = f"count-{normal}-{corrections}-{int(bool(correction))}"
-        journal.append("input_count_started", {"count_id": count_id,
-                       "request_hash": request_hash,
-                       "request": store.put_json(payload).model_dump(mode="json")})
-        try:
-            counted = adapter.count_input_tokens_v2(payload, timeout_seconds=timeout)
-        except Exception:
-            terminal, uncertain = "COUNT_UNCERTAIN", True
-            break
-        journal.append("input_count_finished", {"count_id": count_id,
-                       "request_hash": request_hash, "input_tokens": counted})
-        if type(counted) is not int or counted <= 0:
-            terminal, uncertain = "COUNT_UNCERTAIN", True
-            break
-        if counted > INPUT_LIMIT:
-            terminal = "INPUT_LIMIT"
-            break
         is_correction = correction is not None
-        reserve = (ledger.future_call_reservation_nanos(output_ceiling=CORRECTION_OUTPUT)
-                   if not is_correction and not corrections else 0)
-        if not is_correction and normal + 1 < profile.normal_calls:
-            reserve += ledger.future_call_reservation_nanos(output_ceiling=NORMAL_OUTPUT)
-        admissions = [book.admit(counted, desired_output_ceiling=payload["max_output_tokens"],
-                                 future_cost_reserve_nanos=reserve) for book in (ledger, group)]
-        if any(row is None for row in admissions):
-            terminal = "COST_CAP_REACHED"
+        opportunity = (repair_opportunity(
+            normal_remaining=profile.normal_calls - normal, tool_remaining=TOOL_ACTIONS - actions,
+            probe_used=bool(probes), correction=is_correction) if profile.reserve_opportunity
+            else None)
+        admissions, narrowing = None, 0
+        while True:
+            timeout = gateway.deadline.remaining_seconds()
+            if timeout <= 0:
+                terminal = "MODEL_TIME_LIMIT"
+                break
+            remaining_cost = (min(ledger.remaining_nanos, group.remaining_nanos)
+                              if opportunity else ledger.remaining_nanos)
+            payload = request_payload(loaded.common, arm, history=history,
+                                      remaining=None if first else {
+                                          "normal_calls": profile.normal_calls - normal,
+                                          "tool_actions": TOOL_ACTIONS - actions,
+                                          "diagnostic_probes": 1 - probes, "accepted_mutations": 1,
+                                          "cost_nanos": remaining_cost},
+                                      correction=correction, probe_used=bool(probes),
+                                      profile=profile, source_packet=source_packet,
+                                      opportunity=opportunity)
+            if first:
+                require(sha256_json(payload) == first_hash, "first input differs from preparation")
+            first = False
+            request_hash = sha256_json(payload)
+            count_id = f"count-{normal}-{corrections}-{int(is_correction)}"
+            if narrowing:
+                count_id += f"-narrow-{narrowing}"
+            journal.append("input_count_started", {"count_id": count_id,
+                           "request_hash": request_hash,
+                           "request": store.put_json(payload).model_dump(mode="json")})
+            try:
+                counted = adapter.count_input_tokens_v2(payload, timeout_seconds=timeout)
+            except Exception:
+                terminal, uncertain = "COUNT_UNCERTAIN", True
+                break
+            journal.append("input_count_finished", {"count_id": count_id,
+                           "request_hash": request_hash, "input_tokens": counted})
+            if type(counted) is not int or counted <= 0:
+                terminal, uncertain = "COUNT_UNCERTAIN", True
+                break
+            if counted > INPUT_LIMIT:
+                terminal = "INPUT_LIMIT"
+                break
+            reserve = (ledger.future_call_reservation_nanos(output_ceiling=CORRECTION_OUTPUT)
+                       if not is_correction and not corrections else 0)
+            successors = (opportunity.successor_calls if opportunity else
+                          int(not is_correction and normal + 1 < profile.normal_calls))
+            reserve += successors * ledger.future_call_reservation_nanos(
+                output_ceiling=NORMAL_OUTPUT)
+            attempted = [book.admit(counted, desired_output_ceiling=payload["max_output_tokens"],
+                         minimum_output_ceiling=(CORRECTION_OUTPUT
+                                                 if opportunity and is_correction
+                                                 else MINIMUM_OUTPUT_CEILING),
+                         future_cost_reserve_nanos=reserve) for book in (ledger, group)]
+            if all(row is not None for row in attempted):
+                admissions = attempted
+                break
+            if not opportunity or not opportunity.successor_calls:
+                terminal = "COST_CAP_REACHED"
+                break
+            # Release optional exploration, then optional probe funding. Each
+            # narrower request is freshly counted; no generation was dispatched.
+            before = opportunity
+            opportunity = repair_opportunity(
+                normal_remaining=profile.normal_calls - normal,
+                tool_remaining=TOOL_ACTIONS - actions, probe_used=bool(probes),
+                correction=is_correction, allow_inspection=False,
+                allow_probe=bool(before.max_parallel_reads))
+            narrowing += 1
+            journal.append("opportunity_cost_narrowed", {"count_id": count_id,
+                           "before": before.public(), "after": opportunity.public()})
+        if admissions is None:
             break
         timeout = gateway.deadline.remaining_seconds()
         if timeout <= 0:
@@ -456,7 +540,9 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
                         "request_hash": sha256_json(payload),
                         "request": store.put_json(payload).model_dump(mode="json"),
                         "counted_request_hash": request_hash, "input_tokens": counted,
-                        "output_ceiling": payload["max_output_tokens"]})
+                        "output_ceiling": payload["max_output_tokens"],
+                        **({"opportunity": opportunity.public(),
+                            "future_cost_reserve_nanos": reserve} if opportunity else {})})
         corrections += int(is_correction)
         normal += int(not is_correction)
         try:
@@ -487,8 +573,11 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
         issue = turn.error_code
         try:
             require(issue is None, str(issue))
-            allowed = TOOLS - {"run_probe"} if probes else TOOLS
-            validate_tool_batch(turn.tool_calls, allowed_tools=allowed)
+            allowed = (opportunity.allowed if opportunity else
+                       (TOOLS - {"run_probe"} if probes else TOOLS))
+            validate_tool_batch(turn.tool_calls, allowed_tools=allowed,
+                                max_parallel_reads=opportunity.max_parallel_reads
+                                if opportunity else 4)
             require(actions + len(turn.tool_calls) <= TOOL_ACTIONS, "tool allowance exhausted")
             if turn.provider_continuation:
                 runner._validate_continuation_action_order(

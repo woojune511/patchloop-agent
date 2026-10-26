@@ -304,8 +304,10 @@ def test_prepare_freezes_inputs_without_provider_or_target(smoke_package, tmp_pa
     assert plan["order"] == ["A", "B"] and plan["normal_calls"] == 4
 
 
+@pytest.mark.parametrize("profile", [diagnostic.SOURCE_READY_PROFILE,
+                                   diagnostic.OPPORTUNITY_PROFILE])
 def test_source_ready_manifest_binds_scope_and_source_identity(smoke_package, tmp_path,
-                                                              monkeypatch):
+                                                              monkeypatch, profile):
     source = tmp_path / "source"
     source.mkdir()
     calibration = tmp_path / "calibration/calibration.json"
@@ -323,10 +325,11 @@ def test_source_ready_manifest_binds_scope_and_source_identity(smoke_package, tm
     monkeypatch.setattr(diagnostic, "validate_packet",
                         lambda *args, **kw: checked.append((args, kw)))
     prepared = diagnostic.prepare(calibration, "calibration", tmp_path / "plan",
-        tmp_path / "result", tmp_path / "unread.env", profile=diagnostic.SOURCE_READY_PROFILE,
+        tmp_path / "result", tmp_path / "unread.env", profile=profile,
         source_packet=packet_path, source_packet_hash=sha256_bytes(packet_path.read_bytes()))
     manifest = Path(prepared["manifest"])
     plan, _ = diagnostic.validate(manifest, prepared["manifest_hash"])
+    assert plan["profile"] == profile.name
     assert plan["order"] == ["B"] and plan["normal_calls"] == 8
     assert plan["row_cap_usd"] == plan["new_cap_usd"] == "1.20"
     assert plan["source_packet"] == str(packet_path.resolve()) and len(checked) == 2
