@@ -48,13 +48,21 @@ Final focused/resource controls: 154 PASS in 18.68 s. Earlier quick: 363 PASS an
 old expectation/doc failures; those 11 pass after targeted fixes. A later audit fixed
 the last-observation reserve after a rejected edit, including diagnostic checks and
 two-child tests; the 154 controls verify that final runtime. Quick includes isolated
-mock acceptance. Ruff passes; see the record for phase identities. No live model run was made.
-The latest closed pilot still made zero edits; its diagnosis was NOT_EXERCISED.
-The [next one-run pilot](history/2026-10-26-first-repair-live-plan.md) is prepared
-under the previous mini-model, 40,000/25,000 output ceilings and $1.20 cap; exact new
-paid authorization is pending. The unresolved question is whether the model turns
-an original-call observation into an effective first repair under those limits.
-Local controls do not establish F0010 repair success or general improvement.
+mock acceptance. Ruff passes; see the record for phase identities.
+
+The [authorized one-run pilot](history/2026-10-26-first-repair-live.md) acquired the
+original failure, executed observe_original, made one six-field edit and dispatched
+post-edit diagnosis. Both path traces returned collector_truncated; the first edit
+linked insufficient evidence. Same-call replay still emitted F0010, and the changed
+branch was not observed. The host returned VERIFICATION_INCOMPLETE without submission.
+Cost $0.836407650, 532.83 seconds, 31 model calls; no incomplete provider response or
+no-action correction. The allocation is closed, with $0.363592350 unspent.
+
+First-edit issuance is now live-observed; useful premise evidence and F0010 repair
+remain unestablished. Investigate which trace limits initialization and repeated
+calls consume, and how to preserve relevant path evidence within bounds. Saved
+collector_truncated feedback does not identify the exact internal counter. Do not
+infer function absence from incomplete collection or general benefit from one run.
 
 ## Supporting evidence
 
@@ -85,6 +93,6 @@ submission, independent task acceptance and safety are separate. Mock safety is 
 
 Do not start Docker Desktop or pull/build evaluator images automatically. Preserve
 exact recovery identities, zero SDK retries and stop-all on count/transport/billing
-uncertainty. The latest live run acquired the original failure but made no mutation;
-diagnosis was NOT_EXERCISED, and checks, finish and independent evaluation were NOT_RUN.
+uncertainty. The latest live run made one mutation but retained the original failure;
+checks, finish, frozen post-submission checks and independent evaluation were NOT_RUN.
 Linux CI and general improvement remain unverified.

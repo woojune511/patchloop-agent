@@ -10,3 +10,4 @@
 - [First-mutation stall: unresolved evidence and repeated no-action generation](../2026-10-26-first-mutation-analysis.md)
 - [First-repair original observation and small requests](../2026-10-26-first-repair.md)
 - [First-repair live pilot: prepared scope and stage measurements](../2026-10-26-first-repair-live-plan.md)
+- [First-repair pilot: first edit reached, F0010 persists, traces truncated](../2026-10-26-first-repair-live.md)
