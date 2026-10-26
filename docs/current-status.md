@@ -24,38 +24,35 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [saved-mini verification](history/2026-10-27-mini-candidate-verification.md)
-confirmed that generated Pylint cache files caused the earlier strict input-identity
-failure. Separating fixture inputs from cache outputs gives matching original and
-control conditions: mini removes F0010/unexpected exceptions, but still produces
-C0112 and exit 16 on the public empty-file fixture. Its separate acceptance is FAIL.
+The [relative-root repair](history/2026-10-27-relative-root-repair.md) now passes
+separate isolated acceptance, regression, scope and safety on Astroid-1333.
+From clean task source, the operator changed one line in `astroid/modutils.py`:
+normalize the search root with `abspath` before comparing it with absolute filenames.
+This candidate contains none of the earlier synthetic namespace builder edits.
+It is an accepted local operator repair, not a fresh benchmark-model solve.
 
-The [operator namespace-doc follow-up](history/2026-10-27-namespace-doc-repair.md)
-changed only `doc=""` to `doc=None` on that saved candidate. Six public probes
-confirmed empty output/exit 0 for the original empty and nonempty fixtures,
-unchanged standalone controls, preserved real empty-docstring diagnostics and
-matching selected inputs. Focused work took 72.899 seconds; the public regression
-passed 1,231 tests. Separate isolated acceptance remains FAIL, with regression,
-scope and safety PASS. This is a public symptom repair by the operator, not a
-new mini-model success or an accepted task solution. The private failure cause
-is unknown and is not attributed to any public symptom.
+Ten public probes confirmed the mechanism: base fails with relative root `"."` but
+resolves its absolute equivalent. The candidate resolves both, recognizes the
+namespace, selects and parses the actual child. Empty input exits 0; `import os`
+produces real lint diagnostics; invalid child syntax produces E0001. Direct-file
+and ordinary-package controls are unchanged. Focused comparison took 100.340 seconds;
+with 1,231 public regression passes it took 113.341 seconds. Isolated acceptance
+was run separately once, with no provider calls, credential reads or private
+content in coding context. official=false and claim-ineligible.
 
-The [six-row selection diagnostic](history/2026-10-27-namespace-selection-diagnostic.md)
-now confirms silent omission: with the initializer absent, both base and saved
-candidate select only the nonexistent initializer and never attempt the invalid
-child file. Base emits F0010; the candidate exits 0. Direct-file and ordinary-package
-controls both select/parse the child and emit E0001 in both states. All six probes
-completed in 62.562 seconds with matched conditions and complete bounded observation.
-This additional public diagnostic is not a new benchmark acceptance condition.
+The [preceding selection diagnostic](history/2026-10-27-namespace-selection-diagnostic.md)
+explains the earlier apparent success: the old builder candidate handled a missing
+initializer while leaving the child outside the selected file list. Its
+[docstring improvement](history/2026-10-27-namespace-doc-repair.md) and
+[mini verification](history/2026-10-27-mini-candidate-verification.md) remain narrower
+public results with acceptance FAIL; do not rewrite them as this new success.
 
-Two resolver ImportErrors precede the omission. Actual search paths include `"."`,
-while Astroid's relative-path helper compares it directly against an absolute
-filename. Relative-root normalization is now a concrete source-based repair
-hypothesis, not yet a tested fix. Next compare relative/equivalent absolute search
-roots and test a resolver-only repair from clean source; do not keep extending the
-synthetic-module builder guard. No new target repair or evaluator run occurred.
-Preserve artifacts and production defaults. No model/context budget increase is
-supported by this diagnostic. All paid allocations remain closed.
+Preserve the clean resolver candidate as evidence; stop extending the old builder
+guard for this demonstrated repair. The next agent question is whether public
+selection/resolution feedback leads the model to choose the correct repair layer
+without receiving the operator patch. This is not yet an implemented policy or
+measured model improvement. Production defaults stay unchanged. Another paid trial
+requires a new exact scope; all previous paid allocations remain closed.
 
 Public exception frames and cause/context chains are implemented in fresh invocation
 v5, with historical observer v1-v4 preserved; see the
@@ -104,7 +101,8 @@ submission, independent task acceptance and safety are separate. Mock safety is 
 
 Do not start Docker Desktop or pull/build evaluator images automatically. Preserve
 exact recovery identities, zero SDK retries and stop-all on count/transport/billing
-uncertainty. Saved-patch isolated evaluations have completed with acceptance FAIL;
-no live model has newly achieved an accepted solution in these follow-ups.
+uncertainty. Earlier saved candidates failed isolated acceptance; the clean-source operator
+resolver candidate now passes. No live model has newly achieved an accepted solution
+in these follow-ups.
 Public-check PASS, safety PASS and successful submission do not establish repair
 correctness. Linux CI and general improvement remain unverified.
