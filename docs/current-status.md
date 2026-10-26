@@ -24,6 +24,24 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
+The [diagnosis-gap analysis](history/2026-10-26-repair-diagnosis-gap-analysis.md)
+reconstructs all six post-edit model inputs from the latest pilot. Negative failure
+feedback and the finish blocker worked, but the observer retained only exception
+type/message, with empty captured stdout/stderr and no exception frames or chain.
+The specialized call-path route requires a comparable refutation and unobserved
+changed lines; these candidates instead had UNKNOWN plus a confirmed exception,
+with their changed executable lines entered. The route projected `not_needed`,
+and the actual offered general probe schemas required `call_path=null`.
+An available generic diagnostic allowance did not mean that original-call path
+diagnosis was offered. Earlier descriptions of model non-use need that distinction.
+
+Prioritize a bounded failing-frame/exception-chain packet and a local diagnostic
+of the saved public candidate before another fresh solve. No new runtime change,
+target execution or paid allocation has occurred. Whether this evidence enables
+a correct model repair remains unresolved; a subsequent seeded repair would be
+different evidence from a fresh solve. Keep the finish blocker; do not add another
+mandatory gate or increase context solely on this trajectory.
+
 The [captured-exception fix](history/2026-10-26-target-exception-preservation.md)
 preserves a complete, identity-matched target exception after a settled nonzero
 helper exit. Existing diagnosis, repair-stage and finish-blocking paths now consume

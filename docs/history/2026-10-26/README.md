@@ -1,5 +1,6 @@
 # 2026-10-26 investigations
 
+- [Repair diagnosis gap: exception frames absent and path route unavailable](../2026-10-26-repair-diagnosis-gap-analysis.md)
 - [Host-built original-call diagnosis requests and local validation](../2026-10-26-diagnosis-request.md)
 - [Live diagnosis pilot: incompatible fields rejected before construction](../2026-10-26-diagnosis-request-live.md)
 - [Diagnosis mode schema and actionable field correction](../2026-10-26-diagnosis-mode.md)
