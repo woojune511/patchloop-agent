@@ -122,6 +122,15 @@ remain outside this successful-path opportunity guarantee. Fresh process restart
 cannot continue a collection: the operator requires a new result root and exact
 authorization; its diagnostic collection is not resumable.
 
+`request-annotation-pair-v1` uses that same opportunity policy in two isolated arms,
+each at USD 1.20 (invocation cap USD 2.40). Both receive identical full public
+evidence and source. A uses current tool annotations; B reuses only the existing
+thin wire schema/parser/validator/gateway. The main instructions, operational tool
+parameters, mutation intent and host verification stay identical. This is not the
+full thin policy or its note lifecycle. Preparation validates the sole schema delta;
+the manifest binds the per-arm policies and exact total cap. Wrong-shaped calls
+retain their received annotation fields in the bounded correction transcript.
+
 ## Focused local verification
 
 [Helper program correction](helper-correction.md) reserves one model/probe action

@@ -66,13 +66,24 @@ class RepairProfile:
     normal_calls: int
     row_cap: Decimal
     reserve_opportunity: bool = False
+    compare_request_annotations: bool = False
+
+    @property
+    def invocation_cap(self):
+        return self.row_cap * len(self.order)
 
 
 DEFAULT_PROFILE = RepairProfile("initial-information-pair-v1", ("A", "B"), NORMAL_CALLS, ROW_CAP)
 SOURCE_READY_PROFILE = RepairProfile("source-ready-single-v1", ("B",), 8, CAP)
 OPPORTUNITY_PROFILE = RepairProfile("source-ready-opportunity-v1", ("B",), 8, CAP, True)
+REQUEST_STRUCTURE_PROFILE = RepairProfile("request-annotation-pair-v1", ("A", "B"),
+                                        8, CAP, True, True)
 PROFILES = {profile.name: profile for profile in (
-    DEFAULT_PROFILE, SOURCE_READY_PROFILE, OPPORTUNITY_PROFILE)}
+    DEFAULT_PROFILE, SOURCE_READY_PROFILE, OPPORTUNITY_PROFILE, REQUEST_STRUCTURE_PROFILE)}
+
+
+def arm_policy(profile, arm):
+    return "thin" if profile.compare_request_annotations and arm == "B" else "current"
 
 
 @dataclass(frozen=True)
@@ -271,7 +282,8 @@ def load_calibration(path: Path, digest: str):
 def request_payload(common, arm, *, history=(), remaining=None, correction=None, probe_used=False,
                     profile=DEFAULT_PROFILE, source_packet=None, opportunity=None):
     require(arm in profile.order, "unknown arm for repair profile")
-    initial = strip_frames(common) if arm == "A" else copy.deepcopy(common)
+    initial = (strip_frames(common) if profile == DEFAULT_PROFILE and arm == "A"
+               else copy.deepcopy(common))
     prompt, focus = PROMPT, []
     if profile != DEFAULT_PROFILE:
         require(source_packet is not None, "source-ready profile needs a source packet")
@@ -302,7 +314,8 @@ def request_payload(common, arm, *, history=(), remaining=None, correction=None,
     allowed = (opportunity.allowed if opportunity else
                (TOOLS - {"run_probe"} if probe_used else TOOLS))
     schemas = dev_tool_schemas(finish_enabled=False, allowed_tools=allowed,
-                               probe_environment=common.get("probe_environment"))
+                               probe_environment=common.get("probe_environment"),
+                               agent_policy=arm_policy(profile, arm))
     # A non-SDK inert client makes request construction incapable of network access.
     adapter = OpenAIResponsesAdapter(config(), api_key="", client=SimpleNamespace(max_retries=0))
     payload = adapter.request_payload(items, schemas, system_prompt=prompt)
@@ -315,6 +328,23 @@ def verify_pair(a, b):
     expected["input"][1]["content"] = canonical_json(strip_frames(
         json.loads(expected["input"][1]["content"])))
     require(a == expected, "inputs differ beyond the initial exception details")
+
+
+def verify_request_pair(a, b):
+    """Only the existing thin annotation schema may differ; evidence is identical."""
+    current, thin = copy.deepcopy(a), copy.deepcopy(b)
+    require(len(current["tools"]) == len(thin["tools"]), "request tool counts differ")
+    for left, right in zip(current["tools"], thin["tools"], strict=True):
+        require(left["name"] == right["name"], "request tool order differs")
+        if left["name"] not in {"read_file", "search_files", "run_probe"}:
+            continue
+        lp, rp = left["parameters"], right["parameters"]
+        decision = lp["properties"].pop("turn_decision")
+        lp["required"].remove("turn_decision")
+        memory = rp["properties"].pop("memory_update")
+        rp["required"].remove("memory_update")
+        require(memory == decision["properties"]["memory_update"], "memory schema differs")
+    require(current == thin, "inputs differ beyond request annotations")
 
 
 def prepare(calibration: Path, calibration_hash: str, output: Path, result_root: Path,
@@ -331,6 +361,8 @@ def prepare(calibration: Path, calibration_hash: str, output: Path, result_root:
                 for arm in profile.order}
     if profile == DEFAULT_PROFILE:
         verify_pair(requests["A"], requests["B"])
+    if profile.compare_request_annotations:
+        verify_request_pair(requests["A"], requests["B"])
     plan = {"schema": SCHEMA, "official": False, "paid_execution_authorized": False,
             "calibration": str(calibration.resolve()), "calibration_hash": calibration_hash,
             "runtime_hash": runtime_content_hash(), "implementation_hash": implementation_hash(),
@@ -346,7 +378,7 @@ def prepare(calibration: Path, calibration_hash: str, output: Path, result_root:
             "input_limit": INPUT_LIMIT, "normal_calls": profile.normal_calls, "correction_calls": 1,
             "tool_actions": TOOL_ACTIONS, "diagnostic_probes": 1, "accepted_mutations": 1,
             "model_seconds_per_arm": MODEL_SECONDS, "host_check_seconds_per_arm": CHECK_SECONDS,
-            "row_cap_usd": str(profile.row_cap), "new_cap_usd": str(CAP),
+            "row_cap_usd": str(profile.row_cap), "new_cap_usd": str(profile.invocation_cap),
             "credential_file": str(credential_file.resolve()),
             "result_root": str(result_root.resolve()),
             "pricing": {k: str(v) for k, v in asdict(pricing_for_model(MODEL)).items()},
@@ -357,6 +389,13 @@ def prepare(calibration: Path, calibration_hash: str, output: Path, result_root:
                 "acceptance or generalization." if profile != DEFAULT_PROFILE else
                 "Initial-information effect at one fixed candidate; not fresh solve, "
                 "ordinary runner completion, acceptance or generalization.")}
+    if profile.compare_request_annotations:
+        plan["request_annotation_policies"] = {
+            arm: arm_policy(profile, arm) for arm in profile.order}
+        plan["interpretation"] = (
+            "Required action-commentary annotation effect at one source-ready saved candidate; "
+            "same evidence, model, operational tools and opportunity policy. One run per arm; "
+            "not a full thin-policy comparison, fresh solve, acceptance or generalization.")
     output.mkdir()
     for arm, value in requests.items():
         (output / f"{arm}-first.json").write_text(canonical_json(value) + "\n", encoding="utf-8")
@@ -376,6 +415,9 @@ def validate(manifest: Path, digest: str):
     require(plan["schema"] == SCHEMA and plan["implementation_hash"] == implementation_hash()
             and plan["runtime_hash"] == runtime_content_hash(), "prepared implementation changed")
     profile = selected_profile(plan["profile"])
+    if profile.compare_request_annotations:
+        require(plan.get("request_annotation_policies") == {
+            arm: arm_policy(profile, arm) for arm in profile.order}, "annotation policies changed")
     require(plan["source_helper_hash"] == (
         source_helper_hash() if profile != DEFAULT_PROFILE else None),
         "prepared source helper changed")
@@ -388,7 +430,7 @@ def validate(manifest: Path, digest: str):
     require(plan["model"] == MODEL and plan["reasoning_effort"] == "xhigh"
             and plan["order"] == list(profile.order) and plan["repeat_per_arm"] == 1
             and Decimal(plan["row_cap_usd"]) == profile.row_cap
-            and Decimal(plan["new_cap_usd"]) == CAP
+            and Decimal(plan["new_cap_usd"]) == profile.invocation_cap
             and (plan["ordinary_output"], plan["correction_output"])
             == (NORMAL_OUTPUT, CORRECTION_OUTPUT)
             and (plan["normal_calls"], plan["correction_calls"], plan["tool_actions"],
@@ -405,6 +447,8 @@ def validate(manifest: Path, digest: str):
                 "prepared input changed")
     if profile == DEFAULT_PROFILE:
         verify_pair(requests["A"], requests["B"])
+    if profile.compare_request_annotations:
+        verify_request_pair(requests["A"], requests["B"])
     require(plan["pricing"] == {k: str(v) for k, v in asdict(pricing_for_model(MODEL)).items()},
             "registered pricing changed")
     loaded.source_packet = packet
@@ -414,6 +458,8 @@ def validate(manifest: Path, digest: str):
 def _exchange(turn, results, issue=None):
     calls = {call.action_id: call for call in turn.tool_calls}
     items = []
+    provider_arguments = (runner._provider_rejected_call_arguments if issue
+                          else runner._provider_tool_arguments)
     continuation = turn.provider_continuation
     for item in continuation.output_order if continuation else []:
         if item.type == "reasoning":
@@ -424,11 +470,11 @@ def _exchange(turn, results, issue=None):
             call = calls[item.action_id]
             items.append({"type": "function_call", "call_id": call.action_id,
                           "name": call.name,
-                          "arguments": canonical_json(runner._provider_tool_arguments(call))})
+                          "arguments": canonical_json(provider_arguments(call))})
     if not continuation:
         items.extend({"type": "function_call", "call_id": call.action_id,
                       "name": call.name,
-                      "arguments": canonical_json(runner._provider_tool_arguments(call))}
+                      "arguments": canonical_json(provider_arguments(call))}
                      for call in turn.tool_calls)
     by_id = {row.action_id: row.model_dump(mode="json") for row in results}
     items.extend({"type": "function_call_output", "call_id": call.action_id,
@@ -441,6 +487,8 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
               source_packet=None):
     """At most one new edit. Adapter injection supports finite offline tests."""
     journal = gateway.journal
+    policy = arm_policy(profile, arm)
+    require(gateway.agent_policy == policy, "gateway annotation policy differs from request")
     store = ArtifactStore(journal.root / "artifacts")
     ledger = DevCostLedger(profile.row_cap, pricing_for_model(MODEL))
     history, normal, corrections, actions, probes = [], 0, 0, 0, 0
@@ -551,7 +599,7 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
         except Exception:
             terminal, uncertain = "PROVIDER_UNCERTAIN", True
             break
-        turn = runner._turn_from_openai(raw)
+        turn = runner._turn_from_openai(raw, agent_policy=policy)
         if (turn.usage_evidence is None or turn.usage_evidence.get("failure_kind") is not None
                 or turn.response_model != MODEL
                 or turn.output_tokens > payload["max_output_tokens"]):
@@ -576,6 +624,7 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
             allowed = (opportunity.allowed if opportunity else
                        (TOOLS - {"run_probe"} if probes else TOOLS))
             validate_tool_batch(turn.tool_calls, allowed_tools=allowed,
+                                agent_policy=policy,
                                 max_parallel_reads=opportunity.max_parallel_reads
                                 if opportunity else 4)
             require(actions + len(turn.tool_calls) <= TOOL_ACTIONS, "tool allowance exhausted")
@@ -660,7 +709,7 @@ def case_support(base, current):
             "control_unchanged": control_same, "task_acceptance": "NOT_ASSESSED"}
 
 
-def _gateway(loaded, root, *, profile=DEFAULT_PROFILE, source_packet=None):
+def _gateway(loaded, root, *, profile=DEFAULT_PROFILE, source_packet=None, arm="B"):
     deadline = ExecutionDeadline.from_remaining(MODEL_SECONDS)
     workspace = WorkspaceManager(repository_root() / "fixtures/repositories", root / "workspaces",
         prepared_source=Path(loaded.old.prepared_source_path),
@@ -679,7 +728,8 @@ def _gateway(loaded, root, *, profile=DEFAULT_PROFILE, source_packet=None):
     require(sandbox.image_identity(deadline=deadline) == loaded.environment.image_digest,
             "public regression image is unavailable or changed")
     return DevToolGateway(workspace=workspace, public_task=loaded.public, sandbox=sandbox,
-        probe_sandbox=probe, journal=journal, limits=DevLimits(max_accepted_mutations=1,
+        probe_sandbox=probe, journal=journal, agent_policy=arm_policy(profile, arm),
+        limits=DevLimits(max_accepted_mutations=1,
         max_model_calls=profile.normal_calls + 1,
         max_tool_actions=TOOL_ACTIONS + anchor_reads(source_packet)), deadline=deadline)
 
@@ -716,9 +766,12 @@ def verify_candidate(loaded, gateway):
 
 
 def collect(manifest: Path, approved_manifest_hash: str, approved_cap_usd: Decimal):
-    require(approved_cap_usd == CAP, "exact new invocation cap approval required")
+    require(approved_cap_usd in {profile.invocation_cap for profile in PROFILES.values()},
+            "exact new invocation cap approval required")
     plan, loaded = validate(manifest, approved_manifest_hash)
     profile = selected_profile(plan["profile"])
+    require(approved_cap_usd == profile.invocation_cap,
+            "exact new invocation cap approval required")
     packet = loaded.source_packet
     require(loaded.source.public_path.resolve().is_relative_to(
         repository_root() / "tasks/dev-train"), "live task is outside admitted dev-train tree")
@@ -726,14 +779,14 @@ def collect(manifest: Path, approved_manifest_hash: str, approved_cap_usd: Decim
     disjoint(root, (repository_root(), loaded.source.root, manifest.parent,
                     Path(plan["calibration"]).parent, loaded.source.public_path.parent))
     root.mkdir()
-    group = DevCostLedger(CAP, pricing_for_model(MODEL))
+    group = DevCostLedger(profile.invocation_cap, pricing_for_model(MODEL))
     journal = DevJournal(root, "run_dev_exceptionframecomparison")
     journal.append("approved_collection_started", {"manifest_hash": approved_manifest_hash,
-                                                   "new_cap_usd": str(CAP)})
+                                                   "new_cap_usd": str(profile.invocation_cap)})
     rows = []
     try:
         for arm in plan["order"]:
-            gateway = _gateway(loaded, root / arm, profile=profile, source_packet=packet)
+            gateway = _gateway(loaded, root / arm, profile=profile, source_packet=packet, arm=arm)
             if packet is not None:
                 validate_packet(loaded, packet, plan["calibration_hash"],
                                 workspace=gateway.workspace)

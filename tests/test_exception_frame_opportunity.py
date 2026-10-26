@@ -27,7 +27,7 @@ WITH_READS = WITH_PROBE | {"read_file", "search_files"}
 def _probe_call():
     return {"name": "run_probe", "action_id": "diagnose", "arguments": {
         "question": "Does the public behavior hold?", "python_source": "assert True",
-        "purpose": None, "replay_action_id": None, "call_path": None,
+        "purpose": {"kind": "helper"}, "replay_action_id": None, "call_path": None,
         "turn_decision": {"mode": "verify", "basis": "Check the public repair premise.",
                           "evidence_goal": None, "memory_update": None}}}
 
@@ -112,6 +112,8 @@ def test_ten_reads_leave_one_probe_and_one_actual_edit(gateway_factory):
     assert [row["max_parallel_reads"] for row in opportunities] == [4, 4, 2, 0, 0]
     assert [row["reserved_successor_calls"] for row in opportunities] == [2, 2, 2, 1, 0]
     assert {row["tool"] for row in _finished(journal)[-2:]} == {"run_probe", "replace_text"}
+    assert all(row["status"] == "succeeded" and row["error_code"] is None
+               for row in _finished(journal)[-2:])
     assert len(client.counted) == len(client.created) == 5
 
 

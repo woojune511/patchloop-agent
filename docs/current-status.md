@@ -69,6 +69,14 @@ not another prerequisite repair success. Information delivery is confirmed, but
 complete information sufficiency and model incapability are not. All paid allocations
 are closed; new execution needs a distinct exact scope.
 
+The [request-annotation comparison](history/2026-10-27-request-annotation-plan.md)
+is prepared and locally validated: same full evidence, source, model and opportunity
+policy; current required action commentary versus the existing thin annotation
+schema only. Edit/stop and operational tools remain identical. This is not the full
+thin policy. A/B each one run at USD 1.20 proposes a new USD 2.40 cap; paid execution
+is not yet authorized and no live result exists.
+Focused 61 and quick 472 tests passed; existing local image identities matched.
+
 The [latest fresh-solve pilot](history/2026-10-26-target-exception-live.md) acquired the
 original/control, observed the pre-edit path and applied two failed edits. It stopped
 with INCOMPLETE_RESPONSE after 36 model calls, USD 1.071262200 and 894.56 seconds;
