@@ -35,7 +35,9 @@ Local validation: the new real regression failed before the fix; target-outcome2
 passed in 28.67 seconds, quick451 passed in 61.16 seconds, Ruff and isolated mock
 evaluation passed. The unchanged saved live receipt now projects one target failure
 and diagnosis available, while whole-case verification stays unverified. This is
-offline projection and local mechanism evidence; live repair after the fix is NOT_RUN.
+offline projection and local mechanism evidence. One new [live pilot](history/2026-10-26-target-exception-live.md)
+is authorized by the current user request, with the same task/model/limits and
+USD 1.20 cap. Preparation is in progress; live repair after the fix is NOT_RUN.
 
 The closed [request-continuity pilot](history/2026-10-26-request-continuity-live.md)
 remains the last live result: one Astroid-1333 solve with mini/xhigh, 40K/25K output
@@ -59,7 +61,7 @@ Keep the [request-continuity contracts](history/2026-10-26-request-continuity.md
 stage-valid probe modes, parallel generation matching gate capacity, bounded exact
 unexecuted drafts and separate preparation/dispatch/request-error acquisition
 budgets. Tool surface v62 binds them. Their combined pilot does not establish
-separate causal effects or repair gain. No paid allocation is active.
+separate causal effects or repair gain. Only the newly scoped pilot is active.
 
 ## Supporting evidence
 

@@ -28,3 +28,4 @@
 - [Target-failure classification defect and current versus mini context limits](../2026-10-26-target-failure-context-analysis.md)
 - [Captured target exception: propagation path and missing helper-failure test](../2026-10-26-target-exception-propagation-analysis.md)
 - [Preserve captured target failures after helper failure](../2026-10-26-target-exception-preservation.md)
+- [Captured target-exception live pilot](../2026-10-26-target-exception-live.md)
