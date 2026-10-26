@@ -32,13 +32,22 @@ delivery remained `unverified_delivery`; independent acceptance was FAIL and saf
 PASS. It used 20 model calls, USD 0.544587150 and 347.78 seconds. The allocation is
 closed. No response exhausted its output ceiling or required protocol correction.
 
-The active unresolved problem is the transition from an observed target exception
-to further repair. The final model input preserved the failed candidate replay and
-its exception, but classified it as unverified with zero target failures and no
-pending repair-path diagnosis. After public-check PASS, the model submitted while
-describing original reproduction as not rerun. Three edits and substantial model,
-time and cost capacity remained. Audit failure classification and evidence use
-before increasing limits or adding another rule; another repair is not guaranteed.
+The [follow-up analysis](history/2026-10-26-target-failure-context-analysis.md)
+isolates a classification defect: `target_outcome.bound_failure` excludes a complete,
+identity-matched target exception when the surrounding helper later raises and
+the whole probe exits nonzero. An offline copy changing only outer status/exit
+restores failure classification; it grants no success or verification credit.
+The live final input retained the exception but exposed zero target failures and
+no repair-path obligation. The model submitted after public-check PASS while
+describing original reproduction as not rerun, with capacity for further repairs.
+Fix selected-call versus helper-failure classification before increasing limits.
+
+Context continuity is a separate unresolved question. This run used at most 56,977
+input tokens; all five post-initial resets were stage/result triggered, with no
+size-triggered reset. Raising the 60K ceiling alone retains those transitions.
+Historical mini-SWE-agent used accumulated history without the extra 60K cap,
+but maximum actual input was 77,660, not a full model window. Its tools, budgets
+and outcomes differ; no context-only quality effect has been established.
 
 The submitted builder change bypassed the initial missing-file error but left a
 later source-stream read opening the nonexistent initializer. The frozen public

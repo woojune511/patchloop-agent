@@ -25,3 +25,4 @@
 - [Request analysis: mixed probe modes, parallel edits and missing correction drafts](../2026-10-26-completion-feedback-analysis.md)
 - [Stage-valid requests, retained correction drafts and reserved original acquisition](../2026-10-26-request-continuity.md)
 - [Request-continuity live pilot](../2026-10-26-request-continuity-live.md)
+- [Target-failure classification defect and current versus mini context limits](../2026-10-26-target-failure-context-analysis.md)
