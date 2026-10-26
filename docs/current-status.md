@@ -46,8 +46,11 @@ UNKNOWN. Projecting the legacy ready states preserves patch/check/original facts
 and reduces serialized state bytes by about 56%; it does not measure model tokens,
 cost savings or a repaired trajectory. That failing candidate now requires repair.
 Actual-model use, useful finalization output and F0010 repair remain unverified.
-The next measurement should keep the same paid scope and cap after freezing a
-separate exact run. No new live allocation was created in this implementation.
+The [completion-feedback pilot plan](history/2026-10-26-completion-feedback-live-plan.md)
+prepares one fresh Astroid-1333 solve with the same mini/xhigh model, 40K/25K
+ceilings and USD 1.20 cap. The request will bind committed source and existing
+environment identities. Live execution awaits a new exact authorization; prior
+allocations remain closed. No provider or target run is part of preparation.
 
 The [closed revision pilot](history/2026-10-26-repair-revision-live.md) used one
 Astroid-1333 solve, gpt-5.4-mini-2026-03-17 xhigh, 40K/25K ceilings and $1.20 cap.
