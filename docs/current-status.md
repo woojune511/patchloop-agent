@@ -46,12 +46,18 @@ action and ended INCOMPLETE_RESPONSE. The $1.078465800 allocation is closed.
 Host watch construction, compact diagnosis context and typed correction are
 NOT_EXERCISED, not live-negative results for those mechanisms.
 
-The active question is now the upstream transition from inspection to first repair:
-was the repair hypothesis unresolved, or was constructing the mutation too costly?
-Inspect saved public evidence and the mutation contract before another intervention
-or paid comparison. The [earlier diagnosis analysis](history/2026-10-26-diagnosis-mode-analysis.md)
-remains a hypothesis about action generation, not an established cause. No additional
-live run or continuation is authorized by these records.
+The [first-mutation analysis](history/2026-10-26-first-mutation-analysis.md) found
+that edits were available from call 3, while 25 of 27 inspections added new source
+lines without resolving the causal branch. The helper's fixture missed the lookup
+path; both inputs raised ImportError. The final correction retained the same public
+evidence and ordinary mutation schema, restarting after the encrypted-item limit.
+This supports an unresolved first-repair transition; it does not identify why the
+model generated only reasoning. Source anchors and correction funding were present.
+
+The next question is how to distinguish the first repair hypothesis using the
+original caller, and whether ordinary mutation/correction action construction needs
+simplification. Separate these hypotheses before increasing limits or adding rules.
+No additional live run or continuation is authorized by these records.
 
 ## Supporting evidence
 
