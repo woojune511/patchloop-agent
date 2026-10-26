@@ -3,6 +3,7 @@
 import ast
 import json
 import os
+import sys
 
 import pytest
 
@@ -11,10 +12,13 @@ from patchloop.dev.contracts import DevLimits, PublicTurnDecision, RequestedTool
 from patchloop.dev.state import DevJournal
 from patchloop.dev.test_selection import SelectedTests, selected_check
 from patchloop.dev.tools import DevToolGateway
-from patchloop.errors import RecoveryError
+from patchloop.errors import ContractError, RecoveryError
 from patchloop.git_execution import run_git
 from patchloop.repair_verification import _observation, compare_selected_observations
+from patchloop.runtime import repository_root
+from patchloop.sandbox.public_pytest import PUBLIC_RUNNER
 from patchloop.sandbox.runner import SandboxResult
+from patchloop.task_loader import load_public_task
 
 TARGET = "tests/unittest_value.py::ValueTests::test_value"
 TEST_SOURCE = ("import unittest\nfrom sample import value\n\n"
@@ -232,3 +236,43 @@ def test_missing_selected_method_cannot_get_paired_pass():
     target = "tests/unittest_value.py::ValueTests::test_other"
     assert test_comparison._selected_observation(observation, [TARGET, target])[
         "missing_targets"] == [target]
+
+
+def test_actual_astroid_suite_copy_wrapper_is_supported_without_changing_public_command():
+    task = load_public_task(repository_root() / "tasks/dev-train/current-dev20/13/public.yaml")
+    command = task.test_suites[0].command
+    assert command[3] == PUBLIC_RUNNER
+    before = list(command)
+    selected = task.visible_checks[0].model_copy(update={"command": [*command, "--", TARGET]})
+    result = test_comparison._python_command(selected, "def main(*args): pass", "marker")
+    assert result[:3] == command[:3] and result[4:] == ["--", TARGET]
+    assert command == before
+    assert "cwd=checkout, env=env" in result[3]
+    assert 'raise SystemExit(result.returncode)' in result[3]
+    with pytest.raises(ContractError, match="registered public copy wrapper"):
+        test_comparison._python_command(selected.model_copy(update={
+            "command": [*command[:3], command[3] + "# changed", TARGET]}), "", "marker")
+
+
+def test_copy_wrapper_comparison_runs_same_test_and_preserves_isolation(project):
+    project.public_task.test_suites[0].command = [sys.executable, "-B", "-c", PUBLIC_RUNNER]
+    project.sandbox.mode = "real"
+    # The registered wrapper must preserve source priority and a writable temporary home.
+    test = project.workspace / "tests/unittest_value.py"
+    test.write_text(TEST_SOURCE.replace("        self.assertEqual", (
+        "        import os\n        from pathlib import Path\n"
+        "        self.assertFalse(Path('.patchloop-hidden').exists())\n"
+        "        self.assertNotEqual(Path.cwd(), Path(os.environ['HOME']))\n"
+        "        (Path(os.environ['HOME']) / 'cache').write_text('temporary')\n"
+        "        self.assertEqual")))
+    run_git(project.workspace, "add", ".")
+    run_git(project.workspace, "-c", "user.name=test", "-c", "user.email=test@example.invalid",
+            "commit", "--quiet", "-m", "public isolation assertions")
+    mutate(project, "repair", "value = 0", "value = 2")
+    result = comparison(project, baseline="before_mutation", mutation="repair")
+    assert result.status == "succeeded", result.message
+    assert result.output["comparison"]["status"] == "OBSERVED_FAIL_THEN_PASS"
+    assert not result.output["comparison"]["original_requirement_credit"]
+    assert [call[1] for call in project.sandbox.calls] == [0, 2]
+    assert project.sandbox.calls[0][2] == project.sandbox.calls[1][2]
+    assert not (project.workspace / "cache").exists()

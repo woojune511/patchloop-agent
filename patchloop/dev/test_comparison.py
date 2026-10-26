@@ -17,6 +17,7 @@ from patchloop.git_execution import run_git
 from patchloop.repair_verification import _observation, compare_selected_observations
 from patchloop.repository import WorkspaceManager
 from patchloop.runtime import repository_root
+from patchloop.sandbox.public_pytest import reporting_copy_command
 from patchloop.util import sha256_bytes, sha256_json
 
 PREPARED = "test_comparison_prepared"
@@ -89,7 +90,7 @@ def _python_command(check, script, marker):
     module = next((i for i in range(1, len(command) - 1)
                    if command[i:i + 2] == ["-m", "pytest"]), None)
     if module is None:
-        raise ContractError("test comparison requires a registered Python pytest command")
+        return reporting_copy_command(command, script, marker, check.working_directory)
     invocation = repr((command[module + 2:], None, check.working_directory, marker))
     return [*command[:module], "-c", script + "\nmain(*" + invocation + ")"]
 

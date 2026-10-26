@@ -55,6 +55,14 @@ complete-coverage requirements and recovery identities. The next unresolved ques
 is whether a real model revises its repair mechanism using the refutation and
 resolves F0010 within the unchanged limits. No new paid run is authorized.
 
+The [fresh pilot preparation](history/2026-10-26-repair-revision-live-plan.md) found
+that the actual task's public pytest copy wrapper was unsupported by paired
+comparison. The adapter now instruments its child pytest while preserving the
+registered wrapper's setup; task bytes are unchanged. Wrapper/comparison controls
+15 PASS (24.69 s), quick 378 PASS (35.30 s), Ruff PASS; no live target execution.
+The proposed new scope is Astroid-1333, gpt-5.4-mini-2026-03-17 xhigh, one run,
+40K/25K output ceilings and $1.20 total. Exact request approval remains pending.
+
 ## Supporting evidence
 
 - [Security maintenance](history/2026-10-23-security.md): refreshed host dependencies

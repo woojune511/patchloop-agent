@@ -191,8 +191,11 @@ allowances carry forward too. Source changes still need their own current eviden
 implementation `mutation_action_id`. The host reconstructs isolated snapshots
 and puts identical selected test bytes on both. It reverses exact incremental
 mutations with full diff-hash checks for `before_mutation`, rather than using the
-state immediately before a later test addition. Only a registered direct Python
-pytest command is supported for comparison; wrappers keep ordinary selections.
+state immediately before a later test addition. Comparison supports registered
+direct Python pytest and the exact shared public copy wrapper. The latter keeps
+its temporary copy, source priority, environment, arguments and exit propagation;
+only the child pytest launch gains the reporter. Unrecognized wrappers remain
+unsupported rather than silently losing their setup.
 
 Per-test setup/call/teardown records distinguish assertion fail-to-pass,
 `PASSED_BOTH`, collection/setup failures, body exceptions and incomplete runs.

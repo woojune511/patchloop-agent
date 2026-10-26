@@ -69,10 +69,11 @@ def dev_tool_surface_hash(
         })
     base = sha256_json(
         {
-            "schema_version": "dev-tool-surface-v59",
+            "schema_version": "dev-tool-surface-v60",
             "submission_assessment": "required-nonblank-current-diff-plan-review-v2",
             "selected_public_tests": "registered-pytest-same-test-before-after-optional-v2",
             "selected_test_comparison": "two-isolated-children-cas-no-uncertain-reexecution-v1",
+            "selected_test_launcher": "direct-or-exact-public-copy-wrapper-v1",
             "segmented_context": segments.contract(),
             "native_context_policy": "opt-in-full-compaction-seed-public-reentry-prepared-count-v2",
             "repair_recheck": "opt-in-current-failure-child-check-before-inference-v1",
