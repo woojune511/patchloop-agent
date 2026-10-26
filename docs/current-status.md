@@ -58,11 +58,22 @@ branch was not observed. The host returned VERIFICATION_INCOMPLETE without submi
 Cost $0.836407650, 532.83 seconds, 31 model calls; no incomplete provider response or
 no-action correction. The allocation is closed, with $0.363592350 unspent.
 
-First-edit issuance is now live-observed; useful premise evidence and F0010 repair
-remain unestablished. Investigate which trace limits initialization and repeated
-calls consume, and how to preserve relevant path evidence within bounds. Saved
-collector_truncated feedback does not identify the exact internal counter. Do not
-infer function absence from incomplete collection or general benefit from one run.
+The [trace-limit analysis](history/2026-10-26-trace-limit-analysis.md) used two bounded
+operator replays, zero provider calls and an instrumented collector copy. Captured
+calls and original retained entries/events matched. Before editing, initialization
+spent 200,000 whole-call trace events; after editing, repeated checker loading
+filled 48 retained records (34 line, eight call, six return; 6,558 value bytes).
+The measured failure follows directory expansion/module lookup and then
+ast_from_file -> file_build on a nonexistent initializer; the edited branch was
+not observed. Its string argument to spec.find_spec is also a separate latent bug.
+
+Next: separate whole-call entry coverage from line detail, summarize duplicate
+initialization evidence and expose the exhausted counter; diagnose the actual
+file-loading route before another repair. First-edit issuance is live-observed,
+but useful premise evidence and F0010 repair remain unestablished. The frozen
+absolute-path call from /tmp also differs from the issue's cwd/relative-CLI steps;
+within-run identity does not establish that broader equivalence. No new repair or
+paid allocation is authorized by the analysis. Unknown trace remains unknown.
 
 ## Supporting evidence
 
