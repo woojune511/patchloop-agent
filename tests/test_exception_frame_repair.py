@@ -17,7 +17,7 @@ from patchloop.dev.cost import DevCostLedger, pricing_for_model
 from patchloop.dev.model import MOCK_MUTATIONS
 from patchloop.errors import ContractError
 from patchloop.runtime import repository_root
-from patchloop.util import sha256_json
+from patchloop.util import canonical_json, sha256_bytes, sha256_json
 
 
 @pytest.fixture(autouse=True)
@@ -93,7 +93,8 @@ def tool_failure(call, kind):
                 "execution_policy": {"cleanup_status": "confirmed"}})
 
 
-def run(gateway_factory, steps, *, failure=None, cap="1.20", execution_failure=None):
+def run(gateway_factory, steps, *, failure=None, cap="1.20", execution_failure=None,
+        profile=diagnostic.DEFAULT_PROFILE, source_packet=None):
     gateway, journal, _ = gateway_factory()
     gateway.deadline = ExecutionDeadline.from_remaining(60)
     gateway.limits.max_accepted_mutations = 1
@@ -104,10 +105,12 @@ def run(gateway_factory, steps, *, failure=None, cap="1.20", execution_failure=N
     loaded = SimpleNamespace(common=common(gateway.public_task))
     client = ScriptedClient(steps, failure=failure)
     adapter = OpenAIResponsesAdapter(diagnostic.config(), api_key="", client=client)
-    first = diagnostic.request_payload(loaded.common, "B")
+    first = diagnostic.request_payload(loaded.common, "B", profile=profile,
+                                       source_packet=source_packet)
     group = DevCostLedger(Decimal(cap), pricing_for_model(diagnostic.MODEL))
     actual = diagnostic.run_model(loaded, "B", gateway, adapter, group,
-                                 first_hash=sha256_json(first))
+                                 first_hash=sha256_json(first), profile=profile,
+                                 source_packet=source_packet)
     return actual, client, journal, group
 
 
@@ -175,6 +178,36 @@ def test_normal_and_cost_limits_stop_before_additional_dispatch(gateway_factory)
     assert actual["terminal"] == "COST_CAP_REACHED" and len(client.created) == 0
 
 
+def test_source_ready_can_edit_after_four_responses_and_stops_after_one_edit(gateway_factory):
+    packet = {"sources": [{"origin": "workspace", "path": "public_source.py"}],
+              "candidate_diff_hash": "seed"}
+    actual, client, _, _ = run(gateway_factory,
+        [[read_call(str(i))] for i in range(4)] + [[edit_call()], [stop_call()]],
+        profile=diagnostic.SOURCE_READY_PROFILE, source_packet=packet)
+    assert actual["terminal"] == "CANDIDATE_PRODUCED"
+    assert actual["normal_calls"] == len(client.created) == 5 and actual["new_mutations"] == 1
+    first = client.created[0]
+    assert "eight normal" in first["input"][0]["content"]
+    focus = json.loads(first["input"][1]["content"])
+    assert focus["source_packet"] == packet
+    assert focus["current_failure"]["exception_diagnostics"]["calls"]
+    initial = json.loads(first["input"][2]["content"])
+    assert set(initial["initial_observations"]) == {"base"}
+    assert first["max_output_tokens"] == 40000
+
+
+def test_source_ready_has_eight_response_horizon_and_one_correction(gateway_factory):
+    packet = {"sources": []}
+    actual, client, _, _ = run(gateway_factory,
+        [[read_call(str(i))] for i in range(7)] + [[], [stop_call()]],
+        profile=diagnostic.SOURCE_READY_PROFILE, source_packet=packet)
+    assert actual["normal_calls"] == 8 and actual["correction_calls"] == 1
+    assert actual["terminal"] == "AGENT_STOPPED" and len(client.created) == 9
+    assert [r["max_output_tokens"] for r in client.created] == [40000] * 8 + [25000]
+    last = json.loads(client.created[-1]["input"][-1]["content"])
+    assert last["remaining"]["normal_calls"] == 0
+
+
 @pytest.mark.parametrize("kind", ["cleanup", "recovery", "resume", "deadline"])
 def test_tool_uncertainty_stops_all_but_retains_known_billing(gateway_factory, kind):
     actual, client, _, _ = run(gateway_factory, [[read_call()], [stop_call()]],
@@ -237,6 +270,86 @@ def test_prepare_freezes_inputs_without_provider_or_target(smoke_package, tmp_pa
     plan, _ = diagnostic.validate(Path(prepared["manifest"]), prepared["manifest_hash"])
     assert plan["paid_execution_authorized"] is False
     assert plan["row_cap_usd"] == "0.60" and plan["new_cap_usd"] == "1.20"
+    assert plan["profile"] == diagnostic.DEFAULT_PROFILE.name
+    assert plan["order"] == ["A", "B"] and plan["normal_calls"] == 4
+
+
+def test_source_ready_manifest_binds_scope_and_source_identity(smoke_package, tmp_path,
+                                                              monkeypatch):
+    source = tmp_path / "source"
+    source.mkdir()
+    calibration = tmp_path / "calibration/calibration.json"
+    calibration.parent.mkdir()
+    calibration.write_text("{}", encoding="utf-8")
+    packet_path = tmp_path / "packet.json"
+    packet = {"sources": [{"origin": "workspace", "path": "public_source.py"}],
+              "candidate_diff_hash": "seed"}
+    packet_path.write_text(canonical_json(packet), encoding="utf-8")
+    loaded = SimpleNamespace(common=common(smoke_package.public), environment_hash="environment",
+                             source=SimpleNamespace(root=source,
+                                                    public_path=source / "public.yaml"))
+    checked = []
+    monkeypatch.setattr(diagnostic, "load_calibration", lambda *args: loaded)
+    monkeypatch.setattr(diagnostic, "validate_packet",
+                        lambda *args, **kw: checked.append((args, kw)))
+    prepared = diagnostic.prepare(calibration, "calibration", tmp_path / "plan",
+        tmp_path / "result", tmp_path / "unread.env", profile=diagnostic.SOURCE_READY_PROFILE,
+        source_packet=packet_path, source_packet_hash=sha256_bytes(packet_path.read_bytes()))
+    manifest = Path(prepared["manifest"])
+    plan, _ = diagnostic.validate(manifest, prepared["manifest_hash"])
+    assert plan["order"] == ["B"] and plan["normal_calls"] == 8
+    assert plan["row_cap_usd"] == plan["new_cap_usd"] == "1.20"
+    assert plan["source_packet"] == str(packet_path.resolve()) and len(checked) == 2
+    assert plan["host_source_reads"] == diagnostic.anchor_reads(packet)
+    assert checked[-1][0] == (loaded, packet, "calibration")
+    assert not (manifest.parent / "A-first.json").exists()
+    with monkeypatch.context() as changed:
+        changed.setattr(diagnostic, "source_helper_hash", lambda: "changed-helper")
+        with pytest.raises(ContractError, match="source helper changed"):
+            diagnostic.validate(manifest, prepared["manifest_hash"])
+    for field, other in (("normal_calls", 4), ("row_cap_usd", "0.60"), ("order", ["A", "B"])):
+        changed = {**plan, field: other}
+        manifest.write_text(canonical_json(changed), encoding="utf-8")
+        with pytest.raises(ContractError, match="scope changed"):
+            diagnostic.validate(manifest, sha256_bytes(manifest.read_bytes()))
+    manifest.write_text(canonical_json(plan), encoding="utf-8")
+    packet_path.write_text(canonical_json({**packet, "candidate_diff_hash": "other"}),
+                           encoding="utf-8")
+    with pytest.raises(ContractError, match="source packet identity changed"):
+        diagnostic.collect(manifest, sha256_bytes(manifest.read_bytes()), Decimal("1.20"))
+
+
+@pytest.mark.parametrize("failure", ["validate", "observe"])
+def test_source_ready_rechecks_workspace_and_anchors_before_credentials(tmp_path, monkeypatch,
+                                                                       failure):
+    packet, calls = {"sources": [{"origin": "workspace"}]}, []
+    loaded = SimpleNamespace(source_packet=packet, source=SimpleNamespace(
+        root=tmp_path / "historical",
+        public_path=repository_root() / "tasks/dev-train/current-dev20/13/public.yaml"))
+    plan = {"result_root": str(tmp_path / "result"), "calibration": str(tmp_path / "cal/a.json"),
+            "calibration_hash": "calibration", "profile": diagnostic.SOURCE_READY_PROFILE.name,
+            "order": ["B"], "credential_file": str(tmp_path / "unread.env")}
+    gateway = SimpleNamespace(workspace=tmp_path / "workspace")
+    monkeypatch.setattr(diagnostic, "validate", lambda *_: (plan, loaded))
+    monkeypatch.setattr(diagnostic, "_gateway", lambda *_, **__: gateway)
+
+    def validate_packet(actual_loaded, actual_packet, digest, *, workspace):
+        assert (actual_loaded, actual_packet, digest, workspace) == (
+            loaded, packet, "calibration", gateway.workspace)
+        calls.append("validate")
+        if failure == "validate":
+            raise ContractError("source drift")
+
+    def observe_sources(actual_gateway, actual_packet):
+        assert (actual_gateway, actual_packet) == (gateway, packet)
+        calls.append("observe")
+        raise ContractError("source drift")
+
+    monkeypatch.setattr(diagnostic, "validate_packet", validate_packet)
+    monkeypatch.setattr(diagnostic, "observe_sources", observe_sources)
+    with pytest.raises(ContractError, match="source drift"):
+        diagnostic.collect(tmp_path / "plan/manifest.json", "approved", Decimal("1.20"))
+    assert calls == (["validate"] if failure == "validate" else ["validate", "observe"])
 
 
 def host_fixture(*, fail_at, kind):
@@ -282,14 +395,16 @@ def test_host_uncertainty_prevents_the_second_arm(tmp_path, monkeypatch):
     loaded, host, calls = host_fixture(fail_at="host-original", kind="cleanup")
     loaded.source = SimpleNamespace(root=tmp_path / "historical",
         public_path=repository_root() / "tasks/dev-train/current-dev20/13/public.yaml")
+    loaded.source_packet = None
     plan = {"result_root": str(tmp_path / "result"), "calibration": str(tmp_path / "cal/a.json"),
+            "profile": diagnostic.DEFAULT_PROFILE.name,
             "order": ["A", "B"], "credential_file": str(tmp_path / "unread.env"),
             "first_request_hashes": {"A": "a", "B": "b"}, "interpretation": "synthetic"}
     manifest = tmp_path / "plan/manifest.json"
     monkeypatch.setattr(diagnostic, "validate", lambda *_: (plan, loaded))
     arms = []
 
-    def gateway(_, root):
+    def gateway(_, root, **_kwargs):
         arms.append(root.name)
         return SimpleNamespace(workspace=tmp_path, sandbox=None, probe_sandbox=None)
 

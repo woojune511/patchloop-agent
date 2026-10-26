@@ -2,8 +2,9 @@
 
 Preparation reads public evidence and constructs requests without an SDK client,
 credential read, token-count request, target execution or private task loading.
-Collection requires a separately approved manifest and creates two fresh roots.
-Only the initial exception information differs; later diagnostic tools are equal.
+Collection requires a separately approved manifest. The default pair varies only
+initial exception information. The source-ready profile assesses one fixed candidate
+with public source already supplied; it is not a controlled information comparison.
 """
 from __future__ import annotations
 
@@ -11,7 +12,7 @@ import argparse
 import copy
 import json
 from contextlib import suppress
-from dataclasses import asdict
+from dataclasses import asdict, dataclass
 from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
@@ -19,6 +20,7 @@ from types import SimpleNamespace
 from diagnostics.cleanup_information_checkpoint import restore_candidate
 from diagnostics.decision_sampler import require
 from diagnostics.declaration_checkpoint import Source, SourceStore, disjoint
+from diagnostics.source_ready_packet import observe_sources, validate_packet
 from patchloop.agent.model import OpenAIResponsesAdapter
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import Artifact, ModelConfig, PublicTask, TaskEnvironment
@@ -57,6 +59,40 @@ PROMPT = (
 )
 
 
+@dataclass(frozen=True)
+class RepairProfile:
+    name: str
+    order: tuple[str, ...]
+    normal_calls: int
+    row_cap: Decimal
+
+
+DEFAULT_PROFILE = RepairProfile("initial-information-pair-v1", ("A", "B"), NORMAL_CALLS, ROW_CAP)
+SOURCE_READY_PROFILE = RepairProfile("source-ready-single-v1", ("B",), 8, CAP)
+PROFILES = {profile.name: profile for profile in (DEFAULT_PROFILE, SOURCE_READY_PROFILE)}
+
+
+def selected_profile(name):
+    require(name in PROFILES, "unknown repair profile")
+    return PROFILES[name]
+
+
+def load_source_packet(loaded, profile, calibration_hash, path, digest):
+    if profile == DEFAULT_PROFILE:
+        require(path is None and digest is None, "paired profile does not accept a source packet")
+        return None
+    require(path is not None and digest is not None, "source-ready profile needs a source packet")
+    raw = Path(path).read_bytes()
+    require(sha256_bytes(raw) == digest, "source packet identity changed")
+    packet = json.loads(raw)
+    validate_packet(loaded, packet, calibration_hash)
+    return packet
+
+
+def anchor_reads(packet):
+    return sum(row["origin"] == "workspace" for row in packet["sources"]) if packet else 0
+
+
 def config():
     return ModelConfig(provider="openai", model_id=MODEL, reasoning_effort="xhigh",
                        reasoning_continuation="encrypted-v1", transport_max_retries=0,
@@ -65,6 +101,10 @@ def config():
 
 def implementation_hash():
     return sha256_bytes(Path(__file__).read_bytes())
+
+
+def source_helper_hash():
+    return sha256_bytes(Path(__file__).with_name("source_ready_packet.py").read_bytes())
 
 
 def _trace(result):
@@ -190,10 +230,24 @@ def load_calibration(path: Path, digest: str):
                            environment_hash=sha256_bytes(environment_path.read_bytes()))
 
 
-def request_payload(common, arm, *, history=(), remaining=None, correction=None, probe_used=False):
-    require(arm in {"A", "B"}, "unknown arm")
+def request_payload(common, arm, *, history=(), remaining=None, correction=None, probe_used=False,
+                    profile=DEFAULT_PROFILE, source_packet=None):
+    require(arm in profile.order, "unknown arm for repair profile")
     initial = strip_frames(common) if arm == "A" else copy.deepcopy(common)
-    items = [{"role": "system", "content": PROMPT},
+    prompt, focus = PROMPT, []
+    if profile == SOURCE_READY_PROFILE:
+        require(source_packet is not None, "source-ready profile needs a source packet")
+        prompt = PROMPT.replace("four normal", "eight normal").replace(
+            "Inspect current source with registered reads before editing.",
+            "The current failure and public source excerpts are presented first. "
+            "Workspace excerpts are registered current edit anchors; "
+            "you may edit them or inspect further source with the offered tools. "
+            "Source entries are bounded excerpts and may be partial; "
+            "dependency entries are read-only.")
+        focus = [{"role": "user", "content": canonical_json({
+            "current_failure": initial["initial_observations"].pop("candidate"),
+            "source_packet": source_packet})}]
+    items = [{"role": "system", "content": prompt}, *focus,
              {"role": "user", "content": canonical_json(initial)}, *copy.deepcopy(history)]
     if remaining is not None or correction is not None:
         items.append({"role": "developer", "content": canonical_json({
@@ -203,7 +257,7 @@ def request_payload(common, arm, *, history=(), remaining=None, correction=None,
                                probe_environment=common.get("probe_environment"))
     # A non-SDK inert client makes request construction incapable of network access.
     adapter = OpenAIResponsesAdapter(config(), api_key="", client=SimpleNamespace(max_retries=0))
-    payload = adapter.request_payload(items, schemas, system_prompt=PROMPT)
+    payload = adapter.request_payload(items, schemas, system_prompt=prompt)
     payload["max_output_tokens"] = CORRECTION_OUTPUT if correction else NORMAL_OUTPUT
     return payload
 
@@ -216,31 +270,45 @@ def verify_pair(a, b):
 
 
 def prepare(calibration: Path, calibration_hash: str, output: Path, result_root: Path,
-            credential_file: Path):
+            credential_file: Path, *, profile=DEFAULT_PROFILE, source_packet: Path | None = None,
+            source_packet_hash: str | None = None):
     loaded = load_calibration(calibration, calibration_hash)
+    packet = load_source_packet(loaded, profile, calibration_hash,
+                                source_packet, source_packet_hash)
     protected = (repository_root(), loaded.source.root, calibration.parent,
                  loaded.source.public_path.parent, result_root)
     disjoint(output, protected)
     disjoint(result_root, protected[:-1])
-    requests = {arm: request_payload(loaded.common, arm) for arm in ("A", "B")}
-    verify_pair(requests["A"], requests["B"])
+    requests = {arm: request_payload(loaded.common, arm, profile=profile, source_packet=packet)
+                for arm in profile.order}
+    if profile == DEFAULT_PROFILE:
+        verify_pair(requests["A"], requests["B"])
     plan = {"schema": SCHEMA, "official": False, "paid_execution_authorized": False,
             "calibration": str(calibration.resolve()), "calibration_hash": calibration_hash,
             "runtime_hash": runtime_content_hash(), "implementation_hash": implementation_hash(),
+            "profile": profile.name,
+            "source_packet": str(source_packet.resolve()) if source_packet is not None else None,
+            "source_packet_hash": source_packet_hash,
+            "source_helper_hash": source_helper_hash() if packet is not None else None,
+            "host_source_reads": anchor_reads(packet),
             "task": str(loaded.source.public_path.resolve()), "model": MODEL,
             "public_environment_hash": loaded.environment_hash,
-            "reasoning_effort": "xhigh", "order": ["A", "B"], "repeat_per_arm": 1,
+            "reasoning_effort": "xhigh", "order": list(profile.order), "repeat_per_arm": 1,
             "ordinary_output": NORMAL_OUTPUT, "correction_output": CORRECTION_OUTPUT,
-            "input_limit": INPUT_LIMIT, "normal_calls": NORMAL_CALLS, "correction_calls": 1,
+            "input_limit": INPUT_LIMIT, "normal_calls": profile.normal_calls, "correction_calls": 1,
             "tool_actions": TOOL_ACTIONS, "diagnostic_probes": 1, "accepted_mutations": 1,
             "model_seconds_per_arm": MODEL_SECONDS, "host_check_seconds_per_arm": CHECK_SECONDS,
-            "row_cap_usd": str(ROW_CAP), "new_cap_usd": str(CAP),
+            "row_cap_usd": str(profile.row_cap), "new_cap_usd": str(CAP),
             "credential_file": str(credential_file.resolve()),
             "result_root": str(result_root.resolve()),
             "pricing": {k: str(v) for k, v in asdict(pricing_for_model(MODEL)).items()},
             "first_request_hashes": {k: sha256_json(v) for k, v in requests.items()},
-            "interpretation": "Initial-information effect at one fixed candidate; not fresh solve, "
-                              "ordinary runner completion, acceptance or generalization."}
+            "interpretation": (
+                "Source-ready conditional repair opportunity at one fixed candidate; "
+                "not a controlled information comparison, fresh solve, ordinary runner completion, "
+                "acceptance or generalization." if profile == SOURCE_READY_PROFILE else
+                "Initial-information effect at one fixed candidate; not fresh solve, "
+                "ordinary runner completion, acceptance or generalization.")}
     output.mkdir()
     for arm, value in requests.items():
         (output / f"{arm}-first.json").write_text(canonical_json(value) + "\n", encoding="utf-8")
@@ -259,27 +327,39 @@ def validate(manifest: Path, digest: str):
     plan = json.loads(raw)
     require(plan["schema"] == SCHEMA and plan["implementation_hash"] == implementation_hash()
             and plan["runtime_hash"] == runtime_content_hash(), "prepared implementation changed")
+    profile = selected_profile(plan["profile"])
+    require(plan["source_helper_hash"] == (
+        source_helper_hash() if profile == SOURCE_READY_PROFILE else None),
+        "prepared source helper changed")
     loaded = load_calibration(Path(plan["calibration"]), plan["calibration_hash"])
+    packet = load_source_packet(loaded, profile, plan["calibration_hash"], plan["source_packet"],
+                                plan["source_packet_hash"])
+    require(plan["host_source_reads"] == anchor_reads(packet), "source read allowance changed")
     require(plan["public_environment_hash"] == loaded.environment_hash,
             "public check environment changed")
     require(plan["model"] == MODEL and plan["reasoning_effort"] == "xhigh"
-            and plan["order"] == ["A", "B"] and plan["repeat_per_arm"] == 1
-            and Decimal(plan["row_cap_usd"]) == ROW_CAP and Decimal(plan["new_cap_usd"]) == CAP
+            and plan["order"] == list(profile.order) and plan["repeat_per_arm"] == 1
+            and Decimal(plan["row_cap_usd"]) == profile.row_cap
+            and Decimal(plan["new_cap_usd"]) == CAP
             and (plan["ordinary_output"], plan["correction_output"])
             == (NORMAL_OUTPUT, CORRECTION_OUTPUT)
             and (plan["normal_calls"], plan["correction_calls"], plan["tool_actions"],
                  plan["diagnostic_probes"], plan["accepted_mutations"], plan["input_limit"])
-            == (NORMAL_CALLS, 1, TOOL_ACTIONS, 1, 1, INPUT_LIMIT)
+            == (profile.normal_calls, 1, TOOL_ACTIONS, 1, 1, INPUT_LIMIT)
             and (plan["model_seconds_per_arm"], plan["host_check_seconds_per_arm"])
             == (MODEL_SECONDS, CHECK_SECONDS), "comparison scope changed")
-    requests = {arm: request_payload(loaded.common, arm) for arm in ("A", "B")}
+    requests = {arm: request_payload(loaded.common, arm, profile=profile, source_packet=packet)
+                for arm in profile.order}
+    require(set(plan["first_request_hashes"]) == set(profile.order), "prepared arms changed")
     for arm, value in requests.items():
         require(sha256_json(value) == plan["first_request_hashes"][arm]
                 and json.loads((manifest.parent / f"{arm}-first.json").read_bytes()) == value,
                 "prepared input changed")
-    verify_pair(requests["A"], requests["B"])
+    if profile == DEFAULT_PROFILE:
+        verify_pair(requests["A"], requests["B"])
     require(plan["pricing"] == {k: str(v) for k, v in asdict(pricing_for_model(MODEL)).items()},
             "registered pricing changed")
+    loaded.source_packet = packet
     return plan, loaded
 
 
@@ -309,27 +389,29 @@ def _exchange(turn, results, issue=None):
     return items
 
 
-def run_model(loaded, arm, gateway, adapter, group, *, first_hash):
+def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAULT_PROFILE,
+              source_packet=None):
     """At most one new edit. Adapter injection supports finite offline tests."""
     journal = gateway.journal
     store = ArtifactStore(journal.root / "artifacts")
-    ledger = DevCostLedger(ROW_CAP, pricing_for_model(MODEL))
+    ledger = DevCostLedger(profile.row_cap, pricing_for_model(MODEL))
     history, normal, corrections, actions, probes = [], 0, 0, 0, 0
     correction, terminal, uncertain = None, "MODEL_LIMIT", False
     execution_abort, abort_reason = None, None
     first = True
-    while normal < NORMAL_CALLS or correction is not None:
+    while normal < profile.normal_calls or correction is not None:
         timeout = gateway.deadline.remaining_seconds()
         if timeout <= 0:
             terminal = "MODEL_TIME_LIMIT"
             break
         payload = request_payload(loaded.common, arm, history=history,
                                   remaining=None if first else {
-                                      "normal_calls": NORMAL_CALLS - normal,
+                                      "normal_calls": profile.normal_calls - normal,
                                       "tool_actions": TOOL_ACTIONS - actions,
                                       "diagnostic_probes": 1 - probes, "accepted_mutations": 1,
                                       "cost_nanos": ledger.remaining_nanos},
-                                  correction=correction, probe_used=bool(probes))
+                                  correction=correction, probe_used=bool(probes),
+                                  profile=profile, source_packet=source_packet)
         if first:
             require(sha256_json(payload) == first_hash, "first input differs from preparation")
         first = False
@@ -354,7 +436,7 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash):
         is_correction = correction is not None
         reserve = (ledger.future_call_reservation_nanos(output_ceiling=CORRECTION_OUTPUT)
                    if not is_correction and not corrections else 0)
-        if not is_correction and normal + 1 < NORMAL_CALLS:
+        if not is_correction and normal + 1 < profile.normal_calls:
             reserve += ledger.future_call_reservation_nanos(output_ceiling=NORMAL_OUTPUT)
         admissions = [book.admit(counted, desired_output_ceiling=payload["max_output_tokens"],
                                  future_cost_reserve_nanos=reserve) for book in (ledger, group)]
@@ -485,7 +567,7 @@ def case_support(base, current):
             "control_unchanged": control_same, "task_acceptance": "NOT_ASSESSED"}
 
 
-def _gateway(loaded, root):
+def _gateway(loaded, root, *, profile=DEFAULT_PROFILE, source_packet=None):
     deadline = ExecutionDeadline.from_remaining(MODEL_SECONDS)
     workspace = WorkspaceManager(repository_root() / "fixtures/repositories", root / "workspaces",
         prepared_source=Path(loaded.old.prepared_source_path),
@@ -505,7 +587,8 @@ def _gateway(loaded, root):
             "public regression image is unavailable or changed")
     return DevToolGateway(workspace=workspace, public_task=loaded.public, sandbox=sandbox,
         probe_sandbox=probe, journal=journal, limits=DevLimits(max_accepted_mutations=1,
-        max_model_calls=5, max_tool_actions=TOOL_ACTIONS), deadline=deadline)
+        max_model_calls=profile.normal_calls + 1,
+        max_tool_actions=TOOL_ACTIONS + anchor_reads(source_packet)), deadline=deadline)
 
 
 def verify_candidate(loaded, gateway):
@@ -542,6 +625,8 @@ def verify_candidate(loaded, gateway):
 def collect(manifest: Path, approved_manifest_hash: str, approved_cap_usd: Decimal):
     require(approved_cap_usd == CAP, "exact new invocation cap approval required")
     plan, loaded = validate(manifest, approved_manifest_hash)
+    profile = selected_profile(plan["profile"])
+    packet = loaded.source_packet
     require(loaded.source.public_path.resolve().is_relative_to(
         repository_root() / "tasks/dev-train"), "live task is outside admitted dev-train tree")
     root = Path(plan["result_root"])
@@ -555,13 +640,18 @@ def collect(manifest: Path, approved_manifest_hash: str, approved_cap_usd: Decim
     rows = []
     try:
         for arm in plan["order"]:
-            gateway = _gateway(loaded, root / arm)
+            gateway = _gateway(loaded, root / arm, profile=profile, source_packet=packet)
+            if packet is not None:
+                validate_packet(loaded, packet, plan["calibration_hash"],
+                                workspace=gateway.workspace)
+                observe_sources(gateway, packet)
             key = load_exact_openai_api_key(Path(plan["credential_file"]))
             adapter = OpenAIResponsesAdapter(config(), api_key=key)
             del key
             try:
                 row = run_model(loaded, arm, gateway, adapter, group,
-                                first_hash=plan["first_request_hashes"][arm])
+                                first_hash=plan["first_request_hashes"][arm],
+                                profile=profile, source_packet=packet)
             finally:
                 adapter.client.close()
             rows.append({"arm": arm, **row})
@@ -597,13 +687,18 @@ def main():
     for name in ("calibration", "output", "result-root", "credential-file"):
         prep.add_argument("--" + name, required=True, type=Path)
     prep.add_argument("--calibration-hash", required=True)
+    prep.add_argument("--profile", choices=PROFILES, default=DEFAULT_PROFILE.name)
+    prep.add_argument("--source-packet", type=Path)
+    prep.add_argument("--source-packet-hash")
     run = commands.add_parser("collect")
     run.add_argument("--manifest", required=True, type=Path)
     run.add_argument("--approved-manifest-hash", required=True)
     run.add_argument("--approved-cap-usd", required=True, type=Decimal)
     args = parser.parse_args()
     value = (prepare(args.calibration, args.calibration_hash, args.output,
-                     args.result_root, args.credential_file) if args.command == "prepare"
+                     args.result_root, args.credential_file, profile=selected_profile(args.profile),
+                     source_packet=args.source_packet, source_packet_hash=args.source_packet_hash)
+             if args.command == "prepare"
              else collect(args.manifest, args.approved_manifest_hash, args.approved_cap_usd))
     print(canonical_json(value))
 
