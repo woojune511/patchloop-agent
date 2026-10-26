@@ -9,8 +9,15 @@ of that call's normalized inputs and execution environment. Expected exceptions,
 SystemExit, changed conditions, failed setup and uncertain cleanup/timeout/output
 are excluded. Other missing calls do not erase this positive selected-call evidence.
 
+The surrounding helper may exit zero or nonzero: its settled receipt must have
+consistent passed/zero or failed/nonzero status and an integer exit code. A helper
+failure after a complete target exception preserves that negative evidence. Failure
+before a target call, or after a normal target return, is not a target exception.
+Unknown execution, incomplete selected capture and changed identity remain excluded.
+
 The packet retains global incomplete and the original comparison; it supplies no
-whole-case equality, verification or task-correctness credit. Existing observer
+whole-case equality, verification or task-correctness credit. The original outer
+status, exit code and helper error remain in the receipt. Existing observer
 bytes, `_healthy()` and automatic replay identities remain unchanged. A later PASS
 on the same candidate cannot erase the exception. A new diff requires new evidence.
 `target_failure_count` blocks finish in both runner and gateway and exposes the
@@ -44,5 +51,7 @@ action budget is introduced. Stale/unknown observations do not activate it.
 
 Core validation: `uv run --locked pytest @tests/completion-feedback.txt -n 4
 --dist loadfile --max-worker-restart 0 --basetemp C:/pt/tmp/<unique>`.
-Quick includes the cheap projection/budget checks and one real local exception
-fixture plus isolated mock evaluation. No provider or Docker execution is required.
+Quick includes the cheap projection/budget checks and real local target-exception
+fixtures with zero/nonzero helper exits, plus isolated mock evaluation. The focused
+`tests/test_target_outcome.py` suite also covers helper-only failures and rejected
+receipts. No provider or Docker execution is required.

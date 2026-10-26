@@ -45,10 +45,13 @@ def bound_failure(root, candidate):
     trace = observation["call_observation"]
     baseline = root[1]["call_observation"]
     output = result.get("output") or {}
+    # A settled helper failure does not erase an earlier complete target capture.
+    # Keep the outer receipt intact; only selected negative evidence qualifies here.
+    exit_code = output.get("exit_code")
     if (trace.get("binding_method") not in probe_invocation.CAPTURE_CHANNELS
             or observation["binding"] != root[1]["binding"]
-            or result.get("status") != "succeeded" or output.get("status") != "passed"
-            or type(output.get("exit_code")) is not int or output["exit_code"] != 0
+            or result.get("status") != "succeeded" or type(exit_code) is not int
+            or output.get("status") != ("passed" if exit_code == 0 else "failed")
             or any(output.get(key) for key in (
                 "timed_out", "truncated", "cleanup_failed", "deadline_exhausted"))
             or output.get("execution_policy", {}).get("cleanup_status") != "confirmed"

@@ -24,53 +24,42 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [request-continuity pilot](history/2026-10-26-request-continuity-live.md) completed
-one fresh Astroid-1333 solve with mini/xhigh, 40K/25K output ceilings and a USD 1.20
-cap. Original acquisition, pre-edit observation, one edit and submission occurred.
-Public regression passed; original candidate replay raised `FileNotFoundError`;
-delivery remained `unverified_delivery`; independent acceptance was FAIL and safety
-PASS. It used 20 model calls, USD 0.544587150 and 347.78 seconds. The allocation is
-closed. No response exhausted its output ceiling or required protocol correction.
+The [captured-exception fix](history/2026-10-26-target-exception-preservation.md)
+preserves a complete, identity-matched target exception after a settled nonzero
+helper exit. Existing diagnosis, repair-stage and finish-blocking paths now consume
+that evidence. Helper-only failures, changed identity and uncertain/incomplete
+capture remain excluded. Actual outer failure and whole-case UNKNOWN are retained;
+there is no new success credit, tool, gate, budget or context policy.
 
-The [follow-up analysis](history/2026-10-26-target-failure-context-analysis.md)
-isolates a classification defect: `target_outcome.bound_failure` excludes a complete,
-identity-matched target exception when the surrounding helper later raises and
-the whole probe exits nonzero. An offline copy changing only outer status/exit
-restores failure classification; it grants no success or verification credit.
-The live final input retained the exception but exposed zero target failures and
-no repair-path obligation. The model submitted after public-check PASS while
-describing original reproduction as not rerun, with capacity for further repairs.
-The [propagation/test audit](history/2026-10-26-target-exception-propagation-analysis.md)
-confirms that recognizing this failure activates the existing diagnosis allowance,
-repair stage and finish blocker while whole-case verification remains UNKNOWN.
-Current positive tests capture a target exception but let the helper exit zero;
-they omit a fully captured failure followed by helper exit 1. Correct this boundary
-and its focused regression coverage; no new submission rule or budget is indicated.
+Local validation: the new real regression failed before the fix; target-outcome21
+passed in 28.67 seconds, quick451 passed in 61.16 seconds, Ruff and isolated mock
+evaluation passed. The unchanged saved live receipt now projects one target failure
+and diagnosis available, while whole-case verification stays unverified. This is
+offline projection and local mechanism evidence; live repair after the fix is NOT_RUN.
+
+The closed [request-continuity pilot](history/2026-10-26-request-continuity-live.md)
+remains the last live result: one Astroid-1333 solve with mini/xhigh, 40K/25K output
+ceilings and a USD 1.20 cap. One edit and submission occurred; public regression
+passed, original replay raised `FileNotFoundError`, delivery was unverified,
+independent acceptance FAIL and safety PASS. It used 20 model calls, USD 0.544587150
+and 347.78 seconds. No response exhausted its output ceiling. The builder edit
+bypassed the initial missing-file error but a later source-stream read still opened
+the nonexistent initializer. Whether corrected failure feedback leads to a repair
+of that path remains unresolved; the historical result is unchanged.
 
 Context continuity is a separate unresolved question. This run used at most 56,977
 input tokens; all five post-initial resets were stage/result triggered, with no
 size-triggered reset. Raising the 60K ceiling alone retains those transitions.
 Historical mini-SWE-agent used accumulated history without the extra 60K cap,
 but maximum actual input was 77,660, not a full model window. Its tools, budgets
-and outcomes differ; no context-only quality effect has been established.
-
-The submitted builder change bypassed the initial missing-file error but left a
-later source-stream read opening the nonexistent initializer. The frozen public
-assessment observed that crash and returned ERROR; its control was NOT_RUN under
-the stop rule. A separately recorded CP949 decoding adjustment occurred before the
-assessment, without changing the frozen solve, patch or checks.
+and outcomes differ; no context-only quality effect has been established. See the
+[context analysis](history/2026-10-26-target-failure-context-analysis.md).
 
 Keep the [request-continuity contracts](history/2026-10-26-request-continuity.md):
 stage-valid probe modes, parallel generation matching gate capacity, bounded exact
 unexecuted drafts and separate preparation/dispatch/request-error acquisition
-budgets. Tool surface v62 binds them. The run's first request was executable and
-its first edit applied. Draft recovery, a single-action-only generation gate and
-the acquisition preparation ceiling were NOT_EXERCISED. Four bundled changes in
-one stochastic run do not establish their separate causal effects or repair gain.
-
-Unchanged-runtime local evidence: core70 PASS in 28.95 seconds, quick450 PASS in
-37.81 seconds, Ruff and isolated mock evaluation PASS. The [previous failure analysis](history/2026-10-26-completion-feedback-analysis.md)
-remains the motivation for these contracts, not an active execution allocation.
+budgets. Tool surface v62 binds them. Their combined pilot does not establish
+separate causal effects or repair gain. No paid allocation is active.
 
 ## Supporting evidence
 
