@@ -1,6 +1,7 @@
 # History
 
-- [2026-10-26 investigations](2026-10-26/README.md)
+- [2026-10-27](2026-10-27-exception-frames.md)
+- [2026-10-26](2026-10-26/README.md)
 - [2026-10-25 investigations](2026-10-25/README.md)
 - [2026-10-24 investigations](2026-10-24/README.md)
 - [Requests](2026-10-23-requests.md), [CVE](2026-10-23-security.md)

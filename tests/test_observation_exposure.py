@@ -116,12 +116,15 @@ def test_every_turn_after_new_failed_probe(source, tmp_path, arm):
     assert result["provider_calls"] == result["billed_cost_nanos"] == 0
     for request in client.created[1:]:
         state = json.loads(request["input"][-1]["content"])["state"]
-        verification = state["working_notes"]["verification"]
+        # Repair context carries the same advisory verification catalog here.
+        verification = state["repair_intent"]["verification"]
         if arm == "A":
             assert "observations" not in verification
             assert diagnostic.project(request, "A") == request
         else:
-            assert "offline_run_probe" in json.dumps(verification["observations"])
+            observations = verification["observations"]["items"]
+            failed = next(row for row in observations if row["action_id"] == "offline_run_probe")
+            assert failed["execution"]["status"] == "failed"
     assert DevJournal(source.root, source.run_id).path.read_bytes() == original
     with pytest.raises(ContractError, match="cannot be retried"):
         diagnostic.rehearse(branch, ScriptedClient(stop_steps()))

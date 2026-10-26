@@ -1,6 +1,6 @@
 # Current status
 
-Updated: 2026-10-26. Runtime source owns behavior. Historical reports are evidence,
+Updated: 2026-10-27. Runtime source owns behavior. Historical reports are evidence,
 not an active queue.
 
 ## Product and working baseline
@@ -24,79 +24,53 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
+The [exception-frame investigation](history/2026-10-27-exception-frames.md) confirmed
+why the two saved candidates looked alike despite distinct underlying failures.
+Both escaped through Pylint crash reporting as FileNotFoundError. The first candidate
+previously raised AttributeError in tokenize_module because the namespace module
+had no stream; the second tried to open its nonexistent initializer in _get_stream.
+These were observed by local replay of the saved public candidates, not inferred
+from the error message. They do not yet specify a proven correct repair.
+
+Fresh invocation v5 now supplies bounded public exception frames and cause/context
+chains through a separate report channel. Core failure capture, whole-case UNKNOWN,
+finish blocking and historical observer v1-v4 bytes are preserved. The current-profile
+base/candidate replay delivered two exceptions and nine public frames into the compact
+model view. Tool surface v63 binds this implementation. This is implemented and
+locally exercised; model uptake and repair gain remain untested.
+
+Prioritize the prepared same-candidate information comparison before another fresh
+solve: initial type/message versus initial frames/chain, with later tools identical.
+This asks whether usable diagnosis changes the next repair. It is a seeded diagnostic,
+not a fresh solve or ordinary-run completion comparison. No new paid allocation is
+active. Keep completion correctness separate from diagnosis availability; do not add
+another mandatory stage or increase context solely because this trajectory failed.
+If adequate evidence still produces no useful action, investigate tool accessibility
+or model/reasoning settings separately. Only then justify a fresh solve and other
+public development cases.
+
+The [latest closed pilot](history/2026-10-26-target-exception-live.md) acquired the
+original/control, observed the pre-edit path and applied two failed edits. It stopped
+with INCOMPLETE_RESPONSE after 36 model calls, USD 1.071262200 and 894.56 seconds;
+there was no regression run, submission or independent evaluation. Before the first
+edit response it used 29 calls and USD 0.648690600. Negative feedback and finish
+blocking worked. All helpers exited zero, so the preceding nonzero-helper fix was
+NOT_EXERCISED. Three responses exhausted their admitted output ceilings; this does
+not establish that larger context or budget would repair the task.
+
 The [diagnosis-gap analysis](history/2026-10-26-repair-diagnosis-gap-analysis.md)
-reconstructs all six post-edit model inputs from the latest pilot. Negative failure
-feedback and the finish blocker worked, but the observer retained only exception
-type/message, with empty captured stdout/stderr and no exception frames or chain.
-The specialized call-path route requires a comparable refutation and unobserved
-changed lines; these candidates instead had UNKNOWN plus a confirmed exception,
-with their changed executable lines entered. The route projected `not_needed`,
-and the actual offered general probe schemas required `call_path=null`.
-An available generic diagnostic allowance did not mean that original-call path
-diagnosis was offered. Earlier descriptions of model non-use need that distinction.
+verified every post-edit input. Exception locations were absent at capture, and the
+specialized path route was unavailable: its narrow trigger requires a comparable
+refutation plus unobserved changed lines. Here the case was UNKNOWN with a confirmed
+exception and entered changed lines. A generic allowance existed, but it was not an
+offered specialized original-call diagnosis. New frames close the capture gap without
+claiming that this alone fixes the model's action selection.
 
-Prioritize a bounded failing-frame/exception-chain packet and a local diagnostic
-of the saved public candidate before another fresh solve. No new runtime change,
-target execution or paid allocation has occurred. Whether this evidence enables
-a correct model repair remains unresolved; a subsequent seeded repair would be
-different evidence from a fresh solve. Keep the finish blocker; do not add another
-mandatory gate or increase context solely on this trajectory.
-
-The [captured-exception fix](history/2026-10-26-target-exception-preservation.md)
-preserves a complete, identity-matched target exception after a settled nonzero
-helper exit. Existing diagnosis, repair-stage and finish-blocking paths now consume
-that evidence. Helper-only failures, changed identity and uncertain/incomplete
-capture remain excluded. Actual outer failure and whole-case UNKNOWN are retained;
-there is no new success credit, tool, gate, budget or context policy.
-
-Local validation: the new real regression failed before the fix; target-outcome21
-passed in 28.67 seconds, quick451 passed in 61.16 seconds, Ruff and isolated mock
-evaluation passed. The unchanged saved live receipt now projects one target failure
-and diagnosis available, while whole-case verification stays unverified. This is
-offline projection and local mechanism evidence.
-
-The [live pilot](history/2026-10-26-target-exception-live.md) is now closed. It acquired
-the original failure/control, completed a pre-edit path observation and applied two
-edits; both candidates still raised `FileNotFoundError`. The host retained the
-exception and excluded finish, but the model did not complete a repair. It stopped
-with INCOMPLETE_RESPONSE after 36 model calls, USD 1.071262200 and 894.56 seconds.
-No public regression, submission or independent evaluation occurred. All helper
-executions exited zero, so the new nonzero-helper classifier branch was NOT_EXERCISED.
-Existing failure propagation was observed; live efficacy of the new condition
-remains unresolved.
-
-Before the first edit response, 29 calls and USD 0.648690600 were spent. After the
-first failed candidate the model repeated the same replay; after the second it
-read the edited builder again, without a new call-path diagnosis. Three responses
-exhausted admitted ceilings of 19,880, 8,620 and 6,144 tokens. Future completion
-reservations reduced these ceilings within the unchanged USD 1.20 cap; the whole
-cap was not spent. The next question is how to obtain a discriminating diagnostic
-and a supported revision earlier. This single run does not justify a context
-increase or establish that the reserved budget was excessive.
-
-The closed [request-continuity pilot](history/2026-10-26-request-continuity-live.md)
-is the preceding live result: one Astroid-1333 solve with mini/xhigh, 40K/25K output
-ceilings and a USD 1.20 cap. One edit and submission occurred; public regression
-passed, original replay raised `FileNotFoundError`, delivery was unverified,
-independent acceptance FAIL and safety PASS. It used 20 model calls, USD 0.544587150
-and 347.78 seconds. No response exhausted its output ceiling. The builder edit
-bypassed the initial missing-file error but a later source-stream read still opened
-the nonexistent initializer. Whether corrected failure feedback leads to a repair
-of that path remains unresolved; the historical result is unchanged.
-
-Context continuity is a separate unresolved question. That preceding run used at most 56,977
-input tokens; all five post-initial resets were stage/result triggered, with no
-size-triggered reset. Raising the 60K ceiling alone retains those transitions.
-Historical mini-SWE-agent used accumulated history without the extra 60K cap,
-but maximum actual input was 77,660, not a full model window. Its tools, budgets
-and outcomes differ; no context-only quality effect has been established. See the
-[context analysis](history/2026-10-26-target-failure-context-analysis.md).
-
-Keep the [request-continuity contracts](history/2026-10-26-request-continuity.md):
-stage-valid probe modes, parallel generation matching gate capacity, bounded exact
-unexecuted drafts and separate preparation/dispatch/request-error acquisition
-budgets. Tool surface v62 binds them. Their combined pilot does not establish
-separate causal effects or repair gain. No paid allocation is active.
+Context continuity remains separate. The preceding request-continuity pilot had no
+size-triggered reset; raising 60K alone would preserve its stage/result resets.
+Historical mini-SWE-agent accumulated history without that extra cap, with observed
+maximum input 77,660, not a full model window. Tools and budgets differed. No
+context-only quality effect was established; see the [context analysis](history/2026-10-26-target-failure-context-analysis.md).
 
 ## Supporting evidence
 

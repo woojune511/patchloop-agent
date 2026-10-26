@@ -23,7 +23,7 @@ from patchloop.deadline import ExecutionDeadline
 from patchloop.errors import ContractError
 from patchloop.prepared_probe_dependencies import MOUNT, PreparedDependencies, read_descriptor
 from patchloop.probe_runtime import runtime
-from patchloop.sandbox import call_path_trace, probe_setup
+from patchloop.sandbox import call_path_trace, exception_frames, probe_setup
 from patchloop.sandbox.execution_feedback import (
     TRACE_WRAPPER,
     ReportChannel,
@@ -46,6 +46,40 @@ _SNAPSHOT_LIMIT_BYTES = 128 * 1024 * 1024
 _CLEANUP_SECONDS = 5.0
 _WRAPPER = Path(__file__).resolve().parents[2] / "docker" / "probe_runner.py"
 _SETUP_WRAPPER = Path(probe_setup.__file__)
+_EXCEPTION_WRAPPER = Path(exception_frames.__file__)
+EXCEPTION_REPORT_LIMIT_BYTES = 32 * 1024
+
+
+def exception_marker(request: dict) -> bytes:
+    return b"\x1ePATCHLOOP-EXCEPTION:" + request["request_hash"].encode("ascii") + b":"
+
+
+def exception_feedback(request: dict | None, report: object) -> dict:
+    """Reject an unbound diagnostic without changing the core execution result."""
+    result = {"policy": exception_frames.POLICY, "status": "unavailable", "calls": [],
+              "verification_credit": False}
+    if request is None:
+        return result
+    result.update({key: request[key] for key in (
+        "request_hash", "source_hash", "snapshot_hash", "execution_identity_hash", "action_id")})
+    if (not isinstance(report, dict) or set(report) != {"request_hash", "calls", "error"}
+            or report["request_hash"] != request["request_hash"] or report["error"] is not None
+            or not isinstance(report["calls"], list) or len(report["calls"]) > 4):
+        return result
+    calls, seen = [], set()
+    for row in report["calls"]:
+        if (not isinstance(row, dict) or set(row) != {"call_id", "exception", "details"}
+                or type(row["call_id"]) is not str
+                or row["call_id"] not in {f"call-{i}" for i in range(1, 5)}
+                or row["call_id"] in seen or not isinstance(row["exception"], dict)
+                or set(row["exception"]) != {"type", "message"}
+                or any(not isinstance(value, str) or len(value) > 256
+                       for value in row["exception"].values())):
+            return result
+        seen.add(row["call_id"])
+        calls.append({"call_id": row["call_id"], "exception": dict(row["exception"]),
+                      "details": exception_frames.public(row["details"])})
+    return {**result, "status": "collected", "calls": calls}
 
 
 def probe_profile(dependencies: ProbeDependencyIdentity | None = None) -> dict[str, object]:
@@ -61,6 +95,8 @@ def probe_profile(dependencies: ProbeDependencyIdentity | None = None) -> dict[s
         "call_path_trace_hash": sha256_bytes(call_path_trace.WRAPPER.read_bytes()),
         "setup_helper_hash": sha256_bytes(_SETUP_WRAPPER.read_bytes()),
         "setup_report_limit_bytes": probe_setup.MAX_REPORT_BYTES,
+        "exception_frames_hash": sha256_bytes(_EXCEPTION_WRAPPER.read_bytes()),
+        "exception_report_limit_bytes": EXCEPTION_REPORT_LIMIT_BYTES,
         "network": "none",
         "read_only": True,
         "user": "10001:10001",
@@ -226,12 +262,21 @@ class _OutputCollector:
         )
         self.call_path_channel = None
         self.call_path_report = None
+        self.exception_channel = None
+        self.exception_report = None
 
     def enable_call_path(self, request: dict) -> None:
         downstream = self.setup_channel or self.channel
         self.call_path_channel = ReportChannel(
             request, downstream.feed if downstream else lambda block: self._retain(block, "stderr"),
             prefix=call_path_trace.marker(request), limit_bytes=call_path_trace.MAX_REPORT_BYTES,
+        )
+
+    def enable_exception_frames(self, request: dict) -> None:
+        downstream = self.call_path_channel or self.setup_channel or self.channel
+        self.exception_channel = ReportChannel(
+            request, downstream.feed if downstream else lambda block: self._retain(block, "stderr"),
+            prefix=exception_marker(request), limit_bytes=EXCEPTION_REPORT_LIMIT_BYTES,
         )
 
     def _retain(self, block: bytes, name: str) -> None:
@@ -245,7 +290,8 @@ class _OutputCollector:
     def drain(self, stream: BinaryIO, name: str) -> None:
         try:
             while block := stream.read(4096):
-                channel = self.call_path_channel or self.setup_channel or self.channel
+                channel = (self.exception_channel or self.call_path_channel
+                           or self.setup_channel or self.channel)
                 if name == "stderr" and channel is not None:
                     channel.feed(block)
                     for report_channel in (
@@ -263,6 +309,8 @@ class _OutputCollector:
         except (OSError, ValueError):
             return
         finally:
+            if name == "stderr" and self.exception_channel is not None:
+                self.exception_report = self.exception_channel.finish()
             if name == "stderr" and self.call_path_channel is not None:
                 self.call_path_report = self.call_path_channel.finish()
             if name == "stderr" and self.setup_channel is not None:
@@ -455,6 +503,7 @@ class DockerProbeSandbox:
         setup_request["request_hash"] = sha256_json(setup_request)
         collector = _OutputCollector(execution_targets, setup_request)
         bound_call_path = None
+        exception_request = None
         timed_out = False
         exit_code = None
         snapshot_hash = None
@@ -507,6 +556,25 @@ class DockerProbeSandbox:
                         json.dumps(bound_call_path), encoding="utf-8",
                     )
                     collector.enable_call_path(bound_call_path)
+                exception_request = {
+                    "action_id": (execution_identity or {}).get("action_id"),
+                    "source_hash": setup_request["source_hash"],
+                    "execution_identity_hash": setup_request["execution_identity_hash"],
+                    "snapshot_hash": snapshot_hash,
+                    "roots": {"workspace": "/workspace", **(
+                        {"dependency": MOUNT} if self.dependencies is not None else {})},
+                    "dependency_files": (read_descriptor(self.dependencies.path)[0]["files"]
+                                         if self.dependencies is not None else None),
+                    "report_limit_bytes": EXCEPTION_REPORT_LIMIT_BYTES,
+                }
+                exception_request["request_hash"] = sha256_json(exception_request)
+                exception_source = _EXCEPTION_WRAPPER.read_bytes()
+                if sha256_bytes(exception_source) != self._profile["exception_frames_hash"]:
+                    raise ContractError("probe exception collector changed before execution")
+                (trusted / "exception_frames.py").write_bytes(exception_source)
+                (trusted / "exception_frames_request.json").write_text(
+                    json.dumps(exception_request), encoding="utf-8")
+                collector.enable_exception_frames(exception_request)
                 wrapper = _WRAPPER.read_bytes()
                 (trusted / "probe_runner.py").write_bytes(wrapper)
                 if sha256_bytes(wrapper) != self._profile["wrapper_hash"]:
@@ -638,6 +706,9 @@ class DockerProbeSandbox:
         )
         stdout_text, stderr_text = collector.public_text()
         return {
+            "exception_diagnostics": exception_feedback(
+                exception_request, collector.exception_report if status in {"passed", "failed"}
+                else None),
             **({"call_path": call_path_trace.public_feedback(
                 bound_call_path,
                 collector.call_path_report if status in {"passed", "failed"} else None,

@@ -24,6 +24,26 @@ on the same candidate cannot erase the exception. A new diff requires new eviden
 exception through `current_public_failure`. It uses the existing per-candidate
 preparation/probe opportunity, without renewed retries on replay or restart.
 
+Fresh invocation v5 also calls a trusted public exception collector. Frozen v1-v4
+observer programs remain byte-identical. Details travel on a separate bounded
+report channel, so a malformed, missing or oversized diagnostic cannot consume
+the core output allowance or erase a captured exception. The sandbox profile
+binds the collector and wrapper; changing it does not rebind old case baselines.
+
+The selected negative failure may carry `exception_diagnostics`: up to three
+exceptions and 16 public frames with origin, relative path, function, line and
+file hash. The source scope is the exported workspace plus verified prepared
+dependency members. Cause takes precedence over unsuppressed context; excluded,
+limited or unsupported information is explicit. No locals or source text are
+captured. An escaped exception may be secondary to an earlier context exception.
+The host binds the report to action, execution source, snapshot and selected call.
+Malformed diagnostic metadata cannot invalidate otherwise valid negative evidence.
+Frames grant no original-case equality, success, check or submission credit.
+
+Core owner validation: `uv run --locked pytest @tests/exception-frames.txt -n 4
+--dist loadfile --max-worker-restart 0 --basetemp C:/pt/tmp/<unique>`.
+Quick retains the cheap collector, legacy-byte and model-packet checks.
+
 `completion_context` activates at host `ready_to_submit`. Segmented requests start
 a compact segment on entry and after a no-action completion correction. Keep the
 public task, actual current patch, required checks, original verification/outcomes,

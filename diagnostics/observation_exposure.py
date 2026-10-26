@@ -261,6 +261,8 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
         completion_cost_policy=old.completion_cost_policy,
         **({key: getattr(old, key) for key in (
             "retained_source_chars", "evaluation_reserve_seconds", "probe_recheck",
+            "max_correction_output_tokens", "reproduction_acquisition",
+            "history_search_policy", "agent_policy",
         )} if preserve_parent_configuration else {}),
     )
     runtime_hash = runner._runtime_hash()

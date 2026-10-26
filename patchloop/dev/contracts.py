@@ -71,7 +71,7 @@ def dev_tool_surface_hash(
 
     base = sha256_json(
         {
-            "schema_version": "dev-tool-surface-v62",
+            "schema_version": "dev-tool-surface-v63",
             "rejected_drafts": correction_drafts.contract(),
             "parallel_generation": "only-when-current-gate-permits-read-batch-v1",
             "fresh_probe_schema": "state-valid-original-acquisition-or-pending-diagnosis-v1",
@@ -151,8 +151,10 @@ def dev_tool_surface_hash(
             "completion_reproduction_feedback": "bounded-current-observation-comparability-v1",
             "original_obligation": "task-bound-base-failure-and-current-replay-v1",
             "original_acquisition": "fresh-six-preparation-then-request-legacy-shared-six-v2",
-            "public_invocation": "python-call-stream-capture-v4-legacy-v1-v2-v3-replay",
+            "public_invocation": "python-call-stream-capture-v5-legacy-v1-v4-replay",
             "public_invocation_capture_bounds": [4096, 10000],
+            "public_exception_diagnostics": "bounded-public-frames-chain-side-report-v1",
+            "public_exception_diagnostic_bounds": [3, 16, 12, 6144, 32768],
             "reproduction_comparison_feedback": "v3-healthy-frozen-json-field-differences-v1",
             "reproduction_comparison_feedback_bounds": [
                 probe_comparison.MAX_DIFFERENCES, probe_comparison.MAX_PATH_CHARS,

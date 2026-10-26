@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import ctypes
 import errno
+import json
 import os
 import platform
 import runpy
@@ -210,8 +211,48 @@ def _flush_child_output(
                 flush()
 
 
+class ExceptionCapture:
+    """Separate bounded diagnostic channel; failures never replace target outcomes."""
+
+    def __init__(self, request: dict, module: dict) -> None:
+        self.request = request
+        self.frames = module["ExceptionFrames"](
+            roots=request["roots"], dependency_files=request["dependency_files"])
+        self.calls = []
+        self.error = None
+        self.write = os.write
+
+    def capture(self, error: BaseException, call_id: str, exception: dict) -> None:
+        if isinstance(error, SystemExit):
+            return
+        try:
+            if (type(call_id) is not str or call_id not in {f"call-{i}" for i in range(1, 5)}
+                    or any(row["call_id"] == call_id for row in self.calls)
+                    or len(self.calls) >= 4):
+                self.error = "invalid_call"
+                return
+            details = self.frames.capture(error)
+            self.calls.append({"call_id": call_id, "exception": dict(exception),
+                               "details": details})
+        except BaseException:
+            # The independently captured type/message remains authoritative negative evidence.
+            self.error = "collector_error"
+
+    def finish(self) -> None:
+        with suppress(BaseException):
+            report = {"request_hash": self.request["request_hash"],
+                      "calls": self.calls, "error": self.error}
+            raw = json.dumps(report, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+            if len(raw) > self.request["report_limit_bytes"]:
+                report.update(calls=[], error="report_limit")
+                raw = json.dumps(report, separators=(",", ":")).encode("utf-8")
+            prefix = (b"\x1ePATCHLOOP-EXCEPTION:"
+                      + self.request["request_hash"].encode("ascii") + b":")
+            self.write(2, prefix + raw + b"\n")
+
+
 def _execute_child(code: object, collector=None, import_paths=None, setup=None,
-                   call_path=None) -> None:
+                   call_path=None, exceptions=None) -> None:
     stdout = sys.stdout
     stderr = sys.stderr
     try:
@@ -231,6 +272,8 @@ def _execute_child(code: object, collector=None, import_paths=None, setup=None,
         if call_path is not None:
             namespace["_patchloop_call_path_begin"] = call_path.begin
             namespace["_patchloop_call_path_end"] = call_path.end
+        if exceptions is not None:
+            namespace["_patchloop_exception_capture"] = exceptions.capture
         if collector is not None:
             collector.start()
         try:
@@ -238,6 +281,8 @@ def _execute_child(code: object, collector=None, import_paths=None, setup=None,
         finally:
             try:
                 try:
+                    if exceptions is not None:
+                        exceptions.finish()
                     if call_path is not None:
                         call_path.finish()
                 finally:
@@ -309,7 +354,6 @@ def main() -> int:
         traceback.print_exc()
         return 1
 
-    import json
     from pathlib import Path
 
     configuration = Path(__file__).with_name("dependencies.json")
@@ -330,6 +374,11 @@ def main() -> int:
         module = runpy.run_path(str(Path(__file__).with_name("call_path_trace.py")))
         call_path = module["CallPathTrace"](
             json.loads(call_path_request.read_bytes()), line_trace=collector)
+    exceptions = None
+    exception_request = Path(__file__).with_name("exception_frames_request.json")
+    if exception_request.is_file():
+        module = runpy.run_path(str(Path(__file__).with_name("exception_frames.py")))
+        exceptions = ExceptionCapture(json.loads(exception_request.read_bytes()), module)
 
     try:
         child_pid = os.fork()
@@ -337,7 +386,7 @@ def main() -> int:
         traceback.print_exc()
         return CHILD_RESERVED_EXIT_CODE
     if child_pid == 0:
-        _execute_child(code, collector, import_paths, setup, call_path)
+        _execute_child(code, collector, import_paths, setup, call_path, exceptions)
     return _wait_for_child(child_pid, timeout_seconds)
 
 

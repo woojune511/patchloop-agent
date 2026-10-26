@@ -9,8 +9,9 @@ from patchloop.util import canonical_json, sha256_json
 LEGACY_CHANNEL = "invoke-declared-call-v1"
 ARGV_CHANNEL = "invoke-declared-call-v2"
 CAPTURE_CHANNEL = probe_call_capture.CHANNEL
-CHANNEL = "invoke-declared-call-v4"
-CAPTURE_CHANNELS = (CAPTURE_CHANNEL, CHANNEL)
+STABLE_CHANNEL = "invoke-declared-call-v4"
+CHANNEL = "invoke-declared-call-v5"
+CAPTURE_CHANNELS = (CAPTURE_CHANNEL, STABLE_CHANNEL, CHANNEL)
 
 # Runs inside the probe sandbox with a separate host observer source budget.
 # In-process diagnostic feedback is not an attestation against a hostile program.
@@ -152,6 +153,8 @@ def supports(channel):
 def observer(channel):
     """Select frozen legacy bytes or bounded call capture for fresh cases."""
     if channel == CHANNEL:
+        return probe_call_capture.diagnostic_observer(OBSERVER_V2)
+    if channel == STABLE_CHANNEL:
         return probe_call_capture.stable_observer(OBSERVER_V2)
     if channel == CAPTURE_CHANNEL:
         return probe_call_capture.observer(OBSERVER_V2)

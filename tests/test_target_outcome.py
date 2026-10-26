@@ -16,6 +16,8 @@ from test_probe_purpose import SOURCE, probe
 from patchloop.dev import completion_reproduction, repair_context, runner
 from patchloop.dev.contracts import DevLimits
 from patchloop.dev.model_state import compact_model_state
+from patchloop.sandbox import exception_frames
+from patchloop.util import sha256_bytes
 
 
 def raised(trace):
@@ -196,3 +198,71 @@ def test_positive_selected_call_failure_survives_later_pass(original):
                    "payload": {"tool_calls": [{"name": "run_probe", "action_id": "diagnose"}]}})
     restarted = completion_reproduction.review(events, "D1", run_id=journal.run_id)
     assert restarted["original_failure_diagnostic"]["status"] == "spent"
+
+
+def test_bound_exception_chain_survives_repair_context_without_success_credit(original, tmp_path):
+    gateway, journal, _ = original
+    public_file = tmp_path / "public_failure.py"
+    public_file.write_text(
+        "def target():\n"
+        "    try:\n"
+        "        raise ValueError('primary failure')\n"
+        "    except ValueError:\n"
+        "        raise FileNotFoundError('secondary report failure')\n", encoding="utf-8")
+    namespace = {}
+    exec(compile(public_file.read_text(encoding="utf-8"), str(public_file), "exec"), namespace)
+    try:
+        namespace["target"]()
+    except FileNotFoundError as error:
+        details = exception_frames.ExceptionFrames(roots={"workspace": tmp_path}).capture(error)
+    assert details["status"] == "complete"
+    events = journal.events()
+    row = observation(events, "raised-with-frames", "D1", comparison="not_compared", change=raised)
+    result = row["payload"]["result"]
+    output = result["output"]
+    call = output["reproduction"]["call_observation"]["calls"][0]
+    call["exception"] = {
+        "type": "builtins.FileNotFoundError", "message": "secondary report failure"}
+    output["snapshot_hash"] = sha256_bytes(b"synthetic-public-snapshot")
+    output["exception_diagnostics"] = {
+        "policy": exception_frames.POLICY, "status": "collected", "verification_credit": False,
+        "action_id": result["action_id"], "snapshot_hash": output["snapshot_hash"],
+        "source_hash": output.get("execution_source_hash", output["source_hash"]),
+        "calls": [{"call_id": call["call_id"], "exception": copy.deepcopy(call["exception"]),
+                   "details": details}],
+    }
+    review = project(gateway, journal, events=[*events, row], diff="D1")
+    assert review["target_failure_count"] == 1
+    assert review["cases"][0]["evidence"]["status"] == "UNKNOWN"
+    failure = review["target_failures"][0]
+    assert failure["original_verification_credit"] is False
+    packet = failure["exception_diagnostics"]
+    assert [item["type"] for item in packet["exceptions"]] == [
+        "builtins.FileNotFoundError", "builtins.ValueError"]
+    assert packet["exceptions"][1]["relation"] == "context"
+    compact = compact_model_state({"current_public_failure": failure}, [])
+    delivered = repair_context.project(compact)["current_public_failure"]["exception_diagnostics"]
+    assert delivered == packet
+    assert completion_reproduction.review(
+        [*events, row], "D1", run_id=journal.run_id)["target_failures"][0] == failure
+
+    # Side-packet mistakes must not erase an independently valid target failure.
+    for problem in ("action", "source", "snapshot", "call", "exception", "duplicate", "details"):
+        broken = copy.deepcopy(row)
+        report = broken["payload"]["result"]["output"]["exception_diagnostics"]
+        if problem in {"action", "source", "snapshot"}:
+            report[{"action": "action_id", "source": "source_hash",
+                    "snapshot": "snapshot_hash"}[problem]] = "changed"
+        elif problem == "call":
+            report["calls"][0]["call_id"] = "call-4"
+        elif problem == "exception":
+            report["calls"][0]["exception"]["message"] = "different failure"
+        elif problem == "duplicate":
+            report["calls"].append(copy.deepcopy(report["calls"][0]))
+        else:
+            report["calls"][0]["details"] = {"status": "complete", "locals": {"secret": "x"}}
+        rejected = project(gateway, journal, events=[*events, broken], diff="D1")
+        assert rejected["target_failure_count"] == 1
+        assert rejected["cases"][0]["evidence"]["status"] == "UNKNOWN"
+        attached = rejected["target_failures"][0].get("exception_diagnostics")
+        assert (attached is None if problem != "details" else attached["status"] == "unavailable")

@@ -153,6 +153,24 @@ def reproduction_workspace():
     return source
 
 
+def diagnostic_observer(legacy):
+    """v5 adds a separate trusted diagnostic hook; v1-v4 bytes stay frozen."""
+    source = stable_observer(legacy)
+    anchor = '   row["outcome"] = "system_exit"'
+    hook = ('   try:_patchloop_exception_capture(caught,row["call_id"],row["exception"])\n'
+            '   except BaseException:pass\n')
+    if source.count(anchor) != 1:
+        raise ValueError("exception observer hook location is unavailable")
+    source = source.replace(anchor, hook + anchor, 1)
+    # Keep the existing observer allowance even at the maximum entrypoint length.
+    # Only private host identifiers change; authored source and prior versions do not.
+    for old, new in (("_pr_start", "_pr_st"), ("_pr_work", "_pr_w"),
+                     ("_pr_snapshot", "_pr_ss"), ("_pr_resolve", "_pr_rs"),
+                     ("_pr_hash", "_pr_h"), ("_pr_import", "_pr_im"), ("budget", "b")):
+        source = source.replace(old, new)
+    return source
+
+
 def valid(call):
     capture = call.get("capture")
     error = call.get("exception")

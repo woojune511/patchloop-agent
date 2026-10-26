@@ -1,0 +1,5 @@
+tests/test_exception_frames.py
+tests/test_exception_capture_wiring.py
+tests/test_target_outcome.py
+tests/test_probe_invocation_workspace.py
+tests/test_probe_setup.py

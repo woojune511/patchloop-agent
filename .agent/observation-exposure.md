@@ -47,7 +47,8 @@ establish model behavior, task acceptance, Docker safety or a quality improvemen
 Live execution still requires a separate exact invocation and execution path.
 
 The opt-in `preserve_parent_configuration` restoration flag retains the parent's
-model/pricing, reasoning/output settings, source retention, evaluation reserve and
-probe replay policy. The [cost-cap continuation](cost-cap-continuation.md) uses it
+model/pricing, reasoning/output settings (including the separate correction ceiling),
+source retention, evaluation reserve, probe replay, reproduction acquisition,
+history-search and agent policy. The [cost-cap continuation](cost-cap-continuation.md) uses it
 with identity projection B. Existing observation comparisons keep their explicit
 full-model intervention; no closed comparison configuration is changed.

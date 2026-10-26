@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from patchloop.dev import probe_invocation
+from patchloop.sandbox import exception_frames
 from patchloop.util import sha256_json
 
 
@@ -37,6 +38,31 @@ def _selected_conditions(trace, call):
     # Global incomplete concerns all calls; it must remain in the public packet,
     # but does not erase positive evidence about this one fully captured call.
     return {key: conditions[key] for key in ("calls", "execution_environment")}
+
+
+def _exception_diagnostics(result, call):
+    """Attach same-execution diagnostics without changing core failure evidence."""
+    output = result.get("output") or {}
+    report = output.get("exception_diagnostics")
+    source_hash = output.get("execution_source_hash", output.get("source_hash"))
+    if (not isinstance(report, dict) or report.get("status") != "collected"
+            or report.get("policy") != exception_frames.POLICY
+            or report.get("verification_credit") is not False
+            or report.get("action_id") != result["action_id"]
+            or not source_hash or report.get("source_hash") != source_hash
+            or not output.get("snapshot_hash")
+            or report.get("snapshot_hash") != output["snapshot_hash"]):
+        return {}
+    rows = report.get("calls")
+    if (not isinstance(rows, list) or len(rows) > 4
+            or any(not isinstance(row, dict) for row in rows)
+            or len({str(row.get("call_id")) for row in rows}) != len(rows)):
+        return {}
+    selected = next((row for row in rows if row.get("call_id") == call["call_id"]
+                     and row.get("exception") == call["exception"]), None)
+    if selected is None:
+        return {}
+    return {"exception_diagnostics": exception_frames.public(selected.get("details"))}
 
 
 def bound_failure(root, candidate):
@@ -81,6 +107,7 @@ def bound_failure(root, candidate):
             "observation_incomplete": trace["incomplete"],
             "whole_case_comparison": observation["comparison"],
             "original_verification_credit": False,
+            **_exception_diagnostics(result, call),
             "interpretation": "Positive failure of the selected call under the original "
             "inputs and environment. Whole-case comparison and task correctness remain unverified.",
         }
