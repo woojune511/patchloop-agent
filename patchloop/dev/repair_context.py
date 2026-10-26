@@ -7,6 +7,9 @@ Use observe_original before the first edit when a candidate call-path premise ne
 give a short hypothesis and 1-2 candidate functions with falsifiable event predictions.
 The host replays the frozen original caller and collects bounded parameters and events.
 A matched prediction tests a premise, not a repair. Unknown is never absence.
+Reuse the completed observation and delivered current source before another read. When
+inspection_focus reports no new covered lines, reassess the remaining question; a repeated
+read may still be useful for a missing anchor or a specific unresolved decision.
 For a supported edit, replace_text starts with path, old_text, new_text, occurrence,
 hypothesis and expected_behavior. Copy an exact current source anchor. Explain the revised
 mechanism in hypothesis using the actual original-call observations and counterevidence.
@@ -64,7 +67,7 @@ def project(state):
         "last_failed_mutation", "last_successful_mutation", "current_public_failure",
         "visible_check_status", "mutation_readiness", "context_projection",
         "recent_attempt_result_next_question", "recent_probes", "recent_checks",
-        "latest_tool_results",
+        "latest_tool_results", "inspection_focus",
     ) if key in state}
     notes = state.get("working_notes", {})
     view["repair_intent"] = {key: notes[key] for key in (

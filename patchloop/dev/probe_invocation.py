@@ -231,6 +231,8 @@ def conditions(trace):
 
 def summary(trace):
     """Keep the concrete scope visible in handoffs without copying full probe bodies."""
+    from patchloop.dev.target_outcome import summaries
+
     calls = trace["calls"]
     value = conditions(trace)
     preview = canonical_json(value["calls"])
@@ -239,4 +241,5 @@ def summary(trace):
         "call_count": len(calls), "conditions_hash": sha256_json(value),
         "actual_conditions": preview[:700], "omitted_condition_chars": max(0, len(preview) - 700),
         "execution_environment_hash": sha256_json(value["execution_environment"]),
+        "target_outcomes": summaries(trace),
     }

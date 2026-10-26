@@ -15,13 +15,16 @@ from patchloop.dev import cost, runner, segments
 from patchloop.dev.contracts import DevLimits, DevRunEnvelope, DevRunRequest
 
 POLICY = cost.COMPLETION_RECOVERY_POLICY
-LEGACY_CONTRACT = {
+CURRENT_CONTRACT = {
     "policy": POLICY,
     "future_input_tokens": segments.MAX_INPUT_TOKENS,
     "future_output_tokens": 128,
     "pricing": "uncached-input-and-minimum-output",
     "horizon": "minimum-success-path-and-one-protocol-correction-v1",
-    "reservation": "largest-offered-action-minimum-successor-plus-one-correction-v1",
+    "reservation": "minimum-successor-plus-correction-and-finalization-v2",
+    "finalization_output_tokens": 8_192,
+    "finalization_ceiling": "min-floor-and-invocation-normal-output-ceiling",
+    "finalization_release": "exact-counted-ready-request-no-successor",
     "correction_credits_per_run": 1,
     "correction_output_tokens": "invocation-max-output-tokens",
     "correction_consumption": "first-durable-protocol-correction-never-renewed",
@@ -30,7 +33,8 @@ LEGACY_CONTRACT = {
     "release": "first-protocol-correction-or-terminal",
     "limit": "One protocol correction receives the requested output ceiling; valid "
     "response and task success are not guaranteed. Tool failures and unknown billing "
-    "are not covered. Other successors retain minimum output admission only.",
+    "are not covered. One finalization successor retains a bounded output floor; "
+    "other successors retain minimum output admission only.",
 }
 
 
@@ -54,16 +58,16 @@ def envelope_data(**changes):
         "sandbox_backend": "local", "created_at": datetime(2026, 10, 25, tzinfo=UTC),
         "split": "dev-train", "context_policy": segments.POLICY,
         "segment_contract": segments.contract(), "completion_cost_policy": POLICY,
-        "completion_cost_contract": dict(LEGACY_CONTRACT),
+        "completion_cost_contract": dict(CURRENT_CONTRACT),
         **changes,
     }
 
 
-def test_omitted_correction_allowance_preserves_legacy_contract_and_wire_shape():
-    assert cost.completion_cost_contract(POLICY) == LEGACY_CONTRACT
+def test_omitted_correction_allowance_preserves_coupled_ceiling_and_wire_shape():
+    assert cost.completion_cost_contract(POLICY) == CURRENT_CONTRACT
     assert cost.completion_cost_contract(
         POLICY, max_correction_output_tokens=None,
-    ) == LEGACY_CONTRACT
+    ) == CURRENT_CONTRACT
     for model, data in [(DevRunRequest, request_data()), (DevRunEnvelope, envelope_data())]:
         original = model.model_validate(data).model_dump(mode="json")
         explicit_none = model.model_validate({**data, "max_correction_output_tokens": None})
@@ -76,7 +80,7 @@ def test_omitted_correction_allowance_preserves_legacy_contract_and_wire_shape()
 @pytest.mark.parametrize("normal,correction", [(40_000, 25_000), (8_000, 25_000), (128, 128_000)])
 def test_explicit_allowance_is_independent_and_bound_into_the_envelope(normal, correction):
     contract = cost.completion_cost_contract(POLICY, max_correction_output_tokens=correction)
-    assert contract == {**LEGACY_CONTRACT, "correction_output_tokens": correction}
+    assert contract == {**CURRENT_CONTRACT, "correction_output_tokens": correction}
     values = {"max_output_tokens": normal, "max_correction_output_tokens": correction}
     request = DevRunRequest.model_validate(request_data(**values))
     envelope = DevRunEnvelope.model_validate(envelope_data(
@@ -88,7 +92,7 @@ def test_explicit_allowance_is_independent_and_bound_into_the_envelope(normal, c
     assert wire["max_correction_output_tokens"] == correction
     assert DevRunEnvelope.model_validate(wire) == envelope
     for changed in [{"max_correction_output_tokens": None},
-                    {"completion_cost_contract": LEGACY_CONTRACT},
+                    {"completion_cost_contract": CURRENT_CONTRACT},
                     {"completion_cost_contract": {**contract, "correction_output_tokens": 256}}]:
         with pytest.raises(ValidationError, match="exact contract"):
             DevRunEnvelope.model_validate({**wire, **changed})

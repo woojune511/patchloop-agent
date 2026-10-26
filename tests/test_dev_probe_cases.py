@@ -117,18 +117,18 @@ def test_case_policy_extends_current_probe_schema_without_changing_prompt():
     before = dev_tool_schemas(**options)
     # Current purpose binding is separate from the immutable removal-arm snapshots.
     assert sha256_json(before) == (
-        "sha256:cb4f9d4de559502b19e6a57e31523fd6264fa9dc2961a08afdd4e41a373b5065"
+        "sha256:c447cafc8eade8cd002379e3cd138acc458d6553c1cb2f1334119e0c2ac02543"
         if FROZEN_ARM is None else
         "sha256:be1012933d3448903e70edb181c229547f0f8c5e9f285f159e50e7582b825a2e"
     )
     assert dev_tool_surface_hash() == (
-        "sha256:cb51a65c02044359360bcd9760c38e014e79fbb62a7835f5ac73db7b7a4c6276"
+        "sha256:92f8bb113481d7a60604d2b6820860ee309168021edd2cda220413cea8dd8c2e"
         if FROZEN_ARM is None else
         "sha256:57193859890419b79cb7f4927c37796d044bc4bf7159c51ddf17723849529e26"
     )
     # Probe policy cannot change the exact prompt of the selected frozen arm.
     assert sha256_bytes(DEV_SYSTEM_PROMPT.encode()) == (
-        "sha256:fba010b36b464597e02dd82572a7e2bf5d84d0117c7fed7f3ed52082b4c8dadb"
+        "sha256:63ed052099375137c734cccbd04811179c6dcc2772709b19a9914b1aea20d2a0"
         if FROZEN_ARM is None else {
         "E0J0": "sha256:84a795485c40cbc9024d938335a6b1b349231d6a20c069590527be606122ef72",
         "E1J0": "sha256:64c42360807cdf8c13e75c39fc7395fa077c6d71f8970eb05ae74398c4dcbfe4",

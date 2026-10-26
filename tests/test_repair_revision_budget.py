@@ -52,7 +52,9 @@ def diagnosed(*, status="available", mutations=3, path="diagnosed", replay_pendi
 def select(gateway, state, *, model=20, tools=50, money=20, recovery=False):
     ledger = ledger_for_slots(money)
     if recovery:
-        ledger.cap_nanos += ledger.future_call_reservation_nanos(output_ceiling=25_000)
+        ledger.cap_nanos += (ledger.future_call_reservation_nanos(output_ceiling=25_000)
+                             + ledger.future_call_reservation_nanos(output_ceiling=8_192)
+                             - ledger.future_call_reservation_nanos())
     counts = counters(model=model, tools=tools, mutation_recovery_used=True)
     policy = runner._tool_policy(
         gateway, counts, DevLimits(), snapshot=state, cost_ledger=ledger,

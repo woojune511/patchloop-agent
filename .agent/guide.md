@@ -103,6 +103,7 @@ actions separately. Healthy acquired originals replay early and reuse receipts a
 finish; pending/mixed/unknown cases keep fallback. A comparable current original
 failure permits separate preparation and probe slots from minimum reserves;
 replay cannot renew them. See [resources](completion-resources.md).
+See [completion feedback](completion-feedback.md) for target exceptions, finalization and reuse.
 With measured unobserved changed lines, use [call-path diagnosis](repair-path.md)
 before another repair. Keep source anchors and fresh original/check results.
 Before the first edit, optional `observe_original` tests path premises on the frozen
@@ -173,8 +174,8 @@ exact counting without successor reserve. Rechecks/replays retain real tool slot
 Opt-in `completion-recovery-v1` reserves one model slot and one correction at 60K
 input + `max_correction_output_tokens` (ordinary ceiling when omitted). Its first
 durable protocol correction consumes the full allowance; restart/valid actions
-never renew it. The explicit ceiling is contract-bound, independent of normal
-output. Tool failures/unknown billing are excluded; funding never proves repair.
+never renew it. The independent ceiling and capped 8,192-output finalization floor
+are contract-bound. Tool failures/unknown billing are excluded; funding never proves repair.
 Use zero SDK retries; count, transport, billing, or cleanup uncertainty stops all
 remaining repetitions. Reservations are not billed usage; unknown usage is not zero.
 Panel usage restoration includes compaction and adds only the row's delta to shared cost.
@@ -200,8 +201,7 @@ CLI defaults are defined by `DevRunRequest` and differ from the selected baselin
 in current status. The reviewed full GPT-5.4 snapshot requires segmented-v1 and its
 counted input bound. Reading diagnostics never authorizes live work or changes defaults.
 
-Read optional implementation notes only when changing that feature. They contain
-experimental context and historical plans; current source/status take precedence:
+Read relevant optional notes only; current source/status supersede historical plans:
 
 - Context: [handoffs](plans/evidence-preserving-handoff.md), [native window](plans/native-context-window.md).
 - Planning and probes: [planning](planning-experiment.md), [probe replay/cases](probe-cases.md),
@@ -233,6 +233,6 @@ uv run --locked pytest @tests/request-correction.txt --basetemp C:\pt\tmp\<other
 uv run --locked pytest tests -n 4 --dist loadfile --max-worker-restart 0 --basetemp C:\pt\tmp\<short-id>
 ```
 
-Quick tests include mock smoke. Worker crashes fail validation. Docker tests require
+Worker crashes fail validation. Docker tests require
 opt-in and existing images. Before handoff verify boundaries, links, recovery identities,
 unrelated edits and historical bytes. Separate local evidence from live and `NOT_RUN`.

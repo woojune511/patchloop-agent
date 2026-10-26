@@ -24,46 +24,44 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [closed revision pilot](history/2026-10-26-repair-revision-live.md) completed
-one authorized Astroid-1333 solve with gpt-5.4-mini-2026-03-17 xhigh and unchanged
-40K/25K ceilings. Cost $1.199996700; 37 model calls, 39 actions, two source edits.
-Both traces were complete. After the first edit retained F0010, the second revised
-the mechanism using the observed import error and bound an original-effect prediction.
-This exercises source revision; it does not establish repair success.
+The [completion-feedback change](history/2026-10-26-completion-feedback.md)
+implements the next priorities from the closed revision pilot and budget analysis.
+Captured unexpected target exceptions now survive as current repair feedback,
+separate from missing/UNKNOWN whole-case comparison. A qualified selected-call
+failure blocks finish and reuses the finite diagnostic allowance. Original
+verification, public regression PASS and independent acceptance remain distinct.
 
-The final original call raised FileNotFoundError instead of emitting F0010. The
-host kept the comparison and prediction unverified. The exception is present in
-the durable receipt but absent from final public inputs, which retained UNKNOWN
-and current_public_failure=null. Public regression passed 1,231 tests; that did
-not resolve the original failure. The last two responses exhausted their admitted
-4,677/4,157 output ceilings without calling finish. Terminal INCOMPLETE_RESPONSE;
-no submission or independent evaluation. Direct-API equivalence and changed fresh
-caller conditions still limit historical comparison.
+Finalization now uses a compact public view and fresh segmented entry/correction
+handoffs. completion-recovery-v1 protects an 8,192-output finalization floor,
+clipped to the normal ceiling and funded within the same invocation cap. The
+separate first correction reserve is retained. Complete first observations link
+to delivered source ranges and recent inspection questions through an advisory;
+zero new covered lines does not ban further inspection. Tool surface v61 binds
+these contracts. Core local validation: 98 PASS in 35.66 seconds.
+Quick: 415 PASS, one guide-size failure corrected; focused docs/contracts then
+9 PASS. Isolated mock evaluation and Ruff passed; verification was split.
 
-The active problem is preserving unexpected target exceptions as actionable repair
-feedback instead of collapsing them into missing-observation UNKNOWN, while keeping
-verification and candidate-return eligibility distinct. Finalization context and
-completion funding also remain unresolved; another ceiling increase alone is not
-supported by this run. No new paid run is authorized.
+Offline reprojection recovers the prior FileNotFoundError without upgrading
+UNKNOWN. Projecting the legacy ready states preserves patch/check/original facts
+and reduces serialized state bytes by about 56%; it does not measure model tokens,
+cost savings or a repaired trajectory. That failing candidate now requires repair.
+Actual-model use, useful finalization output and F0010 repair remain unverified.
+The next measurement should keep the same paid scope and cap after freezing a
+separate exact run. No new live allocation was created in this implementation.
 
-The [budget follow-up](history/2026-10-26-revision-budget-analysis.md) attributes
-45.7% of spending to 27 inspection responses and 16.9% to three no-tool incomplete
-responses. First edit arrived after 59.2% was spent. Repeated source/context is an
-efficiency target, not proof that every inspection was wasted. Prioritize complete
-failure feedback, compact finalization and usable completion funding before a
-separate cost-cap comparison. These changes remain proposed.
+The [closed revision pilot](history/2026-10-26-repair-revision-live.md) used one
+Astroid-1333 solve, gpt-5.4-mini-2026-03-17 xhigh, 40K/25K ceilings and $1.20 cap.
+It spent $1.199996700 across 37 calls and 39 actions, with two edits. Public
+regression passed 1,231 tests; the original call raised FileNotFoundError, finish
+was never called, and acceptance was NOT_RUN. The [budget analysis](history/2026-10-26-revision-budget-analysis.md)
+found missing failure feedback, repeated inspection and low admitted final output.
+These observations support the implemented mechanism changes, not a repair-gain claim.
 
-The [revision contract](history/2026-10-26-repair-revision.md) retains host-bound
-predictions checked in original replay, additive-test comparison funding, and strict
-historical diagnosis reuse. A rejected directory-level test selection produced no
-paired execution; added-test/reuse behavior remains locally validated only.
-The [actual-task wrapper adapter](history/2026-10-26-repair-revision-live-plan.md)
-preserves the registered pytest copy wrapper and unchanged task bytes.
-Local core 68 PASS (37.93 s); wrapper/comparison 15 PASS (24.69 s); latest quick
-378 PASS (35.30 s), including isolated mock evaluation; Ruff PASS.
-The [collector](history/2026-10-26-trace-budget.md) and
-[first-repair path](history/2026-10-26-first-repair.md) retain their bounded coverage
-and recovery identities. No runtime change was made during this live closeout.
+The [revision contract](history/2026-10-26-repair-revision.md),
+[trace collector](history/2026-10-26-trace-budget.md) and
+[first-repair path](history/2026-10-26-first-repair.md) retain their recovery and
+comparison boundaries. The [actual-task wrapper adapter](history/2026-10-26-repair-revision-live-plan.md)
+retains the registered pytest copy wrapper and unchanged task bytes.
 
 ## Supporting evidence
 

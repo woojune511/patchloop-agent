@@ -14,6 +14,7 @@ from patchloop.dev import (
     probe_invocation,
     probe_replay,
     reproduction,
+    target_outcome,
 )
 from patchloop.dev.contracts import RequestedTool
 from patchloop.errors import ContractError, RecoveryError
@@ -179,6 +180,19 @@ def review(events, current_diff, *, public_task=None, run_id):
             eligible = False
             root_reason = "public_task_changed"
 
+        paired = "reported_failure_json" in binding["definition"]
+        original_failure = bool(
+            eligible and root[0]["workspace_diff_hash"] == sha256_bytes(b"")
+            and root[1]["comparison"] == "mismatched"
+            and (not paired or root[1].get("declared_failure_comparison") == "matched"))
+        target_failures = [
+            failure for row in rows
+            if original_failure and current_diff != sha256_bytes(b"")
+            and row[0]["workspace_diff_hash"] == current_diff
+            and (failure := target_outcome.bound_failure(root, row)) is not None
+        ]
+        target_failure = target_failures[-1] if target_failures else None
+
         comparable = [row for row in rows if eligible
                       and row[0]["workspace_diff_hash"] == current_diff
                       and _healthy(*row)
@@ -199,22 +213,18 @@ def review(events, current_diff, *, public_task=None, run_id):
                 != sha256_json({"tool": call.name, "arguments": call.arguments})):
             raise RecoveryError("completion reproduction action identity mismatch")
         settled = completed is not None or attempt is not None
-        is_pending = eligible and evidence == "UNKNOWN" and not settled
+        is_pending = eligible and evidence == "UNKNOWN" and not settled and not target_failure
         if is_pending:
             pending.append({"case_id": case_id, "root_action_id": root_id,
                             "auto_action_id": call.action_id, "current_diff": current_diff})
-        state = ("refuted" if evidence in {"REFUTED", "CONFLICT"} else "verified"
+        state = ("unverified" if target_failure else
+                 "refuted" if evidence in {"REFUTED", "CONFLICT"} else "verified"
                  if evidence == "SUPPORTED" else "pending" if is_pending else "unverified")
         reason = ("same_case_conflicting_observations" if evidence == "CONFLICT"
                   else "frozen_expectation_comparison" if comparable
                   else root_reason if not eligible else "automatic_attempt_unverified"
                   if settled else "no_comparable_current_observation")
         witnesses = {row[1]["comparison"]: row[0]["action_id"] for row in comparable}
-        paired = "reported_failure_json" in binding["definition"]
-        original_failure = bool(
-            eligible and root[0]["workspace_diff_hash"] == sha256_bytes(b"")
-            and root[1]["comparison"] == "mismatched"
-            and (not paired or root[1].get("declared_failure_comparison") == "matched"))
         current = next((row for row in reversed(rows)
                         if row[0]["workspace_diff_hash"] == current_diff), None)
         comparability = _comparability(root, current, eligible)
@@ -222,12 +232,15 @@ def review(events, current_diff, *, public_task=None, run_id):
             failure_actions.update(row[0]["action_id"] for row in comparable
                                    if row[1]["comparison"] == "mismatched")
             diagnostic_eligible |= evidence == "REFUTED" and comparability["status"] == "same"
+            failure_actions.update(failure["action_id"] for failure in target_failures)
+            diagnostic_eligible |= bool(target_failure)
         items.append({
             "case_id": case_id, "root_action_id": root_id,
             "purpose": copy.deepcopy(binding["definition"]),
             "baseline": _compact(root), "latest": _compact(rows[-1] if rows else None),
             "current": _compact(current, include_observation=True),
             "comparability": comparability,
+            "target_failure": target_failure,
             "status": state, "replayable": bool(eligible), "auto_action_id": call.action_id,
             **({"baseline_acquisition": {
                 "status": "qualified" if original_failure else "unverified",
@@ -282,6 +295,9 @@ def review(events, current_diff, *, public_task=None, run_id):
         "baseline_observed_count": sum(item["replayable"] and item["baseline"]["diff_hash"]
                                        == sha256_bytes(b"") for item in items),
         "pending_count": len(pending), "failed_count": failed,
+        "target_failure_count": sum(bool(item["target_failure"]) for item in items),
+        "target_failures": [item["target_failure"] for item in items
+                            if item["target_failure"]][:DISPLAY_LIMIT],
         "unestablished_count": sum(not item["replayable"] for item in items),
         "unverified_count": unverified, "pending_cases": pending,
         "original_failure_diagnostic": (

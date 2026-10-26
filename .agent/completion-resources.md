@@ -28,8 +28,9 @@ with `completion-recovery-v1` (which requires segmented context). It can be lowe
 or higher than the ordinary ceiling. The CLI flag is
 `--max-correction-output-tokens`.
 
-Omission preserves old request/envelope serialization and the exact coupled cost
-contract. An explicit value is bound into the cost contract, model identity and
+Omission preserves request field serialization and the coupled correction ceiling.
+The current cost contract also binds the finalization floor described in
+[completion feedback](completion-feedback.md). An explicit value binds model identity and
 envelope; changing or removing it on resume is rejected. New defaults do not
 silently allocate 25K when a different ordinary ceiling was requested.
 
@@ -47,7 +48,9 @@ transport and billing uncertainty retain the existing stop-all behavior.
 A nonempty candidate with a comparable current refutation of an acquired original
 case can spend one preparation read/search and one model diagnostic probe
 using the minimum successful completion reserve. Baseline acquisition, a helper,
-old-diff failure or unknown/incomparable observation does not grant this credit.
+old-diff failure or missing/incomparable observation does not grant this credit.
+A qualified complete selected-call exception is separate positive failure evidence
+and uses the same finite opportunity, while whole-case UNKNOWN stays unverified.
 The actual minimum repair, fresh checks, original replays and finish must still
 fit the remaining model calls, tool actions and selected cost-admission policy.
 No cap or mutation capacity is increased. A diagnostic probe reserves one possible additional case

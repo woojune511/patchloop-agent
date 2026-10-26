@@ -38,8 +38,15 @@ def no_network(monkeypatch):
 def funding(slots, *, output=25_000, extra=0):
     ledger = ledger_for_slots(slots)
     ledger.cap_nanos = (slots * ledger.future_call_reservation_nanos()
-                        + ledger.future_call_reservation_nanos(output_ceiling=output) + extra)
+                        + ledger.future_call_reservation_nanos(output_ceiling=output) + extra
+                        + finalization_premium(ledger, output))
     return ledger
+
+
+def finalization_premium(ledger, output=25_000):
+    return ledger.future_call_reservation_nanos(
+        output_ceiling=min(output, cost.FINALIZATION_OUTPUT_FLOOR),
+    ) - ledger.future_call_reservation_nanos()
 
 
 def select(gateway, ledger, *, counts=None, state=None, output=25_000, limits=None):
@@ -80,7 +87,8 @@ def test_one_no_action_response_preserves_full_correction_and_successor_checks(o
     corrected = admit(ledger, after, output=output)
     assert corrected is not None and corrected.output_ceiling == output
     ledger.settle(input_tokens=60_000, cached_input_tokens=0, output_tokens=output)
-    assert ledger.remaining_nanos == 2 * ledger.future_call_reservation_nanos()
+    assert ledger.remaining_nanos == (2 * ledger.future_call_reservation_nanos()
+                                      + finalization_premium(ledger, output))
 
 
 @pytest.mark.parametrize("short", ["money", "model", "tool"])
@@ -100,6 +108,7 @@ def test_recovery_needs_a_real_call_slot_and_does_not_add_a_tool_slot(short):
 def test_disabled_or_spent_correction_credit_does_not_tax_later_valid_actions():
     gateway = Gateway()
     ledger = ledger_for_slots(3)
+    ledger.cap_nanos += finalization_premium(ledger)
     disabled = select(gateway, ledger, limits=DevLimits(max_protocol_recoveries=0))
     spent = select(gateway, ledger, counts=counters(protocol_corrections_total=1))
     later_error = select(
@@ -124,7 +133,7 @@ def test_ready_exact_count_keeps_unused_correction_and_all_case_replay_actions()
     assert selected.completion_cost["future_calls_reserved"] == 0
     full_correction = ledger.future_call_reservation_nanos(output_ceiling=25_000)
     assert selected.completion_cost["future_cost_reserve_nanos"] == full_correction
-    assert admit(ledger, selected, input_tokens=26_313).output_ceiling >= 128
+    assert admit(ledger, selected, input_tokens=26_313).output_ceiling >= 8_192
     assert admit(ledger, selected) is None
     for model, tools in [(1, 5), (2, 4)]:
         assert not select(gateway, ledger, counts=counters(model=model, tools=tools),

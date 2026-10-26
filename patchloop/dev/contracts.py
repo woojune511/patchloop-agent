@@ -67,9 +67,14 @@ def dev_tool_surface_hash(
                 planning_policy=planning_policy, probe_policy=probe_policy),
             "probe_recheck": contract(),
         })
+    from patchloop.dev import completion_context, inspection_focus
+
     base = sha256_json(
         {
-            "schema_version": "dev-tool-surface-v60",
+            "schema_version": "dev-tool-surface-v61",
+            "completion_context": completion_context.contract(),
+            "inspection_focus": inspection_focus.contract(),
+            "original_target_failure": "same-selected-call-exception-no-equality-credit-v1",
             "submission_assessment": "required-nonblank-current-diff-plan-review-v2",
             "selected_public_tests": "registered-pytest-same-test-before-after-optional-v2",
             "selected_test_comparison": "two-isolated-children-cas-no-uncertain-reexecution-v1",

@@ -2498,6 +2498,17 @@ class DevToolGateway:
     ) -> dict[str, Any] | None:
         """Qualify the latest counterexample by diff currency and current action space."""
 
+        current_hash = diff_hash if diff_hash is not None else self.current_diff_hash
+        original = self.completion_verification(diff_hash=current_hash)
+        if original.get("target_failure_count"):
+            return {
+                **copy.deepcopy(original["target_failures"][0]),
+                "current_diff_hash": current_hash, "evidence_currency": "current",
+                "phase": "repair_current_diff", "failure_count": original["target_failure_count"],
+                "guidance": "The original selected call raised this unexpected exception. "
+                "Repair this observed failure; UNKNOWN is not evidence that the call was absent. "
+                "Regression PASS cannot resolve it.",
+            }
         if self._active_failed_check is None:
             return None
         stored = self._active_failed_check.get("public_check_failure")
@@ -4283,7 +4294,8 @@ class DevToolGateway:
         if not self.visible_checks_pass(diff_hash=summary.patch_hash):
             raise ContractError("all visible checks must pass against the current diff")
         verification = self.completion_verification(diff_hash=summary.patch_hash)
-        if verification["status"] in {"pending", "refuted"}:
+        if (verification["status"] in {"pending", "refuted"}
+                or verification.get("target_failure_count")):
             raise ContractError(
                 "Original-case verification is " + verification["status"]
                 + "; a helper or regression PASS cannot close it.",

@@ -55,12 +55,12 @@ def view(journal, diff="d1", gate="needs_mutation"):
 
 def test_off_wire_and_prompt_are_unchanged():
     assert dev_tool_surface_hash() == (
-        "sha256:cb51a65c02044359360bcd9760c38e014e79fbb62a7835f5ac73db7b7a4c6276"
+        "sha256:92f8bb113481d7a60604d2b6820860ee309168021edd2cda220413cea8dd8c2e"
         if FROZEN_ARM is None else
         "sha256:57193859890419b79cb7f4927c37796d044bc4bf7159c51ddf17723849529e26"
     )
     assert sha256_json(dev_tool_schemas(finish_enabled=True, check_ids=["check"])) == (
-        "sha256:84a7b74ff8fcc860b08eaa565db05725821fcbee3a46446c462f47df0f078c58"
+        "sha256:f52a0448927070016090fcd3fd415eb4df6ae1edbbf9fb68d617c12b6bc15840"
         if FROZEN_ARM is None else
         "sha256:e8ac4db103389896d6df2061340f328e1c400ee83cb439a4c4f1ed4529f50036"
     )

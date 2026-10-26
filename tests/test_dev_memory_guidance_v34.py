@@ -201,7 +201,7 @@ def test_guidance_identity_changes_without_changing_run_schema_or_limits():
     # Common action/probe guidance changes the overall surface identity;
     # argument and description identities remain independently pinned above.
     assert dev_tool_surface_hash() == (
-        "sha256:20b8638da9e5d2c5c82a9d16b6a74f865bf86d18853dd82200e0fd4993953f75"
+        "sha256:92f8bb113481d7a60604d2b6820860ee309168021edd2cda220413cea8dd8c2e"
         if FROZEN_ARM is None else
         "sha256:57193859890419b79cb7f4927c37796d044bc4bf7159c51ddf17723849529e26"
     )

@@ -29,10 +29,12 @@ from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import Artifact, ModelConfig, RunManifest, VerdictState
 from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
 from patchloop.dev import (
+    completion_context,
     completion_reproduction,
     diagnosis_context,
     evidence_focus,
     history_search,
+    inspection_focus,
     native_compaction,
     probe_recheck,
     repair_context,
@@ -85,6 +87,7 @@ from patchloop.dev.cost import (
     COMPLETION_RESERVE_POLICY,
     DEFAULT_COMPLETION_COST_POLICY,
     DEFAULT_OUTPUT_CEILING,
+    FINALIZATION_OUTPUT_FLOOR,
     MINIMUM_OUTPUT_CEILING,
     PRICING_SOURCE,
     PRICING_VERIFIED_ON,
@@ -770,7 +773,8 @@ def _completion_guidance(
         "stage": stage,
         "submission_ready": (snapshot.ready_to_submit and "finish_task" in allowed
                              and (snapshot.completion_verification or {}).get("status")
-                             != "refuted"),
+                             != "refuted" and not (snapshot.completion_verification or {}).get(
+                                 "target_failure_count")),
         "next_action": next_action,
         "message": message,
     }
@@ -872,7 +876,8 @@ def _tool_policy(
     )
     helper_available = bool(helper_blocked and helper_fix.get("status") == "pending")
     first_available &= not (observation_blocked or path_blocked or helper_blocked)
-    original_case_failed = verification.get("status") == "refuted"
+    original_case_failed = (verification.get("status") == "refuted"
+                            or bool(verification.get("target_failure_count")))
     diagnostic = verification.get("original_failure_diagnostic")
     diagnostic_available = bool(
         original_case_failed and diagnostic and diagnostic["status"] == "available"
@@ -904,6 +909,8 @@ def _tool_policy(
     cost_unit = 0
     funded_calls = None
     correction_cost = correction_reserve = correction_current_premium = 0
+    finalization_premium = finalization_current_premium = 0
+    finalization_floor = min(desired_output_ceiling, FINALIZATION_OUTPUT_FLOOR)
     correction_available = correction_pending = False
     correction_model_reserve = 0
     correction_ceiling = correction_output_ceiling(
@@ -915,6 +922,10 @@ def _tool_policy(
             and cost_ledger is not None):
         cost_unit = cost_ledger.future_call_reservation_nanos()
         if completion_cost_policy == COMPLETION_RECOVERY_POLICY:
+            finalization_premium = cost_ledger.future_call_reservation_nanos(
+                output_ceiling=finalization_floor,
+            ) - cost_unit
+            finalization_current_premium = finalization_premium if ready_to_submit else 0
             correction_cost = cost_ledger.future_call_reservation_nanos(
                 output_ceiling=correction_ceiling,
             )
@@ -929,7 +940,9 @@ def _tool_policy(
             correction_model_reserve = int(correction_available)
             remaining_model_calls = max(0, remaining_model_calls - correction_model_reserve)
         funded_calls = (
-            max(0, cost_ledger.remaining_nanos - correction_reserve - correction_current_premium)
+            max(0, cost_ledger.remaining_nanos - correction_reserve - finalization_premium
+                - (correction_current_premium if correction_pending
+                   else finalization_current_premium))
             // cost_unit
             if _cost_call_limit is None else _cost_call_limit
         )
@@ -1442,7 +1455,8 @@ def _tool_policy(
             "funded_calls": funded_calls,
             "admitted_call_slots": max(int("finish_task" in allowed), funded_calls),
             "future_calls_reserved": future_calls,
-            "future_cost_reserve_nanos": future_calls * cost_unit + correction_reserve,
+            "future_cost_reserve_nanos": (future_calls * cost_unit + correction_reserve
+                                          + (finalization_premium if future_calls else 0)),
             "basis": "largest_offered_action_minimum_successor",
             "recovery_scope": "Protected forecasts retain model/tool slots; money reserves only "
                               "successful minimum successors, not failure recovery.",
@@ -1451,7 +1465,9 @@ def _tool_policy(
         })
         if completion_cost_policy == COMPLETION_RECOVERY_POLICY:
             policy.completion_cost.update({
-                "basis": "largest_offered_action_minimum_successor_plus_one_correction",
+                "basis": "minimum_successor_plus_correction_and_finalization",
+                "finalization_output_floor": finalization_floor,
+                "finalization_cost_reserved_nanos": finalization_premium if future_calls else 0,
                 "correction_credits_remaining": int(correction_available),
                 "correction_pending": correction_pending,
                 "correction_output_ceiling": correction_ceiling,
@@ -1459,13 +1475,15 @@ def _tool_policy(
                 "correction_cost_reserved_nanos": correction_reserve,
                 "correction_model_calls_reserved": correction_model_reserve,
                 "current_minimum_output_ceiling": (
-                    correction_ceiling if correction_pending else MINIMUM_OUTPUT_CEILING
+                    correction_ceiling if correction_pending else finalization_floor
+                    if ready_to_submit else MINIMUM_OUTPUT_CEILING
                 ),
                 "recovery_scope": "One protocol correction per run at the correction output "
                                   "ceiling, never renewed by valid actions. No tool-failure or "
                                   "unknown-billing retry funding.",
-                "limit": "The correction has an output allowance, not a guarantee of a valid "
-                         "response. Other successors retain minimum output admission only.",
+                "limit": "Correction and finalization have bounded output allowances, not "
+                         "guarantees of useful output or repair. Other successors retain "
+                         "minimum output admission only. The invocation cap is unchanged.",
             })
     elif funded_calls is not None:
         successors = [0]  # Stop and a successful finish need no subsequent call.
@@ -1885,6 +1903,10 @@ def _protocol_correction(
         result["repair_correction"] = repair_context.correction(
             code, issue, result["tool_contract_failure"])
         result["message"] = result["repair_correction"]["message"]
+    elif policy.workflow_gate == "ready_to_submit":
+        result["completion_correction"] = completion_context.correction(
+            code, issue, result["tool_contract_failure"])
+        result["message"] = result["completion_correction"]["message"]
     return result
 
 
@@ -2143,6 +2165,11 @@ def _build_context(
             journal.events(), active_policy.first_observation or {})
         if correction:
             payload["protocol_correction"] = correction
+    focus = inspection_focus.packet(journal.events(), payload)
+    if focus is not None:
+        payload["inspection_focus"] = focus
+    if correction and completion_context.active(payload):
+        payload["protocol_correction"] = correction
     # Construction is allowlist-based from ``package.public`` and public tool outputs;
     # private task fields are never accepted as context inputs.
     return json.dumps(
@@ -2627,8 +2654,13 @@ def _build_model_input(
     elif repair_context.pending(json.loads(context)):
         state = compact_model_state(repair_context.project(json.loads(context)), history,
                                     archive_kind=archive_kind)
+    elif completion_context.active(json.loads(context)):
+        state = compact_model_state(completion_context.project(json.loads(context)), history,
+                                    archive_kind=archive_kind)
     return assemble_model_input(
-        system_prompt=(repair_context.SYSTEM_PROMPT if repair_context.pending(json.loads(context))
+        system_prompt=(completion_context.SYSTEM_PROMPT
+                       if completion_context.active(json.loads(context)) else
+                       repair_context.SYSTEM_PROMPT if repair_context.pending(json.loads(context))
                        else thin_policy.system_prompt(agent_policy, planning_policy)),
         state=thin_policy.project_state(state, agent_policy), history=new_history,
         previous_input=previous_input, context_policy=context_policy,
@@ -2704,9 +2736,16 @@ def _build_segmented_model_input(
     current = json.loads(context)
     diagnosing = diagnosis_context.pending(current)
     repairing = repair_context.pending(current)
+    finalizing = completion_context.active(current)
     was_diagnosing = bool(handoff and diagnosis_context.pending(handoff["state"]))
     was_repairing = bool(handoff and repair_context.pending(handoff["state"]))
-    if diagnosing != was_diagnosing:
+    was_finalizing = bool(handoff and completion_context.active(handoff["state"]))
+    if finalizing != was_finalizing:
+        reason = "completion_stage_entered" if finalizing else "completion_stage_returned"
+    elif finalizing and current.get("protocol_correction", {}).get(
+        "completion_correction", {}).get("fresh_segment"):
+        reason = "completion_no_action"
+    elif diagnosing != was_diagnosing:
         reason = "path_diagnosis_entered" if diagnosing else "path_diagnosis_returned"
     elif diagnosing and current.get("protocol_correction", {}).get(
         "diagnosis_correction", {}).get("fresh_segment"):
@@ -2716,9 +2755,9 @@ def _build_segmented_model_input(
     elif repairing and current.get("protocol_correction", {}).get(
         "repair_correction", {}).get("fresh_segment"):
         reason = "repair_no_action"
-    compact_stage = diagnosing or repairing
+    compact_stage = diagnosing or repairing or finalizing
     prompt = (diagnosis_context.SYSTEM_PROMPT if diagnosing else repair_context.SYSTEM_PROMPT
-              if repairing else
+              if repairing else completion_context.SYSTEM_PROMPT if finalizing else
               thin_policy.system_prompt(agent_policy, planning_policy, history_search_policy))
     replace_pending = force_reason in {"omit_optional_evidence", "shrink_history_result"}
     old_manifest = handoff.get("evidence_manifest", {}) if handoff else {}
@@ -2747,7 +2786,8 @@ def _build_segmented_model_input(
             seed_results = [overflow_result(r) for r in latest_results]
         if compact_stage:
             state = (diagnosis_context.project(state) if diagnosing
-                     else repair_context.project(state))
+                     else repair_context.project(state) if repairing
+                     else completion_context.project(state))
             base = segment_seed(prompt, state["public_task"], agent_policy=agent_policy,
                                 diagnosis=True)
         else:
@@ -2826,6 +2866,11 @@ def _build_segmented_model_input(
         state = repair_context.project(state)
         state["segment_handoff"].update(
             review_requested=False, interpretation="public repair evidence and explicit hypothesis")
+    elif finalizing:
+        state = completion_context.project(state)
+        state["segment_handoff"].update(
+            review_requested=False,
+            interpretation="public candidate, checks and unresolved outcomes")
     view = _segment_current_view(state, history, latest_results, agent_policy)
     return assemble_model_input(
         system_prompt=prompt, state=thin_policy.project_state(view, agent_policy),

@@ -17,6 +17,9 @@ TOKENS_PER_MILLION = Decimal("1000000")
 # The invocation-wide cost ledger still lowers this value before every dispatch.
 DEFAULT_OUTPUT_CEILING = 25_000
 MINIMUM_OUTPUT_CEILING = 128
+# A completion decision gets a bounded allowance after source/probe history is
+# compacted. This engineering floor is not evidence of model-quality sufficiency.
+FINALIZATION_OUTPUT_FLOOR = 8_192
 # Both registered GPT-5.4 snapshots support this maximum (reviewed 2026-09-24).
 MAX_OUTPUT_CEILING = 128_000
 CompletionCostPolicy = Literal[
@@ -59,7 +62,10 @@ def completion_cost_contract(
             "future_output_tokens": MINIMUM_OUTPUT_CEILING,
             "pricing": "uncached-input-and-minimum-output",
             "horizon": "minimum-success-path-and-one-protocol-correction-v1",
-            "reservation": "largest-offered-action-minimum-successor-plus-one-correction-v1",
+            "reservation": "minimum-successor-plus-correction-and-finalization-v2",
+            "finalization_output_tokens": FINALIZATION_OUTPUT_FLOOR,
+            "finalization_ceiling": "min-floor-and-invocation-normal-output-ceiling",
+            "finalization_release": "exact-counted-ready-request-no-successor",
             "correction_credits_per_run": 1,
             "correction_output_tokens": (
                 "invocation-max-output-tokens"
@@ -71,7 +77,8 @@ def completion_cost_contract(
             "release": "first-protocol-correction-or-terminal",
             "limit": "One protocol correction receives the requested output ceiling; valid "
             "response and task success are not guaranteed. Tool failures and unknown billing "
-            "are not covered. Other successors retain minimum output admission only.",
+            "are not covered. One finalization successor retains a bounded output floor; "
+            "other successors retain minimum output admission only.",
         }
     if policy == COMPLETION_MINIMUM_POLICY:
         return {
