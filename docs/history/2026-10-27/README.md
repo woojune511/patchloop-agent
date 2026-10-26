@@ -8,3 +8,4 @@
 - [Request annotation comparison: identical evidence/model and one schema intervention](../2026-10-27-request-annotation-plan.md)
 - [Request annotation result: B reached an edit, neither arm repaired the original](../2026-10-27-request-annotation-results.md)
 - [Fixed-request model comparison: mini versus full with funded opportunities](../2026-10-27-model-setting-plan.md)
+- [Model comparison result: mini behavior improved; full missed stream encoding](../2026-10-27-model-setting-results.md)

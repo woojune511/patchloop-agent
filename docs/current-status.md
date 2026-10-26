@@ -78,12 +78,17 @@ establishes how many failures were newly introduced. Both final decision opportu
 were preserved. All sixteen responses settled, total USD 0.228657450, no submission
 or independent acceptance. This is an action difference without repair success;
 retain production defaults. A fixed-request model-setting comparison is a next
-question. The [fixed-request model comparison](history/2026-10-27-model-setting-plan.md)
-now prepares fresh mini/full arms at xhigh with identical thin requests, evidence
-and token/action opportunities. Model prices fund the same 8+1 response horizon;
-the proposed caps are USD 6.60 per arm and USD 8.60 total. The saved seed's local
-public regression passed (1,231 passed, 69 skipped, 15 xfailed); the frozen caller
-failure remains. Exact new execution approval is pending; all prior allocations
+question. The [fixed-request model comparison](history/2026-10-27-model-setting-results.md)
+is now closed: both mini/full made one edit and passed 1,231 public regression
+tests. Mini supplied both an empty namespace stream and UTF-8 encoding; its frozen
+original call no longer raised unexpectedly, but call-2's captured input root
+changed after call-1, so strict case support remains false. Full supplied only the
+stream: tokenization passed, then the original call raised ValueError in Pylint's
+similarity checker for missing encoding. Its strict case support also remains false.
+All thirteen responses settled for USD 0.443923450 with no input/output/cost cutoff.
+Do not infer model superiority or independent acceptance. Preserve the mini candidate;
+next isolate fixture inputs from generated cache/output state and locally recalibrate
+seed/candidate original/control identity before another paid run. All allocations
 are closed. Production defaults stay unchanged.
 
 The [latest fresh-solve pilot](history/2026-10-26-target-exception-live.md) acquired the
