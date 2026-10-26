@@ -61,6 +61,8 @@ def stage_run(monkeypatch, tmp_path, smoke_package, failure):
         "        return []\n    rows: list[list[str]] = []")
     fixed = mutation_call(None, action_id="diagnosed-repair", alternative=True)
     fixed.arguments["old_text"] = wrong.arguments["new_text"]
+    fixed.arguments["repair_prediction"] = {
+        "kind": "source", "target": -1, "event": "original_failure_absent"}
     correction_step = []
     if failure == "missing_tool":
         correction_step = [DevModelTurn(tool_calls=[])]

@@ -15,3 +15,4 @@
 - [Separate call coverage, coalesced detail and complete-call diagnosis](../2026-10-26-trace-budget.md)
 - [Trace-budget live pilot: proposed fresh solve and measurement plan](../2026-10-26-trace-budget-live-plan.md)
 - [Trace-budget pilot: complete observations, original failure persists](../2026-10-26-trace-budget-live.md)
+- [Refutation-linked revisions, test-only diagnosis reuse and local validation](../2026-10-26-repair-revision.md)

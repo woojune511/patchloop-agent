@@ -69,7 +69,7 @@ def dev_tool_surface_hash(
         })
     base = sha256_json(
         {
-            "schema_version": "dev-tool-surface-v58",
+            "schema_version": "dev-tool-surface-v59",
             "submission_assessment": "required-nonblank-current-diff-plan-review-v2",
             "selected_public_tests": "registered-pytest-same-test-before-after-optional-v2",
             "selected_test_comparison": "two-isolated-children-cas-no-uncertain-reexecution-v1",
@@ -153,6 +153,8 @@ def dev_tool_surface_hash(
             "probe_request_correction": "field-diagnostics-actual-arguments-preflight-receipt-v1",
             "probe_judgment": "captured-diagnostic-host-values-witnesses-v1",
             "repair_call_path": "original-refuted-unobserved-branch-bounded-diagnosis-v1",
+            "repair_prediction": "host-refutation-small-observable-source-or-test-v1",
+            "repair_diagnosis_reuse": "same-implementation-additive-test-historical-provenance-v1",
             "call_path_collection": "separate-entry-coverage-coalesced-first-and-recent-details-v2",
             "call_path_scope": "fresh-selected-call-saved-focus-scope-preserved-v2",
             "repair_call_path_bounds": [4, 32, 6, 1, 2],
@@ -262,6 +264,7 @@ class TextReplacementIntent(StrictModel):
     occurrence: int = Field(default=1, ge=1, le=100)
     hypothesis: str = Field(min_length=1, max_length=1_500)
     expected_behavior: str = Field(min_length=1, max_length=1_500)
+    repair_prediction: dict[str, Any] | None = None
     # Retained for old action/intent hashes and journal recovery. These annotations
     # are not advertised by the current provider schema; legacy parsing is nonblocking.
     causal_revision: CausalRevision | None = None
@@ -271,7 +274,7 @@ class TextReplacementIntent(StrictModel):
     @model_serializer(mode="wrap")
     def preserve_optional_reference_wire(self, handler: Any) -> dict[str, Any]:
         result = handler(self)
-        for field in ("causal_revision", "requirement_ref", "behavior_cases"):
+        for field in ("causal_revision", "requirement_ref", "behavior_cases", "repair_prediction"):
             if field not in self.model_fields_set:
                 result.pop(field, None)
         return result

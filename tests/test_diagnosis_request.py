@@ -419,6 +419,8 @@ def test_scripted_diagnosis_repair_reaches_isolated_mock_evaluation(
         "        return []\n    rows: list[list[str]] = []")
     fixed = mutation_call(None, action_id="diagnosed-repair", alternative=True)
     fixed.arguments["old_text"] = wrong.arguments["new_text"]
+    fixed.arguments["repair_prediction"] = {
+        "kind": "source", "target": -1, "event": "original_failure_absent"}
     selected = focused()
     incompatible = focused("mixed-diagnosis", "missing_function")
     steps = iter([read_calls()[1], diagnostic_probe(smoke_package.public, "original",

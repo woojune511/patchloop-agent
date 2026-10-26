@@ -24,47 +24,36 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [trace-budget correction](history/2026-10-26-trace-budget.md) separates global
-call discovery from selected-frame detail. Unselected initialization lines no
-longer consume coverage. Function aliases and overlapping focus/watch selections
-share bounded samples; repeats coalesce and recent distinct arguments can replace
-early detail. The report exposes independent coverage/event counts, sampling and
-exhausted counters. Complete coverage can support absence despite sampled values;
-unknown coverage cannot. Predictions use aggregate counts, not missing samples.
+The [closed live pilot](history/2026-10-26-trace-budget-live.md) delivered complete
+traces but retained F0010: spec.find_spec raised before the changed branch, then
+the model added an unexecuted test. It ended VERIFICATION_INCOMPLETE at $0.944915400
+within $1.20. The remaining two funded minimum calls could not cover four required
+calls; no output cap was exhausted. Complete observation did not establish useful
+repair revision. The prepared direct-API caller still has shell/venv equivalence
+limits, and changed caller conditions prevent causal historical comparisons.
 
-Fresh post-edit diagnosis observes the selected call even outside focus. The model
-selects a public failure-path function; the host retains changed-function watches.
-Saved absent-scope requests preserve their prior focus-only identity and meaning.
-Diagnosis summaries retain collection limits/counts for the next repair hypothesis.
-The [first-repair observation and small request path](history/2026-10-26-first-repair.md)
-keeps its original caller, finite allowances, recovery and completion budget rules.
-No model output or monetary ceiling is increased.
+The [revision follow-up](history/2026-10-26-repair-revision.md) separates complete
+diagnosis collection from original-effect refutation. The next source edit supplies
+a small host-bound changed-observation prediction, checked during the already-required
+original replay. Prediction results never replace original verification or checks.
 
-Local validation: short core 111 PASS (8.39 s), quick 374 PASS (34.58 s), Ruff PASS.
-Quick includes isolated mock evaluation. Two operator Docker replays both returned
-complete coverage with identical captured calls and unchanged F0010/control output.
-Pre-edit tracing retained file_build's missing initializer path; post-edit tracing
-represented 31 callback calls in 26 detail records. These are collector controls,
-not model repair or acceptance evidence; see the correction record.
+A test-only edit reserves a frozen comparison of the actually added/extended test
+before/after the diagnosed source edit, plus remaining source repair and completion.
+Strict additive-test receipt chains and unchanged captured failure/environment can
+reuse the old diagnosis with explicit historical diff/snapshot provenance. They do
+not produce a new current-snapshot trace or renew consumed diagnostic allowances.
+PASSED_BOTH and unverified comparison results cannot retire the original failure.
 
-The [authorized live pilot](history/2026-10-26-trace-budget-live.md) returned two
-complete traces without exhausted collection limits. The initial observation
-reached 25 later model inputs; the post-edit diagnosis reached the next edit.
-The source change still missed the failing route: spec.find_spec raised before
-the changed branch. The next edit added an unexecuted test while retaining the
-refuted source hypothesis. Both original replays retained F0010 and the clean
-control. This establishes observation and delivery, not useful repair revision.
+Local core: 68 PASS (37.93 s); quick: 377 PASS (36.34 s, four workers), including
+isolated mock evaluation; Ruff PASS. No provider generation or real container execution is part of
+this change. Normal output, action, mutation and monetary limits are unchanged;
+the unused protocol correction reserve remains reserved.
 
-The fresh caller uses the issue's cwd and relative target; direct Python API use
-under the prepared environment still does not establish full shell/venv equivalence.
-It differs from the prior pilot's caller/control, so historical comparisons cannot
-identify causal repair gains. Saved prior calls and their caveats remain unchanged.
-
-The run ended VERIFICATION_INCOMPLETE at $0.944915400 within $1.20: after the unused
-correction reserve, two minimum calls were funded but four were required. No output
-cap was exhausted. The next question is how the observed exception and unexecuted
-branch constrain a revised repair or discriminating test, and whether test-only
-edits can reuse valid path diagnosis. No limit increase or new run is authorized.
+The [collector](history/2026-10-26-trace-budget.md) and
+[first-repair path](history/2026-10-26-first-repair.md) retain their finite budgets,
+complete-coverage requirements and recovery identities. The next unresolved question
+is whether a real model revises its repair mechanism using the refutation and
+resolves F0010 within the unchanged limits. No new paid run is authorized.
 
 ## Supporting evidence
 

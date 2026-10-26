@@ -11,12 +11,133 @@ import json
 
 from patchloop.dev import completion_reproduction, probe_invocation, reproduction
 from patchloop.errors import ContractError
-from patchloop.util import sha256_json
+from patchloop.util import sha256_bytes, sha256_json
 from patchloop.verifier.policy import _is_test_path
 
 POLICY = "repair-call-path-v1"
 MAX_REJECTED_REQUESTS = 2  # Original request and one correction, not two executions.
 READ_TOOLS = {"read_file", "search_files"}
+
+
+def _mutation_receipt(start, result):
+    """Require the durable admission and completed full-diff receipt to agree."""
+    output = result.get("output", {})
+    mutation = output.get("mutation", {})
+    evidence = output.get("mutation_evidence") or {}
+    arguments = start.get("arguments", {})
+    path = start.get("mutation_target_path")
+    patch = start.get("mutation_generated_patch")
+    diff = start.get("mutation_expected_worktree_diff_hash")
+    return bool(
+        start.get("mutation_admitted") is True and path and patch and diff
+        and start.get("baseline_diff_hash") and start.get("mutation_preimage_file_hash")
+        and start.get("mutation_expected_postimage_file_hash")
+        and start.get("input_hash") and start["input_hash"] == result.get("input_hash")
+        and start["action_id"] == result.get("action_id")
+        and result.get("tool") == "replace_text" and result.get("status") == "succeeded"
+        and arguments.get("path") == path and output.get("changed_files") == [path]
+        and result.get("workspace_diff_hash") == diff == output.get("worktree_diff_hash")
+        and mutation.get("diff_hash") == diff and mutation.get("changed_hunk") == patch
+        and output.get("patch_hash") == sha256_bytes(patch.encode("utf-8"))
+        and mutation.get("replacement_hash") == sha256_json({
+            key: arguments.get(key) for key in ("path", "old_text", "new_text", "occurrence")})
+        and evidence.get("path") == path and evidence.get("source_diff_hash") == diff
+        and evidence.get("file_hash") == start["mutation_expected_postimage_file_hash"]
+    )
+
+
+def _test_only_chain(events, mutation_id, current_diff, results):
+    """Prove unchanged implementation through host-certified additive test edits.
+
+    This grants no fresh trace or check credit. Missing legacy metadata keeps the
+    old, exact-candidate rule; an admitted mutation without a result is uncertain.
+    """
+    chain, hashes, seen = [], {}, set()
+    for event in events:
+        start = event["payload"]
+        if event["event_type"] != "action_started" or start.get("tool") != "replace_text":
+            continue
+        if not chain and start["action_id"] != mutation_id:
+            continue
+        if start.get("mutation_admitted") is False:
+            continue
+        if start["action_id"] in seen:
+            return None
+        seen.add(start["action_id"])
+        if not _mutation_receipt(start, results.get(start["action_id"], {})):
+            return None
+        path = start["mutation_target_path"]
+        if chain and (
+            start.get("mutation_test_only") is not True
+            or not _is_test_path(path) or not path.endswith(".py")
+            or path.rsplit("/", 1)[-1] in {"conftest.py", "setup.py", "__init__.py"}
+            or start["baseline_diff_hash"] != chain[-1]["mutation_expected_worktree_diff_hash"]
+            or (path in hashes and start["mutation_preimage_file_hash"] != hashes[path])
+        ):
+            return None
+        chain.append(start)
+        hashes[path] = start["mutation_expected_postimage_file_hash"]
+    if not chain or chain[-1]["mutation_expected_worktree_diff_hash"] != current_diff:
+        return None
+    return chain
+
+
+def _same_failure(before, after):
+    """Require the same public inputs, environment and captured failure, not a label."""
+    old, new = before.get("output", {}), after.get("output", {})
+    if any(not old.get(key) or old[key] != new.get(key)
+           for key in ("image_digest", "profile_hash")):
+        return False
+    a, b = old.get("reproduction", {}), new.get("reproduction", {})
+    if a.get("binding") != b.get("binding") or a.get("observed_json") != b.get("observed_json"):
+        return False
+    if reproduction.call_identity(a["call_observation"]) != reproduction.call_identity(
+        b["call_observation"]
+    ):
+        return False
+    def outputs(observation):
+        return [{key: call.get(key) for key in (
+            "call_id", "capture", "exception", "outcome", "exit_code")}
+                for call in observation["call_observation"]["calls"]]
+    return sha256_json(outputs(a)) == sha256_json(outputs(b))
+
+
+def _historical_links(starts, results, chain, link, failure, base):
+    if not chain:
+        return {}
+    histories = {}
+    for start in starts.values():
+        prior = start.get("repair_path_link") or {}
+        if prior == link or any(prior.get(key) != link[key] for key in (
+            "policy", "case_id", "replay_action_id", "mutation_action_id", "call_id"
+        )):
+            continue
+        position = next((i for i, step in enumerate(chain[:-1])
+                         if step["mutation_expected_worktree_diff_hash"]
+                         == prior.get("candidate_diff_hash")), None)
+        old_failure = results.get(prior.get("failure_action_id"), {})
+        if (position is not None
+                and _unchanged_failure(old_failure, base, link["case_id"],
+                                       prior["candidate_diff_hash"])
+                and _same_failure(old_failure, failure)):
+            histories[start["action_id"]] = {
+                "observed_diff_hash": prior["candidate_diff_hash"],
+                "test_only_mutation_action_ids": [s["action_id"] for s in chain[position + 1:]],
+            }
+    return histories
+
+
+def _exception_sites(trace):
+    sites = []
+    for row in [trace["focus"], *trace["watches"]]:
+        for event in row["events"]:
+            if event.get("event") != "exception":
+                continue
+            site = {**{key: row[key] for key in ("origin", "path", "function", "file_hash")},
+                    "line": event["line"], "exception_type": event["exception_type"]}
+            if site not in sites:
+                sites.append(site)
+    return sites[:4], max(0, len(sites) - 4)
 
 
 def _unchanged_failure(result, baseline, case_id, current_diff):
@@ -122,7 +243,10 @@ def review(events, current_diff, completion):
             "case_id": case["case_id"], "replay_action_id": case["root_action_id"],
             "failure_action_id": failure["action_id"], "mutation_action_id": mutation["action_id"],
             "call_id": call_id}
-    linked = [start for start in starts.values() if start.get("repair_path_link") == link]
+    history = _historical_links(starts, results, _test_only_chain(
+        events, mutation["action_id"], current_diff, results), link, failure, base)
+    linked = [start for start in starts.values() if start.get("repair_path_link") == link
+              or start["action_id"] in history]
     preparations = [s["action_id"] for s in linked if s["tool"] in READ_TOOLS]
     attempts = [s for s in linked if s["tool"] == "run_probe"]
     dispatched = {e["payload"]["action_id"] for e in events
@@ -132,9 +256,13 @@ def review(events, current_diff, completion):
     diagnosis = next((results[s["action_id"]] for s in executed
                       if s["action_id"] in results), None)
     complete = False
+    trace = {}
+    observed_diff = current_diff
     if diagnosis:
         trace = diagnosis.get("output", {}).get("call_path", {})
         admission = starts[diagnosis["action_id"]]
+        historical = history.get(diagnosis["action_id"])
+        observed_diff = historical["observed_diff_hash"] if historical else current_diff
         request = (admission.get("diagnosis_request", {}).get("call_path")
                    or admission["arguments"].get("call_path", {}))
         expected_scope = ("selected_call_launch_thread" if request.get("scope") == "selected_call"
@@ -144,7 +272,7 @@ def review(events, current_diff, completion):
         complete = bool(
             trace.get("status") == "complete" and trace.get("call_id") == call_id
             and expected_scope is not None and trace.get("scope") == expected_scope
-            and trace.get("candidate_diff_hash") == current_diff
+            and trace.get("candidate_diff_hash") == observed_diff
             and trace.get("snapshot_hash") is not None
             and trace.get("snapshot_hash") == diagnosis["output"].get("snapshot_hash")
             and trace.get("execution_identity_hash") == sha256_json(
@@ -152,18 +280,54 @@ def review(events, current_diff, completion):
             and trace.get("raw_request_hash") == sha256_json(request)
             and _watched_changes(request, changes)
             and any((c["path"], c["file_hash"]) in watched_hashes for c in changes)
-            and _unchanged_failure(diagnosis, base, case["case_id"], current_diff)
+            and _unchanged_failure(diagnosis, base, case["case_id"], observed_diff)
+            and (not historical or (
+                admission.get("input_hash")
+                and admission["input_hash"] == diagnosis.get("input_hash")
+                and _same_failure(diagnosis, failure)))
         )
     exhausted = bool(executed or len(rejected) >= MAX_REJECTED_REQUESTS)
+    collection_status = "complete" if complete else "unknown" if executed else "not_collected"
+    sites, omitted_sites = _exception_sites(trace) if complete else ([], 0)
+    origin = diagnosis or (executed[0] if executed else None)
+    evidence = None
+    if origin:
+        historical = history.get(origin["action_id"])
+        attempted_diff = historical["observed_diff_hash"] if historical else current_diff
+        evidence = {
+            "relation": "historical_test_only" if historical else "current_candidate",
+            "source_action_id": origin["action_id"],
+            "observed_diff_hash": attempted_diff if complete else None,
+            "attempted_diff_hash": attempted_diff, "current_diff_hash": current_diff,
+            "snapshot_hash": trace.get("snapshot_hash") if complete else None,
+            "test_only_mutation_action_ids": (
+                historical["test_only_mutation_action_ids"] if historical else []),
+            "current_snapshot_trace": bool(complete and not historical),
+        }
     return {
         **link, "status": "diagnosed" if complete else "verification_incomplete" if exhausted
         else "needs_path_diagnosis", "blocked": not complete,
         "diagnosis_action_id": diagnosis["action_id"] if complete else None,
+        "diagnosis_collection_status": collection_status,
+        "original_effect_status": "original_effect_refuted",
+        **({"diagnosis_evidence": evidence} if evidence else {}),
         **({"diagnosis_observation": _summary(diagnosis["output"]["call_path"])}
            if complete else {}),
         "preparation_available": not preparations, "preparation_action_ids": preparations,
         "rejected_requests": len(rejected), "execution_attempted": bool(executed),
         "unobserved_changes": changes,
+        "factual_refutation": {
+            "failure_action_id": failure["action_id"], "case_id": case["case_id"],
+            "call_id": call_id, "candidate_diff_hash": current_diff,
+            "original_failure": "unchanged", "unobserved_changes": copy.deepcopy(changes),
+            "exception_sites": sites, "omitted_exception_site_count": omitted_sites,
+            "exception_evidence_action_id": diagnosis["action_id"] if complete else None,
+            "exception_evidence_diff_hash": observed_diff if complete else None,
+            "interpretation": "Captured original failure and measured line absence refute the "
+                "predicted original-call effect. Exception sites are observed samples; exceptions "
+                "may be caught and a return event may be exception unwinding. No alternative "
+                "repair mechanism or semantic correctness is established.",
+        },
         "prior_prediction": {"hypothesis": mutation_start.get("arguments", {}).get("hypothesis"),
                              "expected_behavior": mutation_start.get("arguments", {}).get(
                                  "expected_behavior"),

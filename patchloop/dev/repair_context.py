@@ -7,9 +7,13 @@ Use observe_original before the first edit when a candidate call-path premise ne
 give a short hypothesis and 1-2 candidate functions with falsifiable event predictions.
 The host replays the frozen original caller and collects bounded parameters and events.
 A matched prediction tests a premise, not a repair. Unknown is never absence.
-For a supported edit, replace_text needs only path, old_text, new_text, occurrence,
+For a supported edit, replace_text starts with path, old_text, new_text, occurrence,
 hypothesis and expected_behavior. Copy an exact current source anchor. Explain the revised
 mechanism in hypothesis using the actual original-call observations and counterevidence.
+After a refuted repair's diagnosis, repair_prediction selects one changed observable
+or a bounded test addition. The host binds the counterevidence. A test addition leaves
+the source repair unresolved; use the frozen run_tests comparison when pending.
+PASS/PASS is non-discriminating. Prediction support never replaces original/control checks.
 No turn_decision, plan, memory update or causal_revision is needed for edit, observation
 or stop. For other actions follow their offered schema; nullable updates may stay null.
 stop_task needs only reason_code and summary. It abandons without submission.
@@ -20,8 +24,8 @@ Return a registered tool call, with concise public statements and no reasoning t
 
 
 def pending(state):
-    return (state.get("workflow_gate") == "needs_mutation"
-            and bool({"replace_text", "observe_original"}
+    return (state.get("workflow_gate") in {"needs_mutation", "needs_test_comparison"}
+            and bool({"replace_text", "observe_original", "run_tests"}
                      & set(state.get("available_tool_names", []))))
 
 
@@ -76,11 +80,13 @@ def correction(code, issue, failure=None):
         "kind": "no_action" if fresh else "request_fields",
         "fresh_segment": fresh,
         "message": (
-            "No executable action was returned. Use six-field replace_text for a supported "
-            "repair, observe_original if offered to test an unresolved premise, or two-field "
-            "stop_task. Do not reconstruct plans or notes. The same remaining budget applies."
+            "No executable action was returned. Use an offered small action: replace_text "
+            "with repair_prediction after diagnosis, the frozen run_tests when pending, "
+            "observe_original if offered, or stop_task. Do not reconstruct plans or notes. "
+            "The same remaining budget applies."
             if fresh else f"{issue} Correct only the listed request fields; preserve valid "
-            "content. Edits need the six execution/intent fields, without plan or memory metadata."
+            "content. Keep the base edit fields and any offered repair_prediction, "
+            "without plan or memory metadata."
         ),
         "tool_contract_failure": failure,
     }

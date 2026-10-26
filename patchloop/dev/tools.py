@@ -33,8 +33,10 @@ from patchloop.dev import (
     probe_replay,
     probe_requests,
     repair_path,
+    repair_prediction,
     reproduction,
     requirement_reference,
+    test_comparison,
 )
 from patchloop.dev.check_feedback import check_failure_diagnostics, output_tail
 from patchloop.dev.context import (
@@ -228,6 +230,9 @@ def dev_tool_schemas(
     probe_recheck_policy: str = "none",
     probe_environment: dict[str, Any] | None = None,
     path_diagnosis_pending: bool = False,
+    repair_test_comparison_pending: bool = False,
+    repair_revision: dict[str, Any] | None = None,
+    repair_test_edit_enabled: bool = False,
     agent_policy: str = "current",
     history_search_policy: history_search.Policy = "none",
 ) -> list[dict[str, Any]]:
@@ -352,6 +357,11 @@ def dev_tool_schemas(
             },
         },
     ]
+    if repair_revision and repair_revision.get("status") == "diagnosed":
+        parameters = next(s["parameters"] for s in schemas if s["name"] == "replace_text")
+        parameters["properties"]["repair_prediction"] = repair_prediction.schema(
+            repair_revision, test_enabled=repair_test_edit_enabled, suite_ids=test_suite_ids)
+        parameters["required"].append("repair_prediction")
     if finish_enabled:
         schemas.append(
             {
@@ -556,7 +566,8 @@ def dev_tool_schemas(
         if name not in enabled:
             continue
         parameters = schema["parameters"]
-        if path_diagnosis_pending or name in {"replace_text", "stop_task", "observe_original"}:
+        if (path_diagnosis_pending or repair_test_comparison_pending
+                or name in {"replace_text", "stop_task", "observe_original"}):
             projected.append(schema)
             continue
         if agent_policy == "thin":
@@ -589,6 +600,7 @@ def validate_tool_batch(
     allowed_read_paths: Sequence[str] = (),
     agent_policy: str = "current",
     path_diagnosis_pending: bool = False,
+    repair_test_comparison_pending: bool = False,
 ) -> str:
     """Return ``parallel_read`` or ``single_action``; reject every mixed shape."""
 
@@ -604,10 +616,10 @@ def validate_tool_batch(
         raise ContractError("model response requested a tool unavailable at the current gate")
     if agent_policy not in {"current", "thin"}:
         raise ContractError("unknown agent policy")
-    if path_diagnosis_pending:
+    if path_diagnosis_pending or repair_test_comparison_pending:
         if any({"turn_decision", "rejected_turn_decision", "memory_update"}
                & call.model_fields_set for call in calls):
-            raise ContractError("diagnosis tools do not accept plan or memory annotations")
+            raise ContractError("diagnosis tools and pending comparisons do not accept annotations")
         for call in calls:
             if call.name == "run_probe":
                 diagnosis_request.validate_selection(call.arguments)
@@ -639,7 +651,7 @@ def validate_tool_batch(
         "finish_task": "finish",
         "stop_task": "stop",
     }
-    if not path_diagnosis_pending and any(
+    if not (path_diagnosis_pending or repair_test_comparison_pending) and any(
         call.turn_decision is not None and call.turn_decision.mode != expected_modes[call.name]
         for call in calls
     ):
@@ -2596,11 +2608,13 @@ class DevToolGateway:
         )
 
     def execute_batch(self, calls: list[RequestedTool], *,
-                      path_diagnosis_pending=False) -> list[DevToolResult]:
+                      path_diagnosis_pending=False,
+                      repair_test_comparison_pending=False) -> list[DevToolResult]:
         shape = validate_tool_batch(
             calls, max_parallel_reads=self.limits.max_parallel_reads,
             agent_policy=self.agent_policy,
             path_diagnosis_pending=path_diagnosis_pending,
+            repair_test_comparison_pending=repair_test_comparison_pending,
         )
         if shape == "single_action":
             return [self.execute(calls[0])]
@@ -2657,7 +2671,15 @@ class DevToolGateway:
         path_admission = copy.deepcopy(pending.get("diagnosis_request")) if pending else None
         first_admission = copy.deepcopy(pending.get("first_observation")) if pending else None
         first_link = copy.deepcopy(pending.get("first_observation_link")) if pending else None
+        repair_intent = copy.deepcopy(pending.get("repair_prediction")) if pending else None
+        prediction_observation = (
+            copy.deepcopy(pending.get("repair_prediction_observation")) if pending else None)
+        repair_test_link = copy.deepcopy(pending.get("repair_test_link")) if pending else None
         probe_call_arguments = call.arguments
+        if prediction_observation is not None:
+            path_request = prediction_observation.get("call_path")
+            if prediction_observation["candidate_diff_hash"] != baseline:
+                preflight_error = RecoveryError("pending prediction observation changed diff")
         if first_admission is not None and call.name == "observe_original":
             probe_call_arguments = first_observation.arguments(call.arguments, first_admission)
             path_request = probe_call_arguments["call_path"]
@@ -2706,6 +2728,13 @@ class DevToolGateway:
                               "observation_action_id": first_state["observation"]["action_id"],
                               "observation_status": first_state["observation"]["status"]}
             path_state = verification["repair_path"]
+            prediction_state = verification["repair_prediction"]
+            pending_comparison = prediction_state["status"] == "needs_test_comparison"
+            if pending_comparison and call.name not in {"run_tests", "stop_task"} and not (
+                call.name == "run_probe" and call.action_id.startswith("completion-reproduction-")
+            ):
+                preflight_error = ContractError(
+                    "Compare the added test on before/after source before another edit")
             if path_state.get("blocked") and call.name != "stop_task":
                 # Record rejected requests too, without treating them as executions.
                 path_link = repair_path.link(path_state)
@@ -2724,10 +2753,17 @@ class DevToolGateway:
                     probe_call_arguments = diagnosis_request.arguments(
                         call.arguments, path_admission)
                     path_request = probe_call_arguments["call_path"]
-                path_link = repair_path.validate(
-                    path_state, call.name,
-                    call.arguments if call.name == "observe_original" else probe_call_arguments,
-                )
+                if not (pending_comparison and call.name == "run_tests"):
+                    path_link = repair_path.validate(
+                        path_state, call.name,
+                        call.arguments if call.name == "observe_original" else probe_call_arguments,
+                    )
+                if call.name == "replace_text":
+                    repair_intent = repair_prediction.admit(
+                        path_state, prediction_state, call.arguments, public_task=self.public_task)
+                elif call.name == "run_tests":
+                    repair_test_link = repair_prediction.validate_test(
+                        prediction_state, path_state, call.arguments)
             except (PatchLoopError, ValueError, OSError, SyntaxError) as exc:
                 preflight_error = exc
             helper_state = verification["helper_correction"]
@@ -2737,6 +2773,12 @@ class DevToolGateway:
                 helper_recovery.validate(helper_state, call.name, call.arguments)
             except ContractError as exc:
                 preflight_error = exc
+            if call.name == "run_probe" and preflight_error is None:
+                prediction_observation = repair_prediction.prepare_replay(
+                    self.journal.events(), call, baseline, self.journal.run_id, self.workspace,
+                    getattr(self.probe_sandbox, "validate_call_path", None), deadline=self.deadline)
+                if prediction_observation is not None:
+                    path_request = prediction_observation.get("call_path")
         replay_probe = (
             is_probe and probe_call_arguments.get("replay_action_id") is not None
         )
@@ -2858,6 +2900,21 @@ class DevToolGateway:
                         raise preflight_error
                     self._require_acquisition_released(baseline)
                     validated = self._validate_replacement_intent(call.arguments)
+                    test_only = self._validated_test_only(validated.path)
+                    if repair_intent is not None and (repair_intent["kind"] == "test") != test_only:
+                        raise ContractError(
+                            "repair_prediction.kind must distinguish additive tests "
+                            "from source repair")
+                    if repair_intent is not None and repair_intent["kind"] == "test":
+                        selection = SelectedTests.model_validate(repair_intent["selection"])
+                        suite = next(s for s in self.public_task.test_suites
+                                     if s.id == selection.suite_id)
+                        check, _ = selected_check(
+                            suite, selection, self.workspace, self._tracked_path)
+                        test_comparison._python_command(check, "", "")
+                        repair_prediction.validate_addition(
+                            validated.path, validated.before_bytes, validated.after_bytes,
+                            repair_intent["selection"])
                     mutation_anchor_evidence_span_id = validated.anchor_evidence_span_id
                     candidate_summary = WorkspaceManager.preview_text_replacement(
                         self.workspace,
@@ -2888,6 +2945,11 @@ class DevToolGateway:
                     "baseline_diff_hash": baseline,
                     "baseline_changed_files": baseline_summary.changed_files,
                     **({"repair_path_link": path_link} if path_link is not None else {}),
+                    **({"repair_prediction": repair_intent} if repair_intent is not None else {}),
+                    **({"repair_prediction_observation": prediction_observation}
+                       if prediction_observation is not None else {}),
+                    **({"repair_test_link": repair_test_link}
+                       if repair_test_link is not None else {}),
                     **({"diagnosis_request": path_admission} if path_admission is not None else {}),
                     **({"first_observation": first_admission}
                        if first_admission is not None else {}),
@@ -2944,6 +3006,8 @@ class DevToolGateway:
                         else None
                     ),
                     "mutation_admitted": mutation_admitted,
+                    **({"mutation_test_only": self._validated_test_only(validated.path)}
+                       if call.name == "replace_text" and mutation_admitted is True else {}),
                     **({"mutation_requirement_reference": mutation_requirement_reference}
                        if call.name == "replace_text" else {}),
                     **({"mutation_behavior_cases": mutation_behavior_cases}
@@ -3039,6 +3103,10 @@ class DevToolGateway:
                     output["diagnosis_request"] = copy.deepcopy(path_admission)
                 if first_admission is not None:
                     output["first_observation"] = copy.deepcopy(first_admission)
+                if prediction_observation is not None:
+                    output["repair_prediction"] = repair_prediction.assess(
+                        prediction_observation, output,
+                        {"run_id": self.journal.run_id, "action_id": call.action_id})
                 evidence_cache_hit = False
             elif call.name == history_search.TOOL:
                 if self.history_search_policy != history_search.POLICY:
@@ -3114,6 +3182,10 @@ class DevToolGateway:
                 output["request_validation"] = request_validation
             if helper_link is not None:
                 output["helper_recovery_link"] = copy.deepcopy(helper_link)
+            if repair_intent is not None:
+                output["mutation"]["repair_prediction"] = copy.deepcopy(repair_intent)
+            if repair_test_link is not None:
+                output["repair_test_link"] = copy.deepcopy(repair_test_link)
             if path_link is not None:
                 output["repair_path_link"] = copy.deepcopy(path_link)
                 if call.name == "replace_text":
@@ -3468,6 +3540,12 @@ class DevToolGateway:
             raise ContractError("replace_text refuses legacy carriage-return newlines")
         newline = "\r\n" if "\r\n" in decoded else "\n"
         return normalize_source_text(decoded), newline
+
+    def _validated_test_only(self, path: str) -> bool:
+        """Called only after additive-test validation, never infer from a suffix alone."""
+        roots = self.public_task.constraints.additive_test_roots
+        return bool(roots and any(path.startswith(root + "/") for root in roots)
+                    and Path(path).name not in {"conftest.py", "__init__.py", "setup.py"})
 
     def _validate_replacement_intent(self, arguments: dict[str, Any]) -> _ValidatedReplacement:
         intent = TextReplacementIntent.model_validate(arguments)
@@ -4158,9 +4236,12 @@ class DevToolGateway:
             self.journal.events(), diff_hash, public_task=self.public_task,
             run_id=self.journal.run_id,
         )
+        path = repair_prediction.decorate(
+            repair_path.review(self.journal.events(), diff_hash, review))
         return {
             **{key: value for key, value in review.items() if key != "pending_cases"},
-            "repair_path": repair_path.review(self.journal.events(), diff_hash, review),
+            "repair_path": path,
+            "repair_prediction": repair_prediction.review(self.journal.events(), diff_hash, path),
             "first_observation": first_observation.review(self.journal.events(), diff_hash, review),
             "helper_correction": helper_recovery.review(self.journal.events(), diff_hash),
             "original_obligation": original_obligation.review(

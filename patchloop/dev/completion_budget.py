@@ -38,6 +38,8 @@ class CompletionState:
     path_preparation_available: bool = False
     path_request_correction_available: bool = False
     helper_correction_pending: bool = False
+    test_comparison_pending: bool = False
+    test_comparison_replay_count: int = 0
 
 
 @dataclass(frozen=True)
@@ -138,16 +140,19 @@ def completion_budget(state: CompletionState) -> CompletionBudget:
     request_correction = int(
         state.path_diagnosis_pending and state.path_request_correction_available
     )
+    comparison_calls = int(state.test_comparison_pending)
+    comparison_actions = (2 + state.test_comparison_replay_count) * comparison_calls
     return CompletionBudget(
-        minimum=minimum + diagnosis,
-        protected=protected + diagnosis + preparation + request_correction,
+        minimum=minimum + diagnosis + comparison_calls,
+        protected=protected + diagnosis + preparation + request_correction + comparison_calls,
         future_check_failures=future_failures,
         mutation_retry_reserve=mutation_retry,
         check_recovery_reserve=check_recovery,
         current_read_reserve=current_read,
         minimum_tool_actions=(minimum_tools + reproduction_actions
-                              + diagnosis),
-        protected_tool_actions=protected_tools + diagnosis + preparation + request_correction,
+                              + diagnosis + comparison_actions),
+        protected_tool_actions=(protected_tools + diagnosis + preparation + request_correction
+                                + comparison_actions),
         check_recovery_tool_actions=(check_recovery_tools
                                      + future_failures * state.early_reproduction_count),
     )
@@ -162,6 +167,27 @@ def mutation_attempt_budget(state: CompletionState) -> CompletionBudget:
     return completion_budget(replace(
         state, requires_mutation=True, anchor_available=True, repair_read_credit=False,
     ))
+
+
+def test_addition_budget(state: CompletionState) -> CompletionBudget:
+    """Count a test edit, paired comparison, and the still-required source repair.
+
+    The test edit consumes a real mutation slot and its automatic original replay.
+    Its comparison consumes one model call and two sandbox actions. A diagnostic
+    recheck may retire the earlier failure, so the next source edit cannot rely on
+    that check's automatic-recheck saving.
+    """
+    successor = completion_budget(replace(
+        state, requires_mutation=True, remaining_mutations=max(0, state.remaining_mutations - 1),
+        current_recheck_eligible=False, test_comparison_pending=True,
+        test_comparison_replay_count=state.early_reproduction_count,
+    ))
+    extra_actions = 1 + int(state.automatic_recheck and state.current_recheck_eligible)
+    return replace(
+        successor, minimum=successor.minimum + 1, protected=successor.protected + 1,
+        minimum_tool_actions=successor.minimum_tool_actions + extra_actions,
+        protected_tool_actions=successor.protected_tool_actions + extra_actions,
+    )
 
 
 def minimum_successor_calls(state: CompletionState, tool: str) -> int:
@@ -180,6 +206,10 @@ def minimum_successor_calls(state: CompletionState, tool: str) -> int:
         return completion_budget(replace(state, path_diagnosis_pending=False)).minimum
     if tool == "run_probe" and state.helper_correction_pending:
         return completion_budget(replace(state, helper_correction_pending=False)).minimum
+    if tool == "run_tests" and state.test_comparison_pending:
+        return completion_budget(replace(
+            state, test_comparison_pending=False, test_comparison_replay_count=0,
+        )).minimum
     if tool in {"read_file", "search_files"}:
         return completion_budget(replace(state, anchor_available=True)).minimum
     if tool in {"search_history", "run_probe", "run_tests", "observe_original"}:

@@ -154,9 +154,36 @@ execution identity, exported snapshot and watched file hashes. The result must
 still reproduce the same original failure. Current diagnosis state retains a
 bounded entry/exit summary and exact action reference across context changes;
 omitted events remain explicit. Full receipts remain in the public history.
-The next edit expresses the revised mechanism in `hypothesis` and receives a host-owned
-link to the diagnosis. This refutes the previous predicted original-call effect;
-it does not prove an alternative mechanism or require every changed line to run.
+Collection completion and original-call effect are separate. `diagnosed` means
+complete collection, while `original_effect_status` remains refuted. The bounded
+`factual_refutation` retains the unchanged failure, unobserved changes, sampled
+exception sites and their exact evidence action/diff. A caught exception or return
+event is not proof of where the original failure escaped.
+
+After diagnosis, the compact edit schema adds `repair_prediction`. A source edit
+selects a host-numbered function and a changed entered/not_entered/raised/not_raised
+event, or target -1 with `original_failure_absent`. An event already true in the
+failed observation cannot serve as the changed prediction. `not_raised` requires
+entry plus zero exception events. Model prose explains the revised mechanism;
+neither that prose nor a valid prediction proves the mechanism or task correctness.
+
+The host attaches diagnosis/mutation/refutation identity and checks the prediction
+on the already-required automatic original replay. Function predictions add bounded
+whole-call tracing to that replay; no extra model call or probe is scheduled. The raw
+replay arguments/action identity stay unchanged. Current source, call, request,
+snapshot, execution identity, inputs, binding and environment must match. A removed
+function, partial trace or changed invocation gives unverified prediction feedback
+while preserving the original replay. Prediction and original-effect results are
+reported separately and never supply required-check credit.
+
+Only host-admitted additive test mutations can carry a prior diagnosis across a
+full-diff change. Every incremental mutation receipt must agree, runtime source
+must be unchanged, and a fresh current original must reproduce the same captured
+failure with identical binding, conditions, image and profile. Configuration,
+conftest, initialization or unproven/legacy edits cannot qualify. The reused trace
+keeps its historical diff/snapshot and `current_snapshot_trace=false`; it is not a
+new trace of the current snapshot. Unknown attempts and consumed request/preparation
+allowances carry forward too. Source changes still need their own current evidence.
 
 ## Selected tests
 
@@ -173,6 +200,21 @@ The result always retains `requirement_fit=UNVERIFIED` and
 `original_requirement_credit=false`. A discriminating test still needs a valid
 public requirement and original-call mapping. It cannot retire F0010 merely by
 passing, populate required-check credit, or replace original replay.
+
+For one diagnosed implementation, at most one bounded paired selection can use
+minimum completion reserves. A test-only edit uses `repair_prediction.kind=test`
+and names a registered suite plus the added/extended function or method. The host
+checks that this edit actually adds that test and that the suite supports comparison.
+It freezes `before_mutation` to the diagnosed source edit. Test addition leaves
+source repair unresolved, consumes a normal accepted-edit slot and requires room
+for a later source edit. Its next model action is the frozen `run_tests` selection
+or stop, without plan/memory annotations. No fresh path diagnosis is required when
+the strict historical-reuse conditions above hold.
+
+`PASSED_BOTH` is non-discriminating; malformed or incomplete comparison is
+unverified. Both leave original-call requirements unchanged. Starting/completing
+the pair does not grant another pair on the same diagnosis. Outside this bounded
+diagnosis path, ordinary selected tests retain their existing behavior.
 
 ## Resources and recovery
 
@@ -196,9 +238,11 @@ turn into a dispatch after interruption. Completed results replay; an uncertain
 dispatch does not retry. Legacy requests containing explicit call IDs/lines remain
 readable for recovery but are absent from the fresh model schema.
 
-A selected comparison reserves two physical executions and the protected
-completion successor before starting. If only one execution fits, the offered
-schema permits `comparison: null` and keeps the ordinary selection available.
+A selected comparison reserves two physical executions and its completion successor
+before starting. Ordinary optional selections use the protected successor; the
+single diagnosed comparison may use the minimum successor. Only ordinary selections
+can fall back to `comparison: null` when two executions do not fit. A frozen pending
+comparison instead returns verification incomplete if it cannot fit.
 The model batch already counts its first
 action; distinct durable child starts add the second. Restore uses the same
 count. Exact finished child CAS receipts are reused. A child start without a
@@ -216,3 +260,5 @@ and [original implementation](../docs/history/2026-10-25-callpath-repair.md).
 
 For the first-repair path use `tests/first-repair.txt`; quick includes representative
 controls. Local scripts do not establish model uptake or F0010 repair success.
+For refutation-linked revisions and test-only diagnosis reuse, use the short
+`tests/repair-revision.txt` selection and [local record](../docs/history/2026-10-26-repair-revision.md).

@@ -78,6 +78,18 @@ protects preparation and one malformed-request correction. Here only a durable
 execution start consumes the single actual attempt. Optional selected-test
 comparisons reserve two physical child executions plus completion capacity.
 
+A diagnosed implementation may instead revise source with a small prediction or
+add a selected test. Test addition cannot use the source-edit successor discount:
+it reserves the edit, its automatic original replay/recheck, one paired-test model
+call and two child executions, then the still-needed source edit, original replay,
+required checks and finish. It is offered only with at least two accepted-edit
+slots left. All normal edit, call, action, monetary and output caps remain fixed.
+The pending comparison contributes one model call and two tool actions, plus any
+not-yet-run original replay; a still-pending diagnosis remains in the forecast.
+Only this one diagnosed comparison may use minimum reserves. A successful fresh
+original observation remains authoritative; a test-only PASS never supplies it.
+The unused protocol correction reserve is not released by this change.
+
 ## Focused local verification
 
 [Helper program correction](helper-correction.md) reserves one model/probe action

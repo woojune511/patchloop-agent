@@ -148,6 +148,8 @@ def test_failed_repair_requires_path_then_links_next_hypothesis(gateway_factory)
     missing.arguments["hypothesis"] = ""
     assert gateway.execute(missing).status == "failed"
     fixed.arguments.pop("causal_revision")
+    fixed.arguments["repair_prediction"] = {
+        "kind": "source", "target": -1, "event": "original_failure_absent"}
     repaired = gateway.execute(fixed)
     assert repaired.status == "succeeded", repaired
     assert repaired.output["mutation"]["repair_path_link"]["diagnosis_action_id"] == (
