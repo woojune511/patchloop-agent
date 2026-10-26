@@ -46,20 +46,25 @@ complete coverage with identical captured calls and unchanged F0010/control outp
 Pre-edit tracing retained file_build's missing initializer path; post-edit tracing
 represented 31 callback calls in 26 detail records. These are collector controls,
 not model repair or acceptance evidence; see the correction record.
-The prior [live pilot](history/2026-10-26-first-repair-live.md) reached its first
-edit but retained F0010, with both traces truncated. Its paid allocation is closed.
-The [analysis](history/2026-10-26-trace-limit-analysis.md) linked the failure to
-file loading of a nonexistent initializer; the edited callback branch was not
-observed. Model use of the corrected evidence and successful repair remain open.
 
-The frozen absolute-path call from /tmp differs from the issue's cwd/relative-CLI
-steps; within-run identity does not establish that broader equivalence. This
-collector change preserves saved calls and does not silently rewrite that mapping.
-Any new paid pilot needs its own exact approved scope.
-The [new one-run proposal](history/2026-10-26-trace-budget-live-plan.md) keeps
-mini-xhigh, 40,000/25,000 output ceilings and a $1.20 invocation cap. It measures
-complete observation, public-evidence uptake and original-call repair separately;
-preparation does not authorize provider dispatch or reopen a prior allocation.
+The [authorized live pilot](history/2026-10-26-trace-budget-live.md) returned two
+complete traces without exhausted collection limits. The initial observation
+reached 25 later model inputs; the post-edit diagnosis reached the next edit.
+The source change still missed the failing route: spec.find_spec raised before
+the changed branch. The next edit added an unexecuted test while retaining the
+refuted source hypothesis. Both original replays retained F0010 and the clean
+control. This establishes observation and delivery, not useful repair revision.
+
+The fresh caller uses the issue's cwd and relative target; direct Python API use
+under the prepared environment still does not establish full shell/venv equivalence.
+It differs from the prior pilot's caller/control, so historical comparisons cannot
+identify causal repair gains. Saved prior calls and their caveats remain unchanged.
+
+The run ended VERIFICATION_INCOMPLETE at $0.944915400 within $1.20: after the unused
+correction reserve, two minimum calls were funded but four were required. No output
+cap was exhausted. The next question is how the observed exception and unexecuted
+branch constrain a revised repair or discriminating test, and whether test-only
+edits can reuse valid path diagnosis. No limit increase or new run is authorized.
 
 ## Supporting evidence
 
@@ -90,6 +95,7 @@ submission, independent task acceptance and safety are separate. Mock safety is 
 
 Do not start Docker Desktop or pull/build evaluator images automatically. Preserve
 exact recovery identities, zero SDK retries and stop-all on count/transport/billing
-uncertainty. The latest live run made one mutation but retained the original failure;
-checks, finish, frozen post-submission checks and independent evaluation were NOT_RUN.
+uncertainty. The latest live run made one source edit and one test-only edit but
+retained the original failure; checks, finish, frozen post-submission checks and
+independent evaluation were NOT_RUN.
 Linux CI and general improvement remain unverified.
