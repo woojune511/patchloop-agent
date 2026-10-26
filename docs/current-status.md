@@ -24,102 +24,45 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [exception-frame investigation](history/2026-10-27-exception-frames.md) confirmed
-why the two saved candidates looked alike despite distinct underlying failures.
-Both escaped through Pylint crash reporting as FileNotFoundError. The first candidate
-previously raised AttributeError in tokenize_module because the namespace module
-had no stream; the second tried to open its nonexistent initializer in _get_stream.
-These were observed by local replay of the saved public candidates, not inferred
-from the error message. They do not yet specify a proven correct repair.
+The [saved-mini verification](history/2026-10-27-mini-candidate-verification.md)
+confirmed that generated Pylint cache files caused the earlier strict input-identity
+failure. Separating fixture inputs from cache outputs gives matching original and
+control conditions: mini removes F0010/unexpected exceptions, but still produces
+C0112 and exit 16 on the public empty-file fixture. Its separate acceptance is FAIL.
 
-Fresh invocation v5 now supplies bounded public exception frames and cause/context
-chains through a separate report channel. Core failure capture, whole-case UNKNOWN,
-finish blocking and historical observer v1-v4 bytes are preserved. The current-profile
-base/candidate replay delivered two exceptions and nine public frames into the compact
-model view. Tool surface v63 binds this implementation. This is implemented and
-locally exercised; correct-repair benefit remains unproven.
+The [operator namespace-doc follow-up](history/2026-10-27-namespace-doc-repair.md)
+changed only `doc=""` to `doc=None` on that saved candidate. Six public probes
+confirmed empty output/exit 0 for the original empty and nonempty fixtures,
+unchanged standalone controls, preserved real empty-docstring diagnostics and
+matching selected inputs. Focused work took 72.899 seconds; the public regression
+passed 1,231 tests. Separate isolated acceptance remains FAIL, with regression,
+scope and safety PASS. This is a public symptom repair by the operator, not a
+new mini-model success or an accepted task solution. The private failure cause
+is unknown and is not attributed to any public symptom.
 
-The [seeded information comparison](history/2026-10-27-exception-frame-repair-live.md)
-is closed: A/B each stopped at four model responses with no edit, spending USD
-0.047714850 combined. B received the complete frames but continued builder/manager
-inspection. Neither arm exhausted input, output or cost ceilings. The four-response
-horizon prevented a repair outcome; this does not show that frames have no repair
-effect or that the ordinary runner shares this limit. No new target verification,
-public regression, submission or acceptance occurred. All paid allocations are closed.
+Preserve these artifacts and production defaults. The inherited missing-initializer
+guard's broader namespace/path coverage and directory traversal remain unverified.
+Next distinguish those paths using public source and discriminating calls before
+another paid repair trial. Do not equate absence of F0010, a regression PASS or
+one expected output with whole-task correctness. Do not increase model/context
+budgets based on this local outcome. All paid allocations are closed.
 
-The [source-ready single run](history/2026-10-27-source-ready-repair-live.md) is also
-closed without a repair. Every actual input retained the exception and 148 public
-source lines with valid registered edit anchors. The model recognized a possible
-stream/tokenization mechanism but spent twelve actions inspecting source/tests.
-The operator then dispatched a seventh response despite zero remaining actions;
-usage validation failed and stopped the run. First-six settled cost is USD
-0.084176850; total cost including the seventh response is UNKNOWN. No target replay,
-public regression, submission or acceptance occurred.
+Public exception frames and cause/context chains are implemented in fresh invocation
+v5, with historical observer v1-v4 preserved; see the
+[frame investigation](history/2026-10-27-exception-frames.md). Live information,
+[request-annotation](history/2026-10-27-request-annotation-results.md) and
+[model-setting](history/2026-10-27-model-setting-results.md) comparisons are closed
+without an accepted repair. They justify separating evidence delivery, action
+selection and task correctness, not a general model-quality conclusion. The
+[source-ready run](history/2026-10-27-source-ready-repair-live.md) retains one
+unsettled response; the local action-capacity fix does not resolve that billing.
 
-The diagnostic operator now checks exhausted action capacity before another count
-or generation and retains the adapter's sanitized usage evidence on uncertainty.
-This local fix prevents unusable dispatch; it does not repair Astroid or resolve
-historical billing. The [opportunity follow-up](history/2026-10-27-repair-opportunity.md)
-adds an opt-in diagnostic profile that preserves response/action/cost capacity for
-probe then edit/stop, using one policy for offered tools and admission. The old
-profiles and public source remain unchanged; this is a policy intervention whose
-live repair effect is unmeasured. Request-structure and model-setting comparisons
-are already warranted as questions. They need a common feasible action horizon,
-not another prerequisite repair success. Information delivery is confirmed, but
-complete information sufficiency and model incapability are not. All paid allocations
-are closed; new execution needs a distinct exact scope.
-
-The [request-annotation comparison](history/2026-10-27-request-annotation-results.md)
-is closed: same evidence/model/opportunity policy, one run per arm. A requested a
-probe without source and stopped without editing; B executed a probe and made one
-edit, but frozen original-call verification retained the same tokenizer exception.
-B's public regression also failed; no matching seed regression in this comparison
-establishes how many failures were newly introduced. Both final decision opportunities
-were preserved. All sixteen responses settled, total USD 0.228657450, no submission
-or independent acceptance. This is an action difference without repair success;
-retain production defaults. A fixed-request model-setting comparison is a next
-question. The [fixed-request model comparison](history/2026-10-27-model-setting-results.md)
-is now closed: both mini/full made one edit and passed 1,231 public regression
-tests. Mini supplied both an empty namespace stream and UTF-8 encoding; its frozen
-original call no longer raised unexpectedly, but call-2's captured input root
-changed after call-1, so strict case support remains false. Full supplied only the
-stream: tokenization passed, then the original call raised ValueError in Pylint's
-similarity checker for missing encoding. Its strict case support also remains false.
-All thirteen responses settled for USD 0.443923450 with no input/output/cost cutoff.
-Do not infer model superiority from this pair. The [saved-mini verification](history/2026-10-27-mini-candidate-verification.md)
-then confirmed the identity difference was generated Pylint cache output inside
-the captured input root. With fixture inputs separated from cache, mini resolves
-the original F0010/exception and preserves the control with matching conditions.
-However, the public empty-file variant still emits C0112 and exit 16 instead of
-empty output. Separate isolated acceptance is FAIL; regression, scope and safety
-are PASS. The candidate is a partial repair, not an accepted solution. The private
-failure is not attributed to that public symptom. Next test and repair the public
-empty-output behavior through the complete caller; preserve old verdicts and fix
-input/output boundaries without weakening arbitrary identity checks. All paid
-allocations are closed. Production defaults stay unchanged.
-
-The [latest fresh-solve pilot](history/2026-10-26-target-exception-live.md) acquired the
-original/control, observed the pre-edit path and applied two failed edits. It stopped
-with INCOMPLETE_RESPONSE after 36 model calls, USD 1.071262200 and 894.56 seconds;
-there was no regression run, submission or independent evaluation. Before the first
-edit response it used 29 calls and USD 0.648690600. Negative feedback and finish
-blocking worked. All helpers exited zero, so the preceding nonzero-helper fix was
-NOT_EXERCISED. Three responses exhausted their admitted output ceilings; this does
-not establish that larger context or budget would repair the task.
-
-The [diagnosis-gap analysis](history/2026-10-26-repair-diagnosis-gap-analysis.md)
-verified every post-edit input. Exception locations were absent at capture, and the
-specialized path route was unavailable: its narrow trigger requires a comparable
-refutation plus unobserved changed lines. Here the case was UNKNOWN with a confirmed
-exception and entered changed lines. A generic allowance existed, but it was not an
-offered specialized original-call diagnosis. New frames close the capture gap without
-claiming that this alone fixes the model's action selection.
-
-Context continuity remains separate. The preceding request-continuity pilot had no
-size-triggered reset; raising 60K alone would preserve its stage/result resets.
+Context continuity is a separate question. The preceding fresh-solve pilot had
+no size-triggered reset; raising 60K alone would preserve stage/result resets.
 Historical mini-SWE-agent accumulated history without that extra cap, with observed
-maximum input 77,660, not a full model window. Tools and budgets differed. No
-context-only quality effect was established; see the [context analysis](history/2026-10-26-target-failure-context-analysis.md).
+maximum input 77,660, not a full model window. Tools and budgets differed; no
+context-only quality effect is established. See the
+[context analysis](history/2026-10-26-target-failure-context-analysis.md).
 
 ## Supporting evidence
 
@@ -151,7 +94,7 @@ submission, independent task acceptance and safety are separate. Mock safety is 
 
 Do not start Docker Desktop or pull/build evaluator images automatically. Preserve
 exact recovery identities, zero SDK retries and stop-all on count/transport/billing
-uncertainty. The latest run stopped with an unresolved target failure and no
-submission or independent evaluation. Public-check PASS, safety PASS and successful
-submission do not establish repair correctness. Linux CI and general improvement
-remain unverified.
+uncertainty. Saved-patch isolated evaluations have completed with acceptance FAIL;
+no live model has newly achieved an accepted solution in these follow-ups.
+Public-check PASS, safety PASS and successful submission do not establish repair
+correctness. Linux CI and general improvement remain unverified.
