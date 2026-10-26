@@ -21,3 +21,4 @@
 - [Revision budget analysis: inspection cost, no-action responses and next priorities](../2026-10-26-revision-budget-analysis.md)
 - [Captured failures, compact finalization and bounded completion funding](../2026-10-26-completion-feedback.md)
 - [Completion-feedback pilot: proposed fresh solve and measurement plan](../2026-10-26-completion-feedback-live-plan.md)
+- [Completion-feedback pilot: no first edit, correction output exhausted](../2026-10-26-completion-feedback-live.md)

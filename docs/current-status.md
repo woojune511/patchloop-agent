@@ -45,12 +45,21 @@ Offline reprojection recovers the prior FileNotFoundError without upgrading
 UNKNOWN. Projecting the legacy ready states preserves patch/check/original facts
 and reduces serialized state bytes by about 56%; it does not measure model tokens,
 cost savings or a repaired trajectory. That failing candidate now requires repair.
-Actual-model use, useful finalization output and F0010 repair remain unverified.
-The [completion-feedback pilot plan](history/2026-10-26-completion-feedback-live-plan.md)
-prepares one fresh Astroid-1333 solve with the same mini/xhigh model, 40K/25K
-ceilings and USD 1.20 cap. The request will bind committed source and existing
-environment identities. Live execution awaits a new exact authorization; prior
-allocations remain closed. No provider or target run is part of preparation.
+The [completion-feedback pilot](history/2026-10-26-completion-feedback-live.md)
+is now closed after one authorized Astroid-1333 solve with the same mini/xhigh
+model, 40K/25K ceilings and USD 1.20 cap. It ended INCOMPLETE_RESPONSE after
+34 model calls, spending USD 0.843607950 in about 11 minutes 20 seconds. There
+were 33 reads/searches and one probe rejected before target execution. No edit,
+original execution, regression check, submission or independent evaluation occurred.
+
+Call 33 returned two edits in one disallowed batch; the protected call 34 then
+used all 25K correction output without a tool call. The total cap, model-call
+maximum and time limit were not reached. No complete first observation or ready
+stage was reached, leaving exception feedback, inspection advice and compact
+finalization NOT_EXERCISED. The next diagnostic priority is entering original
+reproduction and correcting the rejected edit batch into one executable action.
+This run does not establish whether more correction output would help. No new
+runtime change or paid continuation is active; F0010 repair remains unverified.
 
 The [closed revision pilot](history/2026-10-26-repair-revision-live.md) used one
 Astroid-1333 solve, gpt-5.4-mini-2026-03-17 xhigh, 40K/25K ceilings and $1.20 cap.
@@ -95,7 +104,7 @@ submission, independent task acceptance and safety are separate. Mock safety is 
 
 Do not start Docker Desktop or pull/build evaluator images automatically. Preserve
 exact recovery identities, zero SDK retries and stop-all on count/transport/billing
-uncertainty. The latest live run passed public regression but the original call
-raised a new exception. Paired tests, finish, frozen post-submission checks and
-independent evaluation were NOT_RUN.
+uncertainty. The latest live run applied no patch and performed no target execution.
+Original verification, public checks, finish, frozen post-submission checks and
+independent evaluation were NOT_RUN. Its conditional mechanism effects remain untested.
 Linux CI and general improvement remain unverified.
