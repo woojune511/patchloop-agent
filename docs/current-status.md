@@ -50,8 +50,10 @@ the last-observation reserve after a rejected edit, including diagnostic checks 
 two-child tests; the 154 controls verify that final runtime. Quick includes isolated
 mock acceptance. Ruff passes; see the record for phase identities. No live model run was made.
 The latest closed pilot still made zero edits; its diagnosis was NOT_EXERCISED.
-The unresolved question is whether this intervention lets the model turn an
-original-call observation into an effective first repair under the same limits.
+The [next one-run pilot](history/2026-10-26-first-repair-live-plan.md) is prepared
+under the previous mini-model, 40,000/25,000 output ceilings and $1.20 cap; exact new
+paid authorization is pending. The unresolved question is whether the model turns
+an original-call observation into an effective first repair under those limits.
 Local controls do not establish F0010 repair success or general improvement.
 
 ## Supporting evidence
