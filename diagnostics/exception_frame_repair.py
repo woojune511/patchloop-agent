@@ -70,6 +70,7 @@ class RepairProfile:
     compare_request_annotations: bool = False
     compare_models: bool = False
     total_cap: Decimal | None = None
+    annotation_policy: str | None = None
 
     @property
     def invocation_cap(self):
@@ -90,6 +91,9 @@ PROFILES = {profile.name: profile for profile in (
 
 
 def arm_policy(profile, arm):
+    if profile.annotation_policy is not None:
+        require(profile.annotation_policy in {"current", "thin"}, "unknown annotation policy")
+        return profile.annotation_policy
     return "thin" if (profile.compare_models or
                       profile.compare_request_annotations and arm == "B") else "current"
 
@@ -531,9 +535,10 @@ def _exchange(turn, results, issue=None):
 
 
 def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAULT_PROFILE,
-              source_packet=None):
+              source_packet=None, request_builder=None):
     """At most one new edit. Adapter injection supports finite offline tests."""
     journal = gateway.journal
+    build_request = request_builder or request_payload
     policy = arm_policy(profile, arm)
     require(gateway.agent_policy == policy, "gateway annotation policy differs from request")
     store = ArtifactStore(journal.root / "artifacts")
@@ -567,7 +572,7 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
                 break
             remaining_cost = (min(ledger.remaining_nanos, group.remaining_nanos)
                               if opportunity else ledger.remaining_nanos)
-            payload = request_payload(loaded.common, arm, history=history,
+            payload = build_request(loaded.common, arm, history=history,
                                       remaining=None if first else {
                                           "normal_calls": profile.normal_calls - normal,
                                           "tool_actions": TOOL_ACTIONS - actions,

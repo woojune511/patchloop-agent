@@ -47,12 +47,13 @@ initializer while leaving the child outside the selected file list. Its
 [mini verification](history/2026-10-27-mini-candidate-verification.md) remain narrower
 public results with acceptance FAIL; do not rewrite them as this new success.
 
-Preserve the clean resolver candidate as evidence; stop extending the old builder
-guard for this demonstrated repair. The next agent question is whether public
-selection/resolution feedback leads the model to choose the correct repair layer
-without receiving the operator patch. This is not yet an implemented policy or
-measured model improvement. Production defaults stay unchanged. Another paid trial
-requires a new exact scope; all previous paid allocations remain closed.
+The [clean-base observation A/B](history/2026-10-27-selection-observation-plan.md)
+is prepared to test whether public selection/resolution feedback leads the same
+mini model to a successful repair without receiving the operator patch. Both arms
+start from original source; only B receives three supplementary base observations.
+This is operator-assisted evidence, not autonomous diagnosis or measured improvement.
+Production defaults stay unchanged. Preparation authorizes no paid execution;
+all previous paid allocations remain closed.
 
 Public exception frames and cause/context chains are implemented in fresh invocation
 v5, with historical observer v1-v4 preserved; see the
