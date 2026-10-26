@@ -46,6 +46,13 @@ verification and candidate-return eligibility distinct. Finalization context and
 completion funding also remain unresolved; another ceiling increase alone is not
 supported by this run. No new paid run is authorized.
 
+The [budget follow-up](history/2026-10-26-revision-budget-analysis.md) attributes
+45.7% of spending to 27 inspection responses and 16.9% to three no-tool incomplete
+responses. First edit arrived after 59.2% was spent. Repeated source/context is an
+efficiency target, not proof that every inspection was wasted. Prioritize complete
+failure feedback, compact finalization and usable completion funding before a
+separate cost-cap comparison. These changes remain proposed.
+
 The [revision contract](history/2026-10-26-repair-revision.md) retains host-bound
 predictions checked in original replay, additive-test comparison funding, and strict
 historical diagnosis reuse. A rejected directory-level test selection produced no
