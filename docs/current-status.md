@@ -35,12 +35,29 @@ Local validation: the new real regression failed before the fix; target-outcome2
 passed in 28.67 seconds, quick451 passed in 61.16 seconds, Ruff and isolated mock
 evaluation passed. The unchanged saved live receipt now projects one target failure
 and diagnosis available, while whole-case verification stays unverified. This is
-offline projection and local mechanism evidence. One new [live pilot](history/2026-10-26-target-exception-live.md)
-is authorized by the current user request, with the same task/model/limits and
-USD 1.20 cap. Preparation is in progress; live repair after the fix is NOT_RUN.
+offline projection and local mechanism evidence.
+
+The [live pilot](history/2026-10-26-target-exception-live.md) is now closed. It acquired
+the original failure/control, completed a pre-edit path observation and applied two
+edits; both candidates still raised `FileNotFoundError`. The host retained the
+exception and excluded finish, but the model did not complete a repair. It stopped
+with INCOMPLETE_RESPONSE after 36 model calls, USD 1.071262200 and 894.56 seconds.
+No public regression, submission or independent evaluation occurred. All helper
+executions exited zero, so the new nonzero-helper classifier branch was NOT_EXERCISED.
+Existing failure propagation was observed; live efficacy of the new condition
+remains unresolved.
+
+Before the first edit response, 29 calls and USD 0.648690600 were spent. After the
+first failed candidate the model repeated the same replay; after the second it
+read the edited builder again, without a new call-path diagnosis. Three responses
+exhausted admitted ceilings of 19,880, 8,620 and 6,144 tokens. Future completion
+reservations reduced these ceilings within the unchanged USD 1.20 cap; the whole
+cap was not spent. The next question is how to obtain a discriminating diagnostic
+and a supported revision earlier. This single run does not justify a context
+increase or establish that the reserved budget was excessive.
 
 The closed [request-continuity pilot](history/2026-10-26-request-continuity-live.md)
-remains the last live result: one Astroid-1333 solve with mini/xhigh, 40K/25K output
+is the preceding live result: one Astroid-1333 solve with mini/xhigh, 40K/25K output
 ceilings and a USD 1.20 cap. One edit and submission occurred; public regression
 passed, original replay raised `FileNotFoundError`, delivery was unverified,
 independent acceptance FAIL and safety PASS. It used 20 model calls, USD 0.544587150
@@ -49,7 +66,7 @@ bypassed the initial missing-file error but a later source-stream read still ope
 the nonexistent initializer. Whether corrected failure feedback leads to a repair
 of that path remains unresolved; the historical result is unchanged.
 
-Context continuity is a separate unresolved question. This run used at most 56,977
+Context continuity is a separate unresolved question. That preceding run used at most 56,977
 input tokens; all five post-initial resets were stage/result triggered, with no
 size-triggered reset. Raising the 60K ceiling alone retains those transitions.
 Historical mini-SWE-agent used accumulated history without the extra 60K cap,
@@ -61,7 +78,7 @@ Keep the [request-continuity contracts](history/2026-10-26-request-continuity.md
 stage-valid probe modes, parallel generation matching gate capacity, bounded exact
 unexecuted drafts and separate preparation/dispatch/request-error acquisition
 budgets. Tool surface v62 binds them. Their combined pilot does not establish
-separate causal effects or repair gain. Only the newly scoped pilot is active.
+separate causal effects or repair gain. No paid allocation is active.
 
 ## Supporting evidence
 
@@ -92,7 +109,7 @@ submission, independent task acceptance and safety are separate. Mock safety is 
 
 Do not start Docker Desktop or pull/build evaluator images automatically. Preserve
 exact recovery identities, zero SDK retries and stop-all on count/transport/billing
-uncertainty. The latest run submitted a patch but original verification remained
-unverified and independent acceptance failed. Public-check PASS, safety PASS and
-successful submission do not establish repair correctness. Linux CI and general
-improvement remain unverified.
+uncertainty. The latest run stopped with an unresolved target failure and no
+submission or independent evaluation. Public-check PASS, safety PASS and successful
+submission do not establish repair correctness. Linux CI and general improvement
+remain unverified.
