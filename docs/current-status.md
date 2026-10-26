@@ -58,8 +58,14 @@ maximum and time limit were not reached. No complete first observation or ready
 stage was reached, leaving exception feedback, inspection advice and compact
 finalization NOT_EXERCISED. The next diagnostic priority is entering original
 reproduction and correcting the rejected edit batch into one executable action.
-This run does not establish whether more correction output would help. No new
-runtime change or paid continuation is active; F0010 repair remains unverified.
+The [request/correction analysis](history/2026-10-26-completion-feedback-analysis.md)
+found invalid diagnosis options in the general probe schema, parallel generation
+still enabled for mutation-only turns, and rejected draft bodies absent after the
+correction's segment rollover. Old source anchors remained present. The missing
+drafts increase reconstruction burden; their causal effect on output exhaustion
+has not been isolated. Prioritize valid request modes and preservation of the draft
+being corrected. No runtime change or paid continuation is active; F0010 repair
+and the benefit of more correction output remain unverified.
 
 The [closed revision pilot](history/2026-10-26-repair-revision-live.md) used one
 Astroid-1333 solve, gpt-5.4-mini-2026-03-17 xhigh, 40K/25K ceilings and $1.20 cap.
