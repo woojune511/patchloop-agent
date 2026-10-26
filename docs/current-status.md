@@ -47,9 +47,10 @@ Core local validation: 70 PASS in 28.95 seconds; quick: 450 PASS in 37.81 second
 Ruff and isolated mock evaluation passed. Offline projection retains both actual
 rejected drafts exactly (6,605 argument bytes). Actual model progress, F0010 repair
 and the effect on output exhaustion remain untested with this change.
-No paid continuation is active. The next live question is whether a fresh solve
-executes the original call and turns its first edit proposal into a single applied
-action within the same previously selected limits.
+The [request-continuity pilot](history/2026-10-26-request-continuity-live.md) is being
+prepared for the user's new one-run instruction: same Astroid-1333, mini/xhigh,
+40K/25K ceilings and USD 1.20 cap. It tests original execution and the first applied
+edit. Prior allocations remain closed; this is a fresh solve, not a continuation.
 
 The [closed completion-feedback pilot](history/2026-10-26-completion-feedback-live.md)
 ended INCOMPLETE_RESPONSE: 34 model calls, USD 0.843607950, 33 reads/searches, one

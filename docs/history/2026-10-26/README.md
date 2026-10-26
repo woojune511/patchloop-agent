@@ -24,3 +24,4 @@
 - [Completion-feedback pilot: no first edit, correction output exhausted](../2026-10-26-completion-feedback-live.md)
 - [Request analysis: mixed probe modes, parallel edits and missing correction drafts](../2026-10-26-completion-feedback-analysis.md)
 - [Stage-valid requests, retained correction drafts and reserved original acquisition](../2026-10-26-request-continuity.md)
+- [Request-continuity live pilot](../2026-10-26-request-continuity-live.md)
