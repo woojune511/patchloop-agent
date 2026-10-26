@@ -24,43 +24,39 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [request-continuity change](history/2026-10-26-request-continuity.md) addresses
-observed request/correction failures from the closed completion-feedback pilot.
-Fresh probe modes now match their stage; original acquisition offers an executable
-new original program, and pending diagnosis offers the small focus schema. Parallel
-provider generation is enabled only when the gate can accept a read batch.
+The [request-continuity pilot](history/2026-10-26-request-continuity-live.md) completed
+one fresh Astroid-1333 solve with mini/xhigh, 40K/25K output ceilings and a USD 1.20
+cap. Original acquisition, pre-edit observation, one edit and submission occurred.
+Public regression passed; original candidate replay raised `FileNotFoundError`;
+delivery remained `unverified_delivery`; independent acceptance was FAIL and safety
+PASS. It used 20 model calls, USD 0.544587150 and 347.78 seconds. The allocation is
+closed. No response exhausted its output ceiling or required protocol correction.
 
-Rejected edit batches retain up to two exact unexecuted drafts, bounded to 32 KB of
-canonical argument bytes. The journal, refreshed correction and compact segment
-preserve these bodies on the same diff. Stale or oversized bodies are explicitly
-withheld. Drafts grant no execution, source or verification credit; corrected single
-actions still pass normal anchor/scope checks. Tool surface v62 binds the change.
+The active unresolved problem is the transition from an observed target exception
+to further repair. The final model input preserved the failed candidate replay and
+its exception, but classified it as unverified with zero target failures and no
+pending repair-path diagnosis. After public-check PASS, the model submitted while
+describing original reproduction as not rerun. Three edits and substantial model,
+time and cost capacity remained. Audit failure classification and evidence use
+before increasing limits or adding another rule; another repair is not guaranteed.
 
-Fresh bounded acquisition separates six preparation actions from two actual
-original dispatches and two request errors. At the preparation limit only the
-original request or stop remains. Reads preserve a funded original request and its
-completion route. Existing receipts retain legacy limits; uncertainty and budget
-release remain unverified. The invocation cap and ordinary/correction output
-ceilings have not increased.
+The submitted builder change bypassed the initial missing-file error but left a
+later source-stream read opening the nonexistent initializer. The frozen public
+assessment observed that crash and returned ERROR; its control was NOT_RUN under
+the stop rule. A separately recorded CP949 decoding adjustment occurred before the
+assessment, without changing the frozen solve, patch or checks.
 
-Core local validation: 70 PASS in 28.95 seconds; quick: 450 PASS in 37.81 seconds.
-Ruff and isolated mock evaluation passed. Offline projection retains both actual
-rejected drafts exactly (6,605 argument bytes). Actual model progress, F0010 repair
-and the effect on output exhaustion remain untested with this change.
-The [request-continuity pilot](history/2026-10-26-request-continuity-live.md) is being
-prepared for the user's new one-run instruction: same Astroid-1333, mini/xhigh,
-40K/25K ceilings and USD 1.20 cap. It tests original execution and the first applied
-edit. Prior allocations remain closed; this is a fresh solve, not a continuation.
+Keep the [request-continuity contracts](history/2026-10-26-request-continuity.md):
+stage-valid probe modes, parallel generation matching gate capacity, bounded exact
+unexecuted drafts and separate preparation/dispatch/request-error acquisition
+budgets. Tool surface v62 binds them. The run's first request was executable and
+its first edit applied. Draft recovery, a single-action-only generation gate and
+the acquisition preparation ceiling were NOT_EXERCISED. Four bundled changes in
+one stochastic run do not establish their separate causal effects or repair gain.
 
-The [closed completion-feedback pilot](history/2026-10-26-completion-feedback-live.md)
-ended INCOMPLETE_RESPONSE: 34 model calls, USD 0.843607950, 33 reads/searches, one
-preflight-rejected probe, and no edit or target execution. Its [analysis](history/2026-10-26-completion-feedback-analysis.md)
-confirmed invalid general diagnosis options, parallel generation at a mutation-only
-gate and missing rejected new-text bodies after rollover. Their contribution to
-model output exhaustion was not isolated. Existing [target-failure feedback and
-finalization](history/2026-10-26-completion-feedback.md) remain implemented; the pilot
-did not reach those conditional stages. Prior public PASS and isolated acceptance
-remain separate from original-call verification.
+Unchanged-runtime local evidence: core70 PASS in 28.95 seconds, quick450 PASS in
+37.81 seconds, Ruff and isolated mock evaluation PASS. The [previous failure analysis](history/2026-10-26-completion-feedback-analysis.md)
+remains the motivation for these contracts, not an active execution allocation.
 
 ## Supporting evidence
 
@@ -91,7 +87,7 @@ submission, independent task acceptance and safety are separate. Mock safety is 
 
 Do not start Docker Desktop or pull/build evaluator images automatically. Preserve
 exact recovery identities, zero SDK retries and stop-all on count/transport/billing
-uncertainty. The latest live run applied no patch and performed no target execution.
-Original verification, public checks, finish, frozen post-submission checks and
-independent evaluation were NOT_RUN. Its conditional mechanism effects remain untested.
-Linux CI and general improvement remain unverified.
+uncertainty. The latest run submitted a patch but original verification remained
+unverified and independent acceptance failed. Public-check PASS, safety PASS and
+successful submission do not establish repair correctness. Linux CI and general
+improvement remain unverified.
