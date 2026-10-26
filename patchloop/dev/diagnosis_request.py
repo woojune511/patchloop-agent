@@ -19,8 +19,10 @@ def tool_schema():
         "type": "function", "name": "run_probe", "strict": True,
         "description": (
             "Diagnose the pending original-call failure on the current candidate. "
-            "Select only the enclosing public caller as focus. The host supplies the "
-            "original call, changed-function watches, parameter fields and executable lines. "
+            "Select only a public function on the suspected failure path as focus. The host "
+            "observes it and the changed-function watches across the entire selected call, "
+            "including outside the focus frame. It supplies the original call, parameter "
+            "fields and executable lines. "
             "The frozen program, inputs and expected result do not change. "
             "No plan or memory annotation is required. A complete trace informs the next "
             "repair; it does not verify that repair. Unknown is not no-hit."
@@ -139,6 +141,7 @@ def prepare(arguments, state, workspace, source_preflight, *, deadline=None, rea
         try:
             request = call_path_trace.selection_request(
                 {"focus": arguments["focus"], "watches": host_watches["watches"]}, state["call_id"])
+            request["scope"] = "selected_call"
         except ValueError as exc:
             raise ContractError(str(exc), details={"invalid_fields": [
                 {"path": "/focus", "requirement": str(exc)}]}) from exc
@@ -146,7 +149,7 @@ def prepare(arguments, state, workspace, source_preflight, *, deadline=None, rea
         # Saved symbolic admissions remain recoverable; fresh schemas expose only focus.
         if not symbolic(arguments.get("call_path")):
             raise ContractError("diagnosis requires focus", details={"invalid_fields": [
-                {"path": "/focus", "requirement": "select an enclosing public caller"}]})
+                {"path": "/focus", "requirement": "select a public failure-path function"}]})
         request = call_path_trace.selection_request(arguments["call_path"], state["call_id"])
     try:
         bound = source_preflight(workspace, request, deadline=deadline,
@@ -160,6 +163,7 @@ def prepare(arguments, state, workspace, source_preflight, *, deadline=None, rea
             {"path": "/focus", "requirement": str(exc)}]}) from exc
     identity = ("origin", "path", "function", "file_hash")
     resolved = {"call_id": state["call_id"],
+                **({"scope": request["scope"]} if "scope" in request else {}),
                 "focus": {key: bound["focus"][key] for key in identity},
                 "watches": [{key: watch[key] for key in (*identity, "lines", "fields")}
                             for watch in bound["watches"]]}

@@ -12,3 +12,4 @@
 - [First-repair live pilot: prepared scope and stage measurements](../2026-10-26-first-repair-live-plan.md)
 - [First-repair pilot: first edit reached, F0010 persists, traces truncated](../2026-10-26-first-repair-live.md)
 - [Trace-limit analysis: initialization consumes different caps; edit misses failing route](../2026-10-26-trace-limit-analysis.md)
+- [Separate call coverage, coalesced detail and complete-call diagnosis](../2026-10-26-trace-budget.md)

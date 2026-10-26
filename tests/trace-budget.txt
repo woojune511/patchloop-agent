@@ -1,0 +1,4 @@
+tests/test_call_path_trace.py
+tests/test_first_observation.py
+tests/test_diagnosis_request.py::test_fresh_diagnosis_observes_changed_function_outside_focus
+tests/test_repair_path_diagnosis.py::test_complete_diagnosis_requires_its_admitted_scope

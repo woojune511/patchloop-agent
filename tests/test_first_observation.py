@@ -257,6 +257,55 @@ def test_prediction_uses_only_complete_same_original_trace(
     assert observation.review(copy.deepcopy(events), observation.EMPTY_DIFF, completion) == state
 
 
+@pytest.mark.parametrize("prediction,event", [("returned", "return"), ("raised", "exception")])
+@pytest.mark.parametrize("occurred", [False, True])
+def test_sampled_details_use_complete_event_counts_for_predictions(
+    tmp_path, prediction, event, occurred,
+):
+    events, completion = execute_receipt(tmp_path, selection(prediction))
+    trace = events[-1]["payload"]["result"]["output"]["call_path"]
+    for row in [trace["focus"], *trace["watches"]]:
+        row["event_counts"] = {"call": 1, "line": 0, "return": 0, "exception": 0}
+        row["event_counts"][event] = int(occurred)
+        row["events"] = []  # No detailed sample is retained for this target.
+    trace["collection"] = {
+        "policy": "entry-and-detail-v2",
+        "coverage": {"status": "complete", "call_events": 1, "call_limit": 200_000,
+                     "selected_events": 2, "selected_limit": 200_000},
+        "details": {"status": "sampled", "record_limit": 48, "value_byte_limit": 12_000,
+                    "retained_records": 0, "retained_value_bytes": 0,
+                    "coalesced_events": 0, "omitted_events": 2},
+        "limits": [],
+    }
+    before = copy.deepcopy(events)
+    state = observation.review(events, observation.EMPTY_DIFF, completion)
+    candidate = state["observation"]["candidates"][0]
+    assert state["status"] == "observed" and not state["available"]
+    assert candidate["status"] == ("prediction_matched" if occurred else "prediction_contradicted")
+    assert candidate["entry_exit_events"] == []
+    assert candidate["event_counts"] == trace["watches"][0]["event_counts"]
+    assert state["observation"]["collection"] == trace["collection"]
+    assert events == before
+    trace.update(status="unknown", reason="collector_truncated")
+    incomplete = observation.review(events, observation.EMPTY_DIFF, completion)
+    assert incomplete["status"] == "incomplete" and not incomplete["available"]
+    assert incomplete["observation"]["candidates"][0]["status"] == "insufficient"
+
+
+@pytest.mark.parametrize("invalid", [None, {}, {"call": 1, "line": 0, "return": True,
+                                               "exception": 0},
+                                   {"call": 1, "line": 0, "return": -1, "exception": 0},
+                                   {"call": 2, "line": 0, "return": 1, "exception": 0}])
+def test_invalid_aggregate_events_cannot_fall_back_to_sampled_details(tmp_path, invalid):
+    events, completion = execute_receipt(tmp_path, selection("returned"))
+    trace = events[-1]["payload"]["result"]["output"]["call_path"]
+    assert any(event["event"] == "return" for event in trace["watches"][0]["events"])
+    trace["watches"][0]["event_counts"] = invalid
+    state = observation.review(events, observation.EMPTY_DIFF, completion)
+    assert state["status"] == "incomplete" and not state["available"]
+    assert state["observation"]["candidates"][0]["status"] == "insufficient"
+
+
 @pytest.mark.parametrize("change", ["unknown_no_hit", "setup", "new_outcome", "control", "rules",
                                   "program", "arguments", "environment", "source", "snapshot",
                                   "execution", "request", "dispatch", "execution_source", "scope",

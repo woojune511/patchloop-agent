@@ -57,9 +57,13 @@ def _summary(trace):
         selected = events if len(events) <= 2 else [events[0], events[-1]]
         rows.append({**{key: row[key] for key in ("origin", "path", "function", "file_hash",
                       "entries", "observed_lines", "not_observed_lines", "observation")},
+                     **({"event_counts": copy.deepcopy(row["event_counts"])}
+                        if "event_counts" in row else {}),
                      "entry_exit_events": selected,
                      "omitted_event_count": len(events) - len(selected)})
     return {"scope": trace["scope"], "focus": rows[0], "watches": rows[1:],
+            **({"collection": copy.deepcopy(trace["collection"])}
+               if "collection" in trace else {}),
             "details_field": "output.call_path", "semantic_correctness": "unverified"}
 
 
@@ -133,9 +137,13 @@ def review(events, current_diff, completion):
         admission = starts[diagnosis["action_id"]]
         request = (admission.get("diagnosis_request", {}).get("call_path")
                    or admission["arguments"].get("call_path", {}))
+        expected_scope = ("selected_call_launch_thread" if request.get("scope") == "selected_call"
+                          else "selected_call_focus_launch_thread" if "scope" not in request
+                          else None)
         watched_hashes = {(w.get("path"), w.get("file_hash")) for w in trace.get("watches", [])}
         complete = bool(
             trace.get("status") == "complete" and trace.get("call_id") == call_id
+            and expected_scope is not None and trace.get("scope") == expected_scope
             and trace.get("candidate_diff_hash") == current_diff
             and trace.get("snapshot_hash") is not None
             and trace.get("snapshot_hash") == diagnosis["output"].get("snapshot_hash")

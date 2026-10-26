@@ -12,7 +12,7 @@ from patchloop.dev.contracts import RequestedTool
 from patchloop.dev.tools import dev_tool_schemas, validate_tool_batch
 from patchloop.errors import ContractError
 from patchloop.sandbox import call_path_trace as trace
-from patchloop.util import sha256_json
+from patchloop.util import sha256_bytes, sha256_json
 
 
 @pytest.fixture(autouse=True)
@@ -230,6 +230,8 @@ def test_symbolic_diagnosis_uses_original_root_and_retains_actual_trace(gateway_
     assert admission["replay_action_id"] == "original"
     assert result.output["replayed_from"]["action_id"] == "original"
     assert admission["call_path"]["call_id"] == "call-1"
+    assert "scope" not in admission["call_path"]  # Saved symbolic shape keeps focus scope.
+    assert result.output["call_path"]["scope"] == "selected_call_focus_launch_thread"
     assert admission["call_path"]["watches"][0]["lines"]
     assert call.arguments == raw and raw["replay_action_id"] is None
     assert state(gateway)["status"] == "diagnosed"
@@ -258,19 +260,69 @@ def test_host_watches_follow_the_mutation_and_keep_raw_focus_identity(gateway_fa
     assert admission["host_watches"]["watches"] == [
         {"origin": "workspace", "path": PATH, "function": "parse_rows", "fields": ["text"]}]
     assert admission["call_path"]["call_id"] == "call-1"
+    assert admission["call_path"]["scope"] == "selected_call"
+    assert result.output["call_path"]["scope"] == "selected_call_launch_thread"
     assert call.arguments == raw and state(gateway)["status"] == "diagnosed"
     start = next(e["payload"] for e in journal.events() if e["event_type"] == "action_started"
                  and e["payload"]["action_id"] == call.action_id)
     assert start["arguments"] == raw and start["diagnosis_request"] == admission
+    assert result.output["call_path"]["raw_request_hash"] == sha256_json(admission["call_path"])
+    assert "scope" not in raw
     assert gateway.execute(call).replayed and backend.calls == 3
 
 
-@pytest.mark.parametrize("boundary", ["admitted", "dispatched", "returned", "rejected"])
+@pytest.mark.parametrize("call_focus", [False, True])
+def test_fresh_diagnosis_observes_changed_function_outside_focus(tmp_path, call_focus):
+    source = ("def focus(value):\n    return value\n\n"
+              "def changed(value):\n    if value:\n        return 'new'\n"
+              "    return 'original'\n")
+    path = tmp_path / "sample.py"
+    path.write_text(source, encoding="utf-8")
+    pending = {"status": "needs_path_diagnosis", "blocked": True,
+               "policy": "repair-call-path-v1", "candidate_diff_hash": "candidate",
+               "case_id": "case", "replay_action_id": "original", "failure_action_id": "failed",
+               "mutation_action_id": "edit", "call_id": "call-1", "unobserved_changes": [{
+                   "path": "sample.py", "file_hash": sha256_bytes(path.read_bytes()),
+                   "ranges": [[6, 6]]}]}
+    raw = {"focus": {"origin": "workspace", "path": "sample.py", "function": "focus"}}
+
+    def preflight(workspace, request, *, deadline=None, line_changes=None):
+        del deadline
+        return trace.bind_request(request, workspace, line_changes=line_changes)
+
+    admission = diagnosis_request.prepare(
+        raw, pending, tmp_path, preflight, read_source=lambda name: (tmp_path / name).read_bytes())
+    request = admission["call_path"]
+    assert request["scope"] == "selected_call"
+    assert request["watches"][0]["function"] == "changed"
+    bound = trace.bind_request(request, tmp_path)
+    namespace = {"__name__": "diagnosis_scope_fixture"}
+    exec(compile(source, str(path), "exec"), namespace)
+    collector = trace.CallPathTrace(bound, {"workspace": tmp_path})
+    collector.write = lambda *_: None
+    collector.begin("call-1")
+    if call_focus:
+        assert namespace["focus"]("independent caller") == "independent caller"
+    assert namespace["changed"](False) == "original"
+    collector.end("call-1")
+    feedback = trace.public_feedback(bound, collector.finish())
+    assert feedback["status"] == "complete"
+    assert feedback["focus"]["entries"] == int(call_focus)
+    assert feedback["watches"][0]["entries"] == 1
+    assert 6 in feedback["watches"][0]["not_observed_lines"]
+    assert 7 in feedback["watches"][0]["observed_lines"]
+    assert raw == {"focus": {"origin": "workspace", "path": "sample.py", "function": "focus"}}
+
+
+@pytest.mark.parametrize(("boundary", "legacy"), [
+    ("admitted", False), ("dispatched", False), ("returned", False), ("rejected", False),
+    ("admitted", True), ("returned", True),
+])
 def test_symbolic_recovery_preserves_admission_and_never_repeats_execution(
-    gateway_factory, monkeypatch, boundary,
+    gateway_factory, monkeypatch, boundary, legacy,
 ):
     gateway, journal, _, backend = setup(gateway_factory)
-    call = focused()
+    call = symbolic(gateway) if legacy else focused()
     if boundary == "rejected":
         call.arguments["focus"]["function"] = "missing_function"
     append = journal.append
@@ -290,6 +342,11 @@ def test_symbolic_recovery_preserves_admission_and_never_repeats_execution(
     with pytest.raises(KeyboardInterrupt):
         gateway.execute(call)
     journal.append = append
+    saved = next(e["payload"] for e in journal.events() if e["event_type"] == "action_started"
+                 and e["payload"]["action_id"] == call.action_id)
+    if boundary != "rejected":
+        request = saved["diagnosis_request"]["call_path"]
+        assert ("scope" not in request) if legacy else request["scope"] == "selected_call"
     # Recovery must use the saved construction, not today's selection/projection.
     monkeypatch.setattr(diagnosis_request, "prepare",
                         lambda *_a, **_kw: pytest.fail("reconstructed pending diagnosis"))
@@ -304,6 +361,8 @@ def test_symbolic_recovery_preserves_admission_and_never_repeats_execution(
         assert recovered.status == "succeeded" and backend.calls == 3
         assert state(gateway)["status"] == "diagnosed"
     assert gateway.execute(call).replayed
+    assert next(e["payload"] for e in journal.events() if e["event_type"] == "action_started"
+                and e["payload"]["action_id"] == call.action_id) == saved
     assert backend.calls == (2 if boundary in {"dispatched", "rejected"} else 3)
 
 

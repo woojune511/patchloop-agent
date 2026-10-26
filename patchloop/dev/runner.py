@@ -642,7 +642,8 @@ def _completion_guidance(
                        if "run_probe" in allowed else None)
         message = (
             "The same original failure persists and the modified branch was not observed. "
-            "Supply only focus selecting the enclosing public caller. The host selects "
+            "Supply only focus selecting a public function on the suspected failure path. "
+            "The host observes the selected call even outside focus and selects "
             "changed-function watches, parameter fields and executable lines, and binds "
             "the original replay. Omit general plan/memory annotations. "
             "One optional preparation read, one actual diagnostic execution "

@@ -24,56 +24,38 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-Implement the [first-repair observation and small request path](history/2026-10-26-first-repair.md).
-After an acquired original failure and a distinct clean control, `observe_original`
-selects one or two candidate functions and event predictions. The host replays the
-frozen original program and derives parameter/line watches. Tracing covers the
-selected call window even if the candidate never enters. Complete no-hit and
-incomplete collection remain distinct; predictions test premises, not repairs.
+The [trace-budget correction](history/2026-10-26-trace-budget.md) separates global
+call discovery from selected-frame detail. Unselected initialization lines no
+longer consume coverage. Function aliases and overlapping focus/watch selections
+share bounded samples; repeats coalesce and recent distinct arguments can replace
+early detail. The report exposes independent coverage/event counts, sampling and
+exhausted counters. Complete coverage can support absence despite sampled values;
+unknown coverage cannot. Predictions use aggregate counts, not missing samples.
 
-Fresh `replace_text` uses six execution/intent fields; `stop_task` uses two.
-Neither requires decision/plan/memory metadata. Legacy explicit annotations remain
-recoverable. Ordinary repair has a small public evidence view; no-action correction
-starts a fresh compact segment with original observations, source anchors and the
-same budgets. Field/anchor errors retain typed correction. The existing post-edit
-path diagnosis links the next explicit hypothesis without duplicate causal_revision.
+Fresh post-edit diagnosis observes the selected call even outside focus. The model
+selects a public failure-path function; the host retains changed-function watches.
+Saved absent-scope requests preserve their prior focus-only identity and meaning.
+Diagnosis summaries retain collection limits/counts for the next repair hypothesis.
+The [first-repair observation and small request path](history/2026-10-26-first-repair.md)
+keeps its original caller, finite allowances, recovery and completion budget rules.
+No model output or monetary ceiling is increased.
 
-One pre-edit observation is optional. Exploration preserves its successful
-edit/replay/check/finish successor using existing protected slack, without adding
-it twice. Request rejection, actual dispatch, completed reuse and uncertainty have
-separate durable identities; restart or new action names do not renew allowances.
-The next mutation links its observation receipt, which becomes historical after edit.
+Local validation: short core 111 PASS (8.39 s), quick 374 PASS (34.58 s), Ruff PASS.
+Quick includes isolated mock evaluation. Two operator Docker replays both returned
+complete coverage with identical captured calls and unchanged F0010/control output.
+Pre-edit tracing retained file_build's missing initializer path; post-edit tracing
+represented 31 callback calls in 26 detail records. These are collector controls,
+not model repair or acceptance evidence; see the correction record.
+The prior [live pilot](history/2026-10-26-first-repair-live.md) reached its first
+edit but retained F0010, with both traces truncated. Its paid allocation is closed.
+The [analysis](history/2026-10-26-trace-limit-analysis.md) linked the failure to
+file loading of a nonexistent initializer; the edited callback branch was not
+observed. Model use of the corrected evidence and successful repair remain open.
 
-Final focused/resource controls: 154 PASS in 18.68 s. Earlier quick: 363 PASS and 11
-old expectation/doc failures; those 11 pass after targeted fixes. A later audit fixed
-the last-observation reserve after a rejected edit, including diagnostic checks and
-two-child tests; the 154 controls verify that final runtime. Quick includes isolated
-mock acceptance. Ruff passes; see the record for phase identities.
-
-The [authorized one-run pilot](history/2026-10-26-first-repair-live.md) acquired the
-original failure, executed observe_original, made one six-field edit and dispatched
-post-edit diagnosis. Both path traces returned collector_truncated; the first edit
-linked insufficient evidence. Same-call replay still emitted F0010, and the changed
-branch was not observed. The host returned VERIFICATION_INCOMPLETE without submission.
-Cost $0.836407650, 532.83 seconds, 31 model calls; no incomplete provider response or
-no-action correction. The allocation is closed, with $0.363592350 unspent.
-
-The [trace-limit analysis](history/2026-10-26-trace-limit-analysis.md) used two bounded
-operator replays, zero provider calls and an instrumented collector copy. Captured
-calls and original retained entries/events matched. Before editing, initialization
-spent 200,000 whole-call trace events; after editing, repeated checker loading
-filled 48 retained records (34 line, eight call, six return; 6,558 value bytes).
-The measured failure follows directory expansion/module lookup and then
-ast_from_file -> file_build on a nonexistent initializer; the edited branch was
-not observed. Its string argument to spec.find_spec is also a separate latent bug.
-
-Next: separate whole-call entry coverage from line detail, summarize duplicate
-initialization evidence and expose the exhausted counter; diagnose the actual
-file-loading route before another repair. First-edit issuance is live-observed,
-but useful premise evidence and F0010 repair remain unestablished. The frozen
-absolute-path call from /tmp also differs from the issue's cwd/relative-CLI steps;
-within-run identity does not establish that broader equivalence. No new repair or
-paid allocation is authorized by the analysis. Unknown trace remains unknown.
+The frozen absolute-path call from /tmp differs from the issue's cwd/relative-CLI
+steps; within-run identity does not establish that broader equivalence. This
+collector change preserves saved calls and does not silently rewrite that mapping.
+Any new paid pilot needs its own exact approved scope.
 
 ## Supporting evidence
 

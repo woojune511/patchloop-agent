@@ -222,6 +222,51 @@ def test_finished_execution_recovers_without_duplicate_diagnosis(gateway_factory
     assert backend.calls == 3 and state(gateway)["status"] == "diagnosed"
 
 
+@pytest.mark.parametrize("legacy", [False, True])
+def test_complete_diagnosis_requires_its_admitted_scope(gateway_factory, legacy):
+    gateway, journal, _, backend = setup(gateway_factory)
+    call = diagnosis(gateway) if legacy else RequestedTool(
+        name="run_probe", action_id="whole-call-diagnosis", preserve_annotation_presence=True,
+        arguments={"focus": {"origin": "workspace", "path": PATH, "function": "parse_rows"}})
+    assert gateway.execute(call).status == "succeeded"
+    completed = gateway.completion_verification(diff_hash=gateway.current_diff_hash)
+    assert completed["repair_path"]["status"] == "diagnosed"
+    expected = "selected_call_focus_launch_thread" if legacy else "selected_call_launch_thread"
+    assert completed["repair_path"]["diagnosis_observation"]["scope"] == expected
+    for wrong_scope in (None, "selected_call_launch_thread" if legacy
+                        else "selected_call_focus_launch_thread"):
+        events = copy.deepcopy(journal.events())
+        result = next(e["payload"]["result"] for e in events if e["event_type"] == "action_finished"
+                      and e["payload"]["action_id"] == call.action_id)
+        result["output"]["call_path"]["scope"] = wrong_scope
+        reviewed = repair_path.review(events, gateway.current_diff_hash, completed)
+        assert reviewed["status"] == "verification_incomplete"
+        assert reviewed["execution_attempted"] and reviewed["blocked"]
+    assert gateway.execute(call).replayed and backend.calls == 3
+
+
+def test_diagnosis_summary_retains_coverage_and_detail_sampling_metrics():
+    row = {"origin": "workspace", "path": PATH, "function": "parse_rows", "file_hash": "hash",
+           "entries": 20, "observed_lines": [2], "not_observed_lines": [3],
+           "observation": "observed", "event_counts": {
+               "call": 20, "line": 20, "return": 20, "exception": 0},
+           "events": [{"event": "call", "line": 1, "values": {},
+                       "sample_id": 0, "occurrences": 20}]}
+    collection = {"policy": "entry-and-detail-v2", "coverage": {"status": "complete"},
+                  "details": {"status": "sampled", "coalesced_events": 19, "omitted_events": 40},
+                  "limits": [{"budget": "retained_events", "limit": 48, "observed": 49,
+                              "target_index": 0, "event": "return", "line": 4}]}
+    trace = {"scope": "selected_call_launch_thread", "focus": row,
+             "watches": [copy.deepcopy(row)], "collection": collection}
+    summary = repair_path._summary(trace)
+    assert summary["collection"] == collection
+    assert summary["focus"]["event_counts"] == row["event_counts"]
+    assert summary["focus"]["entry_exit_events"] == row["events"]
+    summary["collection"]["details"]["omitted_events"] = 0
+    summary["focus"]["event_counts"]["call"] = 0
+    assert collection["details"]["omitted_events"] == 40 and row["event_counts"]["call"] == 20
+
+
 @pytest.mark.parametrize("condition", ["trace_unknown", "file_changed", "helper", "different_call"])
 def test_only_bound_original_and_measured_changed_branch_trigger_diagnosis(
     gateway_factory, condition,

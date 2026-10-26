@@ -168,18 +168,16 @@ def test_selected_call_bounds_observations_without_changing_values(tmp_path):
     assert events[-1]["value"] == "x" * 128 + "..."
 
 
-@pytest.mark.parametrize("failure", ["missing_call", "drift", "limit", "trace_limit", "tamper"])
+@pytest.mark.parametrize("failure", ["missing_call", "drift", "trace_limit", "tamper"])
 def test_selected_call_gaps_and_bounds_stay_unknown(tmp_path, monkeypatch, failure):
     bound, ns, roots = fixture(tmp_path, scope="selected_call", candidate_focus=True)
     value = collector(bound, roots)
     if failure != "missing_call":
         value.begin("call-1")
-        if failure == "limit":
-            monkeypatch.setattr(trace, "MAX_EVENTS", 1)
-            ns["helper"](["src/project"])
-        else:
-            if failure == "trace_limit":
-                monkeypatch.setattr(trace, "MAX_TRACE_EVENTS", 1)
+        if failure == "trace_limit":
+            monkeypatch.setattr(trace, "MAX_TRACE_EVENTS", 1)
+        ns["focus"](False, ["src/project"])
+        if failure == "trace_limit":
             ns["focus"](False, ["src/project"])
         if failure == "tamper":
             saved = sys.gettrace()
@@ -220,15 +218,13 @@ def test_selected_call_scope_is_host_only_and_bound_to_report(tmp_path):
 
 
 @pytest.mark.parametrize("failure", [
-    "missing_call", "missing_focus", "tamper", "drift", "limit", "trace_limit",
+    "missing_call", "missing_focus", "tamper", "drift", "trace_limit",
 ])
 def test_unknown_never_claims_not_observed(tmp_path, monkeypatch, failure):
     bound, ns, roots = fixture(tmp_path)
     value = collector(bound, roots)
     if failure != "missing_call":
         value.begin("call-1")
-        if failure == "limit":
-            monkeypatch.setattr(trace, "MAX_EVENTS", 1)
         if failure == "trace_limit":
             monkeypatch.setattr(trace, "MAX_TRACE_EVENTS", 1)
         if failure != "missing_focus":
@@ -294,6 +290,160 @@ def test_initialization_events_do_not_spend_focus_allowance(tmp_path, monkeypatc
     assert 0 < value.trace_events <= 8
     assert feedback["focus"]["entries"] == 1
     assert feedback["watches"][0]["entries"] == 0
+
+
+def test_unselected_initialization_lines_do_not_hide_late_target(tmp_path):
+    bound, ns, roots = fixture(tmp_path, scope="selected_call", candidate_focus=True)
+    exec("def initialize():\n    n = 0\n    for i in range(110000):\n        n += i\n", ns)
+    value = collector(bound, roots)
+    value.begin("call-1")
+    ns["initialize"]()  # Over 200,000 line events if local tracing were installed.
+    assert ns["helper"](["src/project"]) == "src/project"
+    value.end("call-1")
+    feedback = trace.public_feedback(bound, value.finish())
+    assert feedback["status"] == "complete"
+    assert feedback["collection"]["coverage"]["call_events"] == 2
+    assert feedback["collection"]["coverage"]["selected_events"] < 10
+    assert feedback["focus"]["entries"] == 1
+
+
+def test_bare_and_qualified_function_names_share_complete_observations(tmp_path):
+    source = "class Caller:\n    def run(self):\n        return 7\n"
+    (tmp_path / "caller.py").write_text(source)
+    request = {"call_id": "call-1", "scope": "selected_call",
+               "focus": {"origin": "workspace", "path": "caller.py", "function": "run"},
+               "watches": [{"origin": "workspace", "path": "caller.py",
+                            "function": "Caller.run", "lines": [3], "fields": []}]}
+    bound = trace.bind_request(request, tmp_path)
+    ns = {}
+    exec(compile(source, str(tmp_path / "caller.py"), "exec"), ns)
+    value = collector(bound, {"workspace": tmp_path})
+    caller = ns["Caller"]()
+    value.begin("call-1")
+    assert caller.run() == 7
+    value.end("call-1")
+    feedback = trace.public_feedback(bound, value.finish())
+    assert feedback["status"] == "complete"
+    assert feedback["focus"]["event_counts"]["return"] == 1
+    assert feedback["watches"][0]["event_counts"]["return"] == 1
+    assert feedback["watches"][0]["observed_lines"] == [3]
+    assert feedback["watches"][0]["not_observed_lines"] == []
+
+
+def test_identical_repeats_and_focus_watch_share_physical_records(tmp_path):
+    bound, ns, roots = fixture(tmp_path, scope="selected_call", candidate_focus=True)
+    value = collector(bound, roots)
+    value.begin("call-1")
+    for _ in range(31):
+        ns["helper"](["initialization"])
+    ns["helper"](["src/project"])
+    value.end("call-1")
+    feedback = trace.public_feedback(bound, value.finish())
+    assert feedback["status"] == "complete"
+    details = feedback["collection"]["details"]
+    assert details["status"] == "complete" and details["coalesced_events"] > 0
+    assert details["retained_records"] == 8  # Four unique events per argument value.
+    focus, watch = feedback["focus"], feedback["watches"][0]
+    assert focus["entries"] == watch["entries"] == 32
+    assert focus["event_counts"]["return"] == watch["event_counts"]["return"] == 32
+    focus_calls = [e for e in focus["events"] if e["event"] == "call"]
+    watch_calls = [e for e in watch["events"] if e["event"] == "call"]
+    assert [e["sample_id"] for e in focus_calls] == [e["sample_id"] for e in watch_calls]
+    assert [e["occurrences"] for e in focus_calls] == [31, 1]
+    assert all(set(e["values"]) <= {"paths"} for e in focus["events"])
+
+
+def test_distinct_initialization_keeps_late_values_and_independent_counts(tmp_path):
+    bound, ns, roots = fixture(tmp_path, scope="selected_call", candidate_focus=True)
+    value = collector(bound, roots)
+    value.begin("call-1")
+    for i in range(100):
+        ns["helper"]([f"plugin-{i}"])
+    ns["helper"](["src/project"])
+    value.end("call-1")
+    report = value.finish()
+    feedback = trace.public_feedback(bound, report)
+    assert feedback["status"] == "complete" and feedback["reason"] is None
+    assert feedback["collection"]["details"]["status"] == "sampled"
+    assert feedback["collection"]["details"]["omitted_events"] > 0
+    assert feedback["collection"]["details"]["retained_records"] <= trace.MAX_EVENTS
+    assert len(trace._json(report).encode()) <= trace.MAX_REPORT_BYTES
+    assert feedback["collection"]["limits"][0]["budget"] in {
+        "function_records", "function_value_bytes"}
+    watch = feedback["watches"][0]
+    assert watch["entries"] == watch["event_counts"]["return"] == 101
+    assert watch["observed_lines"] == [2, 5]
+    assert watch["not_observed_lines"] == [4]
+    assert watch["events"][0]["values"]["paths"] == ["plugin-0"]
+    assert watch["events"][-1]["value"] == "src/project"
+
+
+@pytest.mark.parametrize("budget", ["MAX_TRACE_EVENTS", "MAX_SELECTED_EVENTS"])
+def test_coverage_limit_names_counter_and_never_proves_absence(tmp_path, monkeypatch, budget):
+    bound, ns, roots = fixture(tmp_path, scope="selected_call", candidate_focus=True)
+    monkeypatch.setattr(trace, budget, 1)
+    value = collector(bound, roots)
+    value.begin("call-1")
+    ns["helper"](["first"])
+    ns["helper"](["late"])
+    value.end("call-1")
+    feedback = trace.public_feedback(bound, value.finish())
+    assert feedback["status"] == "unknown" and feedback["reason"] == "collector_truncated"
+    expected = "call_events" if budget == "MAX_TRACE_EVENTS" else "selected_events"
+    assert feedback["collection"]["limits"][0]["budget"] == expected
+    assert feedback["collection"]["limits"][0]["observed"] == 2
+    assert feedback["watches"][0]["not_observed_lines"] is None
+
+
+@pytest.mark.parametrize("budget,limit", [("MAX_EVENTS", 1), ("MAX_VALUE_BYTES", 64),
+                                         ("MAX_REPORT_BYTES", 1500)])
+def test_detail_limit_does_not_discard_complete_counts(tmp_path, monkeypatch, budget, limit):
+    bound, ns, roots = fixture(tmp_path, scope="selected_call", candidate_focus=True)
+    monkeypatch.setattr(trace, budget, limit)
+    value = collector(bound, roots)
+    value.begin("call-1")
+    ns["helper"](["initialization"])
+    ns["helper"](["src/project"])
+    value.end("call-1")
+    report = value.finish()
+    feedback = trace.public_feedback(bound, report)
+    assert feedback["status"] == "complete"
+    assert feedback["collection"]["details"]["status"] == "sampled"
+    assert feedback["focus"]["event_counts"]["return"] == 2
+    assert feedback["watches"][0]["not_observed_lines"] == [4]
+    assert len(trace._json(report).encode()) <= trace.MAX_REPORT_BYTES
+
+
+@pytest.mark.parametrize("corrupt", ["counter", "occurrences", "alias", "limit", "coverage",
+                                     "zero_coverage", "missing_lines", "missing_samples"])
+def test_versioned_telemetry_cannot_be_used_when_corrupt(tmp_path, corrupt):
+    bound, ns, roots = fixture(tmp_path, scope="selected_call", candidate_focus=True)
+    value = collector(bound, roots)
+    value.begin("call-1")
+    ns["helper"](["src/project"])
+    value.end("call-1")
+    report = value.finish()
+    if corrupt == "counter":
+        report["rows"][0]["event_counts"]["return"] = True
+    elif corrupt == "occurrences":
+        report["rows"][0]["events"][0]["occurrences"] = 2
+    elif corrupt == "alias":
+        report["rows"][1]["events"][0]["values"]["paths"] = ["foreign"]
+    elif corrupt == "limit":
+        report["collection"]["details"]["record_limit"] += 1
+    elif corrupt == "zero_coverage":
+        report["collection"]["coverage"].update(call_events=0, selected_events=0)
+    elif corrupt == "missing_lines":
+        report["rows"][1]["line_hits"] = []
+    elif corrupt == "missing_samples":
+        for row in report["rows"]:
+            row["events"] = []
+        report["collection"]["details"].update(retained_records=0, retained_value_bytes=0)
+    else:
+        report["collection"]["coverage"]["status"] = "unknown"
+    feedback = trace.public_feedback(bound, report)
+    assert feedback["status"] == "unknown" and feedback["reason"] == "invalid_report"
+    assert "collection" not in feedback
 
 
 def test_binding_rejects_private_unprepared_and_outside_function(tmp_path):

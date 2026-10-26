@@ -81,7 +81,7 @@ def test_default_serialization_and_schema_identities_remain_exact():
     )
     assert "memory_update" not in RequestedTool(name="read_file", action_id="x").model_dump()
     assert dev_tool_surface_hash() == (
-        "sha256:b3bf0277ccad71850e97a6c29dc46777e24cace0a8e44554fffaaa103065a827"
+        "sha256:0eea89c7bddee6c10a83549f86d1f19c07502486568e0c854aba18268008c3f6"
         if FROZEN_ARM is None else
         "sha256:57193859890419b79cb7f4927c37796d044bc4bf7159c51ddf17723849529e26"
     )

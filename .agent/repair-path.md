@@ -50,7 +50,7 @@ conflicting judgment or different file hash cannot trigger the diagnosis.
 The current candidate permits one preparation `read_file`/`search_files` when
 offered, one `run_probe` replay of the frozen original, and stop. Repair, checks and
 tests wait for the diagnosis. A fresh request supplies only `focus` (origin, path,
-function), selecting the public caller that encloses the suspected path. The host
+function), selecting a public function on the suspected failure path. The host
 maps current unobserved changed ranges to their innermost unique Python function
 frames and selects their parameter names, up to four watches and six fields each.
 Module-level/ambiguous changes or exceeded bounds remain unavailable; the host does
@@ -112,18 +112,41 @@ native history; the fresh-segment behavior belongs to segmented-v1.
 ## Observation and evidence linkage
 
 The host binds regular tracked public Python source or verified prepared
-dependency members, source hashes and function locations. The trusted collector
-observes only the selected invocation on its launch thread while the focus frame
-is active. Calls before the focus, initialization and control invocations do not
-count. It records bounded named simple values, call entry, selected line entry,
-return and exception type. Values at a line precede its execution; a recorded
+dependency members, source hashes and function locations. Fresh first-observation
+and focus-only diagnosis requests cover the selected invocation on its launch
+thread, including watches outside focus. Saved requests without `scope` retain
+their focus-subtree meaning and raw input identity. Other invocations, threads
+and processes remain unmeasured. It records bounded named simple values, call
+entry, selected line entry, return and exception type. Values at a line precede its execution; a recorded
 exception may subsequently be caught. No arbitrary expression, object `repr`,
 attribute traversal or unrestricted locals capture is exposed.
 
+Entry discovery and selected-frame observation have separate 200,000-event
+limits. Unselected frames receive no local line tracing unless the trusted
+changed-line collector needs it; delegated events do not consume selected-frame
+capacity. Counters saturate at limit+1 after a gap. Such coverage, trace/source
+drift or an incomplete call stays unknown and cannot establish absence.
+
+The v2 report separates complete coverage from sampled detail. Event counts and
+selected line hits continue independently of the 48-record/8,000-value-byte
+sample budgets. Function aliases and overlapping focus/watch selections share
+physical samples. Equal bounded projections coalesce with occurrence counts;
+per-function shares retain the first and recent distinct samples, keeping one
+hot function from crowding out later targets. Grouping is not chronological call
+pairing, and equal clipped values do not prove equal full values. The 24,000-byte
+wire cap can discard detail while retaining counters. `collection` exposes
+coverage, retained/omitted/coalesced counts and exhausted budgets with the first
+bound target/event/line where available; unselected frame values are not captured.
+
+Only validated complete coverage permits event/line absence. Missing samples
+never prove no return or exception: premise predictions use `event_counts`.
+Legacy reports without v2 metadata retain their original conservative semantics.
+Summaries carry collection limits and event counts into the next repair context.
+
 The collector composes with existing changed-line tracing. Its separate framed
 report is removed before ordinary output and host diagnostic judgment parsing.
-Timeout, truncation, source/trace drift, absent focus/call, or missing report is
-`unknown`; only a complete selected-call/focus observation permits no-hit.
+Timeout, coverage truncation, source/trace drift, absent call, legacy absent focus,
+or missing report is `unknown`; only complete scoped coverage permits no-hit.
 Default reproduction observer programs keep their existing bytes.
 
 Diagnosis completion binds case, candidate, failure, mutation, replay request,
@@ -182,7 +205,9 @@ count. Exact finished child CAS receipts are reused. A child start without a
 durable result is uncertain and is never redispatched; remaining phases stop.
 All generated snapshots, logs and receipts stay outside the repository.
 
-Run `uv run --locked pytest @tests/diagnosis-request.txt --basetemp C:/pt/<unique>`
+Run `uv run --locked pytest @tests/trace-budget.txt --basetemp C:/pt/<unique>`
+for the short collector/scope/prediction controls. Use
+`uv run --locked pytest @tests/diagnosis-request.txt --basetemp C:/pt/<unique>`
 for core construction/context/correction/recovery/resource controls, then quick once for integration
 and isolated mock evaluation. Use `tests/call-path-repair.txt` when changing the
 broader comparison mechanism. See the [stage record](../docs/history/2026-10-26-diagnosis-stage.md),

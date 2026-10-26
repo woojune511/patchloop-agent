@@ -69,7 +69,7 @@ def dev_tool_surface_hash(
         })
     base = sha256_json(
         {
-            "schema_version": "dev-tool-surface-v57",
+            "schema_version": "dev-tool-surface-v58",
             "submission_assessment": "required-nonblank-current-diff-plan-review-v2",
             "selected_public_tests": "registered-pytest-same-test-before-after-optional-v2",
             "selected_test_comparison": "two-isolated-children-cas-no-uncertain-reexecution-v1",
@@ -153,6 +153,8 @@ def dev_tool_surface_hash(
             "probe_request_correction": "field-diagnostics-actual-arguments-preflight-receipt-v1",
             "probe_judgment": "captured-diagnostic-host-values-witnesses-v1",
             "repair_call_path": "original-refuted-unobserved-branch-bounded-diagnosis-v1",
+            "call_path_collection": "separate-entry-coverage-coalesced-first-and-recent-details-v2",
+            "call_path_scope": "fresh-selected-call-saved-focus-scope-preserved-v2",
             "repair_call_path_bounds": [4, 32, 6, 1, 2],
             "repair_call_path_budget": "one-execution-preparation-and-request-correction-v1",
             "observation_correction": "one-fresh-baseline-same-conditions-supersession-v1",

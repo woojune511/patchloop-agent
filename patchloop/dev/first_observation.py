@@ -198,6 +198,13 @@ def _trace_complete(result, start, dispatch, baseline, identity):
                 or row.get("observation") != ("observed" if row["entries"] else "not_observed")
                 or type(row.get("events")) is not list):
             return False
+        if "event_counts" in row:
+            counts = row["event_counts"]
+            if (type(counts) is not dict
+                    or set(counts) != {"call", "line", "return", "exception"}
+                    or any(type(value) is not int or value < 0 for value in counts.values())
+                    or counts["call"] != row["entries"]):
+                return False
         if index and (row.get("fields") != target["fields"]
                       or row.get("not_observed_lines") is None
                       or set(row.get("observed_lines", [])) | set(row["not_observed_lines"])
@@ -213,10 +220,13 @@ def _observation(start, result, complete):
     for index, selected in enumerate(admission.get("candidates", [])):
         row = trace.get("watches", [])[index] if complete else {}
         events = row.get("events", [])
+        counts = row.get("event_counts")
         outcomes = {"entered": bool(row.get("entries")),
                     "not_entered": row.get("entries") == 0,
-                    "returned": any(e["event"] == "return" for e in events),
-                    "raised": any(e["event"] == "exception" for e in events)}
+                    "returned": counts["return"] > 0 if counts is not None
+                    else any(e["event"] == "return" for e in events),
+                    "raised": counts["exception"] > 0 if counts is not None
+                    else any(e["event"] == "exception" for e in events)}
         exits = [event for event in events if event["event"] != "line"]
         status = ("prediction_matched" if outcomes[selected["prediction"]]
                   else "prediction_contradicted") if complete else "insufficient"
@@ -224,12 +234,15 @@ def _observation(start, result, complete):
             "file_hash"], "status": status,
             "entries": row.get("entries"), "observed_lines": row.get("observed_lines"),
             "not_observed_lines": row.get("not_observed_lines"),
+            **({"event_counts": copy.deepcopy(counts)} if counts is not None else {}),
             "entry_exit_events": exits if len(exits) <= 4 else [*exits[:2], *exits[-2:]],
             "omitted_event_count": max(0, len(exits) - 4)})
     return {"action_id": start["action_id"], "input_hash": start.get("input_hash"),
             "hypothesis": admission.get("hypothesis"),
             "selection_hash": admission.get("selection_hash"), "candidates": candidates,
             "status": "observed" if complete else "insufficient",
+            **({"collection": copy.deepcopy(trace["collection"])}
+               if "collection" in trace else {}),
             "trace_identity": {key: trace.get(key) for key in (
                 "request_hash", "raw_request_hash", "snapshot_hash", "execution_identity_hash")},
             "interpretation": "Predictions concern bounded trace events in the original call. "
