@@ -40,12 +40,22 @@ scope and safety PASS. This is a public symptom repair by the operator, not a
 new mini-model success or an accepted task solution. The private failure cause
 is unknown and is not attributed to any public symptom.
 
-Preserve these artifacts and production defaults. The inherited missing-initializer
-guard's broader namespace/path coverage and directory traversal remain unverified.
-Next distinguish those paths using public source and discriminating calls before
-another paid repair trial. Do not equate absence of F0010, a regression PASS or
-one expected output with whole-task correctness. Do not increase model/context
-budgets based on this local outcome. All paid allocations are closed.
+The [six-row selection diagnostic](history/2026-10-27-namespace-selection-diagnostic.md)
+now confirms silent omission: with the initializer absent, both base and saved
+candidate select only the nonexistent initializer and never attempt the invalid
+child file. Base emits F0010; the candidate exits 0. Direct-file and ordinary-package
+controls both select/parse the child and emit E0001 in both states. All six probes
+completed in 62.562 seconds with matched conditions and complete bounded observation.
+This additional public diagnostic is not a new benchmark acceptance condition.
+
+Two resolver ImportErrors precede the omission. Actual search paths include `"."`,
+while Astroid's relative-path helper compares it directly against an absolute
+filename. Relative-root normalization is now a concrete source-based repair
+hypothesis, not yet a tested fix. Next compare relative/equivalent absolute search
+roots and test a resolver-only repair from clean source; do not keep extending the
+synthetic-module builder guard. No new target repair or evaluator run occurred.
+Preserve artifacts and production defaults. No model/context budget increase is
+supported by this diagnostic. All paid allocations remain closed.
 
 Public exception frames and cause/context chains are implemented in fresh invocation
 v5, with historical observer v1-v4 preserved; see the

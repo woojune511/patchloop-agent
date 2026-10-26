@@ -11,3 +11,4 @@
 - [Model comparison result: mini behavior improved; full missed stream encoding](../2026-10-27-model-setting-results.md)
 - [Saved mini verification: cache identity explained, isolated acceptance fails](../2026-10-27-mini-candidate-verification.md)
 - [Operator namespace-doc repair: public empty output restored, acceptance still fails](../2026-10-27-namespace-doc-repair.md)
+- [Namespace selection diagnosis: silent success omits the invalid child file](../2026-10-27-namespace-selection-diagnostic.md)
