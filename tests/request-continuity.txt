@@ -1,0 +1,10 @@
+tests/test_request_continuity.py
+tests/test_correction_drafts.py
+tests/test_original_acquisition_opportunity.py
+tests/test_original_obligation.py
+tests/test_original_obligation_admission.py
+tests/test_dev_segments.py::test_real_mock_smoke_reaches_isolated_acceptance[none]
+tests/test_dev_probe_cases.py::test_case_policy_extends_current_probe_schema_without_changing_prompt
+tests/test_thin_policy_gateway.py::test_default_serialization_and_schema_identities_remain_exact
+tests/test_dev_planning.py::test_off_wire_and_prompt_are_unchanged
+tests/test_documentation_layout.py

@@ -12,7 +12,7 @@ from test_dev_tools import mutation_call, read_calls
 from test_finish_reproduction import checks, finish, mutate, request, results_for
 from test_probe_purpose import probe
 
-from diagnostics.finish_reproduction_experiment import original_case
+from diagnostics.finish_reproduction_experiment import NORMAL, NORMAL_EXPECTED
 from patchloop.dev import original_obligation as obligation
 from patchloop.dev import runner
 from patchloop.dev.conversation import assemble_model_input, reconstruct_state
@@ -87,8 +87,9 @@ def test_helper_notes_plan_and_rejected_edits_do_not_discharge_root(
     for number in range(3, obligation.MAX_ACTIONS + 1):
         read(gateway, number)
     limited = view(gateway)
-    assert limited["stage"] == "released" and limited["reason"] == "investigation_action_limit"
+    assert limited["stage"] == "pending" and limited["acquisition_phase"] == "request_only"
     assert limited["status"] == "unverified"
+    gateway.release_original_acquisition("completion_budget")
     mutate(gateway)
     checks(gateway)
     result, _ = finish(gateway)
@@ -116,8 +117,11 @@ def test_acquired_failure_still_requires_current_replay(acquired_gateway, correc
 def test_two_matched_baselines_release_without_original_failure_credit(acquired_gateway):
     gateway = acquired_gateway
     for index in range(2):
-        call = original_case(gateway.public_task, normal=True).model_copy(
-            update={"action_id": f"normal-{index}"})
+        call = probe(gateway.public_task, f"normal-{index}", source=(
+            f"record_observation(observed_target()({NORMAL!r}).value)"))
+        call.arguments["purpose"].update(
+            input_conditions="Normal two-column CSV.",
+            expected_json=json.dumps(NORMAL_EXPECTED), reported_failure_json="[]")
         assert gateway.execute(call).output["reproduction"]["comparison"] == "matched"
     state = view(gateway)
     assert state["stage"] == "released" and state["original_attempts"] == 2

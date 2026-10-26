@@ -117,7 +117,9 @@ def test_real_mock_smoke_reaches_isolated_acceptance(tmp_path, planning):
     result = runner.run_dev(request)["runs"][0]
     assert result["terminal"] == "EVALUATOR_PASS", result
     assert result["evaluator"]["safety_state"] == "NOT_RUN"
-    assert result["context_management"]["segment_count"] == 2
+    assert result["context_management"]["transition_reasons"] == [
+        "initial", "repair_stage_entered", "repair_stage_returned", "completion_stage_entered",
+    ]
 
 
 def test_request_bytes_are_final_utf8_not_character_or_token_estimates():

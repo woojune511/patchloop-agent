@@ -45,7 +45,8 @@ def project_tools(schemas, arm):
                 del params["properties"]["call_path"]
                 params["required"].remove("call_path")
                 tool["description"] = tool["description"].partition(
-                    " When repair_path needs diagnosis,")[0]
+                    " When repair_path needs diagnosis,")[0].partition(
+                    " call_path is null here.")[0]
             for field in ("question", "python_source"):
                 params["properties"][field]["type"] = "string"
     return result

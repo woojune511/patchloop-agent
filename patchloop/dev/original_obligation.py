@@ -11,6 +11,9 @@ MAX_ATTEMPTS = 2
 MAX_ACTIONS = 6
 MAX_REQUEST_ERRORS = 2
 PROBE_STAGES = "probe-stages-v1"
+ACQUISITION_BUDGET = "inspection-then-request-v1"
+MAX_PREPARATION_ACTIONS = 6
+MAX_INVESTIGATION_ACTIONS = MAX_PREPARATION_ACTIONS + MAX_ATTEMPTS + MAX_REQUEST_ERRORS
 EMPTY_DIFF = sha256_bytes(b"")
 INVESTIGATION_TOOLS = frozenset({"read_file", "search_files", "search_history", "run_probe"})
 
@@ -29,12 +32,15 @@ def definition(public_task):
 def ensure(journal, public_task, acquisition):
     legacy = {**definition(public_task), "acquisition_policy": acquisition,
               "max_original_attempts": MAX_ATTEMPTS, "max_investigation_actions": MAX_ACTIONS}
-    expected = {**legacy, "accounting_policy": PROBE_STAGES,
+    previous = {**legacy, "accounting_policy": PROBE_STAGES,
                 "max_request_errors": MAX_REQUEST_ERRORS}
+    expected = {**previous, "acquisition_budget_policy": ACQUISITION_BUDGET,
+                "max_preparation_actions": MAX_PREPARATION_ACTIONS,
+                "max_investigation_actions": MAX_INVESTIGATION_ACTIONS}
     records = [e["payload"] for e in journal.events()
                if e["event_type"] == "original_obligation_registered"]
     if records:
-        if records not in ([expected], [legacy]):
+        if records not in ([expected], [previous], [legacy]):
             raise RecoveryError("original public obligation identity changed")
     elif acquisition != "none":
         journal.append("original_obligation_registered", expected)
@@ -59,6 +65,7 @@ def review(events, public_task, completion, *, acquisition="none", probe_availab
     """Derive truth from receipts; plans, helper passes and releases confer no credit."""
     identity = definition(public_task)
     starts, results, dispatched, returned, releases = {}, {}, {}, {}, []
+    registrations = []
     for event in events:
         payload = event["payload"]
         if event["event_type"] == "action_started":
@@ -72,6 +79,8 @@ def review(events, public_task, completion, *, acquisition="none", probe_availab
             returned[payload["action_id"]] = payload
         elif event["event_type"] == "original_acquisition_released":
             releases.append(payload)
+        elif event["event_type"] == "original_obligation_registered":
+            registrations.append(payload)
     if any(row.get("obligation_id") != identity["obligation_id"] for row in releases):
         raise RecoveryError("original acquisition release refers to another task")
     baseline_probes = {key: row for key, row in starts.items()
@@ -105,6 +114,18 @@ def review(events, public_task, completion, *, acquisition="none", probe_availab
         and results[key]["output"].get("status") != "passed" for key in attempts)
     actions = sum(row.get("tool") in INVESTIGATION_TOOLS
                   and row.get("baseline_diff_hash") == EMPTY_DIFF for row in starts.values())
+    # Existing registrations keep their old shared-six bound. Fresh runs reserve
+    # original requests separately: ordinary reads and helpers cannot spend them.
+    split_preparation = (not registrations or registrations[0].get(
+        "acquisition_budget_policy") == ACQUISITION_BUDGET)
+    preparation_actions = sum(
+        row.get("tool") in INVESTIGATION_TOOLS
+        and row.get("baseline_diff_hash") == EMPTY_DIFF
+        and key not in originals and key not in request_errors
+        for key, row in starts.items())
+    preparation_remaining = max(0, (MAX_PREPARATION_ACTIONS - preparation_actions
+                                    if split_preparation else MAX_ACTIONS - actions))
+    shared_limit = not split_preparation and actions >= MAX_ACTIONS
     roots = completion.get("baseline_failure_case_ids", [])
     matched = completion.get("baseline_matched_count", 0)
     observed = completion.get("baseline_observed_count", 0)
@@ -116,10 +137,12 @@ def review(events, public_task, completion, *, acquisition="none", probe_availab
               else "probe_unavailable" if not probe_available else "attempt_pending" if pending
               else "request_error_limit" if len(request_errors) >= MAX_REQUEST_ERRORS
               else "original_attempt_limit" if reserved >= MAX_ATTEMPTS
-              else "investigation_action_limit" if actions >= MAX_ACTIONS else "awaiting_original")
+              else "investigation_action_limit" if shared_limit
+              else "preparation_action_limit" if preparation_remaining == 0
+              else "awaiting_original")
     stage = ("acquired" if roots else "disabled" if acquisition == "none" else "released"
              if releases or not probe_available else "pending" if pending else "released"
-             if reserved >= MAX_ATTEMPTS or actions >= MAX_ACTIONS
+             if reserved >= MAX_ATTEMPTS or shared_limit
              or len(request_errors) >= MAX_REQUEST_ERRORS else "pending")
     status = ("refuted" if completion["status"] == "refuted" else "verified"
               if roots and completion["status"] == "cases_verified" else "unverified")
@@ -132,6 +155,13 @@ def review(events, public_task, completion, *, acquisition="none", probe_availab
     return {
         **identity, "status": status, "acquisition_policy": acquisition,
         "acquisition_status": acquisition_status, "stage": stage, "reason": reason,
+        "acquisition_budget_policy": (ACQUISITION_BUDGET if split_preparation
+                                      else "shared-investigation-v1"),
+        "acquisition_phase": ("request_only" if preparation_remaining == 0 else "inspect")
+            if stage == "pending" else "inactive",
+        "preparation_actions": preparation_actions,
+        "max_preparation_actions": MAX_PREPARATION_ACTIONS,
+        "preparation_actions_remaining": preparation_remaining,
         "original_attempts": len(attempts), "investigation_actions": actions,
         "accounting_policy": PROBE_STAGES, "request_errors": len(request_errors),
         "max_request_errors": MAX_REQUEST_ERRORS,
@@ -143,7 +173,10 @@ def review(events, public_task, completion, *, acquisition="none", probe_availab
         "uncertain_original_dispatches": len(uncertain_dispatches),
         "original_execution_results": sum(key in returned for key in attempts),
         "original_setup_failures": setup_failures,
-        "max_original_attempts": MAX_ATTEMPTS, "max_investigation_actions": MAX_ACTIONS,
+        "max_original_attempts": MAX_ATTEMPTS,
+        "max_investigation_actions": (
+            MAX_INVESTIGATION_ACTIONS if split_preparation else MAX_ACTIONS
+        ),
         "baseline_failure_case_ids": roots, "current_diff_hash": completion["current_diff_hash"],
         "interpretation": "Only selected public cases; issue-to-caller mapping is unverified. "
         "Releasing acquisition, helper/check PASS and independent acceptance do not discharge "

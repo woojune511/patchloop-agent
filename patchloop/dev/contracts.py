@@ -67,11 +67,14 @@ def dev_tool_surface_hash(
                 planning_policy=planning_policy, probe_policy=probe_policy),
             "probe_recheck": contract(),
         })
-    from patchloop.dev import completion_context, inspection_focus
+    from patchloop.dev import completion_context, correction_drafts, inspection_focus
 
     base = sha256_json(
         {
-            "schema_version": "dev-tool-surface-v61",
+            "schema_version": "dev-tool-surface-v62",
+            "rejected_drafts": correction_drafts.contract(),
+            "parallel_generation": "only-when-current-gate-permits-read-batch-v1",
+            "fresh_probe_schema": "state-valid-original-acquisition-or-pending-diagnosis-v1",
             "completion_context": completion_context.contract(),
             "inspection_focus": inspection_focus.contract(),
             "original_target_failure": "same-selected-call-exception-no-equality-credit-v1",
@@ -143,11 +146,11 @@ def dev_tool_surface_hash(
             "mutation_anchor_guidance": "smallest-sufficient-exact-observed-text-v1",
             "public_check_failure_focus": "public-location-with-unknown-execution-boundary-v2",
             "public_failure_guidance": "diff-currency-and-actual-action-space-v1",
-            "completion_guidance": "original-call-path-before-repair-explicit-delivery-v9",
+            "completion_guidance": "original-request-after-bounded-preparation-v10",
             "completion_reproduction": "acquired-original-after-edit-shared-finish-replay-v2",
             "completion_reproduction_feedback": "bounded-current-observation-comparability-v1",
             "original_obligation": "task-bound-base-failure-and-current-replay-v1",
-            "original_acquisition": "opt-in-two-attempt-six-action-protected-budget-v1",
+            "original_acquisition": "fresh-six-preparation-then-request-legacy-shared-six-v2",
             "public_invocation": "python-call-stream-capture-v4-legacy-v1-v2-v3-replay",
             "public_invocation_capture_bounds": [4096, 10000],
             "reproduction_comparison_feedback": "v3-healthy-frozen-json-field-differences-v1",
@@ -208,7 +211,7 @@ def dev_tool_surface_hash(
             "public_probe_design_guidance": "public-input-variation-expected-observation-v1",
             "public_probe_usage_guidance": "injected-helper-direct-call-progressive-output-v1",
             "mutation_recovery": "atomic-complete-candidate-diff-v2",
-            "correction_recovery": "journal-derived-unconsumed-v2",
+            "correction_recovery": "journal-derived-unexecuted-drafts-same-diff-v3",
             "execution_deadline": "shared-active-deadline-owned-cleanup-v1",
             "provider_tool_validation": "schema-exact-null-bounded-diagnostic-v1",
         }

@@ -230,6 +230,7 @@ def dev_tool_schemas(
     probe_recheck_policy: str = "none",
     probe_environment: dict[str, Any] | None = None,
     path_diagnosis_pending: bool = False,
+    original_acquisition_pending: bool = False,
     repair_test_comparison_pending: bool = False,
     repair_revision: dict[str, Any] | None = None,
     repair_test_edit_enabled: bool = False,
@@ -469,13 +470,8 @@ def dev_tool_schemas(
                 "Results are diagnostics, not required visible-check verdicts. "
                 + helper_program.DESCRIPTION + " "
                 + probe_replay.DESCRIPTION + " " + reproduction.DESCRIPTION
-                + " When repair_path needs diagnosis, set replay_action_id/question/python_source/"
-                "purpose to null and select call_path focus and watched public functions/fields. "
-                "The host binds the pending original call and current source hashes, selecting "
-                "up to 32 executable lines per function with changed lines first. Do not supply "
-                "call_id or line numbers. The host reports bounded inputs, returns/exceptions "
-                "and line entries. "
-                "Function entry alone is not changed-branch execution; unknown is not no-hit."
+                + " call_path is null here. A pending original-call diagnosis offers its own "
+                "small focus schema."
             ),
             "strict": True,
             "parameters": {
@@ -490,7 +486,7 @@ def dev_tool_schemas(
                         "type": ["string", "null"], "minLength": 1, "maxLength": 500,
                     },
                     "purpose": reproduction.purpose_schema(),
-                    "call_path": {"anyOf": [{"type": "null"}, call_path_trace.selection_schema()]},
+                    "call_path": {"type": "null"},
                 },
                 "required": ["question", "python_source", "replay_action_id", "purpose",
                              "call_path"],
@@ -505,6 +501,27 @@ def dev_tool_schemas(
                 )
         if path_diagnosis_pending:
             schemas[-1] = diagnosis_request.tool_schema()
+        elif original_acquisition_pending:
+            schema = schemas[-1]
+            schema["description"] = (
+                "Reproduce the original public caller on the unchanged base before editing. "
+                "This stage accepts a new original_requirement program only; provide question "
+                "and python_source, with replay_action_id and call_path null. "
+                "Call a Python entry point in this process; child processes are unavailable. "
+                + environment_description + " " + helper_program.DESCRIPTION + " "
+                + reproduction.DESCRIPTION
+            )
+            properties = schema["parameters"]["properties"]
+            properties["question"]["type"] = "string"
+            properties["python_source"]["type"] = "string"
+            properties["replay_action_id"] = {"type": "null"}
+            properties["purpose"] = reproduction.purpose_schema()["anyOf"][1]
+            properties["purpose"]["properties"]["corrects_action_id"] = {"type": "null"}
+            for name in ("case_id", "reference_action_id"):
+                if name in properties:
+                    properties[name] = {"type": "null"}
+            if "save_program" in properties:
+                properties["save_program"] = {"type": "boolean", "enum": [False]}
     if allowed_tools is not None and "observe_original" in allowed_tools:
         schemas.append(first_observation.schema())
     if test_suite_ids:
@@ -600,6 +617,7 @@ def validate_tool_batch(
     allowed_read_paths: Sequence[str] = (),
     agent_policy: str = "current",
     path_diagnosis_pending: bool = False,
+    original_acquisition_pending: bool = False,
     repair_test_comparison_pending: bool = False,
 ) -> str:
     """Return ``parallel_read`` or ``single_action``; reject every mixed shape."""
@@ -657,6 +675,19 @@ def validate_tool_batch(
     ):
         raise ContractError("turn_decision mode must match the requested tool family")
     for call in calls:
+        if original_acquisition_pending and call.name == "run_probe":
+            purpose = call.arguments.get("purpose")
+            if (not isinstance(purpose, dict) or purpose.get("kind") != "original_requirement"
+                    or call.arguments.get("replay_action_id") is not None
+                    or call.arguments.get("call_path") is not None
+                    or purpose.get("corrects_action_id") is not None
+                    or call.arguments.get("case_id") is not None
+                    or call.arguments.get("reference_action_id") is not None
+                    or call.arguments.get("save_program", False) is not False):
+                raise ContractError(
+                    "original acquisition requires a new original_requirement probe; "
+                    "replay, call_path, correction and helper-case fields must be null, "
+                    "with save_program false")
         if call.name == "observe_original":
             first_observation.validate_selection(call.arguments)
     if allowed_read_paths:

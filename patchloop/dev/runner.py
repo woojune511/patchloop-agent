@@ -6,7 +6,7 @@ import copy
 import json
 import os
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 from time import monotonic
@@ -31,6 +31,7 @@ from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
 from patchloop.dev import (
     completion_context,
     completion_reproduction,
+    correction_drafts,
     diagnosis_context,
     evidence_focus,
     history_search,
@@ -707,7 +708,8 @@ def _completion_guidance(
             "environment; a helper or normal-only PASS does not reproduce the reported failure. "
             "Request rejection is not an execution: correct the primary probe request error. "
             "This stage permits two actual original dispatches, at most two rejected requests "
-            "and six investigation actions, within the shared completion budget. "
+            "and six preparation actions, within the shared completion budget. When reads "
+            "close, request the original probe or stop; reading does not use execution slots. "
             "Release without a failure keeps verification unmet."
         )
     elif snapshot.ready_to_submit and "finish_task" in allowed:
@@ -1027,6 +1029,10 @@ def _tool_policy(
         repair_read_credit=False if repair_read_credit else completion_state.repair_read_credit,
     )
     inspection_budget = completion_budget(inspection_state)
+    acquisition_pending = verification.get("original_obligation", {}).get("stage") == "pending"
+    acquisition_inspection_budget = completion_budget(replace(
+        inspection_state, reproduction_case_count=inspection_state.reproduction_case_count + 1,
+    )) if acquisition_pending else None
     inspection_floor = (
         inspection_budget.minimum
         if required_inspection and not protected_completion_possible
@@ -1067,6 +1073,12 @@ def _tool_policy(
         inspection_floor = max(inspection_floor, inspection_budget.minimum + 1)
         inspection_tool_floor = max(
             inspection_tool_floor, inspection_budget.minimum_tool_actions + 1)
+    if acquisition_inspection_budget is not None:
+        # A preparatory read must leave one original dispatch and its acquired-case
+        # completion route. Reading cannot consume the last funded probe opportunity.
+        inspection_floor = max(inspection_floor, 1 + acquisition_inspection_budget.protected)
+        inspection_tool_floor = max(
+            inspection_tool_floor, 1 + acquisition_inspection_budget.protected_tool_actions)
     inspection_tool_slack = remaining_tool_actions - inspection_tool_floor
     inspection_model_slack = remaining_model_calls - inspection_floor
     inspection_allowed = (
@@ -1216,9 +1228,16 @@ def _tool_policy(
         allowed.intersection_update({"stop_task", "read_file", "search_files", "run_probe",
                                      history_search.TOOL})
         mutation_allowed = mutation_protected_completion_possible = False
-        max_parallel_reads = min(max_parallel_reads, max(
-            0, obligation["max_investigation_actions"] - obligation["investigation_actions"],
-        ))
+        preparation_remaining = obligation.get("preparation_actions_remaining", max(
+            0, obligation["max_investigation_actions"] - obligation["investigation_actions"]))
+        max_parallel_reads = min(max_parallel_reads, preparation_remaining)
+        exploration_capacity = min(exploration_capacity, preparation_remaining)
+        if not preparation_remaining:
+            allowed.difference_update({"read_file", "search_files", history_search.TOOL})
+            inspection_allowed = False
+        elif (remaining_model_calls - 1 < 1 + probe_floor
+              or remaining_tool_actions - 1 < 1 + probe_tool_floor):
+            allowed.discard(history_search.TOOL)
         available_check_ids = ()
     if observation_blocked:
         workflow_gate = "needs_observation_correction"
@@ -1295,6 +1314,14 @@ def _tool_policy(
         if first_available:
             for tool in _FIRST_OBSERVATION_EXPLORATION & allowed:
                 minimum_cost_successors[tool] += 1
+        if acquisition_inspection_budget is not None:
+            for tool in {"read_file", "search_files"} & allowed:
+                minimum_cost_successors[tool] = max(
+                    minimum_cost_successors[tool], 1 + acquisition_inspection_budget.minimum)
+            if history_search.TOOL in allowed:
+                minimum_cost_successors[history_search.TOOL] = 1 + probe_budget.minimum
+            if "run_probe" in allowed:
+                minimum_cost_successors["run_probe"] = probe_budget.minimum
         allowed = {
             tool for tool in allowed
             if tool in {"finish_task", "stop_task"}
@@ -1821,6 +1848,12 @@ def _tool_policy_transition(
     }
 
 
+def _parallel_tool_calls(policy: _ToolPolicy) -> bool:
+    """Parallel generation is useful only when the gate can accept a read batch."""
+    return policy.max_parallel_reads > 1 and bool(
+        {"read_file", "search_files"} & policy.allowed_tools)
+
+
 def _protocol_correction(
     *,
     turn_id: str,
@@ -1829,8 +1862,8 @@ def _protocol_correction(
     gateway: DevToolGateway,
     policy: _ToolPolicy,
     tool_contract_failure: DevToolContractFailure | None = None,
+    rejected_calls: Sequence[RequestedTool] = (),
 ) -> dict[str, Any]:
-    del gateway
     allowed = policy.allowed_tools
     actions: list[str] = []
     inspection_names = sorted({"read_file", "search_files"} & allowed)
@@ -1907,6 +1940,12 @@ def _protocol_correction(
         result["completion_correction"] = completion_context.correction(
             code, issue, result["tool_contract_failure"])
         result["message"] = result["completion_correction"]["message"]
+    drafts = correction_drafts.build(
+        rejected_calls, turn_id=turn_id, diff_hash=gateway.current_diff.patch_hash
+    ) if rejected_calls else None
+    if drafts is not None:
+        result["rejected_drafts"] = drafts
+        result["message"] += " Reuse current rejected_drafts as appropriate; return one action."
     return result
 
 
@@ -1935,6 +1974,9 @@ def _build_context(
     )
     active_snapshot = snapshot or gateway.state_snapshot(projection=projection)
     summary = active_snapshot.diff
+    if correction and "rejected_drafts" in correction:
+        correction = {**correction, "rejected_drafts": correction_drafts.project(
+            correction["rejected_drafts"], diff_hash=summary.patch_hash)}
     recheck_context = (
         repair_recheck_context(journal, summary.patch_hash) if repair_recheck else None
     )
@@ -2158,17 +2200,13 @@ def _build_context(
         payload["diagnosis_stage"] = diagnosis_context.packet(
             active_policy.repair_path_diagnosis, journal.events(),
             lambda path: gateway._tracked_path(path)[1].read_bytes())
-        if correction:
-            payload["protocol_correction"] = correction
     if repair_context.pending(payload):
         payload["repair_stage"] = repair_context.packet(
             journal.events(), active_policy.first_observation or {})
-        if correction:
-            payload["protocol_correction"] = correction
     focus = inspection_focus.packet(journal.events(), payload)
     if focus is not None:
         payload["inspection_focus"] = focus
-    if correction and completion_context.active(payload):
+    if correction:
         payload["protocol_correction"] = correction
     # Construction is allowlist-based from ``package.public`` and public tool outputs;
     # private task fields are never accepted as context inputs.
@@ -5275,6 +5313,8 @@ def _run_one_active(
                         allowed_read_paths=pending_targeted_read_paths,
                         path_diagnosis_pending=(
                             pending_started["workflow_gate"] == "needs_path_diagnosis"),
+                        original_acquisition_pending=(
+                            pending_started.get("original_acquisition_pending", False)),
                         repair_test_comparison_pending=(
                             pending_started["workflow_gate"] == "needs_test_comparison"),
                     )
@@ -5304,6 +5344,7 @@ def _run_one_active(
                             issue=str(exc),
                             gateway=gateway,
                             policy=next_policy,
+                            rejected_calls=pending_calls,
                         )
                         journal.append("protocol_correction", correction)
                 else:
@@ -5569,6 +5610,10 @@ def _run_one_active(
                         pending_correction["tool_contract_failure"])
                         if pending_correction.get("tool_contract_failure") else None),
                 )
+                if "rejected_drafts" in pending_correction:
+                    # Refresh gate guidance without dropping the original rejected
+                    # proposal. Context projection checks its diff before delivery.
+                    correction["rejected_drafts"] = pending_correction["rejected_drafts"]
             context = _build_context(
                 package=package,
                 gateway=gateway,
@@ -5653,6 +5698,7 @@ def _run_one_active(
             probe_recheck_policy=request.probe_recheck,
             probe_environment=getattr(gateway.probe_sandbox, "environment", None),
             path_diagnosis_pending=policy.workflow_gate == "needs_path_diagnosis",
+            original_acquisition_pending=policy.workflow_gate == "needs_original_reproduction",
             repair_test_comparison_pending=policy.workflow_gate == "needs_test_comparison",
             repair_revision=(
                 policy.repair_path_diagnosis if policy.repair_path_diagnosis
@@ -5708,6 +5754,7 @@ def _run_one_active(
             "available_tool_names": sorted(policy.allowed_tools),
             "workflow_gate": policy.workflow_gate,
             "max_parallel_reads": policy.max_parallel_reads,
+            "original_acquisition_pending": policy.workflow_gate == "needs_original_reproduction",
             "targeted_read_paths": list(policy.targeted_read_paths),
             "minimum_completion_calls": policy.minimum_completion_calls,
             **_completion_cost_payload(policy),
@@ -5763,7 +5810,8 @@ def _run_one_active(
                     "model": request.model, "input": model_input, "tools": schemas,
                     "max_output_tokens": request.max_output_tokens,
                 })
-                request_payload.update(parallel_tool_calls=True, tool_choice="required",
+                request_payload.update(parallel_tool_calls=_parallel_tool_calls(policy),
+                                       tool_choice="required",
                                        max_output_tokens=current_output_ceiling)
                 sizes = segments.request_sizes(request_payload)
                 reasons = segments.size_reasons(sizes)
@@ -5817,7 +5865,7 @@ def _run_one_active(
                         request.agent_policy, request.planning_policy,
                         request.history_search_policy),
                 )
-                request_payload["parallel_tool_calls"] = True
+                request_payload["parallel_tool_calls"] = _parallel_tool_calls(policy)
                 request_payload["tool_choice"] = "required"
                 request_payload["max_output_tokens"] = current_output_ceiling
                 boundary, bundle = native_compaction.prepared_input(
@@ -5981,7 +6029,7 @@ def _run_one_active(
                 terminal_code = DevTerminal.TASK_FAILED
                 terminal_message = f"provider request construction failed: {type(exc).__name__}"
                 break
-            request_payload["parallel_tool_calls"] = True
+            request_payload["parallel_tool_calls"] = _parallel_tool_calls(policy)
             request_payload["tool_choice"] = "required"
             if prepared_count:
                 count_id, input_tokens = prepared_count
@@ -6259,6 +6307,8 @@ def _run_one_active(
                 allowed_tools=policy.allowed_tools,
                 allowed_read_paths=policy.targeted_read_paths,
                 path_diagnosis_pending=policy.workflow_gate == "needs_path_diagnosis",
+                original_acquisition_pending=(
+                    policy.workflow_gate == "needs_original_reproduction"),
                 repair_test_comparison_pending=policy.workflow_gate == "needs_test_comparison",
             )
         except ContractError as exc:
@@ -6283,6 +6333,7 @@ def _run_one_active(
                 issue=str(exc),
                 gateway=gateway,
                 policy=next_policy,
+                rejected_calls=turn.tool_calls,
             )
             journal.append("protocol_correction", correction)
             continue

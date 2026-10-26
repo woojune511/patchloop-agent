@@ -43,7 +43,8 @@ Gates and resource horizons expose registered tools, never unrestricted shell.
 `TextReplacementIntent` preserves explicit/absent fields, legacy annotations,
 cross-field validation and exact anchor/scope admission.
 
-Batch 1–4 `read_file`/`search_files` calls; other tools run singly.
+Batch 1–4 reads/searches; other tools run singly. See [request continuity](request-continuity.md)
+for stage-valid schemas, parallel generation and unexecuted correction drafts.
 Opt-in history search: eight candidates, execution-only ranking, whole originals
 within actual input limits. Only fresh-seed overflow uses 48k units; ID pages are
 48k too. Authored fields labelled, no source/PASS credit.
@@ -77,12 +78,12 @@ Known failure blocks; missing/incomplete evidence stays unverified. See linked
 contract for v4 identity and budget bounds.
 `original_obligation.py` retains the public-task obligation separately from cases.
 `--reproduction-acquisition bounded-v1` requires probes. Before edits it permits two
-actual original dispatches, two rejected requests, and six total investigation actions;
-completion budgets can release it earlier. Rejected requests do not count as executions.
-Stage receipts distinguish accepted/rejected requests, dispatch and returned results.
-Fresh original purposes bind the host-owned public issue identity and distinct
-failure/desired JSON; no quotation is generated. Acquisition needs both comparisons
-on the unchanged base. Rejections create no case; uncertainty stays unverified.
+actual original dispatches and two rejected requests. Six preparations then close reads;
+only an original request or stop remains. Shared budgets can release it earlier.
+Receipts separate requests, dispatch and results.
+Original purposes bind the host-owned issue and distinct failure/desired JSON.
+Acquisition needs both unchanged-base comparisons. Rejections create no case;
+uncertainty stays unverified.
 Request correction certifies validity only; see [request/replay](evidence-recovery.md).
 For helper source errors, see [bounded preflight correction](helper-correction.md).
 Diagnostic conflicts use [one baseline judgment correction](observation-judgment.md).

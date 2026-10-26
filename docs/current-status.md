@@ -24,62 +24,42 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [completion-feedback change](history/2026-10-26-completion-feedback.md)
-implements the next priorities from the closed revision pilot and budget analysis.
-Captured unexpected target exceptions now survive as current repair feedback,
-separate from missing/UNKNOWN whole-case comparison. A qualified selected-call
-failure blocks finish and reuses the finite diagnostic allowance. Original
-verification, public regression PASS and independent acceptance remain distinct.
+The [request-continuity change](history/2026-10-26-request-continuity.md) addresses
+observed request/correction failures from the closed completion-feedback pilot.
+Fresh probe modes now match their stage; original acquisition offers an executable
+new original program, and pending diagnosis offers the small focus schema. Parallel
+provider generation is enabled only when the gate can accept a read batch.
 
-Finalization now uses a compact public view and fresh segmented entry/correction
-handoffs. completion-recovery-v1 protects an 8,192-output finalization floor,
-clipped to the normal ceiling and funded within the same invocation cap. The
-separate first correction reserve is retained. Complete first observations link
-to delivered source ranges and recent inspection questions through an advisory;
-zero new covered lines does not ban further inspection. Tool surface v61 binds
-these contracts. Core local validation: 98 PASS in 35.66 seconds.
-Quick: 415 PASS, one guide-size failure corrected; focused docs/contracts then
-9 PASS. Isolated mock evaluation and Ruff passed; verification was split.
+Rejected edit batches retain up to two exact unexecuted drafts, bounded to 32 KB of
+canonical argument bytes. The journal, refreshed correction and compact segment
+preserve these bodies on the same diff. Stale or oversized bodies are explicitly
+withheld. Drafts grant no execution, source or verification credit; corrected single
+actions still pass normal anchor/scope checks. Tool surface v62 binds the change.
 
-Offline reprojection recovers the prior FileNotFoundError without upgrading
-UNKNOWN. Projecting the legacy ready states preserves patch/check/original facts
-and reduces serialized state bytes by about 56%; it does not measure model tokens,
-cost savings or a repaired trajectory. That failing candidate now requires repair.
-The [completion-feedback pilot](history/2026-10-26-completion-feedback-live.md)
-is now closed after one authorized Astroid-1333 solve with the same mini/xhigh
-model, 40K/25K ceilings and USD 1.20 cap. It ended INCOMPLETE_RESPONSE after
-34 model calls, spending USD 0.843607950 in about 11 minutes 20 seconds. There
-were 33 reads/searches and one probe rejected before target execution. No edit,
-original execution, regression check, submission or independent evaluation occurred.
+Fresh bounded acquisition separates six preparation actions from two actual
+original dispatches and two request errors. At the preparation limit only the
+original request or stop remains. Reads preserve a funded original request and its
+completion route. Existing receipts retain legacy limits; uncertainty and budget
+release remain unverified. The invocation cap and ordinary/correction output
+ceilings have not increased.
 
-Call 33 returned two edits in one disallowed batch; the protected call 34 then
-used all 25K correction output without a tool call. The total cap, model-call
-maximum and time limit were not reached. No complete first observation or ready
-stage was reached, leaving exception feedback, inspection advice and compact
-finalization NOT_EXERCISED. The next diagnostic priority is entering original
-reproduction and correcting the rejected edit batch into one executable action.
-The [request/correction analysis](history/2026-10-26-completion-feedback-analysis.md)
-found invalid diagnosis options in the general probe schema, parallel generation
-still enabled for mutation-only turns, and rejected draft bodies absent after the
-correction's segment rollover. Old source anchors remained present. The missing
-drafts increase reconstruction burden; their causal effect on output exhaustion
-has not been isolated. Prioritize valid request modes and preservation of the draft
-being corrected. No runtime change or paid continuation is active; F0010 repair
-and the benefit of more correction output remain unverified.
+Core local validation: 70 PASS in 28.95 seconds; quick: 450 PASS in 37.81 seconds.
+Ruff and isolated mock evaluation passed. Offline projection retains both actual
+rejected drafts exactly (6,605 argument bytes). Actual model progress, F0010 repair
+and the effect on output exhaustion remain untested with this change.
+No paid continuation is active. The next live question is whether a fresh solve
+executes the original call and turns its first edit proposal into a single applied
+action within the same previously selected limits.
 
-The [closed revision pilot](history/2026-10-26-repair-revision-live.md) used one
-Astroid-1333 solve, gpt-5.4-mini-2026-03-17 xhigh, 40K/25K ceilings and $1.20 cap.
-It spent $1.199996700 across 37 calls and 39 actions, with two edits. Public
-regression passed 1,231 tests; the original call raised FileNotFoundError, finish
-was never called, and acceptance was NOT_RUN. The [budget analysis](history/2026-10-26-revision-budget-analysis.md)
-found missing failure feedback, repeated inspection and low admitted final output.
-These observations support the implemented mechanism changes, not a repair-gain claim.
-
-The [revision contract](history/2026-10-26-repair-revision.md),
-[trace collector](history/2026-10-26-trace-budget.md) and
-[first-repair path](history/2026-10-26-first-repair.md) retain their recovery and
-comparison boundaries. The [actual-task wrapper adapter](history/2026-10-26-repair-revision-live-plan.md)
-retains the registered pytest copy wrapper and unchanged task bytes.
+The [closed completion-feedback pilot](history/2026-10-26-completion-feedback-live.md)
+ended INCOMPLETE_RESPONSE: 34 model calls, USD 0.843607950, 33 reads/searches, one
+preflight-rejected probe, and no edit or target execution. Its [analysis](history/2026-10-26-completion-feedback-analysis.md)
+confirmed invalid general diagnosis options, parallel generation at a mutation-only
+gate and missing rejected new-text bodies after rollover. Their contribution to
+model output exhaustion was not isolated. Existing [target-failure feedback and
+finalization](history/2026-10-26-completion-feedback.md) remain implemented; the pilot
+did not reach those conditional stages. Prior public PASS and isolated acceptance
+remain separate from original-call verification.
 
 ## Supporting evidence
 

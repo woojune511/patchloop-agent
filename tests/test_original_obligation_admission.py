@@ -44,6 +44,7 @@ def pending_snapshot(gateway, *, controls=0, actions=0):
         "stage": "pending", "status": "unverified", "acquisition_policy": "bounded-v1",
         "original_attempts": controls, "max_original_attempts": 2,
         "investigation_actions": actions, "max_investigation_actions": 6,
+        "preparation_actions_remaining": max(0, 6 - actions),
         "baseline_failure_case_ids": [],
     }
     return state
@@ -142,3 +143,34 @@ def test_pending_phase_blocks_edits_and_bounds_parallel_investigation(actions, r
     with pytest.raises(ContractError, match="at most"):
         validate_tool_batch(reads, max_parallel_reads=selected.max_parallel_reads,
                             allowed_tools=selected.allowed_tools)
+
+
+def test_six_preparations_leave_only_original_request_and_stop():
+    gateway = Gateway()
+    selected = policy(gateway, pending_snapshot(gateway, actions=6))
+    assert selected.workflow_gate == "needs_original_reproduction"
+    assert selected.allowed_tools == {"run_probe", "stop_task"}
+    assert selected.max_parallel_reads == 0
+    assert selected.exploration_state == "closed"
+
+
+@pytest.mark.parametrize("resource", ["model", "tool", "cost"])
+def test_preparation_cannot_spend_last_original_request_opportunity(resource):
+    gateway = Gateway()
+    selected = policy(gateway, pending_snapshot(gateway),
+                      model=SUCCESSOR_MODELS + 1 if resource == "model" else 40,
+                      tools=SUCCESSOR_TOOLS + 1 if resource == "tool" else 100,
+                      ledger=ledger_for_slots(SUCCESSOR_MODELS + 1)
+                      if resource == "cost" else None)
+    assert "run_probe" in selected.allowed_tools
+    assert not {"read_file", "search_files", "search_history"} & selected.allowed_tools
+
+
+def test_read_then_original_probe_fits_reserved_successor():
+    gateway = Gateway()
+    before = policy(gateway, pending_snapshot(gateway), model=SUCCESSOR_MODELS + 2,
+                    tools=SUCCESSOR_TOOLS + 2)
+    assert "read_file" in before.allowed_tools and before.max_parallel_reads == 1
+    after = policy(gateway, pending_snapshot(gateway, actions=1), model=SUCCESSOR_MODELS + 1,
+                   tools=SUCCESSOR_TOOLS + 1)
+    assert after.allowed_tools == {"run_probe", "stop_task"}
