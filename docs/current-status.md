@@ -78,7 +78,13 @@ establishes how many failures were newly introduced. Both final decision opportu
 were preserved. All sixteen responses settled, total USD 0.228657450, no submission
 or independent acceptance. This is an action difference without repair success;
 retain production defaults. A fixed-request model-setting comparison is a next
-question, not an approved run. All allocations are closed.
+question. The [fixed-request model comparison](history/2026-10-27-model-setting-plan.md)
+now prepares fresh mini/full arms at xhigh with identical thin requests, evidence
+and token/action opportunities. Model prices fund the same 8+1 response horizon;
+the proposed caps are USD 6.60 per arm and USD 8.60 total. The saved seed's local
+public regression passed (1,231 passed, 69 skipped, 15 xfailed); the frozen caller
+failure remains. Exact new execution approval is pending; all prior allocations
+are closed. Production defaults stay unchanged.
 
 The [latest fresh-solve pilot](history/2026-10-26-target-exception-live.md) acquired the
 original/control, observed the pre-edit path and applied two failed edits. It stopped

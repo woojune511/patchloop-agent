@@ -7,3 +7,4 @@
 - [Repair opportunity: protected actions, responses and cost in the seeded operator](../2026-10-27-repair-opportunity.md)
 - [Request annotation comparison: identical evidence/model and one schema intervention](../2026-10-27-request-annotation-plan.md)
 - [Request annotation result: B reached an edit, neither arm repaired the original](../2026-10-27-request-annotation-results.md)
+- [Fixed-request model comparison: mini versus full with funded opportunities](../2026-10-27-model-setting-plan.md)

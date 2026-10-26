@@ -131,6 +131,22 @@ full thin policy or its note lifecycle. Preparation validates the sole schema de
 the manifest binds the per-arm policies and exact total cap. Wrong-shaped calls
 retain their received annotation fields in the bounded correction transcript.
 
+`model-setting-pair-v1` fixes that thin wire representation in both arms and varies
+only the model snapshot: A is gpt-5.4-mini-2026-03-17, B is gpt-5.4-2026-03-05, both
+xhigh. Initial requests must differ only in `model`. Eight normal responses and one
+correction retain 60K input and 40K/25K output, twelve actions, one probe attempt
+and one accepted edit. Each arm has the same USD 6.60 ceiling; the invocation cap
+is USD 8.60. Uncached maximum-token costs are USD 1.9575 and 6.525, respectively.
+The total also preserves the full USD 6.60 initial remaining display for B after
+A's maximum cost. Thus price cannot shrink the specified token/action opportunity
+within these bounds. Time, invalid requests and repair failure can still stop it.
+
+The diagnostic collector is sequential. On entry to each model phase the shared
+ledger switches pricing for future admission and settlement only; accumulated USD
+nanos remain unchanged. The manifest binds both snapshot IDs, registered prices,
+thin policies and exact caps. This adds no production-model default, new repair
+hint, ordinary-runner policy or task-acceptance claim.
+
 ## Focused local verification
 
 [Helper program correction](helper-correction.md) reserves one model/probe action

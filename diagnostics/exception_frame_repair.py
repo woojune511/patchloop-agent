@@ -41,6 +41,7 @@ from patchloop.util import canonical_json, load_unique_yaml, sha256_bytes, sha25
 
 SCHEMA = "exception-frame-repair-v1"
 MODEL = "gpt-5.4-mini-2026-03-17"
+FULL_MODEL = "gpt-5.4-2026-03-05"
 CAP, ROW_CAP = Decimal("1.20"), Decimal("0.60")
 NORMAL_OUTPUT, CORRECTION_OUTPUT, INPUT_LIMIT = 40_000, 25_000, 60_000
 NORMAL_CALLS, TOOL_ACTIONS = 4, 12
@@ -67,10 +68,12 @@ class RepairProfile:
     row_cap: Decimal
     reserve_opportunity: bool = False
     compare_request_annotations: bool = False
+    compare_models: bool = False
+    total_cap: Decimal | None = None
 
     @property
     def invocation_cap(self):
-        return self.row_cap * len(self.order)
+        return self.total_cap if self.total_cap is not None else self.row_cap * len(self.order)
 
 
 DEFAULT_PROFILE = RepairProfile("initial-information-pair-v1", ("A", "B"), NORMAL_CALLS, ROW_CAP)
@@ -78,12 +81,26 @@ SOURCE_READY_PROFILE = RepairProfile("source-ready-single-v1", ("B",), 8, CAP)
 OPPORTUNITY_PROFILE = RepairProfile("source-ready-opportunity-v1", ("B",), 8, CAP, True)
 REQUEST_STRUCTURE_PROFILE = RepairProfile("request-annotation-pair-v1", ("A", "B"),
                                         8, CAP, True, True)
+MODEL_SETTING_PROFILE = RepairProfile("model-setting-pair-v1", ("A", "B"),
+                                     8, Decimal("6.60"), True, compare_models=True,
+                                     total_cap=Decimal("8.60"))
 PROFILES = {profile.name: profile for profile in (
-    DEFAULT_PROFILE, SOURCE_READY_PROFILE, OPPORTUNITY_PROFILE, REQUEST_STRUCTURE_PROFILE)}
+    DEFAULT_PROFILE, SOURCE_READY_PROFILE, OPPORTUNITY_PROFILE, REQUEST_STRUCTURE_PROFILE,
+    MODEL_SETTING_PROFILE)}
 
 
 def arm_policy(profile, arm):
-    return "thin" if profile.compare_request_annotations and arm == "B" else "current"
+    return "thin" if (profile.compare_models or
+                      profile.compare_request_annotations and arm == "B") else "current"
+
+
+def arm_model(profile, arm):
+    require(arm in profile.order, "unknown arm for repair profile")
+    return FULL_MODEL if profile.compare_models and arm == "B" else MODEL
+
+
+def model_prices(model):
+    return {key: str(value) for key, value in asdict(pricing_for_model(model)).items()}
 
 
 @dataclass(frozen=True)
@@ -142,8 +159,8 @@ def anchor_reads(packet):
     return sum(row["origin"] == "workspace" for row in packet["sources"]) if packet else 0
 
 
-def config():
-    return ModelConfig(provider="openai", model_id=MODEL, reasoning_effort="xhigh",
+def config(model=MODEL):
+    return ModelConfig(provider="openai", model_id=model, reasoning_effort="xhigh",
                        reasoning_continuation="encrypted-v1", transport_max_retries=0,
                        max_output_tokens=NORMAL_OUTPUT, service_tier="default")
 
@@ -317,7 +334,8 @@ def request_payload(common, arm, *, history=(), remaining=None, correction=None,
                                probe_environment=common.get("probe_environment"),
                                agent_policy=arm_policy(profile, arm))
     # A non-SDK inert client makes request construction incapable of network access.
-    adapter = OpenAIResponsesAdapter(config(), api_key="", client=SimpleNamespace(max_retries=0))
+    adapter = OpenAIResponsesAdapter(config(arm_model(profile, arm)), api_key="",
+                                     client=SimpleNamespace(max_retries=0))
     payload = adapter.request_payload(items, schemas, system_prompt=prompt)
     payload["max_output_tokens"] = CORRECTION_OUTPUT if correction else NORMAL_OUTPUT
     return payload
@@ -347,6 +365,11 @@ def verify_request_pair(a, b):
     require(current == thin, "inputs differ beyond request annotations")
 
 
+def verify_model_pair(a, b):
+    require(a["model"] == MODEL and b["model"] == FULL_MODEL, "comparison model IDs differ")
+    require({**a, "model": FULL_MODEL} == b, "inputs differ beyond model identity")
+
+
 def prepare(calibration: Path, calibration_hash: str, output: Path, result_root: Path,
             credential_file: Path, *, profile=DEFAULT_PROFILE, source_packet: Path | None = None,
             source_packet_hash: str | None = None):
@@ -363,6 +386,8 @@ def prepare(calibration: Path, calibration_hash: str, output: Path, result_root:
         verify_pair(requests["A"], requests["B"])
     if profile.compare_request_annotations:
         verify_request_pair(requests["A"], requests["B"])
+    if profile.compare_models:
+        verify_model_pair(requests["A"], requests["B"])
     plan = {"schema": SCHEMA, "official": False, "paid_execution_authorized": False,
             "calibration": str(calibration.resolve()), "calibration_hash": calibration_hash,
             "runtime_hash": runtime_content_hash(), "implementation_hash": implementation_hash(),
@@ -396,6 +421,18 @@ def prepare(calibration: Path, calibration_hash: str, output: Path, result_root:
             "Required action-commentary annotation effect at one source-ready saved candidate; "
             "same evidence, model, operational tools and opportunity policy. One run per arm; "
             "not a full thin-policy comparison, fresh solve, acceptance or generalization.")
+    if profile.compare_models:
+        plan.pop("model")
+        plan.pop("pricing")
+        plan["models"] = {arm: arm_model(profile, arm) for arm in profile.order}
+        plan["model_pricing"] = {model: model_prices(model) for model in plan["models"].values()}
+        plan["request_annotation_policies"] = {arm: arm_policy(profile, arm)
+                                               for arm in profile.order}
+        plan["interpretation"] = (
+            "Model snapshot comparison at one source-ready saved candidate; fixed thin request "
+            "representation, xhigh reasoning, evidence and funded token/action opportunities. "
+            "One run per arm; not a reasoning-effort effect, fresh solve, acceptance or "
+            "generalization. Same monetary caps; actual cost and histories can differ.")
     output.mkdir()
     for arm, value in requests.items():
         (output / f"{arm}-first.json").write_text(canonical_json(value) + "\n", encoding="utf-8")
@@ -415,7 +452,7 @@ def validate(manifest: Path, digest: str):
     require(plan["schema"] == SCHEMA and plan["implementation_hash"] == implementation_hash()
             and plan["runtime_hash"] == runtime_content_hash(), "prepared implementation changed")
     profile = selected_profile(plan["profile"])
-    if profile.compare_request_annotations:
+    if profile.compare_request_annotations or profile.compare_models:
         require(plan.get("request_annotation_policies") == {
             arm: arm_policy(profile, arm) for arm in profile.order}, "annotation policies changed")
     require(plan["source_helper_hash"] == (
@@ -427,7 +464,17 @@ def validate(manifest: Path, digest: str):
     require(plan["host_source_reads"] == anchor_reads(packet), "source read allowance changed")
     require(plan["public_environment_hash"] == loaded.environment_hash,
             "public check environment changed")
-    require(plan["model"] == MODEL and plan["reasoning_effort"] == "xhigh"
+    models = {arm: arm_model(profile, arm) for arm in profile.order}
+    if profile.compare_models:
+        require(plan.get("models") == models and "model" not in plan and "pricing" not in plan,
+                "comparison model identities changed")
+        require(plan.get("model_pricing") == {model: model_prices(model)
+                                               for model in models.values()},
+                "registered model pricing changed")
+    else:
+        require(plan["model"] == MODEL and plan["pricing"] == model_prices(MODEL),
+                "registered model or pricing changed")
+    require(plan["reasoning_effort"] == "xhigh"
             and plan["order"] == list(profile.order) and plan["repeat_per_arm"] == 1
             and Decimal(plan["row_cap_usd"]) == profile.row_cap
             and Decimal(plan["new_cap_usd"]) == profile.invocation_cap
@@ -449,8 +496,8 @@ def validate(manifest: Path, digest: str):
         verify_pair(requests["A"], requests["B"])
     if profile.compare_request_annotations:
         verify_request_pair(requests["A"], requests["B"])
-    require(plan["pricing"] == {k: str(v) for k, v in asdict(pricing_for_model(MODEL)).items()},
-            "registered pricing changed")
+    if profile.compare_models:
+        verify_model_pair(requests["A"], requests["B"])
     loaded.source_packet = packet
     return plan, loaded
 
@@ -490,7 +537,11 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
     policy = arm_policy(profile, arm)
     require(gateway.agent_policy == policy, "gateway annotation policy differs from request")
     store = ArtifactStore(journal.root / "artifacts")
-    ledger = DevCostLedger(profile.row_cap, pricing_for_model(MODEL))
+    model = arm_model(profile, arm)
+    ledger = DevCostLedger(profile.row_cap, pricing_for_model(model))
+    # Arms execute sequentially. Spent nanos are currency, never token totals;
+    # reprice only future admissions and settlement for this arm's model.
+    group.pricing = ledger.pricing
     history, normal, corrections, actions, probes = [], 0, 0, 0, 0
     correction, terminal, uncertain = None, "MODEL_LIMIT", False
     execution_abort, abort_reason = None, None
@@ -601,7 +652,7 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
             break
         turn = runner._turn_from_openai(raw, agent_policy=policy)
         if (turn.usage_evidence is None or turn.usage_evidence.get("failure_kind") is not None
-                or turn.response_model != MODEL
+                or turn.response_model != model
                 or turn.output_tokens > payload["max_output_tokens"]):
             journal.append("provider_usage_unknown", {"call_id": call_id,
                            "error_code": turn.error_code, "usage_evidence": turn.usage_evidence})
@@ -670,6 +721,8 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
               "diagnostic_probes": probes, "new_cost_nanos": ledger.spent_nanos,
               "candidate_diff_hash": gateway.current_diff_hash,
               "new_mutations": gateway.accepted_mutations, "task_acceptance": "NOT_RUN"}
+    if profile.compare_models:
+        result["model"] = model
     journal.append("model_phase_finished", result)
     return result
 
@@ -792,7 +845,7 @@ def collect(manifest: Path, approved_manifest_hash: str, approved_cap_usd: Decim
                                 workspace=gateway.workspace)
                 observe_sources(gateway, packet)
             key = load_exact_openai_api_key(Path(plan["credential_file"]))
-            adapter = OpenAIResponsesAdapter(config(), api_key=key)
+            adapter = OpenAIResponsesAdapter(config(arm_model(profile, arm)), api_key=key)
             del key
             try:
                 row = run_model(loaded, arm, gateway, adapter, group,
