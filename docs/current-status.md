@@ -37,7 +37,7 @@ chains through a separate report channel. Core failure capture, whole-case UNKNO
 finish blocking and historical observer v1-v4 bytes are preserved. The current-profile
 base/candidate replay delivered two exceptions and nine public frames into the compact
 model view. Tool surface v63 binds this implementation. This is implemented and
-locally exercised; model uptake and repair gain remain untested.
+locally exercised; correct-repair benefit remains unproven.
 
 The [seeded information comparison](history/2026-10-27-exception-frame-repair-live.md)
 is closed: A/B each stopped at four model responses with no edit, spending USD
@@ -47,16 +47,24 @@ horizon prevented a repair outcome; this does not show that frames have no repai
 effect or that the ordinary runner shares this limit. No new target verification,
 public regression, submission or acceptance occurred. All paid allocations are closed.
 
-Next, make a repair opportunity measurable from the saved state before another
-funded run. Choose identical already-observed relevant source or a trace-supported
-inspection horizon; keep current failure evidence prominent and public source
-accessible. Completion classification and diagnosis availability are separate.
-Avoid another mandatory stage or a context/output increase for this stop condition.
-If usable evidence and a feasible action horizon still do not produce a useful
-repair, test tool accessibility or model/reasoning settings separately. Fresh solves
-and other public cases follow conditional repair evidence, not unused allowance.
+The [source-ready single run](history/2026-10-27-source-ready-repair-live.md) is also
+closed without a repair. Every actual input retained the exception and 148 public
+source lines with valid registered edit anchors. The model recognized a possible
+stream/tokenization mechanism but spent twelve actions inspecting source/tests.
+The operator then dispatched a seventh response despite zero remaining actions;
+usage validation failed and stopped the run. First-six settled cost is USD
+0.084176850; total cost including the seventh response is UNKNOWN. No target replay,
+public regression, submission or acceptance occurred.
 
-The [latest closed pilot](history/2026-10-26-target-exception-live.md) acquired the
+The diagnostic operator now checks exhausted action capacity before another count
+or generation and retains the adapter's sanitized usage evidence on uncertainty.
+This local fix prevents unusable dispatch; it does not repair Astroid or resolve
+historical billing. The remaining question is how to turn the available mechanism
+evidence into a targeted probe or edit. Do not infer model incapability or increase
+context/output solely from this run. New paid work needs a separate discriminating
+question and exact scope; all allocations are closed.
+
+The [latest fresh-solve pilot](history/2026-10-26-target-exception-live.md) acquired the
 original/control, observed the pre-edit path and applied two failed edits. It stopped
 with INCOMPLETE_RESPONSE after 36 model calls, USD 1.071262200 and 894.56 seconds;
 there was no regression run, submission or independent evaluation. Before the first
@@ -99,7 +107,8 @@ context-only quality effect was established; see the [context analysis](history/
 ## Execution and claim boundaries
 
 All prior paid allocations are closed. The [older interrupted call](history/2026-09-28-expectation-review-results.md)
-retains unknown billing; later settled allocations do not resolve it.
+retains unknown billing; later settled allocations do not resolve it. The latest
+source-ready diagnostic also retains one unsettled response.
 
 Fresh solves, seeded repairs, funded continuations, saved-patch evaluations,
 operator replays and scripted tests are different evidence. Do not pool them as

@@ -163,6 +163,14 @@ def test_uncertainty_stops_before_any_tool(gateway_factory, failure, terminal):
     assert actual["billing_known"] is False
     assert not any(e["event_type"] == "action_started" for e in journal.events())
     assert len(client.created) <= 1
+    if failure == "usage":
+        unknown = next(e["payload"] for e in journal.events()
+                       if e["event_type"] == "provider_usage_unknown")
+        evidence = unknown["usage_evidence"]
+        assert (unknown["call_id"], evidence["failure_kind"], evidence["requested_input_tokens"]) \
+            == ("call-count-0-0-0", "usage_null", 100)
+        assert evidence["fields"]["input_tokens"] == {"state": "unavailable"}
+        assert evidence["response_diagnostics"]["body_state"] == "unavailable"
 
 
 def test_second_invalid_response_ends_correction(gateway_factory):
@@ -206,6 +214,28 @@ def test_source_ready_has_eight_response_horizon_and_one_correction(gateway_fact
     assert [r["max_output_tokens"] for r in client.created] == [40000] * 8 + [25000]
     last = json.loads(client.created[-1]["input"][-1]["content"])
     assert last["remaining"]["normal_calls"] == 0
+
+
+def test_exhausted_tool_allowance_stops_before_count_and_dispatch(gateway_factory):
+    steps = [[read_call(f"read-{2 * i}"), read_call(f"read-{2 * i + 1}")]
+             for i in range(6)] + [[stop_call()]]
+    actual, client, journal, _ = run(gateway_factory, steps,
+        profile=diagnostic.SOURCE_READY_PROFILE, source_packet={"sources": []})
+    assert actual["terminal"] == "TOOL_LIMIT" and actual["billing_known"]
+    assert actual["normal_calls"] == 6 and actual["tool_actions"] == 12
+    assert len(client.counted) == len(client.created) == 6
+    assert actual["new_mutations"] == 0 and not actual["stop_remaining"]
+    assert sum(e["event_type"] == "input_count_started" for e in journal.events()) == 6
+
+
+def test_last_available_tool_action_can_still_produce_the_candidate(gateway_factory):
+    steps = [[read_call(f"read-{2 * i}"), read_call(f"read-{2 * i + 1}")]
+             for i in range(5)] + [[read_call("read-10")], [edit_call()], [stop_call()]]
+    actual, client, _, _ = run(gateway_factory, steps,
+        profile=diagnostic.SOURCE_READY_PROFILE, source_packet={"sources": []})
+    assert actual["terminal"] == "CANDIDATE_PRODUCED" and actual["new_mutations"] == 1
+    assert actual["tool_actions"] == 12 and actual["normal_calls"] == 7
+    assert len(client.counted) == len(client.created) == 7
 
 
 @pytest.mark.parametrize("kind", ["cleanup", "recovery", "resume", "deadline"])

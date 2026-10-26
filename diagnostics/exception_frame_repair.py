@@ -400,6 +400,9 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
     execution_abort, abort_reason = None, None
     first = True
     while normal < profile.normal_calls or correction is not None:
+        if actions >= TOOL_ACTIONS:
+            terminal = "TOOL_LIMIT"
+            break
         timeout = gateway.deadline.remaining_seconds()
         if timeout <= 0:
             terminal = "MODEL_TIME_LIMIT"
@@ -466,7 +469,8 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
         if (turn.usage_evidence is None or turn.usage_evidence.get("failure_kind") is not None
                 or turn.response_model != MODEL
                 or turn.output_tokens > payload["max_output_tokens"]):
-            journal.append("provider_usage_unknown", {"error_code": turn.error_code})
+            journal.append("provider_usage_unknown", {"call_id": call_id,
+                           "error_code": turn.error_code, "usage_evidence": turn.usage_evidence})
             terminal, uncertain = "BILLING_UNCERTAIN", True
             break
         usage = {k: getattr(turn, k)
