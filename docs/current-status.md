@@ -40,7 +40,12 @@ restores failure classification; it grants no success or verification credit.
 The live final input retained the exception but exposed zero target failures and
 no repair-path obligation. The model submitted after public-check PASS while
 describing original reproduction as not rerun, with capacity for further repairs.
-Fix selected-call versus helper-failure classification before increasing limits.
+The [propagation/test audit](history/2026-10-26-target-exception-propagation-analysis.md)
+confirms that recognizing this failure activates the existing diagnosis allowance,
+repair stage and finish blocker while whole-case verification remains UNKNOWN.
+Current positive tests capture a target exception but let the helper exit zero;
+they omit a fully captured failure followed by helper exit 1. Correct this boundary
+and its focused regression coverage; no new submission rule or budget is indicated.
 
 Context continuity is a separate unresolved question. This run used at most 56,977
 input tokens; all five post-initial resets were stage/result triggered, with no

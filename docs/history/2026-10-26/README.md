@@ -26,3 +26,4 @@
 - [Stage-valid requests, retained correction drafts and reserved original acquisition](../2026-10-26-request-continuity.md)
 - [Request-continuity live pilot](../2026-10-26-request-continuity-live.md)
 - [Target-failure classification defect and current versus mini context limits](../2026-10-26-target-failure-context-analysis.md)
+- [Captured target exception: propagation path and missing helper-failure test](../2026-10-26-target-exception-propagation-analysis.md)
