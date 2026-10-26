@@ -39,15 +39,22 @@ base/candidate replay delivered two exceptions and nine public frames into the c
 model view. Tool surface v63 binds this implementation. This is implemented and
 locally exercised; model uptake and repair gain remain untested.
 
-Prioritize the prepared same-candidate information comparison before another fresh
-solve: initial type/message versus initial frames/chain, with later tools identical.
-This asks whether usable diagnosis changes the next repair. It is a seeded diagnostic,
-not a fresh solve or ordinary-run completion comparison. No new paid allocation is
-active. Keep completion correctness separate from diagnosis availability; do not add
-another mandatory stage or increase context solely because this trajectory failed.
-If adequate evidence still produces no useful action, investigate tool accessibility
-or model/reasoning settings separately. Only then justify a fresh solve and other
-public development cases.
+The [seeded information comparison](history/2026-10-27-exception-frame-repair-live.md)
+is closed: A/B each stopped at four model responses with no edit, spending USD
+0.047714850 combined. B received the complete frames but continued builder/manager
+inspection. Neither arm exhausted input, output or cost ceilings. The four-response
+horizon prevented a repair outcome; this does not show that frames have no repair
+effect or that the ordinary runner shares this limit. No new target verification,
+public regression, submission or acceptance occurred. All paid allocations are closed.
+
+Next, make a repair opportunity measurable from the saved state before another
+funded run. Choose identical already-observed relevant source or a trace-supported
+inspection horizon; keep current failure evidence prominent and public source
+accessible. Completion classification and diagnosis availability are separate.
+Avoid another mandatory stage or a context/output increase for this stop condition.
+If usable evidence and a feasible action horizon still do not produce a useful
+repair, test tool accessibility or model/reasoning settings separately. Fresh solves
+and other public cases follow conditional repair evidence, not unused allowance.
 
 The [latest closed pilot](history/2026-10-26-target-exception-live.md) acquired the
 original/control, observed the pre-edit path and applied two failed edits. It stopped
