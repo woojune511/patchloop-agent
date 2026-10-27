@@ -535,8 +535,10 @@ def _exchange(turn, results, issue=None):
 
 
 def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAULT_PROFILE,
-              source_packet=None, request_builder=None):
-    """At most one new edit. Adapter injection supports finite offline tests."""
+              source_packet=None, request_builder=None, cycle=None):
+    """Legacy one-edit diagnostic, or an explicit bounded public repair cycle."""
+    from diagnostics.repair_cycle_budget import cycle_opportunity
+
     journal = gateway.journal
     build_request = request_builder or request_payload
     policy = arm_policy(profile, arm)
@@ -551,8 +553,28 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
     correction, terminal, uncertain = None, "MODEL_LIMIT", False
     execution_abort, abort_reason = None, None
     first = True
+    latest_original = None
+    tool_limit = cycle.limits.model_tools if cycle else TOOL_ACTIONS
+    probe_limit = cycle.limits.helper_probes if cycle else 1
+    edit_limit = cycle.limits.accepted_edits if cycle else 1
+
+    def opportunity_for(*, is_correction, **options):
+        if cycle:
+            return cycle_opportunity(normal_remaining=profile.normal_calls - normal,
+                tool_remaining=tool_limit - actions, probes_remaining=probe_limit - probes,
+                edits_remaining=edit_limit - gateway.accepted_mutations,
+                correction=is_correction, limits=cycle.limits, **options)
+        return repair_opportunity(normal_remaining=profile.normal_calls - normal,
+            tool_remaining=tool_limit - actions, probe_used=bool(probes),
+            correction=is_correction, **options) if profile.reserve_opportunity else None
+
+    def model_timeout(opportunity):
+        reserve = (cycle.needed_original_seconds(for_new_diff=True) + 5
+                   if cycle and "replace_text" in opportunity.allowed else 0)
+        return gateway.deadline.remaining_seconds() - reserve
+
     while normal < profile.normal_calls or correction is not None:
-        if actions >= TOOL_ACTIONS:
+        if actions >= tool_limit:
             terminal = "TOOL_LIMIT"
             break
         timeout = gateway.deadline.remaining_seconds()
@@ -560,13 +582,21 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
             terminal = "MODEL_TIME_LIMIT"
             break
         is_correction = correction is not None
-        opportunity = (repair_opportunity(
-            normal_remaining=profile.normal_calls - normal, tool_remaining=TOOL_ACTIONS - actions,
-            probe_used=bool(probes), correction=is_correction) if profile.reserve_opportunity
-            else None)
-        admissions, narrowing = None, 0
+        opportunity = opportunity_for(is_correction=is_correction)
+        if cycle and model_timeout(opportunity) <= 0:
+            if first:
+                terminal = "RECHECK_TIME_UNAVAILABLE"
+                break
+            opportunity = cycle_opportunity(normal_remaining=profile.normal_calls - normal,
+                tool_remaining=tool_limit - actions, probes_remaining=0, edits_remaining=0,
+                correction=is_correction, limits=cycle.limits)
+            journal.append("repair_cycle_time_reserved", {
+                "reason": "new edit cannot fund original recheck and a following response",
+                "remaining_seconds": gateway.deadline.remaining_seconds(),
+                "opportunity": opportunity.public()})
+        admissions, narrowing, narrowing_stage = None, 0, 0
         while True:
-            timeout = gateway.deadline.remaining_seconds()
+            timeout = model_timeout(opportunity)
             if timeout <= 0:
                 terminal = "MODEL_TIME_LIMIT"
                 break
@@ -575,12 +605,15 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
             payload = build_request(loaded.common, arm, history=history,
                                       remaining=None if first else {
                                           "normal_calls": profile.normal_calls - normal,
-                                          "tool_actions": TOOL_ACTIONS - actions,
-                                          "diagnostic_probes": 1 - probes, "accepted_mutations": 1,
+                                          "tool_actions": tool_limit - actions,
+                                          "diagnostic_probes": probe_limit - probes,
+                                          "accepted_mutations": (
+                                              edit_limit - gateway.accepted_mutations),
                                           "cost_nanos": remaining_cost},
                                       correction=correction, probe_used=bool(probes),
                                       profile=profile, source_packet=source_packet,
-                                      opportunity=opportunity)
+                                      opportunity=opportunity,
+                                      **({"original_feedback": latest_original} if cycle else {}))
             if first:
                 require(sha256_json(payload) == first_hash, "first input differs from preparation")
             first = False
@@ -608,8 +641,10 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
                        if not is_correction and not corrections else 0)
             successors = (opportunity.successor_calls if opportunity else
                           int(not is_correction and normal + 1 < profile.normal_calls))
-            reserve += successors * ledger.future_call_reservation_nanos(
-                output_ceiling=NORMAL_OUTPUT)
+            reserve += (sum(ledger.future_call_reservation_nanos(output_ceiling=ceiling)
+                            for ceiling in opportunity.successor_output_ceilings) if cycle
+                        else successors * ledger.future_call_reservation_nanos(
+                            output_ceiling=NORMAL_OUTPUT))
             attempted = [book.admit(counted, desired_output_ceiling=payload["max_output_tokens"],
                          minimum_output_ceiling=(CORRECTION_OUTPUT
                                                  if opportunity and is_correction
@@ -624,17 +659,30 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
             # Release optional exploration, then optional probe funding. Each
             # narrower request is freshly counted; no generation was dispatched.
             before = opportunity
-            opportunity = repair_opportunity(
-                normal_remaining=profile.normal_calls - normal,
-                tool_remaining=TOOL_ACTIONS - actions, probe_used=bool(probes),
-                correction=is_correction, allow_inspection=False,
-                allow_probe=bool(before.max_parallel_reads))
+            if cycle:
+                for stage in range(narrowing_stage, 4):
+                    candidate = (opportunity_for(is_correction=is_correction,
+                        allow_continuation=False, allow_inspection=stage == 0,
+                        allow_probe=stage < 2) if stage < 3 else
+                        cycle_opportunity(normal_remaining=profile.normal_calls - normal,
+                            tool_remaining=tool_limit - actions, probes_remaining=0,
+                            edits_remaining=0, correction=is_correction, limits=cycle.limits))
+                    narrowing_stage = stage + 1
+                    if candidate != before:
+                        opportunity = candidate
+                        break
+                else:
+                    terminal = "COST_CAP_REACHED"
+                    break
+            else:
+                opportunity = opportunity_for(is_correction=is_correction,
+                    allow_inspection=False, allow_probe=bool(before.max_parallel_reads))
             narrowing += 1
             journal.append("opportunity_cost_narrowed", {"count_id": count_id,
                            "before": before.public(), "after": opportunity.public()})
         if admissions is None:
             break
-        timeout = gateway.deadline.remaining_seconds()
+        timeout = model_timeout(opportunity)
         if timeout <= 0:
             terminal = "MODEL_TIME_LIMIT"
             break
@@ -684,7 +732,7 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
                                 agent_policy=policy,
                                 max_parallel_reads=opportunity.max_parallel_reads
                                 if opportunity else 4)
-            require(actions + len(turn.tool_calls) <= TOOL_ACTIONS, "tool allowance exhausted")
+            require(actions + len(turn.tool_calls) <= tool_limit, "tool allowance exhausted")
             if turn.provider_continuation:
                 runner._validate_continuation_action_order(
                     turn.provider_continuation, turn.tool_calls)
@@ -715,6 +763,16 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
             break
         if any(row.tool == "replace_text" and row.status == "succeeded" and not row.error_code
                for row in results):
+            if cycle:
+                try:
+                    latest_original = cycle.check()
+                except (ContractError, ExecutionDeadlineExceeded) as exc:
+                    execution_abort = DevTerminal.TASK_FAILED
+                    terminal = "ORIGINAL_RECHECK_INCOMPLETE"
+                    abort_reason = f"original recheck incomplete: {type(exc).__name__}"
+                    break
+                journal.append("original_recheck_available", latest_original)
+                continue
             terminal = "CANDIDATE_PRODUCED"
             break
         if any(row.tool == "stop_task" for row in results):
@@ -727,6 +785,9 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
               "diagnostic_probes": probes, "new_cost_nanos": ledger.spent_nanos,
               "candidate_diff_hash": gateway.current_diff_hash,
               "new_mutations": gateway.accepted_mutations, "task_acceptance": "NOT_RUN"}
+    if cycle:
+        result.update(original_recheck=latest_original, host_original_actions=cycle.host_actions,
+                      final_verification={"public": "not_run", "isolated": "not_run"})
     if profile.compare_models:
         result["model"] = model
     journal.append("model_phase_finished", result)

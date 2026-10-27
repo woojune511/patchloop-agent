@@ -24,73 +24,44 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [relative-root repair](history/2026-10-27-relative-root-repair.md) now passes
-separate isolated acceptance, regression, scope and safety on Astroid-1333.
-From clean task source, the operator changed one line in `astroid/modutils.py`:
-normalize the search root with `abspath` before comparing it with absolute filenames.
-This candidate contains none of the earlier synthetic namespace builder edits.
-It is an accepted local operator repair, not a fresh benchmark-model solve.
+The [original-call repair cycle](history/2026-10-27-original-repair-cycle.md) now
+rechecks every accepted edit and feeds current-diff public failures into the next
+response. The saved-candidate diagnostic permits further reads and up to three
+edits, with separate future-response funding and host verification allowances.
+Final public checks reuse matching original receipts; incomplete rechecks stop
+the run. Local validation: 82 focused PASS/27.91s; 472 quick PASS/105.36s including
+isolated mock evaluation; Ruff PASS. Live use is NOT_RUN.
+Production defaults and legacy one-edit profiles stay unchanged. The changed
+16-response/24-action/2-probe scope needs new preparation for a future authorized
+run; all preceding allocations are closed.
 
-Ten public probes confirmed the mechanism: base fails with relative root `"."` but
-resolves its absolute equivalent. The candidate resolves both, recognizes the
-namespace, selects and parses the actual child. Empty input exits 0; `import os`
-produces real lint diagnostics; invalid child syntax produces E0001. Direct-file
-and ordinary-package controls are unchanged. Focused comparison took 100.340 seconds;
-with 1,231 public regression passes it took 113.341 seconds. Isolated acceptance
-was run separately once, with no provider calls, credential reads or private
-content in coding context. official=false and claim-ineligible.
+The unresolved question is whether the model uses that feedback to revise its
+premise and repair the caller. The [preceding R0/R1 pair](history/2026-10-27-feedback-source-results.md)
+retained F0010 despite complete assigned source delivery and no input/output/cost
+cutoff. R0 undid the seed (empty diff, acceptance NOT_RUN); R1 added a namespace
+fallback and failed acceptance. Neither selected/parsed the namespace child,
+although public regression passed. Each row stopped at its first edit, so it did
+not test recovery after feedback. Total cost $0.33463995; allocation closed.
+The [empty-diff fix](history/2026-10-27-feedback-source-empty-diff.md) preserved the
+R0 incident and ran only the unstarted R1. The [selected-file read API](history/2026-10-27-feedback-source-implementation.md)
+is locally tested; that pair retained range-only tools, so live API uptake is
+still untested. The v2 horizon also differs; do not infer a feedback-only effect
+from a future cross-version result. Broader-suite failures remain unresolved.
 
-The [preceding selection diagnostic](history/2026-10-27-namespace-selection-diagnostic.md)
-explains the earlier apparent success: the old builder candidate handled a missing
-initializer while leaving the child outside the selected file list. Its
-[docstring improvement](history/2026-10-27-namespace-doc-repair.md) and
-[mini verification](history/2026-10-27-mini-candidate-verification.md) remain narrower
-public results with acceptance FAIL; do not rewrite them as this new success.
+An independent [relative-root operator repair](history/2026-10-27-relative-root-repair.md)
+passes isolated acceptance, regression, scope and safety on Astroid-1333. It
+normalizes the search root before comparing absolute filenames and contains no
+synthetic namespace builder edits. This is an accepted local operator repair,
+not a fresh benchmark-model solve. Public child selection and parsing distinguish
+it from the [earlier apparent success](history/2026-10-27-namespace-selection-diagnostic.md).
+That known solution is excluded from model packets and these scripted fixtures.
 
-The [clean-base observation A/B](history/2026-10-27-selection-observation-results.md)
-is complete: both mini candidates retained F0010 and failed isolated acceptance,
-despite 1,231 public regression passes each. A changed a prefix check on a false
-source premise; B appended `__init__` to directory paths and newly omitted the
-invalid child in the ordinary-package control. The assigned public packets were
-delivered intact. Both reached one edit; no context/output/cost cutoff was reported.
-Total settled cost was $0.3003564, with one model run and evaluation per arm.
-The initial zero-call preflight metadata error was corrected without changing
-model requests or conditions. The [follow-up analysis](history/2026-10-27-selection-observation-failure-analysis.md)
-found A edited a search excerpt without the preceding incremental path construction;
-its failed helper left no diagnostic opportunity. B could probe but edited directly.
-The experiment stopped at the first edit and did not return public failures to the
-model. It does not measure recovery after feedback or the full production loop.
-This remains operator-assisted, single-pair evidence.
-The unresolved issue is testing and revising repair premises against the caller.
-Production defaults stay unchanged; this and all prior paid allocations are closed.
-
-The [follow-up implementation](history/2026-10-27-feedback-source-implementation.md)
-adds selected-file whole/page reads within 24K characters; explicit ranges retain
-400 lines. No context or action cap changed. The user authorized the designed R0/R1
-pair from saved A with identical public failure feedback, partial versus complete
-current source, mini/xhigh and a new $2.40 cap. The [completed result](history/2026-10-27-feedback-source-results.md)
-has no successful repair: R0 undid the seed (empty diff, acceptance NOT_RUN), while
-R1 added a namespace fallback and failed acceptance. Both retained F0010 and failed
-to select/parse the namespace child despite 1,231 public regression passes each.
-All actual requests retained their assigned source; input/output/cost ceilings
-were not reached. The reservation policy narrowed late inspection and the first
-edit ended each row, so the diagnosis/revision horizon remains a separate question.
-Both rows kept the old range-only interface; live uptake of the new API is untested.
-The [empty-diff fix](history/2026-10-27-feedback-source-empty-diff.md) preserved R0's
-precheck incident and ran only the unstarted R1 with unchanged requests and restored
-settled usage. Total cost $0.33463995; the pair and allocation are closed. No context
-increase or general quality claim is supported. Local quick suite: 472 PASS/104.09s;
-post-model correction: 25 focused PASS/4.85s. Broader-suite failures remain unresolved.
-
-Public exception frames and cause/context chains are implemented in fresh invocation
-v5, with historical observer v1-v4 preserved; see the
-[frame investigation](history/2026-10-27-exception-frames.md). Live information,
-[request-annotation](history/2026-10-27-request-annotation-results.md) and
-[model-setting](history/2026-10-27-model-setting-results.md) comparisons are closed
-without an accepted repair. They justify separating evidence delivery, action
-selection and task correctness, not a general model-quality conclusion. The
-[source-ready run](history/2026-10-27-source-ready-repair-live.md) retains one
-unsettled response; the local action-capacity fix does not resolve that billing.
+The [clean-base A/B](history/2026-10-27-selection-observation-results.md) and its
+[failure analysis](history/2026-10-27-selection-observation-failure-analysis.md)
+identified a false source premise, untested helper alternatives and the first-edit
+feedback cutoff. Source delivery, action selection, original-call behavior and
+independent acceptance remain separate evidence. No successful new model repair
+has been established in these follow-ups.
 
 Context continuity is a separate question. The preceding fresh-solve pilot had
 no size-triggered reset; raising 60K alone would preserve stage/result resets.

@@ -1,7 +1,8 @@
 """Saved-A public-feedback continuation with partial versus complete current source.
 
 Preparation/validation are offline. Collection has two single-use rows, exact
-manifest/cap admission, and independent public/opaque verification after one edit.
+manifest/cap admission, public original-call feedback between edits, and final
+public/opaque verification. Preparation does not authorize collection.
 """
 from __future__ import annotations
 
@@ -16,6 +17,8 @@ from diagnostics import exception_frame_repair as loop
 from diagnostics import selection_observation as host
 from diagnostics.decision_sampler import require
 from diagnostics.declaration_checkpoint import disjoint
+from diagnostics.repair_cycle import OriginalCallRecheck
+from diagnostics.repair_cycle_budget import CycleLimits, cycle_opportunity
 from diagnostics.source_ready_packet import _read_workspace
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import PublicTask, TaskEnvironment
@@ -38,8 +41,9 @@ from patchloop.sandbox import DockerSandbox
 from patchloop.sandbox.probes import DockerProbeSandbox
 from patchloop.util import canonical_json, load_unique_yaml, sha256_bytes, sha256_json
 
-SCHEMA = "feedback-source-pair-v1"
-PROFILE = loop.RepairProfile(SCHEMA, ("R0", "R1"), 8, Decimal("1.20"),
+SCHEMA = "feedback-source-pair-v2"
+CYCLE_LIMITS = CycleLimits()
+PROFILE = loop.RepairProfile(SCHEMA, ("R0", "R1"), 16, Decimal("1.20"),
                              reserve_opportunity=True, annotation_policy="thin")
 SEED_HASH = "sha256:93b024b3f11ef89311d9cbf5a06a56328b14f7b7d7687746e6d24a8b9fb8e3e5"
 FILE_HASH = "sha256:7728b5200cd0049919dbeeb049a7fafa6f83b2063acd7d5f6044ca8f9313bb46"
@@ -47,34 +51,48 @@ PACKET_BUILDER = Path(__file__).with_name("feedback_source_packet.py")
 PROMPT = (
     "Repair the supplied public task from the saved candidate. The previous authored "
     "hypothesis is unverified; the supplied public observations describe that candidate. "
-    "Current source spans are registered edit anchors. You may inspect further source "
-    "with the same offered tools. You have at most eight normal responses, one protocol "
-    "correction, twelve model tool actions, one diagnostic probe request and one additional "
-    "accepted source edit. Stop if no justified edit is available. A successful replace_text "
-    "ends this model phase. The host then checks the original caller, public controls, "
-    "regression and isolated acceptance. These later results are not fed back to this "
-    "conversation. Use only the offered tools; no shell or dependency installation."
+    "Initial source spans describe the saved candidate; after an edit inspect current "
+    "source before relying on an old span. You have at most sixteen normal responses, "
+    "one protocol correction, twenty-four model tool actions, two diagnostic probe "
+    "requests and three additional accepted source edits. After each accepted edit the "
+    "host replays the original public caller and returns its result before your next "
+    "response. Use that current-diff evidence to decide what to inspect or revise. "
+    "An edit or retraction is not task completion. Stop when no further justified edit "
+    "is available or the public behavior is repaired. Final public controls, regression "
+    "and isolated acceptance occur after this model phase; private results are never "
+    "returned to the model. Use only the offered tools; no shell or installation."
 )
 
 
 def request_payload(common, arm, *, history=(), remaining=None, correction=None,
-                    probe_used=False, profile=PROFILE, source_packet=None, opportunity=None):
+                    probe_used=False, profile=PROFILE, source_packet=None, opportunity=None,
+                    original_feedback=None):
     require(profile == PROFILE and arm in PROFILE.order and source_packet is None,
             "unexpected feedback/source profile")
     remaining = remaining if remaining is not None else {
-        "normal_calls": PROFILE.normal_calls, "tool_actions": loop.TOOL_ACTIONS,
-        "diagnostic_probes": 1, "accepted_mutations": 1,
+        "normal_calls": PROFILE.normal_calls, "tool_actions": CYCLE_LIMITS.model_tools,
+        "diagnostic_probes": CYCLE_LIMITS.helper_probes,
+        "accepted_mutations": CYCLE_LIMITS.accepted_edits,
         "cost_nanos": int(PROFILE.row_cap * 1_000_000_000)}
-    opportunity = opportunity or loop.repair_opportunity(
+    opportunity = opportunity or cycle_opportunity(
         normal_remaining=remaining["normal_calls"], tool_remaining=remaining["tool_actions"],
-        probe_used=probe_used, correction=correction is not None)
+        probes_remaining=remaining.get("diagnostic_probes", int(not probe_used)),
+        edits_remaining=remaining.get("accepted_mutations", CYCLE_LIMITS.accepted_edits),
+        correction=correction is not None, limits=CYCLE_LIMITS)
     items = [{"role": "system", "content": PROMPT},
              {"role": "user", "content": canonical_json({
                  "public_feedback": common["feedback"],
-                 "current_source": common["source_packets"][arm]})}, *copy.deepcopy(history),
+                 "initial_source": common["source_packets"][arm],
+                 "initial_source_diff_hash": SEED_HASH,
+                 "current_original_recheck": original_feedback})}, *copy.deepcopy(history),
              {"role": "developer", "content": canonical_json({
                  "remaining": remaining, "protocol_correction": correction,
-                 "opportunity": opportunity.public()})}]
+                 "opportunity": opportunity.public(),
+                 "verification_reserve": {
+                     "original_actions_max": CYCLE_LIMITS.host_original_actions,
+                     "final_public_actions": CYCLE_LIMITS.final_public_actions,
+                     "final_public_seconds": CYCLE_LIMITS.final_public_seconds,
+                     "isolated_acceptance_seconds": CYCLE_LIMITS.acceptance_seconds}})}]
     schemas = dev_tool_schemas(finish_enabled=False, allowed_tools=opportunity.allowed,
         probe_environment=common.get("probe_environment"), agent_policy="thin",
         read_range_only=True)
@@ -90,7 +108,7 @@ def verify_pair(r0, r1):
     sources = []
     for request in requests:
         data = json.loads(request["input"][1]["content"])
-        sources.append(data.pop("current_source"))
+        sources.append(data.pop("initial_source"))
         request["input"][1]["content"] = canonical_json(data)
     require(sources[0] != sources[1] and requests[0] == requests[1],
             "requests differ beyond the assigned current source")
@@ -172,7 +190,16 @@ def load_inputs():
 def scope():
     return {**host.scope(), "order": list(PROFILE.order), "starting_diff": SEED_HASH,
             "source_ranges": {"R0": [[265, 273]], "R1": [[1, 400], [401, 676]]},
-            "read_range_only": True, "additional_model_edits": 1,
+            "read_range_only": True, "normal_calls": PROFILE.normal_calls,
+            "tool_actions": CYCLE_LIMITS.model_tools,
+            "diagnostic_probes": CYCLE_LIMITS.helper_probes,
+            "accepted_mutations": CYCLE_LIMITS.accepted_edits,
+            "additional_model_edits": CYCLE_LIMITS.accepted_edits,
+            "post_edit_original_recheck": True,
+            "host_original_actions_max": CYCLE_LIMITS.host_original_actions,
+            "final_public_actions": CYCLE_LIMITS.final_public_actions,
+            "followup_output_reserves": [CYCLE_LIMITS.future_diagnostic_output,
+                CYCLE_LIMITS.future_edit_output, CYCLE_LIMITS.final_response_output],
             "host_source_reads": {"R0": 1, "R1": 2}}
 
 
@@ -184,6 +211,8 @@ def prepare(output, result_root, credential_file):
     require(not result_root.exists(), "result root already exists")
     loaded = load_inputs()
     paths = [Path(__file__), Path(loop.__file__), Path(host.__file__), PACKET_BUILDER,
+             Path(__file__).with_name("repair_cycle.py"),
+             Path(__file__).with_name("repair_cycle_budget.py"),
              Path(__file__).with_name("source_ready_packet.py"), host.HELPER,
              Path(__file__).with_name("saved_candidate_acceptance.py"), host.PUBLIC,
              host.PUBLIC.with_name("environment.yaml"), host.SOURCE, host.DEPENDENCIES,
@@ -202,7 +231,8 @@ def prepare(output, result_root, credential_file):
                                      for arm, request in loaded.requests.items()},
             "interpretation": "Assisted saved-candidate continuation, one run per condition. "
                 "Compares current source content, acquisition burden and editable-anchor coverage "
-                "under identical public feedback and opportunities. Not fresh solve, literal "
+                "under identical public feedback and bounded iterative opportunities. "
+                "Resources differ from the earlier one-edit pair. Not fresh solve, literal "
                 "conversation resume, feedback-only effect or general agent-quality evidence."}
     output.mkdir()
     files = {"packet-bundle": loaded.bundle, "manifest": plan,
@@ -280,11 +310,13 @@ def saved_gateway(loaded, root, arm):
     spans = loaded.bundle["source_packets"][arm]
     gateway = DevToolGateway(workspace=workspace, public_task=loaded.public, sandbox=sandbox,
         probe_sandbox=probe, journal=journal, agent_policy="thin", read_range_only=True,
-        limits=DevLimits(max_accepted_mutations=1, max_model_calls=9,
-                         max_tool_actions=loop.TOOL_ACTIONS + len(spans)), deadline=setup_deadline)
+        limits=DevLimits(max_accepted_mutations=CYCLE_LIMITS.accepted_edits,
+                         max_model_calls=PROFILE.normal_calls + 1,
+                         max_tool_actions=CYCLE_LIMITS.model_tools + len(spans)),
+        deadline=setup_deadline)
     observe_sources(gateway, spans)
     journal.append("model_stage_ready", {"candidate_diff_hash": SEED_HASH,
-        "host_source_reads": len(spans), "model_tool_allowance": loop.TOOL_ACTIONS,
+        "host_source_reads": len(spans), "model_tool_allowance": CYCLE_LIMITS.model_tools,
         "source_packet_hash": sha256_json(spans), "read_range_only": True})
     gateway.deadline = ExecutionDeadline.from_remaining(loop.MODEL_SECONDS)
     return gateway
@@ -319,26 +351,35 @@ def collect(manifest, approved_manifest_hash, approved_cap_usd):
     try:
         for arm in PROFILE.order:
             gateway = saved_gateway(loaded, root / arm, arm)
+            cycle = OriginalCallRecheck(loaded, gateway, root / arm / "original-recheck",
+                                       limits=CYCLE_LIMITS)
             key = loop.load_exact_openai_api_key(Path(plan["credential_file"]))
             adapter = loop.OpenAIResponsesAdapter(loop.config(), api_key=key)
             del key
             try:
                 row = loop.run_model(loaded, arm, gateway, adapter, group,
                     first_hash=plan["first_request_hashes"][arm], profile=PROFILE,
-                    request_builder=request_payload)
+                    request_builder=request_payload, cycle=cycle)
             finally:
                 adapter.client.close()
             rows.append({"arm": arm, **row})
             journal.append("model_row_finished", rows[-1])
             if row["stop_remaining"]:
                 break
-            if row["terminal"] == "CANDIDATE_PRODUCED":
-                checks = host.public_checks(loaded, gateway, root / arm / "public")
+            if row["new_mutations"]:
+                originals = cycle.current_receipts()
+                require(originals is not None, "final candidate lacks its original-call receipt")
+                checks = host.public_checks(loaded, gateway, root / arm / "public",
+                                            original_receipts=originals)
                 rows[-1]["public_checks"] = checks
+                rows[-1]["final_verification"] = {"public": "completed", "isolated": "not_run"}
                 journal.append("candidate_ready_for_evaluation", {"arm": arm, **checks})
                 rows[-1]["acceptance"] = acceptance(
                     gateway, root / arm / "acceptance", checks["regression_passed"])
                 rows[-1]["task_acceptance"] = rows[-1]["acceptance"].get("acceptance", "not_run")
+                rows[-1]["final_verification"]["isolated"] = (
+                    "completed" if rows[-1]["acceptance"].get("status") == "COMPLETED"
+                    else rows[-1]["acceptance"].get("status", "not_run"))
             journal.append("row_finished", rows[-1])
     except BaseException as exc:
         journal.append("collection_interrupted", {"error_type": type(exc).__name__,

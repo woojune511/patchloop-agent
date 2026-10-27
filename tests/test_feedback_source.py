@@ -8,16 +8,14 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-from test_exception_frame_repair import edit_call, no_external, stop_call  # noqa: F401
+from test_exception_frame_repair import edit_call, no_external  # noqa: F401
 
 from diagnostics import feedback_source as d
-from diagnostics.checkpoint_continuation import ScriptedClient
 from patchloop.dev.context import source_lines
 from patchloop.dev.contracts import RequestedTool
-from patchloop.dev.cost import DevCostLedger, pricing_for_model
 from patchloop.errors import ContractError
 from patchloop.repository import WorkspaceManager
-from patchloop.util import canonical_json, sha256_bytes, sha256_json
+from patchloop.util import canonical_json, sha256_bytes
 
 
 def bundle(monkeypatch):
@@ -134,6 +132,10 @@ def test_prepare_and_validate_are_offline_and_preserve_frozen_requests(tmp_path,
     assert plan["paid_execution_authorized"] is False
     assert plan["scope"]["starting_diff"] == d.SEED_HASH
     assert plan["scope"]["total_cap_usd"] == "2.40" and plan["scope"]["read_range_only"]
+    assert plan["scope"]["normal_calls"] == 16
+    assert plan["scope"]["tool_actions"] == 24
+    assert plan["scope"]["diagnostic_probes"] == 2
+    assert plan["scope"]["accepted_mutations"] == 3
     before = (output / "manifest.json").read_bytes()
     with pytest.raises(ContractError, match="fresh output root"):
         d.prepare(output, tmp_path / "live", tmp_path / "unread.env")
@@ -143,7 +145,7 @@ def test_prepare_and_validate_are_offline_and_preserve_frozen_requests(tmp_path,
         d.validate(output / "manifest.json", receipt["manifest_hash"])
 
 
-def test_restore_seed_register_anchors_and_allow_exactly_one_additional_edit(
+def test_restore_seed_registers_current_anchors_without_importing_mutation_count(
     gateway_factory, monkeypatch, tmp_path,
 ):
     existing, _, workspace = gateway_factory()
@@ -181,16 +183,12 @@ def test_restore_seed_register_anchors_and_allow_exactly_one_additional_edit(
         common={"feedback": {"saved_patch": seed.patch}, "source_packets": packets})
     gateway = d.saved_gateway(loaded, tmp_path / "restored", "R0")
     assert gateway.current_diff_hash == seed.patch_hash and gateway.accepted_mutations == 0
-    assert gateway.read_range_only is True and gateway.limits.max_tool_actions == 13
-    client = ScriptedClient([[edit_call()], [stop_call()]])
-    adapter = d.loop.OpenAIResponsesAdapter(d.loop.config(), api_key="", client=client)
-    group = DevCostLedger(d.PROFILE.invocation_cap, pricing_for_model(d.loop.MODEL))
-    result = d.loop.run_model(loaded, "R0", gateway, adapter, group,
-        first_hash=sha256_json(d.request_payload(loaded.common, "R0")), profile=d.PROFILE,
-        request_builder=d.request_payload)
-    assert result["terminal"] == "CANDIDATE_PRODUCED" and result["new_mutations"] == 1
-    assert result["normal_calls"] == result["tool_actions"] == len(client.created) == 1
-    assert result["candidate_diff_hash"] != seed.patch_hash
+    assert gateway.read_range_only is True and gateway.limits.max_tool_actions == 25
+    assert gateway.limits.max_accepted_mutations == 3
+    assert gateway.limits.max_model_calls == 17
+    result = gateway.execute(RequestedTool(**edit_call()))
+    assert result.status == "succeeded" and result.error_code is None
+    assert gateway.accepted_mutations == 1 and gateway.current_diff_hash != seed.patch_hash
     assert len([event for event in gateway.journal.events()
                 if event["event_type"] == "action_finished"]) == 2
 
@@ -236,16 +234,22 @@ def test_collection_stops_on_uncertainty_and_evaluates_semantic_failures(
             if stop == "no_diff" and arm == "R0" else d.SEED_HASH)
 
     monkeypatch.setattr(d, "saved_gateway", gateway)
+    receipts = {"baseline": "public baseline receipt", "candidate": "public current receipt"}
+    monkeypatch.setattr(d, "OriginalCallRecheck", lambda *_args, **_kwargs: SimpleNamespace(
+        current_receipts=lambda: receipts))
     monkeypatch.setattr(d.loop, "load_exact_openai_api_key", lambda _: "synthetic")
     monkeypatch.setattr(d.loop, "OpenAIResponsesAdapter", lambda *_args, **_kwargs: SimpleNamespace(
         client=SimpleNamespace(close=lambda: None)))
     monkeypatch.setattr(d.loop, "run_model", lambda *_args, **_kwargs: {
-        "stop_remaining": stop == "model", "terminal": "CANDIDATE_PRODUCED"})
+        "stop_remaining": stop == "model", "terminal": "CANDIDATE_PRODUCED",
+        "new_mutations": 1})
 
-    def checks(*_):
+    def checks(*_, original_receipts):
+        assert original_receipts is receipts
         if stop == "host":
             raise ContractError("unsettled host cleanup")
-        return {"regression_passed": True, "public_cases_passed": False}
+        return {"regression_passed": True, "public_cases_passed": False,
+                "original_call": {"supported": False}}
 
     monkeypatch.setattr(d.host, "public_checks", checks)
 
@@ -253,7 +257,7 @@ def test_collection_stops_on_uncertainty_and_evaluates_semantic_failures(
         accepted.append((root.parent.name, passed))
         if stop == "acceptance":
             raise ContractError("unsettled opaque evaluation")
-        return {"acceptance": "fail"}
+        return {"status": "COMPLETED", "acceptance": "fail"}
 
     monkeypatch.setattr(d.host, "acceptance", opaque)
     arguments = (tmp_path / "plan/manifest.json", "hash", d.PROFILE.invocation_cap)
@@ -263,6 +267,10 @@ def test_collection_stops_on_uncertainty_and_evaluates_semantic_failures(
     else:
         result = d.collect(*arguments)
         assert result["allocation_closed"]
+        if stop == "none":
+            assert all(row["final_verification"] == {
+                "public": "completed", "isolated": "completed"} for row in result["rows"])
+            assert all(row["task_acceptance"] == "fail" for row in result["rows"])
         if stop == "no_diff":
             skipped = result["rows"][0]["acceptance"]
             assert skipped["status"] == "NOT_RUN_NO_DIFF" and not skipped["stop_remaining"]

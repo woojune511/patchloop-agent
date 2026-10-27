@@ -323,7 +323,7 @@ def original_summary(base, current):
                 "report call-2 identity separately from call-1 and control output."}
 
 
-def public_checks(loaded, model_gateway, root):
+def public_checks(loaded, model_gateway, root, *, original_receipts=None):
     before = model_gateway.current_diff_hash
     gateway = DevToolGateway(workspace=model_gateway.workspace, public_task=loaded.public,
         sandbox=model_gateway.sandbox, probe_sandbox=model_gateway.probe_sandbox,
@@ -340,14 +340,25 @@ def public_checks(loaded, model_gateway, root):
         sandbox=gateway.sandbox, probe_sandbox=gateway.probe_sandbox,
         journal=DevJournal(root / "base", "run_dev_selectionbase"), limits=DevLimits(),
         deadline=gateway.deadline)
-    original_call = RequestedTool(name="run_probe", action_id="host-original",
-                                  arguments=loaded.original_arguments)
-    originals = []
-    for selected in (baseline, gateway):
-        result = selected.execute(original_call)
-        abort, reason = loop.runner._batch_execution_abort([result])
-        require(abort is None, "original execution aborted: " + str(reason))
-        originals.append(result.model_dump(mode="json"))
+    if original_receipts is None:
+        original_call = RequestedTool(name="run_probe", action_id="host-original",
+                                      arguments=loaded.original_arguments)
+        originals = []
+        for selected in (baseline, gateway):
+            result = selected.execute(original_call)
+            abort, reason = loop.runner._batch_execution_abort([result])
+            require(abort is None, "original execution aborted: " + str(reason))
+            originals.append(result.model_dump(mode="json"))
+    else:
+        require(len(original_receipts) == 2
+                and original_receipts[0]["workspace_diff_hash"] == EMPTY_DIFF
+                and original_receipts[1]["workspace_diff_hash"] == before,
+                "reused original receipts do not match the current candidate")
+        original_input = sha256_json({"tool": "run_probe",
+                                     "arguments": loaded.original_arguments})
+        require(all(row["tool"] == "run_probe" and row["input_hash"] == original_input
+                    for row in original_receipts), "reused original request changed")
+        originals = original_receipts
     original = {**original_summary(*originals),
                 "base_receipt": store.put_json(originals[0]).model_dump(mode="json"),
                 "candidate_receipt": store.put_json(originals[1]).model_dump(mode="json")}
