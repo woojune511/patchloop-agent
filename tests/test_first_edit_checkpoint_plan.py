@@ -21,7 +21,7 @@ def forbidden(*args, **kwargs):
 
 
 @pytest.fixture
-def prepared_plan(tmp_path, monkeypatch):
+def prepared_plan(tmp_path, monkeypatch, request):
     inputs = tmp_path / "inputs"
     inputs.mkdir()
     marker = inputs / "public-evidence.json"
@@ -51,7 +51,8 @@ def prepared_plan(tmp_path, monkeypatch):
     monkeypatch.setattr(checkpoint.source, "acceptance", forbidden)
     output, result_root = tmp_path / "prepared", tmp_path / "results"
     credential = tmp_path / "never-created-or-read.env"
-    receipt = checkpoint.prepare(output, result_root, credential)
+    receipt = checkpoint.prepare(
+        output, result_root, credential, arm=getattr(request, "param", None))
     return SimpleNamespace(output=output, result_root=result_root, credential=credential,
                            receipt=receipt, manifest=output / "manifest.json", loaded=loaded,
                            marker=marker)
@@ -82,13 +83,49 @@ def test_prepare_and_validate_freeze_offline_pair_with_exact_new_budget(prepared
 
 def test_collect_rejects_wrong_cap_before_validation_or_loading(monkeypatch):
     monkeypatch.setattr(checkpoint, "validate", forbidden)
-    with pytest.raises(ContractError, match="exact new total cap"):
-        checkpoint.collect(None, "unused", Decimal("1.20"))
+    with pytest.raises(ContractError, match="cap"):
+        checkpoint.collect(None, "unused", Decimal("0.60"))
+
+
+@pytest.mark.parametrize("prepared_plan", ["A"], indirect=True)
+def test_single_a_preparation_seals_only_a_with_one_row_cap(prepared_plan):
+    case = prepared_plan
+    plan, loaded = checkpoint.validate(
+        case.manifest, case.receipt["manifest_hash"], approved_cap_usd=Decimal("1.20"))
+    assert plan["scope"]["order"] == ["A"]
+    assert plan["scope"]["row_cap_usd"] == plan["scope"]["total_cap_usd"] == "1.20"
+    assert set(plan["first_request_hashes"]) == {"A"}
+    assert json.loads((case.output / "A-first.json").read_bytes()) == loaded.requests["A"]
+    assert not (case.output / "B-first.json").exists()
+    assert plan["paid_execution_authorized"] is False
+    assert not case.result_root.exists() and not case.credential.exists()
+    assert all(case.receipt[key] == 0 for key in (
+        "provider_calls", "input_count_calls", "credential_reads", "target_executions"))
+
+
+@pytest.mark.parametrize("prepared_plan,cap", [("A", "2.40"), (None, "1.20")],
+                         indirect=["prepared_plan"])
+def test_selected_manifest_cap_mismatch_stops_before_credentials_or_loading(
+    prepared_plan, monkeypatch, cap,
+):
+    case = prepared_plan
+    monkeypatch.setattr(checkpoint, "load_inputs", forbidden)
+    with pytest.raises(ContractError, match="cap"):
+        checkpoint.collect(case.manifest, case.receipt["manifest_hash"], Decimal(cap))
+    assert not case.result_root.exists() and not case.credential.exists()
+
+
+def test_single_b_is_not_an_authorized_preparation_selection(tmp_path, monkeypatch):
+    monkeypatch.setattr(checkpoint, "load_inputs", forbidden)
+    with pytest.raises(ContractError):
+        checkpoint.prepare(tmp_path / "prepared", tmp_path / "results", tmp_path / "unread.env",
+                           arm="B")
+    assert not (tmp_path / "prepared").exists()
 
 
 @pytest.mark.parametrize("change,match", [
     ("approval_hash", "approved manifest hash differs"),
-    ("approval_cap", "exact new total cap"),
+    ("approval_cap", "cap"),
     ("runtime", "runtime changed"),
     ("bound_file", "bound code or evidence changed"),
 ])
@@ -197,7 +234,7 @@ def test_collection_stops_all_rows_on_count_or_provider_uncertainty(
     tmp_path, monkeypatch, uncertainty, raise_error,
 ):
     root = tmp_path / "collection"
-    plan = {"result_root": str(root), "bindings": [],
+    plan = {"scope": checkpoint.scope(), "result_root": str(root), "bindings": [],
             "credential_file": str(tmp_path / "not-read.env"),
             "first_request_hashes": {"A": "sealed-a", "B": "sealed-b"},
             "interpretation": "synthetic collection"}
@@ -246,3 +283,45 @@ def test_collection_stops_all_rows_on_count_or_provider_uncertainty(
     assert not (root / "B").exists()
     events = DevJournal(root, "run_dev_firsteditcomparison").events()
     assert events[-1]["event_type"] == ("collection_interrupted" if raise_error else "closed")
+
+
+@pytest.mark.parametrize("order,cap", [(("A",), "1.20"), (("A", "B"), "2.40")])
+def test_collection_runs_only_manifest_selected_arms_with_exact_group_cap(
+    tmp_path, monkeypatch, order, cap,
+):
+    selected_cap = Decimal(cap)
+    plan = {"scope": checkpoint.scope(order), "result_root": str(tmp_path / "collection"),
+            "bindings": [], "credential_file": str(tmp_path / "not-read.env"),
+            "first_request_hashes": {arm: f"sealed-{arm}" for arm in order},
+            "interpretation": "synthetic selected trial"}
+    monkeypatch.setattr(checkpoint, "validate", lambda *args, **kwargs: (plan, SimpleNamespace()))
+    monkeypatch.setattr(checkpoint.loop.runner, "_require_tracked_clean_paths", lambda *args: None)
+    monkeypatch.setattr(checkpoint, "runtime_content_paths", lambda: [])
+    monkeypatch.setattr(checkpoint, "git_commit", lambda: "fixture-commit")
+    started, requested, closed, credentials = [], [], [], []
+    monkeypatch.setattr(checkpoint, "saved_gateway",
+                        lambda _loaded, root: started.append(root.name))
+    monkeypatch.setattr(checkpoint, "OriginalCallRecheck", lambda *args, **kwargs: None)
+
+    def credential(path):
+        credentials.append(path)
+        return "fixture-key"
+
+    monkeypatch.setattr(checkpoint.loop, "load_exact_openai_api_key", credential)
+    monkeypatch.setattr(checkpoint.loop, "OpenAIResponsesAdapter", lambda *args, **kwargs:
+                        SimpleNamespace(client=SimpleNamespace(close=lambda: closed.append(True))))
+    monkeypatch.setattr(checkpoint.source.host, "public_checks", forbidden)
+    monkeypatch.setattr(checkpoint.source, "acceptance", forbidden)
+
+    def model(_loaded, arm, _gateway, _adapter, group, **kwargs):
+        requested.append(arm)
+        assert group.remaining_nanos == int(selected_cap * 1_000_000_000)
+        assert kwargs["first_hash"] == f"sealed-{arm}" and kwargs["profile"] == checkpoint.PROFILE
+        return {"stop_remaining": False, "new_mutations": 0, "task_acceptance": "NOT_RUN"}
+
+    monkeypatch.setattr(checkpoint.loop, "run_model", model)
+    result = checkpoint.collect(tmp_path / "prepared/manifest.json", "approved", selected_cap)
+    assert started == requested == list(order)
+    assert [row["arm"] for row in result["rows"]] == list(order)
+    assert len(credentials) == len(closed) == len(order)
+    assert result["allocation_closed"] and result["cost_nanos"] == 0

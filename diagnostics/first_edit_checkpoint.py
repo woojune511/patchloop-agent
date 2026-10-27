@@ -1,4 +1,4 @@
-"""Fresh A/B first-edit trials from the same saved public post-helper evidence.
+"""Fresh first-edit trials from the same saved public post-helper evidence.
 
 A retains duplicate public context; B encodes the same facts once with references.
 Preparation is offline. Collection needs an exact new manifest and total cap.
@@ -159,8 +159,10 @@ def load_inputs():
     return loaded
 
 
-def scope():
-    return {**source.host.scope(), "order": list(PROFILE.order),
+def scope(order=PROFILE.order):
+    require(tuple(order) in {PROFILE.order, ("A",)}, "unsupported checkpoint selection")
+    conditions = {"A": "full-public-context", "B": dedup.FORMAT}
+    return {**source.host.scope(), "order": list(order),
         "task": "Astroid-1333/dev-train/current-dev20/13", "starting_diff": source.SEED_HASH,
         "normal_calls": PROFILE.normal_calls, "correction_calls": 1,
         "tool_actions": LIMITS.model_tools, "diagnostic_probes": 0,
@@ -168,15 +170,17 @@ def scope():
         "additional_model_edits": 1, "post_edit_original_recheck": True,
         "host_original_actions_max": LIMITS.host_original_actions,
         "minimum_correction_seconds": MINIMUM_CORRECTION_SECONDS,
-        "row_cap_usd": str(PROFILE.row_cap), "total_cap_usd": str(PROFILE.invocation_cap),
-        "conditions": {"A": "full-public-context", "B": dedup.FORMAT},
+        "row_cap_usd": str(PROFILE.row_cap), "total_cap_usd": str(PROFILE.row_cap * len(order)),
+        "conditions": {arm: conditions[arm] for arm in order},
         "checkpoint": "post-helper-before-response-15", "fresh_counters": True,
         "continuation": "public-exchanges-only", "source_selection": "all-unique-evidence",
         "post_edit_delivery": "exact-visible-source-references-v1",
         "context_handoff": "combined-public-state-lossless-v1"}
 
 
-def prepare(output, result_root, credential_file):
+def prepare(output, result_root, credential_file, arm=None):
+    selected_scope = scope(PROFILE.order if arm is None else (arm,))
+    order = selected_scope["order"]
     output, result_root = output.resolve(), result_root.resolve()
     loaded = load_inputs()
     paths = [Path(__file__), Path(source.__file__), Path(loop.__file__),
@@ -198,21 +202,27 @@ def prepare(output, result_root, credential_file):
     require(not result_root.exists(), "result root already exists")
     plan = {"schema": SCHEMA, "official": False, "paid_execution_authorized": False,
         "runtime_hash": runtime_content_hash(), "prepared_at_commit": git_commit(),
-        "scope": scope(), "result_root": str(result_root),
+        "scope": selected_scope, "result_root": str(result_root),
         "credential_file": str(credential_file.resolve()), "bindings": bindings,
         "evidence_hash": sha256_json(loaded.common["evidence"]),
         "deduplicated_hash": sha256_json(loaded.common["deduplicated_evidence"]),
         "checkpoint_provenance": loaded.checkpoint.provenance,
         "representation_statistics": dedup.statistics(loaded.common["deduplicated_evidence"]),
-        "first_request_hashes": {arm: sha256_json(value)
-                                 for arm, value in loaded.requests.items()},
+        "first_request_hashes": {arm: sha256_json(loaded.requests[arm]) for arm in order},
         "interpretation": "One saved-evidence first-edit trial per condition. Same unique public "
             "facts, source anchors, model and fresh budgets; vary duplicate/full versus reference "
             "representation. Not fresh solve, literal resume, pure token-length effect or general "
             "quality evidence. Earlier costs and uncertain calls remain in the closed old run."}
+    if arm is not None:
+        plan["interpretation"] = (
+            "One full-context saved-evidence first-edit trial with compact post-edit source "
+            "delivery and actual context handoff. Measures current-diff verification delivery "
+            "and honest model completion separately from repair acceptance. Historical A is "
+            "a baseline, not a concurrent control. Not fresh solve, literal resume, causal "
+            "repair gain or general quality evidence. Earlier allocations remain closed.")
     output.mkdir()
     for name, data in {"manifest": plan, "evidence": loaded.common,
-                       **{arm + "-first": value for arm, value in loaded.requests.items()}}.items():
+                       **{arm + "-first": loaded.requests[arm] for arm in order}}.items():
         with (output / (name + ".json")).open("x", encoding="utf-8") as stream:
             stream.write(canonical_json(data) + "\n")
     receipt = {"manifest": str(output / "manifest.json"),
@@ -226,9 +236,12 @@ def prepare(output, result_root, credential_file):
 def validate(manifest, digest, *, approved_cap_usd=None):
     require(sha256_bytes(manifest.read_bytes()) == digest, "approved manifest hash differs")
     plan = json.loads(manifest.read_bytes())
-    require(plan["schema"] == SCHEMA and plan["scope"] == scope(), "experiment scope changed")
+    order = plan["scope"]["order"]
+    require(plan["schema"] == SCHEMA and plan["scope"] == scope(order),
+            "experiment scope changed")
     if approved_cap_usd is not None:
-        require(approved_cap_usd == PROFILE.invocation_cap, "exact new total cap required")
+        require(approved_cap_usd == Decimal(plan["scope"]["total_cap_usd"]),
+                "exact new total cap required")
     require(plan["runtime_hash"] == runtime_content_hash(), "runtime changed")
     for binding in plan["bindings"]:
         require(source.file_binding(binding["path"]) == binding, "bound code or evidence changed")
@@ -238,8 +251,9 @@ def validate(manifest, digest, *, approved_cap_usd=None):
             and plan["deduplicated_hash"] == sha256_json(loaded.common["deduplicated_evidence"])
             and json.loads((manifest.parent / "evidence.json").read_bytes()) == loaded.common,
             "prepared public evidence changed")
-    require(set(plan["first_request_hashes"]) == set(PROFILE.order), "request set changed")
-    for arm, request in loaded.requests.items():
+    require(set(plan["first_request_hashes"]) == set(order), "request set changed")
+    for arm in order:
+        request = loaded.requests[arm]
         require(plan["first_request_hashes"][arm] == sha256_json(request)
                 and json.loads((manifest.parent / f"{arm}-first.json").read_bytes()) == request,
                 "prepared request changed")
@@ -264,7 +278,8 @@ def saved_gateway(loaded, root):
 
 
 def collect(manifest, approved_manifest_hash, approved_cap_usd):
-    require(approved_cap_usd == PROFILE.invocation_cap, "exact new total cap required")
+    require(approved_cap_usd in {PROFILE.row_cap, PROFILE.invocation_cap},
+            "exact new total cap required")
     plan, loaded = validate(manifest, approved_manifest_hash, approved_cap_usd=approved_cap_usd)
     root = Path(plan["result_root"])
     disjoint(root, (repository_root(), manifest.parent,
@@ -280,7 +295,7 @@ def collect(manifest, approved_manifest_hash, approved_cap_usd):
     group = DevCostLedger(approved_cap_usd, pricing_for_model(loop.MODEL))
     rows = []
     try:
-        for arm in PROFILE.order:
+        for arm in plan["scope"]["order"]:
             gateway = saved_gateway(loaded, root / arm)
             cycle = OriginalCallRecheck(loaded, gateway, root / arm / "original-recheck",
                                         limits=LIMITS)
@@ -333,6 +348,7 @@ def main():
     prep = commands.add_parser("prepare")
     for name in ("output", "result-root", "credential-file"):
         prep.add_argument("--" + name, type=Path, required=True)
+    prep.add_argument("--arm", choices=("A",))
     for name in ("validate", "collect"):
         command = commands.add_parser(name)
         command.add_argument("--manifest", type=Path, required=True)

@@ -53,7 +53,17 @@ resetting budgets. Local scripted tests verify successful/failed feedback in the
 next dispatched request: 81 focused PASS/77.15s; 472 quick PASS/108.05s including
 isolated mock; Ruff PASS. Actual saved requests shrink by about 26K JSON characters
 with exact tool-result expansion and verification preservation. A real API token
-count and live continuation under this change remain untested. No paid run was requested.
+count and live continuation under this change remain untested.
+
+The user requested a live delivery trial. Prepare only A from the same checkpoint,
+once with a new $1.20 cap; keep its first request and row limits unchanged. The
+collector now binds selected conditions and their exact total cap together, so
+single-A approval cannot execute B. Measure actual current-diff feedback in the
+next dispatched request and honest model completion separately from acceptance.
+If no edit occurs, feedback delivery is not exercised. Exact paid approval for
+this new allocation is pending; no provider calls have been made.
+Single-row preparation/collection and delivery checks: 47 focused PASS across
+1.83s and 19.47s runs; 472 quick PASS/129.97s including isolated mock; Ruff PASS.
 
 All five input counts and three generation calls completed with known usage;
 zero corrections and no execution uncertainty. Settled cost $0.40829625 under
