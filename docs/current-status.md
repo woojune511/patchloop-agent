@@ -56,7 +56,15 @@ selected W0611 on the direct-file control only, so its desired observation would
 not prove the original directory processed its file. Fixing the helper does not
 repair that observation design or establish F0010 reproduction. Actual-model use
 of execution feedback after the first settled probe was not tested by the closed
-comparison. Another live run needs a newly scoped plan and exact allocation.
+comparison. The [single full-model helper follow-up](history/2026-10-28-helper-first-reproduction-plan.md)
+is sealed at the same public checkpoint: retain the long description except
+its helper exception paragraph, fixed v8 host, same model and resource limits.
+Stop at the first settled probe and audit target entry, F0010 and same-call processing
+separately. Offline 60K admission preserves full 40K/25K outputs, exact first-request
+diff review passes, and read-only source/image/dependency preflight is READY.
+The diagnostic owner checks pass after one test-fixture correction; quick passes
+594 cases including isolated mock evaluation. No new runtime behavior was added.
+New collection and its USD 4.41415320 cap await exact authorization.
 
 The preceding [saved-evidence repair](history/2026-10-27-public-regression-cycle-results.md)
 passed isolated acceptance after public failure feedback; it does not establish

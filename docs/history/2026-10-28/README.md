@@ -10,3 +10,4 @@
 - [First reproduction: model-only checkpoint comparison preparation](../2026-10-28-first-reproduction-model-plan.md)
 - [First reproduction model result: mini output exhaustion, full helper setup failure](../2026-10-28-first-reproduction-model-results.md)
 - [Helper SystemExit configuration compatibility and local validation](../2026-10-28-helper-system-exit-fix.md)
+- [Helper follow-up: single full-model first-reproduction preparation](../2026-10-28-helper-first-reproduction-plan.md)
