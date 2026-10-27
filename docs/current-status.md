@@ -64,6 +64,13 @@ This remains operator-assisted, single-pair evidence.
 The unresolved issue is testing and revising repair premises against the caller.
 Production defaults stay unchanged; this and all prior paid allocations are closed.
 
+The [follow-up design](history/2026-10-27-feedback-source-plan.md) proposes two
+fresh continuations from the same saved A candidate with identical public failure
+feedback, varying only partial versus complete current-file source. It is design
+only, not implemented, sealed or authorized for execution. Selected-file whole
+reading is proposed; search-wide automatic full-file output is not. No default
+or resource-limit change is active.
+
 Public exception frames and cause/context chains are implemented in fresh invocation
 v5, with historical observer v1-v4 preserved; see the
 [frame investigation](history/2026-10-27-exception-frames.md). Live information,

@@ -16,3 +16,4 @@
 - [Clean-base observation A/B: public packet and offline execution preparation](../2026-10-27-selection-observation-plan.md)
 - [Observation A/B results: both fail acceptance; B introduces child-selection regression](../2026-10-27-selection-observation-results.md)
 - [Observation failure analysis: incomplete source premise and first-edit feedback limits](../2026-10-27-selection-observation-failure-analysis.md)
+- [Follow-up design: same public failure feedback, partial versus complete current-file source](../2026-10-27-feedback-source-plan.md)
