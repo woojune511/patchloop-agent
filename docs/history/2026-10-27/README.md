@@ -23,3 +23,4 @@
 - [Original-call repair cycle: public feedback between edits and reserved verification](../2026-10-27-original-repair-cycle.md)
 - [Live repair-cycle pilot: exploration and correction context stop before the first edit](../2026-10-27-repair-cycle-results.md)
 - [Repair entry contracts: registered caller selection, whole reads and public context continuation](../2026-10-27-repair-entry-contracts.md)
+- [Full-source repair entry: one R1 trial with a sealed single-row cap](../2026-10-27-repair-entry-single-plan.md)

@@ -117,7 +117,8 @@ def test_load_inputs_includes_issue_and_exact_public_original_request(
         d.load_inputs()
 
 
-def test_prepare_and_validate_are_offline_and_preserve_frozen_requests(tmp_path, monkeypatch):
+@pytest.mark.parametrize("arm", [None, "R1"])
+def test_prepare_and_validate_are_offline_and_preserve_frozen_requests(tmp_path, monkeypatch, arm):
     value = bundle(monkeypatch)
     data = common(value)
     loaded = SimpleNamespace(bundle=value,
@@ -126,12 +127,19 @@ def test_prepare_and_validate_are_offline_and_preserve_frozen_requests(tmp_path,
     monkeypatch.setattr(d, "file_binding", lambda path: {
         "path": str(Path(path).resolve()), "hash": "fixture", "bytes": 1})
     output = tmp_path / "plan"
-    receipt = d.prepare(output, tmp_path / "live", tmp_path / "unread.env")
+    receipt = d.prepare(output, tmp_path / "live", tmp_path / "unread.env", arm=arm)
     assert receipt["credential_reads"] == receipt["provider_calls"] == 0
     plan, _ = d.validate(output / "manifest.json", receipt["manifest_hash"])
     assert plan["paid_execution_authorized"] is False
     assert plan["scope"]["starting_diff"] == d.SEED_HASH
-    assert plan["scope"]["total_cap_usd"] == "2.40"
+    assert plan["scope"]["total_cap_usd"] == ("2.40" if arm is None else "1.20")
+    order = list(d.PROFILE.order) if arm is None else [arm]
+    assert plan["scope"]["order"] == order
+    assert set(plan["scope"]["source_ranges"]) == set(order)
+    assert set(plan["scope"]["host_source_reads"]) == set(order)
+    assert set(plan["first_request_hashes"]) == set(order)
+    assert (output / "R0-first.json").exists() is (arm is None)
+    assert json.loads((output / "R1-first.json").read_bytes()) == loaded.requests["R1"]
     assert plan["scope"]["read_range_only"] is False
     assert plan["scope"]["normal_calls"] == 16
     assert plan["scope"]["tool_actions"] == 24
@@ -141,9 +149,9 @@ def test_prepare_and_validate_are_offline_and_preserve_frozen_requests(tmp_path,
     assert plan["scope"]["accepted_mutations"] == 3
     before = (output / "manifest.json").read_bytes()
     with pytest.raises(ContractError, match="fresh output root"):
-        d.prepare(output, tmp_path / "live", tmp_path / "unread.env")
+        d.prepare(output, tmp_path / "live", tmp_path / "unread.env", arm=arm)
     assert (output / "manifest.json").read_bytes() == before
-    (output / "R0-first.json").write_text("{}", encoding="utf-8")
+    (output / "R1-first.json").write_text("{}", encoding="utf-8")
     with pytest.raises(ContractError, match="prepared request changed"):
         d.validate(output / "manifest.json", receipt["manifest_hash"])
 
@@ -211,7 +219,51 @@ def test_restore_seed_registers_current_anchors_without_importing_mutation_count
 def test_cap_approval_precedes_all_loading(monkeypatch):
     monkeypatch.setattr(d, "validate", lambda *_: pytest.fail("must reject before loading"))
     with pytest.raises(ContractError, match="exact new cap"):
-        d.collect(None, "none", Decimal("1.20"))
+        d.collect(None, "none", Decimal("0.60"))
+
+
+@pytest.mark.parametrize("change", ["order", "duplicate", "scope_cap", "approved_cap", "keys"])
+def test_selected_scope_and_exact_cap_checked_before_loading(tmp_path, monkeypatch, change):
+    plan = {"schema": d.SCHEMA, "scope": d.scope(("R1",)), "first_request_hashes": {"R1": "x"}}
+    if change == "order":
+        plan["scope"]["order"] = ["R0"]
+    elif change == "duplicate":
+        plan["scope"]["order"] = ["R1", "R1"]
+    elif change == "scope_cap":
+        plan["scope"]["total_cap_usd"] = "2.40"
+    elif change == "keys":
+        plan["first_request_hashes"]["R0"] = "unselected"
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(canonical_json(plan), encoding="utf-8")
+    monkeypatch.setattr(d, "load_inputs", lambda: pytest.fail("must reject before loading"))
+    with pytest.raises(ContractError):
+        d.validate(manifest, sha256_bytes(manifest.read_bytes()),
+                   approved_cap_usd=Decimal("2.40" if change == "approved_cap" else "1.20"))
+
+
+def test_collect_runs_only_sealed_full_source_arm_with_single_cap(tmp_path, monkeypatch):
+    root = tmp_path / "run"
+    plan = {"scope": d.scope(("R1",)), "result_root": str(root), "bindings": [],
+            "credential_file": str(tmp_path / "never-read.env"),
+            "first_request_hashes": {"R1": "sealed"}, "interpretation": "single trial"}
+    monkeypatch.setattr(d, "validate", lambda *_args, **kwargs: (plan, SimpleNamespace()))
+    monkeypatch.setattr(d.loop.runner, "_require_tracked_clean_paths", lambda *_: None)
+    seen = []
+    monkeypatch.setattr(d, "saved_gateway", lambda _loaded, _root, arm: seen.append(arm))
+    monkeypatch.setattr(d, "OriginalCallRecheck", lambda *_args, **_kwargs: None)
+    monkeypatch.setattr(d.loop, "load_exact_openai_api_key", lambda _: "fixture-key")
+    monkeypatch.setattr(d.loop, "OpenAIResponsesAdapter", lambda *_args, **_kwargs:
+                        SimpleNamespace(client=SimpleNamespace(close=lambda: None)))
+
+    def model(_loaded, arm, _gateway, _adapter, group, **kwargs):
+        assert arm == "R1" and group.remaining_nanos == 1_200_000_000
+        assert kwargs["profile"] == d.PROFILE and kwargs["first_hash"] == "sealed"
+        return {"stop_remaining": False, "new_mutations": 0, "task_acceptance": "NOT_RUN"}
+
+    monkeypatch.setattr(d.loop, "run_model", model)
+    result = d.collect(tmp_path / "plan" / "manifest.json", "approved", Decimal("1.20"))
+    assert seen == ["R1"] and [row["arm"] for row in result["rows"]] == ["R1"]
+    assert result["allocation_closed"] and result["cost_nanos"] == 0
 
 
 @pytest.mark.parametrize("actions, parallel", [(3, False), (4, True)])
@@ -245,10 +297,10 @@ def test_only_delivered_current_ranges_become_editable(gateway_factory, monkeypa
 def test_collection_stops_on_uncertainty_and_evaluates_semantic_failures(
     tmp_path, monkeypatch, stop,
 ):
-    plan = {"result_root": str(tmp_path / "live"), "bindings": [],
+    plan = {"scope": d.scope(), "result_root": str(tmp_path / "live"), "bindings": [],
         "credential_file": "unread.env", "first_request_hashes": {"R0": "r0", "R1": "r1"},
         "interpretation": "synthetic controlled pair"}
-    monkeypatch.setattr(d, "validate", lambda *_: (plan, SimpleNamespace()))
+    monkeypatch.setattr(d, "validate", lambda *_args, **_kwargs: (plan, SimpleNamespace()))
     monkeypatch.setattr(d.loop.runner, "_require_tracked_clean_paths", lambda *_: None)
     arms, accepted = [], []
 

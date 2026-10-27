@@ -1,6 +1,6 @@
 """Saved-A public-feedback continuation with partial versus complete current source.
 
-Preparation/validation are offline. Collection has two single-use rows, exact
+Preparation/validation are offline. Collection has selected single-use rows, exact
 manifest/cap admission, public original-call feedback between edits, and final
 public/opaque verification. Preparation does not authorize collection.
 """
@@ -192,9 +192,12 @@ def load_inputs():
                            original_arguments=original)
 
 
-def scope():
-    return {**host.scope(), "order": list(PROFILE.order), "starting_diff": SEED_HASH,
-            "source_ranges": {"R0": [[265, 273]], "R1": [[1, 400], [401, 676]]},
+def scope(order=PROFILE.order):
+    require(tuple(order) in {PROFILE.order, ("R1",)}, "unsupported source selection")
+    ranges = {"R0": [[265, 273]], "R1": [[1, 400], [401, 676]]}
+    return {**host.scope(), "order": list(order), "starting_diff": SEED_HASH,
+            "total_cap_usd": str(PROFILE.row_cap * len(order)),
+            "source_ranges": {arm: ranges[arm] for arm in order},
             "read_range_only": False, "normal_calls": PROFILE.normal_calls,
             "tool_actions": CYCLE_LIMITS.model_tools,
             "diagnostic_probes": CYCLE_LIMITS.helper_probes,
@@ -208,10 +211,12 @@ def scope():
             "final_public_actions": CYCLE_LIMITS.final_public_actions,
             "followup_output_reserves": [CYCLE_LIMITS.future_diagnostic_output,
                 CYCLE_LIMITS.future_edit_output, CYCLE_LIMITS.final_response_output],
-            "host_source_reads": {"R0": 1, "R1": 2}}
+            "host_source_reads": {arm: len(ranges[arm]) for arm in order}}
 
 
-def prepare(output, result_root, credential_file):
+def prepare(output, result_root, credential_file, arm=None):
+    selected_scope = scope(PROFILE.order if arm is None else (arm,))
+    order = selected_scope["order"]
     output, result_root = output.resolve(), result_root.resolve()
     protected = (repository_root(), host.SOURCE.parent, host.DEPENDENCIES.parent)
     disjoint(output, (*protected, result_root))
@@ -234,19 +239,23 @@ def prepare(output, result_root, credential_file):
         disjoint(root, tuple(Path(row["path"]).parent for row in bindings))
     plan = {"schema": SCHEMA, "official": False, "paid_execution_authorized": False,
             "runtime_hash": runtime_content_hash(), "prepared_at_commit": git_commit(),
-            "scope": scope(), "result_root": str(result_root),
+            "scope": selected_scope, "result_root": str(result_root),
             "credential_file": str(credential_file.resolve()), "bindings": bindings,
             "bundle_hash": sha256_json(loaded.bundle),
-            "first_request_hashes": {arm: sha256_json(request)
-                                     for arm, request in loaded.requests.items()},
+            "first_request_hashes": {arm: sha256_json(loaded.requests[arm]) for arm in order},
             "interpretation": "Assisted saved-candidate continuation, one run per condition. "
                 "Compares current source content, acquisition burden and editable-anchor coverage "
                 "under identical public feedback and bounded iterative opportunities. "
                 "Resources differ from the earlier one-edit pair. Not fresh solve, literal "
                 "conversation resume, feedback-only effect or general agent-quality evidence."}
+    if arm is not None:
+        plan["interpretation"] = (
+            "One full-source saved-candidate repair trial. Measures request-contract uptake, "
+            "first edit and original-call feedback use. Not an A/B comparison, fresh solve, "
+            "literal conversation resume or isolated effect of any individual mechanism.")
     output.mkdir()
     files = {"packet-bundle": loaded.bundle, "manifest": plan,
-             **{arm + "-first": value for arm, value in loaded.requests.items()}}
+             **{arm + "-first": loaded.requests[arm] for arm in order}}
     for name, value in files.items():
         with (output / f"{name}.json").open("x", encoding="utf-8") as stream:
             stream.write(canonical_json(value) + "\n")
@@ -258,10 +267,15 @@ def prepare(output, result_root, credential_file):
     return receipt
 
 
-def validate(manifest, digest):
+def validate(manifest, digest, *, approved_cap_usd=None):
     require(sha256_bytes(manifest.read_bytes()) == digest, "approved manifest hash differs")
     plan = json.loads(manifest.read_bytes())
-    require(plan["schema"] == SCHEMA and plan["scope"] == scope(), "comparison scope changed")
+    order = plan["scope"]["order"]
+    require(plan["schema"] == SCHEMA and plan["scope"] == scope(order), "comparison scope changed")
+    if approved_cap_usd is not None:
+        require(approved_cap_usd == Decimal(plan["scope"]["total_cap_usd"]),
+                "exact selected cap approval required")
+    require(set(plan["first_request_hashes"]) == set(order), "selected request set changed")
     require(plan["runtime_hash"] == runtime_content_hash(), "runtime changed")
     for binding in plan["bindings"]:
         require(file_binding(binding["path"]) == binding, "bound code or evidence changed")
@@ -269,7 +283,8 @@ def validate(manifest, digest):
     require(sha256_json(loaded.bundle) == plan["bundle_hash"]
             and json.loads((manifest.parent / "packet-bundle.json").read_bytes()) == loaded.bundle,
             "prepared packet bundle changed")
-    for arm, request in loaded.requests.items():
+    for arm in order:
+        request = loaded.requests[arm]
         require(sha256_json(request) == plan["first_request_hashes"][arm]
                 and json.loads((manifest.parent / f"{arm}-first.json").read_bytes()) == request,
                 "prepared request changed")
@@ -342,8 +357,9 @@ def acceptance(gateway, root, passed):
 
 
 def collect(manifest, approved_manifest_hash, approved_cap_usd):
-    require(approved_cap_usd == PROFILE.invocation_cap, "exact new cap approval required")
-    plan, loaded = validate(manifest, approved_manifest_hash)
+    require(approved_cap_usd in {PROFILE.row_cap, PROFILE.invocation_cap},
+            "exact new cap approval required")
+    plan, loaded = validate(manifest, approved_manifest_hash, approved_cap_usd=approved_cap_usd)
     root = Path(plan["result_root"])
     disjoint(root, (repository_root(), manifest.parent,
                     host.SOURCE.parent, host.DEPENDENCIES.parent,
@@ -356,10 +372,10 @@ def collect(manifest, approved_manifest_hash, approved_cap_usd):
     journal = DevJournal(root, "run_dev_feedbacksourcecomparison")
     journal.append("approved_collection_started", {"manifest_hash": approved_manifest_hash,
         "cap_usd": str(approved_cap_usd), "git_commit": git_commit()})
-    group = DevCostLedger(PROFILE.invocation_cap, pricing_for_model(loop.MODEL))
+    group = DevCostLedger(Decimal(plan["scope"]["total_cap_usd"]), pricing_for_model(loop.MODEL))
     rows = []
     try:
-        for arm in PROFILE.order:
+        for arm in plan["scope"]["order"]:
             gateway = saved_gateway(loaded, root / arm, arm)
             cycle = OriginalCallRecheck(loaded, gateway, root / arm / "original-recheck",
                                        limits=CYCLE_LIMITS)
@@ -409,6 +425,7 @@ def main():
     prep = commands.add_parser("prepare")
     for name in ("output", "result-root", "credential-file"):
         prep.add_argument("--" + name, type=Path, required=True)
+    prep.add_argument("--arm", choices=("R1",), help="Only the full-source arm; default is R0/R1")
     for name in ("validate", "collect"):
         command = commands.add_parser(name)
         command.add_argument("--manifest", type=Path, required=True)
