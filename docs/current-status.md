@@ -24,19 +24,25 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [original-call repair cycle](history/2026-10-27-original-repair-cycle.md) now
-rechecks every accepted edit and feeds current-diff public failures into the next
-response. The saved-candidate diagnostic permits further reads and up to three
-edits, with separate future-response funding and host verification allowances.
-Final public checks reuse matching original receipts; incomplete rechecks stop
-the run. Local validation: 82 focused PASS/27.91s; 472 quick PASS/105.36s including
-isolated mock evaluation; Ruff PASS. Live use is NOT_RUN.
-Production defaults and legacy one-edit profiles stay unchanged. The changed
-16-response/24-action/2-probe scope needs new preparation for a future authorized
-run; all preceding allocations are closed.
+The [live repair-cycle pilot](history/2026-10-27-repair-cycle-results.md) completed
+R0/R1 once each, with zero edits. R0 used 15 responses on source exploration and
+stopped for insufficient evidence; R1 made a probe request with null source,
+then violated the offered one-read batch limit. Its undispatched correction counted
+68,124 input tokens against 60K. Both retained the seed diff; original rechecks,
+final public checks and acceptance were NOT_RUN. Total settled cost $0.32811825;
+all 24 generation calls settled and the $2.40 allocation is closed.
 
-The unresolved question is whether the model uses that feedback to revise its
-premise and repair the caller. The [preceding R0/R1 pair](history/2026-10-27-feedback-source-results.md)
+The [original-call repair cycle](history/2026-10-27-original-repair-cycle.md) is
+implemented and locally verified (82 focused PASS/27.91s; 472 quick PASS/105.36s
+including isolated mock evaluation; Ruff PASS), but its post-edit path was not
+exercised by this live pair. Production defaults and legacy profiles stay unchanged.
+The next unresolved bottleneck is reaching a justified first edit: source location
+selection, executable probe construction and valid correction within retained
+context. More context would admit that particular correction, but cannot establish
+better diagnosis or repair. Future paid work needs a new evidence-based scope.
+
+Whether the model uses post-edit feedback to repair the caller remains unresolved.
+The [preceding R0/R1 pair](history/2026-10-27-feedback-source-results.md)
 retained F0010 despite complete assigned source delivery and no input/output/cost
 cutoff. R0 undid the seed (empty diff, acceptance NOT_RUN); R1 added a namespace
 fallback and failed acceptance. Neither selected/parsed the namespace child,
