@@ -113,8 +113,12 @@ def fork(source: Source, cut_sequence: int, output: Path, arm: str, *, synthetic
 
 
 def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
-          preserve_parent_configuration=False):
+          preserve_parent_configuration=False, model_override=None):
     """Copy a settled prefix; bind current runtime without changing the parent."""
+    require(
+        model_override is None or preserve_parent_configuration,
+        "model override requires preserved parent configuration",
+    )
     require(arm in {"A", "B"}, "unknown exposure arm")
     require(mode in {"offline-scripted-only", "funded-observation"}, "unknown fork mode")
     require(
@@ -228,7 +232,9 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
         and old.limits.max_accepted_mutations - len(accepted) == budget["accepted_mutations"],
         "restored action allowances differ",
     )
-    model = old.model if preserve_parent_configuration else "gpt-5.4-2026-03-05"
+    model = model_override or (
+        old.model if preserve_parent_configuration else "gpt-5.4-2026-03-05"
+    )
     pricing = pricing_for_model(model)
     spent = budget["cost"]["settled_usage"]
     ledger = DevCostLedger(Decimal(spent) / 10**9 + new_cap_usd, pricing)
@@ -301,6 +307,8 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
     }
     if preserve_parent_configuration:
         marker["preserve_parent_configuration"] = True
+    if model_override is not None:
+        marker["model_override"] = model_override
     journal.append("observation_exposure_fork", marker)
     branch = SimpleNamespace(
         root=output,

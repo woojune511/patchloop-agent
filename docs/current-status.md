@@ -24,73 +24,47 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [canonical diagnostic live pilot](history/2026-10-28-canonical-diagnostic-fresh-results.md)
-finished normally with public regression PASS but isolated acceptance FAIL.
-The [public diagnosis](history/2026-10-28-canonical-diagnostic-analysis.md) found
-three distinct causes: error absence hid skipped child analysis, generated cache
-entered fixture identity, and a target-not-entered request polluted case accounting.
-The allocation is closed; this was not resource exhaustion.
+The [canonical diagnosis](history/2026-10-28-canonical-diagnostic-analysis.md)
+identified skipped target processing hidden by error absence, generated cache in
+fixture identity, and pre-target request errors entering case accounting. The
+[processing-evidence implementation](history/2026-10-28-processing-evidence-implementation.md)
+addresses these mechanisms in invocation v7 / diagnostic v2. Surface v66 additionally
+shortens only first-reproduction instructions; schemas and host checks remain intact.
 
-The [processing-evidence implementation](history/2026-10-28-processing-evidence-implementation.md)
-addresses these mechanisms in fresh v7 invocations (wire v65). Diagnostic rules
-pair failure absence with a same-call positive processing code; complete empty
-output is a mismatch delivered before another response. Silent APIs retain actual
-return/effect observations. Stable fixture/output sibling roots prevent generated
-output scope from being declared as fixture input. Explicit settled pre-target
-errors stay audited and budgeted as attempts, without becoming established-case
-obligations. Unknown execution and actual target failures retain their obligations.
-Saved v1-v6 programs keep their bytes and semantics. Limits are unchanged.
+The [fresh pilot](history/2026-10-28-processing-evidence-fresh-results.md) exhausted
+40K ordinary and 25K correction output before an original probe or edit. Its
+USD 0.40966830 allocation is closed. The subsequent
+[description A/B](history/2026-10-28-first-reproduction-description-results.md)
+completed both responses within their limits. Long A produced an admitted call and
+reproduced F0010 but selected only error-presence booleans, without positive intended-
+file processing evidence. Short B was rejected for callable/code-format errors before
+execution. Total new cost USD 0.1688805; that allocation is also closed. Neither arm
+repaired, submitted or evaluated. B's post-validation correction was not tested.
 
-Local core 35 cases passed in 24.954s. Quick covered 568 cases in 159.286s;
-11 legacy/current fixture compatibility failures were corrected and all passed
-targeted reruns, with runtime unchanged. Ruff and isolated mock evaluation PASS.
-The linked record preserves the split validation. No paid model execution or new
-Astroid acceptance result is part of this change.
-Positive code selection still does not prove intended-file coverage or semantic
-correctness. The next live question is whether a model chooses discriminating
-processing evidence and rejects a no-op repair under the existing bounded loop.
-The [fresh pilot](history/2026-10-28-processing-evidence-fresh-results.md) has now
-run once under the approved same mini/xhigh / USD 4.50 allocation. It stopped at
-INCOMPLETE_RESPONSE before original execution or edits: the first request attempt
-used 40K output (39,753 reasoning), then correction used 25K, with no valid tool
-call from either. Inputs were 29,270 and 15,948, below the 60K ceiling. Six initial
-read/search actions completed. Actual cost USD 0.40966830, active time 552.214s;
-all six model/count calls settled. No submission or evaluation occurred.
+The active question is whether the model snapshot changes valid callable and
+observation construction at this same public checkpoint. A
+[model-only comparison](history/2026-10-28-first-reproduction-model-plan.md) is
+prepared and sealed: new mini/full snapshot runs, both xhigh, recorded long description,
+identical public evidence, 60K input, 40K/25K output and first-settled-probe endpoint.
+The checkpoint's mini-derived completion-cost forecast is omitted symmetrically
+from the first visible state; actual host reservation and accounting remain active.
+No prior response, repair or observation choice enters the new model inputs.
 
-First request construction was the observed bottleneck. The controlled change is a
-[short first-reproduction description](history/2026-10-28-first-reproduction-description-plan.md):
-remove helper/replay/repair-stage prose from this stage while retaining the exact
-parameter schema, public environment and host verification. Surface v66 records
-only the description change. Generic and diagnostic-stage descriptions are unchanged.
+Offline cost/policy admission confirms both models retain the same tools and full
+output allowances at 60K uncached input. Proposed new cap is USD 4.41415320 per arm,
+USD 8.82830640 total; full's initial request plus successor/correction reservation
+needs USD 3.866520. Time eligibility remains independently enforced. The exact new
+allocation is pending confirmation against the sealed executable plan. No new paid
+calls have occurred. This is a first-request diagnostic, not a clean-start repair
+or a reason to adopt a model by default. One pair cannot establish stable superiority.
 
-The [A/B comparison](history/2026-10-28-first-reproduction-description-results.md)
-has run once per condition at the same public checkpoint, mini/xhigh and unchanged
-limits. A (recorded long description) produced an admitted in-process call and
-reproduced the original missing-init F0010 with a direct-file control. B (short
-description) returned a tool call but was rejected for an undotted entrypoint and
-invalid diagnostic-code format before target execution. Both completed within their
-output ceilings. Total new cost USD 0.1688805, two settled model/count calls.
-
-A selected only F0010-presence booleans through null rules; positive intended-file
-processing coverage and paired host diagnostic extraction remain unestablished.
-B's later correction was not tested: this diagnostic ends at the first settled
-probe result, including rejection. No repair, submission or evaluation occurred.
-One pair does not establish a causal degradation or gain. The shared reconstruction
-omits historical opaque reasoning, so A's success relative to the old failure also
-does not isolate a context effect. Compact instructions remain implemented without
-a demonstrated live quality benefit; valid callable/observation construction and
-processing evidence are the unresolved questions. Allocation CLOSED, no new paid
-execution authorized.
-
-Local description/core 22 PASS/14.04s, quick 568 PASS/62.16s (isolated mock included),
-Ruff PASS. The initial launcher exposed a zero-dispatch tracked-file enumeration
-defect; a collector-only fix passed nine owner cases in 13.37s. The resealed v2 plan
-changed only that implementation identity and result location, preserving all model
-requests and limits. Both journal/accounting audits pass; see linked result.
-
-The preceding [saved-evidence trial](history/2026-10-27-public-regression-cycle-results.md)
-did receive regression failure, revise and pass isolated acceptance. It used a
-diagnostic loop, prepared evidence and synthetic submission, so it does not establish
+New model-comparison owner/fork/ledger checks: 14 PASS/21.15s; quick 577 PASS
+(isolated mock included), Ruff PASS. Both actual-checkpoint offline rehearsals
+admitted 40K then 25K at 60K uncached input with correct mixed-model accounting.
+Manifest: C:/pt/first-reproduction-model-plan-v1/manifest.json; exact launcher
+and read-only validator are in the same directory. Runtime is unchanged.
+The preceding [saved-evidence repair](history/2026-10-27-public-regression-cycle-results.md)
+passed isolated acceptance after public failure feedback; it does not establish
 clean-start normal completion. Keep these evidence scopes separate.
 
 ## Supporting evidence

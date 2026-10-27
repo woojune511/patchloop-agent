@@ -1,4 +1,4 @@
-# First reproduction description comparison
+# First reproduction checkpoint comparisons
 
 `first_reproduction.description()` is used only while acquiring an original.
 It retains the environment facts and the APIs needed to construct and observe an
@@ -7,7 +7,7 @@ in their existing descriptions. Parameter schemas, validators, acquisition budge
 failure/processing judgments and saved-program bytes do not change. Surface v66
 records the description change; it is not a new observation contract.
 
-The diagnostic compares the saved long description (A) with the short one (B).
+The description profile compares the saved long description (A) with the short one (B).
 Both start from the same public pre-dispatch checkpoint, with public messages and
 read/search results retained. Historical encrypted reasoning is excluded from both
 requests. This is a public reconstruction, not a byte-identical historical resume.
@@ -35,5 +35,13 @@ billing, execution or cleanup uncertainty. Do not retry an uncertain arm.
 
 One A/B pair can identify a useful next intervention on this checkpoint. It cannot
 establish a stable causal effect, clean-start success, repair gain or generalization.
-If both still exhaust output, distinguish request construction from model settings
-in a subsequent separately prepared comparison; do not widen multiple limits here.
+
+The model profile instead keeps the recorded long description in both arms and
+compares mini/full snapshot IDs at the same xhigh setting. First requests differ
+only in model ID. Symmetrically omit the checkpoint's model-priced completion-cost
+forecast; retain public evidence, actual remaining allowance and counters. Host
+admission still uses each model's rates, with the model/pricing/envelope identity
+bound before the fork is written and historical usage restored without repricing.
+Offline admission must verify the same 40K initial and 25K correction ceilings and
+tool opportunity at the 60K input bound. The first-settled-probe endpoint is unchanged.
+This is a new scoped allocation, not reuse of a closed description-comparison cap.

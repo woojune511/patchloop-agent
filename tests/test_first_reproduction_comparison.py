@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import copy
+import json
 import shutil
 import subprocess
 from decimal import Decimal
@@ -19,7 +20,7 @@ from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import TaskEnvironment
 from patchloop.dev import runner
 from patchloop.dev.contracts import DevLimits, DevRunRequest
-from patchloop.dev.cost import DevCostLedger
+from patchloop.dev.cost import DevCostLedger, pricing_for_model
 from patchloop.dev.state import DevJournal
 from patchloop.errors import ContractError
 from patchloop.runtime import repository_root
@@ -205,13 +206,27 @@ def test_pair_keeps_all_public_input_and_parameter_schema(source, tmp_path):
         diagnostic.verify_pair(a, bad)
 
 
-def test_prepare_and_validate_are_offline_and_single_use(source, tmp_path, monkeypatch):
+@pytest.mark.parametrize("comparison", ["description", "model"])
+def test_prepare_and_validate_are_offline_and_single_use(
+    source, tmp_path, monkeypatch, comparison,
+):
     for name in ("load_exact_openai_api_key", "OpenAIResponsesAdapter", "DockerProbeSandbox"):
         monkeypatch.setattr(runner, name, diagnostic.forbidden)
     monkeypatch.setattr("socket.socket.connect", diagnostic.forbidden)
     saved, cut, credential = source
     output, results = tmp_path / "prepared", tmp_path / "results"
-    receipt = diagnostic.prepare(saved, cut, credential, results, output)
+    restored = []
+    restore = diagnostic.restore
+
+    def capture_branch(*args, **kwargs):
+        branch = restore(*args, **kwargs)
+        restored.append(branch)
+        return branch
+
+    monkeypatch.setattr(diagnostic, "restore", capture_branch)
+    receipt = diagnostic.prepare(
+        saved, cut, credential, results, output, comparison=comparison,
+    )
     assert all(
         receipt[key] == 0
         for key in ("provider_calls", "input_count_calls", "credential_reads", "target_executions")
@@ -221,8 +236,61 @@ def test_prepare_and_validate_are_offline_and_single_use(source, tmp_path, monke
     with pytest.raises(ContractError, match="approved cap"):
         diagnostic.validate(output / "manifest.json", receipt["manifest_hash"], Decimal("1"))
     with pytest.raises(ContractError, match="fresh output"):
-        diagnostic.prepare(saved, cut, credential, results, output)
+        diagnostic.prepare(saved, cut, credential, results, output, comparison=comparison)
     assert plan["paid_execution_authorized"] is False
+    if comparison == "model":
+        expected_group = 0
+        for branch in restored:
+            model = diagnostic.MODELS[branch.arm]
+            assert branch.request.model == branch.envelope.model == model
+            assert branch.pricing == pricing_for_model(model)
+            assert branch.envelope.model_hash == runner._model_hash(branch.request, branch.pricing)
+            assert branch.initial_spent_nanos == plan["historical_spent_nanos"] > 0
+            assert branch.request.max_cost_usd * 10**9 == (
+                branch.initial_spent_nanos + plan["row_new_cap_nanos"]
+            )
+            rehearsal = receipt["rehearsals"][branch.arm]
+            assert rehearsal["admitted_output_tokens"] == [40000, 25000]
+            assert rehearsal["synthetic_input_tokens_per_call"] == 60000
+            price = DevCostLedger(Decimal("100"), branch.pricing)
+            costs = [price.settle(input_tokens=60000, cached_input_tokens=0, output_tokens=n)
+                     for n in (40000, 25000)]
+            usage = branch.journal.provider_usage()
+            assert [row["cost_nanos"] for row in usage[-2:]] == costs
+            assert sum(row["cost_nanos"] for row in usage[:-2]) == branch.initial_spent_nanos
+            assert rehearsal["new_cost_nanos"] == sum(costs)
+            expected_group += sum(costs)
+        journal = DevJournal(output, "run_dev_firstreproductionpreparation")
+        assert sum(e["payload"]["provisional_cost_nanos"] for e in journal.events()
+                   if e["event_type"] == "new_usage_recorded") == expected_group
+
+
+def test_model_pair_changes_only_model_after_symmetric_forecast_projection(source, tmp_path):
+    saved, cut, credential = source
+    plan, loaded = diagnostic.controls(
+        saved, cut, credential, tmp_path / "result", comparison="model",
+    )
+    a, b = loaded.requests["A"], loaded.requests["B"]
+    assert {**a, "model": b["model"]} == b
+    assert a["tools"] == loaded.public["tools"]
+    assert plan["pair"]["changed_fields"] == ["model"]
+    assert plan["models"] == diagnostic.MODELS
+    restored = copy.deepcopy(a)
+    # Only the derived model-priced forecast is omitted; public facts remain exact.
+    for index, original in enumerate(loaded.public["input"]):
+        if original != restored["input"][index]:
+            prior = json.loads(original["content"])
+            after = json.loads(restored["input"][index]["content"])
+            forecast = prior["state"]["remaining_budget"]["cost"].pop("completion_cost")
+            assert forecast
+            assert after == prior
+            restored["input"][index] = original
+    assert restored == loaded.public
+    assert "completion_cost" in loaded.state["remaining_budget"]["cost"]
+    bad = copy.deepcopy(b)
+    bad["max_output_tokens"] = 25000
+    with pytest.raises(ContractError, match="only in model"):
+        diagnostic.verify_model_pair(a, bad)
 
 
 @pytest.mark.parametrize("cleanup_failed", [False, True])

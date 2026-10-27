@@ -1,4 +1,4 @@
-"""Prepare a public first-reproduction description pair; collect only exact new approval.
+"""Compare first-reproduction descriptions or models under exact new approval.
 
 This diagnostic ends after the first settled run_probe batch. It preserves the
 ordinary gateway, cost admission and protocol correction, and never repairs or
@@ -21,7 +21,7 @@ from diagnostics import observation_comparison as live
 from diagnostics import observation_exposure as exposure
 from diagnostics.checkpoint_comparison import ContinuationLedger
 from diagnostics.checkpoint_continuation import ScriptedClient, inherited_reads
-from diagnostics.decision_sampler import read_source_artifact, require
+from diagnostics.decision_sampler import SharedCostLedger, read_source_artifact, require
 from diagnostics.declaration_checkpoint import Source, disjoint
 from patchloop.agent.model import OpenAIResponsesAdapter
 from patchloop.artifacts import ArtifactStore
@@ -33,7 +33,9 @@ from patchloop.sandbox import LocalSandbox
 from patchloop.util import canonical_json, sha256_bytes, sha256_json
 
 SCHEMA = "first-reproduction-description-comparison-v1"
+MODEL_SCHEMA = "first-reproduction-model-comparison-v1"
 MODEL = "gpt-5.4-mini-2026-03-17"
+MODELS = {"A": MODEL, "B": "gpt-5.4-2026-03-05"}
 ORDER = ("A", "B")
 HOST_FILES = (
     "patchloop/dev/reproduction.py",
@@ -67,9 +69,13 @@ def verify_pair(a, b):
         a != b and project(a, probe_tool(b)["description"]) == b,
         "pair must differ only in run_probe.description",
     )
+    return pair_summary(a, b, "tools.run_probe.description")
+
+
+def pair_summary(a, b, changed_field):
     require(a["input"] == public_input(a["input"]), "pair contains opaque reasoning")
     return {
-        "changed_fields": ["tools.run_probe.description"],
+        "changed_fields": [changed_field],
         "public_input_hash": sha256_json(a["input"]),
         "parameter_schema_hash": sha256_json(probe_tool(a)["parameters"]),
         "description_chars": {
@@ -79,6 +85,38 @@ def verify_pair(a, b):
         "request_hashes": {"A": sha256_json(a), "B": sha256_json(b)},
         "opaque_reasoning_items": 0,
     }
+
+
+def model_requests(public):
+    """Remove a stale model-priced forecast from the common public checkpoint."""
+    common = copy.deepcopy(public)
+    removed = 0
+    for item in common["input"]:
+        content = item.get("content")
+        if not isinstance(content, str):
+            continue
+        try:
+            value = json.loads(content)
+        except ValueError:
+            continue
+        if not isinstance(value, dict) or "state" not in value:
+            continue
+        cost = value["state"].get("remaining_budget", {}).get("cost", {})
+        if "completion_cost" in cost:
+            del cost["completion_cost"]
+            item["content"] = canonical_json(value)
+            removed += 1
+    require(removed == 1, "one checkpoint completion forecast required")
+    return {arm: {**copy.deepcopy(common), "model": model} for arm, model in MODELS.items()}
+
+
+def verify_model_pair(a, b):
+    require(
+        a["model"] == MODELS["A"] and b["model"] == MODELS["B"]
+        and {**a, "model": b["model"]} == b,
+        "pair must differ only in model",
+    )
+    return pair_summary(a, b, "model")
 
 
 def source_record(root, run_id, public_task):
@@ -189,7 +227,8 @@ def current_description(loaded):
     return probe_tool(current)["description"]
 
 
-def controls(source, cut_sequence, env_file, result_root):
+def controls(source, cut_sequence, env_file, result_root, *, comparison="description"):
+    require(comparison in {"description", "model"}, "unknown comparison profile")
     loaded = load_checkpoint(source, cut_sequence)
     budget, old = loaded.state["remaining_budget"], loaded.envelope
     cap = budget["cost"]["remaining"]
@@ -197,8 +236,13 @@ def controls(source, cut_sequence, env_file, result_root):
         cap > 0 and sha256_bytes(str(env_file.resolve()).encode()) == old.credential_file_path_hash,
         "positive allowance and exact credential path required",
     )
-    requests = {"A": loaded.public, "B": project(loaded.public, current_description(loaded))}
-    pair = verify_pair(**{k.lower(): v for k, v in requests.items()})
+    short = current_description(loaded)
+    requests = (
+        model_requests(loaded.public) if comparison == "model"
+        else {"A": loaded.public, "B": project(loaded.public, short)}
+    )
+    verifier = verify_model_pair if comparison == "model" else verify_pair
+    pair = verifier(**{k.lower(): v for k, v in requests.items()})
     plan = {
         "schema": SCHEMA,
         "official": False,
@@ -241,6 +285,23 @@ def controls(source, cut_sequence, env_file, result_root):
         ),
         "historical_allocations_reopened": False,
     }
+    if comparison == "model":
+        plan.update({
+            "schema": MODEL_SCHEMA,
+            "comparison_profile": comparison,
+            "models": MODELS,
+            "pricing_by_arm": {
+                arm: {k: str(v) for k, v in asdict(pricing_for_model(model)).items()}
+                for arm, model in MODELS.items()
+            },
+            "public_reconstruction": (
+                "same saved public messages and calls/results; all reasoning items removed; "
+                "remove only state.remaining_budget.cost.completion_cost from both inputs; "
+                "host recomputes actual admission with each arm's model pricing"
+            ),
+            "source_public_input_hash": sha256_json(loaded.public["input"]),
+        })
+        del plan["model"], plan["pricing"]
     loaded.requests = requests
     return plan, loaded
 
@@ -255,6 +316,7 @@ def restore(plan, loaded, root, arm, *, live_mode=False):
         mode="funded-observation" if live_mode else "offline-scripted-only",
         env_file=Path(plan["credential_file"]) if live_mode else root / "NO_CREDENTIAL_FILE",
         preserve_parent_configuration=True,
+        model_override=plan.get("models", {}).get(arm),
     )
     branch.arm = arm
     branch.selected = loaded.requests[arm]
@@ -340,7 +402,34 @@ def forbidden(*args, **kwargs):
     raise RuntimeError("offline preparation cannot access credentials, network or targets")
 
 
+class PricedGroup:
+    """Bind one row's pricing to an invocation ledger without repricing history."""
+
+    def __init__(self, shared, pricing):
+        self.shared, self.pricing = shared, pricing
+
+    @property
+    def cap_nanos(self):
+        return self.shared.cap_nanos
+
+    @property
+    def spent_nanos(self):
+        return self.shared.spent_nanos
+
+    @property
+    def remaining_nanos(self):
+        return self.shared.remaining_nanos
+
+    def admit(self, input_tokens, **kwargs):
+        return self.shared.admit(input_tokens, pricing=self.pricing, **kwargs)
+
+    def settle(self, **usage):
+        return self.shared.settle(pricing=self.pricing, **usage)
+
+
 def run_branch(branch, group, journal, store, *, client=None, synthetic_probe_outcomes=None):
+    if isinstance(group, SharedCostLedger):
+        group = PricedGroup(group, branch.pricing)
     ledger = ContinuationLedger(branch, group, journal, branch.arm)
     counted, dispatched = [], []
 
@@ -439,6 +528,7 @@ def run_branch(branch, group, journal, store, *, client=None, synthetic_probe_ou
         uncertain_count = branch.journal.unresolved_input_count() is not None
         receipt = {
             "arm": branch.arm,
+            "model": branch.request.model,
             "result": result,
             "billing_known": known,
             "input_counts": len(counted),
@@ -452,37 +542,64 @@ def run_branch(branch, group, journal, store, *, client=None, synthetic_probe_ou
     return receipt
 
 
-def prepare(source, cut_sequence, env_file, result_root, output):
-    plan, loaded = controls(source, cut_sequence, env_file, result_root)
+class AllowanceClient(ScriptedClient):
+    """Exercise actual admission with worst-case synthetic input and output usage."""
+
+    def create(self, **request):
+        response = super().create(**request)
+        response.usage.output_tokens = request["max_output_tokens"]
+        return response
+
+
+def prepare(source, cut_sequence, env_file, result_root, output, *, comparison="description"):
+    plan, loaded = controls(source, cut_sequence, env_file, result_root, comparison=comparison)
     disjoint(output.resolve(), (repository_root(), source.root, result_root.resolve()))
     require(not result_root.exists(), "result root already used")
     output.mkdir()
     journal = DevJournal(output, "run_dev_firstreproductionpreparation")
     store = ArtifactStore(output / "artifacts")
     rehearsals = {}
+    shared = SharedCostLedger(Decimal(plan["new_cap_nanos"]) / 10**9)
     for arm in ORDER:
         branch = restore(plan, loaded, output / arm, arm)
-        client = ScriptedClient(
+        steps = [
             [
-                [
-                    {
-                        "name": "stop_task",
-                        "action_id": "offline_stop",
-                        "arguments": {
-                            "reason_code": "insufficient_public_evidence",
-                            "summary": "Offline checkpoint preparation.",
-                        },
-                    }
-                ]
+                {
+                    "name": "stop_task",
+                    "action_id": "offline_stop",
+                    "arguments": {
+                        "reason_code": "insufficient_public_evidence",
+                        "summary": "Offline checkpoint preparation.",
+                    },
+                }
             ]
-        )
-        group = DevCostLedger(Decimal(plan["new_cap_nanos"]) / 10**9, branch.pricing)
+        ]
+        if comparison == "model":
+            steps.insert(0, [{"name": "invalid_tool", "action_id": "offline_bad", "arguments": {}}])
+            client = AllowanceClient(steps, input_tokens=plan["context_tokens"])
+            group = shared
+        else:
+            client = ScriptedClient(steps)
+            group = DevCostLedger(Decimal(plan["new_cap_nanos"]) / 10**9, branch.pricing)
         receipt = run_branch(branch, group, journal, store, client=client)
         require(
             receipt["result"]["terminal"] == "AGENT_STOPPED"
-            and receipt["input_counts"] == receipt["model_dispatches"] == 1,
+            and receipt["input_counts"] == receipt["model_dispatches"]
+            == (2 if comparison == "model" else 1),
             "offline ordinary-runner preparation failed: " + canonical_json(receipt),
         )
+        if comparison == "model":
+            ceilings = [request["max_output_tokens"] for request in client.created]
+            require(ceilings == [40000, 25000], "model comparison output opportunity differs")
+            require(all(request["model"] == MODELS[arm]
+                        and request["tools"] == branch.selected["tools"]
+                        for request in client.created), "model/correction schema differs")
+            require(all(item["id"] == "offline_reasoning_1"
+                        for item in client.created[1]["input"]
+                        if item.get("type") == "reasoning"), "inherited reasoning in correction")
+            receipt["synthetic_input_tokens_per_call"] = client.input_tokens
+            receipt["admitted_output_tokens"] = ceilings
+            receipt["synthetic_usage"] = "full offered output at uncached context ceiling"
         rehearsals[arm] = receipt
         (output / f"{arm}-first.json").write_text(
             canonical_json(loaded.requests[arm]) + "\n", encoding="utf-8"
@@ -512,6 +629,7 @@ def validate(manifest, digest, approved_cap_usd=None):
         plan["cut_sequence"],
         Path(plan["credential_file"]),
         Path(plan["result_root"]),
+        comparison=plan.get("comparison_profile", "description"),
     )
     require(plan == current, "prepared controls/runtime changed")
     if approved_cap_usd is not None:
@@ -542,7 +660,7 @@ def collect(manifest, approved_manifest_hash, approved_cap_usd):
     root.mkdir()
     journal = DevJournal(root, "run_dev_firstreproductioncomparison")
     store = ArtifactStore(root / "artifacts")
-    group = DevCostLedger(approved_cap_usd, pricing_for_model(plan["model"]))
+    group = SharedCostLedger(approved_cap_usd)
     rows = [{"arm": arm, "status": "NOT_RUN"} for arm in ORDER]
     journal.append(
         "authorized",
@@ -597,6 +715,7 @@ def main():
         prep.add_argument("--" + key, type=Path, required=True)
     prep.add_argument("--run-id", required=True)
     prep.add_argument("--cut-sequence", type=int, required=True)
+    prep.add_argument("--comparison", choices=("description", "model"), default="description")
     for name in ("validate", "collect"):
         command = commands.add_parser(name)
         command.add_argument("--manifest", type=Path, required=True)
