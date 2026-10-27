@@ -224,7 +224,8 @@ def clean_gateway(loaded, root):
     identity = probe.preflight(deadline=deadline)
     require(identity["image_digest"] == PROBE_IMAGE
             and identity["profile_hash"] == PROBE_PROFILE
-            and identity["dependency_hash"] == DEPENDENCY_HASH, "probe identity changed")
+            and loaded.dependencies.identity.manifest_hash == DEPENDENCY_HASH,
+            "probe identity changed")
     sandbox = DockerSandbox(loaded.environment.evaluator_image)
     require(sandbox.image_identity(deadline=deadline) == loaded.environment.image_digest,
             "public check image changed or missing")
@@ -232,6 +233,7 @@ def clean_gateway(loaded, root):
     journal.append("clean_base_started", {"diff_hash": diff.patch_hash,
                    "base_commit": loaded.public.repository.base_commit,
                    "prepared_source_hash": SOURCE_HASH, "probe_identity": identity,
+                   "dependency_identity": loaded.dependencies.identity.model_dump(mode="json"),
                    "seed_restored": False, "historical_actions_imported": False})
     return DevToolGateway(workspace=workspace, public_task=loaded.public, sandbox=sandbox,
         probe_sandbox=probe, journal=journal, agent_policy="thin",

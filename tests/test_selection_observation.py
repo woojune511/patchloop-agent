@@ -152,6 +152,38 @@ def test_prepare_accepts_existing_packet_folder_and_never_overwrites(
     assert (output / "manifest.json").read_bytes() == before
 
 
+def test_clean_gateway_accepts_the_two_field_probe_preflight_contract(
+    gateway_factory, tmp_path, monkeypatch,
+):
+    existing, _, workspace = gateway_factory()
+    manager = d.WorkspaceManager
+    class PreparedManager:
+        diff_summary = staticmethod(manager.diff_summary)
+
+        def __init__(self, *_, **__):
+            pass
+
+        def create(self, *_, **__):
+            return workspace
+
+    monkeypatch.setattr(d, "WorkspaceManager", PreparedManager)
+    identity = {"image_digest": d.PROBE_IMAGE, "profile_hash": d.PROBE_PROFILE}
+    assert "dependency_hash" not in identity
+    monkeypatch.setattr(d, "DockerProbeSandbox", lambda **_: SimpleNamespace(
+        preflight=lambda **_: identity))
+    monkeypatch.setattr(d, "DockerSandbox", lambda _: SimpleNamespace(
+        image_identity=lambda **_: "public-image"))
+    dependency = SimpleNamespace(manifest_hash=d.DEPENDENCY_HASH,
+                                  model_dump=lambda **_: {"manifest_hash": d.DEPENDENCY_HASH})
+    loaded = SimpleNamespace(public=existing.public_task,
+        dependencies=SimpleNamespace(identity=dependency),
+        environment=SimpleNamespace(evaluator_image="public-image", image_digest="public-image"))
+    gateway = d.clean_gateway(loaded, tmp_path / "fresh")
+    assert gateway.current_diff_hash == d.EMPTY_DIFF and gateway.accepted_mutations == 0
+    event = gateway.journal.events()[0]["payload"]
+    assert event["probe_identity"] == identity and event["seed_restored"] is False
+
+
 def test_collection_stops_remaining_arm_after_uncertainty(tmp_path, monkeypatch):
     plan = {"result_root": str(tmp_path / "live"), "bindings": [],
             "credential_file": "unread.env", "first_request_hashes": {"A": "a", "B": "b"},
