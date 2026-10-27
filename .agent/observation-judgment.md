@@ -1,14 +1,17 @@
-# Canonical diagnostic codes and legacy baseline correction
+# Processing evidence and canonical diagnostic codes
 
 Fresh diagnostic-presence originals declare `purpose.diagnostic_rules`: one to
-four `{field, call_id, code}` rules. `field` is a flat JSON key (1-64 chars),
+four `{field, call_id, code, role}` rules. `field` is a flat JSON key (1-64 chars),
 `call_id` is call-1 through call-4, and `code` is a stable diagnostic identifier
 (2-32 characters, uppercase letters then digits, optional uppercase/digit/_/- suffix).
 Use a public diagnostic code, not its explanatory message. No task-specific code
 is injected. The selected code and caller/requirement mapping remain model-authored.
 
-Expected/failure JSON must be strict boolean objects with exactly those distinct
-keys. The v6 invocation reports complete per-call captures; the host searches code
+Each selected call must pair `role=failure` expected false with `role=processing`
+expected true. Pick positive evidence from the intended fixture's public behavior;
+an unrelated warning cannot establish intended processing. The same call/code
+cannot serve both roles. Expected/failure JSON must be strict boolean objects with
+exactly those distinct keys. The v7 invocation reports per-call captures; the host searches code
 tokens in each stdout/stderr independently, with ASCII identifier boundaries.
 Longer identifiers such as XF0010, F00100 and F0010_EXTRA do not match F0010.
 This is token extraction, not semantic parsing of diagnostic records.
@@ -17,7 +20,8 @@ The helper executes target calls and does not write a second Boolean extractor o
 call `record_observation`. `probe_judgment.py` computes `captured-diagnostic-v2`,
 status `computed`, source `host`, canonical JSON and bounded code witnesses. The
 same rule runs before and after mutation: changed message text with the same code
-remains a current-diff mismatch, is delivered to the next response, and cannot
+remains a current-diff mismatch. Complete empty output also mismatches because
+the processing code is absent. Both failures reach the next response and prevent
 finish. Existing repair/check/finish limits and exact-diff replay reuse apply.
 An incidental authored observation is retained only as information and cannot
 override captures. It does not create an observation-correction obligation.
@@ -29,14 +33,41 @@ The shared `is_usable` contract connects computed values to first-call observati
 path diagnosis, repair prediction and concerns. Independent replay recomputation
 still requires equality with the stored observed JSON.
 
-Without a stable diagnostic code, use null rules and the existing return-value or
-text observation path with `record_observation`. That path does not gain the code
+For a silent target or without a stable processing code, use null rules and
+`record_observation` with actual processed items, returned data or observable
+effects alongside failure evidence. Do not invent target output. This path does not gain the code
 contract's extraction guarantee. Neither path proves the selected observation
-covers the public task or that absence of one diagnostic means general success.
+covers the public task, intended-file identity or semantic correctness.
+
+## Fixture identity and target entry
+
+Fresh v7 helpers expose `reproduction_workspace()` for fixture inputs and
+`reproduction_outputs()` for generated files and HOME/cache children. These are
+separate stable sibling roots under the original sandbox cwd. Select actual
+fixture paths in `observed_target(input_paths=...)`; generated output paths and
+ancestors containing them are rejected as selected inputs. A deliberately read
+warm cache is an input fixture, not an ignored output. There is no cache-name
+filter or blanket HOME exclusion. Fixture changes remain identity differences.
+
+The call row sets `target_started` immediately before invoking the declared
+callable. Resolution, snapshot and signature-binding errors remain false with
+incomplete outcome/captures. `completion_reproduction` excludes only completed,
+bound v7 cases whose every related call proves no target entry and whose host
+receipts settle execution/cleanup. It retains action/input/program/case identities
+in bounded `request_attempts`, full counts and the immutable journal. Attempts
+still consume existing acquisition/action/cost limits; they grant no reproduction
+credit. No established failure means the task obligation stays unverified.
+
+Missing/malformed markers, legacy rows, pending related actions, any target entry,
+timeout/truncation or cleanup uncertainty remain unverified case obligations.
+This is not general case retirement. Corrected requests acquire a new case; only
+its healthy baseline and comparable current replay can support verified delivery.
+Null-rules observations and model-selected code witnesses remain coverage-limited.
 
 ## Frozen v1 diagnostic judgments
 
-Saved v1-v5 invocations retain their exact observer programs and verdict semantics.
+Saved v1-v6 invocations retain their exact observer programs and verdict semantics.
+V6 code-only rules keep their prior host computation without new role requirements.
 Their `{field, call_id, contains}` rules use a literal (1-160 chars).
 Expected/failure JSON must be strict boolean objects with exactly those distinct
 keys. The host searches both complete per-call Python streams separately; it
@@ -55,7 +86,7 @@ semantics; that path does not receive a diagnostic-consistency guarantee.
 
 The provider schema requires explicit nullable `diagnostic_rules` and
 `corrects_action_id`; local legacy requests may omit them. Absent/null fields do
-not change old bindings or observer programs. Fresh wire identity is v64; exact
+not change old bindings or observer programs. Fresh wire identity is v65; exact
 runtime recovery still forbids switching an existing run to new code.
 
 ## Legacy correction before source repair
@@ -114,8 +145,11 @@ horizon. Count/transport/billing uncertainty retains its original terminal.
 
 Run the bounded owner selection with
 `uv run --locked --offline pytest @tests/judgment-correction.txt --basetemp C:/pt/<unique>`.
-The v6 owner checks are `tests/test_canonical_diagnostic.py` and
-`tests/test_normal_diagnostic_continuation.py`, both included in quick.
+The owner checks are `tests/test_canonical_diagnostic.py`,
+`tests/test_behavior_diagnostic.py`, `tests/test_pre_target_obligations.py`,
+`tests/test_processing_observer.py` and `tests/test_normal_diagnostic_continuation.py`,
+included in quick. Normal-runner tests exercise changed wording and missing
+processing through actual prepared requests and a second edit.
 It uses pure receipts and trusted local adapters. Run quick separately; its
 existing smoke reaches isolated mock acceptance, with safety NOT_RUN. Neither
 local path establishes actual-model repair gain or Astroid acceptance.

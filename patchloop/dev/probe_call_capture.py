@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 CHANNEL = "invoke-declared-call-v3"
 CAPTURE_BYTES = 4096
 REPORT_BYTES = 10000
@@ -169,6 +171,88 @@ def diagnostic_observer(legacy):
                      ("_pr_hash", "_pr_h"), ("_pr_import", "_pr_im"), ("budget", "b")):
         source = source.replace(old, new)
     return source
+
+
+def behavior_observer(legacy):
+    """v7 separates generated state and identifies failures before target entry."""
+    source = diagnostic_observer(legacy)
+    old = '''_pr_w=[]
+def reproduction_workspace():
+ if not _pr_w:
+  p=_pr_os.path.join(_pr_st,"patchloop-case")
+  _pr_os.mkdir(p)
+  _pr_w.append(p)
+ return _pr_w[0]
+'''
+    new = '''_pr_dirs={}
+def _pr_dir(name):
+ if name not in _pr_dirs:
+  p=_pr_os.path.join(_pr_st,name)
+  _pr_os.mkdir(p)
+  _pr_dirs[name]=p
+ return _pr_dirs[name]
+def reproduction_workspace():
+ return _pr_dir("patchloop-case")
+def reproduction_outputs():
+ return _pr_dir("patchloop-outputs")
+def _pr_input(p,b):
+ p=_pr_os.path.abspath(p)
+ paths=[_pr_os.path.normcase(_pr_os.path.realpath(v)) for v in
+        (p,_pr_os.path.join(_pr_st,"patchloop-outputs"))]
+ try:
+  overlap=_pr_os.path.commonpath(paths) in paths
+ except ValueError:
+  overlap=False
+ if overlap:
+  raise ValueError("input path overlaps reproduction_outputs")
+ return _pr_ss(p,b)
+def _pr_error(e):
+ return {"type":type(e).__module__+"."+type(e).__qualname__,"message":str(e)[:256]}
+'''
+    # These replacements apply only to the fresh observer. Saved v1-v6 program
+    # bytes retain their original directory, capture and recovery semantics.
+    if source.count(old) != 1:
+        raise ValueError("behavior observer workspace location is unavailable")
+    source = source.replace(old, new, 1)
+    source = source.replace('  target = _pr_rs()\n', '', 1)
+    resolved = ('getattr(target, "__module__", "") + "." +\n'
+                '        getattr(target, "__qualname__", "")')
+    source = source.replace('"resolved_entrypoint": ' + resolved,
+                            '"resolved_entrypoint": "", "target_started": False', 1)
+    source = source.replace('  try:\n   b = [64, 1048576]',
+                            '  try:\n   target = _pr_rs()\n'
+                            '   row["resolved_entrypoint"] = (' + resolved + ')\n'
+                            '   b = [64, 1048576]', 1)
+    source = source.replace('_pr_ss(_pr_os.path.abspath(p), b)', '_pr_input(p,b)', 1)
+    source = source.replace('  except (OSError, ValueError, TypeError):\n',
+                            '  except BaseException as caught:\n'
+                            '   row["exception"] = _pr_error(caught)\n', 1)
+    source = source.replace('   value = target(*args, **kwargs)',
+                            '   row["target_started"] = True\n'
+                            '   value = target(*args, **kwargs)', 1)
+    source = source.replace(
+        '{"type": type(caught).__module__ + "." + type(caught).__qualname__,\n'
+        '        "message": str(caught)[:256]}', '_pr_error(caught)', 1)
+    # Keep the 8K allowance, including the maximum entrypoint and optional call
+    # path hooks, by shortening fixed host symbols only. Never rewrite user code.
+    names = {
+        "_pr_os": "_o", "_pr_sys": "_s", "_pr_j": "_j",
+        "_pr_im": "_im", "_pr_i": "_i", "_pr_h": "_h",
+        "_pr_st": "_st", "_pr_dirs": "_ds", "_pr_dir": "_d",
+        "_pr_input": "_in", "_pr_error": "_e", "_pr_obs": "_ob",
+        "_pr_left": "_l", "_pr_Result": "_R", "_pr_ss": "_ss",
+        "_pr_rs": "_rs", "_pr_v": "_v", "_pr_r": "_r",
+        "_pr_m": "_m", "_pr_S": "_S",
+    }
+    source = re.sub(r"\b_pr_[A-Za-z]+\b", lambda match: names.get(match[0], match[0]), source)
+    for old, new in ((" = ", "="), (", ", ","), (": ", ":"), (" + ", "+")):
+        source = source.replace(old, new)
+    # Keep the two fixed invocation lines available to the optional call-path
+    # transform, which must set the phase after its own begin hook succeeds.
+    return source.replace('   row["target_started"]=True',
+                          '   row["target_started"] = True', 1).replace(
+                              '   value=target(*args,**kwargs)',
+                              '   value = target(*args, **kwargs)', 1)
 
 
 def valid(call):

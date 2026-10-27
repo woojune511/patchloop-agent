@@ -69,7 +69,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     tools = _legacy_compression_surface(tools)
     encoded = json.dumps(_without_descriptions(tools), ensure_ascii=False, separators=(",", ":"))
     assert hashlib.sha256(encoded.encode()).hexdigest() == (
-        "b0bb8b9eaa21b7ecc484b4ece2b0ded0166b459454353647f2cfeb14412140cd"
+        "bd33b423cd68fd374e45f790e9591eaad86ab22c99350aac5158145a23d61a7e"
         if FROZEN_ARM is None else
         "e02c7ceb93201640950920b260422b0ae35fce974e3728b79e63345fb4bcf0e5"
     )
@@ -84,7 +84,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
 @pytest.mark.parametrize(("names", "expected"), [
     pytest.param(
         ("read_file", "run_check", "run_probe", "search_files", "stop_task"),
-        "1f1fd4d1321de711d6ef3bae8e13d1ab1b860b76648ddbd2013045aedf29dee1"
+        "2b7470fea033c70bfddd718e2e28657b4d891235813071cf6debd355153f3799"
         if FROZEN_ARM is None else
         "544c19f4d8e63f8a8810efe1dd4cd0adf3dee51cdb0145a4509de554027739c2",
         id="names0-99567faf1ea920a9157e5ea6618c5d43e7d56e441820be941403a025d9b2abe9"
@@ -92,7 +92,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     ),
     pytest.param(
         ("finish_task", "read_file", "replace_text", "run_probe", "search_files", "stop_task"),
-        "a0a11847ace69e7a7dad5b00e0d703ca3a5b8092523483b8dc1a5e114798e561"
+        "8a5fd7c0df5fa4a43e6dfdb459b09ddbf495ec26d8ad8fe886e1b413ece9989c"
         if FROZEN_ARM is None else
         "b817201c9d1aa8432575b0c1b55015dc01bc08a2b002e3e2cc09ab13bfa229c6",
         id="names1-de57dc4e83f8b26994c5df5f659cc208bbd3b348233d0ad3640493ffd5b90bd3"
@@ -100,7 +100,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     ),
     pytest.param(
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task"),
-        "4d78267666e933627b54a31b2d6a68da02d4bccaf4948e5fd3d7d5362cb719be"
+        "d13d1533ad9ffec64d013d56bc8145e51892fa7452603d56c2f893759f380871"
         if FROZEN_ARM is None else
         "310f8ec3dd129c93fb10c2a0589decf38eb09ce60e395ef906ac814e399e5139",
         id="names2-923a71312af5fa8d677ce72762b2f045a47ff2ebc4e084caaf1f57a2c11e7032"
@@ -109,7 +109,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     pytest.param(
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task",
          "finish_task"),
-        "8b61c9290443b9a69368d4059b3ff1a50f5949cb2b8c1247978106128fc9c5b6"
+        "94df8eb3f7f9c05a7fcfd3953f0861cff424c92e83467d2517829fed7918f778"
         if FROZEN_ARM is None else
         "6302bc9d248be03d6e1430f0102a0e5c00ecb7883c25d453945f979f21fd3af7",
         id="names3-53d8c9ffaa20544b633c883b1e40010113b680722f23caebeb0ef991f1738caa"
@@ -201,7 +201,7 @@ def test_guidance_identity_changes_without_changing_run_schema_or_limits():
     # Common action/probe guidance changes the overall surface identity;
     # argument and description identities remain independently pinned above.
     assert dev_tool_surface_hash() == (
-        "sha256:0d613616087a669825a244efad3fef8365ca34479bce6488dc4ea1067864c61f"
+        "sha256:5392aa6cba33742da80ad989dfc86dee28391261e4b25d743ba05179c17e113e"
         if FROZEN_ARM is None else
         "sha256:57193859890419b79cb7f4927c37796d044bc4bf7159c51ddf17723849529e26"
     )

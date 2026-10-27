@@ -24,7 +24,7 @@ NEW = "F0010: Failed to import module project"
 MARKER = "DIAGNOSTIC_PHASE = 'candidate'"
 
 
-def original_probe(task):
+def original_probe(task, failure_mode="wording"):
     # Trusted fixture adapter changes wording with the first candidate while the
     # public CSV failure remains. Only host code rules determine the observation.
     source = (
@@ -32,6 +32,11 @@ def original_probe(task):
         "original = module.parse_rows\n"
         "def diagnostic(text):\n"
         "    rows = original(text)\n"
+        f"    if {failure_mode!r} == 'processing' and len(rows) > 2 and "
+        "hasattr(module, 'DIAGNOSTIC_PHASE'):\n"
+        "        return rows\n"
+        "    if rows:\n"
+        "        print('P1001: parsed rows')\n"
         "    if len(rows) > 2:\n"
         f"        print({NEW!r} if hasattr(module, 'DIAGNOSTIC_PHASE') else {OLD!r})\n"
         "    return rows\n"
@@ -42,11 +47,17 @@ def original_probe(task):
     )
     call = probe(task, "canonical-original", source=source)
     call.arguments["purpose"].update({
-        "reported_failure_json": canonical_json({"bug": True, "control": False}),
-        "expected_json": canonical_json({"bug": False, "control": False}),
+        "reported_failure_json": canonical_json({
+            "bug": True, "control": False, "bug_processed": True, "control_processed": True}),
+        "expected_json": canonical_json({
+            "bug": False, "control": False, "bug_processed": True, "control_processed": True}),
         "diagnostic_rules": [
-            {"field": "bug", "call_id": "call-1", "code": "F0010"},
-            {"field": "control", "call_id": "call-2", "code": "F0010"},
+            {"field": "bug", "call_id": "call-1", "code": "F0010", "role": "failure"},
+            {"field": "control", "call_id": "call-2", "code": "F0010", "role": "failure"},
+            {"field": "bug_processed", "call_id": "call-1", "code": "P1001",
+             "role": "processing"},
+            {"field": "control_processed", "call_id": "call-2", "code": "P1001",
+             "role": "processing"},
         ],
     })
     assert "record_observation" not in source
@@ -54,14 +65,14 @@ def original_probe(task):
 
 
 class ReviseAfterCurrentFailure:
-    def __init__(self, task):
+    def __init__(self, task, failure_mode):
         repair = edit()
         for field in ("old_text", "new_text"):
             repair.arguments[field] = repair.arguments[field].replace(
                 "import csv", "import csv\n" + MARKER, 1,
             )
         self.steps = iter([
-            read_calls()[1], original_probe(task),
+            read_calls()[1], original_probe(task, failure_mode),
             RequestedTool(name="replace_text", action_id="wording-only-candidate", arguments={
                 "path": PATH, "old_text": "import csv", "new_text": "import csv\n" + MARKER,
                 "occurrence": 1,
@@ -92,13 +103,15 @@ def no_network(monkeypatch):
     monkeypatch.setattr(socket.socket, "connect", forbidden)
 
 
-@pytest.mark.parametrize("force_token_handoff", [False, True])
-def test_changed_failure_text_reaches_next_request_then_repair_checks_and_normal_finish(
-    tmp_path, monkeypatch, smoke_package, force_token_handoff,
+@pytest.mark.parametrize("failure_mode,force_token_handoff", [
+    ("wording", False), ("processing", True),
+])
+def test_residual_failure_reaches_next_request_then_repair_checks_and_normal_finish(
+    tmp_path, monkeypatch, smoke_package, failure_mode, force_token_handoff,
 ):
     backend = ExecutingProbe()
     request, inputs, counted, views = configured(
-        monkeypatch, tmp_path, script=ReviseAfterCurrentFailure(smoke_package.public),
+        monkeypatch, tmp_path, script=ReviseAfterCurrentFailure(smoke_package.public, failure_mode),
         boundary_policy="size-only-v1" if force_token_handoff else "result-or-size-v1",
     )
     monkeypatch.setattr(runner, "DockerProbeSandbox", lambda: backend)
@@ -136,7 +149,7 @@ def test_changed_failure_text_reaches_next_request_then_repair_checks_and_normal
     evidence = [row["output"]["reproduction"] for row in originals]
     assert [row["comparison"] for row in evidence] == ["mismatched", "mismatched", "matched"]
     assert [row["declared_failure_comparison"] for row in evidence] == [
-        "matched", "matched", "mismatched"]
+        "matched", "matched" if failure_mode == "wording" else "mismatched", "mismatched"]
     assert evidence[0]["binding"] == evidence[1]["binding"] == evidence[2]["binding"]
     assert evidence[0]["binding"]["definition"]["observation_channel"] == probe_invocation.CHANNEL
     for row in evidence:
@@ -147,9 +160,13 @@ def test_changed_failure_text_reaches_next_request_then_repair_checks_and_normal
                    for call in row["call_observation"]["calls"])
     first_capture = evidence[0]["call_observation"]["calls"][0]["capture"]["stdout"]
     changed_capture = evidence[1]["call_observation"]["calls"][0]["capture"]["stdout"]
-    assert OLD in first_capture and NEW in changed_capture and OLD not in changed_capture
-    assert json.loads(evidence[1]["observed_json"]) == {"bug": True, "control": False}
-    assert json.loads(evidence[2]["observed_json"]) == {"bug": False, "control": False}
+    assert OLD in first_capture and OLD not in changed_capture
+    assert NEW in changed_capture if failure_mode == "wording" else changed_capture == ""
+    assert json.loads(evidence[1]["observed_json"]) == {
+        "bug": failure_mode == "wording", "control": False,
+        "bug_processed": failure_mode == "wording", "control_processed": True}
+    assert json.loads(evidence[2]["observed_json"]) == {
+        "bug": False, "control": False, "bug_processed": True, "control_processed": True}
 
     first_edit = next(row for row in results if row["action_id"] == "wording-only-candidate")
     failed_request = views[3]
@@ -158,7 +175,7 @@ def test_changed_failure_text_reaches_next_request_then_repair_checks_and_normal
     assert delivered["action_id"] == originals[1]["action_id"]
     assert delivered["diff_hash"] == first_edit["workspace_diff_hash"]
     assert delivered["observed_json"] == evidence[1]["observed_json"]
-    assert NEW in delivered["call_observation"]["calls"][0]["capture"]["stdout"]
+    assert delivered["call_observation"]["calls"][0]["capture"]["stdout"] == changed_capture
     assert "finish_task" not in failed_request["available_tool_names"]
     delivered_edit = next(row for row in failed_request["latest_tool_results"]
                           if row["action_id"] == "wording-only-candidate")

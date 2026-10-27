@@ -23,7 +23,8 @@ def binding(action, source, *, corrects=None):
     definition = {
         "entrypoint": "public.main", "input_conditions": "bug and control fixtures",
         "environment_conditions": "fixed workspace", "public_task_hash": "public-task",
-        "observation_channel": probe_invocation.CHANNEL,
+        # These receipts exercise the frozen v5 authored/host correction contract.
+        "observation_channel": probe_invocation.DIAGNOSTIC_CHANNEL,
         "expected_json": canonical_json({"bug": False, "control": False}),
         "reported_failure_json": canonical_json({"bug": True, "control": False}),
         "diagnostic_rules": [{"field": "bug", "call_id": "call-1", "contains": "F0010"},
@@ -69,7 +70,7 @@ def action(action_id="baseline", *, corrects=None, status="conflict", source=Non
                        "judgment": {"policy": correction.JUDGMENT_POLICY, "status": status,
                                     "host_json": b["definition"]["reported_failure_json"],
                                     "authored_json": authored},
-                       "call_observation": {"binding_method": probe_invocation.CHANNEL,
+                       "call_observation": {"binding_method": probe_invocation.DIAGNOSTIC_CHANNEL,
                                             "calls": calls(), "incomplete": False,
                                             "execution_environment": {"image": "image-hash"}},
                    }},

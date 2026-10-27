@@ -66,10 +66,12 @@ def test_unavailable_capture_or_unexpected_exception_never_means_no_error(fault)
 def test_fresh_wire_declares_codes_instead_of_message_substrings():
     original = reproduction.purpose_schema()["anyOf"][1]
     item = original["properties"]["diagnostic_rules"]["anyOf"][0]["items"]
-    assert set(item["properties"]) == set(item["required"]) == {"field", "call_id", "code"}
+    assert set(item["properties"]) == set(item["required"]) == {
+        "field", "call_id", "code", "role"}
     assert item["additionalProperties"] is False
     assert item["properties"]["code"]["maxLength"] == 32
-    assert probe_invocation.CHANNEL == "invoke-declared-call-v6"
+    assert probe_invocation.CHANNEL == "invoke-declared-call-v7"
+    assert probe_invocation.CANONICAL_CHANNEL == "invoke-declared-call-v6"
     assert probe_invocation.DIAGNOSTIC_CHANNEL == "invoke-declared-call-v5"
 
 
@@ -102,7 +104,7 @@ def execute_fixture(root, public, message, *, authored=False):
         "entrypoint": "public_api.entry", "input_conditions": "bug then public control",
         "environment_conditions": "fixed local fixture", "expected_json": DESIRED,
         "reported_failure_json": FAILURE, "diagnostic_rules": copy.deepcopy(RULES),
-    }, public, source, "fixture-original", observation_channel=probe_invocation.CHANNEL)
+    }, public, source, "fixture-original", observation_channel=probe_invocation.CANONICAL_CHANNEL)
     process = subprocess.run(
         [sys.executable, "-X", "utf8", "-c", reproduction.program(source, binding)],
         cwd=root, env={**os.environ, "PYTHONPATH": str(root)}, capture_output=True,

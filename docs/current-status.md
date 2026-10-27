@@ -25,47 +25,31 @@ and [evidence boundaries](evidence.md).
 ## Active decision
 
 The [canonical diagnostic live pilot](history/2026-10-28-canonical-diagnostic-fresh-results.md)
-completed ordinary acquisition, one edit, public regression and normal finish,
-then failed isolated task acceptance. Safety PASS is separate. It cost USD
-0.59931540 / 4.50 in about 13m38s: 12 responses/counts, 16 actions and one edit.
-All usage settled; no retry, operator patch or synthetic submission occurred.
-The allocation is closed. This is not resource exhaustion or successful task repair.
+finished normally with public regression PASS but isolated acceptance FAIL.
+The [public diagnosis](history/2026-10-28-canonical-diagnostic-analysis.md) found
+three distinct causes: error absence hid skipped child analysis, generated cache
+entered fixture identity, and a target-not-entered request polluted case accounting.
+The allocation is closed; this was not resource exhaustion.
 
-The model selected fresh F0010 code rules, corrected an invalid helper argument,
-and reproduced the baseline. Host v2 computed true/false, then false/false after
-the edit. Actual subsequent requests received that observation, current patch
-and public regression PASS (1,231 passed, 69 skipped, 15 xfailed).
-The patch synthesizes an empty package module when its initializer is missing.
-Code absence does not establish correct file selection or analysis.
+The [processing-evidence implementation](history/2026-10-28-processing-evidence-implementation.md)
+addresses these mechanisms in fresh v7 invocations (wire v65). Diagnostic rules
+pair failure absence with a same-call positive processing code; complete empty
+output is a mismatch delivered before another response. Silent APIs retain actual
+return/effect observations. Stable fixture/output sibling roots prevent generated
+output scope from being declared as fixture input. Explicit settled pre-target
+errors stay audited and budgeted as attempts, without becoming established-case
+obligations. Unknown execution and actual target failures retain their obligations.
+Saved v1-v6 programs keep their bytes and semantics. Limits are unchanged.
 
-The [public operator diagnosis](history/2026-10-28-canonical-diagnostic-analysis.md)
-now confirms the candidate processes an empty initializer AST and omits the child
-file; direct-file and healthy-directory controls still emit W0611. Two isolated
-public probes (28.373 seconds total, no model) matched the saved first-two-call
-captures, source snapshots and input fingerprints exactly.
-
-The candidate's first call creates cache/pylint and project1.stats. Including the
-whole work/cache root in both input snapshots causes the observed 14-to-16 entry
-drift before call-2; no fixture file changed. Delivery stayed unverified. Actual
-requests received UNKNOWN and had remaining tools/time, but no positive child-analysis
-observation rejected the empty-module candidate. The initial target-not-entered
-argument error also remains an unverified case in the aggregate. These are separate
-behavior-coverage, identity-scope and obligation-accounting issues.
-Changed-wording failure feedback and revision remain NOT_EXERCISED in the live run.
-
-Keep the [canonical host change](history/2026-10-27-canonical-diagnostic-feedback.md):
-it removed duplicate helper judgment for fresh calls and kept incomplete execution
-unknown. Local normal-runner tests cover changed-text feedback and a second edit;
-25 new core cases PASS, quick covered 526 cases/82.779s including isolated mock,
-all failed schema/document nodes passed targeted reruns, Ruff PASS. These local
-mechanisms and live task acceptance remain separate claims.
-
-Next improve discriminating public observations, distinguish fixture inputs from
-generated outputs, and separate pre-target request errors from established baseline
-obligations. These recommendations are not implemented. The diagnostic does not
-identify private-test details or replace independent acceptance. Do not increase
-limits or rerun from unused funds. General settings remain unchanged; no further
-paid execution is authorized.
+Local core 35 cases passed in 24.954s. Quick covered 568 cases in 159.286s;
+11 legacy/current fixture compatibility failures were corrected and all passed
+targeted reruns, with runtime unchanged. Ruff and isolated mock evaluation PASS.
+The linked record preserves the split validation. No paid model execution or new
+Astroid acceptance result is part of this change.
+Positive code selection still does not prove intended-file coverage or semantic
+correctness. The next live question is whether a model chooses discriminating
+processing evidence and rejects a no-op repair under the existing bounded loop.
+General settings remain unchanged; no further paid execution is authorized.
 
 The preceding [saved-evidence trial](history/2026-10-27-public-regression-cycle-results.md)
 did receive regression failure, revise and pass isolated acceptance. It used a

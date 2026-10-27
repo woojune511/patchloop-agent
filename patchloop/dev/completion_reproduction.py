@@ -1,7 +1,8 @@
 """Pure completion projection for durable public invocation-bound reproductions.
 
-Every first binding survives plan changes and bounded context display. This judges
-the selected cases only: their mapping to the task and repair success stay unverified.
+Every first binding remains auditable across plan changes and bounded context.
+Proved v7 request failures before target entry are attempts, not established cases.
+This judges selected cases only: task mapping and repair success stay unverified.
 """
 
 from __future__ import annotations
@@ -22,6 +23,7 @@ from patchloop.util import canonical_json, sha256_bytes, sha256_json
 
 POLICY = "completion-reproduction-v1"
 DISPLAY_LIMIT = 3
+TARGET_PHASE_CHANNEL = "invoke-declared-call-v7"
 
 
 def replay_call(run_id, case_id, root_action_id, diff_hash):
@@ -118,10 +120,67 @@ def _failure_diagnostic(events, current_diff, failure_actions):
     }
 
 
+def _pre_target_attempts(case, completed_actions):
+    """Separate completed v7 construction failures without erasing uncertain calls.
+
+    An incomplete target observation can still prove that target entry never
+    occurred. Only the explicit v7 phase, validated rows and settled host receipt
+    establish that distinction; a missing frame or legacy failure does not.
+    Any entered or unresolved action keeps the entire case in obligation accounting.
+    """
+    binding = case["binding"]
+    definition = binding["definition"]
+    starts = case["starts"]
+    if (definition.get("observation_channel") != TARGET_PHASE_CHANNEL
+            or not starts or binding["root_action_id"] not in starts):
+        return None
+    if {row[0]["action_id"] for row in case["rows"]} != set(starts):
+        return None
+    attempts = []
+    for action_id, start in starts.items():
+        result = completed_actions.get(action_id) or {}
+        output = result.get("output") or {}
+        observed = output.get("reproduction") or {}
+        trace = observed.get("call_observation") or {}
+        calls = trace.get("calls")
+        if (start.get("reproduction_binding") != binding or observed.get("binding") != binding
+                or not start.get("input_hash")
+                or result.get("input_hash") != start["input_hash"]
+                or result.get("tool") != start.get("tool")
+                or result.get("status") != "succeeded"
+                or output.get("status") not in {"passed", "failed"}
+                or type(output.get("exit_code")) is not int or output["exit_code"] < 0
+                or any(output.get(key) is not False for key in (
+                    "timed_out", "truncated", "cleanup_failed", "deadline_exhausted"))
+                or output.get("execution_policy", {}).get("cleanup_status") != "confirmed"
+                or trace.get("binding_method") != TARGET_PHASE_CHANNEL
+                or type(trace.get("incomplete")) is not bool
+                or not isinstance(calls, list) or not 1 <= len(calls) <= 4
+                or not all(probe_invocation.valid_call(
+                    call, definition["entrypoint"], channel=TARGET_PHASE_CHANNEL)
+                           for call in calls)
+                or len({call["call_id"] for call in calls}) != len(calls)
+                or any(call.get("target_started") is not False
+                       or call.get("outcome") != "incomplete"
+                       or call.get("capture", {}).get("status") != "incomplete"
+                       for call in calls)):
+            return None
+        attempts.append({
+            "action_id": action_id, "input_hash": result["input_hash"],
+            "case_id": binding["case_id"], "root_action_id": binding["root_action_id"],
+            "program_hash": binding["program_hash"],
+            "diff_hash": result.get("workspace_diff_hash"),
+            "status": "pre_target_request_failure", "target_started": False,
+            "execution_status": output["status"], "exit_code": output["exit_code"],
+        })
+    return attempts
+
+
 def review(events, current_diff, *, public_task=None, run_id):
     """Project all bindings; only the display, never obligations, is bounded.
 
-    ``case_count`` includes unestablished/legacy bindings. ``replayable_case_count``
+    ``case_count`` includes unestablished/legacy bindings except proved v7
+    pre-target request attempts, retained separately. ``replayable_case_count``
     counts healthy invocation-bound roots; ``pending_cases`` is the complete internal
     replay plan. A durable automatic attempt settles UNKNOWN for this diff without
     retrying. A new diff makes that case pending again.
@@ -140,7 +199,9 @@ def review(events, current_diff, *, public_task=None, run_id):
                 continue
             binding = payload.get("reproduction_binding")
             if binding is not None:
-                cases.setdefault(binding["case_id"], {"binding": binding, "rows": []})
+                case = cases.setdefault(binding["case_id"], {
+                    "binding": binding, "rows": [], "starts": {}})
+                case["starts"][payload["action_id"]] = payload
         elif kind == "action_finished":
             result = payload["result"]
             completed_actions[result["action_id"]] = result
@@ -150,16 +211,23 @@ def review(events, current_diff, *, public_task=None, run_id):
             if result.get("tool") not in {"run_probe", "observe_original"} or observation is None:
                 continue
             binding = observation["binding"]
-            case = cases.setdefault(binding["case_id"], {"binding": binding, "rows": []})
+            case = cases.setdefault(binding["case_id"], {
+                "binding": binding, "rows": [], "starts": {}})
             # A later declaration/replay cannot revise the first case's conditions.
             if case["binding"] == binding:
                 case["rows"].append((result, observation))
 
     task_hash = sha256_json(public_task.model_dump(mode="json")) if public_task else None
     items, pending, failure_actions = [], [], set()
+    request_attempts, request_attempt_cases = [], 0
     diagnostic_eligible = False
     for case_id, case in cases.items():
         binding, rows = case["binding"], case["rows"]
+        excluded = _pre_target_attempts(case, completed_actions)
+        if excluded:
+            request_attempts.extend(excluded)
+            request_attempt_cases += 1
+            continue
         root_id = binding["root_action_id"]
         root = next((row for row in rows if row[0]["action_id"] == root_id), None)
         root_reason = "baseline_not_observed"
@@ -276,6 +344,12 @@ def review(events, current_diff, *, public_task=None, run_id):
         "status": "refuted" if failed else "pending" if pending else "unverified"
         if unverified or not items else "cases_verified",
         "current_diff_hash": current_diff, "case_count": len(items),
+        **({
+            "request_attempt_count": len(request_attempts),
+            "request_attempt_case_count": request_attempt_cases,
+            "request_attempts": request_attempts[:DISPLAY_LIMIT],
+            "request_attempt_omitted_count": max(0, len(request_attempts) - DISPLAY_LIMIT),
+        } if request_attempts else {}),
         "observation_correction": correction,
         "superseded_case_count": len(superseded_items),
         "superseded_cases": [{"case_id": item["case_id"],

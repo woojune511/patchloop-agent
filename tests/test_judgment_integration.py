@@ -60,12 +60,21 @@ def diagnostic_probe(task, action="wrong", *, corrected=False, corrects=None, le
         f"bug = target({TEXT!r})\n"
         "control = target('h,v\\na,b\\n')\n"
     )
-    streams = "call.stdout + call.stderr" if corrected else "call.stderr"
-    source += (
-        f"def has_error(call): return 'F0010' in ({streams})\n"
-        "record_observation({'bug_has_error': has_error(bug), "
-        "'control_has_error': has_error(control)})\n"
-    )
+    if legacy:
+        streams = "call.stdout + call.stderr" if corrected else "call.stderr"
+        source += (
+            f"def has_error(call): return 'F0010' in ({streams})\n"
+            "record_observation({'bug_has_error': has_error(bug), "
+            "'control_has_error': has_error(control)})\n"
+        )
+    else:
+        # The fresh contract requires actual processing evidence too. An empty
+        # result must not pass merely by avoiding the synthetic failure signal.
+        source = source.replace(
+            "    return rows\n",
+            "    if rows and rows[0] == ['h', 'v'] and any(rows[1:]):\n"
+            "        print('P1001: parsed input records')\n"
+            "    return rows\n", 1)
     call = probe(task, action, source=source)
     call.arguments["purpose"].update({
         "expected_json": json.dumps({"bug_has_error": False, "control_has_error": False}),
@@ -77,6 +86,17 @@ def diagnostic_probe(task, action="wrong", *, corrected=False, corrects=None, le
              "contains" if legacy else "code": "F0010"},
         ],
     })
+    if not legacy:
+        for key in ("expected_json", "reported_failure_json"):
+            values = json.loads(call.arguments["purpose"][key])
+            values.update(bug_processed=True, control_processed=True)
+            call.arguments["purpose"][key] = json.dumps(values)
+        rules = call.arguments["purpose"]["diagnostic_rules"]
+        for rule in rules:
+            rule["role"] = "failure"
+        rules.extend({"field": f"{case}_processed", "call_id": f"call-{index}",
+                      "code": "P1001", "role": "processing"}
+                     for index, case in enumerate(("bug", "control"), 1))
     if corrects:
         call.arguments["purpose"]["corrects_action_id"] = corrects
     return call

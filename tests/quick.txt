@@ -116,3 +116,6 @@ tests/test_completion_finalization.py::test_finalization_floor_survives_successo
 tests/test_completion_finalization.py::test_exact_count_ready_floor_clips_to_configured_ceiling_and_blocks_insufficient_money
 tests/test_canonical_diagnostic.py
 tests/test_normal_diagnostic_continuation.py
+tests/test_behavior_diagnostic.py
+tests/test_pre_target_obligations.py
+tests/test_processing_observer.py

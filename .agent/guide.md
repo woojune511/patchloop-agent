@@ -87,7 +87,7 @@ Acquisition needs both unchanged-base comparisons. Rejections create no case;
 uncertainty stays unverified.
 Request correction certifies validity only; see [request/replay](evidence-recovery.md).
 For helper source errors, see [bounded preflight correction](helper-correction.md).
-Fresh codes use [host judgment; legacy correction](observation-judgment.md).
+See [host judgment](observation-judgment.md) for processing, input scope and pre-target errors.
 Legacy unknown dispatches reserve slots without becoming execution evidence. Releases
 preserve unmet verification. Journal roots and action/release identities survive recovery;
 forecasts never write them.
@@ -121,7 +121,7 @@ Operator feedback is never an observation; delivery does not imply use.
 Model positions describe discussion. `reproduction_review` computes case evidence;
 requirement mapping stays unverified.
 Plans/concerns cannot close it or gate finish. See [scope](evidence-recovery.md).
-Completion retains all cases beyond the three-case display, independently of plans.
+Completion retains all obligations beyond its bounded display.
 
 Deliver latest observations. `--retained-source-chars`: 24,000 (default) or 48,000
 observed characters, complete lines without unseen gaps; binds model/envelope/resume.

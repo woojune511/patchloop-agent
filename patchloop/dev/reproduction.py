@@ -37,9 +37,10 @@ DESCRIPTION = (
     "reported_failure_json is the reported buggy result; expected_json is the desired result "
     "after repair. Both must be strict JSON and must differ. Choose observable properties "
     "that distinguish the reported failure from the desired behavior. Use one extractor for "
-    "the failing input and a normal-input control, before and after repair. Prefer small stable "
-    "values, e.g. failure={bug_has_error:true,control_has_error:false} and "
-    "desired={bug_has_error:false,control_has_error:false}, recorded with those same keys. "
+    "the failing input and a normal-input control, before and after repair. Check both error "
+    "absence and positive evidence that the intended input was processed; an empty result "
+    "can hide skipped work. Select a public output marker, processed item or returned data "
+    "that would distinguish a no-op from the required behavior. "
     "Keep raw logs and call metadata in the separate call receipt, not in comparison values "
     "unless the requirement concerns them. "
     "Require a clean exit or absence of all diagnostics only when the public requirement "
@@ -49,16 +50,20 @@ DESCRIPTION = (
     "Observing an arbitrary mismatch does not reproduce the declared failure. No separate "
     "declaration step is needed. For original_requirement execute the declared entrypoint "
     "by creating target=observed_target(input_paths=[...], environment_keys=[...]), "
-    "then calling it with ordinary Python arguments: call=target(['path'], option=False). "
+    "then calling it with ordinary Python arguments: call=target(['path']). "
+    "Use only arguments supported by the inspected public signature; this example adds "
+    "no target-specific keyword. "
     "A list argument is passed once, without an adapter args=[...] container. It "
     "resolves public aliases and constructors; do not replace it with a helper call. Select "
     "fixture files/directories in input_paths, not candidate implementation files; select "
-    "relevant environment variable names in environment_keys. Only in original_requirement, "
-    "for fixtures and HOME/cache "
-    "directories use root=Path(reproduction_workspace()): it creates the stable path "
-    "under the fresh sandbox cwd, fails if it already exists and shares it within this probe. "
-    "Create the needed children and set relevant environment variables explicitly; select "
-    "those inputs and variables for observation. Avoid random temporary paths for them. "
+    "relevant environment variable names in environment_keys. In original_requirement use "
+    "root=Path(reproduction_workspace()) for fixtures, and "
+    "outputs=Path(reproduction_outputs()) for generated files and HOME/cache children. "
+    "These are separate stable roots in the fresh sandbox. Select actual fixture paths; "
+    "generated output paths and ancestors containing them cannot be selected inputs. "
+    "Declare cold/warm cache setup explicitly: a cache intentionally read by the target "
+    "is an input fixture, not an ignored output. Create children and set environment "
+    "variables explicitly. Avoid random temporary paths. "
     "The target starts with sys.argv=['<patchloop-reproduction>']; set explicit CLI argv "
     "before calling a CLI that reads it. Host tracing options are not target arguments. "
     "Empty lists mean no selected "
@@ -66,14 +71,18 @@ DESCRIPTION = (
     "value; call.stdout/stderr are bounded per-call Python streams, not repr(value). "
     "Choose the diagnostic channel from public behavior and inspect both captured streams; "
     "For diagnostic-presence booleans, include diagnostic_rules in purpose: "
-    "[{field: 'bug_has_error', call_id: 'call-1', code: 'F0010'}, ...]. "
+    "Each rule has field, call_id, code and role ('failure' or 'processing'). "
     "Select the stable public diagnostic code, not its changing explanatory message. "
+    "Each selected call must pair a failure rule expected false with a processing rule "
+    "expected true. Choose the processing code from the intended fixture's public behavior, "
+    "not an unrelated warning. A target that emits neither code must fail this conjunction. "
     "Each field is computed only by the host from that call's complete stdout AND stderr. "
     "The failure/desired objects must have exactly those boolean fields. With diagnostic_rules, "
     "only execute the target calls; do not write an extractor or call record_observation. "
     "The host uses the same rules before and after edits, so changed text with the same code "
     "remains a failure. Code selection and requirement mapping are still unverified. "
-    "Use null rules for return-value/text observations without a diagnostic code. "
+    "Use null rules for silent targets: record actual processed items/returned data together "
+    "with the failure observation. Do not invent diagnostic output to satisfy a rule. "
     "do not assume stderr. call.outcome='returned' means the callable returned, not task success. "
     "call.exit_code is the observed SystemExit code; null means no exit code, never zero. "
     "capture_status='complete' means both streams were collected. With null rules, "
@@ -147,6 +156,12 @@ class CanonicalOriginalIntent(OriginalIntent):
     )
 
 
+class BehaviorOriginalIntent(OriginalIntent):
+    diagnostic_rules: list[probe_judgment.BehaviorDiagnosticRule] | None = Field(
+        default=None, min_length=1, max_length=4,
+    )
+
+
 def schema():
     result = Intent.model_json_schema()
     result.pop("title", None)
@@ -158,7 +173,7 @@ def schema():
 
 
 def purpose_schema():
-    original = CanonicalOriginalIntent.model_json_schema()
+    original = BehaviorOriginalIntent.model_json_schema()
     original.pop("title", None)
     original.pop("$defs", None)
     for item in original["properties"].values():
@@ -248,12 +263,16 @@ def bind(raw, public_task, source, action_id, *, replay=None, events=(),
     paired = isinstance(raw, dict) and "reported_failure_json" in raw
     legacy = isinstance(raw, dict) and "requirement_quote" in raw
     intent_type = (LegacyOriginalIntent if legacy else OriginalIntent) if paired else Intent
-    if paired and not legacy and observation_channel == probe_invocation.CHANNEL:
-        intent_type = CanonicalOriginalIntent
+    if paired and not legacy:
+        if observation_channel == probe_invocation.CANONICAL_CHANNEL:
+            intent_type = CanonicalOriginalIntent
+        elif observation_channel == probe_invocation.CHANNEL:
+            intent_type = BehaviorOriginalIntent
     try:
         intent = intent_type.model_validate(raw)
     except ValidationError as exc:
         if observation_channel not in (probe_invocation.DIAGNOSTIC_CHANNEL,
+                                       probe_invocation.CANONICAL_CHANNEL,
                                        probe_invocation.CHANNEL):
             raise
         invalid = probe_requests.fields(exc, prefix="/purpose")
@@ -275,7 +294,8 @@ def bind(raw, public_task, source, action_id, *, replay=None, events=(),
         raise probe_requests.error(
             "reproduction expected_json must be bounded strict JSON: " + str(reason),
             "/purpose/expected_json" if observation_channel in (
-                probe_invocation.DIAGNOSTIC_CHANNEL, probe_invocation.CHANNEL)
+                probe_invocation.DIAGNOSTIC_CHANNEL, probe_invocation.CANONICAL_CHANNEL,
+                probe_invocation.CHANNEL)
             else "/reproduction/expected_json",
         )
     failure = None
@@ -293,8 +313,9 @@ def bind(raw, public_task, source, action_id, *, replay=None, events=(),
         probe_judgment.validate(intent.diagnostic_rules, expected, failure)
         if intent.diagnostic_rules:
             canonical = probe_judgment.is_canonical(intent.diagnostic_rules)
-            if ((observation_channel == probe_invocation.CHANNEL and not canonical)
-                    or (observation_channel != probe_invocation.CHANNEL and any(
+            canonical_channels = (probe_invocation.CANONICAL_CHANNEL, probe_invocation.CHANNEL)
+            if ((observation_channel in canonical_channels and not canonical)
+                    or (observation_channel not in canonical_channels and any(
                         isinstance(rule, probe_judgment.DiagnosticCodeRule)
                         for rule in intent.diagnostic_rules))):
                 raise probe_requests.error(
@@ -423,6 +444,11 @@ def program(source, binding, call_path=False):
                "    value = target(*args, **kwargs)\n"
                "   finally:\n"
                "    _patchloop_call_path_end(row['call_id'])")
+        if channel == probe_invocation.CHANNEL:
+            old = '   row["target_started"] = True\n' + old
+            new = new.replace("    value = target(*args, **kwargs)",
+                              '    row["target_started"] = True\n'
+                              "    value = target(*args, **kwargs)")
         if trace.count(old) != 1:
             raise ContractError("call-path observer hook location is unavailable")
         trace = trace.replace(old, new, 1)
@@ -451,7 +477,8 @@ def compare(output, binding):
     trace = {"calls": [], "incomplete": True}
     channel = binding["definition"].get("observation_channel")
     rules = binding["definition"].get("diagnostic_rules")
-    canonical = channel == probe_invocation.CHANNEL and probe_judgment.is_canonical(rules)
+    canonical = channel in (probe_invocation.CANONICAL_CHANNEL, probe_invocation.CHANNEL) and (
+        probe_judgment.is_canonical(rules))
     invoked = probe_invocation.supports(channel)
     recorded = invoked or channel == OBSERVATION_CHANNEL
     if len(frames) == 1:

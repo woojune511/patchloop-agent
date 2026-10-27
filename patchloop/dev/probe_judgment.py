@@ -37,6 +37,12 @@ class DiagnosticCodeRule(BaseModel):
     code: str = Field(min_length=2, max_length=32, pattern=r"^[A-Z]+[0-9]+[A-Z0-9_-]*$")
 
 
+class BehaviorDiagnosticRule(DiagnosticCodeRule):
+    """A selected failure signal or positive evidence of intended processing."""
+
+    role: Literal["failure", "processing"]
+
+
 def is_canonical(rules):
     return bool(rules) and all(isinstance(rule, DiagnosticCodeRule)
                               or isinstance(rule, dict) and "code" in rule for rule in rules)
@@ -50,7 +56,7 @@ def is_usable(judgment):
 
 
 def rules_schema():
-    item = DiagnosticCodeRule.model_json_schema()
+    item = BehaviorDiagnosticRule.model_json_schema()
     item.pop("title", None)
     for value in item["properties"].values():
         value.pop("title", None)
@@ -62,7 +68,8 @@ def rules_schema():
                          "Codes are uppercase letters followed by digits (up to 32 characters). "
                          "The host computes booleans from complete per-call stdout and stderr; "
                          "do not reimplement extraction or call record_observation. "
-                         "Use null for observations without a diagnostic code."}
+                         "Pair failure absence with a positive processing code on the same call. "
+                         "For silent processing use null and observe actual returned/output data."}
 
 
 def validate(rules, expected_json, reported_failure_json):
@@ -82,6 +89,30 @@ def validate(rules, expected_json, reported_failure_json):
             raise probe_requests.error(
                 "diagnostic declarations must be boolean objects with exactly the rule fields",
                 "/purpose/" + key, "/purpose/diagnostic_rules")
+    normalized = [rule.model_dump() if isinstance(rule, BaseModel) else rule for rule in rules]
+    if any("role" in rule for rule in normalized):
+        desired = json.loads(expected_json)
+        failures = {rule["call_id"] for rule in normalized if rule.get("role") == "failure"}
+        processing = {rule["call_id"] for rule in normalized
+                      if rule.get("role") == "processing"}
+        if not failures or failures != processing or any(
+            rule.get("role") not in {"failure", "processing"}
+            or desired[rule["field"]] != (rule["role"] == "processing")
+            for rule in normalized
+        ):
+            raise probe_requests.error(
+                "Each diagnostic call needs failure=false and processing=true in expected_json; "
+                "select positive public processing evidence from that same call. "
+                "For a silent target use null rules and actual processed results instead.",
+                "/purpose/diagnostic_rules", "/purpose/expected_json")
+        signals = {}
+        for rule in normalized:
+            key = (rule["call_id"], rule["code"])
+            if key in signals and signals[key] != rule["role"]:
+                raise probe_requests.error(
+                    "The same call/code cannot be both absent failure and present processing",
+                    "/purpose/diagnostic_rules")
+            signals[key] = rule["role"]
 
 
 def evaluate(rules, trace, authored_json, *, reason=None):
