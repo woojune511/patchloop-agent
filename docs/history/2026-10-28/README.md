@@ -6,3 +6,4 @@
 - [Processing-evidence clean-start pilot prepared](../2026-10-28-processing-evidence-fresh-plan.md)
 - [Processing-evidence live result: output exhaustion before original execution](../2026-10-28-processing-evidence-fresh-results.md)
 - [First reproduction: short description and fixed-checkpoint A/B preparation](../2026-10-28-first-reproduction-description-plan.md)
+- [First reproduction A/B result: long admitted, short rejected before execution](../2026-10-28-first-reproduction-description-results.md)
