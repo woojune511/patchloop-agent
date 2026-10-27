@@ -24,47 +24,35 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [first-reproduction model pair](history/2026-10-28-first-reproduction-model-results.md)
-ran mini/full once at the same public checkpoint and xhigh/60K/40K/25K limits.
-Mini exhausted 40K then 25K without a tool call. Full produced an admitted request
-but failed before both target calls because expected_exceptions=(SystemExit,)
-violated an undisclosed helper restriction. Total new cost USD 0.6721752;
-all usage settled, metadata audit PASS, allocation CLOSED. No repair, submission
-or isolated evaluation occurred. This single pair does not justify model adoption.
+The [single full-model helper follow-up](history/2026-10-28-helper-first-reproduction-results.md)
+executed once at the same public checkpoint, using fresh v8 and only the updated
+helper paragraph in the long description. The prior SystemExit settings error did
+not recur; helper construction and three setup comparisons passed. But the model
+called the zero-parameter pylint.run_pylint entrypoint with a positional list after
+setting sys.argv. Signature binding rejected it before entry: target_started=false,
+TypeError: too many positional arguments. F0010 and same-call processing are NOT_RUN.
+The first settled probe ended the diagnostic; there was no feedback correction.
 
-The [helper compatibility fix](history/2026-10-28-helper-system-exit-fix.md) now
-accepts explicit SystemExit subclasses in fresh v8 calls, matching the automatic
-capture already provided. Ordinary exceptions still require exact listed classes;
-BaseException/KeyboardInterrupt/GeneratorExit are not silently treated as expected.
-The first-original and general descriptions share the explicit API contract.
-V1-v7 observer bytes/replay behavior remain frozen; v7/v8 retain canonical judgment,
-fixture/output separation and target-entry accounting. Surface v67 binds the change.
-No tool, retry opportunity, resource ceiling or completion criterion was added.
+The response completed with 19,997 input and 9,111 output tokens, below 60K/40K limits.
+New cost USD 0.1866575; all usage settled, independent metadata audit PASS, allocation
+CLOSED. No repair, checks, submission or isolated evaluation occurred. The desired
+observation now includes positive processing from the same problematic call, but
+that unexecuted design is not evidence of processing. The explicit SystemExit option
+was omitted in this fresh code, so its new acceptance was not exercised live.
 
-Focused local validation: 89 PASS in 28.176s, including frozen legacy bytes,
-actual automatic/explicit exit capture, invalid settings, processing observations
-and pre-target obligations. Quick covered 594 cases in 190.914s: 587 passed,
-including isolated mock evaluation; seven current contract/description pins were
-refreshed after proving the intended-only difference and all passed focused reruns.
-Four additional surface-identity owner checks and Ruff also passed. No runtime
-behavior changed after the quick run; its final edit was line wrapping for lint.
-The maximum-entrypoint observer with call-path hooks is 7,998 characters, within 8K.
-No paid model call or Astroid benchmark execution is part of this implementation.
+The [helper implementation](history/2026-10-28-helper-system-exit-fix.md) remains:
+fresh v8 accepts explicit SystemExit subclasses, descriptions share the API contract,
+and saved v1-v7 observers remain byte-exact. Its focused 89 tests passed in 28.176s;
+follow-up preparation quick passed 594 cases including isolated mock evaluation.
+Runtime was unchanged during the live follow-up. The preceding [model pair](history/2026-10-28-first-reproduction-model-results.md)
+remains a separate closed experiment, not a new control or model-adoption result.
 
-Positive processing coverage remains a separate unresolved issue. The full arm
-selected W0611 on the direct-file control only, so its desired observation would
-not prove the original directory processed its file. Fixing the helper does not
-repair that observation design or establish F0010 reproduction. Actual-model use
-of execution feedback after the first settled probe was not tested by the closed
-comparison. The [single full-model helper follow-up](history/2026-10-28-helper-first-reproduction-plan.md)
-is sealed at the same public checkpoint: retain the long description except
-its helper exception paragraph, fixed v8 host, same model and resource limits.
-Stop at the first settled probe and audit target entry, F0010 and same-call processing
-separately. Offline 60K admission preserves full 40K/25K outputs, exact first-request
-diff review passes, and read-only source/image/dependency preflight is READY.
-The diagnostic owner checks pass after one test-fixture correction; quick passes
-594 cases including isolated mock evaluation. No new runtime behavior was added.
-New collection and its USD 4.41415320 cap await exact authorization.
+The next unresolved question is callable-signature adaptation and bounded correction
+of an error before target entry. Exposing the actual signature is a more direct
+intervention than raising output/context ceilings; do not coerce arbitrary arguments
+or erase original verification obligations. This first-probe endpoint did not test
+whether a model could correct the returned error. Any feedback trial needs a new
+scope and exact allocation; no automatic retry or default adoption follows.
 
 The preceding [saved-evidence repair](history/2026-10-27-public-regression-cycle-results.md)
 passed isolated acceptance after public failure feedback; it does not establish
