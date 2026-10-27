@@ -11,7 +11,7 @@ from test_finish_reproduction import checks, finish
 from test_probe_purpose import probe
 
 from patchloop.dev import completion_reproduction as completion
-from patchloop.dev import original_obligation
+from patchloop.dev import original_obligation, probe_invocation
 from patchloop.dev.model_state import compact_model_state
 from patchloop.util import sha256_bytes
 
@@ -41,7 +41,7 @@ def failed_request(gateway_factory):
     assert result.status == "succeeded", result
     assert result.output["status"] == "failed"
     trace = result.output["reproduction"]["call_observation"]
-    assert trace["binding_method"] == "invoke-declared-call-v7"
+    assert trace["binding_method"] == probe_invocation.CHANNEL
     assert trace["calls"][0]["target_started"] is False
     return gateway, journal, backend, call
 

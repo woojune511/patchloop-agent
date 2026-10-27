@@ -1,10 +1,10 @@
-"""Description-only acquisition change; frozen pre-change wire stays identical."""
+"""Small acquisition description, stable schemas and shared exception contract."""
 
 from __future__ import annotations
 
 import pytest
 
-from patchloop.dev import first_reproduction
+from patchloop.dev import first_reproduction, probe_call_capture, reproduction
 from patchloop.dev.tools import dev_tool_schemas
 from patchloop.util import sha256_json
 
@@ -29,12 +29,12 @@ def test_original_stage_changes_description_only(agent_policy, probe_policy, exp
 
 
 @pytest.mark.parametrize("agent_policy,diagnosis,expected", [
-    ("current", False, "5983345f1292013056801cf59b8a35a6dffd49f454306d8abcf36b3002ca4ab7"),
-    ("thin", False, "1b0bb89f4423aff4145b4d18133b26ef6aea8857ab8dd5b7365f35e0915fa336"),
+    ("current", False, "2320fb3617904c3c0052a7cf8277565e955e190285a409019b008b7aa99cb166"),
+    ("thin", False, "a7ee855ce0e21a25d85acb46d63a7fbbf5b425da67fe86a8f14a8cc854e47649"),
     ("current", True, "9f7ea75adea8115540ee793197c00039b03672a1c91d437f277951c5faa873e0"),
     ("thin", True, "9f7ea75adea8115540ee793197c00039b03672a1c91d437f277951c5faa873e0"),
 ])
-def test_other_probe_stage_descriptions_and_wire_unchanged(agent_policy, diagnosis, expected):
+def test_other_probe_stages_match_current_contract(agent_policy, diagnosis, expected):
     schemas = dev_tool_schemas(
         finish_enabled=False, allowed_tools={"run_probe", "stop_task"},
         agent_policy=agent_policy, path_diagnosis_pending=diagnosis,
@@ -46,6 +46,8 @@ def test_first_description_keeps_environment_and_required_observation_apis():
     environment = "Read-only dependency and source locations with public caller availability."
     description = first_reproduction.description(environment)
     assert description.endswith(environment)
+    assert probe_call_capture.EXCEPTION_DESCRIPTION in description
+    assert probe_call_capture.EXCEPTION_DESCRIPTION in reproduction.DESCRIPTION
     for name in ("reproduction_workspace()", "reproduction_outputs()", "observed_target(",
                  "record_observation(value)", "diagnostic_rules", "expected_exceptions=",
                  "capture_status", "reported_failure_json", "expected_json"):

@@ -71,8 +71,9 @@ def dev_tool_surface_hash(
 
     base = sha256_json(
         {
-            "schema_version": "dev-tool-surface-v66",
+            "schema_version": "dev-tool-surface-v67",
             "first_original_description": "stage-only-call-and-observation-v1",
+            "observed_target_exceptions": "system-exit-automatic-or-declared-v1",
             "rejected_drafts": correction_drafts.contract(),
             "parallel_generation": "only-when-current-gate-permits-read-batch-v1",
             "fresh_probe_schema": "state-valid-original-acquisition-or-pending-diagnosis-v1",
@@ -152,7 +153,7 @@ def dev_tool_surface_hash(
             "completion_reproduction_feedback": "bounded-current-observation-comparability-v1",
             "original_obligation": "task-bound-base-failure-and-current-replay-v1",
             "original_acquisition": "fresh-six-preparation-then-request-legacy-shared-six-v2",
-            "public_invocation": "python-call-phase-capture-v7-legacy-v1-v6-replay",
+            "public_invocation": "python-call-phase-capture-v8-legacy-v1-v7-replay",
             "public_invocation_capture_bounds": [4096, 10000],
             "public_exception_diagnostics": "bounded-public-frames-chain-side-report-v1",
             "public_exception_diagnostic_bounds": [3, 16, 12, 6144, 32768],
@@ -165,7 +166,7 @@ def dev_tool_surface_hash(
             "probe_request_correction": "field-diagnostics-actual-arguments-preflight-receipt-v1",
             "probe_judgment": "same-call-failure-and-processing-v3-legacy-v1-v2-replay",
             "probe_input_scope": "fixture-and-generated-sibling-roots-v1",
-            "probe_request_attempts": "v7-explicit-pretarget-excluded-from-case-obligations-v1",
+            "probe_request_attempts": "v7-v8-explicit-pretarget-excluded-from-case-obligations-v1",
             "repair_call_path": "original-refuted-unobserved-branch-bounded-diagnosis-v1",
             "repair_prediction": "host-refutation-small-observable-source-or-test-v1",
             "repair_diagnosis_reuse": "same-implementation-additive-test-historical-provenance-v1",

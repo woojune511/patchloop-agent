@@ -81,7 +81,7 @@ def test_default_serialization_and_schema_identities_remain_exact():
     )
     assert "memory_update" not in RequestedTool(name="read_file", action_id="x").model_dump()
     assert dev_tool_surface_hash() == (
-        "sha256:5e2edee62f35eb690138245da6ab8fdaef9600727bd80acdfcca1b09b3bff414"
+        "sha256:c5f1b6748b0b2485ec0699c9624baed8ad55bf8e6c6cbc43a910cf8c46eb2db7"
         if FROZEN_ARM is None else
         "sha256:57193859890419b79cb7f4927c37796d044bc4bf7159c51ddf17723849529e26"
     )
@@ -90,7 +90,7 @@ def test_default_serialization_and_schema_identities_remain_exact():
         allowed_tools=list(MODES),
     )
     assert sha256_json(schemas) == (
-        "sha256:c5df258fe957b1245a4870c372d68e2a996afe6d914c43e42c508ec978a07032"
+        "sha256:8f1890de5a610ba711762cf3f3d51153b14a5a5cf6c36d5ea369f4a2aa48be69"
         if FROZEN_ARM is None else
         "sha256:9757e80d1590c5274966a80011a24ed12e08340d23d2e202f0f099ea1be47955"
     )
@@ -101,7 +101,7 @@ def test_default_serialization_and_schema_identities_remain_exact():
             allowed_tools=list(MODES), read_range_only=True,
         )
         assert sha256_json(legacy) == (
-            "sha256:a77c0111eea18760f01edfcf2f8509f7f388ce8b6b917bef03f7938f23fd6337"
+            "sha256:c2bce485bc0901f10c9714c4f745790248f82337431b1351ead8439fa5eb7385"
         )
         minimal = {schema["name"]: schema["parameters"] for schema in schemas
                    if schema["name"] in {"replace_text", "stop_task"}}

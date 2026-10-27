@@ -8,6 +8,15 @@ CHANNEL = "invoke-declared-call-v3"
 CAPTURE_BYTES = 4096
 REPORT_BYTES = 10000
 
+EXCEPTION_DESCRIPTION = (
+    "expected_exceptions is a tuple of at most four Exception or SystemExit subclasses. "
+    "For intended Exception observations, use expected_exceptions=(ValueError,); only exact "
+    "listed types match, otherwise comparison is incomplete. SystemExit and its subclasses "
+    "are always captured with "
+    "exit_code, whether listed or omitted. BaseException, KeyboardInterrupt and GeneratorExit "
+    "are not allowed in the tuple. This does not make an error a successful result."
+)
+
 # Composed with the existing snapshot/resolver and observation framing. These
 # streams observe this Python process only, not native fd writes or subprocesses.
 CALLS = '''from types import SimpleNamespace as _pr_Result
@@ -253,6 +262,15 @@ def _pr_error(e):
                           '   row["target_started"] = True', 1).replace(
                               '   value=target(*args,**kwargs)',
                               '   value = target(*args, **kwargs)', 1)
+
+
+def exception_observer(legacy):
+    """v8 accepts the already-captured SystemExit family; v1-v7 stay byte-exact."""
+    source = behavior_observer(legacy)
+    check = "issubclass(t,Exception)"
+    if source.count(check) != 1:
+        raise ValueError("exception type validation location is unavailable")
+    return source.replace(check, "issubclass(t,(Exception,SystemExit))", 1)
 
 
 def valid(call):

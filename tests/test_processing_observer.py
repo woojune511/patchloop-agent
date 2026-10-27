@@ -157,9 +157,9 @@ def test_v7_size_with_optional_hooks_and_frozen_v5_v6_bytes():
     for channel in (probe_invocation.DIAGNOSTIC_CHANNEL, probe_invocation.CANONICAL_CHANNEL):
         assert sha256_bytes(probe_invocation.observer(channel).encode()) == frozen
     assert probe_call_capture.behavior_observer(probe_invocation.OBSERVER_V2) == (
-        probe_invocation.observer(probe_invocation.CHANNEL))
+        probe_invocation.observer(probe_invocation.BEHAVIOR_CHANNEL))
     binding = {"case_id": "sha256:" + "c" * 64, "definition": {
-        "entrypoint": "x." + "a" * 198, "observation_channel": probe_invocation.CHANNEL,
+        "entrypoint": "x." + "a" * 198, "observation_channel": probe_invocation.BEHAVIOR_CHANNEL,
     }}
     for call_path in (False, True):
         source = reproduction.program("", binding, call_path=call_path)

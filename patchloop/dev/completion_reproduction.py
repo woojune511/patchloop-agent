@@ -23,7 +23,6 @@ from patchloop.util import canonical_json, sha256_bytes, sha256_json
 
 POLICY = "completion-reproduction-v1"
 DISPLAY_LIMIT = 3
-TARGET_PHASE_CHANNEL = "invoke-declared-call-v7"
 
 
 def replay_call(run_id, case_id, root_action_id, diff_hash):
@@ -121,17 +120,18 @@ def _failure_diagnostic(events, current_diff, failure_actions):
 
 
 def _pre_target_attempts(case, completed_actions):
-    """Separate completed v7 construction failures without erasing uncertain calls.
+    """Separate completed v7+ construction failures without erasing uncertain calls.
 
     An incomplete target observation can still prove that target entry never
-    occurred. Only the explicit v7 phase, validated rows and settled host receipt
+    occurred. Only the explicit target phase, validated rows and settled host receipt
     establish that distinction; a missing frame or legacy failure does not.
     Any entered or unresolved action keeps the entire case in obligation accounting.
     """
     binding = case["binding"]
     definition = binding["definition"]
     starts = case["starts"]
-    if (definition.get("observation_channel") != TARGET_PHASE_CHANNEL
+    channel = definition.get("observation_channel")
+    if (channel not in probe_invocation.BEHAVIOR_CHANNELS
             or not starts or binding["root_action_id"] not in starts):
         return None
     if {row[0]["action_id"] for row in case["rows"]} != set(starts):
@@ -153,11 +153,11 @@ def _pre_target_attempts(case, completed_actions):
                 or any(output.get(key) is not False for key in (
                     "timed_out", "truncated", "cleanup_failed", "deadline_exhausted"))
                 or output.get("execution_policy", {}).get("cleanup_status") != "confirmed"
-                or trace.get("binding_method") != TARGET_PHASE_CHANNEL
+                or trace.get("binding_method") != channel
                 or type(trace.get("incomplete")) is not bool
                 or not isinstance(calls, list) or not 1 <= len(calls) <= 4
                 or not all(probe_invocation.valid_call(
-                    call, definition["entrypoint"], channel=TARGET_PHASE_CHANNEL)
+                    call, definition["entrypoint"], channel=channel)
                            for call in calls)
                 or len({call["call_id"] for call in calls}) != len(calls)
                 or any(call.get("target_started") is not False

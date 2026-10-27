@@ -202,7 +202,7 @@ def test_feedback_changes_preserve_wire_limits_and_bounded_prompt():
     # Pin fresh minimal edit/stop inputs and original observation; frozen arms stay exact.
     assert sha256_json(dev_tool_schemas(
         finish_enabled=True, allowed_tools=ALL_DEV_TOOLS, check_ids=["first", "second"],
-    )) == ("sha256:d03a6f2432bc8e71b7546284f6caefb221ad5d63300fbae9595d5ac0d8f46d05"
+    )) == ("sha256:04d6cdedfc6990afb73f569fbfe62f605576a2ca804bd8e2e0d5b921227e1f9a"
            if FROZEN_ARM is None else
            "sha256:8b024770ed22b31b84e2e5b8890080e1aaad9f15ba9843f5c3ea3f1c12ee0fe0")
     assert dev_tool_surface_hash() != (

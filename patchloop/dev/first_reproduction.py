@@ -1,4 +1,6 @@
-"""Stage-specific instructions; the shared reproduction contract is unchanged."""
+"""Stage-specific instructions with the shared injected helper API contract."""
+
+from patchloop.dev.probe_call_capture import EXCEPTION_DESCRIPTION
 
 DESCRIPTION = (
     "Reproduce the original public caller on the unchanged base before editing. "
@@ -32,8 +34,8 @@ DESCRIPTION = (
     "call exposes value, stdout, stderr, capture_status, exception, outcome and exit_code. "
     "Extract only completed, interpretable results: require complete capture and account "
     "for exceptions. Unexpected setup/invocation/parse failure is incomplete, never false "
-    "or no-error. For an intended exception only, declare exact classes via "
-    "observed_target(expected_exceptions=(ValueError,), ...). outcome='returned' is not "
+    "or no-error. "
+    + EXCEPTION_DESCRIPTION + " outcome='returned' is not "
     "task success; null exit_code is not zero. Report the observed bug as a value, not a "
     "failing assertion. Keep raw logs separate from comparison values."
 )

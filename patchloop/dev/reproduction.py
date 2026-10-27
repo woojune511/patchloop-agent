@@ -87,10 +87,8 @@ DESCRIPTION = (
     "call.exit_code is the observed SystemExit code; null means no exit code, never zero. "
     "capture_status='complete' means both streams were collected. With null rules, "
     "inspect capture_status and exception before extracting values. "
-    "Unexpected exceptions make comparison unavailable. Only for an intended exception "
-    "observation, declare exact classes with expected_exceptions=(ValueError,) "
-    "in observed_target. This is "
-    "not a general retry or error-ignore option. Direct fd/subprocess output is unobserved. "
+    + probe_call_capture.EXCEPTION_DESCRIPTION + " "
+    "Direct fd/subprocess output is unobserved. "
     "Only with null diagnostic_rules, call "
     "record_observation(value) exactly once "
     "with the actual JSON-compatible observation (at most 2048 UTF-8 bytes). Print progress "
@@ -266,14 +264,14 @@ def bind(raw, public_task, source, action_id, *, replay=None, events=(),
     if paired and not legacy:
         if observation_channel == probe_invocation.CANONICAL_CHANNEL:
             intent_type = CanonicalOriginalIntent
-        elif observation_channel == probe_invocation.CHANNEL:
+        elif observation_channel in probe_invocation.BEHAVIOR_CHANNELS:
             intent_type = BehaviorOriginalIntent
     try:
         intent = intent_type.model_validate(raw)
     except ValidationError as exc:
         if observation_channel not in (probe_invocation.DIAGNOSTIC_CHANNEL,
                                        probe_invocation.CANONICAL_CHANNEL,
-                                       probe_invocation.CHANNEL):
+                                       *probe_invocation.BEHAVIOR_CHANNELS):
             raise
         invalid = probe_requests.fields(exc, prefix="/purpose")
         for field in invalid:
@@ -295,7 +293,7 @@ def bind(raw, public_task, source, action_id, *, replay=None, events=(),
             "reproduction expected_json must be bounded strict JSON: " + str(reason),
             "/purpose/expected_json" if observation_channel in (
                 probe_invocation.DIAGNOSTIC_CHANNEL, probe_invocation.CANONICAL_CHANNEL,
-                probe_invocation.CHANNEL)
+                *probe_invocation.BEHAVIOR_CHANNELS)
             else "/reproduction/expected_json",
         )
     failure = None
@@ -313,7 +311,8 @@ def bind(raw, public_task, source, action_id, *, replay=None, events=(),
         probe_judgment.validate(intent.diagnostic_rules, expected, failure)
         if intent.diagnostic_rules:
             canonical = probe_judgment.is_canonical(intent.diagnostic_rules)
-            canonical_channels = (probe_invocation.CANONICAL_CHANNEL, probe_invocation.CHANNEL)
+            canonical_channels = (probe_invocation.CANONICAL_CHANNEL,
+                                  *probe_invocation.BEHAVIOR_CHANNELS)
             if ((observation_channel in canonical_channels and not canonical)
                     or (observation_channel not in canonical_channels and any(
                         isinstance(rule, probe_judgment.DiagnosticCodeRule)
@@ -444,7 +443,7 @@ def program(source, binding, call_path=False):
                "    value = target(*args, **kwargs)\n"
                "   finally:\n"
                "    _patchloop_call_path_end(row['call_id'])")
-        if channel == probe_invocation.CHANNEL:
+        if channel in probe_invocation.BEHAVIOR_CHANNELS:
             old = '   row["target_started"] = True\n' + old
             new = new.replace("    value = target(*args, **kwargs)",
                               '    row["target_started"] = True\n'
@@ -477,8 +476,10 @@ def compare(output, binding):
     trace = {"calls": [], "incomplete": True}
     channel = binding["definition"].get("observation_channel")
     rules = binding["definition"].get("diagnostic_rules")
-    canonical = channel in (probe_invocation.CANONICAL_CHANNEL, probe_invocation.CHANNEL) and (
-        probe_judgment.is_canonical(rules))
+    canonical = (
+        channel in (probe_invocation.CANONICAL_CHANNEL, *probe_invocation.BEHAVIOR_CHANNELS)
+        and probe_judgment.is_canonical(rules)
+    )
     invoked = probe_invocation.supports(channel)
     recorded = invoked or channel == OBSERVATION_CHANNEL
     if len(frames) == 1:

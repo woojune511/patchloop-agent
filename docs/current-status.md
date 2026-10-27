@@ -24,55 +24,45 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [canonical diagnosis](history/2026-10-28-canonical-diagnostic-analysis.md)
-identified skipped target processing hidden by error absence, generated cache in
-fixture identity, and pre-target request errors entering case accounting. The
-[processing-evidence implementation](history/2026-10-28-processing-evidence-implementation.md)
-addresses these mechanisms in invocation v7 / diagnostic v2. Surface v66 additionally
-shortens only first-reproduction instructions; schemas and host checks remain intact.
+The [first-reproduction model pair](history/2026-10-28-first-reproduction-model-results.md)
+ran mini/full once at the same public checkpoint and xhigh/60K/40K/25K limits.
+Mini exhausted 40K then 25K without a tool call. Full produced an admitted request
+but failed before both target calls because expected_exceptions=(SystemExit,)
+violated an undisclosed helper restriction. Total new cost USD 0.6721752;
+all usage settled, metadata audit PASS, allocation CLOSED. No repair, submission
+or isolated evaluation occurred. This single pair does not justify model adoption.
 
-The [fresh pilot](history/2026-10-28-processing-evidence-fresh-results.md) exhausted
-40K ordinary and 25K correction output before an original probe or edit. Its
-USD 0.40966830 allocation is closed. The subsequent
-[description A/B](history/2026-10-28-first-reproduction-description-results.md)
-completed both responses within their limits. Long A produced an admitted call and
-reproduced F0010 but selected only error-presence booleans, without positive intended-
-file processing evidence. Short B was rejected for callable/code-format errors before
-execution. Total new cost USD 0.1688805; that allocation is also closed. Neither arm
-repaired, submitted or evaluated. B's post-validation correction was not tested.
+The [helper compatibility fix](history/2026-10-28-helper-system-exit-fix.md) now
+accepts explicit SystemExit subclasses in fresh v8 calls, matching the automatic
+capture already provided. Ordinary exceptions still require exact listed classes;
+BaseException/KeyboardInterrupt/GeneratorExit are not silently treated as expected.
+The first-original and general descriptions share the explicit API contract.
+V1-v7 observer bytes/replay behavior remain frozen; v7/v8 retain canonical judgment,
+fixture/output separation and target-entry accounting. Surface v67 binds the change.
+No tool, retry opportunity, resource ceiling or completion criterion was added.
 
-The [model-only pair](history/2026-10-28-first-reproduction-model-results.md) has
-now run once per snapshot with the same long description, public input, xhigh and
-60K/40K/25K limits. First requests differed only in model ID after symmetric removal
-of a stale mini-priced cost forecast. Actual first inputs were both 19,947 tokens.
-Mini exhausted 40K then 25K with reasoning-only responses and zero tool calls.
-Full completed a 21,356-token response and an admitted probe, but failed before
-both declared target calls: expected_exceptions=(SystemExit,) violates an unstated
-Exception-subclass restriction, although SystemExit is already captured separately.
-Setup checks passed; calls remained empty and reproduction was not compared.
+Focused local validation: 89 PASS in 28.176s, including frozen legacy bytes,
+actual automatic/explicit exit capture, invalid settings, processing observations
+and pre-target obligations. Quick covered 594 cases in 190.914s: 587 passed,
+including isolated mock evaluation; seven current contract/description pins were
+refreshed after proving the intended-only difference and all passed focused reruns.
+Four additional surface-identity owner checks and Ruff also passed. No runtime
+behavior changed after the quick run; its final edit was line wrapping for lint.
+The maximum-entrypoint observer with call-path hooks is 7,998 characters, within 8K.
+No paid model call or Astroid benchmark execution is part of this implementation.
 
-Full's authored observations also selected positive W0611 only on the direct-file
-control, leaving the original directory's processing unproven even after fixing
-that helper setting. This is a static observation gap, not an executed repair.
-The model change cleared request completion in this pair but met neither actual
-reproduction nor positive target processing. It does not justify default-model
-adoption, a context increase or a repair-quality claim. Each snapshot ran once.
+Positive processing coverage remains a separate unresolved issue. The full arm
+selected W0611 on the direct-file control only, so its desired observation would
+not prove the original directory processed its file. Fixing the helper does not
+repair that observation design or establish F0010 reproduction. Actual-model use
+of execution feedback after the first settled probe was not tested by the closed
+comparison. Another live run needs a newly scoped plan and exact allocation.
 
-The next bounded work is to resolve the SystemExit helper-contract inconsistency
-locally and keep same-call positive processing distinct from control success.
-The model's ability to correct the observed helper error after feedback remains
-untested: the approved endpoint stopped at the first settled probe. Do not reopen
-this allocation for a corrected probe or another model run.
-
-Total new cost USD 0.6721752; all three count/model calls settled, no pending actions
-or probes, independent metadata audit PASS. Allocation CLOSED. No edit, regression,
-submission or isolated evaluation occurred. Result root:
-C:/pt/first-reproduction-model-run-v1. Implementation commit e974094c; runtime unchanged.
-Local owner/fork/ledger checks: 14 PASS/21.15s; quick 577 PASS (isolated mock included),
-Ruff PASS. Both offline rehearsals admitted full 40K then 25K at 60K uncached input.
 The preceding [saved-evidence repair](history/2026-10-27-public-regression-cycle-results.md)
 passed isolated acceptance after public failure feedback; it does not establish
-clean-start normal completion. Keep these evidence scopes separate.
+clean-start normal completion. The [canonical diagnosis](history/2026-10-28-canonical-diagnostic-analysis.md)
+and [processing-evidence contract](history/2026-10-28-processing-evidence-implementation.md)
+remain the basis for same-call processing evidence, fixture identity and request accounting.
 
 ## Supporting evidence
 

@@ -120,3 +120,4 @@ tests/test_normal_diagnostic_continuation.py
 tests/test_behavior_diagnostic.py
 tests/test_pre_target_obligations.py
 tests/test_processing_observer.py
+tests/test_probe_exit_contract.py

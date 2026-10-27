@@ -12,9 +12,11 @@ CAPTURE_CHANNEL = probe_call_capture.CHANNEL
 STABLE_CHANNEL = "invoke-declared-call-v4"
 DIAGNOSTIC_CHANNEL = "invoke-declared-call-v5"
 CANONICAL_CHANNEL = "invoke-declared-call-v6"
-CHANNEL = "invoke-declared-call-v7"
+BEHAVIOR_CHANNEL = "invoke-declared-call-v7"
+CHANNEL = "invoke-declared-call-v8"
+BEHAVIOR_CHANNELS = (BEHAVIOR_CHANNEL, CHANNEL)
 CAPTURE_CHANNELS = (CAPTURE_CHANNEL, STABLE_CHANNEL, DIAGNOSTIC_CHANNEL, CANONICAL_CHANNEL,
-                    CHANNEL)
+                    *BEHAVIOR_CHANNELS)
 
 # Runs inside the probe sandbox with a separate host observer source budget.
 # In-process diagnostic feedback is not an attestation against a hostile program.
@@ -156,6 +158,8 @@ def supports(channel):
 def observer(channel):
     """Select frozen legacy bytes or bounded call capture for fresh cases."""
     if channel == CHANNEL:
+        return probe_call_capture.exception_observer(OBSERVER_V2)
+    if channel == BEHAVIOR_CHANNEL:
         return probe_call_capture.behavior_observer(OBSERVER_V2)
     if channel in (DIAGNOSTIC_CHANNEL, CANONICAL_CHANNEL):
         return probe_call_capture.diagnostic_observer(OBSERVER_V2)
@@ -181,7 +185,7 @@ def valid_call(call, entrypoint, *, channel=None):
     if channel in CAPTURE_CHANNELS:
         fields.update(("call_id", "bound_parameters", "exception_policy", "capture",
                        "exception", "exit_code"))
-    if channel == CHANNEL:
+    if channel in BEHAVIOR_CHANNELS:
         fields.add("target_started")
     return (supports(channel) and isinstance(call, dict) and set(call) == fields
         and call["entrypoint"] == entrypoint and isinstance(call["resolved_entrypoint"], str)
@@ -201,7 +205,7 @@ def valid_call(call, entrypoint, *, channel=None):
                                if channel in CAPTURE_CHANNELS
                                else ("returned", "raised", "incomplete"))
         and (channel not in CAPTURE_CHANNELS or probe_call_capture.valid(call))
-        and (channel != CHANNEL or type(call.get("target_started")) is bool
+        and (channel not in BEHAVIOR_CHANNELS or type(call.get("target_started")) is bool
              and (call["target_started"] or call["outcome"] == "incomplete"
                   and call["capture"]["status"] == "incomplete")))
 
