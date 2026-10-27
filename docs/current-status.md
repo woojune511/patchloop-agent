@@ -24,50 +24,37 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [single-A live regression trial](history/2026-10-27-public-regression-cycle-results.md)
-exercised the intended revision path successfully. The first edit resolved F0010
-but failed a public symlink regression. The model received that current-diff failure,
-revised once, received original and regression PASS, and stopped. Registered
-regression finished with 1,231 passed / 69 skipped / 15 xfailed; supplementary public
-cases passed 5/5. Isolated acceptance, scope and safety each passed.
+The [clean-start ordinary trial](history/2026-10-27-normal-recovery-fresh-results.md)
+reached original-call observation and one accepted repair, then stopped with
+VERIFICATION_INCOMPLETE before another model response. F0010 remained; its text
+changed from `Unable to load file` to `Failed to import module project`. Helper
+code correctly detected either the old phrase or F0010, while the host rule searched
+only the old phrase. Their verdicts diverged, and baseline-only observation correction
+blocked the candidate replay. The repair did not resolve the observed failure.
 
-Retain the [regression repair cycle](history/2026-10-27-public-regression-repair-cycle.md):
-original and registered public checks precede the next response, public failure
-opens one bounded revision, and final checks reuse exact-diff receipts. The real
-handoff reduced a 62,946-token successor to 55,068 while preserving fresh feedback
-and counters. Final success reached the model at 55,488 tokens. The 60K context
-ceiling did not need an increase in this trial.
+This was not resource exhaustion: USD 0.40596195 / 4.50, about 7m38s, 10 responses,
+15 tools and one edit. Ten model calls, 25 tools and about 1,552 solver seconds
+remained. Maximum input/output were 49,059/21,068 tokens. No registered public check,
+normal finish or isolated evaluation ran. All usage settled; no retry or operator
+repair occurred, and the allocation is closed.
 
-Used: 3 ordinary responses, 0 corrections, 3 tools, 2 edits, 3 host original actions,
-2 regression passes, 1 handoff. Cost $0.38928225 / $1.20; all usage known and allocation
-closed. Collection through model completion took 558.49s; through final checks and
-closure, 661.35s. No repeat or operator repair occurred. Local mechanism coverage
-remains 472 quick PASS/119.15s including isolated mock, with focused evidence linked
-in the implementation record.
+Next: make helper/host diagnostic definitions consistent and distinguish a baseline
+failure signature from the desired behavior. Locally cover unchanged F0010 with
+changed text, genuine resolution, capture status `complete`, and delivery of a
+candidate failure to the next response. Do not infer success from an absent phrase
+or increase context/cost limits on this result. The first repair's module fallback
+hypothesis remains disproven for the observed call and needs further diagnosis.
 
-This is one saved-evidence integration result, not fresh-solve or general quality
-evidence. First-original-call identity holds; the second call retains a cache/input
-identity limitation. The stop summary recognized both passes, but its raw diagnostic
-reason code was `public_task_conflict`, not a success verdict. Host receipts establish
-success independently. Diagnostic stop plus synthetic operator submission does not
-exercise the product's complete `finish_task` flow.
+The [ordinary transfer implementation](history/2026-10-27-normal-recovery-transfer.md)
+retains current feedback/source across handoffs and reserves useful successor
+output plus verification time under opt-in recovery. Quick: 500 PASS/61.887s with
+isolated mock; Ruff PASS. Those tests did not cover the live predicate divergence.
+General settings above remain unchanged. No further paid execution is authorized.
 
-The [ordinary-runner transfer](history/2026-10-27-normal-recovery-transfer.md) is now
-implemented and locally tested. Actual request tests confirm failure/source delivery
-through normal handoff and input overflow; no context rewrite was needed. The opt-in
-recovery cost policy now protects role-sized successor output and check/finish time,
-including one possible revision when physical capacity exists. It preserves a fully
-funded current repair before admitting optional exploration. Quick: 500 PASS/61.887s,
-including isolated mock evaluation; Ruff PASS. These are local mechanism results.
-
-The next evidence gap remains a clean-start run through normal `finish_task`.
-The [sealed single-run plan](history/2026-10-27-normal-recovery-fresh-plan.md) passed
-preflight with no provider/target execution. It uses the same mini model, 60K input
-and 40K/25K output, with a fresh proposed $4.50 cap for exploration and completion.
-The ordinary helper can inspect
-public caller source; diagnostic dependency read/search scope is not transferred.
-General settings above remain unchanged. All paid allocations are closed; the new
-trial is NOT_RUN and awaits exact plan-bound approval.
+The preceding [saved-evidence trial](history/2026-10-27-public-regression-cycle-results.md)
+did receive regression failure, revise and pass isolated acceptance. It used a
+diagnostic loop, prepared evidence and synthetic submission, so it does not establish
+clean-start normal completion. Keep these evidence scopes separate.
 
 ## Supporting evidence
 

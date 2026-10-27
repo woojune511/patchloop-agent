@@ -40,3 +40,4 @@
 - [Live regression-revision result: failure delivered, second edit and isolated acceptance pass](../2026-10-27-public-regression-cycle-results.md)
 - [Ordinary-runner transfer: preserve actual feedback and fund repair, checks and finish](../2026-10-27-normal-recovery-transfer.md)
 - [Sealed clean-start pilot: ordinary acquisition, repair and finish without saved evidence](../2026-10-27-normal-recovery-fresh-plan.md)
+- [Clean-start result: first repair reached, changed F0010 wording exposes divergent predicates](../2026-10-27-normal-recovery-fresh-results.md)
