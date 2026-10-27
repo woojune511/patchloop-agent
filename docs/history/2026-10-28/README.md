@@ -14,3 +14,4 @@
 - [Helper follow-up result: configuration passed, target argument binding failed](../2026-10-28-helper-first-reproduction-results.md)
 - [Actual callable signatures and bounded pre-target argument correction](../2026-10-28-original-argument-correction.md)
 - [Signature-guided first reproduction with one conditional argument correction: preparation](../2026-10-28-argument-first-reproduction-plan.md)
+- [First original invocation entered and F0010 reproduced; argument correction unexercised](../2026-10-28-argument-first-reproduction-results.md)

@@ -24,41 +24,38 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [argument-correction implementation](history/2026-10-28-original-argument-correction.md)
-addresses the settled pre-target failure in the [single full-model helper follow-up](history/2026-10-28-helper-first-reproduction-results.md):
-the model set sys.argv, then passed a positional list to zero-parameter
-pylint.run_pylint. Fresh v9 now exposes the actual callable signature and records
-explicit argument-binding failures separately from target exceptions. A proved
-pre-target failure can use the existing one-per-run correction opportunity, with
-the same question, purpose and call-path request. No resource limit is increased.
+The [single signature-guided trial](history/2026-10-28-argument-first-reproduction-results.md)
+entered the original pylint call and reproduced F0010 on the public missing-init
+fixture. Its normal package control emitted W0611. Both call captures are complete;
+the declared failing observation matches and the desired observation mismatches.
+One model response and one probe process produced two target entries. New cost
+USD 0.2817375 is settled; the approved USD 4.41415320 allocation is CLOSED.
+No repair, public regression, finish or isolated evaluation was executed.
 
-The next response receives the failed source, actual signature and supplied args.
-A changed request must still fit acquisition quotas and completion reservations,
-including its prospective original replay. Rejection/repeated failure cannot
-renew the opportunity. Argument correction never establishes original verification.
-Saved v1-v8 observer bytes and completed-action recovery remain fixed.
+The authored program called target.signature(), then set sys.argv and used
+target() without Python arguments. Both host rows record signature () and no
+binding error. The returned signature was discarded, so adaptive use of it is
+not established. The first request entered normally; bounded argument correction
+is NOT_EXERCISED in this live run. No extra error or repeat was manufactured.
 
-Local fixture execution and scripted model responses cover error delivery,
-correction, exhausted budgets and recovery; the focused selection also reaches
-isolated mock evaluation. The implementation record holds exact test receipts.
-No paid model or benchmark execution occurred for this change. The unresolved
-question is whether the actual model uses the signature and feedback to reach
-the original failing call and establish same-call processing evidence. F0010
-reproduction, repair gain and fresh-solve completion remain unverified.
+The [v9 implementation](history/2026-10-28-original-argument-correction.md) retains
+actual signature inspection and one same-question/purpose/call-path correction
+shared with helper recovery, under existing quotas and completion reserves.
+Saved v1-v8 observers and idempotent recovery remain fixed. Local controls cover
+feedback correction; this single live result does not establish its uptake.
 
-A [single full-model trial](history/2026-10-28-argument-first-reproduction-plan.md)
-is sealed and locally validated at the same public checkpoint. The initial request
-changes only the long description's call paragraph; host v9 and one conditional
-argument-correction continuation apply. Normal first entry ends immediately with
-correction NOT_EXERCISED. The second probe, explicit stop or ordinary terminal
-also ends the diagnostic; repair/submission/evaluation remain out of scope.
-Read-only preflight is READY. Proposed new cap USD 4.41415320 is awaiting exact
-authorization; no new paid collection has started.
+The desired observation requires error absence and positive processing from the
+original call itself. Here diagnostic_rules was null and the model's program
+computed nested booleans by substring search. Independent review agrees with the
+current captures, but future candidate judgment is not guaranteed by the host's
+canonical diagnostic-rule path. W0611 is an added processing check beyond the
+issue's explicit error-absence criterion.
 
-The prior first-probe diagnostic stopped at its first result and could not test
-feedback correction. Its USD 0.1866575 allocation is closed; any live continuation
-needs a new scope and exact allocation. The preceding [model pair](history/2026-10-28-first-reproduction-model-results.md)
-is a separate closed experiment, not a new control or model-adoption result.
+The original failure now has an executed public baseline. The next unresolved
+question is whether actual-model repair can preserve that caller/fixture and
+pass its desired behavior plus public regressions before submission. Context and
+output ceilings were not exhausted. No repair continuation is currently funded;
+this checkpoint trial is not a clean-start solve or general improvement claim.
 
 The preceding [saved-evidence repair](history/2026-10-27-public-regression-cycle-results.md)
 passed isolated acceptance after public failure feedback; it does not establish
