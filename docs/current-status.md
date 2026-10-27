@@ -46,6 +46,15 @@ question is whether the actual model uses the signature and feedback to reach
 the original failing call and establish same-call processing evidence. F0010
 reproduction, repair gain and fresh-solve completion remain unverified.
 
+A [single full-model trial](history/2026-10-28-argument-first-reproduction-plan.md)
+is sealed and locally validated at the same public checkpoint. The initial request
+changes only the long description's call paragraph; host v9 and one conditional
+argument-correction continuation apply. Normal first entry ends immediately with
+correction NOT_EXERCISED. The second probe, explicit stop or ordinary terminal
+also ends the diagnostic; repair/submission/evaluation remain out of scope.
+Read-only preflight is READY. Proposed new cap USD 4.41415320 is awaiting exact
+authorization; no new paid collection has started.
+
 The prior first-probe diagnostic stopped at its first result and could not test
 feedback correction. Its USD 0.1866575 allocation is closed; any live continuation
 needs a new scope and exact allocation. The preceding [model pair](history/2026-10-28-first-reproduction-model-results.md)
