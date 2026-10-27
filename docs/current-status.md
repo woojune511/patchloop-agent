@@ -1,6 +1,6 @@
 # Current status
 
-Updated: 2026-10-27. Runtime source owns behavior. Historical reports are evidence,
+Updated: 2026-10-28. Runtime source owns behavior. Historical reports are evidence,
 not an active queue.
 
 ## Product and working baseline
@@ -24,44 +24,38 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [clean-start ordinary trial](history/2026-10-27-normal-recovery-fresh-results.md)
-reached original-call observation and one accepted repair, then stopped with
-VERIFICATION_INCOMPLETE before another model response. F0010 remained; its text
-changed from `Unable to load file` to `Failed to import module project`. Helper
-code correctly detected either the old phrase or F0010, while the host rule searched
-only the old phrase. Their verdicts diverged, and baseline-only observation correction
-blocked the candidate replay. The repair did not resolve the observed failure.
+The [canonical diagnostic live pilot](history/2026-10-28-canonical-diagnostic-fresh-results.md)
+completed ordinary acquisition, one edit, public regression and normal finish,
+then failed isolated task acceptance. Safety PASS is separate. It cost USD
+0.59931540 / 4.50 in about 13m38s: 12 responses/counts, 16 actions and one edit.
+All usage settled; no retry, operator patch or synthetic submission occurred.
+The allocation is closed. This is not resource exhaustion or successful task repair.
 
-This was not resource exhaustion: USD 0.40596195 / 4.50, about 7m38s, 10 responses,
-15 tools and one edit. Ten model calls, 25 tools and about 1,552 solver seconds
-remained. Maximum input/output were 49,059/21,068 tokens. No registered public check,
-normal finish or isolated evaluation ran. All usage settled; no retry or operator
-repair occurred, and the allocation is closed.
+The model selected fresh F0010 code rules, corrected an invalid helper argument,
+and reproduced the baseline. Host v2 computed true/false, then false/false after
+the edit. Actual subsequent requests received that observation, current patch
+and public regression PASS (1,231 passed, 69 skipped, 15 xfailed).
+The patch synthesizes an empty package module when its initializer is missing.
+Code absence does not establish correct file selection or analysis.
 
-The [canonical diagnostic change](history/2026-10-27-canonical-diagnostic-feedback.md)
-now defines fresh code observations once on the host. Helpers invoke targets;
-they no longer need a second Boolean extractor. Stable code tokens survive changed
-wording, and incomplete execution stays unknown. v6 computed evidence connects to
-the existing repair loop; saved v1-v5 judgments retain their semantics.
+Delivery remained unverified: the corrected case's second-call input inventory
+changed from 14 to 16 entries and its hash changed. The receipt does not name the
+added entries. Same-call code output and full reproduction identity are distinct;
+do not assume this was only cache state. Actual requests preserved the UNKNOWN
+comparability state. Changed-wording failure feedback and revision were NOT_EXERCISED
+because the first edit removed the selected code.
 
-Local normal-runner tests delivered changed-text F0010 failure and current source
-to the next request, executed a second edit, checked and finished with exact-diff
-receipt reuse. Both result and forced-token handoffs passed without expanding
-limits. This is scripted-provider evidence; real-model uptake and Astroid repair
-remain untested. The [new clean-start pilot](history/2026-10-27-canonical-diagnostic-fresh-plan.md)
-is sealed and preflight PASS: the same task/mini model, one run, USD 4.50, 20 total
-responses, 40 actions and three edits; 60K input, 40K/25K output and 2,400 seconds
-including 390 for evaluation. Only the canonical diagnostic runtime changes.
-No previous repair evidence is injected. Provider/count/credential/target execution
-counts are zero; exact fresh approval is pending. Do not increase limits.
-New core coverage is 25 PASS. Quick covered 526 cases/82.779s including isolated
-mock; all failed schema-hash/document nodes passed targeted reruns. Ruff PASS.
+Keep the [canonical host change](history/2026-10-27-canonical-diagnostic-feedback.md):
+it removed duplicate helper judgment for fresh calls and kept incomplete execution
+unknown. Local normal-runner tests cover changed-text feedback and a second edit;
+25 new core cases PASS, quick covered 526 cases/82.779s including isolated mock,
+all failed schema/document nodes passed targeted reruns, Ruff PASS. These local
+mechanisms and live task acceptance remain separate claims.
 
-The [ordinary transfer implementation](history/2026-10-27-normal-recovery-transfer.md)
-retains current feedback/source across handoffs and reserves useful successor
-output plus verification time under opt-in recovery. Quick: 500 PASS/61.887s with
-isolated mock; Ruff PASS. Those tests did not cover the live predicate divergence.
-General settings above remain unchanged. No further paid execution is authorized.
+Next diagnose public file-selection behavior and the generated entries behind
+second-call identity drift. The hypotheses are not established by evaluator FAIL
+alone. Do not increase context/cost limits or rerun from unused funds. General
+settings above remain unchanged; no further paid execution is authorized.
 
 The preceding [saved-evidence trial](history/2026-10-27-public-regression-cycle-results.md)
 did receive regression failure, revise and pass isolated acceptance. It used a
