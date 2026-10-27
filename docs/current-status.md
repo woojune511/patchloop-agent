@@ -47,9 +47,10 @@ No solution hints or private evaluation details enter the packet.
 
 Local validation: 112 focused PASS/71.16s; 472 quick PASS/116.57s including isolated
 mock evaluation; Ruff PASS. All 14 saved source anchors matched a fresh workspace.
-The proposed paid scope is A/B once each,
+The [prepared paid scope](history/2026-10-27-first-edit-checkpoint-plan.md) is A/B once each,
 $1.20 per condition and $2.40 total, mini/xhigh, two ordinary responses, one
-correction and one new edit. New exact approval follows preparation and preflight.
+correction and one new edit. Preparation and read-only preflight passed; new exact
+approval is pending. Manifest: `C:/pt/first-edit-checkpoint-plan-v1/manifest.json`.
 No provider or target execution has run for this change; live repair is unverified.
 After an edit, original-call feedback precedes the final response; public regression,
 isolated acceptance, cost and completion remain separate outcomes.
