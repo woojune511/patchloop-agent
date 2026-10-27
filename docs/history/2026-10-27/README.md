@@ -29,3 +29,4 @@
 - [Registered dependency source access and bounded single-trial preparation](../2026-10-27-dependency-source-access.md)
 - [Sealed caller-source trial: R1 once, unchanged limits, preflight complete](../2026-10-27-dependency-source-plan.md)
 - [Caller-source result: runtime diagnosis reached, first edit absent and correction uncertain](../2026-10-27-dependency-source-results.md)
+- [First-edit checkpoint: correction-time admission and lossless public-context comparison](../2026-10-27-first-edit-checkpoint.md)

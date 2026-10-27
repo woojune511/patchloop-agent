@@ -11,10 +11,12 @@ from __future__ import annotations
 import argparse
 import copy
 import json
+import math
 from contextlib import suppress
 from dataclasses import asdict, dataclass
 from decimal import Decimal
 from pathlib import Path
+from time import monotonic
 from types import SimpleNamespace
 
 from diagnostics.cleanup_information_checkpoint import restore_candidate
@@ -534,12 +536,36 @@ def _exchange(turn, results, issue=None):
     return items
 
 
+_SAFE_REQUEST_ERROR_CLASSES = frozenset({
+    "TimeoutError", "ConnectionError", "OSError", "ValueError", "TypeError", "RuntimeError",
+    "ContractError", "ExecutionDeadlineExceeded", "APIError", "APIStatusError",
+    "APITimeoutError", "APIConnectionError", "AuthenticationError", "PermissionDeniedError",
+    "BadRequestError", "NotFoundError", "ConflictError", "UnprocessableEntityError",
+    "RateLimitError", "InternalServerError", "HTTPStatusError", "RequestError", "ReadTimeout",
+    "ConnectTimeout", "PoolTimeout", "WriteTimeout", "TimeoutException", "RemoteProtocolError",
+})
+
+
+def _safe_request_failure(exc, *, phase, request_hash, timeout_s, started_at, **identity):
+    """Operational facts only: exception messages/bodies may contain credentials."""
+    name = type(exc).__name__
+    return {"phase": phase, "error_class": name if name in _SAFE_REQUEST_ERROR_CLASSES
+            else "OtherException", "request_hash": request_hash, "timeout_s": timeout_s,
+            "elapsed_s": max(0.0, monotonic() - started_at), "usage_unknown": True, **identity}
+
+
 def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAULT_PROFILE,
-              source_packet=None, request_builder=None, cycle=None):
+              source_packet=None, request_builder=None, cycle=None,
+              minimum_correction_seconds=30.0):
     """Legacy one-edit diagnostic, or an explicit bounded public repair cycle."""
     from diagnostics import repair_cycle_tools
     from diagnostics.repair_cycle_budget import cycle_opportunity
 
+    if cycle:
+        require(type(minimum_correction_seconds) in {int, float}
+                and math.isfinite(minimum_correction_seconds)
+                and minimum_correction_seconds > 0,
+                "minimum correction seconds must be finite and positive")
     journal = gateway.journal
     build_request = request_builder or request_payload
     policy = arm_policy(profile, arm)
@@ -559,6 +585,7 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
     tool_limit = cycle.limits.model_tools if cycle else TOOL_ACTIONS
     probe_limit = cycle.limits.helper_probes if cycle else 1
     edit_limit = cycle.limits.accepted_edits if cycle else 1
+    correction_time_reserve = 0
 
     def opportunity_for(*, is_correction, **options):
         if cycle:
@@ -571,25 +598,44 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
             tool_remaining=tool_limit - actions, probe_used=bool(probes),
             correction=is_correction, **options) if profile.reserve_opportunity else None
 
-    def model_timeout(opportunity):
+    def original_time_reserve(opportunity):
         reserve = 0
         if cycle:
             if "replace_text" in opportunity.allowed:
                 reserve = cycle.needed_original_seconds(for_new_diff=True) + 5
             if repair_cycle_tools.ORIGINAL in opportunity.allowed:
                 reserve = max(reserve, cycle.needed_original_seconds() + 5)
-        return gateway.deadline.remaining_seconds() - reserve
+        return reserve
+
+    def model_timeout(opportunity):
+        return (gateway.deadline.remaining_seconds()
+                - max(original_time_reserve(opportunity), correction_time_reserve))
+
+    def correction_time_available(timeout, *, phase, **identity):
+        if cycle and is_correction and timeout < minimum_correction_seconds:
+            journal.append("correction_time_unavailable", {
+                "phase": phase, "timeout_s": timeout,
+                "minimum_correction_seconds": minimum_correction_seconds,
+                "original_recheck_reserve_s": correction_time_reserve, **identity})
+            return False
+        return True
 
     while normal < profile.normal_calls or correction is not None:
         if actions >= tool_limit:
             terminal = "TOOL_LIMIT"
             break
+        is_correction = correction is not None
+        opportunity = opportunity_for(is_correction=is_correction)
+        # Keep the initially offered action's original-call reserve even if later
+        # cost narrowing removes that action. Correction never borrows check time.
+        correction_time_reserve = original_time_reserve(opportunity) if is_correction else 0
+        if not correction_time_available(model_timeout(opportunity), phase="before_count"):
+            terminal = "CORRECTION_TIME_UNAVAILABLE"
+            break
         timeout = gateway.deadline.remaining_seconds()
         if timeout <= 0:
             terminal = "MODEL_TIME_LIMIT"
             break
-        is_correction = correction is not None
-        opportunity = opportunity_for(is_correction=is_correction)
         if cycle and model_timeout(opportunity) <= 0:
             if first:
                 terminal = "RECHECK_TIME_UNAVAILABLE"
@@ -605,6 +651,9 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
         pending_handoff = None
         while True:
             timeout = model_timeout(opportunity)
+            if not correction_time_available(timeout, phase="before_count"):
+                terminal = "CORRECTION_TIME_UNAVAILABLE"
+                break
             if timeout <= 0:
                 terminal = "MODEL_TIME_LIMIT"
                 break
@@ -633,16 +682,30 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
                 count_id += f"-narrow-{narrowing}"
             if segment_index:
                 count_id += f"-segment-{segment_index}"
+            request_artifact = store.put_json(payload).model_dump(mode="json")
+            if cycle:
+                timeout = model_timeout(opportunity)
+            if not correction_time_available(timeout, phase="before_count", count_id=count_id,
+                                             request_hash=request_hash):
+                terminal = "CORRECTION_TIME_UNAVAILABLE"
+                break
             journal.append("input_count_started", {"count_id": count_id,
                            "request_hash": request_hash,
-                           "request": store.put_json(payload).model_dump(mode="json")})
+                           "request": request_artifact, "phase": "input_count",
+                           "timeout_s": timeout})
+            count_started_at = monotonic()
             try:
                 counted = adapter.count_input_tokens_v2(payload, timeout_seconds=timeout)
-            except Exception:
+            except Exception as exc:
+                journal.append("input_count_failed", _safe_request_failure(exc,
+                    phase="input_count", request_hash=request_hash, count_id=count_id,
+                    timeout_s=timeout, started_at=count_started_at))
                 terminal, uncertain = "COUNT_UNCERTAIN", True
                 break
             journal.append("input_count_finished", {"count_id": count_id,
-                           "request_hash": request_hash, "input_tokens": counted})
+                           "request_hash": request_hash, "input_tokens": counted,
+                           "phase": "input_count", "timeout_s": timeout,
+                           "elapsed_s": max(0.0, monotonic() - count_started_at)})
             if type(counted) is not int or counted <= 0:
                 terminal, uncertain = "COUNT_UNCERTAIN", True
                 break
@@ -725,6 +788,10 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
         if admissions is None:
             break
         timeout = model_timeout(opportunity)
+        if not correction_time_available(timeout, phase="before_generation", count_id=count_id,
+                                         request_hash=request_hash):
+            terminal = "CORRECTION_TIME_UNAVAILABLE"
+            break
         if timeout <= 0:
             terminal = "MODEL_TIME_LIMIT"
             break
@@ -735,27 +802,47 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
             journal.append("repair_context_committed", {**pending_handoff,
                 "count_id": count_id, "input_tokens": counted,
                 "request_hash": sha256_json(payload)})
+        generation_artifact = store.put_json(payload).model_dump(mode="json")
+        if cycle:
+            timeout = model_timeout(opportunity)
+            if not correction_time_available(timeout, phase="before_generation",
+                                             count_id=count_id, call_id=call_id,
+                                             request_hash=sha256_json(payload)):
+                terminal = "CORRECTION_TIME_UNAVAILABLE"
+                break
+            if timeout <= 0:
+                terminal = "MODEL_TIME_LIMIT"
+                break
         journal.append("provider_call_started", {"call_id": call_id,
                         "request_hash": sha256_json(payload),
-                        "request": store.put_json(payload).model_dump(mode="json"),
+                        "request": generation_artifact,
                         "counted_request_hash": request_hash, "input_tokens": counted,
                         "output_ceiling": payload["max_output_tokens"],
+                        "phase": "generation", "timeout_s": timeout,
                         **({"opportunity": opportunity.public(),
                             "future_cost_reserve_nanos": reserve} if opportunity else {})})
         corrections += int(is_correction)
         normal += int(not is_correction)
+        provider_started_at = monotonic()
         try:
             raw = adapter.execute_request(payload, requested_input_tokens=counted,
                                           timeout_seconds=timeout)
-        except Exception:
+        except Exception as exc:
+            journal.append("provider_usage_unknown", _safe_request_failure(exc,
+                phase="generation", request_hash=sha256_json(payload), call_id=call_id,
+                count_id=count_id, timeout_s=timeout, started_at=provider_started_at))
             terminal, uncertain = "PROVIDER_UNCERTAIN", True
             break
+        provider_elapsed = max(0.0, monotonic() - provider_started_at)
         turn = runner._turn_from_openai(raw, agent_policy=policy)
         if (turn.usage_evidence is None or turn.usage_evidence.get("failure_kind") is not None
                 or turn.response_model != model
                 or turn.output_tokens > payload["max_output_tokens"]):
             journal.append("provider_usage_unknown", {"call_id": call_id,
-                           "error_code": turn.error_code, "usage_evidence": turn.usage_evidence})
+                           "error_code": turn.error_code, "usage_evidence": turn.usage_evidence,
+                           "phase": "generation", "request_hash": sha256_json(payload),
+                           "timeout_s": timeout, "elapsed_s": provider_elapsed,
+                           "usage_unknown": True})
             terminal, uncertain = "BILLING_UNCERTAIN", True
             break
         usage = {k: getattr(turn, k)
@@ -764,6 +851,8 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
         group.settle(**usage)
         journal.append("provider_call_finished", {"call_id": call_id, **usage, "cost_nanos": cost,
                        "response_id": turn.response_id, "error_code": turn.error_code,
+                       "phase": "generation", "request_hash": sha256_json(payload),
+                       "timeout_s": timeout, "elapsed_s": provider_elapsed,
                        "tool_calls": [call.model_dump(mode="json") for call in turn.tool_calls]})
         if ledger.spent_nanos > ledger.cap_nanos or group.spent_nanos > group.cap_nanos:
             terminal, uncertain = "BILLING_UNCERTAIN", True
