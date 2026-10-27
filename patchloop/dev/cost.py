@@ -42,6 +42,36 @@ def correction_output_ceiling(
     )
 
 
+def recovery_successor_output_ceilings(
+    *, calls: int, max_output_tokens: int, repair_calls: int = 0,
+    preparation_calls: int = 0,
+) -> tuple[int, ...]:
+    """Price roles within a caller-selected completion/recovery path.
+
+    The runner owns path eligibility and real model/tool slots. This function
+    adds no calls: one existing successor is finalization, requested repair and
+    preparation roles consume other slots, and other continuations keep the same
+    bounded floor as finalization. The tuple is a price allocation, not execution order.
+    Protocol correction remains a separate, nonrenewable reservation.
+    """
+    if any(type(value) is not int or value < 0
+           for value in (calls, repair_calls, preparation_calls)):
+        raise ValueError("successor role counts must be nonnegative integers")
+    if (type(max_output_tokens) is not int
+            or not MINIMUM_OUTPUT_CEILING <= max_output_tokens <= MAX_OUTPUT_CEILING):
+        raise ValueError("normal output allowance must be an integer from 128 to 128000")
+    if repair_calls + preparation_calls > max(0, calls - 1):
+        raise ValueError("successor roles exceed the path's nonfinal call slots")
+    if calls == 0:
+        return ()
+    bounded_output = min(FINALIZATION_OUTPUT_FLOOR, max_output_tokens)
+    continuation_calls = calls - repair_calls - preparation_calls - 1
+    return ((bounded_output,) * preparation_calls
+            + (max_output_tokens,) * repair_calls
+            + (bounded_output,) * continuation_calls
+            + (bounded_output,))
+
+
 def completion_cost_contract(
     policy: CompletionCostPolicy = COMPLETION_RESERVE_POLICY,
     *,
@@ -59,10 +89,17 @@ def completion_cost_contract(
         return {
             "policy": COMPLETION_RECOVERY_POLICY,
             "future_input_tokens": segments.MAX_INPUT_TOKENS,
-            "future_output_tokens": MINIMUM_OUTPUT_CEILING,
-            "pricing": "uncached-input-and-minimum-output",
-            "horizon": "minimum-success-path-and-one-protocol-correction-v1",
-            "reservation": "minimum-successor-plus-correction-and-finalization-v2",
+            "future_output_tokens": FINALIZATION_OUTPUT_FLOOR,
+            "future_output_ceiling": "min-floor-and-invocation-normal-output-ceiling",
+            "pricing": "uncached-input-and-role-output-allowances",
+            "horizon": "completion-and-available-bounded-repair-v2",
+            "reservation": "role-successors-plus-correction-v3",
+            "preparation_output_tokens": FINALIZATION_OUTPUT_FLOOR,
+            "preparation_ceiling": "min-floor-and-invocation-normal-output-ceiling",
+            "repair_output_tokens": "invocation-max-output-tokens",
+            "role_calls": "existing-runner-path-slots-no-extra-calls",
+            "future_time": "registered-timeouts-plus-cleanup-and-30s-per-successor",
+            "time_admission": "count-and-generation-share-a-deadline-before-reserved-work",
             "finalization_output_tokens": FINALIZATION_OUTPUT_FLOOR,
             "finalization_ceiling": "min-floor-and-invocation-normal-output-ceiling",
             "finalization_release": "exact-counted-ready-request-no-successor",
@@ -75,10 +112,10 @@ def completion_cost_contract(
             "correction_model_calls": 1,
             "correction_tool_actions": 0,
             "release": "first-protocol-correction-or-terminal",
-            "limit": "One protocol correction receives the requested output ceiling; valid "
-            "response and task success are not guaranteed. Tool failures and unknown billing "
-            "are not covered. One finalization successor retains a bounded output floor; "
-            "other successors retain minimum output admission only.",
+            "limit": "Available preparation, repair, check and finalization successors retain "
+            "bounded output allowances within existing path slots. One protocol correction "
+            "receives its requested output ceiling. Useful output, repair and task success are not "
+            "guaranteed. Tool execution uncertainty and unknown billing are not retry funding.",
         }
     if policy == COMPLETION_MINIMUM_POLICY:
         return {

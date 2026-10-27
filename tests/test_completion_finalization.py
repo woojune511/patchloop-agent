@@ -24,7 +24,8 @@ def test_finalization_floor_survives_successor_spend_under_same_cap():
     ledger = ledger_for_slots(3)
     premium = ledger.future_call_reservation_nanos(output_ceiling=8_192) - (
         ledger.future_call_reservation_nanos())
-    ledger.cap_nanos += premium
+    ledger.cap_nanos = sum(ledger.future_call_reservation_nanos(output_ceiling=ceiling)
+                           for ceiling in (40_000, 8_192, 8_192))
     cap = ledger.cap_nanos
     counts = counters(model=3, tools=3, protocol_corrections_total=1)
     ceilings = []
@@ -50,7 +51,7 @@ def test_finalization_floor_survives_successor_spend_under_same_cap():
             gateway.accepted_mutations += 1
         if step == 1:
             gateway.statuses = {"check-0": "PASS"}
-    assert ceilings == [128, 128, 8_192]
+    assert ceilings == [40_000, 8_192, 8_192]
     assert ledger.spent_nanos == cap and ledger.remaining_nanos == 0
 
 

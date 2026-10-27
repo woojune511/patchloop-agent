@@ -52,15 +52,18 @@ identities and existing retrieval tools. Explicit new reads still deliver native
 results. The journal is unchanged. Other context policies compact current state
 but do not acquire segmented history-reset behavior.
 
-`completion-recovery-v1` additionally reserves an 8,192-output-token finalization
-floor, clipped to the configured ordinary ceiling. Ordinary non-final successors
-still reserve 60K uncached input + 128 output. One future finalization premium is
-reserved within the existing invocation cap; an optional action from ready state
-must fund both its current allowance and the subsequent finalization. A closing
-finish has no future reserve and uses exact input counting. The first pending
-protocol correction retains its separate requested ceiling; it is never renewed.
-The floor is a bounded engineering choice, not evidence that xhigh will complete
-or repair successfully. Count/transport/billing uncertainty still stops execution.
+`completion-recovery-v1` reserves role-specific output within the existing cap:
+required source repair uses the ordinary output ceiling; preparation, checks and
+finalization use an 8,192-token floor clipped to that ceiling. Successor inputs use
+60K uncached tokens. The current required repair also keeps its full allowance;
+optional exploration cannot reduce that response to the minimum accounting unit.
+One physically available public-failure revision can retain read, repair, new
+checks and finish funding. Immediate required completion may release speculative
+recovery; per-action reservations expose that release. A closing finish has no
+successor reserve and uses exact counting. The first protocol correction keeps
+its independent ceiling and is never renewed. See [resources](completion-resources.md)
+for time admission. These are bounded engineering allowances, not evidence that
+xhigh will complete or repair. Count/transport/billing uncertainty still stops execution.
 
 `inspection_focus` is advisory after a complete current first observation. It
 connects the observation to delivered current source ranges, up to three recent

@@ -52,9 +52,20 @@ reason code was `public_task_conflict`, not a success verdict. Host receipts est
 success independently. Diagnostic stop plus synthetic operator submission does not
 exercise the product's complete `finish_task` flow.
 
-The next evidence gap is transfer to an unseeded run through normal completion while
-preserving feedback and resource contracts. General production settings above remain
-unchanged. All paid allocations are closed; no further trial is currently authorized.
+The [ordinary-runner transfer](history/2026-10-27-normal-recovery-transfer.md) is now
+implemented and locally tested. Actual request tests confirm failure/source delivery
+through normal handoff and input overflow; no context rewrite was needed. The opt-in
+recovery cost policy now protects role-sized successor output and check/finish time,
+including one possible revision when physical capacity exists. It preserves a fully
+funded current repair before admitting optional exploration. Quick: 500 PASS/61.887s,
+including isolated mock evaluation; Ruff PASS. These are local mechanism results.
+
+The next evidence gap remains a clean-start run through normal `finish_task`.
+Preparation uses the same mini model, 60K input and 40K/25K output, with a proposed
+fresh $4.50 cap for exploration and completion. The ordinary helper can inspect
+public caller source; diagnostic dependency read/search scope is not transferred.
+General settings above remain unchanged. All paid allocations are closed; the new
+trial is NOT_RUN and requires exact plan-bound approval after sealing.
 
 ## Supporting evidence
 

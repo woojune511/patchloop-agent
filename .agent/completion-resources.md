@@ -43,6 +43,34 @@ retain exact-count output reduction. A valid action or restart never renews the
 credit; tool failure and unknown billing do not earn funded retries. Count,
 transport and billing uncertainty retain the existing stop-all behavior.
 
+## Ordinary recovery cost and time admission
+
+`completion-recovery-v1` uses the existing physical call/action forecast, then
+prices the offered actions' actual successor roles. A required repair retains
+the full ordinary output ceiling; preparation/check/finish retain min(8,192,
+ordinary ceiling). Correction retains its independent nonrenewable allowance.
+The 128-output monetary unit is only an initial slot-count upper bound, not the
+final reserve or a promised useful response. Other cost policies remain unchanged.
+
+When model/tool/edit capacity exists, the envelope includes one future public
+failure, a diagnostic read, revision, all new checks and acquired-original replays.
+An original-only failure cannot borrow automatic registered-check savings.
+Optional exploration must preserve this route. A required read/edit/check can
+release speculative recovery when needed to retain a viable immediate completion;
+the action-specific `failure_recovery_reserved` field records that distinction.
+No additional slots, retries or correctness credit are created.
+
+Before counting or generation, reserve registered check timeouts plus five seconds
+per execution, probe timeout/cleanup, and 30 seconds per successor response.
+Selected comparisons reserve both executions. Test addition also retains its
+comparison and both mutations' original replays. Count and generation share one
+earlier deadline, so counting cannot renew generation time. A protocol correction
+requires 30 seconds after these reservations. Time/cost rejection happens before
+dispatch; uncertain dispatched work still stops rather than being retried.
+These are nominal execution allowances, not a worst-case promise about every Git,
+filesystem or container setup delay. The separately reserved isolated-evaluation
+deadline remains independent.
+
 ## One diagnostic opportunity for a refuted candidate
 
 A nonempty candidate with a comparable current refutation of an acquired original

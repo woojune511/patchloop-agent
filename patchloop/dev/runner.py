@@ -117,6 +117,7 @@ from patchloop.dev.native_sources import (
 )
 from patchloop.dev.probe_observation import probe_observation, project_probe_result
 from patchloop.dev.public_history import NATIVE
+from patchloop.dev.recovery_resources import CHECK_OVERHEAD_SECONDS, successor_resources
 from patchloop.dev.repair_recheck import (
     latest_repair_check,
     repair_recheck_context,
@@ -157,7 +158,12 @@ from patchloop.runtime import (
     runtime_content_paths,
 )
 from patchloop.sandbox import DockerSandbox, LocalSandbox
-from patchloop.sandbox.probes import DockerProbeSandbox, probe_profile, probe_profile_hash
+from patchloop.sandbox.probes import (
+    PROBE_TIMEOUT_SECONDS,
+    DockerProbeSandbox,
+    probe_profile,
+    probe_profile_hash,
+)
 from patchloop.sandbox.runner import SandboxCleanupError
 from patchloop.task_loader import load_task_package, task_package_content_paths
 from patchloop.util import canonical_json, sha256_bytes, sha256_json, utc_now
@@ -829,6 +835,7 @@ def _tool_policy(
     completion_cost_policy: str = DEFAULT_COMPLETION_COST_POLICY,
     desired_output_ceiling: int = DEFAULT_OUTPUT_CEILING,
     max_correction_output_tokens: int | None = None,
+    remaining_seconds: float | None = None,
     _preview_inspection: bool = True,
     _cost_call_limit: int | None = None,
     _diagnostic_spent: bool = False,
@@ -1299,6 +1306,8 @@ def _tool_policy(
         if completion_possible:
             allowed.add("run_tests")
     minimum_cost_successors = None
+    recovery_routes = {}
+    resource_rejections = {}
     if (completion_cost_policy in {COMPLETION_MINIMUM_POLICY, COMPLETION_RECOVERY_POLICY}
             and funded_calls is not None):
         # Keep physical model/action recovery slots independent of money. Offer
@@ -1322,14 +1331,72 @@ def _tool_policy(
                 minimum_cost_successors[history_search.TOOL] = 1 + probe_budget.minimum
             if "run_probe" in allowed:
                 minimum_cost_successors["run_probe"] = probe_budget.minimum
+        if completion_cost_policy == COMPLETION_RECOVERY_POLICY:
+            checks = gateway.public_task.visible_checks
+            durations = {check.id: float(getattr(check, "timeout_seconds", 0))
+                         + CHECK_OVERHEAD_SECONDS
+                         for check in checks}
+            suites = getattr(gateway.public_task, "test_suites", ())
+            for tool in allowed:
+                calls = minimum_cost_successors[tool]
+                extra = 2 + completion_state.check_count - int(repair_recheck
+                    and completion_state.check_count > 0
+                    and not completion_state.reproduction_case_count and not acquisition_pending)
+                spare_edits = remaining_mutations - int(requires_mutation
+                    or tool == "replace_text") - int(repair_test_edit_enabled)
+                recover = bool(tool not in {"finish_task", "stop_task"}
+                    and spare_edits > 0
+                    and (completion_state.unused_check_count
+                         or completion_state.reproduction_case_count)
+                    and remaining_model_calls >= 1 + calls + extra
+                    and remaining_tool_actions >= budget.minimum_tool_actions + 3
+                        + completion_state.check_count + completion_state.reproduction_case_count)
+                options = dict(calls=calls, max_output_tokens=desired_output_ceiling,
+                    check_seconds=tuple(durations.values()),
+                    remaining_check_seconds=tuple(durations[c] for c in remaining_check_ids),
+                    probe_seconds=PROBE_TIMEOUT_SECONDS + CHECK_OVERHEAD_SECONDS,
+                    acquisition_pending=acquisition_pending,
+                    test_comparison=(test_comparison_pending or remaining_tool_actions - 2
+                                     >= selected_test_tool_floor),
+                    optional_check_seconds=max((float(getattr(s, "timeout_seconds", 0)) + 5
+                                                for s in suites), default=0),
+                    test_edit=repair_test_edit_enabled and tool == "replace_text")
+                route = successor_resources(completion_state, tool,
+                                            protect_failure=recover, **options)
+
+                def fits(candidate):
+                    money = sum(cost_ledger.future_call_reservation_nanos(output_ceiling=n)
+                                for n in candidate.output_ceilings) + correction_reserve
+                    output = (correction_ceiling if correction_pending else desired_output_ceiling
+                              if requires_mutation and "replace_text" in allowed
+                              else finalization_floor)
+                    current = cost_ledger.future_call_reservation_nanos(output_ceiling=output)
+                    return (money + current <= cost_ledger.remaining_nanos
+                            and (remaining_seconds is None
+                                 or remaining_seconds - candidate.seconds >= 30))
+
+                # A useful immediate repair/check may spend speculative recovery.
+                # Optional exploration cannot consume that reserved revision.
+                if recover and not fits(route) and (tool in {"replace_text", "run_check"}
+                        or required_inspection and tool in {"read_file", "search_files"}):
+                    route = successor_resources(completion_state, tool,
+                                                protect_failure=False, **options)
+                if tool in {"finish_task", "stop_task"} or fits(route):
+                    recovery_routes[tool] = route
+                else:
+                    resource_rejections[tool] = ("time" if remaining_seconds is not None
+                        and remaining_seconds - route.seconds < 30 else "cost")
         allowed = {
             tool for tool in allowed
             if tool in {"finish_task", "stop_task"}
-            or funded_calls >= 1 + minimum_cost_successors[tool]
+            or (tool in recovery_routes if completion_cost_policy == COMPLETION_RECOVERY_POLICY
+                else funded_calls >= 1 + minimum_cost_successors[tool])
         }
         completion_possible = completion_possible and (
             funded_calls >= budget.minimum or "finish_task" in allowed
         )
+        if completion_cost_policy == COMPLETION_RECOVERY_POLICY:
+            completion_possible &= bool(allowed - {"stop_task"})
         protected_completion_possible &= completion_possible
         if not completion_possible:
             allowed = {"stop_task"}
@@ -1512,6 +1579,33 @@ def _tool_policy(
                          "guarantees of useful output or repair. Other successors retain "
                          "minimum output admission only. The invocation cap is unchanged.",
             })
+            routes = {tool: recovery_routes[tool] for tool in allowed}
+            role_costs = {tool: sum(cost_ledger.future_call_reservation_nanos(output_ceiling=n)
+                                   for n in route.output_ceilings)
+                          for tool, route in routes.items()}
+            policy.completion_cost.update({
+                "basis": "largest_offered_action_role_successor",
+                "future_output_tokens": finalization_floor,
+                "funded_calls_basis": "minimum-unit-upper-bound-before-role-admission",
+                "future_calls_reserved": max(len(r.output_ceilings) for r in routes.values()),
+                "future_cost_reserve_nanos": max(role_costs.values()) + correction_reserve,
+                "successor_output_ceilings": {t: list(r.output_ceilings)
+                                             for t, r in routes.items()},
+                "failure_recovery_reserved": {t: r.failure_recovery for t, r in routes.items()},
+                "future_time_reserve_seconds": max(r.seconds for r in routes.values()),
+                "remaining_seconds": remaining_seconds,
+                "resource_rejections": resource_rejections,
+                "current_minimum_output_ceiling": (correction_ceiling if correction_pending
+                    else desired_output_ceiling if requires_mutation and "replace_text" in allowed
+                    else finalization_floor if allowed - {"stop_task"}
+                    else MINIMUM_OUTPUT_CEILING),
+                "recovery_scope": "Current repair and one physically available public-failure "
+                                  "revision retain role output and verification time. Core "
+                                  "completion may release speculative recovery when necessary; "
+                                  "the per-action reservation reports that release.",
+                "limit": "Nominal check timeouts, follow-up floors and output allowances are "
+                         "reserved within existing caps; useful output and repair are unproven.",
+            })
     elif funded_calls is not None:
         successors = [0]  # Stop and a successful finish need no subsequent call.
         if ("finish_task" in allowed and verification.get("pending_count", 0)
@@ -1578,6 +1672,7 @@ def _tool_policy(
             completion_cost_policy=completion_cost_policy,
             desired_output_ceiling=desired_output_ceiling,
             max_correction_output_tokens=max_correction_output_tokens,
+            remaining_seconds=remaining_seconds,
             _preview_inspection=False,
             _cost_call_limit=(max(0, funded_calls - 1) if funded_calls is not None else None),
             _diagnostic_spent=True,
@@ -1743,9 +1838,12 @@ def _completion_horizon_payload(
     remaining_model_calls = max(0, limits.max_model_calls - counters.model_calls)
     remaining_tool_actions = max(0, limits.max_tool_actions - counters.tool_actions)
     blocking_resources: list[str] = []
+    if not policy.completion_possible and policy.completion_cost:
+        blocking_resources.extend(sorted(set(
+            policy.completion_cost.get("resource_rejections", {}).values())))
     if (policy.completion_cost is not None
             and policy.completion_cost["admitted_call_slots"] < policy.minimum_completion_calls):
-        blocking_resources.append("cost")
+            blocking_resources.append("cost")
     correction_model_reserve = (
         policy.completion_cost.get("correction_model_calls_reserved", 0)
         if policy.completion_cost is not None else 0
@@ -4331,6 +4429,8 @@ def _run_probe_recheck(
             cost_ledger=cost_ledger, completion_cost_policy=request.completion_cost_policy,
             desired_output_ceiling=request.max_output_tokens,
             max_correction_output_tokens=request.max_correction_output_tokens,
+            remaining_seconds=(gateway.deadline.remaining_seconds()
+                               if gateway.deadline is not None else None),
         )
         if "run_probe" not in policy.allowed_tools:
             journal.append("probe_recheck_skipped", {
@@ -5538,6 +5638,7 @@ def _run_one_active(
             completion_cost_policy=request.completion_cost_policy,
             desired_output_ceiling=request.max_output_tokens,
             max_correction_output_tokens=request.max_correction_output_tokens,
+            remaining_seconds=remaining_active_seconds(),
         )
         if ((snapshot.completion_verification or {}).get("original_obligation", {}).get("stage")
                 == "pending" and "run_probe" not in policy.allowed_tools):
@@ -5552,6 +5653,7 @@ def _run_one_active(
                 completion_cost_policy=request.completion_cost_policy,
                 desired_output_ceiling=request.max_output_tokens,
                 max_correction_output_tokens=request.max_correction_output_tokens,
+                remaining_seconds=remaining_active_seconds(),
             )
         if not policy.completion_possible:
             terminal_completion_horizon = _completion_horizon_payload(
@@ -5594,6 +5696,14 @@ def _run_one_active(
             else:
                 terminal_code = DevTerminal.LIMIT_REACHED
                 terminal_message = "completion horizon exhausted before provider dispatch"
+            break
+        time_reserve = (policy.completion_cost or {}).get("future_time_reserve_seconds", 0)
+        provider_deadline = ExecutionDeadline(deadline.expires_at - time_reserve, deadline.clock)
+        if (provider_deadline.remaining_seconds() <= 0
+                or (policy.completion_cost or {}).get("correction_pending")
+                and provider_deadline.remaining_seconds() < 30):
+            terminal_code = DevTerminal.LIMIT_REACHED
+            terminal_message = "verification and follow-up time reserve leaves no provider time"
             break
         turn_id = f"turn_{uuid.uuid4().hex}"
         try:
@@ -5881,7 +5991,8 @@ def _run_one_active(
                 schemas = bundle["request"]["tools"]
                 policy_transition = bundle["transition"]
                 prepared_count = native_compaction.count_prepared(
-                    input_journal, boundary, bundle, openai_adapter, deadline, active_elapsed_ms,
+                    input_journal, boundary, bundle, openai_adapter,
+                    provider_deadline, active_elapsed_ms,
                 )
                 counters.input_count_calls = _restore_counters(journal).input_count_calls
                 if (request.context_policy == segments.POLICY
@@ -5930,7 +6041,7 @@ def _run_one_active(
                                 request.limits.max_model_calls - counters.model_calls
                             ),
                             minimum_completion_calls=policy.minimum_completion_calls,
-                            ledger=cost_ledger, deadline=deadline, correction=correction,
+                            ledger=cost_ledger, deadline=provider_deadline, correction=correction,
                         )):
                     if prior_preparation is None:
                         compact_adapter.prepare_locked(
@@ -5942,7 +6053,7 @@ def _run_one_active(
                         )
                     receipt = compact_adapter.execute_locked(
                         client_factory=lambda: BoundedResponsesClient(api_key=api_key),
-                        ledger=cost_ledger, deadline=deadline,
+                        ledger=cost_ledger, deadline=provider_deadline,
                         active_elapsed_seconds=active_elapsed_ms() / 1_000,
                     )
                     cost_ledger.restore_settled_usage(
@@ -5961,6 +6072,10 @@ def _run_one_active(
                 turn_payload = {**turn_payload, "prepared_input": boundary,
                                 "selected_count_id": prepared_count[0],
                                 "counted_request_hash": boundary["request_hash"]}
+            except ExecutionDeadlineExceeded:
+                terminal_code = DevTerminal.LIMIT_REACHED
+                terminal_message = "verification reserve leaves no time for input counting"
+                break
             except native_compaction.CountFailure as exc:
                 counters = _restore_counters(journal)
                 terminal_code = DevTerminal.COUNT_TIMEOUT_OR_UNKNOWN
@@ -6035,7 +6150,7 @@ def _run_one_active(
                 count_id, input_tokens = prepared_count
                 count_request_hash = boundary["request_hash"]
             else:
-                count_timeout = remaining_active_seconds()
+                count_timeout = provider_deadline.remaining_seconds()
                 if count_timeout <= 0:
                     terminal_code = DevTerminal.LIMIT_REACHED
                     terminal_message = "row wall-time limit reached before input counting"
@@ -6111,7 +6226,7 @@ def _run_one_active(
                     terminal_code = DevTerminal.LIMIT_REACHED
                     terminal_message = "admitted request exceeds segment byte limit"
                     break
-            dispatch_timeout = remaining_active_seconds()
+            dispatch_timeout = provider_deadline.remaining_seconds()
             if dispatch_timeout <= 0:
                 terminal_code = DevTerminal.LIMIT_REACHED
                 terminal_message = "row wall-time limit reached before provider dispatch"
@@ -6129,6 +6244,8 @@ def _run_one_active(
                     "input_tokens": input_tokens,
                     "output_ceiling": admission.output_ceiling,
                     "reserved_cost_nanos": admission.reserved_cost_nanos,
+                    "timeout_seconds": dispatch_timeout,
+                    "future_time_reserve_seconds": time_reserve,
                     **_completion_cost_payload(policy),
                     "active_elapsed_ms": active_elapsed_ms(),
                 },

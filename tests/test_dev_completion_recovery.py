@@ -37,9 +37,12 @@ def no_network(monkeypatch):
 
 def funding(slots, *, output=25_000, extra=0):
     ledger = ledger_for_slots(slots)
-    ledger.cap_nanos = (slots * ledger.future_call_reservation_nanos()
-                        + ledger.future_call_reservation_nanos(output_ceiling=output) + extra
-                        + finalization_premium(ledger, output))
+    bounded = min(output, cost.FINALIZATION_OUTPUT_FLOOR)
+    normal_path = (ledger.future_call_reservation_nanos(output_ceiling=output)
+                   + (slots - 1) * ledger.future_call_reservation_nanos(output_ceiling=bounded)
+                   if slots else finalization_premium(ledger, output))
+    ledger.cap_nanos = (normal_path
+                        + ledger.future_call_reservation_nanos(output_ceiling=output) + extra)
     return ledger
 
 
@@ -76,8 +79,8 @@ def test_one_no_action_response_preserves_full_correction_and_successor_checks(o
     assert before.minimum_completion_tool_actions == 3  # No tool action for an invalid response.
     assert before.completion_cost["correction_model_calls_reserved"] == 1
     normal = admit(ledger, before, output=output)
-    assert normal is not None and normal.output_ceiling == 128
-    ledger.settle(input_tokens=60_000, cached_input_tokens=0, output_tokens=128)
+    assert normal is not None and normal.output_ceiling == output
+    ledger.settle(input_tokens=60_000, cached_input_tokens=0, output_tokens=output)
     counts.model_calls += 1
     counts.protocol_recoveries = counts.protocol_corrections_total = 1
     after = select(gateway, ledger, counts=counts, output=output)
@@ -87,8 +90,9 @@ def test_one_no_action_response_preserves_full_correction_and_successor_checks(o
     corrected = admit(ledger, after, output=output)
     assert corrected is not None and corrected.output_ceiling == output
     ledger.settle(input_tokens=60_000, cached_input_tokens=0, output_tokens=output)
-    assert ledger.remaining_nanos == (2 * ledger.future_call_reservation_nanos()
-                                      + finalization_premium(ledger, output))
+    assert ledger.remaining_nanos == 2 * ledger.future_call_reservation_nanos(
+        output_ceiling=min(output, cost.FINALIZATION_OUTPUT_FLOOR),
+    )
 
 
 @pytest.mark.parametrize("short", ["money", "model", "tool"])
@@ -108,7 +112,8 @@ def test_recovery_needs_a_real_call_slot_and_does_not_add_a_tool_slot(short):
 def test_disabled_or_spent_correction_credit_does_not_tax_later_valid_actions():
     gateway = Gateway()
     ledger = ledger_for_slots(3)
-    ledger.cap_nanos += finalization_premium(ledger)
+    ledger.cap_nanos = (ledger.future_call_reservation_nanos(output_ceiling=25_000)
+                       + 2 * ledger.future_call_reservation_nanos(output_ceiling=8_192))
     disabled = select(gateway, ledger, limits=DevLimits(max_protocol_recoveries=0))
     spent = select(gateway, ledger, counts=counters(protocol_corrections_total=1))
     later_error = select(
@@ -119,7 +124,7 @@ def test_disabled_or_spent_correction_credit_does_not_tax_later_valid_actions():
         assert selected.completion_cost["correction_credits_remaining"] == 0
         assert selected.completion_cost["correction_cost_reserved_nanos"] == 0
         assert not selected.completion_cost["correction_pending"]
-        assert admit(ledger, selected).output_ceiling == 128
+        assert admit(ledger, selected).output_ceiling == 25_000
 
 
 def test_ready_exact_count_keeps_unused_correction_and_all_case_replay_actions():
@@ -145,7 +150,7 @@ def test_ready_exact_count_keeps_unused_correction_and_all_case_replay_actions()
     assert admit(ledger, correction).output_ceiling == 25_000
 
 
-def paid_fixture(monkeypatch, tmp_path, *, policy=POLICY, incomplete=(1,), cap="0.40"):
+def paid_fixture(monkeypatch, tmp_path, *, policy=POLICY, incomplete=(1,), cap="0.60"):
     request, inputs, counts, views = configured(
         monkeypatch, tmp_path, planning="brief-v1", incomplete_at=incomplete,
         script=SingleReadAdapter("csv-quoted-newline"),
@@ -194,7 +199,9 @@ def test_same_cap_incomplete_response_correction_has_meaningful_output_allowance
     assert_submitted(result)
     assert inputs == counts and len(inputs) == 5
     assert views[2]["current_diff"] == views[1]["current_diff"]
-    assert ceilings[2] == (25_000 if policy == POLICY else 128)
+    # At the shared $0.60 cap, charging every admitted output token leaves the
+    # minimum policy 22,949 correction tokens; recovery preserves its full 25K.
+    assert ceilings[2] == (25_000 if policy == POLICY else 22_949)
     assert views[-1]["visible_check_status"][0]["status"] == "PASS"
     journal = assert_accounting(request, result)
     assert len([e for e in journal.events() if e["event_type"] == "protocol_correction"]) == 1
@@ -203,11 +210,29 @@ def test_same_cap_incomplete_response_correction_has_meaningful_output_allowance
             "completion_cost"
         ] for i in (0, 2, 3)]
         assert first["correction_credits_remaining"] == 1
+        assert views[1]["remaining_budget"]["cost"]["completion_cost"][
+            "current_minimum_output_ceiling"] == ceilings[1] == 25_000
         assert correction["correction_pending"]
         assert correction["current_minimum_output_ceiling"] == 25_000
         assert next_action["correction_credits_remaining"] == 0
         assert not next_action["correction_pending"]
-        assert next_action["current_minimum_output_ceiling"] == 128
+        assert next_action["current_minimum_output_ceiling"] == 8_192
+
+
+@pytest.mark.parametrize("cap", ["0.40", "0.560591"])
+def test_insufficient_role_allowance_stops_before_first_provider_dispatch(
+    tmp_path, monkeypatch, cap,
+):
+    # Five 60K inputs plus 8,192 preparation/check/finish and two 25K
+    # edit/correction outputs require $0.560592 before the first dispatch.
+    request, inputs, _, _, ceilings = paid_fixture(monkeypatch, tmp_path, cap=cap)
+    result = runner.run_dev(request)["runs"][0]
+    assert result["terminal"] == "COST_CAP_REACHED"
+    assert inputs == ceilings == []
+    assert result["accepted_mutations"] == result["call_counts"]["tool"] == 0
+    journal = assert_accounting(request, result)
+    assert result["cost_nanos"] == 0
+    assert not any(event["event_type"] == "provider_call_started" for event in journal.events())
 
 
 def test_valid_batch_resets_protocol_permission_without_renewing_financial_credit(
@@ -223,7 +248,7 @@ def test_valid_batch_resets_protocol_permission_without_renewing_financial_credi
     assert len([e for e in journal.events() if e["event_type"] == "protocol_correction"]) == 2
     second = views[4]["remaining_budget"]["cost"]["completion_cost"]
     assert second["correction_credits_remaining"] == 0 and not second["correction_pending"]
-    assert second["current_minimum_output_ceiling"] == 128
+    assert second["current_minimum_output_ceiling"] == 8_192
     restored = runner._restore_counters(journal)
     assert restored.protocol_recoveries == 0 and restored.protocol_corrections_total == 2
 
