@@ -24,6 +24,7 @@ from patchloop.dev import (
     diagnosis_request,
     evidence_focus,
     first_observation,
+    first_reproduction,
     helper_program,
     helper_recovery,
     history_search,
@@ -544,14 +545,7 @@ def dev_tool_schemas(
             schemas[-1] = diagnosis_request.tool_schema()
         elif original_acquisition_pending:
             schema = schemas[-1]
-            schema["description"] = (
-                "Reproduce the original public caller on the unchanged base before editing. "
-                "This stage accepts a new original_requirement program only; provide question "
-                "and python_source, with replay_action_id and call_path null. "
-                "Call a Python entry point in this process; child processes are unavailable. "
-                + environment_description + " " + helper_program.DESCRIPTION + " "
-                + reproduction.DESCRIPTION
-            )
+            schema["description"] = first_reproduction.description(environment_description)
             properties = schema["parameters"]["properties"]
             properties["question"]["type"] = "string"
             properties["python_source"]["type"] = "string"

@@ -57,11 +57,23 @@ call from either. Inputs were 29,270 and 15,948, below the 60K ceiling. Six init
 read/search actions completed. Actual cost USD 0.40966830, active time 552.214s;
 all six model/count calls settled. No submission or evaluation occurred.
 
-The new processing/identity/phase mechanisms remain live NOT_EXERCISED. First
-request construction is the observed bottleneck; request burden versus model
-configuration remains unresolved. There is no evidence here for raising the global
-cost/context limit or claiming a repair gain. Allocation CLOSED, no retry. General
-settings and runtime stay unchanged; no further paid execution is authorized.
+The processing/identity/phase mechanisms remain live NOT_EXERCISED. First request
+construction is the observed bottleneck. The next controlled change is a
+[short first-reproduction description](history/2026-10-28-first-reproduction-description-plan.md):
+remove helper/replay/repair-stage prose from this stage while retaining the exact
+parameter schema, public environment and host verification. Surface v66 records
+only the description change. Generic and diagnostic-stage descriptions are unchanged.
+
+Prepared A=recorded long description and B=short description from the same public
+pre-dispatch checkpoint, with mini/xhigh and the same remaining resource limits.
+Both remove historical opaque reasoning; neither receives post-checkpoint results
+or a repair hint. Stop at the first settled original probe result and report request
+validity, target entry and failure reproduction separately. This diagnostic is not
+a full repair or acceptance trial. Description 8,958 to 4,408 chars; final core
+22 PASS/14.04s, quick 568 PASS/62.16s (isolated mock included), Ruff PASS. The linked
+record states the final wording-only rerun and separate offline preparation scope.
+No new paid execution is authorized; previous allocation CLOSED. Request burden
+versus model configuration remains unresolved.
 
 The preceding [saved-evidence trial](history/2026-10-27-public-regression-cycle-results.md)
 did receive regression failure, revise and pass isolated acceptance. It used a

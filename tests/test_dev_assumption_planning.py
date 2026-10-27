@@ -56,11 +56,11 @@ def test_instruction_only_contrast_preserves_old_identities_and_schemas(tmp_path
     }
     if FROZEN_ARM is None:
         old_hashes = {
-            "none": "sha256:f3c479d9325d34be7679d66f95f909977f657721bb2188abb507b4d2e2cc0e0b",
+            "none": "sha256:5e2edee62f35eb690138245da6ab8fdaef9600727bd80acdfcca1b09b3bff414",
             plans.POLICY:
-                "sha256:6d8e06a3f2099373af258d851620b2bb6a937f8dc08f3dd9676b1367b5500220",
+                "sha256:b34f297a5cd6aadf726b005b72e32e627818968ddeda1d4fa05fc7022e602e6a",
             plans.EVIDENCE_POLICY:
-                "sha256:053df6dcd84ea4fd6e5e5beb9dfe965ab11e7724b1967a44602e938f4c5b6419",
+                "sha256:b7f1426922a866fc083165555b3646241dc9528a1c3b29ba6936b00b41fc85a1",
         }
     assert {p: dev_tool_surface_hash(planning_policy=p) for p in old_hashes} == old_hashes
     old = plans.instructions(plans.EVIDENCE_POLICY)

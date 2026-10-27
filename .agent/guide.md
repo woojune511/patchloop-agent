@@ -49,7 +49,7 @@ Opt-in history search: eight candidates, execution-only ranking, whole originals
 within actual input limits. Only fresh-seed overflow uses 48k units; ID pages are
 48k too. Authored fields labelled, no source/PASS credit.
 A question may retain search results within its existing two handoff references.
-Fresh edit/observation/stop requests omit decision/plan/memory annotations;
+Fresh edit/observation/stop omit decision/plan/memory annotations;
 see [small contracts](repair-path.md). Other calls use `turn_decision`, or nullable
 root `memory_update` with `--agent-policy thin --planning-policy none`;
 see [contract](thin-policy-reference.md). Execution gates stay shared.
@@ -85,7 +85,7 @@ Receipts separate requests, dispatch and results.
 Original purposes bind the host-owned issue and distinct failure/desired JSON.
 Acquisition needs both unchanged-base comparisons. Rejections create no case;
 uncertainty stays unverified.
-Request correction certifies validity only; see [request/replay](evidence-recovery.md).
+Request correction certifies validity only. See [first-call descriptions](first-reproduction-comparison.md).
 For helper source errors, see [bounded preflight correction](helper-correction.md).
 See [host judgment](observation-judgment.md) for processing, input scope and pre-target errors.
 Legacy unknown dispatches reserve slots without becoming execution evidence. Releases

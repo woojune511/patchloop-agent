@@ -71,7 +71,8 @@ def dev_tool_surface_hash(
 
     base = sha256_json(
         {
-            "schema_version": "dev-tool-surface-v65",
+            "schema_version": "dev-tool-surface-v66",
+            "first_original_description": "stage-only-call-and-observation-v1",
             "rejected_drafts": correction_drafts.contract(),
             "parallel_generation": "only-when-current-gate-permits-read-batch-v1",
             "fresh_probe_schema": "state-valid-original-acquisition-or-pending-diagnosis-v1",
