@@ -290,6 +290,15 @@ def saved_gateway(loaded, root, arm):
     return gateway
 
 
+def acceptance(gateway, root, passed):
+    """A settled return to clean base is no repair, not evaluator uncertainty."""
+    if gateway.current_diff_hash == host.EMPTY_DIFF:
+        return {"official": False, "status": "NOT_RUN_NO_DIFF", "acceptance": "not_run",
+                "candidate_patch_hash": host.EMPTY_DIFF, "evaluator_dispatches": 0,
+                "scope_compliant_success": False, "stop_remaining": False}
+    return host.acceptance(gateway, root, passed)
+
+
 def collect(manifest, approved_manifest_hash, approved_cap_usd):
     require(approved_cap_usd == PROFILE.invocation_cap, "exact new cap approval required")
     plan, loaded = validate(manifest, approved_manifest_hash)
@@ -327,7 +336,7 @@ def collect(manifest, approved_manifest_hash, approved_cap_usd):
                 checks = host.public_checks(loaded, gateway, root / arm / "public")
                 rows[-1]["public_checks"] = checks
                 journal.append("candidate_ready_for_evaluation", {"arm": arm, **checks})
-                rows[-1]["acceptance"] = host.acceptance(
+                rows[-1]["acceptance"] = acceptance(
                     gateway, root / arm / "acceptance", checks["regression_passed"])
                 rows[-1]["task_acceptance"] = rows[-1]["acceptance"].get("acceptance", "not_run")
             journal.append("row_finished", rows[-1])

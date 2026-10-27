@@ -70,8 +70,12 @@ adds selected-file whole/page reads within 24K characters; explicit ranges retai
 pair from saved A with identical public failure feedback, partial versus complete
 current source, mini/xhigh and a new $2.40 cap. Both experimental rows retain the
 old range-only read interface. Core reading and continuation tests pass; actual
-candidate/source restoration passed without provider or target execution. Collection
-follows final local validation and sealing; no repair-quality result exists yet.
+candidate/source restoration passed without provider or target execution. R0 then
+undid its saved patch and retained F0010. Its known empty diff hit an evaluator
+precheck before any evaluation or R1 call. The [post-model handling fix](history/2026-10-27-feedback-source-empty-diff.md)
+records no repair, preserves R0's original evidence and settled $0.10363125, and
+allows only the unstarted R1 under the same requests and original $2.40 total cap.
+Core correction checks pass; the remaining arm follows sealing of the new command.
 
 Public exception frames and cause/context chains are implemented in fresh invocation
 v5, with historical observer v1-v4 preserved; see the

@@ -219,7 +219,7 @@ def test_only_delivered_current_ranges_become_editable(gateway_factory, monkeypa
     assert gateway.accepted_mutations == int(wide)
 
 
-@pytest.mark.parametrize("stop", ["model", "host", "none"])
+@pytest.mark.parametrize("stop", ["model", "host", "acceptance", "none", "no_diff"])
 def test_collection_stops_on_uncertainty_and_evaluates_semantic_failures(
     tmp_path, monkeypatch, stop,
 ):
@@ -229,7 +229,13 @@ def test_collection_stops_on_uncertainty_and_evaluates_semantic_failures(
     monkeypatch.setattr(d, "validate", lambda *_: (plan, SimpleNamespace()))
     monkeypatch.setattr(d.loop.runner, "_require_tracked_clean_paths", lambda *_: None)
     arms, accepted = [], []
-    monkeypatch.setattr(d, "saved_gateway", lambda _, root, arm: arms.append(arm))
+
+    def gateway(_, root, arm):
+        arms.append(arm)
+        return SimpleNamespace(current_diff_hash=d.host.EMPTY_DIFF
+            if stop == "no_diff" and arm == "R0" else d.SEED_HASH)
+
+    monkeypatch.setattr(d, "saved_gateway", gateway)
     monkeypatch.setattr(d.loop, "load_exact_openai_api_key", lambda _: "synthetic")
     monkeypatch.setattr(d.loop, "OpenAIResponsesAdapter", lambda *_args, **_kwargs: SimpleNamespace(
         client=SimpleNamespace(close=lambda: None)))
@@ -242,14 +248,27 @@ def test_collection_stops_on_uncertainty_and_evaluates_semantic_failures(
         return {"regression_passed": True, "public_cases_passed": False}
 
     monkeypatch.setattr(d.host, "public_checks", checks)
-    monkeypatch.setattr(d.host, "acceptance", lambda _, root, passed: (
-        accepted.append((root.parent.name, passed)) or {"acceptance": "fail"}))
+
+    def opaque(_, root, passed):
+        accepted.append((root.parent.name, passed))
+        if stop == "acceptance":
+            raise ContractError("unsettled opaque evaluation")
+        return {"acceptance": "fail"}
+
+    monkeypatch.setattr(d.host, "acceptance", opaque)
     arguments = (tmp_path / "plan/manifest.json", "hash", d.PROFILE.invocation_cap)
-    if stop == "host":
+    if stop in {"host", "acceptance"}:
         with pytest.raises(ContractError, match="unsettled"):
             d.collect(*arguments)
     else:
         result = d.collect(*arguments)
         assert result["allocation_closed"]
-    assert arms == (["R0", "R1"] if stop == "none" else ["R0"])
-    assert accepted == ([("R0", True), ("R1", True)] if stop == "none" else [])
+        if stop == "no_diff":
+            skipped = result["rows"][0]["acceptance"]
+            assert skipped["status"] == "NOT_RUN_NO_DIFF" and not skipped["stop_remaining"]
+            assert skipped["candidate_patch_hash"] == d.host.EMPTY_DIFF
+            assert skipped["evaluator_dispatches"] == 0
+    assert arms == (["R0", "R1"] if stop in {"none", "no_diff"} else ["R0"])
+    expected = {"none": [("R0", True), ("R1", True)], "no_diff": [("R1", True)],
+                "acceptance": [("R0", True)]}
+    assert accepted == expected.get(stop, [])

@@ -18,3 +18,4 @@
 - [Observation failure analysis: incomplete source premise and first-edit feedback limits](../2026-10-27-selection-observation-failure-analysis.md)
 - [Follow-up design: same public failure feedback, partial versus complete current-file source](../2026-10-27-feedback-source-plan.md)
 - [Implementation: selected-file pages and public-feedback continuation](../2026-10-27-feedback-source-implementation.md)
+- [Empty-diff handling: preserve the failed R0 and run only the unstarted R1](../2026-10-27-feedback-source-empty-diff.md)
