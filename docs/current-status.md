@@ -24,38 +24,35 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [post-reproduction repair trial](history/2026-10-28-post-reproduction-repair-results.md)
-executed once on Astroid-1333 using the acquired public baseline. The first two
-candidate failures reached the next actual model requests; all three edits were
-followed by identical original-call replay. The third edit removed F0010 but
-produced empty original-call output with no W0611 processing witness. All three
-desired comparisons remained mismatched; the normal package control stayed intact.
+The [saved-candidate processing comparison](history/2026-10-28-file-processing-results.md)
+locally observed the second and third Astroid-1333 candidates, with one real probe
+per candidate and no provider calls. Both omit file.py during file enumeration:
+project lookup raises ImportError, expand_modules falls back to is_namespace=false,
+and get_module_files(list_all=false) returns no files from the init-less directory.
+The selected list contains only the nonexistent __init__.py. Candidate3 changes
+only its AST construction: an empty module replaces the exception, so F0010
+disappears while file.py still never enters checking. The control file reaches
+AST construction and actual checking in both conditions.
 
-The same-case/caller/fixture identities and complete captures were preserved.
-Independent output-code extraction agrees with the authored booleans. The case
-still has null diagnostic_rules; this is not a canonical-host-rule improvement.
-W0611 is an added processing criterion beyond the issue's explicit error absence.
-Known missing processing was retained as failure rather than converted to PASS.
+All selected trace calls close, with no overflow or callback errors. Exact original
+call inputs, outputs, fixtures, image, dependencies and candidate snapshots match
+the saved receipts. This supports the selection-before-builder diagnosis for these
+two candidates; it does not establish a successful repair or benchmark acceptance.
+W0611 remains an added processing witness beyond the public issue's error absence.
 
-The run ended LIMIT_REACHED at three accepted edits. New usage:11 responses,
-17 actions, USD0.977534. The USD4.13241570 allocation is CLOSED; unused
-USD3.1548817 does not authorize continuation. Responses4, tools16 and about1293
-solver seconds remained. Context/output/cost/time were not exhausted. Public
-regressions, finish_task and isolated acceptance are NOT_RUN. The final failure
-was not followed by another model request because the mutation limit ended the run.
+Keep the original processing check and failure delivery. The next repair hypothesis
+should address module resolution and traversal, rather than suppressing the builder
+exception. No production gate, repair, paid continuation or evaluation was added.
+The [model trial](history/2026-10-28-post-reproduction-repair-results.md) had stopped at
+three accepted edits, with context/output/time/cost remaining. Its final feedback
+did not reach another model turn; whether one extra edit or earlier path evidence
+helps remains untested. The USD4.13241570 allocation remains CLOSED.
 
-Keep the [restored public handoff](history/2026-10-28-post-reproduction-repair-plan.md)
-and same-call processing check. The next question is whether initial repair
-hypotheses establish caller exception handling and traversal before spending edits.
-Here the model first instrumented that path after two failures, then changed the
-builder to return an empty module. The final traversal mechanism remains untraced;
-an earlier diagnosis or extra edit is a hypothesis, not a demonstrated fix.
-
-The preceding [signature-guided trial](history/2026-10-28-argument-first-reproduction-results.md)
-reproduced the original F0010 with correct arguments. Adaptive signature use and
-live argument-correction uptake remain unestablished. This continuation is one
-checkpoint repair attempt, not a clean-start solve or generalization result.
-No new execution is currently funded.
+New diagnostic tests pass. The broader quick run exposed three existing failures:
+helper_recovery reads malformed purpose values as dicts (two cases), and one test
+expects the obsolete invocation example. Runtime and those tests were unchanged
+in this diagnostic. These must be addressed before calling quick validation green.
+No new provider-backed execution is currently funded.
 
 ## Supporting evidence
 

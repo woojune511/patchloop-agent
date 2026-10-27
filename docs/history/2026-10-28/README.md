@@ -17,3 +17,4 @@
 - [First original invocation entered and F0010 reproduced; argument correction unexercised](../2026-10-28-argument-first-reproduction-results.md)
 - [Post-reproduction checkpoint restored, failure delivery checked and repair trial prepared](../2026-10-28-post-reproduction-repair-plan.md)
 - [Post-reproduction repair result: feedback delivered, error removed but processing witness absent](../2026-10-28-post-reproduction-repair-results.md)
+- [Saved candidate path comparison: file selection omits file.py before the empty-AST edit](../2026-10-28-file-processing-results.md)
