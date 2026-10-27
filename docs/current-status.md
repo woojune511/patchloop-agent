@@ -24,11 +24,16 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [single full-source trial](history/2026-10-27-repair-entry-single-plan.md) is
-prepared and preflighted: R1 once, $1.20 total, same row model and resource limits.
-Collection seals the selected arm and cap (44 focused/472 quick PASS). Exact new
-execution approval is pending; no provider/count call or target execution occurred.
-Earlier paid allocations remain closed.
+The [single full-source trial](history/2026-10-27-repair-entry-single-results.md)
+completed: 15 responses, seven reads, eleven searches, one stop and zero edits.
+The 60,734-token request recovered through a public handoff to 48,301, but the
+model did not select a helper or original replay. It stopped for insufficient
+evidence with edits and funds still available; response-count reservation had
+closed further inspection. Three Pylint-specific searches scanned zero files.
+Caller evidence access and diagnostic action selection remain unresolved.
+No fresh original/public/isolated verification ran. All 15 calls settled at
+$0.22311930; this $1.20 allocation is closed. See the
+[sealed preparation](history/2026-10-27-repair-entry-single-plan.md) for exact scope.
 
 The [repair entry contracts](history/2026-10-27-repair-entry-contracts.md) are now
 implemented for feedback-source-pair-v3: whole/page file reads, a small registered
@@ -39,8 +44,8 @@ global allowances. Opaque prior reasoning stays in local artifacts. The optional
 original selection uses one of 24 model-tool slots; host replays allow at most
 five including the baseline and three edits. Input/output caps remain unchanged.
 Focused owner/legacy validation: 121 PASS/63.49s; fast suite: 472 PASS/106.60s,
-including isolated mock evaluation; Ruff PASS. Live uptake and first-edit repair
-remain untested.
+including isolated mock evaluation; Ruff PASS. Live ordinary context recovery is
+now observed; first-edit repair, original selection and feedback use remain unobserved.
 
 The [live repair-cycle pilot](history/2026-10-27-repair-cycle-results.md) completed
 R0/R1 once each, with zero edits. R0 used 15 responses on source exploration and
