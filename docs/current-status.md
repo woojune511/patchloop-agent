@@ -49,11 +49,19 @@ Astroid acceptance result is part of this change.
 Positive code selection still does not prove intended-file coverage or semantic
 correctness. The next live question is whether a model chooses discriminating
 processing evidence and rejects a no-op repair under the existing bounded loop.
-The [fresh pilot](history/2026-10-28-processing-evidence-fresh-plan.md) is now
-prepared and preflighted with the same mini/xhigh, once, USD 4.50 and existing
-limits. No prior observations or task-specific processing marker are injected.
-Provider/count/target calls remain zero; the new exact allocation awaits approval.
-General settings remain unchanged.
+The [fresh pilot](history/2026-10-28-processing-evidence-fresh-results.md) has now
+run once under the approved same mini/xhigh / USD 4.50 allocation. It stopped at
+INCOMPLETE_RESPONSE before original execution or edits: the first request attempt
+used 40K output (39,753 reasoning), then correction used 25K, with no valid tool
+call from either. Inputs were 29,270 and 15,948, below the 60K ceiling. Six initial
+read/search actions completed. Actual cost USD 0.40966830, active time 552.214s;
+all six model/count calls settled. No submission or evaluation occurred.
+
+The new processing/identity/phase mechanisms remain live NOT_EXERCISED. First
+request construction is the observed bottleneck; request burden versus model
+configuration remains unresolved. There is no evidence here for raising the global
+cost/context limit or claiming a repair gain. Allocation CLOSED, no retry. General
+settings and runtime stay unchanged; no further paid execution is authorized.
 
 The preceding [saved-evidence trial](history/2026-10-27-public-regression-cycle-results.md)
 did receive regression failure, revise and pass isolated acceptance. It used a
