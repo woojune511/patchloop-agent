@@ -24,44 +24,45 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [caller-source trial](history/2026-10-27-dependency-source-results.md) acquired
-caller source, rechecked F0010 and executed a useful helper, but made zero edits.
-The next response exhausted 40K without a tool call. A correction then had about
-six usable seconds and ended PROVIDER_UNCERTAIN; its exception class was not
-recorded. Confirmed cost is $0.49747575 for 15 settled calls, with one unsettled
-correction. The allocation is closed; final public/isolated checks were NOT_RUN.
+The approved [first-edit context A/B](history/2026-10-27-first-edit-checkpoint-results.md)
+executed each condition once from the same saved public post-helper checkpoint.
+A (duplicate context) normalized caller-supplied paths, resolved F0010, passed all
+five public cases/regression and isolated acceptance, scope and safety. This is a
+real model-authored accepted repair with supplied saved evidence, not a fresh
+benchmark solve or general quality claim. The first original call retained its
+identity; the second call's input identity changed while control output stayed equal.
 
-The [first-edit checkpoint intervention](history/2026-10-27-first-edit-checkpoint.md)
-now rejects cycle corrections below 30 usable seconds after original-check reserves,
-logs safe exception classes and actual request timeouts, and provides lossless
-public-context deduplication. Thirty seconds is an admission floor, not guaranteed
-response-completion time. Production defaults and legacy time admission are unchanged.
+B (lossless references) reduced first input from 56,199 to 36,887 tokens (34.4%)
+but changed namespace classification instead. F0010 remained; public cases passed
+2/5, regression passed and isolated task acceptance failed. Both made one edit.
+One fixed-order pair does not establish that representation caused the different
+hypotheses or that compression improves repair quality. Do not adopt it on that claim.
 
-The next controlled question is whether the model reaches a justified first edit
-from the same saved post-helper evidence with duplicates retained (A) or encoded
-once with references (B). Both conditions receive fresh equal budgets and preserve
-all unique public facts/source lines. There is no new exploration or forced probe.
-The complete prepared request differs only in the evidence representation. This
-changes reading work as well as length, so it is not a pure token-length effect.
-No solution hints or private evaluation details enter the packet.
+A's next input grew to 65,982 tokens, largely from revalidated source repeated in
+the edit result. Generic handoff rebuilt the same request, so the model stopped
+at INPUT_LIMIT without receiving its successful verification result. Host checks
+still completed. B received the failed result at 46,645 input tokens and stopped,
+acknowledging failure; the one-edit design did not permit revision. Task correctness
+and successful model completion flow remain separate outcomes.
 
-Local validation: 112 focused PASS/71.16s; 472 quick PASS/116.57s including isolated
-mock evaluation; Ruff PASS. All 14 saved source anchors matched a fresh workspace.
-The [prepared paid scope](history/2026-10-27-first-edit-checkpoint-plan.md) is A/B once each,
-$1.20 per condition and $2.40 total, mini/xhigh, two ordinary responses, one
-correction and one new edit. Preparation and read-only preflight passed; new exact
-approval is pending. Manifest: `C:/pt/first-edit-checkpoint-plan-v1/manifest.json`.
-No provider or target execution has run for this change; live repair is unverified.
-After an edit, original-call feedback precedes the final response; public regression,
-isolated acceptance, cost and completion remain separate outcomes.
+The next concrete defect is post-edit source retransmission and an ineffective
+handoff in the checkpoint request builder. Address that narrow delivery contract
+before another broad search; no follow-up implementation or run is authorized by
+the completed allocation. The correction time floor was not exercised live.
 
-Prior repair-cycle/source-access evidence is indexed in
-[October 27 history](history/2026-10-27/README.md). The
-[relative-root operator repair](history/2026-10-27-relative-root-repair.md) passed
-local isolated acceptance but is excluded from model inputs and is not a model
-solve. Historical mini-SWE-agent context settings are documented in the
-[context analysis](history/2026-10-26-target-failure-context-analysis.md); no
-context-only quality effect is established.
+All five input counts and three generation calls completed with known usage;
+zero corrections and no execution uncertainty. Settled cost $0.40829625 under
+$2.40; allocation closed. Result: `C:/pt/first-edit-checkpoint-run-v1/result.json`.
+The [implementation](history/2026-10-27-first-edit-checkpoint.md) has 112 focused
+PASS/71.16s and 472 quick PASS/116.57s including isolated mock; Ruff PASS.
+No runtime changes occurred during this experiment.
+
+The [preceding caller-source trial](history/2026-10-27-dependency-source-results.md)
+retains one unsettled correction and a closed allocation. Prior evidence and the
+separate local operator repair are indexed in [October 27 history](history/2026-10-27/README.md).
+The operator solution and private evaluation details were excluded from these
+model requests. Context-only comparisons with mini-SWE-agent remain unsupported;
+see the [context analysis](history/2026-10-26-target-failure-context-analysis.md).
 
 ## Supporting evidence
 
@@ -94,7 +95,7 @@ submission, independent task acceptance and safety are separate. Mock safety is 
 Do not start Docker Desktop or pull/build evaluator images automatically. Preserve
 exact recovery identities, zero SDK retries and stop-all on count/transport/billing
 uncertainty. Earlier saved candidates failed isolated acceptance; the clean-source operator
-resolver candidate now passes. No live model has newly achieved an accepted solution
-in these follow-ups.
+resolver candidate passes. The saved-evidence A model trial now passes acceptance;
+fresh-solve and held-out improvement remain unverified.
 Public-check PASS, safety PASS and successful submission do not establish repair
 correctness. Linux CI and general improvement remain unverified.

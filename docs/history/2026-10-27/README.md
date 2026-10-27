@@ -31,3 +31,4 @@
 - [Caller-source result: runtime diagnosis reached, first edit absent and correction uncertain](../2026-10-27-dependency-source-results.md)
 - [First-edit checkpoint: correction-time admission and lossless public-context comparison](../2026-10-27-first-edit-checkpoint.md)
 - [Sealed first-edit A/B: same public evidence, fresh equal budgets and preflight complete](../2026-10-27-first-edit-checkpoint-plan.md)
+- [First-edit A/B result: A accepted repair, B failed hypothesis, post-edit context defect](../2026-10-27-first-edit-checkpoint-results.md)
