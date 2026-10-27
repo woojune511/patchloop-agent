@@ -46,6 +46,13 @@ Synthetic completion, delivery and recovery are plumbing evidence. They cannot
 establish model behavior, task acceptance, Docker safety or a quality improvement.
 Live execution still requires a separate exact invocation and execution path.
 
+The opt-in `after_tool_batch=True` path includes a settled batch instead of
+requiring a following prepared request. It supports an unchanged-base, acquired
+original failure and derives remaining resources from receipts. Nested forks
+resolve exact inherited CAS references without rewriting parent events. The
+[post-reproduction repair](post-reproduction-repair.md) driver uses this path;
+the existing prepared-request cut remains exclusive of that request event.
+
 The opt-in `preserve_parent_configuration` restoration flag retains the parent's
 model/pricing, reasoning/output settings (including the separate correction ceiling),
 source retention, evaluation reserve, probe replay, reproduction acquisition,

@@ -10,11 +10,18 @@ from unittest.mock import patch
 
 import pytest
 from test_checkpoint_continuation import call, stop_steps
+from test_first_reproduction_comparison import (
+    argument_branch,
+    execute,
+    scripted_original,
+)
+from test_first_reproduction_comparison import source as original_source  # noqa: F401
 from test_mutation_advice_checkpoint import source as source  # noqa: F401
+from test_original_argument_correction import GOOD
 
 from diagnostics import observation_exposure as diagnostic
 from diagnostics.checkpoint_continuation import ScriptedClient
-from patchloop.contracts import TaskEnvironment
+from patchloop.contracts import Artifact, TaskEnvironment
 from patchloop.dev import runner
 from patchloop.dev.contracts import RequestedTool
 from patchloop.dev.model import MOCK_MUTATIONS
@@ -22,7 +29,7 @@ from patchloop.dev.state import DevJournal
 from patchloop.dev.tools import DevToolGateway
 from patchloop.errors import ActionConflict, ContractError
 from patchloop.sandbox import LocalSandbox
-from patchloop.util import sha256_bytes
+from patchloop.util import sha256_bytes, sha256_json
 
 
 def branch_for(source, tmp_path, arm="A", cap="1"):
@@ -261,4 +268,96 @@ def test_special_prefixes_rejected(source, tmp_path, event_type):
         diagnostic.fork(
             altered, cut["sequence"], tmp_path / "rejected", "A", synthetic_cap_usd=Decimal("1")
         )
+    assert not (tmp_path / "rejected").exists()
+
+
+@pytest.fixture(scope="module")
+def settled_source(original_source, tmp_path_factory):  # noqa: F811
+    """A real local probe result in a fork with references to an older source root."""
+    root = tmp_path_factory.mktemp("settled-original")
+    task_dir, package = runner._resolve_task_file(original_source[0].public_path)
+    package = package.model_copy(update={"environment": TaskEnvironment(
+        evaluator_image="test/image@sha256:" + "a" * 64, image_digest="sha256:" + "a" * 64,
+    )})
+    with pytest.MonkeyPatch.context() as patcher:
+        patcher.setattr(runner, "_resolve_task_file", lambda _: (task_dir, package))
+        branch, plan, backend = argument_branch(original_source, root, patcher)
+        receipt = execute(branch, plan, root, ScriptedClient([
+            [scripted_original("first-original", GOOD)],
+        ]))
+    assert receipt["result"]["terminal"] == "FIRST_PROBE_SETTLED" and backend.calls == 1
+    cut = [e for e in branch.journal.events() if e["event_type"] == "tool_batch_finished"][-1]
+    saved = replace(
+        branch.source, root=branch.root,
+        journal_hash=sha256_bytes(branch.journal.path.read_bytes()),
+        envelope_hash=sha256_bytes(branch.journal.envelope_path.read_bytes()),
+    )
+    return saved, cut, task_dir, package
+
+
+def settled_fork(saved, cut, output, task_dir, package):
+    with patch.object(runner, "_resolve_task_file", lambda _: (task_dir, package)):
+        return diagnostic.fork(
+            saved, cut["sequence"], output, "B", synthetic_cap_usd=Decimal("1"),
+            preserve_parent_configuration=True, after_tool_batch=True,
+        )
+
+
+def test_after_tool_batch_preserves_evidence_budget_and_nested_artifacts(settled_source, tmp_path):
+    saved, cut, task_dir, package = settled_source
+    historical = DevJournal(saved.root, saved.run_id)
+    before = {p: p.read_bytes() for p in (
+        historical.path, historical.envelope_path, saved.root / "fork.json",
+    )}
+    branch = settled_fork(saved, cut, tmp_path / "continued", task_dir, package)
+    prefix = [e for e in historical.events() if e["sequence"] <= cut["sequence"]]
+    assert branch.journal.events()[:branch.inherited_events] == prefix
+    assert prefix[-1] == cut and branch.active_elapsed_ms == cut["payload"]["active_elapsed_ms"]
+    counters = runner._restore_counters(branch.journal)
+    assert branch.remaining_budget["model_calls"] == branch.envelope.limits.max_model_calls - 3
+    assert branch.remaining_budget["tool_actions"] == branch.envelope.limits.max_tool_actions - 7
+    assert (counters.model_calls, counters.tool_actions) == (3, 7)
+    assert branch.initial_spent_nanos == sum(
+        row["cost_nanos"] for row in historical.provider_usage())
+    assert branch.ledger.remaining_nanos == 10**9
+    assert branch.original_obligation["stage"] == "acquired"
+    assert len(branch.original_obligation["baseline_failure_case_ids"]) == 1
+    latest = branch.latest_results[0]
+    assert latest.action_id == "first-original"
+    assert latest.output["reproduction"]["declared_failure_comparison"] == "matched"
+    references = list(diagnostic._artifacts(prefix))
+    assert any(not str(ref.path).startswith(str(saved.root)) for ref in references)
+    with diagnostic.inherited_reads(branch):
+        for ref in references:
+            data = branch.store.read_bytes(ref)
+            assert sha256_bytes(data) == ref.content_hash
+            copied = branch.references[sha256_json(ref.model_dump(mode="json"))][1]
+            assert branch.store.read_bytes(Artifact.model_validate(copied)) == data
+    assert all(path.read_bytes() == data for path, data in before.items())
+    with pytest.raises(ContractError, match="fresh output"):
+        settled_fork(saved, cut, branch.root, task_dir, package)
+
+
+@pytest.mark.parametrize("uncertainty", ["dispatch", "cleanup"])
+def test_after_tool_batch_rejects_uncertainty_before_creating_output(
+    settled_source, tmp_path, uncertainty,
+):
+    saved, cut, task_dir, package = settled_source
+    parent = DevJournal(saved.root, saved.run_id)
+    root = tmp_path / "uncertain"
+    journal = DevJournal(root, saved.run_id)
+    journal.write_envelope(parent.load_envelope())
+    prefix = [e for e in parent.events() if e["sequence"] < cut["sequence"]]
+    for event in prefix:
+        payload = copy.deepcopy(event["payload"])
+        if uncertainty == "cleanup" and event["event_type"] == "action_finished":
+            payload["result"]["output"]["cleanup_failed"] = True
+        journal.append(event["event_type"], payload)
+    if uncertainty == "dispatch":
+        journal.append("provider_call_started", {"call_id": "unsettled"})
+    altered_cut = journal.append("tool_batch_finished", cut["payload"])
+    altered = replace(saved, root=root, journal_hash=sha256_bytes(journal.path.read_bytes()),
+                      envelope_hash=sha256_bytes(journal.envelope_path.read_bytes()))
+    with pytest.raises(ContractError, match="uncertain|result identity"):
+        settled_fork(altered, altered_cut, tmp_path / "rejected", task_dir, package)
     assert not (tmp_path / "rejected").exists()

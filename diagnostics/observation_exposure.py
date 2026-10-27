@@ -23,7 +23,7 @@ from patchloop.agent.model import OpenAIResponsesAdapter
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import Artifact
 from patchloop.deadline import ExecutionDeadline
-from patchloop.dev import runner
+from patchloop.dev import completion_reproduction, original_obligation, runner
 from patchloop.dev.contracts import DevRunRequest
 from patchloop.dev.cost import DevCostLedger, pricing_for_model
 from patchloop.dev.state import DevJournal
@@ -99,7 +99,7 @@ def exposure(arm):
 
 
 def fork(source: Source, cut_sequence: int, output: Path, arm: str, *, synthetic_cap_usd: Decimal,
-         preserve_parent_configuration=False):
+         preserve_parent_configuration=False, after_tool_batch=False):
     return _fork(
         source,
         cut_sequence,
@@ -109,16 +109,117 @@ def fork(source: Source, cut_sequence: int, output: Path, arm: str, *, synthetic
         mode="offline-scripted-only",
         env_file=output / "NO_CREDENTIAL_FILE",
         preserve_parent_configuration=preserve_parent_configuration,
+        after_tool_batch=after_tool_batch,
     )
 
 
+def _parent_reader(source, events):
+    """Read exact inherited references from an already-forked parent's local CAS."""
+    require((source.root / "artifacts/objects/sha256").is_dir(), "parent artifact store missing")
+    store = ArtifactStore(source.root / "artifacts")
+    fork_path = source.root / "fork.json"
+    references = {}
+    if fork_path.exists():
+        saved = json.loads(fork_path.read_bytes())
+        require(any(event["event_type"] == "observation_exposure_fork"
+                    and event["payload"] == saved.get("marker") for event in events),
+                "parent artifact lineage is not journal-bound")
+        references = saved["references"]
+
+    def read(ref):
+        replacement = references.get(sha256_json(ref.model_dump(mode="json")))
+        if replacement is not None:
+            require(replacement[0] == ref.model_dump(mode="json")
+                    and all(replacement[1].get(key) == getattr(ref, key)
+                            for key in ("content_hash", "media_type", "size_bytes")),
+                    "parent inherited artifact identity changed")
+            ref = Artifact.model_validate(replacement[1])
+        return store.read_bytes(ref)
+
+    return read
+
+
+def _settled_batch_state(prefix, old, package):
+    """Derive bounded continuation state from durable receipts, not an older input."""
+    view = SimpleNamespace(events=lambda: prefix)
+    for started, finished, key in (
+        ("tool_batch_started", "tool_batch_finished", "turn_id"),
+        ("action_started", "action_finished", "action_id"),
+        ("probe_execution_started", "probe_execution_finished", "action_id"),
+    ):
+        pending = set()
+        for event in prefix:
+            if event["event_type"] == started:
+                pending.add(event["payload"][key])
+            elif event["event_type"] == finished:
+                pending.discard(event["payload"][key])
+        require(not pending, "uncertain parent tool execution")
+    latest = DevJournal.latest_tool_batch_results(view)
+    require(latest and prefix[-1]["payload"].get("result_fingerprints") == [
+        sha256_json(result.model_dump(mode="json")) for result in latest
+    ], "settled batch result identity changed")
+    require(all(result.tool not in {"finish_task", "stop_task"} for result in latest),
+            "completed solver endpoints cannot continue")
+    for event in prefix:
+        if event["event_type"] != "action_finished":
+            continue
+        result = event["payload"]["result"]
+        output = result.get("output", {})
+        require(not any(output.get(key) for key in (
+            "cleanup_failed", "timed_out", "deadline_exhausted",
+        )) and result.get("error_code") not in {"RECOVERY_ERROR", "RESUME_CONTRACT_MISMATCH"}
+                and output.get("probe_stage") != "dispatch_pending",
+                "uncertain parent execution or cleanup")
+    empty = original_obligation.EMPTY_DIFF
+    review = completion_reproduction.review(
+        prefix, empty, public_task=package.public, run_id=old.run_id,
+    )
+    obligation = original_obligation.review(
+        prefix, package.public, review, acquisition=old.reproduction_acquisition,
+        probe_available=old.probe_image_digest is not None,
+    )
+    require(obligation["stage"] == "acquired" and obligation["status"] == "refuted"
+            and len(obligation["baseline_failure_case_ids"]) == 1,
+            "one acquired original failure required")
+    require(all(result.workspace_diff_hash == empty for result in latest)
+            and not any(event["event_type"] == "action_finished"
+                        and event["payload"]["result"]["tool"] == "replace_text"
+                        and event["payload"]["result"]["status"] == "succeeded"
+                        and event["payload"]["result"].get("error_code") is None
+                        for event in prefix), "after-batch continuation requires unchanged base")
+    counters = runner._restore_counters(view)
+    active = DevJournal.latest_active_elapsed_ms(view)
+    require(type(prefix[-1]["payload"].get("active_elapsed_ms")) is int
+            and prefix[-1]["payload"]["active_elapsed_ms"] == active,
+            "settled batch active time is missing or regressed")
+    usage = DevJournal.provider_usage(view)
+    require(all(type(row.get("cost_nanos")) is int and row["cost_nanos"] >= 0
+                and not row.get("error_code") for row in usage), "uncertain parent billing")
+    budget = {
+        "model_calls": old.limits.max_model_calls - counters.model_calls,
+        "tool_actions": old.limits.max_tool_actions - counters.tool_actions,
+        "accepted_mutations": old.limits.max_accepted_mutations,
+        "active_wall_time_seconds": int(old.limits.wall_time_seconds
+                                        - old.evaluation_reserve_seconds - active / 1000),
+        "total_active_wall_time_seconds": int(old.limits.wall_time_seconds - active / 1000),
+        "evaluation_reserve_seconds": old.evaluation_reserve_seconds,
+        "cost": {"settled_usage": old.cost_start_nanos + sum(row["cost_nanos"] for row in usage)},
+    }
+    require(all(budget[key] > 0 for key in (
+        "model_calls", "tool_actions", "accepted_mutations", "active_wall_time_seconds",
+    )), "settled checkpoint has no remaining repair allowance")
+    return budget, active, latest, obligation
+
+
 def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
-          preserve_parent_configuration=False, model_override=None):
+          preserve_parent_configuration=False, model_override=None, after_tool_batch=False):
     """Copy a settled prefix; bind current runtime without changing the parent."""
     require(
         model_override is None or preserve_parent_configuration,
         "model override requires preserved parent configuration",
     )
+    require(not after_tool_batch or preserve_parent_configuration,
+            "after-batch continuation requires preserved parent configuration")
     require(arm in {"A", "B"}, "unknown exposure arm")
     require(mode in {"offline-scripted-only", "funded-observation"}, "unknown fork mode")
     require(
@@ -142,10 +243,12 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
     )
     cut = next((e for e in events if e["sequence"] == cut_sequence), None)
     require(
-        cut is not None and cut["event_type"] == "model_input_prepared",
-        "cut must precede a prepared model request",
+        cut is not None and cut["event_type"] == (
+            "tool_batch_finished" if after_tool_batch else "model_input_prepared"),
+        "cut must be a settled tool batch" if after_tool_batch
+        else "cut must precede a prepared model request",
     )
-    prefix = [e for e in events if e["sequence"] < cut_sequence]
+    prefix = [e for e in events if e["sequence"] < cut_sequence + int(after_tool_batch)]
     require(
         not any(e["event_type"] in {"diagnostic_candidate_seeded", "terminal"} for e in prefix),
         "seeded or terminal prefixes are not ordinary checkpoints",
@@ -160,20 +263,25 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
         any(e["event_type"] == "tool_batch_finished" for e in prefix),
         "completed tool batch required",
     )
-    parent_store = ArtifactStore(source.root / "artifacts")
-    bundle = json.loads(
-        parent_store.read_bytes(Artifact.model_validate(cut["payload"]["artifact"]))
-    )
-    context = json.loads(
-        parent_store.read_bytes(Artifact.model_validate(bundle["turn"]["context_artifact"]))
-    )
-    budget = context["remaining_budget"]
     task_dir, package = runner._resolve_task_file(source.public_path)
     require(
         package.public_spec_hash == old.public_spec_hash
         and package.task_content_hash == old.task_content_hash,
         "task identity changed",
     )
+    latest, obligation = [], None
+    if after_tool_batch:
+        budget, active_elapsed_ms, latest, obligation = _settled_batch_state(prefix, old, package)
+        expected_diff = original_obligation.EMPTY_DIFF
+    else:
+        read_parent = _parent_reader(source, prefix)
+        bundle = json.loads(read_parent(Artifact.model_validate(cut["payload"]["artifact"])))
+        context = json.loads(read_parent(
+            Artifact.model_validate(bundle["turn"]["context_artifact"])))
+        budget = context["remaining_budget"]
+        active_elapsed_ms = int(bundle["turn"]["active_elapsed_ms"])
+        expected_diff = context["current_diff"]["patch_hash"]
+    read_parent = _parent_reader(source, prefix)
     output = output.resolve()
     disjoint(output, (repository_root(), source.root, task_dir))
     output.mkdir()
@@ -184,7 +292,7 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
         key = sha256_json(ref.model_dump(mode="json"))
         if key in references:
             continue
-        data = parent_store.read_bytes(ref)
+        data = read_parent(ref)
         copied = store.put_bytes(data, ref.media_type)
         references[key] = (ref.model_dump(mode="json"), copied.model_dump(mode="json"))
         if ref.media_type.startswith("application/json"):
@@ -222,7 +330,7 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
             restore_candidate(workspace, event["payload"])
     require(
         WorkspaceManager.diff_summary(workspace).patch_hash
-        == context["current_diff"]["patch_hash"],
+        == expected_diff,
         "candidate differs from checkpoint",
     )
     counters = runner._restore_counters(journal)
@@ -303,8 +411,12 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
             ref.model_dump(mode="json")
             for ref in runner._probe_evidence(view, store, source.run_id)
         ],
-        "active_elapsed_ms": int(bundle["turn"]["active_elapsed_ms"]),
+        "active_elapsed_ms": active_elapsed_ms,
     }
+    if after_tool_batch:
+        marker["after_tool_batch"] = True
+        marker["remaining_budget"] = budget
+        marker["baseline_failure_case_ids"] = obligation["baseline_failure_case_ids"]
     if preserve_parent_configuration:
         marker["preserve_parent_configuration"] = True
     if model_override is not None:
@@ -327,6 +439,11 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
         inherited_events=len(prefix),
         marker_hash=sha256_json(marker),
         initial_spent_nanos=spent,
+        after_tool_batch=after_tool_batch,
+        remaining_budget=budget,
+        active_elapsed_ms=active_elapsed_ms,
+        latest_results=latest,
+        original_obligation=obligation,
     )
     with inherited_reads(branch):
         runner._validate_recorded_continuations(journal.events(), store)
