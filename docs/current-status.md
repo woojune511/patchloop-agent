@@ -30,7 +30,12 @@ The 60,734-token request recovered through a public handoff to 48,301, but the
 model did not select a helper or original replay. It stopped for insufficient
 evidence with edits and funds still available; response-count reservation had
 closed further inspection. Three Pylint-specific searches scanned zero files.
-Caller evidence access and diagnostic action selection remain unresolved.
+The [caller-access audit](history/2026-10-27-caller-access-analysis.md) establishes
+that repository search excludes prepared Pylint sources, while the actual helper
+description already explained how to read them. The model did not switch methods.
+Same-candidate original failure was already supplied; repeating it would not fetch
+the missing caller body. The proposed next intervention is explicit read-only
+access to registered dependency sources. Its effect on model choices is untested.
 No fresh original/public/isolated verification ran. All 15 calls settled at
 $0.22311930; this $1.20 allocation is closed. See the
 [sealed preparation](history/2026-10-27-repair-entry-single-plan.md) for exact scope.

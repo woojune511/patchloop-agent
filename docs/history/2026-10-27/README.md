@@ -25,3 +25,4 @@
 - [Repair entry contracts: registered caller selection, whole reads and public context continuation](../2026-10-27-repair-entry-contracts.md)
 - [Full-source repair entry: one R1 trial with a sealed single-row cap](../2026-10-27-repair-entry-single-plan.md)
 - [Full-source trial result: context recovered, no first repair](../2026-10-27-repair-entry-single-results.md)
+- [Caller-source analysis: available dependency access was not selected](../2026-10-27-caller-access-analysis.md)
