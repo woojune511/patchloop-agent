@@ -55,8 +55,9 @@ isolated mock; Ruff PASS. Actual saved requests shrink by about 26K JSON charact
 with exact tool-result expansion and verification preservation. A real API token
 count and live continuation under this change remain untested.
 
-The user requested a live delivery trial. Prepare only A from the same checkpoint,
-once with a new $1.20 cap; keep its first request and row limits unchanged. The
+The requested [live delivery trial](history/2026-10-27-checkpoint-feedback-single-plan.md)
+is prepared and preflighted: only A from the same checkpoint, once with a new
+$1.20 cap; its first request and row limits stay unchanged. The
 collector now binds selected conditions and their exact total cap together, so
 single-A approval cannot execute B. Measure actual current-diff feedback in the
 next dispatched request and honest model completion separately from acceptance.
