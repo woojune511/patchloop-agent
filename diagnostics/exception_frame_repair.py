@@ -680,6 +680,7 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
             allowed = (opportunity.allowed if opportunity else
                        (TOOLS - {"run_probe"} if probes else TOOLS))
             validate_tool_batch(turn.tool_calls, allowed_tools=allowed,
+                                read_range_only=getattr(gateway, "read_range_only", False),
                                 agent_policy=policy,
                                 max_parallel_reads=opportunity.max_parallel_reads
                                 if opportunity else 4)

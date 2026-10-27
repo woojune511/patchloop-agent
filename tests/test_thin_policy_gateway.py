@@ -81,7 +81,7 @@ def test_default_serialization_and_schema_identities_remain_exact():
     )
     assert "memory_update" not in RequestedTool(name="read_file", action_id="x").model_dump()
     assert dev_tool_surface_hash() == (
-        "sha256:e1f5e1cc36a7be3cea41507a4259c58cd363b64b466faa2b6ccc54b6c255a630"
+        "sha256:d059b84421e7046f498046c734454a65cc3f4240332daa777ead92096ef0ec5d"
         if FROZEN_ARM is None else
         "sha256:57193859890419b79cb7f4927c37796d044bc4bf7159c51ddf17723849529e26"
     )
@@ -90,11 +90,19 @@ def test_default_serialization_and_schema_identities_remain_exact():
         allowed_tools=list(MODES),
     )
     assert sha256_json(schemas) == (
-        "sha256:f3b249b48edbfbdfa5283b6231217dc3f0287fc3350c8a8addd200948b4bb876"
+        "sha256:7027dbc48e39126b6d46bac9ad74d882857ff8bcc47e0182f1269b7462552841"
         if FROZEN_ARM is None else
         "sha256:9757e80d1590c5274966a80011a24ed12e08340d23d2e202f0f099ea1be47955"
     )
     if FROZEN_ARM is None:
+        # The selected-file default changes; bounded comparisons retain the old wire bytes.
+        legacy = dev_tool_schemas(
+            finish_enabled=True, check_ids=["public-check"], test_suite_ids=["public-tests"],
+            allowed_tools=list(MODES), read_range_only=True,
+        )
+        assert sha256_json(legacy) == (
+            "sha256:f3b249b48edbfbdfa5283b6231217dc3f0287fc3350c8a8addd200948b4bb876"
+        )
         minimal = {schema["name"]: schema["parameters"] for schema in schemas
                    if schema["name"] in {"replace_text", "stop_task"}}
         assert list(minimal["replace_text"]["properties"]) == [

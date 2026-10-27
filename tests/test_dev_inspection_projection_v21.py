@@ -251,7 +251,7 @@ def test_projection_preserves_current_ordered_tool_inputs_and_limits():
     # Ordered fresh inputs include minimal edit/stop and optional original observation.
     encoded = json.dumps(structure(schemas), separators=(",", ":"), ensure_ascii=False).encode()
     assert hashlib.sha256(encoded).hexdigest() == (
-        "40503cccc058a69fd79471c3615dfc9c855f83d434696ee896c1f571fbe04a9b"
+        "c451395cc0d797f1c79777e21bb479cbd9c8917a06b336875d02bc9ca3b7622d"
         if FROZEN_ARM is None else
         "acdcc28623f92006faaa95a0c58015095e28b851093d0eb983e8d59bcd303222"
     )

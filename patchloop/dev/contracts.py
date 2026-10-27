@@ -110,7 +110,7 @@ def dev_tool_surface_hash(
             "current_source_catalog": "file-hash-delivery-groups-with-mutation-path-permission-v2",
             "native_source_delivery": "exact-path-hash-line-union-references-v1",
             "native_source_reference_limit": 16,
-            "public_read_range": "inclusive-1-to-400-lines-advertised-v1",
+            "public_read_range": "whole-file-pages-or-inclusive-1-to-400-lines-v2",
             "reasoning_context_evidence": "provider-reported-mode-or-null-v1",
             "reads": sorted(DEV_READ_TOOLS),
             "single_actions": sorted(DEV_SINGLE_ACTION_TOOLS),

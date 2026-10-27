@@ -64,12 +64,14 @@ This remains operator-assisted, single-pair evidence.
 The unresolved issue is testing and revising repair premises against the caller.
 Production defaults stay unchanged; this and all prior paid allocations are closed.
 
-The [follow-up design](history/2026-10-27-feedback-source-plan.md) proposes two
-fresh continuations from the same saved A candidate with identical public failure
-feedback, varying only partial versus complete current-file source. It is design
-only, not implemented, sealed or authorized for execution. Selected-file whole
-reading is proposed; search-wide automatic full-file output is not. No default
-or resource-limit change is active.
+The [follow-up implementation](history/2026-10-27-feedback-source-implementation.md)
+adds selected-file whole/page reads within 24K characters; explicit ranges retain
+400 lines. No context or action cap changed. The user authorized the designed R0/R1
+pair from saved A with identical public failure feedback, partial versus complete
+current source, mini/xhigh and a new $2.40 cap. Both experimental rows retain the
+old range-only read interface. Core reading and continuation tests pass; actual
+candidate/source restoration passed without provider or target execution. Collection
+follows final local validation and sealing; no repair-quality result exists yet.
 
 Public exception frames and cause/context chains are implemented in fresh invocation
 v5, with historical observer v1-v4 preserved; see the

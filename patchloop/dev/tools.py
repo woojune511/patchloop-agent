@@ -217,6 +217,21 @@ def _replacement_parameters() -> dict[str, Any]:
     }
 
 
+def _read_line_bounds(start_line=None, end_line=None, *, range_only=False):
+    """Keep explicit ranges bounded; a missing end selects a complete-line page."""
+    if end_line is None and not range_only:
+        if start_line is None:
+            return 1, None
+        if type(start_line) is not int or start_line < 1:
+            raise ContractError("read_file page start_line must be a positive integer")
+        return start_line, None
+    if type(start_line) is not int or type(end_line) is not int:
+        raise ContractError("read_file line bounds must be integers")
+    if start_line < 1 or end_line < start_line or end_line - start_line + 1 > 400:
+        raise ContractError("read_file accepts a 1-400 line inclusive range")
+    return start_line, end_line
+
+
 def dev_tool_schemas(
     *,
     finish_enabled: bool,
@@ -236,6 +251,7 @@ def dev_tool_schemas(
     repair_test_edit_enabled: bool = False,
     agent_policy: str = "current",
     history_search_policy: history_search.Policy = "none",
+    read_range_only: bool = False,
 ) -> list[dict[str, Any]]:
     if agent_policy not in {"current", "thin"}:
         raise ContractError("unknown agent policy")
@@ -286,6 +302,12 @@ def dev_tool_schemas(
                 "Read one inclusive line range from a tracked public source file. "
                 "Request at most 400 lines: end_line - start_line + 1 must be between 1 and 400. "
                 "The existing output bound may return fewer complete lines."
+                if read_range_only else
+                "Read a selected tracked public source file. Set both line bounds to null "
+                "to read from the beginning; the 24000-character output limit returns only "
+                "complete lines. If truncated, continue with next_start_line and end_line null. "
+                "For an explicit inclusive range, supply both integers and request at most "
+                "400 lines. Returned spans cover only the lines actually delivered."
             ),
             "strict": True,
             "parameters": {
@@ -296,8 +318,14 @@ def dev_tool_schemas(
                         "minLength": 1,
                         **({"enum": list(read_paths)} if read_paths else {}),
                     },
-                    "start_line": {"type": "integer", "minimum": 1},
-                    "end_line": {"type": "integer", "minimum": 1},
+                    "start_line": {
+                        "type": "integer" if read_range_only else ["integer", "null"],
+                        "minimum": 1,
+                    },
+                    "end_line": {
+                        "type": "integer" if read_range_only else ["integer", "null"],
+                        "minimum": 1,
+                    },
                 },
                 "required": ["path", "start_line", "end_line"],
                 "additionalProperties": False,
@@ -619,6 +647,7 @@ def validate_tool_batch(
     path_diagnosis_pending: bool = False,
     original_acquisition_pending: bool = False,
     repair_test_comparison_pending: bool = False,
+    read_range_only: bool = False,
 ) -> str:
     """Return ``parallel_read`` or ``single_action``; reject every mixed shape."""
 
@@ -675,6 +704,9 @@ def validate_tool_batch(
     ):
         raise ContractError("turn_decision mode must match the requested tool family")
     for call in calls:
+        if read_range_only and call.name == "read_file":
+            _read_line_bounds(call.arguments.get("start_line"),
+                              call.arguments.get("end_line"), range_only=True)
         if original_acquisition_pending and call.name == "run_probe":
             purpose = call.arguments.get("purpose")
             if (not isinstance(purpose, dict) or purpose.get("kind") != "original_requirement"
@@ -724,6 +756,7 @@ class DevToolGateway:
         retained_source_chars: RetainedSourceChars = RETAINED_SOURCE_CHARS,
         agent_policy: str = "current",
         history_search_policy: history_search.Policy = "none",
+        read_range_only: bool = False,
     ) -> None:
         self.workspace = workspace.resolve()
         self.public_task = public_task
@@ -737,6 +770,7 @@ class DevToolGateway:
         if history_search_policy not in {"none", history_search.POLICY}:
             raise ContractError("unknown history search policy")
         self.history_search_policy = history_search_policy
+        self.read_range_only = read_range_only
         from patchloop.dev.history_evidence import EvidenceHistory
 
         self._public_history = EvidenceHistory()
@@ -2657,6 +2691,7 @@ class DevToolGateway:
             agent_policy=self.agent_policy,
             path_diagnosis_pending=path_diagnosis_pending,
             repair_test_comparison_pending=repair_test_comparison_pending,
+            read_range_only=self.read_range_only,
         )
         if shape == "single_action":
             return [self.execute(calls[0])]
@@ -3167,6 +3202,9 @@ class DevToolGateway:
                 )
                 evidence_cache_hit = False
             elif call.name in READ_TOOLS:
+                if self.read_range_only and call.name == "read_file":
+                    _read_line_bounds(call.arguments.get("start_line"),
+                                      call.arguments.get("end_line"), range_only=True)
                 if self.deadline is not None:
                     self.deadline.check()
                 cache_key = self._cache_key(read_request_hash, baseline)
@@ -3373,16 +3411,19 @@ class DevToolGateway:
         }
         return {"span_id": f"span_{sha256_json(identity).split(':', 1)[1][:16]}", **identity}
 
-    def _read_file(self, path: str, start_line: int, end_line: int) -> dict[str, Any]:
-        if type(start_line) is not int or type(end_line) is not int:
-            raise ContractError("read_file line bounds must be integers")
-        if start_line < 1 or end_line < start_line or end_line - start_line + 1 > 400:
-            raise ContractError("read_file accepts a 1-400 line inclusive range")
+    def _read_file(
+        self, path: str, start_line: int | None = None, end_line: int | None = None,
+    ) -> dict[str, Any]:
+        start_line, end_line = _read_line_bounds(
+            start_line, end_line, range_only=self.read_range_only,
+        )
         normalized, selected = self._tracked_path(path)
         raw = selected.read_bytes()
         if len(raw) > 2_000_000:
             raise ContractError("read_file refuses files larger than 2 MB")
         lines = source_lines(raw.decode("utf-8"))
+        if end_line is None:
+            end_line = len(lines)
         content, actual_end, truncated = bounded_lines(lines, start_line, end_line)
         spans = (
             [self._span(normalized, start_line, actual_end, content, sha256_bytes(raw))]

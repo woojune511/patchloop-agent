@@ -56,9 +56,10 @@ see [contract](thin-policy-reference.md). Execution gates stay shared.
 Notes/plans are unverified; never reasoning transcripts.
 One consecutive protocol/incomplete correction; reset on valid batches.
 
-Reads return at most 400 lines. Searches use literal queries, rooted component-aware
-globs and one tracked-path enumeration per uncached call. Edits require delivered
-current public source. `replace_text` requires an exact occurrence in a tracked,
+Reads: null bounds select 24k-char pages; ranges allow 400 lines.
+Search: literal queries, rooted component-aware globs; one tracked-path scan/uncached call.
+Edits require delivered current public source. `replace_text` requires an exact occurrence
+in a tracked,
 allowed file, a hypothesis and expected behavior (each 1-1,500 characters in both
 schemas). Bind the contiguous observed anchor, enforce canonical full-diff scope,
 and restore the pre-image on rejection. No fuzzy matching, unseen source, new paths
