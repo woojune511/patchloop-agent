@@ -28,7 +28,7 @@ from patchloop.artifacts import ArtifactStore
 from patchloop.dev import runner, segments
 from patchloop.dev.cost import DevCostLedger, pricing_for_model, usd_to_nanos
 from patchloop.dev.state import DevJournal
-from patchloop.runtime import repository_root, runtime_content_hash
+from patchloop.runtime import repository_root, runtime_content_hash, runtime_content_paths
 from patchloop.sandbox import LocalSandbox
 from patchloop.util import canonical_json, sha256_bytes, sha256_json
 
@@ -525,11 +525,20 @@ def validate(manifest, digest, approved_cap_usd=None):
     return plan, loaded
 
 
+def clean_implementation():
+    root = repository_root()
+    runner._require_tracked_clean_paths(root, [
+        *runtime_content_paths(root),
+        *sorted(path.relative_to(root).as_posix()
+                for path in (root / "diagnostics").glob("*.py")),
+    ])
+
+
 def collect(manifest, approved_manifest_hash, approved_cap_usd):
     plan, loaded = validate(manifest, approved_manifest_hash, approved_cap_usd)
     root = Path(plan["result_root"])
     disjoint(root, (repository_root(), loaded.source.root, manifest.parent))
-    runner._require_tracked_clean_paths(repository_root(), ["patchloop", "diagnostics"])
+    clean_implementation()
     root.mkdir()
     journal = DevJournal(root, "run_dev_firstreproductioncomparison")
     store = ArtifactStore(root / "artifacts")

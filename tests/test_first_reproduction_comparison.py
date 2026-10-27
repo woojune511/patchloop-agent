@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import shutil
+import subprocess
 from decimal import Decimal
 
 import pytest
@@ -34,6 +35,33 @@ def stop(action_id="stop"):
             "summary": "Synthetic endpoint.",
         },
     }
+
+
+def test_live_tracking_guard_checks_files_and_rejects_changed_or_untracked_code(
+    tmp_path, monkeypatch,
+):
+    root = tmp_path / "repo"
+    paths = ["patchloop/runtime.py", "diagnostics/comparison.py", "pyproject.toml",
+             "uv.lock", "docker/probe_runner.py", "docker/Dockerfile.sandbox"]
+    for name in paths:
+        path = root / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("original\n", encoding="utf-8")
+    subprocess.run(["git", "init", "-q"], cwd=root, check=True)
+    subprocess.run(["git", "add", "--", *paths], cwd=root, check=True)
+    subprocess.run(["git", "-c", "user.name=Test", "-c", "user.email=test@example.invalid",
+                    "commit", "-qm", "fixture"], cwd=root, check=True)
+    monkeypatch.setattr(diagnostic, "repository_root", lambda: root)
+    # Use the real exact-file tracking guard, unlike simulated paid-row tests.
+    diagnostic.clean_implementation()
+    changed = root / "diagnostics/comparison.py"
+    changed.write_text("changed\n", encoding="utf-8")
+    with pytest.raises(ContractError, match="match HEAD exactly"):
+        diagnostic.clean_implementation()
+    changed.write_text("original\n", encoding="utf-8")
+    (root / "patchloop/untracked.py").write_text("new\n", encoding="utf-8")
+    with pytest.raises(ContractError, match="all be tracked"):
+        diagnostic.clean_implementation()
 
 
 @pytest.fixture(scope="module")
