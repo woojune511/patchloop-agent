@@ -5,7 +5,7 @@
 - Origin Skill: academic-research-suite / experiment-agent
 - Origin Mode: bounded live-trial preparation and local validation
 - Origin Date: 2026-10-27
-- Verification Status: preparation in progress; live NOT_RUN
+- Verification Status: PREPARED / PREFLIGHTED / LOCALLY TESTED; live NOT_RUN
 - Mechanism source: `48e62b64`, with an explicit single-arm collection selector
 
 ## Question and reason
@@ -82,5 +82,17 @@ Local validation: 44 focused PASS in 36.73 seconds; 472 quick PASS in 111.64
 seconds, including isolated mock evaluation; Ruff and whitespace checks PASS.
 Receipts: `C:/pt/tmp/singleentry27b.xml` and `C:/pt/tmp/singlequick27.xml`.
 Read-only review found no additional defect. Docker is running and both pinned
-images were present when inspected. Preparation receipts will be recorded after
-sealing. A live result will be a separate follow-up; this is not an execution result.
+images were present when inspected. Preparation was sealed at `47ba713c`:
+
+- Manifest hash: `sha256:711dc6277d512a76bc93c00f8ca9da3eb896606f76a0d0f32ba9cbd92bc478be`.
+- R1 request hash: `sha256:3143e35e9d9247ee22e75ed529bc10e75dcbaf23f82a3dc28c08aa930f642cab`.
+- `preflight.json` in the plan directory confirms current runtime/bindings,
+  prepared dependencies, probe profile, both pinned images and all 676 source lines.
+  Credential existence was checked; its content was not read. Provider, input-count,
+  credential-read and target-execution counts are all zero. The result root is absent.
+- Exact PowerShell command: `& 'C:/pt/repair-entry-single-plan-v1/run.ps1'`, from
+  `C:/Users/geonj/Documents/PatchLoop`. The script calls the collector with the
+  sealed manifest/hash and `--approved-cap-usd 1.20`.
+
+New exact execution approval is pending. A live result will be a separate
+follow-up; this is not an execution result.

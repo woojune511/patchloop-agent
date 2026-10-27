@@ -25,8 +25,10 @@ and [evidence boundaries](evidence.md).
 ## Active decision
 
 The [single full-source trial](history/2026-10-27-repair-entry-single-plan.md) is
-being prepared: R1 once, $1.20 total, same row model and resource limits. Collection
-now seals the selected arm and cap; earlier paid allocations remain closed.
+prepared and preflighted: R1 once, $1.20 total, same row model and resource limits.
+Collection seals the selected arm and cap (44 focused/472 quick PASS). Exact new
+execution approval is pending; no provider/count call or target execution occurred.
+Earlier paid allocations remain closed.
 
 The [repair entry contracts](history/2026-10-27-repair-entry-contracts.md) are now
 implemented for feedback-source-pair-v3: whole/page file reads, a small registered
