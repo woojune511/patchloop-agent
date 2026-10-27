@@ -41,28 +41,35 @@ file processing evidence. Short B was rejected for callable/code-format errors b
 execution. Total new cost USD 0.1688805; that allocation is also closed. Neither arm
 repaired, submitted or evaluated. B's post-validation correction was not tested.
 
-The active question is whether the model snapshot changes valid callable and
-observation construction at this same public checkpoint. A
-[model-only comparison](history/2026-10-28-first-reproduction-model-plan.md) is
-prepared and sealed: new mini/full snapshot runs, both xhigh, recorded long description,
-identical public evidence, 60K input, 40K/25K output and first-settled-probe endpoint.
-The checkpoint's mini-derived completion-cost forecast is omitted symmetrically
-from the first visible state; actual host reservation and accounting remain active.
-No prior response, repair or observation choice enters the new model inputs.
+The [model-only pair](history/2026-10-28-first-reproduction-model-results.md) has
+now run once per snapshot with the same long description, public input, xhigh and
+60K/40K/25K limits. First requests differed only in model ID after symmetric removal
+of a stale mini-priced cost forecast. Actual first inputs were both 19,947 tokens.
+Mini exhausted 40K then 25K with reasoning-only responses and zero tool calls.
+Full completed a 21,356-token response and an admitted probe, but failed before
+both declared target calls: expected_exceptions=(SystemExit,) violates an unstated
+Exception-subclass restriction, although SystemExit is already captured separately.
+Setup checks passed; calls remained empty and reproduction was not compared.
 
-Offline cost/policy admission confirms both models retain the same tools and full
-output allowances at 60K uncached input. Proposed new cap is USD 4.41415320 per arm,
-USD 8.82830640 total; full's initial request plus successor/correction reservation
-needs USD 3.866520. Time eligibility remains independently enforced. The exact new
-allocation is pending confirmation against the sealed executable plan. No new paid
-calls have occurred. This is a first-request diagnostic, not a clean-start repair
-or a reason to adopt a model by default. One pair cannot establish stable superiority.
+Full's authored observations also selected positive W0611 only on the direct-file
+control, leaving the original directory's processing unproven even after fixing
+that helper setting. This is a static observation gap, not an executed repair.
+The model change cleared request completion in this pair but met neither actual
+reproduction nor positive target processing. It does not justify default-model
+adoption, a context increase or a repair-quality claim. Each snapshot ran once.
 
-New model-comparison owner/fork/ledger checks: 14 PASS/21.15s; quick 577 PASS
-(isolated mock included), Ruff PASS. Both actual-checkpoint offline rehearsals
-admitted 40K then 25K at 60K uncached input with correct mixed-model accounting.
-Manifest: C:/pt/first-reproduction-model-plan-v1/manifest.json; exact launcher
-and read-only validator are in the same directory. Runtime is unchanged.
+The next bounded work is to resolve the SystemExit helper-contract inconsistency
+locally and keep same-call positive processing distinct from control success.
+The model's ability to correct the observed helper error after feedback remains
+untested: the approved endpoint stopped at the first settled probe. Do not reopen
+this allocation for a corrected probe or another model run.
+
+Total new cost USD 0.6721752; all three count/model calls settled, no pending actions
+or probes, independent metadata audit PASS. Allocation CLOSED. No edit, regression,
+submission or isolated evaluation occurred. Result root:
+C:/pt/first-reproduction-model-run-v1. Implementation commit e974094c; runtime unchanged.
+Local owner/fork/ledger checks: 14 PASS/21.15s; quick 577 PASS (isolated mock included),
+Ruff PASS. Both offline rehearsals admitted full 40K then 25K at 60K uncached input.
 The preceding [saved-evidence repair](history/2026-10-27-public-regression-cycle-results.md)
 passed isolated acceptance after public failure feedback; it does not establish
 clean-start normal completion. Keep these evidence scopes separate.

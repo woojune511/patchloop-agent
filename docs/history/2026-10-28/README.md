@@ -8,3 +8,4 @@
 - [First reproduction: short description and fixed-checkpoint A/B preparation](../2026-10-28-first-reproduction-description-plan.md)
 - [First reproduction A/B result: long admitted, short rejected before execution](../2026-10-28-first-reproduction-description-results.md)
 - [First reproduction: model-only checkpoint comparison preparation](../2026-10-28-first-reproduction-model-plan.md)
+- [First reproduction model result: mini output exhaustion, full helper setup failure](../2026-10-28-first-reproduction-model-results.md)
