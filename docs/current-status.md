@@ -55,10 +55,14 @@ invalid child in the ordinary-package control. The assigned public packets were
 delivered intact. Both reached one edit; no context/output/cost cutoff was reported.
 Total settled cost was $0.3003564, with one model run and evaluation per arm.
 The initial zero-call preflight metadata error was corrected without changing
-model requests or conditions. This remains operator-assisted evidence, not a
-general observation-policy result. The unresolved issue is validating the repair
-premise against the observed caller before committing the edit. Production defaults
-stay unchanged; this and all prior paid allocations are closed.
+model requests or conditions. The [follow-up analysis](history/2026-10-27-selection-observation-failure-analysis.md)
+found A edited a search excerpt without the preceding incremental path construction;
+its failed helper left no diagnostic opportunity. B could probe but edited directly.
+The experiment stopped at the first edit and did not return public failures to the
+model. It does not measure recovery after feedback or the full production loop.
+This remains operator-assisted, single-pair evidence.
+The unresolved issue is testing and revising repair premises against the caller.
+Production defaults stay unchanged; this and all prior paid allocations are closed.
 
 Public exception frames and cause/context chains are implemented in fresh invocation
 v5, with historical observer v1-v4 preserved; see the
