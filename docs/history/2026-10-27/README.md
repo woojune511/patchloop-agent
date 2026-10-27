@@ -32,3 +32,4 @@
 - [First-edit checkpoint: correction-time admission and lossless public-context comparison](../2026-10-27-first-edit-checkpoint.md)
 - [Sealed first-edit A/B: same public evidence, fresh equal budgets and preflight complete](../2026-10-27-first-edit-checkpoint-plan.md)
 - [First-edit A/B result: A accepted repair, B failed hypothesis, post-edit context defect](../2026-10-27-first-edit-checkpoint-results.md)
+- [Checkpoint delivery fix: exact source references and actual handoff state in the next request](../2026-10-27-checkpoint-feedback-delivery.md)

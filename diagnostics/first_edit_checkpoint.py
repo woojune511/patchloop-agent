@@ -12,6 +12,7 @@ from decimal import Decimal
 from pathlib import Path
 from types import SimpleNamespace
 
+from diagnostics import checkpoint_delivery as delivery
 from diagnostics import feedback_source as source
 from diagnostics import first_edit_checkpoint_source as checkpoint_source
 from diagnostics import public_context_dedup as dedup
@@ -20,6 +21,7 @@ from diagnostics.decision_sampler import require
 from diagnostics.declaration_checkpoint import disjoint
 from diagnostics.repair_cycle import OriginalCallRecheck
 from diagnostics.repair_cycle_budget import CycleLimits, cycle_opportunity
+from diagnostics.repair_cycle_context import HANDOFF_KIND
 from patchloop.artifacts import ArtifactStore
 from patchloop.deadline import ExecutionDeadline
 from patchloop.dev.conversation import SEGMENT_RULES
@@ -89,16 +91,37 @@ def request_payload(common, arm, *, history=(), remaining=None, correction=None,
     require(opportunity.allowed <= {"replace_text", "stop_task"},
             "first-edit trial cannot reopen exploration")
     evidence = common["evidence"]
-    encoded = evidence if arm == "A" else common["deduplicated_evidence"]
-    items = [{"role": "system", "content": PROMPT},
-             {"role": "user", "content": canonical_json(encoded)}]
     # Both conditions keep completed public exchanges. Opaque generation state is
     # archived by the runner but never redispatched in this new diagnostic profile.
-    exchanges = list(public_exchanges(history, archive_kind=PUBLIC_EVIDENCE_KIND))
-    if exchanges:
+    exchanges = delivery.project_exchanges(evidence, list(
+        public_exchanges(history, archive_kind=PUBLIC_EVIDENCE_KIND)))
+    handoff = None
+    for item in history:
+        if item.get("role") != "developer":
+            continue
+        try:
+            record = json.loads(item["content"])
+        except (KeyError, TypeError, ValueError):
+            continue
+        if isinstance(record, dict) and record.get("kind") == HANDOFF_KIND:
+            handoff = record
+    encoded = evidence if arm == "A" else common["deduplicated_evidence"]
+    if handoff is not None:
+        # The boundary applies equally to both arms. Keep the frozen observations,
+        # actually consume fresh state, and deduplicate the whole public document.
+        structured = copy.deepcopy(exchanges)
+        for item in structured:
+            if item.get("type") == "function_call_output":
+                item["output"] = json.loads(item["output"])
+        encoded = dedup.deduplicate({**evidence, "current_handoff": handoff,
+                                    "completed_public_exchanges": structured})
+    items = [{"role": "system", "content": PROMPT},
+             {"role": "user", "content": canonical_json(encoded)}]
+    if exchanges and handoff is None:
         items.append(SEGMENT_RULES.archive(exchanges=exchanges))
     items.append({"role": "developer", "content": canonical_json({
         "remaining": remaining, "protocol_correction": correction,
+        **({"source_delivery": delivery.REFERENCE_RULES} if exchanges or handoff else {}),
         "opportunity": opportunity.public(), "current_trial_original_recheck": original_feedback,
         "verification_reserve": {"original_actions_max": LIMITS.host_original_actions,
             "original_seconds_per_action": LIMITS.original_recheck_seconds,
@@ -148,7 +171,9 @@ def scope():
         "row_cap_usd": str(PROFILE.row_cap), "total_cap_usd": str(PROFILE.invocation_cap),
         "conditions": {"A": "full-public-context", "B": dedup.FORMAT},
         "checkpoint": "post-helper-before-response-15", "fresh_counters": True,
-        "continuation": "public-exchanges-only", "source_selection": "all-unique-evidence"}
+        "continuation": "public-exchanges-only", "source_selection": "all-unique-evidence",
+        "post_edit_delivery": "exact-visible-source-references-v1",
+        "context_handoff": "combined-public-state-lossless-v1"}
 
 
 def prepare(output, result_root, credential_file):
@@ -159,7 +184,8 @@ def prepare(output, result_root, credential_file):
              source.host.PUBLIC, source.host.PUBLIC.with_name("environment.yaml"),
              source.host.SOURCE, source.host.DEPENDENCIES, source.host.CALIBRATION]
     paths.extend(Path(__file__).with_name(name + ".py") for name in (
-        "first_edit_checkpoint_source", "public_context_dedup", "repair_cycle",
+        "first_edit_checkpoint_source", "public_context_dedup", "checkpoint_delivery",
+        "repair_cycle",
         "repair_cycle_budget", "repair_cycle_tools", "repair_cycle_context",
         "source_ready_packet", "saved_candidate_acceptance", "decision_sampler",
         "declaration_checkpoint"))

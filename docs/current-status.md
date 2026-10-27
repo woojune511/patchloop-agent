@@ -45,10 +45,15 @@ still completed. B received the failed result at 46,645 input tokens and stopped
 acknowledging failure; the one-edit design did not permit revision. Task correctness
 and successful model completion flow remain separate outcomes.
 
-The next concrete defect is post-edit source retransmission and an ineffective
-handoff in the checkpoint request builder. Address that narrow delivery contract
-before another broad search; no follow-up implementation or run is authorized by
-the completed allocation. The correction time floor was not exercised live.
+The [post-edit delivery fix](history/2026-10-27-checkpoint-feedback-delivery.md)
+now references exact revalidated text already visible in the request and consumes
+actual handoff state. Initial A/B requests stay unchanged. At a counted boundary,
+both arms use a combined lossless public document and fresh admission without
+resetting budgets. Local scripted tests verify successful/failed feedback in the
+next dispatched request: 81 focused PASS/77.15s; 472 quick PASS/108.05s including
+isolated mock; Ruff PASS. Actual saved requests shrink by about 26K JSON characters
+with exact tool-result expansion and verification preservation. A real API token
+count and live continuation under this change remain untested. No paid run was requested.
 
 All five input counts and three generation calls completed with known usage;
 zero corrections and no execution uncertainty. Settled cost $0.40829625 under
