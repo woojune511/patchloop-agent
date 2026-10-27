@@ -38,12 +38,20 @@ and public regression PASS (1,231 passed, 69 skipped, 15 xfailed).
 The patch synthesizes an empty package module when its initializer is missing.
 Code absence does not establish correct file selection or analysis.
 
-Delivery remained unverified: the corrected case's second-call input inventory
-changed from 14 to 16 entries and its hash changed. The receipt does not name the
-added entries. Same-call code output and full reproduction identity are distinct;
-do not assume this was only cache state. Actual requests preserved the UNKNOWN
-comparability state. Changed-wording failure feedback and revision were NOT_EXERCISED
-because the first edit removed the selected code.
+The [public operator diagnosis](history/2026-10-28-canonical-diagnostic-analysis.md)
+now confirms the candidate processes an empty initializer AST and omits the child
+file; direct-file and healthy-directory controls still emit W0611. Two isolated
+public probes (28.373 seconds total, no model) matched the saved first-two-call
+captures, source snapshots and input fingerprints exactly.
+
+The candidate's first call creates cache/pylint and project1.stats. Including the
+whole work/cache root in both input snapshots causes the observed 14-to-16 entry
+drift before call-2; no fixture file changed. Delivery stayed unverified. Actual
+requests received UNKNOWN and had remaining tools/time, but no positive child-analysis
+observation rejected the empty-module candidate. The initial target-not-entered
+argument error also remains an unverified case in the aggregate. These are separate
+behavior-coverage, identity-scope and obligation-accounting issues.
+Changed-wording failure feedback and revision remain NOT_EXERCISED in the live run.
 
 Keep the [canonical host change](history/2026-10-27-canonical-diagnostic-feedback.md):
 it removed duplicate helper judgment for fresh calls and kept incomplete execution
@@ -52,10 +60,12 @@ unknown. Local normal-runner tests cover changed-text feedback and a second edit
 all failed schema/document nodes passed targeted reruns, Ruff PASS. These local
 mechanisms and live task acceptance remain separate claims.
 
-Next diagnose public file-selection behavior and the generated entries behind
-second-call identity drift. The hypotheses are not established by evaluator FAIL
-alone. Do not increase context/cost limits or rerun from unused funds. General
-settings above remain unchanged; no further paid execution is authorized.
+Next improve discriminating public observations, distinguish fixture inputs from
+generated outputs, and separate pre-target request errors from established baseline
+obligations. These recommendations are not implemented. The diagnostic does not
+identify private-test details or replace independent acceptance. Do not increase
+limits or rerun from unused funds. General settings remain unchanged; no further
+paid execution is authorized.
 
 The preceding [saved-evidence trial](history/2026-10-27-public-regression-cycle-results.md)
 did receive regression failure, revise and pass isolated acceptance. It used a
