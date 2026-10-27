@@ -24,44 +24,37 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [single signature-guided trial](history/2026-10-28-argument-first-reproduction-results.md)
-entered the original pylint call and reproduced F0010 on the public missing-init
-fixture. Its normal package control emitted W0611. Both call captures are complete;
-the declared failing observation matches and the desired observation mismatches.
-One model response and one probe process produced two target entries. New cost
-USD 0.2817375 is settled; the approved USD 4.41415320 allocation is CLOSED.
-No repair, public regression, finish or isolated evaluation was executed.
+The [post-reproduction repair continuation](history/2026-10-28-post-reproduction-repair-plan.md)
+is prepared, locally validated and NOT live-executed. It restores the public
+Astroid-1333 checkpoint immediately after the completed original probe, preserves
+its program/caller/fixture and failure/desired comparisons, and uses the ordinary
+repair/recheck/public-check/finish/isolated-evaluation loop. No new runtime gate,
+repair hint or diagnostic-rules override was added.
 
-The authored program called target.signature(), then set sys.argv and used
-target() without Python arguments. Both host rows record signature () and no
-binding error. The returned signature was discarded, so adaptive use of it is
-not established. The first request entered normally; bounded argument correction
-is NOT_EXERCISED in this live run. No extra error or repeat was manufactured.
+The actual saved failure and both complete call captures are present in the next
+model request, with stage needs_mutation. Two independent offline restores agree
+at the first count/dispatch boundary after clock/derived-segment normalization.
+Historical opaque reasoning is excluded. Core local validation is 26 PASS in about
+71 seconds, including mock isolated completion; documentation 5 PASS and Ruff PASS.
+Read-only environment preflight is READY. Provider calls and new benchmark calls: 0.
 
-The [v9 implementation](history/2026-10-28-original-argument-correction.md) retains
-actual signature inspection and one same-question/purpose/call-path correction
-shared with helper recovery, under existing quotas and completion reserves.
-Saved v1-v8 observers and idempotent recovery remain fixed. Local controls cover
-feedback correction; this single live result does not establish its uptake.
+Proposed run: same gpt-5.4-2026-03-05 xhigh, one dev-train current-dev20/13
+continuation, NEW cap USD 4.13241570 (not approved). Preserve remaining 15 responses,
+33 tools, 3 edits, output40K/correction25K/context60K, solver1727.678 seconds plus
+390 evaluation reserve. Historical settled USD0.3675843 is excluded from new cost;
+all old allocations remain closed. See the linked plan for sealed controls and files.
 
-The desired observation requires error absence and positive processing from the
-original call itself. Here diagnostic_rules was null and the model's program
-computed nested booleans by substring search. Independent review agrees with the
-current captures, but future candidate judgment is not guaranteed by the host's
-canonical diagnostic-rule path. W0611 is an added processing check beyond the
-issue's explicit error-absence criterion.
+The preceding [signature-guided trial](history/2026-10-28-argument-first-reproduction-results.md)
+entered the original call and reproduced F0010; its normal package control emitted
+W0611. No repair was attempted. Signature inspection was executed but its returned
+value was discarded, so adaptive use is not established. Argument correction is
+NOT_EXERCISED in that live trial; local correction controls do not prove uptake.
 
-The original failure now has an executed public baseline. The next unresolved
-question is whether actual-model repair can preserve that caller/fixture and
-pass its desired behavior plus public regressions before submission. Context and
-output ceilings were not exhausted. No repair continuation is currently funded;
-this checkpoint trial is not a clean-start solve or general improvement claim.
-
-The preceding [saved-evidence repair](history/2026-10-27-public-regression-cycle-results.md)
-passed isolated acceptance after public failure feedback; it does not establish
-clean-start normal completion. The [canonical diagnosis](history/2026-10-28-canonical-diagnostic-analysis.md)
-and [processing-evidence contract](history/2026-10-28-processing-evidence-implementation.md)
-remain the basis for same-call processing evidence, fixture identity and request accounting.
+Next evidence must separate same-call error absence and processing, public
+regressions, normal submission and isolated acceptance. The case has null
+diagnostic_rules and model-authored boolean judgment; independently audit candidate
+captures against it. W0611 is an added processing check beyond the public issue.
+Checkpoint repair is not a clean-start solve or a general improvement claim.
 
 ## Supporting evidence
 
