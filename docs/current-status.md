@@ -47,13 +47,18 @@ initializer while leaving the child outside the selected file list. Its
 [mini verification](history/2026-10-27-mini-candidate-verification.md) remain narrower
 public results with acceptance FAIL; do not rewrite them as this new success.
 
-The [clean-base observation A/B](history/2026-10-27-selection-observation-plan.md)
-is prepared to test whether public selection/resolution feedback leads the same
-mini model to a successful repair without receiving the operator patch. Both arms
-start from original source; only B receives three supplementary base observations.
-This is operator-assisted evidence, not autonomous diagnosis or measured improvement.
-Production defaults stay unchanged. Preparation authorizes no paid execution;
-all previous paid allocations remain closed.
+The [clean-base observation A/B](history/2026-10-27-selection-observation-results.md)
+is complete: both mini candidates retained F0010 and failed isolated acceptance,
+despite 1,231 public regression passes each. A changed a prefix check on a false
+source premise; B appended `__init__` to directory paths and newly omitted the
+invalid child in the ordinary-package control. The assigned public packets were
+delivered intact. Both reached one edit; no context/output/cost cutoff was reported.
+Total settled cost was $0.3003564, with one model run and evaluation per arm.
+The initial zero-call preflight metadata error was corrected without changing
+model requests or conditions. This remains operator-assisted evidence, not a
+general observation-policy result. The unresolved issue is validating the repair
+premise against the observed caller before committing the edit. Production defaults
+stay unchanged; this and all prior paid allocations are closed.
 
 Public exception frames and cause/context chains are implemented in fresh invocation
 v5, with historical observer v1-v4 preserved; see the
