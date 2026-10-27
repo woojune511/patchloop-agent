@@ -68,14 +68,19 @@ The [follow-up implementation](history/2026-10-27-feedback-source-implementation
 adds selected-file whole/page reads within 24K characters; explicit ranges retain
 400 lines. No context or action cap changed. The user authorized the designed R0/R1
 pair from saved A with identical public failure feedback, partial versus complete
-current source, mini/xhigh and a new $2.40 cap. Both experimental rows retain the
-old range-only read interface. Core reading and continuation tests pass; actual
-candidate/source restoration passed without provider or target execution. R0 then
-undid its saved patch and retained F0010. Its known empty diff hit an evaluator
-precheck before any evaluation or R1 call. The [post-model handling fix](history/2026-10-27-feedback-source-empty-diff.md)
-records no repair, preserves R0's original evidence and settled $0.10363125, and
-allows only the unstarted R1 under the same requests and original $2.40 total cap.
-Core correction checks pass; the remaining arm follows sealing of the new command.
+current source, mini/xhigh and a new $2.40 cap. The [completed result](history/2026-10-27-feedback-source-results.md)
+has no successful repair: R0 undid the seed (empty diff, acceptance NOT_RUN), while
+R1 added a namespace fallback and failed acceptance. Both retained F0010 and failed
+to select/parse the namespace child despite 1,231 public regression passes each.
+All actual requests retained their assigned source; input/output/cost ceilings
+were not reached. The reservation policy narrowed late inspection and the first
+edit ended each row, so the diagnosis/revision horizon remains a separate question.
+Both rows kept the old range-only interface; live uptake of the new API is untested.
+The [empty-diff fix](history/2026-10-27-feedback-source-empty-diff.md) preserved R0's
+precheck incident and ran only the unstarted R1 with unchanged requests and restored
+settled usage. Total cost $0.33463995; the pair and allocation are closed. No context
+increase or general quality claim is supported. Local quick suite: 472 PASS/104.09s;
+post-model correction: 25 focused PASS/4.85s. Broader-suite failures remain unresolved.
 
 Public exception frames and cause/context chains are implemented in fresh invocation
 v5, with historical observer v1-v4 preserved; see the
