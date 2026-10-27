@@ -71,7 +71,7 @@ def dev_tool_surface_hash(
 
     base = sha256_json(
         {
-            "schema_version": "dev-tool-surface-v63",
+            "schema_version": "dev-tool-surface-v64",
             "rejected_drafts": correction_drafts.contract(),
             "parallel_generation": "only-when-current-gate-permits-read-batch-v1",
             "fresh_probe_schema": "state-valid-original-acquisition-or-pending-diagnosis-v1",
@@ -151,7 +151,7 @@ def dev_tool_surface_hash(
             "completion_reproduction_feedback": "bounded-current-observation-comparability-v1",
             "original_obligation": "task-bound-base-failure-and-current-replay-v1",
             "original_acquisition": "fresh-six-preparation-then-request-legacy-shared-six-v2",
-            "public_invocation": "python-call-stream-capture-v5-legacy-v1-v4-replay",
+            "public_invocation": "python-call-stream-capture-v6-legacy-v1-v5-replay",
             "public_invocation_capture_bounds": [4096, 10000],
             "public_exception_diagnostics": "bounded-public-frames-chain-side-report-v1",
             "public_exception_diagnostic_bounds": [3, 16, 12, 6144, 32768],
@@ -162,7 +162,7 @@ def dev_tool_surface_hash(
             ],
             "original_request_source": "host-full-public-task-and-issue-hash-v1",
             "probe_request_correction": "field-diagnostics-actual-arguments-preflight-receipt-v1",
-            "probe_judgment": "captured-diagnostic-host-values-witnesses-v1",
+            "probe_judgment": "canonical-diagnostic-code-values-witnesses-v2-legacy-v1-replay",
             "repair_call_path": "original-refuted-unobserved-branch-bounded-diagnosis-v1",
             "repair_prediction": "host-refutation-small-observable-source-or-test-v1",
             "repair_diagnosis_reuse": "same-implementation-additive-test-historical-provenance-v1",

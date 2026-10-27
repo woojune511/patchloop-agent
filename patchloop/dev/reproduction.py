@@ -66,21 +66,23 @@ DESCRIPTION = (
     "value; call.stdout/stderr are bounded per-call Python streams, not repr(value). "
     "Choose the diagnostic channel from public behavior and inspect both captured streams; "
     "For diagnostic-presence booleans, include diagnostic_rules in purpose: "
-    "[{field: 'bug_has_error', call_id: 'call-1', contains: 'reported-code'}, ...]. "
-    "Each field is computed by the host from that call's complete stdout AND stderr. "
-    "The failure/desired objects must have exactly those boolean fields. Keep "
-    "record_observation consistent with this rule; null rules are for other observation kinds. "
-    "If judgment.status is conflict, fix the extractor on the unchanged base with "
-    "corrects_action_id pointing to that failed judgment; retain declarations, rules, "
-    "caller, inputs and environment. A new explanation or desired value cannot correct it. "
+    "[{field: 'bug_has_error', call_id: 'call-1', code: 'F0010'}, ...]. "
+    "Select the stable public diagnostic code, not its changing explanatory message. "
+    "Each field is computed only by the host from that call's complete stdout AND stderr. "
+    "The failure/desired objects must have exactly those boolean fields. With diagnostic_rules, "
+    "only execute the target calls; do not write an extractor or call record_observation. "
+    "The host uses the same rules before and after edits, so changed text with the same code "
+    "remains a failure. Code selection and requirement mapping are still unverified. "
+    "Use null rules for return-value/text observations without a diagnostic code. "
     "do not assume stderr. call.outcome='returned' means the callable returned, not task success. "
     "call.exit_code is the observed SystemExit code; null means no exit code, never zero. "
-    "Inspect capture_status and exception before extracting values. "
+    "capture_status='complete' means both streams were collected. With null rules, "
+    "inspect capture_status and exception before extracting values. "
     "Unexpected exceptions make comparison unavailable. Only for an intended exception "
     "observation, declare exact classes with expected_exceptions=(ValueError,) "
     "in observed_target. This is "
     "not a general retry or error-ignore option. Direct fd/subprocess output is unobserved. "
-    "Then call "
+    "Only with null diagnostic_rules, call "
     "record_observation(value) exactly once "
     "with the actual JSON-compatible observation (at most 2048 UTF-8 bytes). Print progress "
     "normally: probe logs are not auto-parsed; explicitly derive the observation from "
@@ -139,6 +141,12 @@ class LegacyOriginalIntent(OriginalIntent):
     requirement_quote: str = Field(min_length=1, max_length=600)
 
 
+class CanonicalOriginalIntent(OriginalIntent):
+    diagnostic_rules: list[probe_judgment.DiagnosticCodeRule] | None = Field(
+        default=None, min_length=1, max_length=4,
+    )
+
+
 def schema():
     result = Intent.model_json_schema()
     result.pop("title", None)
@@ -150,7 +158,7 @@ def schema():
 
 
 def purpose_schema():
-    original = OriginalIntent.model_json_schema()
+    original = CanonicalOriginalIntent.model_json_schema()
     original.pop("title", None)
     original.pop("$defs", None)
     for item in original["properties"].values():
@@ -240,14 +248,22 @@ def bind(raw, public_task, source, action_id, *, replay=None, events=(),
     paired = isinstance(raw, dict) and "reported_failure_json" in raw
     legacy = isinstance(raw, dict) and "requirement_quote" in raw
     intent_type = (LegacyOriginalIntent if legacy else OriginalIntent) if paired else Intent
+    if paired and not legacy and observation_channel == probe_invocation.CHANNEL:
+        intent_type = CanonicalOriginalIntent
     try:
         intent = intent_type.model_validate(raw)
     except ValidationError as exc:
-        if observation_channel != probe_invocation.CHANNEL:
+        if observation_channel not in (probe_invocation.DIAGNOSTIC_CHANNEL,
+                                       probe_invocation.CHANNEL):
             raise
-        raise ContractError("invalid original_requirement fields", details={
-            "invalid_fields": probe_requests.fields(exc, prefix="/purpose"),
-        }) from exc
+        invalid = probe_requests.fields(exc, prefix="/purpose")
+        for field in invalid:
+            if field["path"].startswith("/purpose/diagnostic_rules/"):
+                # The request correction tracker compares named argument fields;
+                # point at the real rule list, not a type branch or list traversal.
+                field["path"] = "/purpose/diagnostic_rules"
+        raise ContractError("invalid original_requirement fields",
+                            details={"invalid_fields": invalid}) from exc
     task = public_task.model_dump(mode="json")
     if legacy and not any(intent.requirement_quote in task["issue"][key]
                           for key in ("title", "description")):
@@ -258,7 +274,8 @@ def bind(raw, public_task, source, action_id, *, replay=None, events=(),
     if expected is None:
         raise probe_requests.error(
             "reproduction expected_json must be bounded strict JSON: " + str(reason),
-            "/purpose/expected_json" if observation_channel == probe_invocation.CHANNEL
+            "/purpose/expected_json" if observation_channel in (
+                probe_invocation.DIAGNOSTIC_CHANNEL, probe_invocation.CHANNEL)
             else "/reproduction/expected_json",
         )
     failure = None
@@ -274,6 +291,15 @@ def bind(raw, public_task, source, action_id, *, replay=None, events=(),
                 "reported_failure_json and desired expected_json must differ",
                 "/purpose/reported_failure_json", "/purpose/expected_json")
         probe_judgment.validate(intent.diagnostic_rules, expected, failure)
+        if intent.diagnostic_rules:
+            canonical = probe_judgment.is_canonical(intent.diagnostic_rules)
+            if ((observation_channel == probe_invocation.CHANNEL and not canonical)
+                    or (observation_channel != probe_invocation.CHANNEL and any(
+                        isinstance(rule, probe_judgment.DiagnosticCodeRule)
+                        for rule in intent.diagnostic_rules))):
+                raise probe_requests.error(
+                    "Fresh diagnostic_rules require stable code fields; contains is legacy-only",
+                    "/purpose/diagnostic_rules")
     definition = {
         **intent.model_dump(exclude_none=True),
         "expected_json": expected,
@@ -424,6 +450,8 @@ def compare(output, binding):
     result["stderr"] = "\n".join(part for part in stderr.split("\n") if not part.startswith(prefix))
     trace = {"calls": [], "incomplete": True}
     channel = binding["definition"].get("observation_channel")
+    rules = binding["definition"].get("diagnostic_rules")
+    canonical = channel == probe_invocation.CHANNEL and probe_judgment.is_canonical(rules)
     invoked = probe_invocation.supports(channel)
     recorded = invoked or channel == OBSERVATION_CHANNEL
     if len(frames) == 1:
@@ -453,7 +481,20 @@ def compare(output, binding):
         except (ValueError, TypeError):
             pass
     actual, reason = observation_json(result) if not recorded else (None, "missing_observation")
-    if recorded:
+    if recorded and canonical:
+        # Diagnostic observations come from final complete call captures, not a
+        # second model-written extractor. Preserve a supplied value as information
+        # only; it cannot replace captures or turn a failed execution into credit.
+        value = trace.get("observation")
+        if isinstance(value, dict) and value.get("count") == 1 and isinstance(
+                value.get("json"), str):
+            actual, _ = observation_json(
+                {"status": "passed", "exit_code": 0, "stdout": value["json"]})
+        _, reason = observation_json({**result, "stdout": "null"})
+        if result.get("setup_checks", {}).get("status") == "failed":
+            reason = "setup_check_failed"
+        trace = {key: trace[key] for key in ("calls", "incomplete")}
+    elif recorded:
         value = trace.get("observation")
         fields = {"count", "json", "error"} | ({"call_count"} if invoked else set())
         if isinstance(value, dict) and set(value) == fields:
@@ -485,11 +526,10 @@ def compare(output, binding):
     if invoked:
         trace.update(binding_method=channel,
                      execution_environment=probe_invocation.environment(result))
-    rules = binding["definition"].get("diagnostic_rules")
     judgment = (probe_judgment.evaluate(rules, trace, actual, reason=reason)
                 if rules is not None else None)
     if judgment is not None:
-        if judgment["status"] == "consistent":
+        if probe_judgment.is_usable(judgment):
             actual = judgment["host_json"]
         else:
             reason = judgment["reason"]

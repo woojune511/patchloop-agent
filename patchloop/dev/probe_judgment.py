@@ -7,6 +7,7 @@ This checks extraction consistency, not semantic task coverage or repair quality
 from __future__ import annotations
 
 import json
+import re
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -15,6 +16,7 @@ from patchloop.dev import probe_requests
 from patchloop.util import canonical_json, sha256_json
 
 POLICY = "captured-diagnostic-v1"
+CANONICAL_POLICY = "captured-diagnostic-v2"
 
 
 class DiagnosticRule(BaseModel):
@@ -25,24 +27,49 @@ class DiagnosticRule(BaseModel):
     contains: str = Field(min_length=1, max_length=160)
 
 
+class DiagnosticCodeRule(BaseModel):
+    """Fresh diagnostic identity, independent of changing explanatory text."""
+
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    field: str = Field(min_length=1, max_length=64)
+    call_id: Literal["call-1", "call-2", "call-3", "call-4"]
+    code: str = Field(min_length=2, max_length=32, pattern=r"^[A-Z]+[0-9]+[A-Z0-9_-]*$")
+
+
+def is_canonical(rules):
+    return bool(rules) and all(isinstance(rule, DiagnosticCodeRule)
+                              or isinstance(rule, dict) and "code" in rule for rule in rules)
+
+
+def is_usable(judgment):
+    """Legacy agreement and fresh host computation are distinct usable evidence."""
+    return isinstance(judgment, dict) and (
+        judgment.get("policy", POLICY) == POLICY and judgment.get("status") == "consistent"
+        or judgment.get("policy") == CANONICAL_POLICY and judgment.get("status") == "computed")
+
+
 def rules_schema():
-    item = DiagnosticRule.model_json_schema()
+    item = DiagnosticCodeRule.model_json_schema()
     item.pop("title", None)
     for value in item["properties"].values():
         value.pop("title", None)
+    item["properties"]["code"].pop("pattern", None)
     return {"anyOf": [
         {"type": "array", "items": item, "minItems": 1, "maxItems": 4},
         {"type": "null"},
-    ], "description": "For diagnostic-presence booleans, declare each field's call_id and literal. "
-                         "The host searches both complete per-call stdout and stderr. "
-                         "Use null only for observations outside this diagnostic contract."}
+    ], "description": "Declare each field's call_id and stable diagnostic code, e.g. F0010. "
+                         "Codes are uppercase letters followed by digits (up to 32 characters). "
+                         "The host computes booleans from complete per-call stdout and stderr; "
+                         "do not reimplement extraction or call record_observation. "
+                         "Use null for observations without a diagnostic code."}
 
 
 def validate(rules, expected_json, reported_failure_json):
     """Validate declaration shape without inferring whether its literal is correct."""
     if rules is None:
         return
-    fields = [rule.field if isinstance(rule, DiagnosticRule) else rule["field"]
+    fields = [rule.field if isinstance(rule, BaseModel) else rule["field"]
               for rule in rules]
     if len(set(fields)) != len(fields):
         raise probe_requests.error("diagnostic_rules must have distinct field keys",
@@ -59,11 +86,13 @@ def validate(rules, expected_json, reported_failure_json):
 
 def evaluate(rules, trace, authored_json, *, reason=None):
     """Compute field values independently per stream; incomplete is never absent."""
-    normalized = [rule.model_dump() if isinstance(rule, DiagnosticRule) else rule
+    normalized = [rule.model_dump() if isinstance(rule, BaseModel) else rule
                   for rule in rules]
-    result = {"policy": POLICY, "status": "unknown", "rules_hash": sha256_json(normalized),
+    canonical = is_canonical(normalized)
+    result = {"policy": CANONICAL_POLICY if canonical else POLICY, "status": "unknown",
+              "rules_hash": sha256_json(normalized),
               "host_json": None, "authored_json": authored_json, "witnesses": [],
-              "reason": reason}
+              "reason": reason, **({"source": "host"} if canonical else {})}
     if reason is not None:
         return result
     calls = trace.get("calls", [])
@@ -88,15 +117,19 @@ def evaluate(rules, trace, authored_json, *, reason=None):
         matches = []
         for channel in ("stdout", "stderr"):
             text = capture[channel]
-            offset = text.find(rule["contains"])
+            token = rule["code"] if canonical else rule["contains"]
+            match = (re.search(r"(?<![A-Za-z0-9_-])" + re.escape(token)
+                               + r"(?![A-Za-z0-9_-])", text) if canonical else None)
+            offset = ((match.start() if match else -1) if canonical else text.find(token))
             if offset >= 0:
                 matches.append({"channel": channel, "character_offset": offset,
-                                "text": rule["contains"]})
+                                "text": token})
         values[rule["field"]] = bool(matches)
         witnesses.append({"field": rule["field"], "call_id": rule["call_id"],
                           "capture_status": "complete", "channels": ["stdout", "stderr"],
                           "matches": matches})
     result.update(host_json=canonical_json(values), witnesses=witnesses)
-    result["status"] = "consistent" if result["host_json"] == authored_json else "conflict"
-    result["reason"] = None if result["status"] == "consistent" else "observation_conflict"
+    result["status"] = ("computed" if canonical else "consistent"
+                        if result["host_json"] == authored_json else "conflict")
+    result["reason"] = None if is_usable(result) else "observation_conflict"
     return result

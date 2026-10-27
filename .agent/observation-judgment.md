@@ -1,8 +1,43 @@
-# Captured diagnostic judgments and one baseline correction
+# Canonical diagnostic codes and legacy baseline correction
 
 Fresh diagnostic-presence originals declare `purpose.diagnostic_rules`: one to
-four `{field, call_id, contains}` rules. `field` is a flat JSON key (1-64 chars),
-`call_id` is call-1 through call-4, and `contains` is a literal (1-160 chars).
+four `{field, call_id, code}` rules. `field` is a flat JSON key (1-64 chars),
+`call_id` is call-1 through call-4, and `code` is a stable diagnostic identifier
+(2-32 characters, uppercase letters then digits, optional uppercase/digit/_/- suffix).
+Use a public diagnostic code, not its explanatory message. No task-specific code
+is injected. The selected code and caller/requirement mapping remain model-authored.
+
+Expected/failure JSON must be strict boolean objects with exactly those distinct
+keys. The v6 invocation reports complete per-call captures; the host searches code
+tokens in each stdout/stderr independently, with ASCII identifier boundaries.
+Longer identifiers such as XF0010, F00100 and F0010_EXTRA do not match F0010.
+This is token extraction, not semantic parsing of diagnostic records.
+
+The helper executes target calls and does not write a second Boolean extractor or
+call `record_observation`. `probe_judgment.py` computes `captured-diagnostic-v2`,
+status `computed`, source `host`, canonical JSON and bounded code witnesses. The
+same rule runs before and after mutation: changed message text with the same code
+remains a current-diff mismatch, is delivered to the next response, and cannot
+finish. Existing repair/check/finish limits and exact-diff replay reuse apply.
+An incidental authored observation is retained only as information and cannot
+override captures. It does not create an observation-correction obligation.
+
+Missing/truncated captures, unexpected exceptions, setup failure and unhealthy
+execution remain `unknown`/`not_compared`; absence of a Boolean extractor does not
+erase execution failures. The actual API status is `capture_status='complete'`.
+The shared `is_usable` contract connects computed values to first-call observation,
+path diagnosis, repair prediction and concerns. Independent replay recomputation
+still requires equality with the stored observed JSON.
+
+Without a stable diagnostic code, use null rules and the existing return-value or
+text observation path with `record_observation`. That path does not gain the code
+contract's extraction guarantee. Neither path proves the selected observation
+covers the public task or that absence of one diagnostic means general success.
+
+## Frozen v1 diagnostic judgments
+
+Saved v1-v5 invocations retain their exact observer programs and verdict semantics.
+Their `{field, call_id, contains}` rules use a literal (1-160 chars).
 Expected/failure JSON must be strict boolean objects with exactly those distinct
 keys. The host searches both complete per-call Python streams separately; it
 never concatenates channels, pools calls, parses whole-probe logs, runs arbitrary
@@ -20,13 +55,13 @@ semantics; that path does not receive a diagnostic-consistency guarantee.
 
 The provider schema requires explicit nullable `diagnostic_rules` and
 `corrects_action_id`; local legacy requests may omit them. Absent/null fields do
-not change old bindings or observer programs. Fresh wire identity is v55; exact
+not change old bindings or observer programs. Fresh wire identity is v64; exact
 runtime recovery still forbids switching an existing run to new code.
 
-## Correction before source repair
+## Legacy correction before source repair
 
 `observation_correction.py` derives one run-wide correction opportunity from a
-completed fresh original baseline conflict. Pending conflicts precede acquisition
+completed legacy original baseline conflict. Pending conflicts precede acquisition
 attempt/action release: the runner offers only `run_probe` and `stop_task`, and
 the gateway independently blocks exploration, edits, checks and finish. Current
 state includes the target judgment, witnesses and bounded original request/program
@@ -79,6 +114,8 @@ horizon. Count/transport/billing uncertainty retains its original terminal.
 
 Run the bounded owner selection with
 `uv run --locked --offline pytest @tests/judgment-correction.txt --basetemp C:/pt/<unique>`.
+The v6 owner checks are `tests/test_canonical_diagnostic.py` and
+`tests/test_normal_diagnostic_continuation.py`, both included in quick.
 It uses pure receipts and trusted local adapters. Run quick separately; its
 existing smoke reaches isolated mock acceptance, with safety NOT_RUN. Neither
 local path establishes actual-model repair gain or Astroid acceptance.

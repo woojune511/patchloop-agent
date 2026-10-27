@@ -7,6 +7,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
+from patchloop.dev import probe_judgment
 from patchloop.dev.verification_observations import verification_observation
 
 
@@ -142,7 +143,7 @@ def _resolution_evidence(
         passed = output.get("passed") is True
     else:
         judgment = output.get("reproduction", {}).get("judgment")
-        if judgment is not None and judgment.get("status") != "consistent":
+        if judgment is not None and not probe_judgment.is_usable(judgment):
             return None, "verification_judgment_unverified"
         passed = (
             output.get("status") == "passed" and type(output.get("exit_code")) is int

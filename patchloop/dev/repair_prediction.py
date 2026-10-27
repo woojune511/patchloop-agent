@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 
+from patchloop.dev import probe_judgment
 from patchloop.errors import ContractError
 from patchloop.util import sha256_json
 
@@ -264,7 +265,7 @@ def assess(admission, result, execution_identity):
     reproduction = result.get("reproduction") or {}
     healthy = (admission["candidate_diff_hash"] == result.get("diff_hash")
                and reproduction.get("binding", {}).get("case_id") == prediction["case_id"]
-               and reproduction.get("judgment", {}).get("status") == "consistent"
+               and probe_judgment.is_usable(reproduction.get("judgment"))
                and admission.get("invocation_fingerprint") is not None
                and admission["invocation_fingerprint"] == _invocation_fingerprint(result)
                and bool(reproduction) and completion_reproduction._healthy(

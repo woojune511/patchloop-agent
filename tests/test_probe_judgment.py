@@ -126,7 +126,7 @@ def test_rule_declarations_require_exact_boolean_fields(smoke_package, fault):
         raw["diagnostic_rules"] = []
     with pytest.raises(ContractError):
         reproduction.bind(raw, smoke_package.public, "pass", "a",
-                          observation_channel=probe_invocation.CHANNEL)
+                          observation_channel=probe_invocation.DIAGNOSTIC_CHANNEL)
 
 
 def test_provider_schema_is_inline_nullable_and_strict():
@@ -160,7 +160,7 @@ def test_omitted_and_null_new_fields_preserve_old_binding_identity(smoke_package
 def test_captured_execution_is_compared_only_after_host_agreement(tmp_path, authored, expected):
     original = execute(tmp_path / "capture", source=(
         "call = observed_target()()\nrecord_observation(True)"),
-        implementation='print("F0010")', parameters="", channel=probe_invocation.CHANNEL)
+        implementation='print("F0010")', parameters="", channel=probe_invocation.DIAGNOSTIC_CHANNEL)
     binding = copy.deepcopy(original["binding"])
     binding["definition"].update(diagnostic_rules=RULES[:1],
                                   expected_json='{"bug":false}',

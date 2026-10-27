@@ -41,3 +41,4 @@
 - [Ordinary-runner transfer: preserve actual feedback and fund repair, checks and finish](../2026-10-27-normal-recovery-transfer.md)
 - [Sealed clean-start pilot: ordinary acquisition, repair and finish without saved evidence](../2026-10-27-normal-recovery-fresh-plan.md)
 - [Clean-start result: first repair reached, changed F0010 wording exposes divergent predicates](../2026-10-27-normal-recovery-fresh-results.md)
+- [Canonical diagnostic feedback: one code definition across baseline and revised candidates](../2026-10-27-canonical-diagnostic-feedback.md)

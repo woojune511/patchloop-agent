@@ -87,7 +87,7 @@ Acquisition needs both unchanged-base comparisons. Rejections create no case;
 uncertainty stays unverified.
 Request correction certifies validity only; see [request/replay](evidence-recovery.md).
 For helper source errors, see [bounded preflight correction](helper-correction.md).
-Diagnostic conflicts use [one baseline judgment correction](observation-judgment.md).
+Fresh codes use [host judgment; legacy correction](observation-judgment.md).
 Legacy unknown dispatches reserve slots without becoming execution evidence. Releases
 preserve unmet verification. Journal roots and action/release identities survive recovery;
 forecasts never write them.

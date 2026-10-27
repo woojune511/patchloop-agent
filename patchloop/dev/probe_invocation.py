@@ -10,8 +10,9 @@ LEGACY_CHANNEL = "invoke-declared-call-v1"
 ARGV_CHANNEL = "invoke-declared-call-v2"
 CAPTURE_CHANNEL = probe_call_capture.CHANNEL
 STABLE_CHANNEL = "invoke-declared-call-v4"
-CHANNEL = "invoke-declared-call-v5"
-CAPTURE_CHANNELS = (CAPTURE_CHANNEL, STABLE_CHANNEL, CHANNEL)
+DIAGNOSTIC_CHANNEL = "invoke-declared-call-v5"
+CHANNEL = "invoke-declared-call-v6"
+CAPTURE_CHANNELS = (CAPTURE_CHANNEL, STABLE_CHANNEL, DIAGNOSTIC_CHANNEL, CHANNEL)
 
 # Runs inside the probe sandbox with a separate host observer source budget.
 # In-process diagnostic feedback is not an attestation against a hostile program.
@@ -152,7 +153,7 @@ def supports(channel):
 
 def observer(channel):
     """Select frozen legacy bytes or bounded call capture for fresh cases."""
-    if channel == CHANNEL:
+    if channel in (DIAGNOSTIC_CHANNEL, CHANNEL):
         return probe_call_capture.diagnostic_observer(OBSERVER_V2)
     if channel == STABLE_CHANNEL:
         return probe_call_capture.stable_observer(OBSERVER_V2)

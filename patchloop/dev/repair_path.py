@@ -9,7 +9,7 @@ from __future__ import annotations
 import copy
 import json
 
-from patchloop.dev import completion_reproduction, probe_invocation, reproduction
+from patchloop.dev import completion_reproduction, probe_invocation, probe_judgment, reproduction
 from patchloop.errors import ContractError
 from patchloop.util import sha256_bytes, sha256_json
 from patchloop.verifier.policy import _is_test_path
@@ -146,7 +146,7 @@ def _unchanged_failure(result, baseline, case_id, current_diff):
             or observation.get("binding", {}).get("case_id") != case_id
             or observation.get("comparison") != "mismatched"
             or observation.get("declared_failure_comparison") != "matched"
-            or observation.get("judgment", {}).get("status") != "consistent"):
+            or not probe_judgment.is_usable(observation.get("judgment"))):
         return False
     return (completion_reproduction._healthy(result, observation)
             and reproduction.call_identity(observation["call_observation"])

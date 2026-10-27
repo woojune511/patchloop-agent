@@ -129,18 +129,21 @@ def arguments(raw, admission):
 def _same_failure(result, baseline, identity):
     try:
         observed = result["output"]["reproduction"]
+        recomputed = probe_judgment.evaluate(
+            observed["binding"]["definition"]["diagnostic_rules"],
+            observed["call_observation"], observed["observed_json"])
         return bool(
             result.get("workspace_diff_hash") == identity["candidate_diff_hash"]
             and observed["binding"] == baseline["binding"]
             and observed["binding"]["case_id"] == identity["case_id"]
             and observed["comparison"] == "mismatched"
             and observed.get("declared_failure_comparison") == "matched"
-            and observed.get("judgment", {}).get("status") == "consistent"
-            and baseline.get("judgment", {}).get("status") == "consistent"
+            and probe_judgment.is_usable(observed.get("judgment"))
+            and probe_judgment.is_usable(baseline.get("judgment"))
             and json.loads(observed["observed_json"]) == json.loads(baseline["observed_json"])
             and completion_reproduction._healthy(result, observed)
-            and probe_judgment.evaluate(observed["binding"]["definition"]["diagnostic_rules"],
-                observed["call_observation"], observed["observed_json"])["status"] == "consistent"
+            and probe_judgment.is_usable(recomputed)
+            and recomputed["host_json"] == observed["observed_json"]
             and reproduction.call_identity(observed["call_observation"])
             == reproduction.call_identity(baseline["call_observation"])
             and probe_invocation.conditions(observed["call_observation"])

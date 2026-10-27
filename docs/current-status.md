@@ -38,12 +38,19 @@ remained. Maximum input/output were 49,059/21,068 tokens. No registered public c
 normal finish or isolated evaluation ran. All usage settled; no retry or operator
 repair occurred, and the allocation is closed.
 
-Next: make helper/host diagnostic definitions consistent and distinguish a baseline
-failure signature from the desired behavior. Locally cover unchanged F0010 with
-changed text, genuine resolution, capture status `complete`, and delivery of a
-candidate failure to the next response. Do not infer success from an absent phrase
-or increase context/cost limits on this result. The first repair's module fallback
-hypothesis remains disproven for the observed call and needs further diagnosis.
+The [canonical diagnostic change](history/2026-10-27-canonical-diagnostic-feedback.md)
+now defines fresh code observations once on the host. Helpers invoke targets;
+they no longer need a second Boolean extractor. Stable code tokens survive changed
+wording, and incomplete execution stays unknown. v6 computed evidence connects to
+the existing repair loop; saved v1-v5 judgments retain their semantics.
+
+Local normal-runner tests delivered changed-text F0010 failure and current source
+to the next request, executed a second edit, checked and finished with exact-diff
+receipt reuse. Both result and forced-token handoffs passed without expanding
+limits. This is scripted-provider evidence; real-model uptake and Astroid repair
+remain untested. Do not increase context/cost limits on the preceding failure.
+New core coverage is 25 PASS. Quick covered 526 cases/82.779s including isolated
+mock; all failed schema-hash/document nodes passed targeted reruns. Ruff PASS.
 
 The [ordinary transfer implementation](history/2026-10-27-normal-recovery-transfer.md)
 retains current feedback/source across handoffs and reserves useful successor
