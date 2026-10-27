@@ -61,11 +61,13 @@ funded current repair before admitting optional exploration. Quick: 500 PASS/61.
 including isolated mock evaluation; Ruff PASS. These are local mechanism results.
 
 The next evidence gap remains a clean-start run through normal `finish_task`.
-Preparation uses the same mini model, 60K input and 40K/25K output, with a proposed
-fresh $4.50 cap for exploration and completion. The ordinary helper can inspect
+The [sealed single-run plan](history/2026-10-27-normal-recovery-fresh-plan.md) passed
+preflight with no provider/target execution. It uses the same mini model, 60K input
+and 40K/25K output, with a fresh proposed $4.50 cap for exploration and completion.
+The ordinary helper can inspect
 public caller source; diagnostic dependency read/search scope is not transferred.
 General settings above remain unchanged. All paid allocations are closed; the new
-trial is NOT_RUN and requires exact plan-bound approval after sealing.
+trial is NOT_RUN and awaits exact plan-bound approval.
 
 ## Supporting evidence
 
