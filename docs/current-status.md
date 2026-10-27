@@ -24,61 +24,42 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The approved [first-edit context A/B](history/2026-10-27-first-edit-checkpoint-results.md)
-executed each condition once from the same saved public post-helper checkpoint.
-A (duplicate context) normalized caller-supplied paths, resolved F0010, passed all
-five public cases/regression and isolated acceptance, scope and safety. This is a
-real model-authored accepted repair with supplied saved evidence, not a fresh
-benchmark solve or general quality claim. The first original call retained its
-identity; the second call's input identity changed while control output stayed equal.
+The approved [single-A delivery trial](history/2026-10-27-checkpoint-feedback-single-results.md)
+executed once from the same saved public checkpoint with unchanged first request
+and row limits. The first input was 56,199 tokens. After one accepted edit and a
+successful original-call recheck, the next actual request fit at 59,142 tokens
+and contained the exact current-diff verification. Two source references expand
+exactly to the durable result. The model accurately recognized original-call
+success and called stop_task. No handoff or correction was needed.
 
-B (lossless references) reduced first input from 56,199 to 36,887 tokens (34.4%)
-but changed namespace classification instead. F0010 remained; public cases passed
-2/5, regression passed and isolated task acceptance failed. Both made one edit.
-One fixed-order pair does not establish that representation caused the different
-hypotheses or that compression improves repair quality. Do not adopt it on that claim.
+The original F0010 resolved and all five public cases passed, but the later public
+regression failed one symlink-path test (1,230 passed). Isolated evaluation was
+NOT_RUN_PUBLIC_CHECKS with zero evaluator dispatches. That regression happened
+after the model stopped and was not model-visible. Original-feedback delivery
+and accurate diagnostic stop passed; full repair and acceptance remain incomplete.
+The second original call's input identity changed due to cache output in the input
+root; first-call identity and control output were preserved.
 
-A's next input grew to 65,982 tokens, largely from revalidated source repeated in
-the edit result. Generic handoff rebuilt the same request, so the model stopped
-at INPUT_LIMIT without receiving its successful verification result. Host checks
-still completed. B received the failed result at 46,645 input tokens and stopped,
-acknowledging failure; the one-edit design did not permit revision. Task correctness
-and successful model completion flow remain separate outcomes.
+Retain the [delivery fix](history/2026-10-27-checkpoint-feedback-delivery.md) on local
+and live delivery evidence. Do not increase context based on this run: the next
+question is making final public regression model-visible before completion and
+funding a bounded response or repair. Preserve raw/symlink path matching when
+investigating the new patch. The 858-token remaining input margin and unexercised
+handoff do not establish future fit or general quality. One saved-evidence trial
+is not a fresh solve or a controlled repair-gain comparison.
 
-The [post-edit delivery fix](history/2026-10-27-checkpoint-feedback-delivery.md)
-now references exact revalidated text already visible in the request and consumes
-actual handoff state. Initial A/B requests stay unchanged. At a counted boundary,
-both arms use a combined lossless public document and fresh admission without
-resetting budgets. Local scripted tests verify successful/failed feedback in the
-next dispatched request: 81 focused PASS/77.15s; 472 quick PASS/108.05s including
-isolated mock; Ruff PASS. Actual saved requests shrink by about 26K JSON characters
-with exact tool-result expansion and verification preservation. A real API token
-count and live continuation under this change remain untested.
+Two counts and two generation calls settled; $0.19439055 under $1.20, allocation
+closed, no execution/billing uncertainty. Model+intermediate 175.42s; through final
+checks 307.75s. Result: `C:/pt/checkpoint-feedback-single-run-v1/result.json`.
+Preparation/delivery checks: 47 focused PASS across 1.83s and 19.47s runs; 472 quick
+PASS/129.97s including isolated mock; Ruff PASS. No code changed during the run.
 
-The requested [live delivery trial](history/2026-10-27-checkpoint-feedback-single-plan.md)
-is prepared and preflighted: only A from the same checkpoint, once with a new
-$1.20 cap; its first request and row limits stay unchanged. The
-collector now binds selected conditions and their exact total cap together, so
-single-A approval cannot execute B. Measure actual current-diff feedback in the
-next dispatched request and honest model completion separately from acceptance.
-If no edit occurs, feedback delivery is not exercised. Exact paid approval for
-this new allocation is pending; no provider calls have been made.
-Single-row preparation/collection and delivery checks: 47 focused PASS across
-1.83s and 19.47s runs; 472 quick PASS/129.97s including isolated mock; Ruff PASS.
-
-All five input counts and three generation calls completed with known usage;
-zero corrections and no execution uncertainty. Settled cost $0.40829625 under
-$2.40; allocation closed. Result: `C:/pt/first-edit-checkpoint-run-v1/result.json`.
-The [implementation](history/2026-10-27-first-edit-checkpoint.md) has 112 focused
-PASS/71.16s and 472 quick PASS/116.57s including isolated mock; Ruff PASS.
-No runtime changes occurred during this experiment.
-
-The [preceding caller-source trial](history/2026-10-27-dependency-source-results.md)
-retains one unsettled correction and a closed allocation. Prior evidence and the
-separate local operator repair are indexed in [October 27 history](history/2026-10-27/README.md).
-The operator solution and private evaluation details were excluded from these
-model requests. Context-only comparisons with mini-SWE-agent remain unsupported;
-see the [context analysis](history/2026-10-26-target-failure-context-analysis.md).
+The [previous A/B result](history/2026-10-27-first-edit-checkpoint-results.md)
+remains historical: A repaired the task but could not receive its result at
+65,982 input tokens; B received failure feedback and failed acceptance. The new
+A chose a different patch despite identical first input. Cost/cache and patch
+variation preclude attributing repair quality or spend changes to compression.
+All older allocations are closed; previous approvals do not authorize another run.
 
 ## Supporting evidence
 
