@@ -59,6 +59,14 @@ hidden-evaluation boundary are unchanged. The next question is whether a real mo
 can use this feedback to make a successful revision within the reserved allowance.
 All older allocations are closed; a future run needs a newly bound exact approval.
 
+The requested [single-A live trial](history/2026-10-27-public-regression-cycle-plan.md)
+is prepared and preflighted at `C:/pt/public-regression-cycle-plan-v1`: one run,
+$1.20 cap, same public seed/evidence, updated bounded regression-repair cycle.
+Actual first-regression failure delivery and successful second-edit verification
+are the primary criteria. If the first edit already passes, regression revision is
+NOT_EXERCISED; no automatic retry. Exact new paid approval is pending. Provider,
+API-count, credential-read and target-execution counts remain zero.
+
 ## Supporting evidence
 
 - [Security maintenance](history/2026-10-23-security.md): refreshed host dependencies

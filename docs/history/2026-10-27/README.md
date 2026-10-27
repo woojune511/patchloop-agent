@@ -36,3 +36,4 @@
 - [Sealed single-A trial: actual post-edit verification delivery and honest completion](../2026-10-27-checkpoint-feedback-single-plan.md)
 - [Single-A result: original feedback delivered, later symlink regression blocks acceptance](../2026-10-27-checkpoint-feedback-single-results.md)
 - [Public regression before completion: bounded revision, verification reserves and receipt reuse](../2026-10-27-public-regression-repair-cycle.md)
+- [Sealed live regression-revision trial: one A condition with before-stop checks](../2026-10-27-public-regression-cycle-plan.md)
