@@ -49,7 +49,11 @@ Astroid acceptance result is part of this change.
 Positive code selection still does not prove intended-file coverage or semantic
 correctness. The next live question is whether a model chooses discriminating
 processing evidence and rejects a no-op repair under the existing bounded loop.
-General settings remain unchanged; no further paid execution is authorized.
+The [fresh pilot](history/2026-10-28-processing-evidence-fresh-plan.md) is now
+prepared and preflighted with the same mini/xhigh, once, USD 4.50 and existing
+limits. No prior observations or task-specific processing marker are injected.
+Provider/count/target calls remain zero; the new exact allocation awaits approval.
+General settings remain unchanged.
 
 The preceding [saved-evidence trial](history/2026-10-27-public-regression-cycle-results.md)
 did receive regression failure, revise and pass isolated acceptance. It used a
