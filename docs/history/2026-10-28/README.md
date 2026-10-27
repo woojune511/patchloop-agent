@@ -12,3 +12,4 @@
 - [Helper SystemExit configuration compatibility and local validation](../2026-10-28-helper-system-exit-fix.md)
 - [Helper follow-up: single full-model first-reproduction preparation](../2026-10-28-helper-first-reproduction-plan.md)
 - [Helper follow-up result: configuration passed, target argument binding failed](../2026-10-28-helper-first-reproduction-results.md)
+- [Actual callable signatures and bounded pre-target argument correction](../2026-10-28-original-argument-correction.md)

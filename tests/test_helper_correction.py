@@ -239,7 +239,8 @@ def test_protocol_output_reserve_stays_separate_from_helper_correction(slots, av
     snap.completion_verification["helper_correction"] = {
         "status": "pending", "blocked": True, "question": QUESTION,
     }
-    ledger = funding(4, output=25_000)
+    # Fund the ordinary 40K repair route; protocol correction remains 25K below.
+    ledger = funding(4, output=40_000)
     cap = ledger.cap_nanos
     selected = runner._tool_policy(
         gateway, counters(model=slots, tools=5), DevLimits(), snapshot=snap,

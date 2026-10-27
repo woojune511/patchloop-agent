@@ -273,6 +273,62 @@ def exception_observer(legacy):
     return source.replace(check, "issubclass(t,(Exception,SystemExit))", 1)
 
 
+def signature_observer(legacy):
+    """v9 exposes actual signatures and distinguishes pre-target binding failures."""
+    source = exception_observer(legacy)
+    helper = '''def _sg(t):
+ try:
+  s=_i.signature(t)
+  text=str(s)
+  return s,text if 0<len(text)<=256 else None
+ except (ValueError,TypeError):
+  return None,None
+'''
+    source = source.replace('def observed_target(', helper + 'def observed_target(', 1)
+    source = source.replace('"bound_parameters":None,',
+                            '"bound_parameters":None,"signature":None,"binding_error":False,', 1)
+    old = '''   try:
+    signature=_i.signature(target)
+   except (ValueError,TypeError):
+    signature=None
+   if signature is not None:
+    row["bound_parameters"]=_v(dict(signature.bind(*args,**kwargs).arguments))
+'''
+    new = '''   sg,row["signature"]=_sg(target)
+   if sg is not None:
+    try:
+     bound=sg.bind(*args,**kwargs)
+    except TypeError:
+     row["binding_error"]=row["signature"] is not None
+     raise
+    row["bound_parameters"]=_v(dict(bound.arguments))
+'''
+    if source.count(old) != 1:
+        raise ValueError("signature binding location is unavailable")
+    source = source.replace(old, new, 1).replace(
+        ' return invoke\n', ' invoke.signature=lambda:_sg(_rs())[1]\n return invoke\n', 1)
+    # Shorten only fresh private closure aliases; the public helper's keywords,
+    # saved observer bytes and authored programs remain unchanged.
+    prefix, body = source.split('def observed_target(', 1)
+    declaration, body = body.split('\n', 1)
+    body, suffix = body.split(' return invoke\n', 1)
+    for old, new in (("input_paths", "ip"), ("environment_keys", "ek"),
+                     ("expected_exceptions", "ee")):
+        body = body.replace(old, new)
+    source = (prefix + 'def observed_target(' + declaration + '\n'
+              ' ip,ek,ee=input_paths,environment_keys,expected_exceptions\n'
+              + body + ' return invoke\n' + suffix)
+    # Fixed private locals have no public field or keyword with these names.
+    # The captured authored program remains outside this host-only source text.
+    names = {"depth": "dp", "report": "rp", "overlap": "ov", "kept": "kp",
+             "names": "ns", "parts": "ps"}
+    source = re.sub(r"\b(?:depth|report|overlap|kept|names|parts)\b",
+                    lambda match: names[match[0]], source)
+    for operator in ("<=", "<", ">", "==", "!=", ">=", "-=", "+=", "|=", "&"):
+        source = source.replace(f" {operator} ", operator)
+    return source
+
+
 def valid(call):
     capture = call.get("capture")
     error = call.get("exception")

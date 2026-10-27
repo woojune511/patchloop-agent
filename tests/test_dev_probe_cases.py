@@ -117,12 +117,12 @@ def test_case_policy_extends_current_probe_schema_without_changing_prompt():
     before = dev_tool_schemas(**options)
     # Current purpose binding is separate from the immutable removal-arm snapshots.
     assert sha256_json(before) == (
-        "sha256:91bd3997cb0e3eafe81a0670cf2a19d665bc3e4aac8c93329f0adb3857a6504c"
+        "sha256:0292549776319316b950c476ccd08b0f0c762c570c08e946b959b79c5c9f1ef1"
         if FROZEN_ARM is None else
         "sha256:be1012933d3448903e70edb181c229547f0f8c5e9f285f159e50e7582b825a2e"
     )
     assert dev_tool_surface_hash() == (
-        "sha256:c5f1b6748b0b2485ec0699c9624baed8ad55bf8e6c6cbc43a910cf8c46eb2db7"
+        "sha256:7922057439ab59f26761bd7a6c88993ba4c256e2dc469a06c84be4a20563f551"
         if FROZEN_ARM is None else
         "sha256:57193859890419b79cb7f4927c37796d044bc4bf7159c51ddf17723849529e26"
     )

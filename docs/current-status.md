@@ -24,35 +24,32 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [single full-model helper follow-up](history/2026-10-28-helper-first-reproduction-results.md)
-executed once at the same public checkpoint, using fresh v8 and only the updated
-helper paragraph in the long description. The prior SystemExit settings error did
-not recur; helper construction and three setup comparisons passed. But the model
-called the zero-parameter pylint.run_pylint entrypoint with a positional list after
-setting sys.argv. Signature binding rejected it before entry: target_started=false,
-TypeError: too many positional arguments. F0010 and same-call processing are NOT_RUN.
-The first settled probe ended the diagnostic; there was no feedback correction.
+The [argument-correction implementation](history/2026-10-28-original-argument-correction.md)
+addresses the settled pre-target failure in the [single full-model helper follow-up](history/2026-10-28-helper-first-reproduction-results.md):
+the model set sys.argv, then passed a positional list to zero-parameter
+pylint.run_pylint. Fresh v9 now exposes the actual callable signature and records
+explicit argument-binding failures separately from target exceptions. A proved
+pre-target failure can use the existing one-per-run correction opportunity, with
+the same question, purpose and call-path request. No resource limit is increased.
 
-The response completed with 19,997 input and 9,111 output tokens, below 60K/40K limits.
-New cost USD 0.1866575; all usage settled, independent metadata audit PASS, allocation
-CLOSED. No repair, checks, submission or isolated evaluation occurred. The desired
-observation now includes positive processing from the same problematic call, but
-that unexecuted design is not evidence of processing. The explicit SystemExit option
-was omitted in this fresh code, so its new acceptance was not exercised live.
+The next response receives the failed source, actual signature and supplied args.
+A changed request must still fit acquisition quotas and completion reservations,
+including its prospective original replay. Rejection/repeated failure cannot
+renew the opportunity. Argument correction never establishes original verification.
+Saved v1-v8 observer bytes and completed-action recovery remain fixed.
 
-The [helper implementation](history/2026-10-28-helper-system-exit-fix.md) remains:
-fresh v8 accepts explicit SystemExit subclasses, descriptions share the API contract,
-and saved v1-v7 observers remain byte-exact. Its focused 89 tests passed in 28.176s;
-follow-up preparation quick passed 594 cases including isolated mock evaluation.
-Runtime was unchanged during the live follow-up. The preceding [model pair](history/2026-10-28-first-reproduction-model-results.md)
-remains a separate closed experiment, not a new control or model-adoption result.
+Local fixture execution and scripted model responses cover error delivery,
+correction, exhausted budgets and recovery; the focused selection also reaches
+isolated mock evaluation. The implementation record holds exact test receipts.
+No paid model or benchmark execution occurred for this change. The unresolved
+question is whether the actual model uses the signature and feedback to reach
+the original failing call and establish same-call processing evidence. F0010
+reproduction, repair gain and fresh-solve completion remain unverified.
 
-The next unresolved question is callable-signature adaptation and bounded correction
-of an error before target entry. Exposing the actual signature is a more direct
-intervention than raising output/context ceilings; do not coerce arbitrary arguments
-or erase original verification obligations. This first-probe endpoint did not test
-whether a model could correct the returned error. Any feedback trial needs a new
-scope and exact allocation; no automatic retry or default adoption follows.
+The prior first-probe diagnostic stopped at its first result and could not test
+feedback correction. Its USD 0.1866575 allocation is closed; any live continuation
+needs a new scope and exact allocation. The preceding [model pair](history/2026-10-28-first-reproduction-model-results.md)
+is a separate closed experiment, not a new control or model-adoption result.
 
 The preceding [saved-evidence repair](history/2026-10-27-public-regression-cycle-results.md)
 passed isolated acceptance after public failure feedback; it does not establish

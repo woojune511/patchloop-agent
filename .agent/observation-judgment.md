@@ -11,7 +11,7 @@ Each selected call must pair `role=failure` expected false with `role=processing
 expected true. Pick positive evidence from the intended fixture's public behavior;
 an unrelated warning cannot establish intended processing. The same call/code
 cannot serve both roles. Expected/failure JSON must be strict boolean objects with
-exactly those distinct keys. The v7/v8 invocation reports per-call captures; the host searches code
+exactly those distinct keys. The v7-v9 invocation reports per-call captures; the host searches code
 tokens in each stdout/stderr independently, with ASCII identifier boundaries.
 Longer identifiers such as XF0010, F00100 and F0010_EXTRA do not match F0010.
 This is token extraction, not semantic parsing of diagnostic records.
@@ -41,7 +41,7 @@ covers the public task, intended-file identity or semantic correctness.
 
 ## Fixture identity and target entry
 
-Fresh v8 helpers retain v7's `reproduction_workspace()` for fixture inputs and
+Fresh v9 helpers retain v7's `reproduction_workspace()` for fixture inputs and
 `reproduction_outputs()` for generated files and HOME/cache children. These are
 separate stable sibling roots under the original sandbox cwd. Select actual
 fixture paths in `observed_target(input_paths=...)`; generated output paths and
@@ -52,7 +52,7 @@ filter or blanket HOME exclusion. Fixture changes remain identity differences.
 The call row sets `target_started` immediately before invoking the declared
 callable. Resolution, snapshot and signature-binding errors remain false with
 incomplete outcome/captures. `completion_reproduction` excludes only completed,
-bound v7/v8 cases whose every related call proves no target entry and whose host
+bound v7-v9 cases whose every related call proves no target entry and whose host
 receipts settle execution/cleanup. It retains action/input/program/case identities
 in bounded `request_attempts`, full counts and the immutable journal. Attempts
 still consume existing acquisition/action/cost limits; they grant no reproduction
@@ -66,7 +66,7 @@ Null-rules observations and model-selected code witnesses remain coverage-limite
 
 ## Expected exceptions
 
-Fresh v8 `observed_target` accepts a tuple of at most four Exception or SystemExit
+V8 and fresh v9 `observed_target` accept a tuple of at most four Exception or SystemExit
 subclasses in `expected_exceptions`. Ordinary Exception observations require an
 exact listed class: listing Exception does not match ValueError. SystemExit and
 its subclasses are always captured with their actual `exit_code`, whether listed
@@ -81,9 +81,15 @@ family; it preserves output, exception and exit-code capture. Stored v1-v7 obser
 bytes and replay behavior remain unchanged. A saved v7 request that explicitly
 lists SystemExit therefore still has its historical configuration error.
 
+V9 adds actual callable signature inspection and a separate pre-target argument
+binding marker. It preserves frozen v1-v8 programs. See [bounded correction](helper-correction.md)
+for eligibility, replay, acquisition and completion-resource handling. These new
+metadata fields are excluded from input-identity comparison. The fresh observer
+is compacted within the existing 8K host-code cap; authored code retains its own cap.
+
 ## Frozen v1 diagnostic judgments
 
-Saved v1-v7 invocations retain their exact observer programs and verdict semantics.
+Saved v1-v8 invocations retain their exact observer programs and verdict semantics.
 V6 code-only rules keep their prior host computation without new role requirements.
 Their `{field, call_id, contains}` rules use a literal (1-160 chars).
 Expected/failure JSON must be strict boolean objects with exactly those distinct
@@ -103,7 +109,7 @@ semantics; that path does not receive a diagnostic-consistency guarantee.
 
 The provider schema requires explicit nullable `diagnostic_rules` and
 `corrects_action_id`; local legacy requests may omit them. Absent/null fields do
-not change old bindings or observer programs. Fresh wire identity is v67; exact
+not change old bindings or observer programs. Fresh wire identity is v68; exact
 runtime recovery still forbids switching an existing run to new code.
 
 ## Legacy correction before source repair

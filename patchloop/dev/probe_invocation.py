@@ -13,8 +13,10 @@ STABLE_CHANNEL = "invoke-declared-call-v4"
 DIAGNOSTIC_CHANNEL = "invoke-declared-call-v5"
 CANONICAL_CHANNEL = "invoke-declared-call-v6"
 BEHAVIOR_CHANNEL = "invoke-declared-call-v7"
-CHANNEL = "invoke-declared-call-v8"
-BEHAVIOR_CHANNELS = (BEHAVIOR_CHANNEL, CHANNEL)
+EXCEPTION_CHANNEL = "invoke-declared-call-v8"
+SIGNATURE_CHANNEL = "invoke-declared-call-v9"
+CHANNEL = SIGNATURE_CHANNEL
+BEHAVIOR_CHANNELS = (BEHAVIOR_CHANNEL, EXCEPTION_CHANNEL, CHANNEL)
 CAPTURE_CHANNELS = (CAPTURE_CHANNEL, STABLE_CHANNEL, DIAGNOSTIC_CHANNEL, CANONICAL_CHANNEL,
                     *BEHAVIOR_CHANNELS)
 
@@ -158,6 +160,8 @@ def supports(channel):
 def observer(channel):
     """Select frozen legacy bytes or bounded call capture for fresh cases."""
     if channel == CHANNEL:
+        return probe_call_capture.signature_observer(OBSERVER_V2)
+    if channel == EXCEPTION_CHANNEL:
         return probe_call_capture.exception_observer(OBSERVER_V2)
     if channel == BEHAVIOR_CHANNEL:
         return probe_call_capture.behavior_observer(OBSERVER_V2)
@@ -174,7 +178,9 @@ def valid_call(call, entrypoint, *, channel=None):
     # Preserve the two-argument reader for existing v1 observations. Known bindings
     # pass their channel explicitly so a v2 row cannot silently omit argv.
     if channel is None:
-        channel = (CHANNEL if isinstance(call, dict) and "target_started" in call else
+        channel = (CHANNEL if isinstance(call, dict)
+                   and {"signature", "binding_error"} <= call.keys() else
+                   EXCEPTION_CHANNEL if isinstance(call, dict) and "target_started" in call else
                    CANONICAL_CHANNEL if isinstance(call, dict) and "capture" in call else
                    ARGV_CHANNEL if isinstance(call, dict) and "argv" in call else LEGACY_CHANNEL)
     fields = {
@@ -187,6 +193,8 @@ def valid_call(call, entrypoint, *, channel=None):
                        "exception", "exit_code"))
     if channel in BEHAVIOR_CHANNELS:
         fields.add("target_started")
+    if channel == CHANNEL:
+        fields.update(("signature", "binding_error"))
     return (supports(channel) and isinstance(call, dict) and set(call) == fields
         and call["entrypoint"] == entrypoint and isinstance(call["resolved_entrypoint"], str)
         and isinstance(call["arguments"], dict)
@@ -205,9 +213,21 @@ def valid_call(call, entrypoint, *, channel=None):
                                if channel in CAPTURE_CHANNELS
                                else ("returned", "raised", "incomplete"))
         and (channel not in CAPTURE_CHANNELS or probe_call_capture.valid(call))
+        and (channel != CHANNEL or _valid_signature(call))
         and (channel not in BEHAVIOR_CHANNELS or type(call.get("target_started")) is bool
              and (call["target_started"] or call["outcome"] == "incomplete"
                   and call["capture"]["status"] == "incomplete")))
+
+
+def _valid_signature(call):
+    signature = call.get("signature")
+    return ((signature is None or isinstance(signature, str) and 0 < len(signature) <= 256)
+            and type(call.get("binding_error")) is bool
+            and (not call["binding_error"] or signature is not None
+                 and call.get("target_started") is False
+                 and call.get("outcome") == "incomplete"
+                 and call.get("bound_parameters") is None
+                 and (call.get("exception") or {}).get("type") == "builtins.TypeError"))
 
 
 def environment(output):
@@ -240,7 +260,8 @@ def conditions(trace):
         # A return/exception or a changed implementation is an outcome, not input
         # drift. The public callable selection, argument and setup identities remain.
         for key in ("resolved_entrypoint", "bound_parameters", "outcome", "capture",
-                    "exception", "exit_code", "call_id", "target_started"):
+                    "exception", "exit_code", "call_id", "target_started", "signature",
+                    "binding_error"):
             row.pop(key, None)
         calls.append(normalize(row))
     return {"calls": calls, "execution_environment": trace.get("execution_environment"),

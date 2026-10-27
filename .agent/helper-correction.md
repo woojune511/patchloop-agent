@@ -1,4 +1,4 @@
-# Helper program preflight and one correction
+# Helper preflight and original argument correction
 
 The [failed-helper audit](../docs/history/2026-10-25-helper-stop-analysis.md)
 found a helper using `reproduction_workspace`, which is injected only for original
@@ -64,6 +64,40 @@ durable return retains `RECOVERY_ERROR`, never an automatic retry. Pure forecast
 do not write state. Unresolved correction at an output/resource stop preserves the
 underlying stop cause and returns `VERIFICATION_INCOMPLETE`.
 
-Run `uv run --locked pytest @tests/helper-correction.txt --basetemp C:/pt/<unique>`
-for short local controls, then quick for integration and isolated mock evaluation.
-These checks establish mechanics, not real-model uptake or F0010 repair gain.
+Run `uv run --locked --offline pytest @tests/argument-correction.txt --basetemp C:/pt/<unique>`
+for focused helper/original correction controls and isolated mock evaluation.
+The broader quick suite remains available for cross-feature integration. These
+checks establish mechanics, not real-model uptake or F0010 repair gain.
+
+## Original-call argument binding
+
+Fresh v9 `observed_target(...)` wrappers expose `target.signature()`: a bounded
+actual callable signature string, or None if unavailable/oversized. Inspect it
+before choosing Python arguments. A zero-parameter CLI reads its own sys.argv;
+setting argv does not add a Python list parameter. No argument coercion occurs.
+Each call records its actual signature again at binding time. `binding_error`
+marks only TypeError from Signature.bind with an available signature; target
+TypeError, import/snapshot errors and missing signatures are not this evidence.
+
+Before the first mutation, a settled original v9 invocation whose valid call rows
+all prove target_started=false and include an explicit binding error may create
+`original-argument-correction-v1`. Its action, input, program, diff and execution
+receipts must agree, with confirmed cleanup and no timeout/truncation/uncertainty.
+This shares the existing one-per-run helper correction allowance; it adds no
+separate retry counter. Legacy v1-v8 records do not create the new ticket.
+
+The next response receives the failed source, signature, supplied arguments and
+argv. Only a changed program with the exact question, original purpose and
+call-path request, using a new action ID, or stop is offered. The small original
+schema remains active. Every attempted correction consumes the ticket, including
+rejection. A repeated pre-target failure stays verification incomplete. A healthy
+returned invocation with all recorded calls entered and complete captures settles
+only argument correction; original behavior still needs observations and replay.
+
+Acquisition attempt/rejection quotas remain enforced by scheduler and gateway,
+including after recovery. The completion forecast reserves one correction plus
+one prospective original replay, without counting acquisition twice. Existing
+model/tool/output/cost/time caps and uncertain-execution recovery remain unchanged.
+No error is automatically retried, and a completed action is recovered idempotently.
+The closed first-probe diagnostic still stops at its first result; it is not the
+runtime feedback loop and needs separate authorization to test a continuation.

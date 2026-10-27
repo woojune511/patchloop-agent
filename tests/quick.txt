@@ -1,5 +1,8 @@
 tests/test_dev_contracts.py
 tests/test_first_reproduction_description.py
+tests/test_probe_signature_contract.py
+tests/test_binding_recovery.py
+tests/test_original_argument_correction.py
 tests/test_dev_state.py
 tests/test_original_acquisition_opportunity.py
 tests/test_correction_drafts.py

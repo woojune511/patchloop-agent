@@ -2966,7 +2966,8 @@ class DevToolGateway:
             if helper_state.get("blocked") and call.name != "stop_task":
                 helper_link = helper_recovery.link(helper_state)
             try:
-                helper_recovery.validate(helper_state, call.name, call.arguments)
+                helper_recovery.validate(helper_state, call.name, call.arguments,
+                                         original_obligation=verification["original_obligation"])
             except ContractError as exc:
                 preflight_error = exc
             if call.name == "run_probe" and preflight_error is None:

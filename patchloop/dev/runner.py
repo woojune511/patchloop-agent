@@ -34,6 +34,7 @@ from patchloop.dev import (
     correction_drafts,
     diagnosis_context,
     evidence_focus,
+    helper_recovery,
     history_search,
     inspection_focus,
     native_compaction,
@@ -640,7 +641,8 @@ def _completion_guidance(
         correction = policy.helper_correction
         stage = policy.workflow_gate
         next_action = ({"tool": "run_probe", "question": correction["question"],
-                        "purpose": {"kind": "helper"}, "replay_action_id": None}
+                        "purpose": correction.get("purpose", {"kind": "helper"}),
+                        "replay_action_id": None}
                        if "run_probe" in allowed else None)
         message = (
             "The helper source was rejected before execution. Fix its named source error, "
@@ -652,6 +654,17 @@ def _completion_guidance(
             "renew the allowance; an unresolved or unaffordable correction returns "
             "verification incomplete."
         )
+        if correction.get("policy") == helper_recovery.ARGUMENT_POLICY:
+            message = (
+                "The original call failed argument binding before target entry. Read its actual "
+                "signature and supplied arguments in helper_correction.error. Inspect "
+                "target.signature() before calling; sys.argv is separate from Python arguments. "
+                "Correct python_source with a new action_id, keeping the exact question, purpose "
+                "and call_path, or stop. One correction request uses existing acquisition and "
+                "completion budgets; unrelated exploration cannot spend it. Rejection, another "
+                "pre-target error or insufficient resources leaves verification incomplete. "
+                "A corrected invocation alone does not verify the original failure."
+            )
     elif (policy.repair_path_diagnosis and policy.repair_path_diagnosis.get("blocked")
           and (policy.repair_prediction or {}).get("status") != "needs_test_comparison"):
         diagnosis = policy.repair_path_diagnosis
@@ -883,7 +896,11 @@ def _tool_policy(
     helper_blocked = bool(
         helper_fix.get("blocked") and not observation_blocked and not path_blocked
     )
-    helper_available = bool(helper_blocked and helper_fix.get("status") == "pending")
+    helper_available = bool(helper_blocked and helper_recovery.correction_available(
+        helper_fix, verification.get("original_obligation", {})))
+    argument_correction = bool(
+        helper_available and helper_fix.get("policy") == helper_recovery.ARGUMENT_POLICY
+    )
     first_available &= not (observation_blocked or path_blocked or helper_blocked)
     original_case_failed = (verification.get("status") == "refuted"
                             or bool(verification.get("target_failure_count")))
@@ -995,7 +1012,7 @@ def _tool_policy(
         automatic_recheck=repair_recheck,
         current_recheck_eligible=current_recheck_eligible,
         reproduction_case_count=(verification.get("replayable_case_count", 0)
-                                 + int(observation_available)),
+                                 + int(observation_available) + int(argument_correction)),
         pending_reproduction_count=verification.get("pending_count", 0),
         early_reproduction_count=len(verification.get("baseline_failure_case_ids", [])),
         early_replay_reusable=bool(
@@ -1039,7 +1056,7 @@ def _tool_policy(
     acquisition_pending = verification.get("original_obligation", {}).get("stage") == "pending"
     acquisition_inspection_budget = completion_budget(replace(
         inspection_state, reproduction_case_count=inspection_state.reproduction_case_count + 1,
-    )) if acquisition_pending else None
+    )) if acquisition_pending and not argument_correction else None
     inspection_floor = (
         inspection_budget.minimum
         if required_inspection and not protected_completion_possible
@@ -1144,7 +1161,8 @@ def _tool_policy(
     obligation = verification.get("original_obligation", {})
     probe_budget = (completion_budget(replace(
         completion_state, reproduction_case_count=completion_state.reproduction_case_count + 1,
-    )) if obligation.get("stage") == "pending" or diagnostic_available else budget)
+    )) if (obligation.get("stage") == "pending" and not argument_correction)
+        or diagnostic_available else budget)
     probe_floor = probe_budget.minimum if diagnostic_available else probe_budget.protected
     probe_tool_floor = (probe_budget.minimum_tool_actions if diagnostic_available
                         else probe_budget.protected_tool_actions)
@@ -1281,7 +1299,9 @@ def _tool_policy(
                 inspection_floor = after_preparation.minimum
                 inspection_tool_floor = after_preparation.minimum_tool_actions
     if helper_blocked:
-        workflow_gate = "needs_helper_correction"
+        workflow_gate = ("needs_original_argument_correction"
+                         if helper_fix.get("policy") == helper_recovery.ARGUMENT_POLICY
+                         else "needs_helper_correction")
         allowed = {"stop_task"}
         completion_possible &= (
             helper_available and getattr(gateway, "probe_sandbox", None) is not None
@@ -1355,7 +1375,7 @@ def _tool_policy(
                     check_seconds=tuple(durations.values()),
                     remaining_check_seconds=tuple(durations[c] for c in remaining_check_ids),
                     probe_seconds=PROBE_TIMEOUT_SECONDS + CHECK_OVERHEAD_SECONDS,
-                    acquisition_pending=acquisition_pending,
+                    acquisition_pending=acquisition_pending and not argument_correction,
                     test_comparison=(test_comparison_pending or remaining_tool_actions - 2
                                      >= selected_test_tool_floor),
                     optional_check_seconds=max((float(getattr(s, "timeout_seconds", 0)) + 5
@@ -5808,7 +5828,8 @@ def _run_one_active(
             probe_recheck_policy=request.probe_recheck,
             probe_environment=getattr(gateway.probe_sandbox, "environment", None),
             path_diagnosis_pending=policy.workflow_gate == "needs_path_diagnosis",
-            original_acquisition_pending=policy.workflow_gate == "needs_original_reproduction",
+            original_acquisition_pending=policy.workflow_gate in {
+                "needs_original_reproduction", "needs_original_argument_correction"},
             repair_test_comparison_pending=policy.workflow_gate == "needs_test_comparison",
             repair_revision=(
                 policy.repair_path_diagnosis if policy.repair_path_diagnosis
@@ -5864,7 +5885,8 @@ def _run_one_active(
             "available_tool_names": sorted(policy.allowed_tools),
             "workflow_gate": policy.workflow_gate,
             "max_parallel_reads": policy.max_parallel_reads,
-            "original_acquisition_pending": policy.workflow_gate == "needs_original_reproduction",
+            "original_acquisition_pending": policy.workflow_gate in {
+                "needs_original_reproduction", "needs_original_argument_correction"},
             "targeted_read_paths": list(policy.targeted_read_paths),
             "minimum_completion_calls": policy.minimum_completion_calls,
             **_completion_cost_payload(policy),
@@ -6425,7 +6447,8 @@ def _run_one_active(
                 allowed_read_paths=policy.targeted_read_paths,
                 path_diagnosis_pending=policy.workflow_gate == "needs_path_diagnosis",
                 original_acquisition_pending=(
-                    policy.workflow_gate == "needs_original_reproduction"),
+                    policy.workflow_gate in {
+                        "needs_original_reproduction", "needs_original_argument_correction"}),
                 repair_test_comparison_pending=policy.workflow_gate == "needs_test_comparison",
             )
         except ContractError as exc:
