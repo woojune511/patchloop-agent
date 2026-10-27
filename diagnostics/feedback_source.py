@@ -26,6 +26,7 @@ from patchloop.contracts import PublicTask, TaskEnvironment
 from patchloop.deadline import ExecutionDeadline
 from patchloop.dev.contracts import DevLimits
 from patchloop.dev.cost import DevCostLedger, pricing_for_model
+from patchloop.dev.dependency_sources import DependencySources
 from patchloop.dev.state import DevJournal
 from patchloop.dev.tools import DevToolGateway
 from patchloop.git_execution import run_git
@@ -42,7 +43,8 @@ from patchloop.sandbox import DockerSandbox
 from patchloop.sandbox.probes import DockerProbeSandbox
 from patchloop.util import canonical_json, load_unique_yaml, sha256_bytes, sha256_json
 
-SCHEMA = "feedback-source-pair-v3"
+SCHEMA = "feedback-source-pair-v4"
+DEPENDENCY_SOURCE_ROOTS = {"pylint": "pylint"}
 CYCLE_LIMITS = CycleLimits()
 PROFILE = loop.RepairProfile(SCHEMA, ("R0", "R1"), 16, Decimal("1.20"),
                              reserve_opportunity=True, annotation_policy="thin")
@@ -90,6 +92,7 @@ def request_payload(common, arm, *, history=(), remaining=None, correction=None,
                  "public_feedback": common["feedback"],
                  "initial_source": common["source_packets"][arm],
                  "initial_source_diff_hash": SEED_HASH,
+                 "registered_dependency_sources": common.get("dependency_sources", []),
                  "current_original_recheck": original_feedback})}, *copy.deepcopy(history),
              {"role": "developer", "content": canonical_json({
                  "remaining": remaining, "protocol_correction": correction,
@@ -99,7 +102,8 @@ def request_payload(common, arm, *, history=(), remaining=None, correction=None,
                      "final_public_actions": CYCLE_LIMITS.final_public_actions,
                      "final_public_seconds": CYCLE_LIMITS.final_public_seconds,
                      "isolated_acceptance_seconds": CYCLE_LIMITS.acceptance_seconds}})}]
-    schemas = repair_cycle_tools.schemas(opportunity, common.get("probe_environment"))
+    schemas = repair_cycle_tools.schemas(opportunity, common.get("probe_environment"),
+                                        common.get("dependency_sources"))
     adapter = loop.OpenAIResponsesAdapter(loop.config(), api_key="",
                                           client=SimpleNamespace(max_retries=0))
     payload = adapter.request_payload(items, schemas, system_prompt=PROMPT)
@@ -171,6 +175,7 @@ def load_inputs():
             "dependency descriptor changed")
     dependencies = load_dependencies(host.DEPENDENCIES, public,
                                      read_descriptor(host.DEPENDENCIES)[1])
+    dependency_sources = DependencySources(dependencies, DEPENDENCY_SOURCE_ROOTS)
     provenance = bundle["provenance"]
     require(Path(provenance["public_task_path"]).resolve() == host.PUBLIC.resolve()
             and provenance["public_hash"] == sha256_bytes(host.PUBLIC.read_bytes())
@@ -184,10 +189,12 @@ def load_inputs():
             "original host request differs from the frozen public program")
     common = {"feedback": {**bundle["common"], "public_task": public.model_dump(mode="json")},
               "source_packets": bundle["source_packets"],
-              "probe_environment": dependencies.environment}
+              "probe_environment": dependencies.environment,
+              "dependency_sources": dependency_sources.catalog()}
     requests = {arm: request_payload(common, arm) for arm in PROFILE.order}
     verify_pair(requests["R0"], requests["R1"])
     return SimpleNamespace(public=public, environment=environment, dependencies=dependencies,
+                           dependency_sources=dependency_sources,
                            bundle=bundle, common=common, requests=requests,
                            original_arguments=original)
 
@@ -204,6 +211,8 @@ def scope(order=PROFILE.order):
             "original_selection_requests": CYCLE_LIMITS.original_requests,
             "probe_request_contract": "new-helper-program-or-registered-original-v1",
             "context_handoff": "public-repair-state-on-input-limit-v1",
+            "dependency_source_access": {"policy": "registered-read-only-v1",
+                                         "roots": DEPENDENCY_SOURCE_ROOTS},
             "accepted_mutations": CYCLE_LIMITS.accepted_edits,
             "additional_model_edits": CYCLE_LIMITS.accepted_edits,
             "post_edit_original_recheck": True,
@@ -250,8 +259,9 @@ def prepare(output, result_root, credential_file, arm=None):
                 "conversation resume, feedback-only effect or general agent-quality evidence."}
     if arm is not None:
         plan["interpretation"] = (
-            "One full-source saved-candidate repair trial. Measures request-contract uptake, "
-            "first edit and original-call feedback use. Not an A/B comparison, fresh solve, "
+            "One full-source saved-candidate repair trial with registered read-only dependency "
+            "source scopes. Measures caller-source acquisition, diagnostic execution, first "
+            "edit and original-call feedback use. Not an A/B comparison, fresh solve, "
             "literal conversation resume or isolated effect of any individual mechanism.")
     output.mkdir()
     files = {"packet-bundle": loaded.bundle, "manifest": plan,
@@ -335,6 +345,7 @@ def saved_gateway(loaded, root, arm):
     spans = loaded.bundle["source_packets"][arm]
     gateway = DevToolGateway(workspace=workspace, public_task=loaded.public, sandbox=sandbox,
         probe_sandbox=probe, journal=journal, agent_policy="thin", read_range_only=False,
+        dependency_sources=loaded.dependency_sources,
         limits=DevLimits(max_accepted_mutations=CYCLE_LIMITS.accepted_edits,
                          max_model_calls=PROFILE.normal_calls + 1,
                          max_tool_actions=CYCLE_LIMITS.model_tools + len(spans)),

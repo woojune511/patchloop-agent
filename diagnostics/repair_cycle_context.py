@@ -110,6 +110,7 @@ def build_handoff(gateway, *, history, latest_original, correction, parent_reque
                 {key: copy.deepcopy(latest_original[key]) for key in ORIGINAL_FIELDS
                  if key in latest_original})
     sources = copy.deepcopy(gateway.context_spans())
+    dependency_sources = copy.deepcopy(gateway.dependency_context_spans())
     mutation = gateway.actionable_last_successful_mutation(diff_hash=summary.patch_hash)
     require(gateway.current_diff_hash == summary.patch_hash, "handoff candidate changed")
     outcomes = {}
@@ -129,6 +130,7 @@ def build_handoff(gateway, *, history, latest_original, correction, parent_reque
         "parent_history": store.put_json(history).model_dump(mode="json"),
         "current_diff": store.put_text(summary.patch).model_dump(mode="json"),
         "current_sources": store.put_json(sources).model_dump(mode="json"),
+        "dependency_sources": store.put_json(dependency_sources).model_dump(mode="json"),
     }
     state = {
         "public_task": gateway.public_task.model_dump(mode="json"),
@@ -137,6 +139,7 @@ def build_handoff(gateway, *, history, latest_original, correction, parent_reque
                          "added_lines": summary.added_lines,
                          "deleted_lines": summary.deleted_lines},
         "current_sources": sources,
+        "dependency_sources": dependency_sources,
         "current_original_recheck": original,
         "last_successful_mutation": mutation,
         "protocol_correction": correction,

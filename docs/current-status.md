@@ -24,21 +24,23 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [single full-source trial](history/2026-10-27-repair-entry-single-results.md)
-completed: 15 responses, seven reads, eleven searches, one stop and zero edits.
-The 60,734-token request recovered through a public handoff to 48,301, but the
-model did not select a helper or original replay. It stopped for insufficient
-evidence with edits and funds still available; response-count reservation had
-closed further inspection. Three Pylint-specific searches scanned zero files.
-The [caller-access audit](history/2026-10-27-caller-access-analysis.md) establishes
-that repository search excludes prepared Pylint sources, while the actual helper
-description already explained how to read them. The model did not switch methods.
-Same-candidate original failure was already supplied; repeating it would not fetch
-the missing caller body. The proposed next intervention is explicit read-only
-access to registered dependency sources. Its effect on model choices is untested.
-No fresh original/public/isolated verification ran. All 15 calls settled at
-$0.22311930; this $1.20 allocation is closed. See the
-[sealed preparation](history/2026-10-27-repair-entry-single-plan.md) for exact scope.
+The [registered dependency-source intervention](history/2026-10-27-dependency-source-access.md)
+adds explicit read-only caller scopes to ordinary reads/searches. The diagnostic
+v4 profile registers Pylint 2.12.2 from the pinned public bundle, reports scope on
+zero-file repository searches, and retains verified dependency observations
+separately from editable workspace anchors. Normal action limits apply; helper
+and original-replay quotas, money and context limits are unchanged.
+Focused validation: 79 PASS/3 platform SKIP in 48.85s; fast suite 472 PASS/106.52s
+including isolated mock evaluation; Ruff PASS. One fresh R1 trial is being prepared;
+model uptake, first edit and repair remain untested with this intervention.
+
+The [preceding R1](history/2026-10-27-repair-entry-single-results.md) stopped after
+15 responses and zero edits ($0.22311930; allocation closed). Three Pylint searches
+scanned zero repository files. The [audit](history/2026-10-27-caller-access-analysis.md)
+confirmed that helper source access was already advertised, but the model did not
+switch methods. Interface burden is a hypothesis. Original failure was already
+supplied, so an unchanged replay would not fetch the missing caller body. No fresh
+original/public/isolated verification ran in that trial.
 
 The [repair entry contracts](history/2026-10-27-repair-entry-contracts.md) are now
 implemented for feedback-source-pair-v3: whole/page file reads, a small registered

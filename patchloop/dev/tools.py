@@ -60,6 +60,7 @@ from patchloop.dev.contracts import (
     StopIntent,
     TextReplacementIntent,
 )
+from patchloop.dev.dependency_sources import DependencySources
 from patchloop.dev.path_policy import mutation_path_allowed
 from patchloop.dev.source_glob import matches_source_glob
 from patchloop.dev.source_rebinding import SourceReplacement
@@ -114,6 +115,17 @@ _INLINE_PYTHON_FRAME = re.compile(
     r'File "<string>", line (?P<line>\d+)(?:, in (?P<scope>[^\r\n]+))?'
 )
 _MUTATION_TOOLS = frozenset({"replace_text", "apply_git_diff"})
+
+
+def _requested_source_scope(tool: str, arguments: dict[str, Any]) -> str:
+    scope = arguments.get("source_scope", "repository")
+    if "source_scope" in arguments and tool not in {"read_file", "search_files"}:
+        raise ContractError("source_scope is available only for read_file and search_files")
+    if not isinstance(scope, str) or not (
+        scope == "repository" or re.fullmatch(r"dependency:[A-Za-z0-9][A-Za-z0-9._-]*", scope)
+    ):
+        raise ContractError("source_scope must be repository or a registered dependency scope")
+    return scope
 
 
 @dataclass(frozen=True)
@@ -252,6 +264,7 @@ def dev_tool_schemas(
     agent_policy: str = "current",
     history_search_policy: history_search.Policy = "none",
     read_range_only: bool = False,
+    dependency_sources: Sequence[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     if agent_policy not in {"current", "thin"}:
         raise ContractError("unknown agent policy")
@@ -611,6 +624,26 @@ def dev_tool_schemas(
         if name not in enabled:
             continue
         parameters = schema["parameters"]
+        if dependency_sources is not None and name in {"read_file", "search_files"}:
+            scopes = ["repository", *[source["scope"] for source in dependency_sources]]
+            parameters["properties"]["source_scope"] = {
+                "type": "string", "enum": scopes,
+                "description": "Repository source or a registered read-only dependency.",
+            }
+            parameters["required"].append("source_scope")
+            schema["description"] += (
+                " Select source_scope. Dependency paths are site-packages-relative, e.g. "
+                "<registered-root>/module.py; searches use the same rooted glob syntax. "
+                "Dependency results use dependency_spans with pinned provenance and cannot "
+                "authorize workspace edits. Registered sources: "
+                + "; ".join(f"{source['scope']} {source['version']} root={source['root']}"
+                            for source in dependency_sources)
+                + "."
+            )
+            if name == "read_file":
+                # Targeted repository paths are checked by the batch validator. A single
+                # path enum cannot also represent registered dependency paths.
+                parameters["properties"]["path"].pop("enum", None)
         if (path_diagnosis_pending or repair_test_comparison_pending
                 or name in {"replace_text", "stop_task", "observe_original"}):
             projected.append(schema)
@@ -704,6 +737,7 @@ def validate_tool_batch(
     ):
         raise ContractError("turn_decision mode must match the requested tool family")
     for call in calls:
+        _requested_source_scope(call.name, call.arguments)
         if read_range_only and call.name == "read_file":
             _read_line_bounds(call.arguments.get("start_line"),
                               call.arguments.get("end_line"), range_only=True)
@@ -725,7 +759,9 @@ def validate_tool_batch(
     if allowed_read_paths:
         allowed_paths = set(allowed_read_paths)
         if any(
-            call.name == "read_file" and call.arguments.get("path") not in allowed_paths
+            call.name == "read_file"
+            and call.arguments.get("source_scope", "repository") == "repository"
+            and call.arguments.get("path") not in allowed_paths
             for call in calls
         ):
             raise ContractError("read_file path is unavailable in the targeted repair window")
@@ -757,6 +793,7 @@ class DevToolGateway:
         agent_policy: str = "current",
         history_search_policy: history_search.Policy = "none",
         read_range_only: bool = False,
+        dependency_sources: DependencySources | None = None,
     ) -> None:
         self.workspace = workspace.resolve()
         self.public_task = public_task
@@ -764,6 +801,13 @@ class DevToolGateway:
         self.journal = journal
         self.limits = limits
         self.retained_source_chars = retained_source_chars
+        self.dependency_sources = dependency_sources
+        self._dependency_source_identity = (
+            dependency_sources.identity if dependency_sources is not None else None
+        )
+        self._dependency_spans: dict[str, dict[str, Any]] = {}
+        self._dependency_observation_seq = 0
+        self._observed_dependency_actions: set[str] = set()
         if agent_policy not in {"current", "thin"}:
             raise ContractError("unknown agent policy")
         self.agent_policy = agent_policy
@@ -1393,7 +1437,57 @@ class DevToolGateway:
             "marginal_evidence_gain_units": gain_units,
         }
 
+    def _dependency_catalog(self) -> list[dict[str, Any]]:
+        if self.dependency_sources is None:
+            raise ContractError("dependency source access is not enabled")
+        if self.dependency_sources.identity != self._dependency_source_identity:
+            raise RecoveryError("registered dependency source identity changed")
+        return self.dependency_sources.catalog()
+
+    def _validate_dependency_output(self, output: dict[str, Any]) -> None:
+        """Never replay source bodies whose registered identity or bytes changed."""
+        catalog = self._dependency_catalog()
+        if (output.get("dependency_source_identity") != self._dependency_source_identity
+                or output.get("source_scope") not in {entry["scope"] for entry in catalog}):
+            raise RecoveryError("dependency evidence belongs to a different source registry")
+        assert self.dependency_sources is not None
+        sources: dict[str, tuple[str, dict[str, Any]]] = {}
+        spans = output.get("dependency_spans", [])
+        try:
+            provenances = [span["provenance"] for span in spans]
+            if "provenance" in output:
+                provenances.append(output["provenance"])
+            for provenance in provenances:
+                path = provenance["path"]
+                if path not in sources:
+                    sources[path] = self.dependency_sources.read(output["source_scope"], path)
+                if provenance != sources[path][1]:
+                    raise RecoveryError("dependency evidence provenance changed")
+            for span in spans:
+                text, provenance = sources[span["path"]]
+                if (not valid_observed_span(span, source_lines(text), provenance["file_hash"])
+                        or span.get("source_scope") != output["source_scope"]
+                        or span.get("file_hash") != provenance["file_hash"]):
+                    raise RecoveryError("dependency evidence no longer matches registered source")
+        except (KeyError, TypeError, ContractError, OSError) as exc:
+            raise RecoveryError("cannot validate registered dependency evidence") from exc
+
+    def _remember_dependency_output(self, output: dict[str, Any], *, action_id: str) -> None:
+        self._validate_dependency_output(output)
+        with self._lock:
+            if action_id in self._observed_dependency_actions:
+                return
+            for span in output.get("dependency_spans", []):
+                self._dependency_observation_seq += 1
+                restored = copy.deepcopy(span)
+                restored["last_observed_seq"] = self._dependency_observation_seq
+                self._dependency_spans[restored["span_id"]] = restored
+            self._observed_dependency_actions.add(action_id)
+
     def _restore_read_result(self, result: DevToolResult) -> None:
+        if result.output.get("source_scope", "repository") != "repository":
+            self._remember_dependency_output(result.output, action_id=result.action_id)
+            return
         spans = result.output.get("spans", [])
         with self._lock:
             if result.action_id in self._observed_read_actions:
@@ -2331,6 +2425,33 @@ class DevToolGateway:
             focus_references=self.focus_source_references(),
         ).source_spans)
 
+    def dependency_context_spans(self) -> list[dict[str, Any]]:
+        """Retain only previously delivered dependency lines, outside edit evidence."""
+        with self._lock:
+            candidates = sorted(copy.deepcopy(list(self._dependency_spans.values())),
+                                key=lambda span: span["last_observed_seq"], reverse=True)
+        retained: list[dict[str, Any]] = []
+        remaining = self.retained_source_chars
+        for span in candidates:
+            self._validate_dependency_output({
+                "source_scope": span["source_scope"],
+                "dependency_source_identity": self._dependency_source_identity,
+                "dependency_spans": [span],
+            })
+            content, end, _ = bounded_lines(source_lines(span["content"]), 1,
+                                           span["end_line"] - span["start_line"] + 1,
+                                           max_chars=remaining)
+            if end < 1:
+                continue
+            selected = self._dependency_span(span["provenance"], span["start_line"],
+                                             span["start_line"] + end - 1, content)
+            selected["last_observed_seq"] = span["last_observed_seq"]
+            retained.append(selected)
+            remaining -= len(content)
+            if remaining <= 0:
+                break
+        return retained
+
     def evidence_ledger(self, *, diff_hash: str | None = None) -> dict[str, Any]:
         """Project bounded, public, deterministic facts about observed evidence."""
 
@@ -2700,11 +2821,15 @@ class DevToolGateway:
             return [future.result() for future in futures]
 
     def execute(self, call: RequestedTool) -> DevToolResult:
+        source_scope = _requested_source_scope(call.name, call.arguments)
         is_probe = call.name in {"run_probe", "observe_original"}
         turn_decision = (
             call.turn_decision.model_dump(mode="json") if call.turn_decision is not None else None
         )
         executable_input = {"tool": call.name, "arguments": call.arguments}
+        if self.dependency_sources is not None and call.name in {"read_file", "search_files"}:
+            self._dependency_catalog()
+            executable_input["dependency_source_identity"] = self._dependency_source_identity
         action_input = dict(executable_input)
         if turn_decision is not None:
             action_input["turn_decision"] = turn_decision
@@ -3021,6 +3146,9 @@ class DevToolGateway:
                        if "memory_update" in call.model_fields_set else {}),
                     "baseline_diff_hash": baseline,
                     "baseline_changed_files": baseline_summary.changed_files,
+                    **({"dependency_source_identity": self._dependency_source_identity}
+                       if self.dependency_sources is not None
+                       and call.name in {"read_file", "search_files"} else {}),
                     **({"repair_path_link": path_link} if path_link is not None else {}),
                     **({"repair_prediction": repair_intent} if repair_intent is not None else {}),
                     **({"repair_prediction_observation": prediction_observation}
@@ -3207,40 +3335,17 @@ class DevToolGateway:
                                       call.arguments.get("end_line"), range_only=True)
                 if self.deadline is not None:
                     self.deadline.check()
-                cache_key = self._cache_key(read_request_hash, baseline)
-                with self._lock:
-                    cached = copy.deepcopy(self._read_cache.get(cache_key))
-                evidence_cache_hit = cached is not None
-                output = cached if cached is not None else self._perform(call.name, call.arguments)
-                if (call.name == "search_files"
-                        and self.history_search_policy == history_search.POLICY):
-                    from patchloop.dev.source_recovery import expand
-
-                    # Prefix-only delivery, not arbitrary past action output. Parallel
-                    # source reads share this derived index under the existing lock.
-                    with self._lock:
-                        events = self.journal.events()
-                        cutoff = next(e["sequence"] for e in events
-                                      if e["event_type"] == "action_started"
-                                      and e["payload"]["action_id"] == call.action_id)
-                        self._public_history.sync(
-                            events, ArtifactStore(self.journal.root / "artifacts"),
-                            before_sequence=cutoff,
-                            check_deadline=self.deadline.check if self.deadline else lambda: None,
-                        )
-                        output = expand(output, self._public_history,
-                                        self._public_history.visible_source_lines)
-                output = self._decorate_read_output(
-                    tool=call.name,
-                    input_hash=read_request_hash,
-                    workspace_diff_hash=baseline,
-                    output=output,
-                    turn_decision=turn_decision,
-                    action_id=call.action_id,
-                )
-                with self._lock:
-                    if not output.get("source_recovery"):
-                        self._read_cache[cache_key] = self._cacheable_read_output(output)
+                if source_scope != "repository":
+                    # Source identity is pinned in the action hash; foreign evidence is
+                    # separate from the workspace cache, coverage, and editable anchors.
+                    output = self._perform(call.name, call.arguments)
+                    self._remember_dependency_output(output, action_id=call.action_id)
+                    evidence_cache_hit = False
+                else:
+                    output, evidence_cache_hit = self._execute_repository_read(
+                        call, read_request_hash=read_request_hash, baseline=baseline,
+                        turn_decision=turn_decision,
+                    )
             else:
                 if self.deadline is not None:
                     self.deadline.check()
@@ -3368,6 +3473,39 @@ class DevToolGateway:
             )
         return result
 
+    def _execute_repository_read(
+        self, call: RequestedTool, *, read_request_hash: str, baseline: str,
+        turn_decision: dict[str, Any] | None,
+    ) -> tuple[dict[str, Any], bool]:
+        cache_key = self._cache_key(read_request_hash, baseline)
+        with self._lock:
+            cached = copy.deepcopy(self._read_cache.get(cache_key))
+        output = cached if cached is not None else self._perform(call.name, call.arguments)
+        if (call.name == "search_files" and self.history_search_policy == history_search.POLICY):
+            from patchloop.dev.source_recovery import expand
+
+            # Only workspace spans are eligible; dependencies have a separate output field.
+            with self._lock:
+                events = self.journal.events()
+                cutoff = next(e["sequence"] for e in events
+                              if e["event_type"] == "action_started"
+                              and e["payload"]["action_id"] == call.action_id)
+                self._public_history.sync(
+                    events, ArtifactStore(self.journal.root / "artifacts"),
+                    before_sequence=cutoff,
+                    check_deadline=self.deadline.check if self.deadline else lambda: None,
+                )
+                output = expand(output, self._public_history,
+                                self._public_history.visible_source_lines)
+        output = self._decorate_read_output(
+            tool=call.name, input_hash=read_request_hash, workspace_diff_hash=baseline,
+            output=output, turn_decision=turn_decision, action_id=call.action_id,
+        )
+        with self._lock:
+            if not output.get("source_recovery"):
+                self._read_cache[cache_key] = self._cacheable_read_output(output)
+        return output, cached is not None
+
     def _perform(self, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         if name == "read_file":
             return self._read_file(**arguments)
@@ -3411,29 +3549,55 @@ class DevToolGateway:
         }
         return {"span_id": f"span_{sha256_json(identity).split(':', 1)[1][:16]}", **identity}
 
+    @staticmethod
+    def _dependency_span(
+        provenance: dict[str, Any], start: int, end: int, content: str,
+    ) -> dict[str, Any]:
+        identity = {
+            "source_scope": provenance["scope"], "path": provenance["path"],
+            "start_line": start, "end_line": end, "content": content,
+            "file_hash": provenance["file_hash"], "provenance": copy.deepcopy(provenance),
+            "read_only": True,
+        }
+        return {"span_id": f"dependency_{sha256_json(identity).split(':', 1)[1][:16]}",
+                **identity}
+
     def _read_file(
         self, path: str, start_line: int | None = None, end_line: int | None = None,
+        source_scope: str = "repository",
     ) -> dict[str, Any]:
         start_line, end_line = _read_line_bounds(
             start_line, end_line, range_only=self.read_range_only,
         )
-        normalized, selected = self._tracked_path(path)
-        raw = selected.read_bytes()
-        if len(raw) > 2_000_000:
-            raise ContractError("read_file refuses files larger than 2 MB")
-        lines = source_lines(raw.decode("utf-8"))
+        provenance = None
+        if source_scope != "repository":
+            self._dependency_catalog()
+            assert self.dependency_sources is not None
+            text, provenance = self.dependency_sources.read(source_scope, path)
+            normalized = provenance["path"]
+            lines = source_lines(text)
+            file_hash = provenance["file_hash"]
+        else:
+            normalized, selected = self._tracked_path(path)
+            raw = selected.read_bytes()
+            if len(raw) > 2_000_000:
+                raise ContractError("read_file refuses files larger than 2 MB")
+            lines = source_lines(raw.decode("utf-8"))
+            file_hash = sha256_bytes(raw)
         if end_line is None:
             end_line = len(lines)
         content, actual_end, truncated = bounded_lines(lines, start_line, end_line)
         spans = (
-            [self._span(normalized, start_line, actual_end, content, sha256_bytes(raw))]
+            [self._dependency_span(provenance, start_line, actual_end, content)
+             if provenance is not None else
+             self._span(normalized, start_line, actual_end, content, file_hash)]
             if actual_end >= start_line else []
         )
         return {
             "path": normalized,
             "start_line": start_line,
             "end_line": actual_end if spans else None,
-            "spans": spans,
+            "dependency_spans" if provenance is not None else "spans": spans,
             "line_count": len(lines),
             "truncated": truncated,
             "eof": start_line > len(lines),
@@ -3442,12 +3606,20 @@ class DevToolGateway:
                 "requested source line exceeds the 24000-character output limit"
                 if truncated and not spans else None
             ),
+            **({"source_scope": source_scope} if self.dependency_sources is not None else {}),
+            **({"provenance": provenance,
+                "dependency_source_identity": self._dependency_source_identity,
+                "read_only": True} if provenance is not None else {}),
         }
 
-    def _search_files(self, query: str, path_glob: str = "**/*") -> dict[str, Any]:
+    def _search_files(
+        self, query: str, path_glob: str = "**/*", source_scope: str = "repository",
+    ) -> dict[str, Any]:
         if not isinstance(query, str) or not query or len(query) > 500:
             raise ContractError("search query must contain 1-500 characters")
         pattern = safe_relative_path(path_glob, field_name="search path_glob")
+        if source_scope != "repository":
+            return self._search_dependency_files(query, pattern, source_scope)
         tracked = run_git(
             self.workspace, "ls-files", "-z", text=False, deadline=self.deadline,
         )
@@ -3507,7 +3679,56 @@ class DevToolGateway:
             "searched_file_count": searched_file_count,
             "spans": spans,
             "truncated": truncated,
+            **({"source_scope": "repository"} if self.dependency_sources is not None else {}),
+            **({"available_sources": self._dependency_catalog(),
+                "diagnostic": "No tracked repository files match this glob. To inspect a "
+                "registered caller package, select its dependency source_scope."}
+               if self.dependency_sources is not None and searched_file_count == 0 else {}),
         }
+
+    def _search_dependency_files(
+        self, query: str, pattern: str, source_scope: str,
+    ) -> dict[str, Any]:
+        self._dependency_catalog()
+        assert self.dependency_sources is not None
+        spans: list[dict[str, Any]] = []
+        content_chars = searched_file_count = 0
+        truncated = False
+        for path in self.dependency_sources.paths(source_scope, pattern):
+            if self.deadline is not None:
+                self.deadline.check()
+            if len(spans) >= 20 or content_chars >= 24_000:
+                truncated = True
+                break
+            text, provenance = self.dependency_sources.read(source_scope, path)
+            if len(text.encode("utf-8")) > 1_000_000:
+                continue
+            searched_file_count += 1
+            lines = source_lines(text)
+            for index, line in enumerate(lines, start=1):
+                if query not in line:
+                    continue
+                start, end = max(1, index - 2), min(len(lines), index + 2)
+                content, actual_end, clipped = bounded_lines(
+                    lines, start, end, max_chars=24_000 - content_chars,
+                )
+                if actual_end < index:
+                    start = index
+                    content, actual_end, clipped = bounded_lines(
+                        lines, start, index, max_chars=24_000 - content_chars,
+                    )
+                truncated |= clipped
+                if actual_end < index:
+                    continue
+                spans.append(self._dependency_span(provenance, start, actual_end, content))
+                content_chars += len(content)
+                if len(spans) >= 20:
+                    truncated = True
+                    break
+        return {"query": query, "path_glob": pattern, "source_scope": source_scope,
+                "searched_file_count": searched_file_count, "dependency_spans": spans,
+                "truncated": truncated, "read_only": True,
+                "dependency_source_identity": self._dependency_source_identity}
 
     def _path_allowed(self, path: str) -> bool:
         constraints = self.public_task.constraints

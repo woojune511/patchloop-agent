@@ -106,12 +106,23 @@ def test_load_inputs_includes_issue_and_exact_public_original_request(
     monkeypatch.setattr(d, "load_source", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(d, "read_descriptor", lambda _: ({}, "identity"))
     monkeypatch.setattr(d, "load_dependencies", lambda *_: SimpleNamespace(environment=None))
+    catalog = [{"scope": "dependency:pylint", "package": "pylint", "version": "2.12.2",
+                "root": "pylint", "manifest_hash": "fixture", "content_hash": "fixture"}]
+    registry = SimpleNamespace(catalog=lambda: catalog)
+    monkeypatch.setattr(d, "DependencySources", lambda *_: registry)
     loaded = d.load_inputs()
     assert loaded.common["feedback"]["public_task"] == public.model_dump(mode="json")
     assert loaded.original_arguments == original
+    assert loaded.dependency_sources is registry
     for request in loaded.requests.values():
-        feedback = json.loads(request["input"][1]["content"])["public_feedback"]
+        payload = json.loads(request["input"][1]["content"])
+        feedback = payload["public_feedback"]
         assert feedback["public_task"] == public.model_dump(mode="json")
+        assert payload["registered_dependency_sources"] == catalog
+        for tool in request["tools"]:
+            if tool["name"] in {"read_file", "search_files"}:
+                scopes = tool["parameters"]["properties"]["source_scope"]
+                assert scopes["enum"] == ["repository", "dependency:pylint"]
     value["provenance"]["original_arguments"] = {"python_source": "changed"}
     with pytest.raises(ContractError, match="original host request"):
         d.load_inputs()
@@ -147,6 +158,8 @@ def test_prepare_and_validate_are_offline_and_preserve_frozen_requests(tmp_path,
     assert plan["scope"]["original_selection_requests"] == 1
     assert plan["scope"]["host_original_actions_max"] == 5
     assert plan["scope"]["accepted_mutations"] == 3
+    assert plan["scope"]["dependency_source_access"] == {
+        "policy": "registered-read-only-v1", "roots": {"pylint": "pylint"}}
     before = (output / "manifest.json").read_bytes()
     with pytest.raises(ContractError, match="fresh output root"):
         d.prepare(output, tmp_path / "live", tmp_path / "unread.env", arm=arm)
@@ -187,7 +200,7 @@ def test_restore_seed_registers_current_anchors_without_importing_mutation_count
     monkeypatch.setattr(d, "DockerSandbox", lambda _: SimpleNamespace(
         image_identity=lambda **_: "public-image"))
     packets = {arm: spans for arm in d.PROFILE.order}
-    loaded = SimpleNamespace(public=existing.public_task,
+    loaded = SimpleNamespace(public=existing.public_task, dependency_sources=None,
         dependencies=SimpleNamespace(identity=SimpleNamespace(manifest_hash=d.host.DEPENDENCY_HASH)),
         environment=SimpleNamespace(evaluator_image="public-image", image_digest="public-image"),
         bundle={"seed_patch": seed.patch, "source_packets": packets},

@@ -11,9 +11,10 @@ from patchloop.errors import ContractError
 ORIGINAL = "recheck_original"
 
 
-def schemas(opportunity, probe_environment=None):
+def schemas(opportunity, probe_environment=None, dependency_sources=None):
     tools = dev_tool_schemas(finish_enabled=False, allowed_tools=opportunity.allowed - {ORIGINAL},
-        probe_environment=probe_environment, agent_policy="thin", read_range_only=False)
+        probe_environment=probe_environment, agent_policy="thin", read_range_only=False,
+        dependency_sources=dependency_sources)
     for tool in tools:
         if tool["name"] != "run_probe":
             continue
