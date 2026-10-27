@@ -45,3 +45,12 @@ bound before the fork is written and historical usage restored without repricing
 Offline admission must verify the same 40K initial and 25K correction ceilings and
 tool opportunity at the 60K input bound. The first-settled-probe endpoint is unchanged.
 This is a new scoped allocation, not reuse of a closed description-comparison cap.
+
+The helper follow-up profile runs only B/full once from that same checkpoint.
+It keeps the recorded long description, replacing only the legacy exception
+paragraph with the current shared helper API contract. It uses fresh v8 capture;
+old observers and previous model responses are not replayed into this request.
+The first API request otherwise matches the model profile's B request exactly.
+Its total cap equals one row's remaining allowance, with no mini arm or automatic
+repeat. Preparation checks ordinary 40K and correction 25K admission at 60K input.
+The first-settled-probe endpoint and separate processing-coverage audit still apply.

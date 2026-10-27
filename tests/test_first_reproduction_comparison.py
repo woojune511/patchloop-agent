@@ -130,7 +130,8 @@ def source(tmp_path_factory):
                 if tool["name"] == "run_probe":
                     tool["description"] = (
                         "Synthetic long baseline description. " + tool["description"]
-                    )
+                    ).replace(diagnostic.probe_call_capture.EXCEPTION_DESCRIPTION,
+                              diagnostic.LEGACY_EXCEPTION_DESCRIPTION)
         return schemas
 
     with pytest.MonkeyPatch.context() as patch:
@@ -206,7 +207,7 @@ def test_pair_keeps_all_public_input_and_parameter_schema(source, tmp_path):
         diagnostic.verify_pair(a, bad)
 
 
-@pytest.mark.parametrize("comparison", ["description", "model"])
+@pytest.mark.parametrize("comparison", ["description", "model", "helper"])
 def test_prepare_and_validate_are_offline_and_single_use(
     source, tmp_path, monkeypatch, comparison,
 ):
@@ -238,7 +239,10 @@ def test_prepare_and_validate_are_offline_and_single_use(
     with pytest.raises(ContractError, match="fresh output"):
         diagnostic.prepare(saved, cut, credential, results, output, comparison=comparison)
     assert plan["paid_execution_authorized"] is False
-    if comparison == "model":
+    if comparison in {"model", "helper"}:
+        assert [branch.arm for branch in restored] == plan["order"]
+        assert plan["order"] == (["B"] if comparison == "helper" else ["A", "B"])
+        assert plan["new_cap_nanos"] == plan["row_new_cap_nanos"] * len(restored)
         expected_group = 0
         for branch in restored:
             model = diagnostic.MODELS[branch.arm]
@@ -291,6 +295,66 @@ def test_model_pair_changes_only_model_after_symmetric_forecast_projection(sourc
     bad["max_output_tokens"] = 25000
     with pytest.raises(ContractError, match="only in model"):
         diagnostic.verify_model_pair(a, bad)
+
+
+def test_helper_followup_retains_long_description_and_changes_only_exception_contract(
+    source, tmp_path,
+):
+    saved, cut, credential = source
+    plan, loaded = diagnostic.controls(
+        saved, cut, credential, tmp_path / "result", comparison="helper",
+    )
+    request = loaded.requests["B"]
+    baseline = diagnostic.model_requests(loaded.public)["B"]
+    old_description = diagnostic.probe_tool(baseline)["description"]
+    new_description = diagnostic.probe_tool(request)["description"]
+    assert new_description.startswith("Synthetic long baseline description.")
+    assert new_description.replace(diagnostic.probe_call_capture.EXCEPTION_DESCRIPTION,
+                                   diagnostic.LEGACY_EXCEPTION_DESCRIPTION) == old_description
+    assert diagnostic.project(request, old_description) == baseline
+    assert plan["schema"] == diagnostic.HELPER_SCHEMA
+    assert plan["models"] == {"B": diagnostic.MODELS["B"]}
+    assert plan["new_cap_nanos"] == plan["row_new_cap_nanos"]
+    assert request["model"] == diagnostic.MODELS["B"]
+    assert plan["pair"]["changed_fields"] == [
+        "tools.run_probe.description.expected_exceptions"
+    ]
+    bad = copy.deepcopy(request)
+    diagnostic.probe_tool(bad)["parameters"]["required"] = []
+    with pytest.raises(ContractError, match="beyond exception paragraph"):
+        diagnostic.verify_helper_request(loaded.public, bad)
+    with pytest.raises(ContractError, match="one legacy exception paragraph"):
+        diagnostic.helper_request(diagnostic.project(loaded.public, new_description))
+
+
+def test_helper_collection_dispatches_only_full_model_and_stops_on_usage_uncertainty(
+    source, tmp_path, monkeypatch,
+):
+    saved, cut, credential = source
+    plan, loaded = diagnostic.controls(
+        saved, cut, credential, tmp_path / "result", comparison="helper",
+    )
+    monkeypatch.setattr(diagnostic, "validate", lambda *args: (plan, loaded))
+    monkeypatch.setattr(diagnostic, "clean_implementation", lambda: None)
+    monkeypatch.setattr(diagnostic.live, "check_environment", lambda *a: {"status": "READY"})
+    actual_run, attempted = diagnostic.run_branch, []
+
+    def scripted(branch, group, journal, store):
+        attempted.append(branch.arm)
+        return actual_run(branch, group, journal, store,
+                          client=ScriptedClient([[stop()]], failure="usage"))
+
+    monkeypatch.setattr(diagnostic, "run_branch", scripted)
+    preparation = tmp_path / "preparation"
+    preparation.mkdir()
+    receipt = diagnostic.collect(
+        preparation / "manifest.json", "synthetic-approved", Decimal(plan["new_cap_nanos"]) / 10**9
+    )
+    assert attempted == ["B"]
+    assert len(receipt["rows"]) == 1
+    assert receipt["rows"][0]["arm"] == "B"
+    assert receipt["stop_reason"] is not None
+    assert receipt["billing_known"] is False
 
 
 @pytest.mark.parametrize("cleanup_failed", [False, True])

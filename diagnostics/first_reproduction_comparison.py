@@ -25,7 +25,7 @@ from diagnostics.decision_sampler import SharedCostLedger, read_source_artifact,
 from diagnostics.declaration_checkpoint import Source, disjoint
 from patchloop.agent.model import OpenAIResponsesAdapter
 from patchloop.artifacts import ArtifactStore
-from patchloop.dev import runner, segments
+from patchloop.dev import probe_call_capture, runner, segments
 from patchloop.dev.cost import DevCostLedger, pricing_for_model, usd_to_nanos
 from patchloop.dev.state import DevJournal
 from patchloop.runtime import repository_root, runtime_content_hash, runtime_content_paths
@@ -34,9 +34,15 @@ from patchloop.util import canonical_json, sha256_bytes, sha256_json
 
 SCHEMA = "first-reproduction-description-comparison-v1"
 MODEL_SCHEMA = "first-reproduction-model-comparison-v1"
+HELPER_SCHEMA = "first-reproduction-helper-followup-v1"
 MODEL = "gpt-5.4-mini-2026-03-17"
 MODELS = {"A": MODEL, "B": "gpt-5.4-2026-03-05"}
 ORDER = ("A", "B")
+LEGACY_EXCEPTION_DESCRIPTION = (
+    "Only for an intended exception observation, declare exact classes with "
+    "expected_exceptions=(ValueError,) in observed_target. "
+    "This is not a general retry or error-ignore option."
+)
 HOST_FILES = (
     "patchloop/dev/reproduction.py",
     "patchloop/dev/probe_invocation.py",
@@ -117,6 +123,30 @@ def verify_model_pair(a, b):
         "pair must differ only in model",
     )
     return pair_summary(a, b, "model")
+
+
+def helper_request(public):
+    """Change only the old helper paragraph in the full-model public request."""
+    baseline = model_requests(public)["B"]
+    description = probe_tool(baseline)["description"]
+    require(description.count(LEGACY_EXCEPTION_DESCRIPTION) == 1,
+            "one legacy exception paragraph required")
+    return project(baseline, description.replace(
+        LEGACY_EXCEPTION_DESCRIPTION, probe_call_capture.EXCEPTION_DESCRIPTION, 1))
+
+
+def verify_helper_request(public, request):
+    require(request == helper_request(public), "helper request changed beyond exception paragraph")
+    baseline = model_requests(public)["B"]
+    return {
+        "changed_fields": ["tools.run_probe.description.expected_exceptions"],
+        "reference_model_request_hash": sha256_json(baseline),
+        "public_input_hash": sha256_json(request["input"]),
+        "parameter_schema_hash": sha256_json(probe_tool(request)["parameters"]),
+        "description_chars": {"B": len(probe_tool(request)["description"])},
+        "request_hashes": {"B": sha256_json(request)},
+        "opaque_reasoning_items": 0,
+    }
 
 
 def source_record(root, run_id, public_task):
@@ -228,7 +258,7 @@ def current_description(loaded):
 
 
 def controls(source, cut_sequence, env_file, result_root, *, comparison="description"):
-    require(comparison in {"description", "model"}, "unknown comparison profile")
+    require(comparison in {"description", "model", "helper"}, "unknown comparison profile")
     loaded = load_checkpoint(source, cut_sequence)
     budget, old = loaded.state["remaining_budget"], loaded.envelope
     cap = budget["cost"]["remaining"]
@@ -237,12 +267,16 @@ def controls(source, cut_sequence, env_file, result_root, *, comparison="descrip
         "positive allowance and exact credential path required",
     )
     short = current_description(loaded)
-    requests = (
-        model_requests(loaded.public) if comparison == "model"
-        else {"A": loaded.public, "B": project(loaded.public, short)}
-    )
-    verifier = verify_model_pair if comparison == "model" else verify_pair
-    pair = verifier(**{k.lower(): v for k, v in requests.items()})
+    if comparison == "helper":
+        requests = {"B": helper_request(loaded.public)}
+        pair = verify_helper_request(loaded.public, requests["B"])
+    else:
+        requests = (
+            model_requests(loaded.public) if comparison == "model"
+            else {"A": loaded.public, "B": project(loaded.public, short)}
+        )
+        verifier = verify_model_pair if comparison == "model" else verify_pair
+        pair = verifier(**{k.lower(): v for k, v in requests.items()})
     plan = {
         "schema": SCHEMA,
         "official": False,
@@ -252,12 +286,12 @@ def controls(source, cut_sequence, env_file, result_root, *, comparison="descrip
         "prefix_hash": loaded.prefix_hash,
         "model": old.model,
         "reasoning_effort": old.reasoning_effort,
-        "order": list(ORDER),
+        "order": list(requests),
         "repeats_per_arm": 1,
         "credential_file": str(env_file.resolve()),
         "result_root": str(result_root.resolve()),
         "row_new_cap_nanos": cap,
-        "new_cap_nanos": cap * 2,
+        "new_cap_nanos": cap * len(requests),
         "historical_spent_nanos": budget["cost"]["settled_usage"],
         "remaining_budget": budget,
         "original_limits": old.limits.model_dump(mode="json"),
@@ -285,14 +319,15 @@ def controls(source, cut_sequence, env_file, result_root, *, comparison="descrip
         ),
         "historical_allocations_reopened": False,
     }
-    if comparison == "model":
+    if comparison in {"model", "helper"}:
+        models = {arm: MODELS[arm] for arm in requests}
         plan.update({
-            "schema": MODEL_SCHEMA,
+            "schema": HELPER_SCHEMA if comparison == "helper" else MODEL_SCHEMA,
             "comparison_profile": comparison,
-            "models": MODELS,
+            "models": models,
             "pricing_by_arm": {
                 arm: {k: str(v) for k, v in asdict(pricing_for_model(model)).items()}
-                for arm, model in MODELS.items()
+                for arm, model in models.items()
             },
             "public_reconstruction": (
                 "same saved public messages and calls/results; all reasoning items removed; "
@@ -302,6 +337,13 @@ def controls(source, cut_sequence, env_file, result_root, *, comparison="descrip
             "source_public_input_hash": sha256_json(loaded.public["input"]),
         })
         del plan["model"], plan["pricing"]
+        if comparison == "helper":
+            plan["public_reconstruction"] = (
+                "same saved public messages and calls/results; all reasoning items removed; "
+                "remove only state.remaining_budget.cost.completion_cost; retain the long "
+                "description with only its exception paragraph updated to the current helper API; "
+                "host recomputes actual admission with the full model pricing"
+            )
     loaded.requests = requests
     return plan, loaded
 
@@ -321,7 +363,7 @@ def restore(plan, loaded, root, arm, *, live_mode=False):
     branch.arm = arm
     branch.selected = loaded.requests[arm]
     branch.descriptions = {
-        label: probe_tool(loaded.requests[label])["description"] for label in ORDER
+        label: probe_tool(loaded.requests[label])["description"] for label in plan["order"]
     }
     return branch
 
@@ -560,7 +602,7 @@ def prepare(source, cut_sequence, env_file, result_root, output, *, comparison="
     store = ArtifactStore(output / "artifacts")
     rehearsals = {}
     shared = SharedCostLedger(Decimal(plan["new_cap_nanos"]) / 10**9)
-    for arm in ORDER:
+    for arm in plan["order"]:
         branch = restore(plan, loaded, output / arm, arm)
         steps = [
             [
@@ -574,7 +616,7 @@ def prepare(source, cut_sequence, env_file, result_root, output, *, comparison="
                 }
             ]
         ]
-        if comparison == "model":
+        if comparison in {"model", "helper"}:
             steps.insert(0, [{"name": "invalid_tool", "action_id": "offline_bad", "arguments": {}}])
             client = AllowanceClient(steps, input_tokens=plan["context_tokens"])
             group = shared
@@ -585,10 +627,10 @@ def prepare(source, cut_sequence, env_file, result_root, output, *, comparison="
         require(
             receipt["result"]["terminal"] == "AGENT_STOPPED"
             and receipt["input_counts"] == receipt["model_dispatches"]
-            == (2 if comparison == "model" else 1),
+            == (2 if comparison in {"model", "helper"} else 1),
             "offline ordinary-runner preparation failed: " + canonical_json(receipt),
         )
-        if comparison == "model":
+        if comparison in {"model", "helper"}:
             ceilings = [request["max_output_tokens"] for request in client.created]
             require(ceilings == [40000, 25000], "model comparison output opportunity differs")
             require(all(request["model"] == MODELS[arm]
@@ -634,7 +676,7 @@ def validate(manifest, digest, approved_cap_usd=None):
     require(plan == current, "prepared controls/runtime changed")
     if approved_cap_usd is not None:
         require(usd_to_nanos(approved_cap_usd) == plan["new_cap_nanos"], "approved cap differs")
-    for arm in ORDER:
+    for arm in plan["order"]:
         require(
             json.loads((manifest.parent / f"{arm}-first.json").read_bytes())
             == loaded.requests[arm],
@@ -661,7 +703,7 @@ def collect(manifest, approved_manifest_hash, approved_cap_usd):
     journal = DevJournal(root, "run_dev_firstreproductioncomparison")
     store = ArtifactStore(root / "artifacts")
     group = SharedCostLedger(approved_cap_usd)
-    rows = [{"arm": arm, "status": "NOT_RUN"} for arm in ORDER]
+    rows = [{"arm": arm, "status": "NOT_RUN"} for arm in plan["order"]]
     journal.append(
         "authorized",
         {"manifest_hash": approved_manifest_hash, "new_cap_nanos": plan["new_cap_nanos"]},
@@ -672,7 +714,7 @@ def collect(manifest, approved_manifest_hash, approved_cap_usd):
     )
     journal.append("environment_checked", preflight)
     stop = None if preflight["status"] == "READY" else "PREFLIGHT_FAILED"
-    for index, arm in enumerate(ORDER):
+    for index, arm in enumerate(plan["order"]):
         if stop is not None:
             break
         branch = None
@@ -715,7 +757,8 @@ def main():
         prep.add_argument("--" + key, type=Path, required=True)
     prep.add_argument("--run-id", required=True)
     prep.add_argument("--cut-sequence", type=int, required=True)
-    prep.add_argument("--comparison", choices=("description", "model"), default="description")
+    prep.add_argument("--comparison", choices=("description", "model", "helper"),
+                      default="description")
     for name in ("validate", "collect"):
         command = commands.add_parser(name)
         command.add_argument("--manifest", type=Path, required=True)
