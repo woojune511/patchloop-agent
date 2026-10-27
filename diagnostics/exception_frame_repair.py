@@ -537,6 +537,7 @@ def _exchange(turn, results, issue=None):
 def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAULT_PROFILE,
               source_packet=None, request_builder=None, cycle=None):
     """Legacy one-edit diagnostic, or an explicit bounded public repair cycle."""
+    from diagnostics import repair_cycle_tools
     from diagnostics.repair_cycle_budget import cycle_opportunity
 
     journal = gateway.journal
@@ -554,6 +555,7 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
     execution_abort, abort_reason = None, None
     first = True
     latest_original = None
+    segment_index, context_handoffs = 0, 0
     tool_limit = cycle.limits.model_tools if cycle else TOOL_ACTIONS
     probe_limit = cycle.limits.helper_probes if cycle else 1
     edit_limit = cycle.limits.accepted_edits if cycle else 1
@@ -563,14 +565,19 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
             return cycle_opportunity(normal_remaining=profile.normal_calls - normal,
                 tool_remaining=tool_limit - actions, probes_remaining=probe_limit - probes,
                 edits_remaining=edit_limit - gateway.accepted_mutations,
+                original_remaining=cycle.limits.original_requests - cycle.original_requests_used,
                 correction=is_correction, limits=cycle.limits, **options)
         return repair_opportunity(normal_remaining=profile.normal_calls - normal,
             tool_remaining=tool_limit - actions, probe_used=bool(probes),
             correction=is_correction, **options) if profile.reserve_opportunity else None
 
     def model_timeout(opportunity):
-        reserve = (cycle.needed_original_seconds(for_new_diff=True) + 5
-                   if cycle and "replace_text" in opportunity.allowed else 0)
+        reserve = 0
+        if cycle:
+            if "replace_text" in opportunity.allowed:
+                reserve = cycle.needed_original_seconds(for_new_diff=True) + 5
+            if repair_cycle_tools.ORIGINAL in opportunity.allowed:
+                reserve = max(reserve, cycle.needed_original_seconds() + 5)
         return gateway.deadline.remaining_seconds() - reserve
 
     while normal < profile.normal_calls or correction is not None:
@@ -595,6 +602,7 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
                 "remaining_seconds": gateway.deadline.remaining_seconds(),
                 "opportunity": opportunity.public()})
         admissions, narrowing, narrowing_stage = None, 0, 0
+        pending_handoff = None
         while True:
             timeout = model_timeout(opportunity)
             if timeout <= 0:
@@ -609,6 +617,8 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
                                           "diagnostic_probes": probe_limit - probes,
                                           "accepted_mutations": (
                                               edit_limit - gateway.accepted_mutations),
+                                          **({"original_rechecks": cycle.limits.original_requests
+                                              - cycle.original_requests_used} if cycle else {}),
                                           "cost_nanos": remaining_cost},
                                       correction=correction, probe_used=bool(probes),
                                       profile=profile, source_packet=source_packet,
@@ -621,6 +631,8 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
             count_id = f"count-{normal}-{corrections}-{int(is_correction)}"
             if narrowing:
                 count_id += f"-narrow-{narrowing}"
+            if segment_index:
+                count_id += f"-segment-{segment_index}"
             journal.append("input_count_started", {"count_id": count_id,
                            "request_hash": request_hash,
                            "request": store.put_json(payload).model_dump(mode="json")})
@@ -635,6 +647,36 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
                 terminal, uncertain = "COUNT_UNCERTAIN", True
                 break
             if counted > INPUT_LIMIT:
+                if cycle and history and pending_handoff is None:
+                    from diagnostics.repair_cycle_context import build_handoff
+
+                    counters = {"normal_calls": normal, "correction_calls": corrections,
+                        "tool_actions": actions, "diagnostic_probes": probes,
+                        "original_requests": cycle.original_requests_used,
+                        "new_mutations": gateway.accepted_mutations,
+                        "host_original_actions": cycle.host_actions,
+                        "new_cost_nanos": ledger.spent_nanos,
+                        "row_remaining_nanos": ledger.remaining_nanos,
+                        "group_remaining_nanos": group.remaining_nanos,
+                        "remaining_seconds": gateway.deadline.remaining_seconds(),
+                        "segment_index": segment_index + 1}
+                    try:
+                        handoff = build_handoff(gateway, history=history,
+                            latest_original=latest_original, correction=correction,
+                            parent_request=payload, counters=counters)
+                    except (ContractError, ExecutionDeadlineExceeded) as exc:
+                        execution_abort = DevTerminal.TASK_FAILED
+                        terminal = "CONTEXT_HANDOFF_INCOMPLETE"
+                        abort_reason = f"public handoff incomplete: {type(exc).__name__}"
+                        break
+                    segment_index += 1
+                    pending_handoff = {"segment_index": segment_index,
+                        "parent_count_id": count_id, "parent_input_tokens": counted,
+                        "state_hash": sha256_json(handoff["state"]),
+                        "artifacts": handoff["artifacts"], "counters": counters}
+                    journal.append("repair_context_prepared", pending_handoff)
+                    history = handoff["history"]
+                    continue  # Recount and admit the fresh public segment; no budget renewal.
                 terminal = "INPUT_LIMIT"
                 break
             reserve = (ledger.future_call_reservation_nanos(output_ceiling=CORRECTION_OUTPUT)
@@ -688,6 +730,11 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
             break
         payload["max_output_tokens"] = min(row.output_ceiling for row in admissions)
         call_id = "call-" + count_id
+        if pending_handoff is not None:
+            context_handoffs += 1
+            journal.append("repair_context_committed", {**pending_handoff,
+                "count_id": count_id, "input_tokens": counted,
+                "request_hash": sha256_json(payload)})
         journal.append("provider_call_started", {"call_id": call_id,
                         "request_hash": sha256_json(payload),
                         "request": store.put_json(payload).model_dump(mode="json"),
@@ -727,11 +774,14 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
             require(issue is None, str(issue))
             allowed = (opportunity.allowed if opportunity else
                        (TOOLS - {"run_probe"} if probes else TOOLS))
-            validate_tool_batch(turn.tool_calls, allowed_tools=allowed,
-                                read_range_only=getattr(gateway, "read_range_only", False),
-                                agent_policy=policy,
-                                max_parallel_reads=opportunity.max_parallel_reads
-                                if opportunity else 4)
+            if cycle:
+                repair_cycle_tools.validate(turn.tool_calls, opportunity)
+            else:
+                validate_tool_batch(turn.tool_calls, allowed_tools=allowed,
+                                    read_range_only=getattr(gateway, "read_range_only", False),
+                                    agent_policy=policy,
+                                    max_parallel_reads=opportunity.max_parallel_reads
+                                    if opportunity else 4)
             require(actions + len(turn.tool_calls) <= tool_limit, "tool allowance exhausted")
             if turn.provider_continuation:
                 runner._validate_continuation_action_order(
@@ -748,8 +798,21 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
             continue
         actions += len(turn.tool_calls)
         probes += sum(call.name == "run_probe" for call in turn.tool_calls)
+        selecting_original = cycle and turn.tool_calls[0].name == repair_cycle_tools.ORIGINAL
         try:
-            results = gateway.execute_batch(turn.tool_calls)
+            if selecting_original:
+                results = [cycle.execute_selection(turn.tool_calls[0])]
+                latest_original = results[0].output
+                journal.append("original_recheck_available", latest_original)
+            else:
+                results = gateway.execute_batch(turn.tool_calls)
+        except ContractError as exc:
+            if not selecting_original:
+                raise
+            execution_abort = DevTerminal.TASK_FAILED
+            terminal = "ORIGINAL_RECHECK_INCOMPLETE"
+            abort_reason = f"original selection incomplete: {type(exc).__name__}"
+            break
         except ExecutionDeadlineExceeded:
             # Without a returned receipt this may follow a started external probe.
             execution_abort = DevTerminal.TASK_FAILED
@@ -787,6 +850,8 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
               "new_mutations": gateway.accepted_mutations, "task_acceptance": "NOT_RUN"}
     if cycle:
         result.update(original_recheck=latest_original, host_original_actions=cycle.host_actions,
+                      original_requests=cycle.original_requests_used,
+                      context_handoffs=context_handoffs,
                       final_verification={"public": "not_run", "isolated": "not_run"})
     if profile.compare_models:
         result["model"] = model

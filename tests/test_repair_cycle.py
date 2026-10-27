@@ -10,7 +10,8 @@ from test_exception_frame_repair import result as original_result
 
 from diagnostics import repair_cycle as d
 from patchloop.deadline import ExecutionDeadline
-from patchloop.dev.contracts import DevToolResult
+from patchloop.dev.contracts import DevToolResult, RequestedTool
+from patchloop.dev.state import DevJournal
 from patchloop.errors import ContractError
 from patchloop.util import sha256_json
 
@@ -42,7 +43,8 @@ class RecordedGateway:
 
 def checker(tmp_path, monkeypatch, smoke_package, *, diff="one"):
     model = SimpleNamespace(current_diff_hash=diff, workspace=tmp_path / "candidate",
-                            deadline=ExecutionDeadline.from_remaining(600))
+                            deadline=ExecutionDeadline.from_remaining(600),
+                            journal=DevJournal(tmp_path / "model", "run_dev_model"))
     loaded = SimpleNamespace(original_arguments={"python_source": "original caller",
         "purpose": {"kind": "helper"}}, public=smoke_package.public)
     check = d.OriginalCallRecheck(loaded, model, tmp_path / "checks")
@@ -112,14 +114,74 @@ def test_pending_replay_or_cleanup_failure_never_retries(tmp_path, monkeypatch, 
 
 def test_recheck_quota_does_not_reset_per_edit(tmp_path, monkeypatch, smoke_package):
     check, model, _, candidate = checker(tmp_path, monkeypatch, smoke_package)
+    # An optional initial seed observation precedes the three accepted edits.
+    model.current_diff_hash = candidate.current_diff_hash = "seed"
+    check.execute_selection(RequestedTool(name="recheck_original", action_id="seed-original"))
     for diff in ("one", "two", "three"):
         model.current_diff_hash = candidate.current_diff_hash = diff
         check.check()
-    assert check.host_actions == 4
+    assert check.host_actions == 5
     model.current_diff_hash = candidate.current_diff_hash = "four"
     with pytest.raises(ContractError, match="allowance exhausted"):
         check.check()
-    assert candidate.dispatches == 3
+    assert candidate.dispatches == 4
+
+
+def test_selected_original_replay_is_durable_and_consumes_only_one_model_action(
+    tmp_path, monkeypatch, smoke_package,
+):
+    check, model, base, candidate = checker(tmp_path, monkeypatch, smoke_package)
+    call = RequestedTool(name="recheck_original", action_id="selected-original", arguments={})
+    first = check.execute_selection(call)
+    assert first.status == "succeeded" and first.output["status"] == "failed"
+    assert first.output["observed"]["calls"][0]["capture"]["stdout"] == "F0010"
+    assert "PRIVATE_SENTINEL" not in str(first.output)
+    assert check.original_requests_used == 1 and check.host_actions == 2
+    recovered = d.OriginalCallRecheck(check.loaded, model, check.root)
+    monkeypatch.setattr(recovered, "check", lambda: pytest.fail("selection redispatched"))
+    replay = recovered.execute_selection(call)
+    assert replay.replayed and replay.output == first.output
+    starts = [event for event in model.journal.events() if event["event_type"] == "action_started"]
+    assert len(starts) == 1 and starts[0]["payload"]["arguments"] == {}
+    assert base.dispatches == candidate.dispatches == 1
+    with pytest.raises(ContractError, match="selection allowance exhausted"):
+        recovered.execute_selection(call.model_copy(update={"action_id": "another-selection"}))
+
+
+def test_selected_original_rejects_invalid_stale_and_conflicting_requests(
+    tmp_path, monkeypatch, smoke_package,
+):
+    check, model, _, candidate = checker(tmp_path, monkeypatch, smoke_package)
+    call = RequestedTool(name="recheck_original", action_id="selected-original", arguments={})
+    for invalid in (call.model_copy(update={"name": "run_probe"}),
+                    call.model_copy(update={"arguments": {"python_source": "new source"}})):
+        with pytest.raises(ContractError, match="requires empty arguments"):
+            check.execute_selection(invalid)
+    assert check.host_actions == check.original_requests_used == 0
+    check.execute_selection(call)
+    model.current_diff_hash = candidate.current_diff_hash = "changed"
+    with pytest.raises(ContractError, match="receipt is stale"):
+        check.execute_selection(call)
+    model.current_diff_hash = "one"
+    conflicting = RequestedTool(name=call.name, action_id=call.action_id, memory_update={},
+                                arguments={})
+    with pytest.raises(ContractError, match="different input"):
+        check.execute_selection(conflicting)
+    assert candidate.dispatches == 1
+
+
+def test_selected_original_pending_start_does_not_retry_target(
+    tmp_path, monkeypatch, smoke_package,
+):
+    check, model, _, candidate = checker(tmp_path, monkeypatch, smoke_package)
+    call = RequestedTool(name="recheck_original", action_id="selected-original", arguments={})
+    candidate.cleanup = False
+    with pytest.raises(ContractError, match="execution aborted"):
+        check.execute_selection(call)
+    recovered = d.OriginalCallRecheck(check.loaded, model, check.root)
+    with pytest.raises(ContractError, match="selection has an unfinished action"):
+        recovered.execute_selection(call)
+    assert recovered.original_requests_used == 1 and candidate.dispatches == 1
 
 
 @pytest.mark.parametrize("changed", [False, True])

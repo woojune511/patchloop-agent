@@ -13,6 +13,7 @@ from dataclasses import dataclass
 class CycleLimits:
     model_tools: int = 24
     helper_probes: int = 2
+    original_requests: int = 1
     accepted_edits: int = 3
     future_diagnostic_output: int = 8_192
     future_edit_output: int = 8_192
@@ -24,8 +25,8 @@ class CycleLimits:
 
     @property
     def host_original_actions(self) -> int:
-        # One fresh clean baseline plus at most one replay per accepted edit.
-        return self.accepted_edits + 1
+        # Fresh baseline, optional seed observation, and each accepted edit.
+        return self.accepted_edits + self.original_requests + 1
 
 
 DEFAULT_LIMITS = CycleLimits()
@@ -55,7 +56,8 @@ class CycleOpportunity:
 
 def cycle_opportunity(
     *, normal_remaining: int, tool_remaining: int, probes_remaining: int,
-    edits_remaining: int, correction: bool = False, allow_inspection: bool = True,
+    edits_remaining: int, original_remaining: int = 1,
+    correction: bool = False, allow_inspection: bool = True,
     allow_probe: bool = True, allow_continuation: bool = True,
     limits: CycleLimits = DEFAULT_LIMITS,
 ) -> CycleOpportunity:
@@ -85,7 +87,9 @@ retain the original global response/action/probe/edit counters.
             allowed.update({"read_file", "search_files"})
         if allow_probe and probes_remaining > 0:
             allowed.add("run_probe")
-        if reads or "run_probe" in allowed:
+        if allow_probe and original_remaining > 0:
+            allowed.add("recheck_original")
+        if reads or allowed.intersection({"run_probe", "recheck_original"}):
             successors = (limits.future_edit_output, limits.final_response_output)
     continuation = (allow_continuation and edits_remaining > 1
                     and responses >= 4 and tool_remaining >= 4)

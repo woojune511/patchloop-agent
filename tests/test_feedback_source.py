@@ -53,8 +53,8 @@ def test_pair_only_changes_source_in_normal_and_correction(monkeypatch):
             encoded = canonical_json(request)
             assert "original issue" in encoded and "public saved patch" in encoded
             read = next(tool for tool in request["tools"] if tool["name"] == "read_file")
-            assert read["parameters"]["properties"]["start_line"]["type"] == "integer"
-            assert read["parameters"]["properties"]["end_line"]["type"] == "integer"
+            assert read["parameters"]["properties"]["start_line"]["type"] == ["integer", "null"]
+            assert read["parameters"]["properties"]["end_line"]["type"] == ["integer", "null"]
             assert request["max_output_tokens"] == (25_000 if options else 40_000)
         requests[1]["max_output_tokens"] += 1
         with pytest.raises(ContractError, match="beyond"):
@@ -131,10 +131,13 @@ def test_prepare_and_validate_are_offline_and_preserve_frozen_requests(tmp_path,
     plan, _ = d.validate(output / "manifest.json", receipt["manifest_hash"])
     assert plan["paid_execution_authorized"] is False
     assert plan["scope"]["starting_diff"] == d.SEED_HASH
-    assert plan["scope"]["total_cap_usd"] == "2.40" and plan["scope"]["read_range_only"]
+    assert plan["scope"]["total_cap_usd"] == "2.40"
+    assert plan["scope"]["read_range_only"] is False
     assert plan["scope"]["normal_calls"] == 16
     assert plan["scope"]["tool_actions"] == 24
     assert plan["scope"]["diagnostic_probes"] == 2
+    assert plan["scope"]["original_selection_requests"] == 1
+    assert plan["scope"]["host_original_actions_max"] == 5
     assert plan["scope"]["accepted_mutations"] == 3
     before = (output / "manifest.json").read_bytes()
     with pytest.raises(ContractError, match="fresh output root"):
@@ -183,7 +186,7 @@ def test_restore_seed_registers_current_anchors_without_importing_mutation_count
         common={"feedback": {"saved_patch": seed.patch}, "source_packets": packets})
     gateway = d.saved_gateway(loaded, tmp_path / "restored", "R0")
     assert gateway.current_diff_hash == seed.patch_hash and gateway.accepted_mutations == 0
-    assert gateway.read_range_only is True and gateway.limits.max_tool_actions == 25
+    assert gateway.read_range_only is False and gateway.limits.max_tool_actions == 25
     assert gateway.limits.max_accepted_mutations == 3
     assert gateway.limits.max_model_calls == 17
     result = gateway.execute(RequestedTool(**edit_call()))
@@ -191,12 +194,33 @@ def test_restore_seed_registers_current_anchors_without_importing_mutation_count
     assert gateway.accepted_mutations == 1 and gateway.current_diff_hash != seed.patch_hash
     assert len([event for event in gateway.journal.events()
                 if event["event_type"] == "action_finished"]) == 2
+    # Advertised whole/page bounds are executable on the restored gateway too.
+    opportunity = d.cycle_opportunity(normal_remaining=3, tool_remaining=3,
+                                      probes_remaining=0, edits_remaining=1)
+    for start in (None, 2):
+        call = RequestedTool(name="read_file", action_id=f"current-page-{start}",
+            arguments={"path": "mini_data_utils/csvlite.py", "start_line": start,
+                       "end_line": None}, memory_update=None)
+        d.repair_cycle_tools.validate([call], opportunity)
+        current = gateway.execute(call)
+        assert current.status == "succeeded" and current.output["start_line"] == (start or 1)
+        assert current.output["end_line"] == current.output["line_count"]
+        assert current.output["next_start_line"] is None
 
 
 def test_cap_approval_precedes_all_loading(monkeypatch):
     monkeypatch.setattr(d, "validate", lambda *_: pytest.fail("must reject before loading"))
     with pytest.raises(ContractError, match="exact new cap"):
         d.collect(None, "none", Decimal("1.20"))
+
+
+@pytest.mark.parametrize("actions, parallel", [(3, False), (4, True)])
+def test_request_parallel_setting_tracks_the_offered_read_allowance(monkeypatch, actions, parallel):
+    request = d.request_payload(common(bundle(monkeypatch)), "R0", remaining={
+        "normal_calls": 3, "tool_actions": actions, "accepted_mutations": 1})
+    public = json.loads(request["input"][-1]["content"])
+    assert public["opportunity"]["max_parallel_reads"] == actions - 2
+    assert request["parallel_tool_calls"] is parallel
 
 
 @pytest.mark.parametrize("wide", [False, True])

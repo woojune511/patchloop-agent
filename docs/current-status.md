@@ -24,6 +24,18 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
+The [repair entry contracts](history/2026-10-27-repair-entry-contracts.md) are now
+implemented for feedback-source-pair-v3: whole/page file reads, a small registered
+original-call selector, required executable helper source, and a provider parallel
+flag matching the actual read limit. An over-limit request can rebuild once from
+current public evidence, then recount and pass cost admission with unchanged
+global allowances. Opaque prior reasoning stays in local artifacts. The optional
+original selection uses one of 24 model-tool slots; host replays allow at most
+five including the baseline and three edits. Input/output caps remain unchanged.
+Focused owner/legacy validation: 121 PASS/63.49s; fast suite: 472 PASS/106.60s,
+including isolated mock evaluation; Ruff PASS. Live uptake and first-edit repair
+remain untested.
+
 The [live repair-cycle pilot](history/2026-10-27-repair-cycle-results.md) completed
 R0/R1 once each, with zero edits. R0 used 15 responses on source exploration and
 stopped for insufficient evidence; R1 made a probe request with null source,
@@ -36,10 +48,10 @@ The [original-call repair cycle](history/2026-10-27-original-repair-cycle.md) is
 implemented and locally verified (82 focused PASS/27.91s; 472 quick PASS/105.36s
 including isolated mock evaluation; Ruff PASS), but its post-edit path was not
 exercised by this live pair. Production defaults and legacy profiles stay unchanged.
-The next unresolved bottleneck is reaching a justified first edit: source location
-selection, executable probe construction and valid correction within retained
-context. More context would admit that particular correction, but cannot establish
-better diagnosis or repair. Future paid work needs a new evidence-based scope.
+The next unresolved bottleneck is reaching a justified first edit and revising it
+from failure feedback. The new contracts remove demonstrated request mismatches;
+they do not establish better diagnosis or repair. Future paid work needs a new
+evidence-based scope and prepared identities.
 
 Whether the model uses post-edit feedback to repair the caller remains unresolved.
 The [preceding R0/R1 pair](history/2026-10-27-feedback-source-results.md)

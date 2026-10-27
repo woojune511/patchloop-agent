@@ -20,7 +20,7 @@ def opportunity(**changes):
 def test_nonfinal_edit_funds_diagnosis_repair_and_feedback_without_raising_ceilings():
     selected = opportunity()
     assert selected.allowed == {
-        "read_file", "search_files", "run_probe", "replace_text", "stop_task",
+        "read_file", "search_files", "run_probe", "recheck_original", "replace_text", "stop_task",
     }
     assert selected.successor_output_ceilings == (8192, 8192, 128)
     assert selected.successor_calls == 3 and selected.continuation_reserved
@@ -64,7 +64,8 @@ def test_cost_narrowing_releases_optional_work_but_not_post_edit_feedback():
     edit_only = opportunity(allow_continuation=False, allow_inspection=False, allow_probe=False)
     assert broad.successor_output_ceilings == (8192, 8192, 128)
     assert without_continuation.successor_output_ceilings == (8192, 128)
-    assert without_inspection.allowed == {"run_probe", "replace_text", "stop_task"}
+    assert without_inspection.allowed == {
+        "run_probe", "recheck_original", "replace_text", "stop_task"}
     assert edit_only.allowed == {"replace_text", "stop_task"}
     assert edit_only.successor_output_ceilings == (128,)
 
@@ -85,7 +86,26 @@ def test_exhausted_budget_offers_no_action(changes):
 
 def test_host_replay_and_final_verification_are_separate_from_model_probe_quota():
     limits = CycleLimits()
-    assert limits.host_original_actions == 4 and limits.helper_probes == 2
+    assert limits.host_original_actions == 5 and limits.helper_probes == 2
+    assert limits.original_requests == 1
     assert limits.final_public_actions == 11
     assert limits.final_public_seconds == limits.acceptance_seconds == 390
-    assert replace(limits, accepted_edits=1).host_original_actions == 2
+    assert replace(limits, accepted_edits=1).host_original_actions == 3
+    assert replace(limits, original_requests=0).host_original_actions == 4
+
+
+@pytest.mark.parametrize("changes", [{"normal_remaining": 2}, {"tool_remaining": 2},
+                                      {"original_remaining": 0}, {"allow_probe": False}])
+def test_original_selection_needs_separate_allowance_and_future_repair_room(changes):
+    assert "recheck_original" not in opportunity(**changes).allowed
+
+
+def test_original_selection_does_not_need_helper_probe_quota_but_funds_successor_edit():
+    selected = opportunity(normal_remaining=3, tool_remaining=3, probes_remaining=0,
+                           allow_inspection=False)
+    assert selected.allowed == {"recheck_original", "replace_text", "stop_task"}
+    assert selected.successor_output_ceilings == (8192, 128)
+    assert not selected.continuation_reserved
+    corrected = opportunity(normal_remaining=2, correction=True, probes_remaining=0,
+                            allow_inspection=False, original_remaining=0)
+    assert corrected.allowed == {"replace_text", "stop_task"}

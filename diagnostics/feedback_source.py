@@ -14,6 +14,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 from diagnostics import exception_frame_repair as loop
+from diagnostics import repair_cycle_tools
 from diagnostics import selection_observation as host
 from diagnostics.decision_sampler import require
 from diagnostics.declaration_checkpoint import disjoint
@@ -26,7 +27,7 @@ from patchloop.deadline import ExecutionDeadline
 from patchloop.dev.contracts import DevLimits
 from patchloop.dev.cost import DevCostLedger, pricing_for_model
 from patchloop.dev.state import DevJournal
-from patchloop.dev.tools import DevToolGateway, dev_tool_schemas
+from patchloop.dev.tools import DevToolGateway
 from patchloop.git_execution import run_git
 from patchloop.prepared_probe_dependencies import load_dependencies, read_descriptor
 from patchloop.prepared_source import load_source
@@ -41,7 +42,7 @@ from patchloop.sandbox import DockerSandbox
 from patchloop.sandbox.probes import DockerProbeSandbox
 from patchloop.util import canonical_json, load_unique_yaml, sha256_bytes, sha256_json
 
-SCHEMA = "feedback-source-pair-v2"
+SCHEMA = "feedback-source-pair-v3"
 CYCLE_LIMITS = CycleLimits()
 PROFILE = loop.RepairProfile(SCHEMA, ("R0", "R1"), 16, Decimal("1.20"),
                              reserve_opportunity=True, annotation_policy="thin")
@@ -61,6 +62,9 @@ PROMPT = (
     "is available or the public behavior is repaired. Final public controls, regression "
     "and isolated acceptance occur after this model phase; private results are never "
     "returned to the model. Use only the offered tools; no shell or installation."
+    " Use recheck_original with empty arguments to observe the registered original caller "
+    "once on demand; it is separate from the two new helper programs. read_file accepts "
+    "null line bounds for a whole file or bounded page, with next_start_line for continuation."
 )
 
 
@@ -72,11 +76,13 @@ def request_payload(common, arm, *, history=(), remaining=None, correction=None,
     remaining = remaining if remaining is not None else {
         "normal_calls": PROFILE.normal_calls, "tool_actions": CYCLE_LIMITS.model_tools,
         "diagnostic_probes": CYCLE_LIMITS.helper_probes,
+        "original_rechecks": CYCLE_LIMITS.original_requests,
         "accepted_mutations": CYCLE_LIMITS.accepted_edits,
         "cost_nanos": int(PROFILE.row_cap * 1_000_000_000)}
     opportunity = opportunity or cycle_opportunity(
         normal_remaining=remaining["normal_calls"], tool_remaining=remaining["tool_actions"],
         probes_remaining=remaining.get("diagnostic_probes", int(not probe_used)),
+        original_remaining=remaining.get("original_rechecks", CYCLE_LIMITS.original_requests),
         edits_remaining=remaining.get("accepted_mutations", CYCLE_LIMITS.accepted_edits),
         correction=correction is not None, limits=CYCLE_LIMITS)
     items = [{"role": "system", "content": PROMPT},
@@ -93,12 +99,11 @@ def request_payload(common, arm, *, history=(), remaining=None, correction=None,
                      "final_public_actions": CYCLE_LIMITS.final_public_actions,
                      "final_public_seconds": CYCLE_LIMITS.final_public_seconds,
                      "isolated_acceptance_seconds": CYCLE_LIMITS.acceptance_seconds}})}]
-    schemas = dev_tool_schemas(finish_enabled=False, allowed_tools=opportunity.allowed,
-        probe_environment=common.get("probe_environment"), agent_policy="thin",
-        read_range_only=True)
+    schemas = repair_cycle_tools.schemas(opportunity, common.get("probe_environment"))
     adapter = loop.OpenAIResponsesAdapter(loop.config(), api_key="",
                                           client=SimpleNamespace(max_retries=0))
     payload = adapter.request_payload(items, schemas, system_prompt=PROMPT)
+    payload["parallel_tool_calls"] = repair_cycle_tools.parallel_calls(opportunity)
     payload["max_output_tokens"] = loop.CORRECTION_OUTPUT if correction else loop.NORMAL_OUTPUT
     return payload
 
@@ -190,9 +195,12 @@ def load_inputs():
 def scope():
     return {**host.scope(), "order": list(PROFILE.order), "starting_diff": SEED_HASH,
             "source_ranges": {"R0": [[265, 273]], "R1": [[1, 400], [401, 676]]},
-            "read_range_only": True, "normal_calls": PROFILE.normal_calls,
+            "read_range_only": False, "normal_calls": PROFILE.normal_calls,
             "tool_actions": CYCLE_LIMITS.model_tools,
             "diagnostic_probes": CYCLE_LIMITS.helper_probes,
+            "original_selection_requests": CYCLE_LIMITS.original_requests,
+            "probe_request_contract": "new-helper-program-or-registered-original-v1",
+            "context_handoff": "public-repair-state-on-input-limit-v1",
             "accepted_mutations": CYCLE_LIMITS.accepted_edits,
             "additional_model_edits": CYCLE_LIMITS.accepted_edits,
             "post_edit_original_recheck": True,
@@ -213,6 +221,8 @@ def prepare(output, result_root, credential_file):
     paths = [Path(__file__), Path(loop.__file__), Path(host.__file__), PACKET_BUILDER,
              Path(__file__).with_name("repair_cycle.py"),
              Path(__file__).with_name("repair_cycle_budget.py"),
+             Path(__file__).with_name("repair_cycle_tools.py"),
+             Path(__file__).with_name("repair_cycle_context.py"),
              Path(__file__).with_name("source_ready_packet.py"), host.HELPER,
              Path(__file__).with_name("saved_candidate_acceptance.py"), host.PUBLIC,
              host.PUBLIC.with_name("environment.yaml"), host.SOURCE, host.DEPENDENCIES,
@@ -309,7 +319,7 @@ def saved_gateway(loaded, root, arm):
         "probe_identity": identity})
     spans = loaded.bundle["source_packets"][arm]
     gateway = DevToolGateway(workspace=workspace, public_task=loaded.public, sandbox=sandbox,
-        probe_sandbox=probe, journal=journal, agent_policy="thin", read_range_only=True,
+        probe_sandbox=probe, journal=journal, agent_policy="thin", read_range_only=False,
         limits=DevLimits(max_accepted_mutations=CYCLE_LIMITS.accepted_edits,
                          max_model_calls=PROFILE.normal_calls + 1,
                          max_tool_actions=CYCLE_LIMITS.model_tools + len(spans)),
@@ -317,7 +327,7 @@ def saved_gateway(loaded, root, arm):
     observe_sources(gateway, spans)
     journal.append("model_stage_ready", {"candidate_diff_hash": SEED_HASH,
         "host_source_reads": len(spans), "model_tool_allowance": CYCLE_LIMITS.model_tools,
-        "source_packet_hash": sha256_json(spans), "read_range_only": True})
+        "source_packet_hash": sha256_json(spans), "read_range_only": False})
     gateway.deadline = ExecutionDeadline.from_remaining(loop.MODEL_SECONDS)
     return gateway
 

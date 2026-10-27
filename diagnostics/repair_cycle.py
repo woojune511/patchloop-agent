@@ -95,6 +95,56 @@ class OriginalCallRecheck:
                    for journal in (self.journal, self.base_journal)
                    for event in journal.events())
 
+    @property
+    def original_requests_used(self):
+        return sum(event["event_type"] == "action_started"
+                   and event["payload"].get("tool") == "recheck_original"
+                   for event in self.model_gateway.journal.events())
+
+    def execute_selection(self, call: RequestedTool) -> DevToolResult:
+        """Select the frozen public caller without constructing another program.
+
+        This diagnostic-only action consumes one model-tool slot, independently
+        of the host replay actions it needs. Unknown execution is never retried.
+        """
+        host.require(call.name == "recheck_original" and call.arguments == {},
+                     "recheck_original requires empty arguments")
+        action_input = {"tool": call.name, "arguments": call.arguments}
+        if call.turn_decision is not None:
+            action_input["turn_decision"] = call.turn_decision.model_dump(mode="json")
+        if "memory_update" in call.model_fields_set:
+            action_input["memory_update"] = call.memory_update
+        input_hash = sha256_json(action_input)
+        journal = self.model_gateway.journal
+        before = self.model_gateway.current_diff_hash
+        host.require(journal.pending_action(call.action_id, input_hash) is None,
+                     "original selection has an unfinished action; no automatic retry")
+        replay = journal.action_result(call.action_id, input_hash)
+        if replay is not None:
+            host.require(replay.tool == call.name and replay.workspace_diff_hash == before
+                         and replay.output.get("candidate_diff_hash") == before
+                         and replay.output.get("arguments_hash") == self.argument_hash,
+                         "original selection receipt is stale or belongs to another caller")
+            return replay
+        host.require(self.original_requests_used < self.limits.original_requests,
+                     "original selection allowance exhausted")
+        self.model_gateway.deadline.check()
+        journal.append("action_started", {
+            "action_id": call.action_id, "input_hash": input_hash, "tool": call.name,
+            "arguments": {}, "baseline_diff_hash": before,
+            "original_arguments_hash": self.argument_hash,
+        })
+        feedback = self.check()
+        host.require(feedback["candidate_diff_hash"] == before,
+                     "candidate changed during original selection")
+        result = DevToolResult(action_id=call.action_id, input_hash=input_hash,
+            tool=call.name, status="succeeded", output=feedback, workspace_diff_hash=before)
+        journal.append("action_finished", {
+            "action_id": call.action_id, "input_hash": input_hash,
+            "result": result.model_dump(mode="json"),
+        })
+        return result
+
     def needed_actions(self, *, for_new_diff=False):
         base = self._completed(self.base_journal, host.EMPTY_DIFF)
         current_hash = self.model_gateway.current_diff_hash
