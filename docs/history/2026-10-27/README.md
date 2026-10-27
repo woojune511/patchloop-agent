@@ -42,3 +42,4 @@
 - [Sealed clean-start pilot: ordinary acquisition, repair and finish without saved evidence](../2026-10-27-normal-recovery-fresh-plan.md)
 - [Clean-start result: first repair reached, changed F0010 wording exposes divergent predicates](../2026-10-27-normal-recovery-fresh-results.md)
 - [Canonical diagnostic feedback: one code definition across baseline and revised candidates](../2026-10-27-canonical-diagnostic-feedback.md)
+- [Sealed canonical diagnostic pilot: same clean-start conditions with one host judgment](../2026-10-27-canonical-diagnostic-fresh-plan.md)

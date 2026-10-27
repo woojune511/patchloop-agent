@@ -48,7 +48,12 @@ Local normal-runner tests delivered changed-text F0010 failure and current sourc
 to the next request, executed a second edit, checked and finished with exact-diff
 receipt reuse. Both result and forced-token handoffs passed without expanding
 limits. This is scripted-provider evidence; real-model uptake and Astroid repair
-remain untested. Do not increase context/cost limits on the preceding failure.
+remain untested. The [new clean-start pilot](history/2026-10-27-canonical-diagnostic-fresh-plan.md)
+is sealed and preflight PASS: the same task/mini model, one run, USD 4.50, 20 total
+responses, 40 actions and three edits; 60K input, 40K/25K output and 2,400 seconds
+including 390 for evaluation. Only the canonical diagnostic runtime changes.
+No previous repair evidence is injected. Provider/count/credential/target execution
+counts are zero; exact fresh approval is pending. Do not increase limits.
 New core coverage is 25 PASS. Quick covered 526 cases/82.779s including isolated
 mock; all failed schema-hash/document nodes passed targeted reruns. Ruff PASS.
 
