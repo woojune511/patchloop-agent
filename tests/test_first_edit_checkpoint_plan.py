@@ -70,8 +70,8 @@ def test_prepare_and_validate_freeze_offline_pair_with_exact_new_budget(prepared
     assert plan["scope"]["order"] == ["A", "B"]
     assert plan["scope"]["row_cap_usd"] == "1.20"
     assert plan["scope"]["total_cap_usd"] == "2.40"
-    assert plan["scope"]["normal_calls"] == 2 and plan["scope"]["correction_calls"] == 1
-    assert plan["scope"]["tool_actions"] == 2 and plan["scope"]["accepted_mutations"] == 1
+    assert plan["scope"]["normal_calls"] == 4 and plan["scope"]["correction_calls"] == 1
+    assert plan["scope"]["tool_actions"] == 5 and plan["scope"]["accepted_mutations"] == 2
     assert plan["scope"]["diagnostic_probes"] == 0
     assert plan["scope"]["original_selection_requests"] == 0
     assert plan["scope"]["fresh_counters"] is True
@@ -169,7 +169,7 @@ def test_validate_rejects_changed_checkpoint_provenance(prepared_plan):
 def test_validate_rejects_scope_change_even_if_manifest_hash_is_reapproved(prepared_plan):
     case = prepared_plan
     plan = json.loads(case.manifest.read_bytes())
-    plan["scope"]["accepted_mutations"] = 2
+    plan["scope"]["accepted_mutations"] = 3
     case.manifest.write_text(canonical_json(plan), encoding="utf-8")
     with pytest.raises(ContractError, match="experiment scope changed"):
         checkpoint.validate(case.manifest, sha256_bytes(case.manifest.read_bytes()))
@@ -217,15 +217,16 @@ def test_saved_gateway_registers_all_extra_source_anchors_and_resets_allowances(
     result = checkpoint.saved_gateway(loaded, tmp_path / "fresh")
     assert result is gateway and restored == [(loaded, tmp_path / "fresh", "R1")]
     assert observed == [extra, wider]
-    assert gateway.limits.max_tool_actions == 4 + 2
-    assert gateway.limits.max_model_calls == 2 + 1
-    assert gateway.limits.max_accepted_mutations == 1
-    assert 0 < gateway.deadline.remaining_seconds() <= checkpoint.loop.MODEL_SECONDS
+    assert gateway.limits.max_tool_actions == 4 + 5
+    assert gateway.limits.max_model_calls == 4 + 1
+    assert gateway.limits.max_accepted_mutations == 2
+    assert 0 < gateway.deadline.remaining_seconds() <= checkpoint.MODEL_SECONDS
     ready = events[-1]
     assert ready["event_type"] == "checkpoint_stage_ready"
     assert ready["payload"]["host_source_reads"] == 4
     assert ready["payload"]["historical_actions_imported"] is False
-    assert ready["payload"]["fresh_normal_calls"] == ready["payload"]["fresh_tool_actions"] == 2
+    assert ready["payload"]["fresh_normal_calls"] == 4
+    assert ready["payload"]["fresh_tool_actions"] == 5
 
 
 @pytest.mark.parametrize("uncertainty", ["count", "provider"])
@@ -252,6 +253,7 @@ def test_collection_stops_all_rows_on_count_or_provider_uncertainty(
 
     monkeypatch.setattr(checkpoint, "saved_gateway", saved)
     monkeypatch.setattr(checkpoint, "OriginalCallRecheck", lambda *args, **kwargs: object())
+    monkeypatch.setattr(checkpoint, "PublicRegressionRecheck", lambda *args, **kwargs: object())
     monkeypatch.setattr(checkpoint.loop, "load_exact_openai_api_key", lambda path: "fixture-only")
     monkeypatch.setattr(checkpoint.loop, "OpenAIResponsesAdapter", lambda *args, **kwargs:
                         SimpleNamespace(client=SimpleNamespace(close=lambda: closed.append(True))))
@@ -302,6 +304,7 @@ def test_collection_runs_only_manifest_selected_arms_with_exact_group_cap(
     monkeypatch.setattr(checkpoint, "saved_gateway",
                         lambda _loaded, root: started.append(root.name))
     monkeypatch.setattr(checkpoint, "OriginalCallRecheck", lambda *args, **kwargs: None)
+    monkeypatch.setattr(checkpoint, "PublicRegressionRecheck", lambda *args, **kwargs: None)
 
     def credential(path):
         credentials.append(path)

@@ -15,6 +15,7 @@ HANDOFF_KIND = "diagnostic_repair_cycle_handoff_v1"
 COUNTERS = frozenset({
     "normal_calls", "correction_calls", "tool_actions", "diagnostic_probes",
     "original_requests", "new_mutations", "host_original_actions", "new_cost_nanos",
+    "host_regression_actions",
     "row_remaining_nanos", "group_remaining_nanos", "remaining_seconds", "segment_index",
     "model_limit", "output_limit", "input_limit",
 })
@@ -92,7 +93,8 @@ def _previous_outcomes(history):
                 yield {key: copy.deepcopy(outcome.get(key)) for key in OUTCOME_FIELDS}
 
 
-def build_handoff(gateway, *, history, latest_original, correction, parent_request, counters):
+def build_handoff(gateway, *, history, latest_original, correction, parent_request, counters,
+                  latest_regression=None):
     """Archive parent bytes and return a fresh public-only history and its bindings.
 
     Current diff and original-call evidence are mandatory, never size-truncated.
@@ -104,6 +106,9 @@ def build_handoff(gateway, *, history, latest_original, correction, parent_reque
     if latest_original is not None:
         require(latest_original.get("candidate_diff_hash") == summary.patch_hash,
                 "handoff original observation belongs to another diff")
+    if latest_regression is not None:
+        require(latest_regression.get("candidate_diff_hash") == summary.patch_hash,
+                "handoff public regression belongs to another diff")
     require(not gateway.accepted_mutations or latest_original is not None,
             "handoff edited candidate lacks original-call evidence")
     original = (None if latest_original is None else
@@ -141,6 +146,8 @@ def build_handoff(gateway, *, history, latest_original, correction, parent_reque
         "current_sources": sources,
         "dependency_sources": dependency_sources,
         "current_original_recheck": original,
+        **({"current_public_regression": copy.deepcopy(latest_regression)}
+           if latest_regression is not None else {}),
         "last_successful_mutation": mutation,
         "protocol_correction": correction,
         "counters": {key: copy.deepcopy(value) for key, value in counters.items()

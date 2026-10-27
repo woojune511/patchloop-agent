@@ -24,42 +24,40 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The approved [single-A delivery trial](history/2026-10-27-checkpoint-feedback-single-results.md)
-executed once from the same saved public checkpoint with unchanged first request
-and row limits. The first input was 56,199 tokens. After one accepted edit and a
-successful original-call recheck, the next actual request fit at 59,142 tokens
-and contained the exact current-diff verification. Two source references expand
-exactly to the durable result. The model accurately recognized original-call
-success and called stop_task. No handoff or correction was needed.
+The [last live checkpoint trial](history/2026-10-27-checkpoint-feedback-single-results.md)
+received original-call success at 59,142 input tokens and stopped accurately, but
+later public regression exposed a symlink-path failure. Isolated evaluation was
+NOT_RUN_PUBLIC_CHECKS. This established original-feedback delivery, not full repair.
+Its $0.19439055 allocation is closed and the candidate/evidence remain immutable.
 
-The original F0010 resolved and all five public cases passed, but the later public
-regression failed one symlink-path test (1,230 passed). Isolated evaluation was
-NOT_RUN_PUBLIC_CHECKS with zero evaluator dispatches. That regression happened
-after the model stopped and was not model-visible. Original-feedback delivery
-and accurate diagnostic stop passed; full repair and acceptance remain incomplete.
-The second original call's input identity changed due to cache output in the input
-root; first-call identity and control output were preserved.
+The [public regression repair cycle](history/2026-10-27-public-regression-repair-cycle.md)
+is now implemented for the saved-checkpoint diagnostic. After each accepted edit,
+the host verifies the original call and all registered public checks before the
+next model response. Failure in either opens a bounded diagnostic response and
+one additional edit. Both checks passing closes mutation and offers stop; exhausted
+or incomplete verification is not promoted to success. Correction/handoff retain
+current-diff feedback and counters. Completed exact-diff receipts are reused at
+final checks; uncertain execution is never retried automatically. Known exit results
+with clipped logs remain usable with explicit omission flags.
 
-Retain the [delivery fix](history/2026-10-27-checkpoint-feedback-delivery.md) on local
-and live delivery evidence. Do not increase context based on this run: the next
-question is making final public regression model-visible before completion and
-funding a bounded response or repair. Preserve raw/symlink path matching when
-investigating the new patch. The 858-token remaining input margin and unexercised
-handoff do not establish future fit or general quality. One saved-evidence trial
-is not a fresh solve or a controlled repair-gain comparison.
+Updated diagnostic allowances: 4 ordinary responses, 1 correction, 5 tools, 2 edits,
+0 helpers/original selections, up to 3 host original actions and 2 candidate regression
+passes; model+intermediate deadline 1,200s. Input 60K and output 40K/25K stay unchanged.
+Future diagnostic/repair/final output reserves are 8,192/40,000/8,192. The configured
+uncached maximum token envelope is $1.0575 under the unchanged $1.20 single-row cap.
+These are prepared implementation settings, not new paid authorization.
 
-Two counts and two generation calls settled; $0.19439055 under $1.20, allocation
-closed, no execution/billing uncertainty. Model+intermediate 175.42s; through final
-checks 307.75s. Result: `C:/pt/checkpoint-feedback-single-run-v1/result.json`.
-Preparation/delivery checks: 47 focused PASS across 1.83s and 19.47s runs; 472 quick
-PASS/129.97s including isolated mock; Ruff PASS. No code changed during the run.
+Focused validation: 108 PASS/109.69s, then log-clipping correction with 21 controller
+PASS/30.19s and 9 integration/legacy PASS/69.68s. Actual public request construction
+was verified offline; 472 quick PASS/119.15s including isolated mock, Ruff PASS.
+No provider, API count, Astroid target or private evaluation
+was executed for this change. Local evidence does not establish live repair gain.
 
-The [previous A/B result](history/2026-10-27-first-edit-checkpoint-results.md)
-remains historical: A repaired the task but could not receive its result at
-65,982 input tokens; B received failure feedback and failed acceptance. The new
-A chose a different patch despite identical first input. Cost/cache and patch
-variation preclude attributing repair quality or spend changes to compression.
-All older allocations are closed; previous approvals do not authorize another run.
+Five supplementary public controls and isolated evaluation still follow the model
+phase; their outcomes remain separate. The general production profile above and
+hidden-evaluation boundary are unchanged. The next question is whether a real model
+can use this feedback to make a successful revision within the reserved allowance.
+All older allocations are closed; a future run needs a newly bound exact approval.
 
 ## Supporting evidence
 

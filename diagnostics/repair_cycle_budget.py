@@ -32,6 +32,16 @@ class CycleLimits:
 DEFAULT_LIMITS = CycleLimits()
 
 
+def regression_opportunity(*, original_feedback, regression_feedback, initial,
+                           allow_inspection=True, **options):
+    """Reopen the bounded revision only after an observed public failure."""
+    failed = (original_feedback is not None and original_feedback.get("status") == "failed"
+              or regression_feedback is not None and regression_feedback.get("status") == "failed")
+    if not initial and not failed:
+        options["edits_remaining"] = 0
+    return cycle_opportunity(allow_inspection=allow_inspection and failed, **options)
+
+
 @dataclass(frozen=True)
 class CycleOpportunity:
     allowed: frozenset[str]

@@ -323,7 +323,8 @@ def original_summary(base, current):
                 "report call-2 identity separately from call-1 and control output."}
 
 
-def public_checks(loaded, model_gateway, root, *, original_receipts=None):
+def public_checks(loaded, model_gateway, root, *, original_receipts=None,
+                  regression_receipts=None):
     before = model_gateway.current_diff_hash
     gateway = DevToolGateway(workspace=model_gateway.workspace, public_task=loaded.public,
         sandbox=model_gateway.sandbox, probe_sandbox=model_gateway.probe_sandbox,
@@ -391,15 +392,36 @@ def public_checks(loaded, model_gateway, root, *, original_receipts=None):
                        "base_receipt": store.put_json(base_result.model_dump(mode="json"))
                            .model_dump(mode="json"),
                        "receipt": receipt.model_dump(mode="json")}
-    regression = gateway.execute(RequestedTool(name="run_check", action_id="host-regression",
-                                               arguments={"check_id": "base-regression"}))
-    abort, reason = loop.runner._batch_execution_abort([regression])
+    if regression_receipts is None:
+        regression = gateway.execute(RequestedTool(name="run_check", action_id="host-regression",
+                                                   arguments={"check_id": "base-regression"}))
+        regressions = [regression]
+    else:
+        from patchloop.dev.contracts import DevToolResult
+
+        checks = {check.id for check in loaded.public.visible_checks}
+        regressions = [DevToolResult.model_validate(receipt) for receipt in regression_receipts]
+        require(len(regressions) == len(checks)
+                and {row.output.get("check_id") for row in regressions} == checks,
+                "reused regression receipt set differs from registered checks")
+        for row in regressions:
+            require(row.tool == "run_check" and row.workspace_diff_hash == before
+                    and row.output.get("diff_hash") == before
+                    and row.input_hash == sha256_json({"tool": "run_check", "arguments": {
+                        "check_id": row.output["check_id"]}}),
+                    "reused regression receipt belongs to another diff or request")
+        regression = next(row for row in regressions if row.output["check_id"] == "base-regression")
+    abort, reason = loop.runner._batch_execution_abort(regressions)
     require(abort is None, "regression infrastructure failed: " + str(reason))
     require(gateway.current_diff_hash == before, "public checks changed candidate")
     summary = {"candidate_hash": before, "original_call": original, "cases": cases,
                "public_cases_passed": all(row["passed"] for row in cases.values()),
-               "regression_passed": regression.status == "succeeded"
-                   and regression.output.get("passed") is True,
+               "regression_passed": all(row.status == "succeeded"
+                   and row.output.get("passed") is True for row in regressions),
+               **({"regression_receipts_reused": True,
+                   "regression_receipts": [store.put_json(row.model_dump(mode="json"))
+                       .model_dump(mode="json") for row in regressions]}
+                  if regression_receipts is not None else {}),
                "regression_receipt": store.put_json(regression.model_dump(mode="json"))
                    .model_dump(mode="json")}
     gateway.journal.append("public_checks_finished", summary)

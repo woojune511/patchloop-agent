@@ -19,8 +19,9 @@ from diagnostics import public_context_dedup as dedup
 from diagnostics import repair_cycle_tools
 from diagnostics.decision_sampler import require
 from diagnostics.declaration_checkpoint import disjoint
+from diagnostics.public_regression import PublicRegressionRecheck
 from diagnostics.repair_cycle import OriginalCallRecheck
-from diagnostics.repair_cycle_budget import CycleLimits, cycle_opportunity
+from diagnostics.repair_cycle_budget import CycleLimits, regression_opportunity
 from diagnostics.repair_cycle_context import HANDOFF_KIND
 from patchloop.artifacts import ArtifactStore
 from patchloop.deadline import ExecutionDeadline
@@ -38,18 +39,23 @@ from patchloop.util import canonical_json, sha256_bytes, sha256_json
 
 loop = source.loop
 SCHEMA = "first-edit-checkpoint-pair-v1"
-PROFILE = loop.RepairProfile(SCHEMA, ("A", "B"), 2, Decimal("1.20"),
+PROFILE = loop.RepairProfile(SCHEMA, ("A", "B"), 4, Decimal("1.20"),
                              reserve_opportunity=True, annotation_policy="thin")
-LIMITS = CycleLimits(model_tools=2, helper_probes=0, original_requests=0, accepted_edits=1)
+LIMITS = CycleLimits(model_tools=5, helper_probes=0, original_requests=0, accepted_edits=2,
+                     future_edit_output=40_000, final_response_output=8_192)
+MODEL_SECONDS = 1_200
 MINIMUM_CORRECTION_SECONDS = 30.0
 PROMPT = (
     "Repair the supplied public task from the saved candidate using the saved public evidence. "
-    "This is a new trial with two normal responses, one protocol correction, two model tool "
-    "actions and at most one accepted source edit. The supplied source lines have been checked "
+    "This is a new trial with four normal responses, one protocol correction, five model tool "
+    "actions and at most two accepted source edits. The supplied source lines have been checked "
     "against this restored candidate and registered as edit anchors. Use replace_text for a "
     "justified edit or stop_task if no justified edit is available. After an accepted edit the "
-    "host rechecks the original public caller and returns that result before the final response. "
-    "Final public controls, regression and isolated evaluation follow; their private details "
+    "host rechecks the original public caller and registered public regression checks before "
+    "the next response. If either fails, use the bounded read/search opportunity and one further "
+    "edit to address that evidence, then both checks run again. Once both pass, stop. If repair "
+    "or verification cannot finish within the remaining allowance, report the unresolved result. "
+    "Final public controls and isolated evaluation follow. Private evaluator details "
     "are never model inputs. Saved observations and authored hypotheses describe the earlier "
     "candidate; hypotheses are unverified. Saved action IDs are evidence, not pending actions "
     "or authorization to repeat them. Current-trial counters and results are supplied separately. "
@@ -75,21 +81,24 @@ def evidence_document(checkpoint):
 
 def request_payload(common, arm, *, history=(), remaining=None, correction=None,
                     probe_used=False, profile=PROFILE, source_packet=None, opportunity=None,
-                    original_feedback=None):
+                    original_feedback=None, public_regression_feedback=None):
     del probe_used
     require(profile == PROFILE and arm in PROFILE.order and source_packet is None,
             "unexpected first-edit checkpoint profile")
     remaining = remaining if remaining is not None else {
         "normal_calls": PROFILE.normal_calls, "tool_actions": LIMITS.model_tools,
-        "diagnostic_probes": 0, "original_rechecks": 0, "accepted_mutations": 1,
+        "diagnostic_probes": 0, "original_rechecks": 0,
+        "accepted_mutations": LIMITS.accepted_edits,
         "cost_nanos": int(PROFILE.row_cap * 1_000_000_000)}
-    opportunity = opportunity or cycle_opportunity(
+    opportunity = opportunity or regression_opportunity(
+        original_feedback=original_feedback, regression_feedback=public_regression_feedback,
+        initial=remaining["accepted_mutations"] == LIMITS.accepted_edits,
         normal_remaining=remaining["normal_calls"], tool_remaining=remaining["tool_actions"],
         probes_remaining=0, original_remaining=0,
         edits_remaining=remaining["accepted_mutations"], correction=correction is not None,
         limits=LIMITS)
-    require(opportunity.allowed <= {"replace_text", "stop_task"},
-            "first-edit trial cannot reopen exploration")
+    require(opportunity.allowed <= {"replace_text", "stop_task", "read_file", "search_files"},
+            "checkpoint revision cannot introduce helper execution")
     evidence = common["evidence"]
     # Both conditions keep completed public exchanges. Opaque generation state is
     # archived by the runner but never redispatched in this new diagnostic profile.
@@ -123,16 +132,19 @@ def request_payload(common, arm, *, history=(), remaining=None, correction=None,
         "remaining": remaining, "protocol_correction": correction,
         **({"source_delivery": delivery.REFERENCE_RULES} if exchanges or handoff else {}),
         "opportunity": opportunity.public(), "current_trial_original_recheck": original_feedback,
+        "current_trial_public_regression": public_regression_feedback,
         "verification_reserve": {"original_actions_max": LIMITS.host_original_actions,
             "original_seconds_per_action": LIMITS.original_recheck_seconds,
             "minimum_correction_seconds": MINIMUM_CORRECTION_SECONDS,
+            "registered_regression_passes_max": LIMITS.accepted_edits,
             "final_public_seconds": LIMITS.final_public_seconds,
             "isolated_acceptance_seconds": LIMITS.acceptance_seconds}})})
     adapter = loop.OpenAIResponsesAdapter(loop.config(), api_key="",
                                           client=SimpleNamespace(max_retries=0))
-    payload = adapter.request_payload(items, repair_cycle_tools.schemas(opportunity),
+    payload = adapter.request_payload(items, repair_cycle_tools.schemas(opportunity,
+        dependency_sources=common.get("dependency_sources")),
                                       system_prompt=PROMPT)
-    payload["parallel_tool_calls"] = False
+    payload["parallel_tool_calls"] = repair_cycle_tools.parallel_calls(opportunity)
     payload["max_output_tokens"] = loop.CORRECTION_OUTPUT if correction else loop.NORMAL_OUTPUT
     return payload
 
@@ -153,7 +165,8 @@ def load_inputs():
     encoded = dedup.deduplicate(evidence)
     require(dedup.expand(encoded) == evidence, "deduplication changes public evidence")
     loaded.checkpoint = checkpoint
-    loaded.common = {"evidence": evidence, "deduplicated_evidence": encoded}
+    loaded.common = {"evidence": evidence, "deduplicated_evidence": encoded,
+                     "dependency_sources": loaded.dependency_sources.catalog()}
     loaded.requests = {arm: request_payload(loaded.common, arm) for arm in PROFILE.order}
     verify_pair(loaded.requests["A"], loaded.requests["B"])
     return loaded
@@ -166,8 +179,13 @@ def scope(order=PROFILE.order):
         "task": "Astroid-1333/dev-train/current-dev20/13", "starting_diff": source.SEED_HASH,
         "normal_calls": PROFILE.normal_calls, "correction_calls": 1,
         "tool_actions": LIMITS.model_tools, "diagnostic_probes": 0,
-        "original_selection_requests": 0, "accepted_mutations": 1,
-        "additional_model_edits": 1, "post_edit_original_recheck": True,
+        "original_selection_requests": 0, "accepted_mutations": LIMITS.accepted_edits,
+        "additional_model_edits": LIMITS.accepted_edits, "post_edit_original_recheck": True,
+        "post_edit_public_regression": "registered-checks-before-response-v1",
+        "revision_policy": "one-additional-edit-after-public-failure-v1",
+        "model_seconds_per_arm": MODEL_SECONDS,
+        "followup_output_reserves": [LIMITS.future_diagnostic_output,
+                                     LIMITS.future_edit_output, LIMITS.final_response_output],
         "host_original_actions_max": LIMITS.host_original_actions,
         "minimum_correction_seconds": MINIMUM_CORRECTION_SECONDS,
         "row_cap_usd": str(PROFILE.row_cap), "total_cap_usd": str(PROFILE.row_cap * len(order)),
@@ -190,7 +208,7 @@ def prepare(output, result_root, credential_file, arm=None):
     paths.extend(Path(__file__).with_name(name + ".py") for name in (
         "first_edit_checkpoint_source", "public_context_dedup", "checkpoint_delivery",
         "repair_cycle",
-        "repair_cycle_budget", "repair_cycle_tools", "repair_cycle_context",
+        "repair_cycle_budget", "repair_cycle_tools", "repair_cycle_context", "public_regression",
         "source_ready_packet", "saved_candidate_acceptance", "decision_sampler",
         "declaration_checkpoint"))
     paths.extend(Path(row["path"]) for row in (
@@ -216,7 +234,8 @@ def prepare(output, result_root, credential_file, arm=None):
     if arm is not None:
         plan["interpretation"] = (
             "One full-context saved-evidence first-edit trial with compact post-edit source "
-            "delivery and actual context handoff. Measures current-diff verification delivery "
+            "delivery, registered regression feedback and one bounded revision. "
+            "Measures current-diff verification delivery "
             "and honest model completion separately from repair acceptance. Historical A is "
             "a baseline, not a concurrent control. Not fresh solve, literal resume, causal "
             "repair gain or general quality evidence. Earlier allocations remain closed.")
@@ -273,7 +292,7 @@ def saved_gateway(loaded, root):
         "checkpoint": loaded.checkpoint.provenance, "host_source_reads": host_reads,
         "candidate_diff_hash": gateway.current_diff_hash, "historical_actions_imported": False,
         "fresh_normal_calls": PROFILE.normal_calls, "fresh_tool_actions": LIMITS.model_tools})
-    gateway.deadline = ExecutionDeadline.from_remaining(loop.MODEL_SECONDS)
+    gateway.deadline = ExecutionDeadline.from_remaining(MODEL_SECONDS)
     return gateway
 
 
@@ -299,6 +318,8 @@ def collect(manifest, approved_manifest_hash, approved_cap_usd):
             gateway = saved_gateway(loaded, root / arm)
             cycle = OriginalCallRecheck(loaded, gateway, root / arm / "original-recheck",
                                         limits=LIMITS)
+            regression = PublicRegressionRecheck(loaded, gateway, root / arm / "public-regression",
+                                                max_passes=LIMITS.accepted_edits)
             key = loop.load_exact_openai_api_key(Path(plan["credential_file"]))
             adapter = loop.OpenAIResponsesAdapter(loop.config(), api_key=key)
             del key
@@ -306,6 +327,7 @@ def collect(manifest, approved_manifest_hash, approved_cap_usd):
                 row = loop.run_model(loaded, arm, gateway, adapter, group,
                     first_hash=plan["first_request_hashes"][arm], profile=PROFILE,
                     request_builder=request_payload, cycle=cycle,
+                    regression=regression,
                     minimum_correction_seconds=MINIMUM_CORRECTION_SECONDS)
             finally:
                 adapter.client.close()
@@ -316,8 +338,10 @@ def collect(manifest, approved_manifest_hash, approved_cap_usd):
             if row["new_mutations"]:
                 originals = cycle.current_receipts()
                 require(originals is not None, "edited candidate lacks original receipts")
+                registered = regression.current_receipts()
+                require(registered is not None, "edited candidate lacks public regression receipts")
                 checks = source.host.public_checks(loaded, gateway, root / arm / "public",
-                                                    original_receipts=originals)
+                    original_receipts=originals, regression_receipts=registered)
                 rows[-1]["public_checks"] = checks
                 rows[-1]["final_verification"] = {"public": "completed", "isolated": "not_run"}
                 journal.append("candidate_ready_for_evaluation", {"arm": arm, **checks})

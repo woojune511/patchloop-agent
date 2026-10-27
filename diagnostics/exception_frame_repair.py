@@ -556,10 +556,13 @@ def _safe_request_failure(exc, *, phase, request_hash, timeout_s, started_at, **
 
 def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAULT_PROFILE,
               source_packet=None, request_builder=None, cycle=None,
-              minimum_correction_seconds=30.0):
+              minimum_correction_seconds=30.0, regression=None):
     """Legacy one-edit diagnostic, or an explicit bounded public repair cycle."""
     from diagnostics import repair_cycle_tools
-    from diagnostics.repair_cycle_budget import cycle_opportunity
+    from diagnostics.repair_cycle_budget import cycle_opportunity, regression_opportunity
+
+    require(regression is None or cycle is not None,
+            "public regression feedback requires the original-call cycle")
 
     if cycle:
         require(type(minimum_correction_seconds) in {int, float}
@@ -581,6 +584,7 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
     execution_abort, abort_reason = None, None
     first = True
     latest_original = None
+    latest_regression = None
     segment_index, context_handoffs = 0, 0
     tool_limit = cycle.limits.model_tools if cycle else TOOL_ACTIONS
     probe_limit = cycle.limits.helper_probes if cycle else 1
@@ -589,7 +593,13 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
 
     def opportunity_for(*, is_correction, **options):
         if cycle:
-            return cycle_opportunity(normal_remaining=profile.normal_calls - normal,
+            build_opportunity = (regression_opportunity if regression is not None
+                                 else cycle_opportunity)
+            if regression is not None:
+                options.update(original_feedback=latest_original,
+                               regression_feedback=latest_regression,
+                               initial=gateway.accepted_mutations == 0)
+            return build_opportunity(normal_remaining=profile.normal_calls - normal,
                 tool_remaining=tool_limit - actions, probes_remaining=probe_limit - probes,
                 edits_remaining=edit_limit - gateway.accepted_mutations,
                 original_remaining=cycle.limits.original_requests - cycle.original_requests_used,
@@ -603,6 +613,16 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
         if cycle:
             if "replace_text" in opportunity.allowed:
                 reserve = cycle.needed_original_seconds(for_new_diff=True) + 5
+                if regression is not None:
+                    # Protect the immediate checks and a useful final response.
+                    reserve += regression.needed_seconds(for_new_diff=True) + 30
+                    if opportunity.allowed.intersection({"read_file", "search_files"}):
+                        reserve += 30  # Keep a usable repair response after an inspection.
+                    if opportunity.continuation_reserved:
+                        # A second edit needs another caller+regression pass, plus
+                        # a bounded diagnostic and repair response before finalizing.
+                        reserve += (cycle.limits.original_recheck_seconds
+                                    + regression.needed_seconds(for_new_diff=True) + 60)
             if repair_cycle_tools.ORIGINAL in opportunity.allowed:
                 reserve = max(reserve, cycle.needed_original_seconds() + 5)
         return reserve
@@ -672,7 +692,9 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
                                       correction=correction, probe_used=bool(probes),
                                       profile=profile, source_packet=source_packet,
                                       opportunity=opportunity,
-                                      **({"original_feedback": latest_original} if cycle else {}))
+                                      **({"original_feedback": latest_original} if cycle else {}),
+                                      **({"public_regression_feedback": latest_regression}
+                                         if regression is not None else {}))
             if first:
                 require(sha256_json(payload) == first_hash, "first input differs from preparation")
             first = False
@@ -718,6 +740,8 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
                         "original_requests": cycle.original_requests_used,
                         "new_mutations": gateway.accepted_mutations,
                         "host_original_actions": cycle.host_actions,
+                        **({"host_regression_actions": regression.host_actions}
+                           if regression is not None else {}),
                         "new_cost_nanos": ledger.spent_nanos,
                         "row_remaining_nanos": ledger.remaining_nanos,
                         "group_remaining_nanos": group.remaining_nanos,
@@ -726,7 +750,8 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
                     try:
                         handoff = build_handoff(gateway, history=history,
                             latest_original=latest_original, correction=correction,
-                            parent_request=payload, counters=counters)
+                            parent_request=payload, counters=counters,
+                            latest_regression=latest_regression)
                     except (ContractError, ExecutionDeadlineExceeded) as exc:
                         execution_abort = DevTerminal.TASK_FAILED
                         terminal = "CONTEXT_HANDOFF_INCOMPLETE"
@@ -916,6 +941,7 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
         if any(row.tool == "replace_text" and row.status == "succeeded" and not row.error_code
                for row in results):
             if cycle:
+                latest_original = latest_regression = None
                 try:
                     latest_original = cycle.check()
                 except (ContractError, ExecutionDeadlineExceeded) as exc:
@@ -924,6 +950,18 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
                     abort_reason = f"original recheck incomplete: {type(exc).__name__}"
                     break
                 journal.append("original_recheck_available", latest_original)
+                if regression is not None:
+                    try:
+                        latest_regression = regression.check()
+                        require(latest_regression["candidate_diff_hash"]
+                                == gateway.current_diff_hash,
+                                "public regression feedback belongs to another diff")
+                    except (ContractError, ExecutionDeadlineExceeded) as exc:
+                        execution_abort = DevTerminal.TASK_FAILED
+                        terminal = "PUBLIC_REGRESSION_INCOMPLETE"
+                        abort_reason = f"public regression incomplete: {type(exc).__name__}"
+                        break
+                    journal.append("public_regression_available", latest_regression)
                 continue
             terminal = "CANDIDATE_PRODUCED"
             break
@@ -942,6 +980,15 @@ def run_model(loaded, arm, gateway, adapter, group, *, first_hash, profile=DEFAU
                       original_requests=cycle.original_requests_used,
                       context_handoffs=context_handoffs,
                       final_verification={"public": "not_run", "isolated": "not_run"})
+    if regression is not None:
+        result.update(public_regression=latest_regression,
+                      host_regression_actions=regression.host_actions,
+                      registered_verification=("passed" if latest_regression is not None
+                          and latest_regression["candidate_diff_hash"] == gateway.current_diff_hash
+                          and latest_regression["status"] == "passed"
+                          and latest_original is not None
+                          and latest_original["candidate_diff_hash"] == gateway.current_diff_hash
+                          and latest_original["status"] == "supported" else "unverified"))
     if profile.compare_models:
         result["model"] = model
     journal.append("model_phase_finished", result)

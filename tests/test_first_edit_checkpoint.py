@@ -33,6 +33,12 @@ def evidence():
     return {"evidence": document, "deduplicated_evidence": d.dedup.deduplicate(document)}
 
 
+def successful_regression(gateway):
+    return SimpleNamespace(host_actions=1, needed_seconds=lambda **_: 0,
+        check=lambda: {"schema": "public-regression-feedback-v1", "status": "passed",
+                       "candidate_diff_hash": gateway.current_diff_hash, "checks": []})
+
+
 @pytest.mark.parametrize("stage", ["first", "correction", "after_edit"])
 def test_requests_differ_only_by_lossless_evidence_with_fresh_allowances(stage):
     common = evidence()
@@ -40,7 +46,7 @@ def test_requests_differ_only_by_lossless_evidence_with_fresh_allowances(stage):
     if stage == "correction":
         options.update(correction={"reason": "missing tool"}, remaining={
             "normal_calls": 1, "tool_actions": 2, "diagnostic_probes": 0,
-            "original_rechecks": 0, "accepted_mutations": 1, "cost_nanos": 900_000_000})
+            "original_rechecks": 0, "accepted_mutations": 2, "cost_nanos": 900_000_000})
     elif stage == "after_edit":
         options.update(remaining={"normal_calls": 1, "tool_actions": 1,
             "diagnostic_probes": 0, "original_rechecks": 0, "accepted_mutations": 0,
@@ -61,9 +67,9 @@ def test_requests_differ_only_by_lossless_evidence_with_fresh_allowances(stage):
     assert a["max_output_tokens"] == (25_000 if stage == "correction" else 40_000)
     state = json.loads(a["input"][-1]["content"])
     if stage == "first":
-        assert state["remaining"]["normal_calls"] == 2
-        assert state["remaining"]["tool_actions"] == 2
-        assert state["remaining"]["accepted_mutations"] == 1
+        assert state["remaining"]["normal_calls"] == 4
+        assert state["remaining"]["tool_actions"] == 5
+        assert state["remaining"]["accepted_mutations"] == 2
         assert state["remaining"]["cost_nanos"] == 1_200_000_000
     assert "counters" not in common["evidence"]["saved_public_evidence"][1]["state"]
     assert d.dedup.expand(common["deduplicated_evidence"]) == common["evidence"]
@@ -91,14 +97,15 @@ def test_first_edit_rechecks_current_diff_and_delivers_result_before_stop(
     actual = d.loop.run_model(loaded, arm, gateway, adapter,
         DevCostLedger(Decimal("2.40"), pricing_for_model(d.loop.MODEL)),
         first_hash=sha256_json(d.request_payload(loaded.common, arm)), profile=d.PROFILE,
-        request_builder=d.request_payload, cycle=cycle,
+        request_builder=d.request_payload, cycle=cycle, regression=successful_regression(gateway),
         minimum_correction_seconds=d.MINIMUM_CORRECTION_SECONDS)
     assert actual["terminal"] == "AGENT_STOPPED" and actual["new_mutations"] == 1
     assert actual["normal_calls"] == actual["tool_actions"] == 2
     assert actual["correction_calls"] == int(correction)
     assert actual["host_original_actions"] == 2 and baseline.dispatches == 1
     final = client.created[-1]
-    assert {tool["name"] for tool in final["tools"]} == {"stop_task"}
+    assert {tool["name"] for tool in final["tools"]} == (
+        {"stop_task", "replace_text", "read_file", "search_files"} if failed else {"stop_task"})
     result = json.loads(final["input"][-1]["content"])["current_trial_original_recheck"]
     assert result["status"] == ("failed" if failed else "supported")
     assert result["candidate_diff_hash"] == gateway.current_diff_hash
@@ -164,14 +171,17 @@ def test_large_source_feedback_reaches_actual_next_dispatch_without_budget_reset
     monkeypatch.setattr(cycle, "_gateway", lambda *_: RecordedGateway(
         cycle.journal, gateway.current_diff_hash, failed=failed))
     first = d.request_payload(loaded.common, arm)
+    # Failure now also offers bounded read/search schemas; leave room for that
+    # public action surface while still requiring source-reference savings.
+    margin = 20_000 if arm == "B" and failed else 8_000
     client = DeliveryBoundaryClient([[edit_call()], [stop_call()]],
-        len(canonical_json(first)) + 8_000, force_handoff=force_handoff,
+        len(canonical_json(first)) + margin, force_handoff=force_handoff,
         still_large=still_large)
     adapter = d.loop.OpenAIResponsesAdapter(d.loop.config(), api_key="", client=client)
     actual = d.loop.run_model(loaded, arm, gateway, adapter,
         DevCostLedger(Decimal("2.40"), pricing_for_model(d.loop.MODEL)),
         first_hash=sha256_json(first), profile=d.PROFILE,
-        request_builder=d.request_payload, cycle=cycle)
+        request_builder=d.request_payload, cycle=cycle, regression=successful_regression(gateway))
     events = journal.events()
     prepared = [e["payload"] for e in events if e["event_type"] == "repair_context_prepared"]
     committed = [e["payload"] for e in events if e["event_type"] == "repair_context_committed"]
@@ -191,8 +201,9 @@ def test_large_source_feedback_reaches_actual_next_dispatch_without_budget_reset
     assert info["current_trial_original_recheck"] == actual["original_recheck"]
     assert info["current_trial_original_recheck"]["status"] == (
         "failed" if failed else "supported")
-    assert info["remaining"]["normal_calls"] == info["remaining"]["tool_actions"] == 1
-    assert info["remaining"]["accepted_mutations"] == 0
+    assert info["remaining"]["normal_calls"] == 3
+    assert info["remaining"]["tool_actions"] == 4
+    assert info["remaining"]["accepted_mutations"] == 1
     assert "PRIVATE_SENTINEL" not in str(client.created)
     counted = {key: value for key, value in client.counted[-1].items() if key != "timeout"}
     sent = {key: value for key, value in final.items() if key != "timeout"}

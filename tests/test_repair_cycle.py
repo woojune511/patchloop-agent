@@ -9,6 +9,7 @@ import pytest
 from test_exception_frame_repair import result as original_result
 
 from diagnostics import repair_cycle as d
+from patchloop.contracts import RegisteredCheck
 from patchloop.deadline import ExecutionDeadline
 from patchloop.dev.contracts import DevToolResult, RequestedTool
 from patchloop.dev.state import DevJournal
@@ -185,8 +186,9 @@ def test_selected_original_pending_start_does_not_retry_target(
 
 
 @pytest.mark.parametrize("changed", [False, True])
+@pytest.mark.parametrize("regression_reuse", [None, "pass", "fail", "stale"])
 def test_final_public_checks_reuse_only_matching_original_input_and_diff(
-    tmp_path, monkeypatch, smoke_package, changed,
+    tmp_path, monkeypatch, smoke_package, changed, regression_reuse,
 ):
     check, model, _, _ = checker(tmp_path, monkeypatch, smoke_package)
     check.check()
@@ -196,6 +198,17 @@ def test_final_public_checks_reuse_only_matching_original_input_and_diff(
     model.public_task = smoke_package.public
     model.sandbox = model.probe_sandbox = None
     seen = []
+    options = {}
+    if regression_reuse:
+        check.loaded.public = smoke_package.public.model_copy(update={"visible_checks": [
+            RegisteredCheck(id="base-regression", command=["pytest"])]})
+        receipt = DevToolResult(action_id="completed-regression",
+            input_hash=sha256_json({"tool": "run_check", "arguments": {
+                "check_id": "base-regression"}}), tool="run_check", status="succeeded",
+            workspace_diff_hash="other" if regression_reuse == "stale" else "one",
+            output={"check_id": "base-regression", "diff_hash": "one",
+                    "passed": regression_reuse == "pass"})
+        options["regression_receipts"] = [receipt.model_dump(mode="json")]
 
     class HostGateway:
         def __init__(self, **kwargs):
@@ -222,12 +235,16 @@ def test_final_public_checks_reuse_only_matching_original_input_and_diff(
     monkeypatch.setattr(d.host, "DevToolGateway", HostGateway)
     monkeypatch.setattr(d.host, "WorkspaceManager", Manager)
     monkeypatch.setattr(d.host, "programs", lambda: {})
-    if changed:
-        with pytest.raises(ContractError, match="request changed"):
-            d.host.public_checks(check.loaded, model, tmp_path / "final", original_receipts=pair)
+    if changed or regression_reuse == "stale":
+        with pytest.raises(ContractError, match="request changed|another diff"):
+            d.host.public_checks(check.loaded, model, tmp_path / "final", original_receipts=pair,
+                                 **options)
         assert seen == []
     else:
         result = d.host.public_checks(check.loaded, model, tmp_path / "final",
-                                      original_receipts=pair)
+                                      original_receipts=pair, **options)
         assert not result["original_call"]["call1_F0010_resolved"]
-        assert result["regression_passed"] and seen == ["run_check"]
+        assert result["regression_passed"] == (regression_reuse != "fail")
+        assert seen == ([] if regression_reuse else ["run_check"])
+        if regression_reuse:
+            assert result["regression_receipts_reused"]
