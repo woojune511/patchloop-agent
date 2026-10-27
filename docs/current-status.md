@@ -31,8 +31,9 @@ zero-file repository searches, and retains verified dependency observations
 separately from editable workspace anchors. Normal action limits apply; helper
 and original-replay quotas, money and context limits are unchanged.
 Focused validation: 79 PASS/3 platform SKIP in 48.85s; fast suite 472 PASS/106.52s
-including isolated mock evaluation; Ruff PASS. One fresh R1 trial is being prepared;
-model uptake, first edit and repair remain untested with this intervention.
+including isolated mock evaluation; Ruff PASS. A fresh [R1 trial](history/2026-10-27-dependency-source-plan.md)
+is prepared and image/input preflighted for $1.20, pending exact execution approval.
+No paid call has run; model uptake, first edit and repair remain untested.
 
 The [preceding R1](history/2026-10-27-repair-entry-single-results.md) stopped after
 15 responses and zero edits ($0.22311930; allocation closed). Three Pylint searches

@@ -27,3 +27,4 @@
 - [Full-source trial result: context recovered, no first repair](../2026-10-27-repair-entry-single-results.md)
 - [Caller-source analysis: available dependency access was not selected](../2026-10-27-caller-access-analysis.md)
 - [Registered dependency source access and bounded single-trial preparation](../2026-10-27-dependency-source-access.md)
+- [Sealed caller-source trial: R1 once, unchanged limits, preflight complete](../2026-10-27-dependency-source-plan.md)
