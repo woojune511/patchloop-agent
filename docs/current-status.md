@@ -24,16 +24,23 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [registered dependency-source intervention](history/2026-10-27-dependency-source-access.md)
-adds explicit read-only caller scopes to ordinary reads/searches. The diagnostic
-v4 profile registers Pylint 2.12.2 from the pinned public bundle, reports scope on
-zero-file repository searches, and retains verified dependency observations
-separately from editable workspace anchors. Normal action limits apply; helper
-and original-replay quotas, money and context limits are unchanged.
-Focused validation: 79 PASS/3 platform SKIP in 48.85s; fast suite 472 PASS/106.52s
-including isolated mock evaluation; Ruff PASS. A fresh [R1 trial](history/2026-10-27-dependency-source-plan.md)
-is prepared and image/input preflighted for $1.20, pending exact execution approval.
-No paid call has run; model uptake, first edit and repair remain untested.
+The [registered caller-source trial](history/2026-10-27-dependency-source-results.md)
+executed once. The model read the full caller, rechecked F0010 and used a helper
+to observe absolute-versus-relative search-root behavior, but made zero edits.
+Its fifteenth normal response exhausted 40K output with no tool call. Correction
+then had about 6s after the 65s recheck reserve and ended `PROVIDER_UNCERTAIN`; the
+exception class was not recorded. Four context handoffs recovered below 60K.
+Confirmed cost is $0.49747575 for 15 settled calls; one correction's usage remains
+unknown. The $1.20 allocation is closed. Final public/isolated checks were NOT_RUN.
+
+The unresolved bottleneck is producing a first edit from the acquired diagnosis
+and admitting a correction with usable time, rather than obtaining caller source.
+The trace does not establish why the model used 40K without a tool call. Examine
+public request construction and time admission before another paid scope.
+The [opt-in source capability](history/2026-10-27-dependency-source-access.md) keeps
+dependency evidence separate from editable anchors. Prior local checks remain:
+79 PASS/3 platform SKIP in 48.85s, fast 472 PASS/106.52s including isolated mock,
+Ruff PASS. Live source/probe uptake is observed; repair is not.
 
 The [preceding R1](history/2026-10-27-repair-entry-single-results.md) stopped after
 15 responses and zero edits ($0.22311930; allocation closed). Three Pylint searches
@@ -52,8 +59,9 @@ global allowances. Opaque prior reasoning stays in local artifacts. The optional
 original selection uses one of 24 model-tool slots; host replays allow at most
 five including the baseline and three edits. Input/output caps remain unchanged.
 Focused owner/legacy validation: 121 PASS/63.49s; fast suite: 472 PASS/106.60s,
-including isolated mock evaluation; Ruff PASS. Live ordinary context recovery is
-now observed; first-edit repair, original selection and feedback use remain unobserved.
+including isolated mock evaluation; Ruff PASS. The earlier v3 trial observed context
+recovery; v4 now observes original selection too. First-edit repair and post-edit
+feedback use remain unobserved.
 
 The [live repair-cycle pilot](history/2026-10-27-repair-cycle-results.md) completed
 R0/R1 once each, with zero edits. R0 used 15 responses on source exploration and
