@@ -1,6 +1,8 @@
 """Compare first-reproduction descriptions or models under exact new approval.
 
-This diagnostic ends after the first settled run_probe batch. It preserves the
+This diagnostic normally ends after the first settled run_probe batch. The
+argument profile allows one host-eligible pre-target correction before stopping.
+It preserves the
 ordinary gateway, cost admission and protocol correction, and never repairs or
 evaluates. Preparation uses a scripted stop and forbids network/credentials/Docker.
 """
@@ -25,7 +27,7 @@ from diagnostics.decision_sampler import SharedCostLedger, read_source_artifact,
 from diagnostics.declaration_checkpoint import Source, disjoint
 from patchloop.agent.model import OpenAIResponsesAdapter
 from patchloop.artifacts import ArtifactStore
-from patchloop.dev import probe_call_capture, runner, segments
+from patchloop.dev import helper_recovery, probe_call_capture, reproduction, runner, segments
 from patchloop.dev.cost import DevCostLedger, pricing_for_model, usd_to_nanos
 from patchloop.dev.state import DevJournal
 from patchloop.runtime import repository_root, runtime_content_hash, runtime_content_paths
@@ -35,6 +37,7 @@ from patchloop.util import canonical_json, sha256_bytes, sha256_json
 SCHEMA = "first-reproduction-description-comparison-v1"
 MODEL_SCHEMA = "first-reproduction-model-comparison-v1"
 HELPER_SCHEMA = "first-reproduction-helper-followup-v1"
+ARGUMENT_SCHEMA = "first-reproduction-argument-followup-v1"
 MODEL = "gpt-5.4-mini-2026-03-17"
 MODELS = {"A": MODEL, "B": "gpt-5.4-2026-03-05"}
 ORDER = ("A", "B")
@@ -42,6 +45,11 @@ LEGACY_EXCEPTION_DESCRIPTION = (
     "Only for an intended exception observation, declare exact classes with "
     "expected_exceptions=(ValueError,) in observed_target. "
     "This is not a general retry or error-ignore option."
+)
+LEGACY_CALL_DESCRIPTION = (
+    "then calling it with ordinary Python arguments: call=target(['path']). "
+    "Use only arguments supported by the inspected public signature; this example adds "
+    "no target-specific keyword. "
 )
 HOST_FILES = (
     "patchloop/dev/reproduction.py",
@@ -141,6 +149,35 @@ def verify_helper_request(public, request):
     return {
         "changed_fields": ["tools.run_probe.description.expected_exceptions"],
         "reference_model_request_hash": sha256_json(baseline),
+        "public_input_hash": sha256_json(request["input"]),
+        "parameter_schema_hash": sha256_json(probe_tool(request)["parameters"]),
+        "description_chars": {"B": len(probe_tool(request)["description"])},
+        "request_hashes": {"B": sha256_json(request)},
+        "opaque_reasoning_items": 0,
+    }
+
+
+def signature_call_description():
+    prefix = "then inspect target.signature()"
+    return prefix + reproduction.DESCRIPTION.split(prefix, 1)[1].split("A list argument", 1)[0]
+
+
+def argument_request(public):
+    """Keep the helper follow-up input and update only its callable-shape paragraph."""
+    baseline = helper_request(public)
+    description = probe_tool(baseline)["description"]
+    require(description.count(LEGACY_CALL_DESCRIPTION) == 1,
+            "one legacy callable paragraph required")
+    return project(baseline, description.replace(
+        LEGACY_CALL_DESCRIPTION, signature_call_description(), 1))
+
+
+def verify_argument_request(public, request):
+    require(request == argument_request(public), "argument request changed beyond call paragraph")
+    baseline = helper_request(public)
+    return {
+        "changed_fields": ["tools.run_probe.description.call_signature"],
+        "reference_helper_request_hash": sha256_json(baseline),
         "public_input_hash": sha256_json(request["input"]),
         "parameter_schema_hash": sha256_json(probe_tool(request)["parameters"]),
         "description_chars": {"B": len(probe_tool(request)["description"])},
@@ -258,7 +295,8 @@ def current_description(loaded):
 
 
 def controls(source, cut_sequence, env_file, result_root, *, comparison="description"):
-    require(comparison in {"description", "model", "helper"}, "unknown comparison profile")
+    require(comparison in {"description", "model", "helper", "argument"},
+            "unknown comparison profile")
     loaded = load_checkpoint(source, cut_sequence)
     budget, old = loaded.state["remaining_budget"], loaded.envelope
     cap = budget["cost"]["remaining"]
@@ -267,9 +305,11 @@ def controls(source, cut_sequence, env_file, result_root, *, comparison="descrip
         "positive allowance and exact credential path required",
     )
     short = current_description(loaded)
-    if comparison == "helper":
-        requests = {"B": helper_request(loaded.public)}
-        pair = verify_helper_request(loaded.public, requests["B"])
+    if comparison in {"helper", "argument"}:
+        make = argument_request if comparison == "argument" else helper_request
+        verify = verify_argument_request if comparison == "argument" else verify_helper_request
+        requests = {"B": make(loaded.public)}
+        pair = verify(loaded.public, requests["B"])
     else:
         requests = (
             model_requests(loaded.public) if comparison == "model"
@@ -319,10 +359,11 @@ def controls(source, cut_sequence, env_file, result_root, *, comparison="descrip
         ),
         "historical_allocations_reopened": False,
     }
-    if comparison in {"model", "helper"}:
+    if comparison in {"model", "helper", "argument"}:
         models = {arm: MODELS[arm] for arm in requests}
         plan.update({
-            "schema": HELPER_SCHEMA if comparison == "helper" else MODEL_SCHEMA,
+            "schema": {"helper": HELPER_SCHEMA, "argument": ARGUMENT_SCHEMA,
+                       "model": MODEL_SCHEMA}[comparison],
             "comparison_profile": comparison,
             "models": models,
             "pricing_by_arm": {
@@ -337,13 +378,30 @@ def controls(source, cut_sequence, env_file, result_root, *, comparison="descrip
             "source_public_input_hash": sha256_json(loaded.public["input"]),
         })
         del plan["model"], plan["pricing"]
-        if comparison == "helper":
+        if comparison in {"helper", "argument"}:
             plan["public_reconstruction"] = (
                 "same saved public messages and calls/results; all reasoning items removed; "
                 "remove only state.remaining_budget.cost.completion_cost; retain the long "
                 "description with only its exception paragraph updated to the current helper API; "
                 "host recomputes actual admission with the full model pricing"
             )
+        if comparison == "argument":
+            plan.update({
+                "stop_at": "first settled probe unless host-eligible original argument correction; "
+                           "then one correction result, model stop, or ordinary terminal",
+                "max_original_probe_results": 2,
+                "public_reconstruction": (
+                    "same public checkpoint and helper-followup long description, with only its "
+                    "callable paragraph replaced by current signature guidance; no prior generated "
+                    "program, result or opaque reasoning injected; after a proved binding failure "
+                    "normal host feedback and one existing correction allowance apply"
+                ),
+                "correction_contract": helper_recovery.ARGUMENT_POLICY,
+                "host_file_hashes": {**plan["host_file_hashes"], **{
+                    p: sha256_bytes((repository_root() / p).read_bytes()) for p in (
+                        "patchloop/dev/probe_call_capture.py", "patchloop/dev/helper_recovery.py",
+                        "patchloop/dev/runner.py", "patchloop/dev/tools.py")}},
+            })
     loaded.requests = requests
     return plan, loaded
 
@@ -361,6 +419,10 @@ def restore(plan, loaded, root, arm, *, live_mode=False):
         model_override=plan.get("models", {}).get(arm),
     )
     branch.arm = arm
+    branch.comparison_profile = plan.get("comparison_profile", "description")
+    branch.probe_results = []
+    branch.probe_reviews = []
+    branch.argument_feedback_opened = False
     branch.selected = loaded.requests[arm]
     branch.descriptions = {
         label: probe_tool(loaded.requests[label])["description"] for label in plan["order"]
@@ -414,6 +476,9 @@ def diagnostic_hooks(branch):
         return actual
 
     def stage_schemas(**kwargs):
+        if (branch.comparison_profile == "argument" and branch.argument_feedback_opened
+                and set(kwargs.get("allowed_tools", ())) == {"stop_task"}):
+            return schemas(**kwargs)
         require(
             kwargs.get("original_acquisition_pending") is True,
             "diagnostic cannot continue beyond original acquisition",
@@ -429,6 +494,33 @@ def diagnostic_hooks(branch):
         probes = [item for item in kwargs["results"] if item.tool == "run_probe"]
         if probes:
             require(len(probes) == len(kwargs["results"]) == 1, "single probe required")
+            branch.probe_results.append(probes[0].model_dump(mode="json"))
+            if branch.comparison_profile == "argument":
+                view = kwargs["gateway"].state_snapshot().completion_verification
+                correction = view.get("helper_correction", {})
+                abort, _ = runner._batch_execution_abort(probes)
+                review = {
+                    "action_id": probes[0].action_id,
+                    "helper_correction": correction,
+                    "original_obligation": view.get("original_obligation"),
+                    "execution_abort": abort,
+                }
+                branch.probe_reviews.append(review)
+                branch.journal.append("argument_probe_review", review)
+                if (len(branch.probe_results) == 1 and abort is None
+                        and correction.get("policy") == helper_recovery.ARGUMENT_POLICY
+                        and helper_recovery.correction_available(
+                            correction, view.get("original_obligation"))):
+                    require(correction["root_action_id"] == probes[0].action_id,
+                            "argument correction belongs to a different request")
+                    branch.argument_feedback_opened = True
+                    branch.journal.append("argument_correction_window_opened", {
+                        "root_action_id": probes[0].action_id,
+                        "correction": correction,
+                        "interpretation": "Normal runner still admits count, cost and time; "
+                                          "opening this window does not guarantee another call.",
+                    })
+                    return result
             raise FirstProbeSettled(probes[0].model_dump(mode="json"))
         return result
 
@@ -580,6 +672,20 @@ def run_branch(branch, group, journal, store, *, client=None, synthetic_probe_ou
             "task_acceptance": "NOT_RUN",
             "repair_efficacy": "NOT_ESTABLISHED",
         }
+        if branch.comparison_profile == "argument":
+            current_diff = (branch.probe_results[-1]["workspace_diff_hash"]
+                            if branch.probe_results else sha256_bytes(b""))
+            correction = helper_recovery.review(branch.journal.events(), current_diff)
+            receipt["argument_correction"] = {
+                "policy": correction["policy"], "status": correction["status"],
+                "feedback_window_opened": branch.argument_feedback_opened,
+                "probe_results": branch.probe_results,
+                "probe_reviews": branch.probe_reviews,
+                "acquisition_releases": [e["payload"] for e in branch.journal.events()
+                                         if e["event_type"] == "original_acquisition_released"],
+                "interpretation": "No induced error. If the first request enters normally, "
+                                  "argument-correction uptake is NOT_EXERCISED.",
+            }
         branch.journal.append("first_reproduction_diagnostic_finished", receipt)
     return receipt
 
@@ -616,7 +722,7 @@ def prepare(source, cut_sequence, env_file, result_root, output, *, comparison="
                 }
             ]
         ]
-        if comparison in {"model", "helper"}:
+        if comparison in {"model", "helper", "argument"}:
             steps.insert(0, [{"name": "invalid_tool", "action_id": "offline_bad", "arguments": {}}])
             client = AllowanceClient(steps, input_tokens=plan["context_tokens"])
             group = shared
@@ -627,10 +733,10 @@ def prepare(source, cut_sequence, env_file, result_root, output, *, comparison="
         require(
             receipt["result"]["terminal"] == "AGENT_STOPPED"
             and receipt["input_counts"] == receipt["model_dispatches"]
-            == (2 if comparison in {"model", "helper"} else 1),
+            == (2 if comparison in {"model", "helper", "argument"} else 1),
             "offline ordinary-runner preparation failed: " + canonical_json(receipt),
         )
-        if comparison in {"model", "helper"}:
+        if comparison in {"model", "helper", "argument"}:
             ceilings = [request["max_output_tokens"] for request in client.created]
             require(ceilings == [40000, 25000], "model comparison output opportunity differs")
             require(all(request["model"] == MODELS[arm]
@@ -757,7 +863,7 @@ def main():
         prep.add_argument("--" + key, type=Path, required=True)
     prep.add_argument("--run-id", required=True)
     prep.add_argument("--cut-sequence", type=int, required=True)
-    prep.add_argument("--comparison", choices=("description", "model", "helper"),
+    prep.add_argument("--comparison", choices=("description", "model", "helper", "argument"),
                       default="description")
     for name in ("validate", "collect"):
         command = commands.add_parser(name)

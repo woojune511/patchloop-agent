@@ -1,4 +1,4 @@
-"""Public-checkpoint diagnostic plumbing only; no network or target execution."""
+"""Offline public-checkpoint plumbing and trusted local argument-call fixtures."""
 
 from __future__ import annotations
 
@@ -11,6 +11,8 @@ from decimal import Decimal
 import pytest
 import yaml
 from test_dev_probes import FakeProbe
+from test_original_argument_correction import BAD, GOOD, FixtureProbe
+from test_original_argument_correction import original as fixture_original
 from test_probe_purpose import original_intent
 
 from diagnostics import first_reproduction_comparison as diagnostic
@@ -129,7 +131,10 @@ def source(tmp_path_factory):
             for tool in schemas:
                 if tool["name"] == "run_probe":
                     tool["description"] = (
-                        "Synthetic long baseline description. " + tool["description"]
+                        "Synthetic long baseline description. "
+                        + diagnostic.reproduction.DESCRIPTION
+                    ).replace(diagnostic.signature_call_description(),
+                              diagnostic.LEGACY_CALL_DESCRIPTION
                     ).replace(diagnostic.probe_call_capture.EXCEPTION_DESCRIPTION,
                               diagnostic.LEGACY_EXCEPTION_DESCRIPTION)
         return schemas
@@ -207,7 +212,7 @@ def test_pair_keeps_all_public_input_and_parameter_schema(source, tmp_path):
         diagnostic.verify_pair(a, bad)
 
 
-@pytest.mark.parametrize("comparison", ["description", "model", "helper"])
+@pytest.mark.parametrize("comparison", ["description", "model", "helper", "argument"])
 def test_prepare_and_validate_are_offline_and_single_use(
     source, tmp_path, monkeypatch, comparison,
 ):
@@ -239,9 +244,9 @@ def test_prepare_and_validate_are_offline_and_single_use(
     with pytest.raises(ContractError, match="fresh output"):
         diagnostic.prepare(saved, cut, credential, results, output, comparison=comparison)
     assert plan["paid_execution_authorized"] is False
-    if comparison in {"model", "helper"}:
+    if comparison in {"model", "helper", "argument"}:
         assert [branch.arm for branch in restored] == plan["order"]
-        assert plan["order"] == (["B"] if comparison == "helper" else ["A", "B"])
+        assert plan["order"] == (["A", "B"] if comparison == "model" else ["B"])
         assert plan["new_cap_nanos"] == plan["row_new_cap_nanos"] * len(restored)
         expected_group = 0
         for branch in restored:
@@ -355,6 +360,124 @@ def test_helper_collection_dispatches_only_full_model_and_stops_on_usage_uncerta
     assert receipt["rows"][0]["arm"] == "B"
     assert receipt["stop_reason"] is not None
     assert receipt["billing_known"] is False
+
+
+def test_argument_request_changes_only_call_signature_paragraph(source, tmp_path):
+    saved, cut, credential = source
+    plan, loaded = diagnostic.controls(
+        saved, cut, credential, tmp_path / "result", comparison="argument",
+    )
+    request = loaded.requests["B"]
+    baseline = diagnostic.helper_request(loaded.public)
+    before = diagnostic.probe_tool(baseline)["description"]
+    after = diagnostic.probe_tool(request)["description"]
+    assert after.replace(diagnostic.signature_call_description(),
+                         diagnostic.LEGACY_CALL_DESCRIPTION) == before
+    assert diagnostic.project(request, before) == baseline
+    assert request["input"] == baseline["input"]
+    assert plan["schema"] == diagnostic.ARGUMENT_SCHEMA and plan["order"] == ["B"]
+    assert plan["new_cap_nanos"] == plan["row_new_cap_nanos"]
+    assert plan["pair"]["changed_fields"] == ["tools.run_probe.description.call_signature"]
+    bad = copy.deepcopy(request)
+    diagnostic.probe_tool(bad)["parameters"]["required"] = []
+    with pytest.raises(ContractError, match="beyond call paragraph"):
+        diagnostic.verify_argument_request(loaded.public, bad)
+
+
+def argument_branch(source, tmp_path, monkeypatch, *, cleanup_failed=False):
+    saved, cut, credential = source
+    plan, loaded = diagnostic.controls(
+        saved, cut, credential, tmp_path / "result", comparison="argument",
+    )
+
+    class LocalProbe(FixtureProbe):
+        def run_probe(self, *args, **kwargs):
+            result = super().run_probe(*args, **kwargs)
+            result["cleanup_failed"] = cleanup_failed
+            if cleanup_failed:
+                result["execution_policy"]["cleanup_status"] = "unknown"
+            return result
+
+    backend = LocalProbe()
+    monkeypatch.setattr(diagnostic.exposure, "SyntheticProbe", lambda *a, **kw: backend)
+    return diagnostic.restore(plan, loaded, tmp_path / "B", "B"), plan, backend
+
+
+def scripted_original(action, code, *, entrypoint="os.getcwd"):
+    call = fixture_original(action, code, entrypoint=entrypoint)
+    return {"name": call.name, "action_id": call.action_id,
+            "arguments": {**call.arguments, "memory_update": None}}
+
+
+@pytest.mark.parametrize("corrected", [True, False])
+def test_argument_followup_delivers_feedback_and_stops_after_one_corrected_probe(
+    source, tmp_path, monkeypatch, corrected,
+):
+    branch, plan, backend = argument_branch(source, tmp_path, monkeypatch)
+    client = ScriptedClient([
+        [scripted_original("bad-original", BAD)],
+        [scripted_original("corrected-original", GOOD if corrected else BAD + "# changed\n")],
+        [stop("must_not_dispatch")],
+    ])
+    receipt = execute(branch, plan, tmp_path, client)
+    assert receipt["result"]["terminal"] == "FIRST_PROBE_SETTLED"
+    assert receipt["model_dispatches"] == receipt["input_counts"] == backend.calls == 2
+    assert len(client.steps) == 1
+    correction = receipt["argument_correction"]
+    assert correction["feedback_window_opened"] is True
+    assert correction["policy"] == diagnostic.helper_recovery.ARGUMENT_POLICY
+    expected_status = "execution_returned" if corrected else "verification_incomplete"
+    assert correction["status"] == expected_status
+    assert len(correction["probe_results"]) == 2
+    reviews = correction["probe_reviews"]
+    assert reviews[0]["helper_correction"]["status"] == "pending"
+    assert reviews[1]["helper_correction"]["remaining_attempts"] == 0
+    calls = [result["output"]["reproduction"]["call_observation"]["calls"][0]
+             for result in correction["probe_results"]]
+    assert calls[0]["binding_error"] is True and calls[0]["target_started"] is False
+    assert calls[1]["target_started"] is corrected
+    state = json.loads(client.created[1]["input"][-1]["content"])["state"]
+    ticket = state["action_horizon"]["helper_correction"]
+    assert ticket["root_action_id"] == "bad-original" and ticket["python_source"] == BAD
+    assert ticket["error"]["calls"][0]["signature"] == "()"
+    assert {tool["name"] for tool in client.created[1]["tools"]} == {"run_probe", "stop_task"}
+    events = branch.journal.events()[branch.inherited_events:]
+    actions = [event["payload"]["tool"] for event in events
+               if event["event_type"] == "action_started"]
+    assert actions == ["run_probe", "run_probe"]
+    assert receipt["task_acceptance"] == "NOT_RUN"
+    assert receipt["repair_efficacy"] == "NOT_ESTABLISHED"
+
+
+@pytest.mark.parametrize("mode", ["normal", "target_error", "unknown_signature", "cleanup"])
+def test_argument_followup_does_not_continue_other_first_results(
+    source, tmp_path, monkeypatch, mode,
+):
+    branch, plan, backend = argument_branch(
+        source, tmp_path, monkeypatch, cleanup_failed=mode == "cleanup",
+    )
+    entrypoint, code = "os.getcwd", GOOD
+    if mode == "target_error":
+        entrypoint, code = "operator.index", "observed_target()([])\n"
+    elif mode == "unknown_signature":
+        entrypoint, code = "builtins.dict", "record_observation(observed_target()().value)\n"
+    elif mode == "cleanup":
+        code = BAD
+    client = ScriptedClient([
+        [scripted_original("first-original", code, entrypoint=entrypoint)],
+        [stop("must_not_dispatch")],
+    ])
+    receipt = execute(branch, plan, tmp_path, client)
+    assert receipt["result"]["terminal"] == "FIRST_PROBE_SETTLED"
+    assert receipt["model_dispatches"] == backend.calls == 1 and len(client.steps) == 1
+    correction = receipt["argument_correction"]
+    assert correction["feedback_window_opened"] is False and len(correction["probe_results"]) == 1
+    assert len(correction["probe_reviews"]) == 1
+    call = correction["probe_results"][0]["output"]["reproduction"]["call_observation"]["calls"][0]
+    assert call["target_started"] is (mode != "cleanup")
+    if mode == "unknown_signature":
+        assert call["signature"] is None
+    assert receipt["stop_remaining"] is (mode == "cleanup")
 
 
 @pytest.mark.parametrize("cleanup_failed", [False, True])
