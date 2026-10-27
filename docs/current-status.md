@@ -24,37 +24,38 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [post-reproduction repair continuation](history/2026-10-28-post-reproduction-repair-plan.md)
-is prepared, locally validated and NOT live-executed. It restores the public
-Astroid-1333 checkpoint immediately after the completed original probe, preserves
-its program/caller/fixture and failure/desired comparisons, and uses the ordinary
-repair/recheck/public-check/finish/isolated-evaluation loop. No new runtime gate,
-repair hint or diagnostic-rules override was added.
+The [post-reproduction repair trial](history/2026-10-28-post-reproduction-repair-results.md)
+executed once on Astroid-1333 using the acquired public baseline. The first two
+candidate failures reached the next actual model requests; all three edits were
+followed by identical original-call replay. The third edit removed F0010 but
+produced empty original-call output with no W0611 processing witness. All three
+desired comparisons remained mismatched; the normal package control stayed intact.
 
-The actual saved failure and both complete call captures are present in the next
-model request, with stage needs_mutation. Two independent offline restores agree
-at the first count/dispatch boundary after clock/derived-segment normalization.
-Historical opaque reasoning is excluded. Core local validation is 26 PASS in about
-71 seconds, including mock isolated completion; documentation 5 PASS and Ruff PASS.
-Read-only environment preflight is READY. Provider calls and new benchmark calls: 0.
+The same-case/caller/fixture identities and complete captures were preserved.
+Independent output-code extraction agrees with the authored booleans. The case
+still has null diagnostic_rules; this is not a canonical-host-rule improvement.
+W0611 is an added processing criterion beyond the issue's explicit error absence.
+Known missing processing was retained as failure rather than converted to PASS.
 
-Proposed run: same gpt-5.4-2026-03-05 xhigh, one dev-train current-dev20/13
-continuation, NEW cap USD 4.13241570 (not approved). Preserve remaining 15 responses,
-33 tools, 3 edits, output40K/correction25K/context60K, solver1727.678 seconds plus
-390 evaluation reserve. Historical settled USD0.3675843 is excluded from new cost;
-all old allocations remain closed. See the linked plan for sealed controls and files.
+The run ended LIMIT_REACHED at three accepted edits. New usage:11 responses,
+17 actions, USD0.977534. The USD4.13241570 allocation is CLOSED; unused
+USD3.1548817 does not authorize continuation. Responses4, tools16 and about1293
+solver seconds remained. Context/output/cost/time were not exhausted. Public
+regressions, finish_task and isolated acceptance are NOT_RUN. The final failure
+was not followed by another model request because the mutation limit ended the run.
+
+Keep the [restored public handoff](history/2026-10-28-post-reproduction-repair-plan.md)
+and same-call processing check. The next question is whether initial repair
+hypotheses establish caller exception handling and traversal before spending edits.
+Here the model first instrumented that path after two failures, then changed the
+builder to return an empty module. The final traversal mechanism remains untraced;
+an earlier diagnosis or extra edit is a hypothesis, not a demonstrated fix.
 
 The preceding [signature-guided trial](history/2026-10-28-argument-first-reproduction-results.md)
-entered the original call and reproduced F0010; its normal package control emitted
-W0611. No repair was attempted. Signature inspection was executed but its returned
-value was discarded, so adaptive use is not established. Argument correction is
-NOT_EXERCISED in that live trial; local correction controls do not prove uptake.
-
-Next evidence must separate same-call error absence and processing, public
-regressions, normal submission and isolated acceptance. The case has null
-diagnostic_rules and model-authored boolean judgment; independently audit candidate
-captures against it. W0611 is an added processing check beyond the public issue.
-Checkpoint repair is not a clean-start solve or a general improvement claim.
+reproduced the original F0010 with correct arguments. Adaptive signature use and
+live argument-correction uptake remain unestablished. This continuation is one
+checkpoint repair attempt, not a clean-start solve or generalization result.
+No new execution is currently funded.
 
 ## Supporting evidence
 
