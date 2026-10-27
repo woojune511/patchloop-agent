@@ -24,48 +24,37 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [last live checkpoint trial](history/2026-10-27-checkpoint-feedback-single-results.md)
-received original-call success at 59,142 input tokens and stopped accurately, but
-later public regression exposed a symlink-path failure. Isolated evaluation was
-NOT_RUN_PUBLIC_CHECKS. This established original-feedback delivery, not full repair.
-Its $0.19439055 allocation is closed and the candidate/evidence remain immutable.
+The [single-A live regression trial](history/2026-10-27-public-regression-cycle-results.md)
+exercised the intended revision path successfully. The first edit resolved F0010
+but failed a public symlink regression. The model received that current-diff failure,
+revised once, received original and regression PASS, and stopped. Registered
+regression finished with 1,231 passed / 69 skipped / 15 xfailed; supplementary public
+cases passed 5/5. Isolated acceptance, scope and safety each passed.
 
-The [public regression repair cycle](history/2026-10-27-public-regression-repair-cycle.md)
-is now implemented for the saved-checkpoint diagnostic. After each accepted edit,
-the host verifies the original call and all registered public checks before the
-next model response. Failure in either opens a bounded diagnostic response and
-one additional edit. Both checks passing closes mutation and offers stop; exhausted
-or incomplete verification is not promoted to success. Correction/handoff retain
-current-diff feedback and counters. Completed exact-diff receipts are reused at
-final checks; uncertain execution is never retried automatically. Known exit results
-with clipped logs remain usable with explicit omission flags.
+Retain the [regression repair cycle](history/2026-10-27-public-regression-repair-cycle.md):
+original and registered public checks precede the next response, public failure
+opens one bounded revision, and final checks reuse exact-diff receipts. The real
+handoff reduced a 62,946-token successor to 55,068 while preserving fresh feedback
+and counters. Final success reached the model at 55,488 tokens. The 60K context
+ceiling did not need an increase in this trial.
 
-Updated diagnostic allowances: 4 ordinary responses, 1 correction, 5 tools, 2 edits,
-0 helpers/original selections, up to 3 host original actions and 2 candidate regression
-passes; model+intermediate deadline 1,200s. Input 60K and output 40K/25K stay unchanged.
-Future diagnostic/repair/final output reserves are 8,192/40,000/8,192. The configured
-uncached maximum token envelope is $1.0575 under the unchanged $1.20 single-row cap.
-These are prepared implementation settings, not new paid authorization.
+Used: 3 ordinary responses, 0 corrections, 3 tools, 2 edits, 3 host original actions,
+2 regression passes, 1 handoff. Cost $0.38928225 / $1.20; all usage known and allocation
+closed. Collection through model completion took 558.49s; through final checks and
+closure, 661.35s. No repeat or operator repair occurred. Local mechanism coverage
+remains 472 quick PASS/119.15s including isolated mock, with focused evidence linked
+in the implementation record.
 
-Focused validation: 108 PASS/109.69s, then log-clipping correction with 21 controller
-PASS/30.19s and 9 integration/legacy PASS/69.68s. Actual public request construction
-was verified offline; 472 quick PASS/119.15s including isolated mock, Ruff PASS.
-No provider, API count, Astroid target or private evaluation
-was executed for this change. Local evidence does not establish live repair gain.
+This is one saved-evidence integration result, not fresh-solve or general quality
+evidence. First-original-call identity holds; the second call retains a cache/input
+identity limitation. The stop summary recognized both passes, but its raw diagnostic
+reason code was `public_task_conflict`, not a success verdict. Host receipts establish
+success independently. Diagnostic stop plus synthetic operator submission does not
+exercise the product's complete `finish_task` flow.
 
-Five supplementary public controls and isolated evaluation still follow the model
-phase; their outcomes remain separate. The general production profile above and
-hidden-evaluation boundary are unchanged. The next question is whether a real model
-can use this feedback to make a successful revision within the reserved allowance.
-All older allocations are closed; a future run needs a newly bound exact approval.
-
-The requested [single-A live trial](history/2026-10-27-public-regression-cycle-plan.md)
-is prepared and preflighted at `C:/pt/public-regression-cycle-plan-v1`: one run,
-$1.20 cap, same public seed/evidence, updated bounded regression-repair cycle.
-Actual first-regression failure delivery and successful second-edit verification
-are the primary criteria. If the first edit already passes, regression revision is
-NOT_EXERCISED; no automatic retry. Exact new paid approval is pending. Provider,
-API-count, credential-read and target-execution counts remain zero.
+The next evidence gap is transfer to an unseeded run through normal completion while
+preserving feedback and resource contracts. General production settings above remain
+unchanged. All paid allocations are closed; no further trial is currently authorized.
 
 ## Supporting evidence
 
