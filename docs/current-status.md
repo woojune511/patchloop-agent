@@ -104,9 +104,13 @@ SELECT-column guard also preserves two top-level regression cases. This operator
 diagnostic does not retroactively count as solver replay. The discriminating
 pre-edit observation and regression-driven revision are evidenced; card causality
 remains unestablished because the first repair idea predates the card.
-Helper return types and incomplete output capture remain separate unresolved issues;
-this intervention does not repair those contracts. Repeatability and held-out
-improvement remain unverified. No further paid run is authorized by unused funds.
+The [pvlib saved-candidate comparison](history/2026-10-29-pvlib-saved-candidate-comparison.md)
+confirms both candidates repair the reported 100-degree call and preserve selected
+public expectations. Differences at zero absorption/grazing incidence and outside
+the geometric angle domain do not establish the historical acceptance failure's
+cause. Keep runtime unchanged; no replay mandate or budget increase follows.
+Helper return types and incomplete capture remain unresolved. Repeatability and
+held-out improvement remain unverified; unused funds authorize no further paid run.
 
 ## Supporting evidence
 
