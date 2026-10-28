@@ -1,6 +1,6 @@
 # Current status
 
-Updated: 2026-10-28. Runtime source owns behavior. Historical reports are evidence,
+Updated: 2026-10-29. Runtime source owns behavior. Historical reports are evidence,
 not an active queue.
 
 ## Product and working baseline
@@ -69,13 +69,26 @@ Focused79 and quick792 checks pass, including isolated mock evaluation. Pure rep
 of the saved public state opens reading and both observation options under the same
 limits while retaining the old UNKNOWN obligation. This is local mechanism evidence.
 
-The next live question is whether the model uses the restored choice to inspect
-file selection/processing and revise its repair hypothesis. Local mechanism checks
-do not answer it. A [clean-start follow-up](history/2026-10-28-observation-opportunity-fresh-plan.md)
-is prepared for one full-model run with the same USD4.50/20-response/40-action/
-three-edit/2400-second limits. Offline first-request audit and read-only preflight
-pass. The new command/cap confirmation is pending; no provider execution has started.
-Prior allocations remain closed and benchmark candidates are unchanged.
+The [approved clean-start follow-up](history/2026-10-29-observation-opportunity-fresh-results.md)
+has now completed once under those unchanged limits: EVALUATOR_FAIL,
+unverified_delivery, public regression1231 PASS, isolated task acceptance FAIL and
+safety PASS. It spent USD1.476264,12 responses,22 actions and851.269 active seconds.
+The allocation is CLOSED. One patch was delivered, but no original failure or target
+processing was established, so post-reproduction observation uptake remains untested.
+
+The live blocker occurred earlier: the first-only helper description omitted
+check_setup's required signature and all descriptions omitted input_paths maximum4.
+The model fixed the first API error from delivered feedback, then hit the undisclosed
+path limit. Two acquisition attempts ended before captured target entry. v10 correctly
+separated the typed settings rejection; the earlier setup error remained UNKNOWN.
+The original obligation stayed unverified through submission; public PASS did not
+discharge it. This is not evidence that the model ignored an offered original trace.
+
+The next engineering focus is a consistent helper API contract and precise field
+errors, followed by short local setup-correction checks. No new implementation or
+live allocation follows automatically. Preserve the unknown-evidence boundary and
+the original failure/processing verification requirement; higher overall limits are
+not supported as the immediate remedy by this result.
 
 ## Supporting evidence
 

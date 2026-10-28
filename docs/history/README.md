@@ -1,10 +1,6 @@
 # History
 
-- [2026-10-28](2026-10-28/README.md)
-- [2026-10-27](2026-10-27/README.md)
-- [2026-10-26](2026-10-26/README.md)
-- [2026-10-25](2026-10-25/README.md)
-- [2026-10-24](2026-10-24/README.md)
+- [October daily investigations](2026-10/README.md)
 - [Requests](2026-10-23-requests.md), [CVE](2026-10-23-security.md)
 - [Retry](2026-10-23-repro-recovery.md), [live](2026-10-23-repro-live.md), [oracles](2026-10-23-oracles.md), [pilot](2026-10-23-oracle-live.md), [audit](2026-10-23-request.md)
 - [Case](2026-10-22-original-case-live-results.md), [Finish](2026-10-22-finish-reproduction-results.md), [Help](2026-10-22-helper-path-results.md)
