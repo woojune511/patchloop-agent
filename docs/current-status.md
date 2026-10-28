@@ -24,53 +24,42 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [required-public-check continuation](history/2026-10-28-required-public-check-repair-results.md)
-repaired the saved candidate's three public regressions in two new edits. The first
-edit still failed the required matrix; its exact output reached the next request.
-The second edit passed all 11 required public cases while preserving the original
-call and positive processing evidence. Public regression passed 1231 tests; normal
-finish then reached isolated task acceptance PASS and safety PASS.
+Keep the [required-public-check design](history/2026-10-28-required-public-checks.md):
+known FAIL and required NOT_RUN block successful finish; accepted edits require
+fresh current-diff checks and deliver their failures to the next response.
+Model notes remain advisory. The [assisted continuation](history/2026-10-28-required-public-check-repair-results.md)
+passed11 required public cases,1231 regression tests and isolated acceptance/safety
+after two edits. That saved-candidate result is not a fresh solve or generalization
+estimate. Its allocation is CLOSED.
 
-The [required-public-check design](history/2026-10-28-required-public-checks.md)
-is retained: explicit host-registered public counterexamples join execution,
-current-diff status, automatic repair feedback, completion and budget paths.
-Initial imported failures retain their provenance; recovery preserves their binding.
-Model notes and speculative questions remain advisory.
+The [clean-original follow-up](history/2026-10-28-autonomous-fresh-results.md)
+reproduced F0010, inspected source31 times and made two edits, but still failed its
+selected processing witness. Tool actions38/40 left two versus four needed for
+completion; USD1.549624/4.50 and656.865 active seconds were below their limits.
+Public regression, submission, isolated acceptance and safety are NOT_RUN.
+Its allocation is CLOSED; supplemental operator counterexamples were not injected.
 
-Known FAIL and required NOT_RUN block successful finish regardless of unused budget.
-An accepted edit needs the same check on the new diff; its result reaches the next
-model response. Resource exhaustion or explicit stop preserves unresolved status.
-The frozen diagnostic's 11-case host assessment now runs before completion through
-its prepared environment. The old separate final replay reservation is removed;
-normal check actions/time are budgeted, and final reporting reuses receipts.
+The [public-record analysis](history/2026-10-28-autonomous-fresh-analysis.md)
+found that the complete caller file and the first patch's negative feedback reached
+the model. Both edits treated the missing init file downstream without establishing
+that the caller selected and processed the real fixture file. An initial callee
+search fragment was lost before the second edit, but missing caller information
+does not explain the first edit. Exact repeated inspection requests were absent.
 
-The authorized single run used five model responses, nine actions and USD0.90023750
-of its USD3.38078870 cap. Its allocation is CLOSED. This is a successful assisted
-checkpoint repair, not a fresh solve or a causal/generalization estimate. F0010
-already passed at the starting candidate. One preexisting public discrepancy stays
-excluded from the mandatory 11 and is still reported as FAIL.
+After reproduction, ordinary probes were denied under protected recovery cost while
+reads could use a minimum-success path. The first-observation selector also stayed
+inactive for this ruleless case. Thus source-only exploration was partly a host
+action-set restriction, not simply model avoidance of available observation.
+An early helper configuration failure remained a separate UNKNOWN obligation;
+pure policy replay showed that this alone did not cause the probe denial.
 
-Caller-source access, original-call/processing verification, bounded exploration
-and shared completion-path reservations remain active. The first request allowed
-repair/stop; optional inspection reopened after the first failed repair. Successful
-delivery, public PASS, isolated acceptance and safety remain separate evidence.
-The [clean-original follow-up](history/2026-10-28-autonomous-fresh-results.md) executed
-once with the full model and original USD4.50/2400-second limits. Without saved
-patches or operator counterexamples, it corrected request/helper errors and
-reproduced F0010. After31 inspections, its first edit removed F0010 but caused an
-unexpected FileNotFoundError. That failure reached the next model request; the
-second edit removed the exception but still lacked the selected processing witness.
-
-The run stopped with two tool actions left versus four needed for completion.
-Cost USD1.549624 and active time656.865 seconds were below their limits; output
-ceilings were not exhausted. Public regression, submission, isolated acceptance and
-safety are NOT_RUN. The allocation is CLOSED. The supplemental counterexample
-mechanism was NOT_EXERCISED because no such registry was injected.
-
-The next bounded investigation is why caller/test exploration did not redirect the
-repair toward actual file processing, and how it consumed revision opportunities.
-Inspect public evidence and reservation choices before adding a rule or increasing
-limits. No further run or runtime change is prepared or funded.
+The next implementation decision is to align observation and reading admission,
+support bounded original-call selection without diagnostic rules, and distinguish
+proved pre-target construction attempts from unresolved execution. Preserve actual
+completion costs and original-call identity; avoid mandatory diagnosis after every
+read or larger ceilings without evidence. Verify these mechanisms locally before
+another same-budget trial. Runtime and candidates are unchanged by the analysis;
+no further execution is prepared or funded.
 
 ## Supporting evidence
 
