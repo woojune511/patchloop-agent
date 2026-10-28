@@ -32,3 +32,4 @@
 - [Helper delivery and revision reserve: same-checkpoint follow-up prepared](../2026-10-28-probe-revision-repair-plan.md)
 - [Revision window preserved, but the model resubmitted the unchanged candidate](../2026-10-28-probe-revision-repair-results.md)
 - [Required public failures prompted two edits, all 11 cases and isolated acceptance passed](../2026-10-28-required-public-check-repair-results.md)
+- [Clean-original normal-run follow-up: preparation without saved patches or operator counterexamples](../2026-10-28-autonomous-fresh-plan.md)

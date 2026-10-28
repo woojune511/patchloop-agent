@@ -54,9 +54,13 @@ Caller-source access, original-call/processing verification, bounded exploration
 and shared completion-path reservations remain active. The first request allowed
 repair/stop; optional inspection reopened after the first failed repair. Successful
 delivery, public PASS, isolated acceptance and safety remain separate evidence.
-The next unresolved question is whether this completion policy helps from a clean
-original task without operator-selected counterexamples, within the same overall
-budget. No fresh run or broader comparison is prepared or funded.
+The [clean-original follow-up](history/2026-10-28-autonomous-fresh-plan.md) is prepared
+to test the whole normal runner on Astroid-1333 with the same full model and original
+USD4.50/2400-second limits. It supplies no saved patch, prior observations or operator
+counterexamples; explicit read-only pylint access remains. No supplemental registry
+is injected, so the new required-counterexample mechanism is NOT_EXERCISED in this
+trial. Offline first-request audit and read-only preflight passed; exact command
+confirmation is pending. No new paid execution has started.
 
 ## Supporting evidence
 
