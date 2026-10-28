@@ -152,6 +152,32 @@ reproduction_outputs()
     assert sentinel.read_text() == "keep"
 
 
+def test_host_configuration_rejection_has_no_target_entry_and_preserves_no_comparison(tmp_path):
+    result = run(tmp_path, "observed_target(expected_exceptions=[ValueError])",
+                 "from pathlib import Path; Path('entered').touch(); return True")
+    assert result["comparison"] == "not_compared"
+    trace = result["call_observation"]
+    assert trace["calls"] == [] and trace["incomplete"] is True
+    assert trace["request_phase"] == {"settings_rejected": True, "target_entries": 0}
+    assert not (tmp_path / "execution/entered").exists()
+
+
+def test_request_phase_requires_exact_types_and_matching_host_entry_count():
+    valid = {"settings_rejected": True, "target_entries": 0}
+    assert probe_invocation.valid_request_phase(valid, [], True)
+    for change in ({"target_entries": False}, {"target_entries": 0.0},
+                   {"target_entries": -1}, {"target_entries": 1},
+                   {"settings_rejected": 1}, {"extra": True}):
+        assert not probe_invocation.valid_request_phase({**valid, **change}, [], True)
+    assert not probe_invocation.valid_request_phase(valid, [], False)
+    assert not probe_invocation.valid_request_phase(None, [], True)
+
+
+def test_v9_observer_bytes_remain_frozen():
+    assert sha256_bytes(probe_invocation.observer(probe_invocation.SIGNATURE_CHANNEL).encode()) == (
+        "sha256:024e7db6c2eb8b5b85311427ce14b2efafe7661463f16226fa081175d719b92b")
+
+
 def test_v7_size_with_optional_hooks_and_frozen_v5_v6_bytes():
     frozen = "sha256:67052927eab7f0ab6dd72b7afad7cfdb3c32bf37befad1e46e14861392a47fe4"
     for channel in (probe_invocation.DIAGNOSTIC_CHANNEL, probe_invocation.CANONICAL_CHANNEL):

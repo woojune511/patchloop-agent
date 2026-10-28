@@ -6,8 +6,13 @@ original-case completion gate. Provider/output/action/edit/wall limits stay fixe
 ## Trigger and sequence
 
 Before the first successful edit, `observe_original` is offered after an acquired
-unchanged-base original has a consistent failure and a distinct clean diagnostic
-control. The small request has `hypothesis` and 1-2 `candidates`, each selecting a
+unchanged-base original has a consistent failure. Diagnostic rules retain their
+automatic failing-call selection and distinct clean control. With null rules,
+the small request also requires `call_id` from at most four complete host-captured
+calls; its relation to the failure is explicitly model-selected and unverified.
+The observed JSON must match the frozen reported failure and differ from desired
+behavior, with identical binding, call conditions and complete paired captures.
+The small request has `hypothesis` and 1-2 `candidates`, each selecting a
 public function and predicting entered/not_entered/returned/raised. The host binds
 the original root, failing call and current source; AST-selected parameters and
 executable lines are the only watched fields. The full frozen program (including
@@ -20,6 +25,9 @@ identities and observed event predictions. A changed original result, invalid
 control/setup, partial trace or uncertainty is insufficient. One real execution
 is available; two rejected requests exhaust request correction. Admitted pending
 work reserves the same opportunity. Changing names or restarting never refills it.
+Rejected ruleless selections share the same two-request allowance; the first
+admitted selection fixes the call for execution and recovery. Selecting another
+call cannot obtain another execution. Observation grants no check or repair credit.
 Direct supported editing remains available: these observations test a premise,
 not the repair. The next edit records the observation action/status in its receipt;
 after editing the observation is historical and the original must be replayed.
@@ -301,6 +309,9 @@ and [original implementation](../docs/history/2026-10-25-callpath-repair.md).
 
 For the first-repair path use `tests/first-repair.txt`; quick includes representative
 controls. Local scripts do not establish model uptake or F0010 repair success.
+For ruleless first-observation choice, resource admission and pre-target settings
+evidence, use `tests/observation-opportunity.txt`; see the
+[implementation record](../docs/history/2026-10-28-observation-opportunity.md).
 For refutation-linked revisions and test-only diagnosis reuse, use the short
 `tests/repair-revision.txt` selection and [local record](../docs/history/2026-10-26-repair-revision.md).
 For null-rule call selection, linked prediction and recovery, use

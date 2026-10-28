@@ -53,13 +53,26 @@ action-set restriction, not simply model avoidance of available observation.
 An early helper configuration failure remained a separate UNKNOWN obligation;
 pure policy replay showed that this alone did not cause the probe denial.
 
-The next implementation decision is to align observation and reading admission,
-support bounded original-call selection without diagnostic rules, and distinguish
-proved pre-target construction attempts from unresolved execution. Preserve actual
-completion costs and original-call identity; avoid mandatory diagnosis after every
-read or larger ceilings without evidence. Verify these mechanisms locally before
-another same-budget trial. Runtime and candidates are unchanged by the analysis;
-no further execution is prepared or funded.
+The [observation-opportunity change](history/2026-10-28-observation-opportunity.md)
+now exposes bounded captured-call selection for null diagnostic rules and aligns
+reading, general-probe and first-observation minimum-path admission. General probes
+reserve a prospective additional case; reading/probing preserves an available first
+observation. Response/action/cost/time and protocol-correction reserves remain real.
+Protected later-failure recovery is preferred when feasible; its release is explicit.
+
+Fresh v10 invocation evidence distinguishes host-confirmed settings rejection before
+any captured target entry from unknown execution. Such attempts retain their costs
+and counters but do not become replay obligations. Old v1-v9 programs and unknown
+receipts are preserved; saved v9 and fresh v10 argument correction remain supported.
+Original verification and required checks are not waived by selection or observation.
+Focused79 and quick792 checks pass, including isolated mock evaluation. Pure replay
+of the saved public state opens reading and both observation options under the same
+limits while retaining the old UNKNOWN obligation. This is local mechanism evidence.
+
+The next live question is whether the model uses the restored choice to inspect
+file selection/processing and revise its repair hypothesis. Local mechanism checks
+do not answer it. No further provider execution is prepared or funded; prior
+allocations remain closed and benchmark candidates are unchanged.
 
 ## Supporting evidence
 

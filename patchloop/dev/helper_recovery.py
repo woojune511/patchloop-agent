@@ -14,7 +14,7 @@ from patchloop.util import sha256_bytes, sha256_json
 
 POLICY = "helper-program-correction-v1"
 ARGUMENT_POLICY = "original-argument-correction-v1"
-ARGUMENT_CHANNEL = "invoke-declared-call-v9"
+ARGUMENT_CHANNEL = probe_invocation.SIGNATURE_CHANNEL
 
 
 def _original_calls(start, result, execution_starts, execution_returns):
@@ -23,6 +23,7 @@ def _original_calls(start, result, execution_starts, execution_returns):
     purpose = arguments.get("purpose")
     binding = start.get("reproduction_binding") or {}
     definition = binding.get("definition", {})
+    channel = definition.get("observation_channel")
     output = result.get("output") or {}
     observed = output.get("reproduction") or {}
     trace = observed.get("call_observation") or {}
@@ -41,8 +42,8 @@ def _original_calls(start, result, execution_starts, execution_returns):
             or not isinstance(source, str)
             or binding.get("program_hash") != sha256_bytes(source.encode("utf-8"))
             or observed.get("binding") != binding
-            or definition.get("observation_channel") != ARGUMENT_CHANNEL
-            or trace.get("binding_method") != ARGUMENT_CHANNEL
+            or channel not in probe_invocation.SIGNATURE_CHANNELS
+            or trace.get("binding_method") != channel
             or result.get("workspace_diff_hash") != start.get("baseline_diff_hash")
             or output.get("diff_hash") != start.get("baseline_diff_hash")
             or output.get("probe_stage") != "execution_returned"
@@ -50,7 +51,7 @@ def _original_calls(start, result, execution_starts, execution_returns):
             or not isinstance(calls, list) or not 1 <= len(calls) <= 4
             or type(trace.get("incomplete")) is not bool
             or not all(probe_invocation.valid_call(
-                call, definition.get("entrypoint"), channel=ARGUMENT_CHANNEL) for call in calls)
+                call, definition.get("entrypoint"), channel=channel) for call in calls)
             or len({call["call_id"] for call in calls}) != len(calls)):
         return None
     identity = started[0]

@@ -11,7 +11,7 @@ Each selected call must pair `role=failure` expected false with `role=processing
 expected true. Pick positive evidence from the intended fixture's public behavior;
 an unrelated warning cannot establish intended processing. The same call/code
 cannot serve both roles. Expected/failure JSON must be strict boolean objects with
-exactly those distinct keys. The v7-v9 invocation reports per-call captures; the host searches code
+exactly those distinct keys. The v7-v10 invocation reports per-call captures; the host searches code
 tokens in each stdout/stderr independently, with ASCII identifier boundaries.
 Longer identifiers such as XF0010, F00100 and F0010_EXTRA do not match F0010.
 This is token extraction, not semantic parsing of diagnostic records.
@@ -41,7 +41,7 @@ covers the public task, intended-file identity or semantic correctness.
 
 ## Fixture identity and target entry
 
-Fresh v9 helpers retain v7's `reproduction_workspace()` for fixture inputs and
+Fresh v10 helpers retain v7's `reproduction_workspace()` for fixture inputs and
 `reproduction_outputs()` for generated files and HOME/cache children. These are
 separate stable sibling roots under the original sandbox cwd. Select actual
 fixture paths in `observed_target(input_paths=...)`; generated output paths and
@@ -52,11 +52,20 @@ filter or blanket HOME exclusion. Fixture changes remain identity differences.
 The call row sets `target_started` immediately before invoking the declared
 callable. Resolution, snapshot and signature-binding errors remain false with
 incomplete outcome/captures. `completion_reproduction` excludes only completed,
-bound v7-v9 cases whose every related call proves no target entry and whose host
+bound v7-v10 cases whose every related call proves no target entry and whose host
 receipts settle execution/cleanup. It retains action/input/program/case identities
 in bounded `request_attempts`, full counts and the immutable journal. Attempts
 still consume existing acquisition/action/cost limits; they grant no reproduction
 credit. No established failure means the task obligation stays unverified.
+
+V10 also records a host `request_phase` with `settings_rejected` and
+`target_entries`, validated against every call row. A settled, complete host receipt
+with explicit settings rejection and zero target entries can establish a request
+attempt even when helper construction failed before creating the first row. Empty
+calls or an error-message match alone cannot. Any entered or unresolved related
+action keeps the whole case as an obligation. These attempts are not refunded and
+do not renew correction or execution allowances. Frozen v1-v9 programs remain
+byte-identical; older empty traces are not retroactively retired.
 
 Missing/malformed markers, legacy rows, pending related actions, any target entry,
 timeout/truncation or cleanup uncertainty remain unverified case obligations.
@@ -66,7 +75,7 @@ Null-rules observations and model-selected code witnesses remain coverage-limite
 
 ## Expected exceptions
 
-V8 and fresh v9 `observed_target` accept a tuple of at most four Exception or SystemExit
+V8-v10 `observed_target` accept a tuple of at most four Exception or SystemExit
 subclasses in `expected_exceptions`. Ordinary Exception observations require an
 exact listed class: listing Exception does not match ValueError. SystemExit and
 its subclasses are always captured with their actual `exit_code`, whether listed
@@ -86,6 +95,8 @@ binding marker. It preserves frozen v1-v8 programs. See [bounded correction](hel
 for eligibility, replay, acquisition and completion-resource handling. These new
 metadata fields are excluded from input-identity comparison. The fresh observer
 is compacted within the existing 8K host-code cap; authored code retains its own cap.
+Signature-bound correction accepts both saved v9 and fresh v10 receipts and keeps
+their actual channel when validating rows.
 
 ## Frozen v1 diagnostic judgments
 

@@ -15,8 +15,10 @@ CANONICAL_CHANNEL = "invoke-declared-call-v6"
 BEHAVIOR_CHANNEL = "invoke-declared-call-v7"
 EXCEPTION_CHANNEL = "invoke-declared-call-v8"
 SIGNATURE_CHANNEL = "invoke-declared-call-v9"
-CHANNEL = SIGNATURE_CHANNEL
-BEHAVIOR_CHANNELS = (BEHAVIOR_CHANNEL, EXCEPTION_CHANNEL, CHANNEL)
+CONSTRUCTION_CHANNEL = "invoke-declared-call-v10"
+CHANNEL = CONSTRUCTION_CHANNEL
+SIGNATURE_CHANNELS = (SIGNATURE_CHANNEL, CONSTRUCTION_CHANNEL)
+BEHAVIOR_CHANNELS = (BEHAVIOR_CHANNEL, EXCEPTION_CHANNEL, *SIGNATURE_CHANNELS)
 CAPTURE_CHANNELS = (CAPTURE_CHANNEL, STABLE_CHANNEL, DIAGNOSTIC_CHANNEL, CANONICAL_CHANNEL,
                     *BEHAVIOR_CHANNELS)
 
@@ -160,6 +162,8 @@ def supports(channel):
 def observer(channel):
     """Select frozen legacy bytes or bounded call capture for fresh cases."""
     if channel == CHANNEL:
+        return probe_call_capture.construction_observer(OBSERVER_V2)
+    if channel == SIGNATURE_CHANNEL:
         return probe_call_capture.signature_observer(OBSERVER_V2)
     if channel == EXCEPTION_CHANNEL:
         return probe_call_capture.exception_observer(OBSERVER_V2)
@@ -193,7 +197,7 @@ def valid_call(call, entrypoint, *, channel=None):
                        "exception", "exit_code"))
     if channel in BEHAVIOR_CHANNELS:
         fields.add("target_started")
-    if channel == CHANNEL:
+    if channel in SIGNATURE_CHANNELS:
         fields.update(("signature", "binding_error"))
     return (supports(channel) and isinstance(call, dict) and set(call) == fields
         and call["entrypoint"] == entrypoint and isinstance(call["resolved_entrypoint"], str)
@@ -213,7 +217,7 @@ def valid_call(call, entrypoint, *, channel=None):
                                if channel in CAPTURE_CHANNELS
                                else ("returned", "raised", "incomplete"))
         and (channel not in CAPTURE_CHANNELS or probe_call_capture.valid(call))
-        and (channel != CHANNEL or _valid_signature(call))
+        and (channel not in SIGNATURE_CHANNELS or _valid_signature(call))
         and (channel not in BEHAVIOR_CHANNELS or type(call.get("target_started")) is bool
              and (call["target_started"] or call["outcome"] == "incomplete"
                   and call["capture"]["status"] == "incomplete")))
@@ -228,6 +232,15 @@ def _valid_signature(call):
                  and call.get("outcome") == "incomplete"
                  and call.get("bound_parameters") is None
                  and (call.get("exception") or {}).get("type") == "builtins.TypeError"))
+
+
+def valid_request_phase(phase, calls, incomplete):
+    """Validate fresh host stage evidence without inferring entry from empty rows."""
+    return (isinstance(phase, dict) and set(phase) == {"settings_rejected", "target_entries"}
+            and type(phase["settings_rejected"]) is bool
+            and type(phase["target_entries"]) is int and 0 <= phase["target_entries"] <= 4
+            and phase["target_entries"] == sum(call["target_started"] for call in calls)
+            and (not phase["settings_rejected"] or incomplete is True))
 
 
 def environment(output):

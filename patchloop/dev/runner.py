@@ -1122,7 +1122,7 @@ def _tool_policy(
         inspection_tool_floor = inspection_budget.minimum_tool_actions
     shared_failure_exploration = bool(
         completion_cost_policy == COMPLETION_RECOVERY_POLICY and cost_ledger is not None
-        and original_case_failed and not (first_available or observation_blocked or helper_blocked
+        and original_case_failed and not (observation_blocked or helper_blocked
                                      or test_comparison_pending or acquisition_pending)
     )
     if shared_failure_exploration:
@@ -1200,13 +1200,23 @@ def _tool_policy(
     )
     allowed = {"stop_task"}
     obligation = verification.get("original_obligation", {})
+    minimum_observation_available = bool(
+        completion_cost_policy == COMPLETION_RECOVERY_POLICY and cost_ledger is not None
+        and original_case_failed and not (acquisition_pending or observation_blocked
+            or path_blocked or helper_blocked or test_comparison_pending)
+    )
     probe_budget = (completion_budget(replace(
         completion_state, reproduction_case_count=completion_state.reproduction_case_count + 1,
     )) if (obligation.get("stage") == "pending" and not argument_correction)
-        or diagnostic_available else budget)
-    probe_floor = probe_budget.minimum if diagnostic_available else probe_budget.protected
-    probe_tool_floor = (probe_budget.minimum_tool_actions if diagnostic_available
+        or diagnostic_available or minimum_observation_available else budget)
+    probe_floor = (probe_budget.minimum if diagnostic_available or minimum_observation_available
+                   else probe_budget.protected)
+    probe_tool_floor = (probe_budget.minimum_tool_actions
+                        if diagnostic_available or minimum_observation_available
                         else probe_budget.protected_tool_actions)
+    if minimum_observation_available and first_available:
+        probe_floor += 1
+        probe_tool_floor += 1
     available_check_ids = unrun_checks
     check_successor_reserve = max(0, (
         budget.protected if protected_completion_possible else budget.minimum
@@ -1371,6 +1381,7 @@ def _tool_policy(
             allowed.add("run_tests")
     minimum_cost_successors = None
     recovery_routes = {}
+    minimum_observation_routes = {}
     resource_rejections = {}
     released_failure_recovery = {}
     # This host-bound request reserves an opportunity, not verification credit.
@@ -1400,7 +1411,10 @@ def _tool_policy(
             )
         if first_available:
             for tool in _FIRST_OBSERVATION_EXPLORATION & allowed:
-                minimum_cost_successors[tool] += 1
+                # The shared inspection floor already retained the first
+                # observation. Other tools still need that separate successor.
+                if not (shared_failure_exploration and tool in {"read_file", "search_files"}):
+                    minimum_cost_successors[tool] += 1
         if acquisition_inspection_budget is not None:
             for tool in {"read_file", "search_files"} & allowed:
                 minimum_cost_successors[tool] = max(
@@ -1454,6 +1468,40 @@ def _tool_policy(
                     preserve_read_anchor=shared_failure_exploration)
                 route = successor_resources(completion_state, tool,
                                             protect_failure=recover, **options)
+                if minimum_observation_available and (
+                    tool == "run_probe" or first_available
+                    and tool in {"read_file", "search_files", "observe_original"}
+                ):
+                    # General probes may add a case. Reobserving an acquired
+                    # original does not. Reading keeps that first observation
+                    # ahead, including its response, action and target execution.
+                    prospective = replace(
+                        completion_state,
+                        reproduction_case_count=completion_state.reproduction_case_count
+                        + int(tool == "run_probe"),
+                    )
+                    mandatory = completion_budget(prospective)
+                    pending_observation = int(first_available and tool != "observe_original")
+                    followup_calls = mandatory.minimum + pending_observation
+                    followup_actions = mandatory.minimum_tool_actions + pending_observation
+                    observation_candidates = {}
+                    for protect_failure in ((False, True) if recover else (False,)):
+                        resource = successor_resources(prospective, tool,
+                            protect_failure=protect_failure, **{
+                                **options, "calls": followup_calls, "ordinary_routes": False,
+                            })
+                        # The protected alternative adds one read, one repair,
+                        # every invalidated check and every original replay.
+                        extra_calls = int(protect_failure) * (2 + prospective.check_count)
+                        extra_tools = extra_calls + int(protect_failure) * (
+                            prospective.reproduction_case_count)
+                        observation_candidates[protect_failure] = replace(resource,
+                            physical_model_floor=1 + followup_calls + extra_calls,
+                            physical_tool_floor=1 + followup_actions + extra_tools,
+                            seconds=resource.seconds + pending_observation
+                            * (PROBE_TIMEOUT_SECONDS + CHECK_OVERHEAD_SECONDS))
+                    minimum_observation_routes[tool] = observation_candidates[False]
+                    route = merge_resources(route, observation_candidates[recover])
                 if reserve_revision:
                     revision = requested_revision_resources(
                         completion_state, tool, max_output_tokens=desired_output_ceiling,
@@ -1481,11 +1529,13 @@ def _tool_policy(
                               if requires_mutation and "replace_text" in allowed
                               else finalization_floor)
                     current = cost_ledger.future_call_reservation_nanos(output_ceiling=output)
-                    physical = (not candidate.routes or (
-                        candidate.model_calls <= remaining_model_calls
-                        and candidate.tool_actions <= remaining_tool_actions))
+                    physical = (
+                        (candidate.model_calls is None
+                         or candidate.model_calls <= remaining_model_calls)
+                        and (candidate.tool_actions is None
+                             or candidate.tool_actions <= remaining_tool_actions))
                     seconds = candidate.seconds + (FOLLOWUP_SECONDS * correction_model_reserve
-                                                   if candidate.routes else 0)
+                                                   if candidate.model_calls is not None else 0)
                     return (physical and money + current <= cost_ledger.remaining_nanos
                             and (remaining_seconds is None
                                  or remaining_seconds - seconds >= FOLLOWUP_SECONDS))
@@ -1497,20 +1547,25 @@ def _tool_policy(
                         or required_inspection and not path_available
                         and tool in {"read_file", "search_files"}
                         or shared_failure_exploration and tool in {"read_file", "search_files"}
-                        or path_available and tool == "run_probe"):
+                        or path_available and tool == "run_probe"
+                        or tool in minimum_observation_routes):
                     route = successor_resources(completion_state, tool,
                                                 protect_failure=False, **options)
+                    if tool in minimum_observation_routes:
+                        route = merge_resources(route, minimum_observation_routes[tool])
                     released_failure_recovery[tool] = "speculative_future_failure_does_not_fit"
                 if tool in {"finish_task", "stop_task"} or fits(route):
                     recovery_routes[tool] = route
                 else:
                     resource_rejections[tool] = (
-                        "model_calls" if route.routes and route.model_calls > remaining_model_calls
-                        else "tool_actions" if route.routes
+                        "model_calls" if route.model_calls is not None
+                        and route.model_calls > remaining_model_calls
+                        else "tool_actions" if route.tool_actions is not None
                         and route.tool_actions > remaining_tool_actions
                         else "time" if remaining_seconds is not None
                         and remaining_seconds - route.seconds
-                            - (FOLLOWUP_SECONDS * correction_model_reserve if route.routes else 0)
+                            - (FOLLOWUP_SECONDS * correction_model_reserve
+                               if route.model_calls is not None else 0)
                             < FOLLOWUP_SECONDS else "cost")
         allowed = {
             tool for tool in allowed
@@ -1761,7 +1816,8 @@ def _tool_policy(
                                              for t, r in routes.items()},
                 "failure_recovery_reserved": {t: r.failure_recovery for t, r in routes.items()},
                 "future_time_reserve_seconds": max(
-                    r.seconds + (FOLLOWUP_SECONDS * correction_model_reserve if r.routes else 0)
+                    r.seconds + (FOLLOWUP_SECONDS * correction_model_reserve
+                                 if r.model_calls is not None else 0)
                     for r in routes.values()),
                 "remaining_seconds": remaining_seconds,
                 "resource_rejections": resource_rejections,
@@ -1772,10 +1828,14 @@ def _tool_policy(
                              else "required_completion"),
                     "model_calls": route.model_calls,
                     "tool_actions": route.tool_actions,
-                    "required_model_calls": (route.model_calls if requested_revision
+                    "required_model_calls": (minimum_observation_routes[tool].model_calls
+                        if tool in minimum_observation_routes
+                        else route.model_calls if requested_revision
                         and tool in revision_exploration else
                         route.routes[0].model_calls if route.routes else None),
-                    "required_tool_actions": (route.tool_actions if requested_revision
+                    "required_tool_actions": (minimum_observation_routes[tool].tool_actions
+                        if tool in minimum_observation_routes
+                        else route.tool_actions if requested_revision
                         and tool in revision_exploration else
                         route.routes[0].tool_actions if route.routes else None),
                     "released_reason": released_failure_recovery.get(tool),
@@ -6041,6 +6101,7 @@ def _run_one_active(
                 "needs_original_reproduction", "needs_original_argument_correction"},
             repair_test_comparison_pending=policy.workflow_gate == "needs_test_comparison",
             repair_revision=policy.repair_path_diagnosis,
+            first_original_observation=policy.first_observation,
             repair_test_edit_enabled=policy.repair_test_edit_enabled,
             history_search_policy=request.history_search_policy,
         )

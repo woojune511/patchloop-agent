@@ -262,6 +262,7 @@ def dev_tool_schemas(
     original_acquisition_pending: bool = False,
     repair_test_comparison_pending: bool = False,
     repair_revision: dict[str, Any] | None = None,
+    first_original_observation: dict[str, Any] | None = None,
     repair_test_edit_enabled: bool = False,
     agent_policy: str = "current",
     history_search_policy: history_search.Policy = "none",
@@ -559,7 +560,7 @@ def dev_tool_schemas(
             if "save_program" in properties:
                 properties["save_program"] = {"type": "boolean", "enum": [False]}
     if allowed_tools is not None and "observe_original" in allowed_tools:
-        schemas.append(first_observation.schema())
+        schemas.append(first_observation.schema(first_original_observation))
     if test_suite_ids:
         from patchloop.dev import test_comparison
 
@@ -2952,6 +2953,7 @@ class DevToolGateway:
                         getattr(self.probe_sandbox, "validate_call_path", None),
                         deadline=self.deadline,
                     )
+                    first_link = first_observation.link(first_admission)
                     probe_call_arguments = first_observation.arguments(
                         call.arguments, first_admission)
                     path_request = probe_call_arguments["call_path"]

@@ -1,8 +1,11 @@
 """A public revision request retains one edit route without new funding or verdicts."""
+import copy
+import json
 from dataclasses import asdict
 from decimal import Decimal
 
 import pytest
+from test_counterexample_check import harness, saved  # noqa: F401
 from test_dev_completion_resources import Gateway, counters
 from test_finish_reproduction_budget import snapshot
 
@@ -96,18 +99,56 @@ def test_preview_and_reconstruction_keep_the_same_nonrenewing_reservation():
     assert "requested_revision" not in policy(current="edited").completion_cost
 
 
-def test_diagnostic_binding_comes_from_the_frozen_packet_not_model_notes(monkeypatch):
+def test_diagnostic_binding_comes_from_the_frozen_packet_not_model_notes(
+    monkeypatch, harness,  # noqa: F811
+):
     captured = []
+
     def original(*args, **kwargs):
         captured.append(kwargs)
         return "policy"
+
+    class Gateway:
+        def __init__(self, **kwargs):
+            self.arguments = kwargs
+
+    state = {"current_diff": {"patch_hash": harness.packet["candidate_diff_hash"]},
+             "working_notes": [{"statement": "All public counterexamples pass."}]}
+    def build_context(**kwargs):
+        return json.dumps(state)
+
+    def build_input(**kwargs):
+        return [{"role": "user", "content": json.dumps({"state": state})}]
+
     monkeypatch.setattr(runner, "_tool_policy", original)
-    with counterexample_repair.public_feedback({
-        "candidate_diff_hash": "measured", "regressions": ["case-1"]}):
+    monkeypatch.setattr(runner, "DevToolGateway", Gateway)
+    monkeypatch.setattr(runner, "_build_context", build_context)
+    monkeypatch.setattr(runner, "_build_model_input", build_input)
+    packet = copy.deepcopy(harness.packet)
+    with counterexample_repair.public_feedback(packet):
+        packet["regressions"] = []
+        packet["program_text"] += "# later mutable caller input\n"
+        gateway = runner.DevToolGateway(sandbox=harness.delegate,
+            probe_sandbox=harness.probe, journal=harness.journal)
+        entry, = gateway.arguments["supplemental_checks"]
+        assert entry == harness.sandbox.entry
+        assert entry.observation["passed"] is False
+        assert gateway.arguments["sandbox"].entry == entry
+        assert gateway.arguments["sandbox"].delegate is harness.delegate
+        assert runner._tool_policy is original
         assert runner._tool_policy() == "policy"
-    assert captured[-1]["requested_revision_diff_hash"] == "measured"
+        for delivered in (json.loads(runner._build_context()),
+                          json.loads(runner._build_model_input()[-1]["content"])["state"]):
+            feedback = delivered[counterexample_repair.FIELD]
+            assert feedback["regressions"] == harness.packet["regressions"]
+            assert feedback["program_definition_ref"]["program_hash"] == (
+                harness.packet["program_hash"])
+            assert feedback["required_check_status"] == "NOT_RUN"
+            assert feedback["new_verification_required"]
+            assert delivered["working_notes"] == state["working_notes"]
+    assert captured == [{}]
     assert runner._tool_policy is original
-    with counterexample_repair.public_feedback({
-        "candidate_diff_hash": "measured", "regressions": []}):
-        runner._tool_policy()
-    assert captured[-1]["requested_revision_diff_hash"] is None
+    assert runner.DevToolGateway is Gateway
+    assert runner._build_context is build_context
+    assert runner._build_model_input is build_input
+    assert harness.journal.events() == [] and harness.probe.calls == []

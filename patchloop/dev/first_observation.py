@@ -9,7 +9,13 @@ from __future__ import annotations
 import copy
 import json
 
-from patchloop.dev import completion_reproduction, probe_invocation, probe_judgment, reproduction
+from patchloop.dev import (
+    completion_reproduction,
+    probe_invocation,
+    probe_judgment,
+    repair_path,
+    reproduction,
+)
 from patchloop.errors import ContractError
 from patchloop.sandbox import call_path_trace
 from patchloop.util import sha256_bytes, sha256_json
@@ -23,9 +29,9 @@ LINK_FIELDS = ("policy", "candidate_diff_hash", "case_id", "replay_action_id", "
 IDENTITY = ("origin", "path", "function", "file_hash")
 
 
-def schema():
+def schema(state=None):
     identity = call_path_trace.schema()["properties"]["focus"]["properties"]
-    return {
+    tool = {
         "type": "function", "name": TOOL_NAME, "strict": True,
         "description": (
             "Optionally test a first-repair hypothesis on the acquired original call. "
@@ -48,6 +54,14 @@ def schema():
             },
         },
     }
+    if state and state.get("call_selection_required"):
+        tool["parameters"]["properties"]["call_id"] = {
+            "type": "string", "enum": [row["call_id"] for row in state["call_choices"]]}
+        tool["parameters"]["required"].append("call_id")
+        tool["description"] += (
+            " Select call_id from first_observation.call_choices. Its connection to the "
+            "failure remains your hypothesis, not a host judgment.")
+    return tool
 
 
 def _invalid(path, requirement):
@@ -57,8 +71,12 @@ def _invalid(path, requirement):
 
 def validate_selection(arguments):
     """Validate only model-owned selections; never accept replay/trace identities."""
-    if type(arguments) is not dict or set(arguments) != {"hypothesis", "candidates"}:
-        raise _invalid("/", "select only hypothesis and candidates")
+    if type(arguments) is not dict or set(arguments) not in (
+            {"hypothesis", "candidates"}, {"hypothesis", "candidates", "call_id"}):
+        raise _invalid("/", "select only hypothesis, candidates and an offered call_id")
+    if "call_id" in arguments and arguments["call_id"] not in (
+            "call-1", "call-2", "call-3", "call-4"):
+        raise _invalid("/call_id", "select a captured call")
     hypothesis, candidates = arguments["hypothesis"], arguments["candidates"]
     if type(hypothesis) is not str or not hypothesis.strip() or len(hypothesis) > 1000:
         raise _invalid("/hypothesis", "use 1-1000 characters")
@@ -94,24 +112,30 @@ def prepare(arguments, state, workspace, source_preflight, *, deadline=None):
     selection = validate_selection(arguments)
     if state.get("status") != "available" or not state.get("available"):
         raise ContractError("first original-call observation is not available")
+    call_id = selection.get("call_id", state.get("call_id"))
+    allowed = ({row["call_id"] for row in state["call_choices"]}
+               if state.get("call_selection_required") else {state.get("call_id")})
+    if call_id is None or call_id not in allowed:
+        raise _invalid("/call_id", "select a captured call from first_observation.call_choices")
     if not callable(source_preflight):
         raise ContractError("public source binding is unavailable")
     targets = [{key: row[key] for key in ("origin", "path", "function")}
                for row in selection["candidates"]]
     request = {**call_path_trace.selection_request({"focus": targets[0],
-        "watches": [{**target, "fields": []} for target in targets]}, state["call_id"]),
+        "watches": [{**target, "fields": []} for target in targets]}, call_id),
         "scope": "selected_call"}
     try:
         bound = source_preflight(workspace, request, deadline=deadline, line_changes=[])
     except (OSError, ValueError, SyntaxError) as exc:
         raise _invalid("/candidates", f"public source binding failed: {exc}") from exc
     # The preflight AST supplies parameters even though the model selected no fields.
-    resolved = {"call_id": state["call_id"], "scope": "selected_call",
+    resolved = {"call_id": call_id, "scope": "selected_call",
                 "focus": {key: bound["focus"][key] for key in IDENTITY},
                 "watches": [{**{key: watch[key] for key in (*IDENTITY, "lines")},
                              "fields": list(watch["parameters"])}
                             for watch in bound["watches"]]}
-    return {**link(state), **selection, "selection_hash": sha256_json(selection),
+    return {**link(state), **selection, "call_id": call_id,
+            "selection_hash": sha256_json(selection),
             "call_path": resolved,
             "line_selection": [{"path": watch["path"], "function": watch["function"],
                                 **watch["line_selection"]} for watch in bound["watches"]]}
@@ -129,21 +153,33 @@ def arguments(raw, admission):
 def _same_failure(result, baseline, identity):
     try:
         observed = result["output"]["reproduction"]
-        recomputed = probe_judgment.evaluate(
-            observed["binding"]["definition"]["diagnostic_rules"],
-            observed["call_observation"], observed["observed_json"])
+        definition = observed["binding"]["definition"]
+        rules = definition.get("diagnostic_rules")
+        actual = sha256_json(json.loads(observed["observed_json"]))
+        if rules is None:
+            judgment_valid = (
+                actual == sha256_json(json.loads(definition["reported_failure_json"]))
+                and actual != sha256_json(json.loads(definition["expected_json"]))
+                and repair_path._paired_capture(observed, baseline))
+        else:
+            recomputed = probe_judgment.evaluate(
+                rules, observed["call_observation"], observed["observed_json"])
+            judgment_valid = (
+                probe_judgment.is_usable(observed.get("judgment"))
+                and probe_judgment.is_usable(baseline.get("judgment"))
+                and probe_judgment.is_usable(recomputed)
+                and recomputed["host_json"] == observed["observed_json"])
         return bool(
             result.get("workspace_diff_hash") == identity["candidate_diff_hash"]
             and observed["binding"] == baseline["binding"]
             and observed["binding"]["case_id"] == identity["case_id"]
             and observed["comparison"] == "mismatched"
             and observed.get("declared_failure_comparison") == "matched"
-            and probe_judgment.is_usable(observed.get("judgment"))
-            and probe_judgment.is_usable(baseline.get("judgment"))
-            and json.loads(observed["observed_json"]) == json.loads(baseline["observed_json"])
+            and baseline["comparison"] == "mismatched"
+            and baseline.get("declared_failure_comparison") == "matched"
+            and actual == sha256_json(json.loads(baseline["observed_json"]))
             and completion_reproduction._healthy(result, observed)
-            and probe_judgment.is_usable(recomputed)
-            and recomputed["host_json"] == observed["observed_json"]
+            and judgment_valid
             and reproduction.call_identity(observed["call_observation"])
             == reproduction.call_identity(baseline["call_observation"])
             and probe_invocation.conditions(observed["call_observation"])
@@ -167,6 +203,15 @@ def _failing_call(observation):
         return None
 
 
+def _call_choices(observation):
+    if observation.get("binding", {}).get("definition", {}).get("diagnostic_rules") is not None:
+        return []
+    if not repair_path._paired_capture(observation, observation):
+        return []
+    choices = repair_path._call_choices(observation)
+    return choices if len({row["call_id"] for row in choices}) == len(choices) else []
+
+
 def _trace_complete(result, start, dispatch, baseline, identity):
     admission = start.get("first_observation") or {}
     request = admission.get("call_path") or {}
@@ -188,7 +233,8 @@ def _trace_complete(result, start, dispatch, baseline, identity):
             and dispatch.get("call_path_request_hash") == sha256_json(request)
             and dispatch.get("execution_source_hash") is not None
             and dispatch["execution_source_hash"] == output.get("execution_source_hash")
-            and _failing_call(baseline) == identity["call_id"]
+            and (_failing_call(baseline) == identity["call_id"]
+                 or identity["call_id"] in {row["call_id"] for row in _call_choices(baseline)})
             and _same_failure(result, baseline, identity)):
         return False
     requested = [request.get("focus", {}), *request.get("watches", [])]
@@ -282,14 +328,24 @@ def review(events, current_diff, completion):
             candidate = {"policy": POLICY, "candidate_diff_hash": current_diff,
                          "case_id": case["case_id"], "replay_action_id": case["root_action_id"],
                          "call_id": call_id}
-            if call_id and _same_failure(results[case["root_action_id"]], baseline, candidate):
+            if (call_id or _call_choices(baseline)) and _same_failure(
+                    results[case["root_action_id"]], baseline, candidate):
                 identity = candidate
                 break
     if identity is None:
         return inactive
-    attempts = [s for s in attempts if s["first_observation_link"] == identity]
+    baseline = results.get(identity["replay_action_id"], {}).get("output", {}).get(
+        "reproduction", {})
+    choices = _call_choices(baseline)
+    ruleless = baseline.get("binding", {}).get("definition", {}).get("diagnostic_rules") is None
+    attempts = [s for s in attempts if all(
+        s["first_observation_link"].get(key) == value
+        for key, value in identity.items() if key != "call_id" or not ruleless)]
     rejected = [s for s in attempts if s.get("probe_request", {}).get("status") == "rejected"]
     reserved = [s for s in attempts if s not in rejected]
+    if ruleless:
+        identity["call_id"] = (reserved[0]["first_observation_link"].get("call_id")
+                               if reserved else None)
     eligible = (identity["case_id"] in completion.get("baseline_failure_case_ids", [])
                 and not completion.get("observation_correction", {}).get("blocked"))
     stale = edited or current_diff != identity["candidate_diff_hash"] or not eligible
@@ -299,8 +355,6 @@ def review(events, current_diff, completion):
     if reserved:
         start = reserved[0]
         result = results.get(start["action_id"])
-        baseline = results.get(identity["replay_action_id"], {}).get("output", {}).get(
-            "reproduction", {})
         complete = bool(result and _trace_complete(
             result, start, dispatches.get(start["action_id"], {}), baseline, identity))
         observation = _observation(start, result, complete)
@@ -312,4 +366,6 @@ def review(events, current_diff, completion):
             "execution_reserved": bool(reserved),
             "execution_attempted": any(s["action_id"] in dispatches for s in attempts),
             "attempt_action_ids": [s["action_id"] for s in attempts],
+            **({"call_mapping": "model_selected_unverified", "call_choices": choices,
+                "call_selection_required": identity["call_id"] is None} if ruleless else {}),
             "observation": observation, "repair_correctness": "unverified"}

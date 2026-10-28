@@ -449,6 +449,9 @@ def program(source, binding, call_path=False):
             new = new.replace("    value = target(*args, **kwargs)",
                               '    row["target_started"] = True\n'
                               "    value = target(*args, **kwargs)")
+        if channel == probe_invocation.CONSTRUCTION_CHANNEL:
+            old = old.replace('row[', 'r[').replace('target(', 't(')
+            new = new.replace('row[', 'r[').replace('target(', 't(')
         if trace.count(old) != 1:
             raise ContractError("call-path observer hook location is unavailable")
         trace = trace.replace(old, new, 1)
@@ -489,7 +492,10 @@ def compare(output, binding):
             if (
                 isinstance(candidate, dict)
                 and set(candidate) == (
-                    {"calls", "incomplete", "observation"} if recorded else {"calls", "incomplete"})
+                    ({"calls", "incomplete", "observation"} if recorded
+                     else {"calls", "incomplete"})
+                    | ({"request_phase"} if channel == probe_invocation.CONSTRUCTION_CHANNEL
+                       else set()))
                 and type(candidate["incomplete"]) is bool
                 and isinstance(candidate["calls"], list)
                 and len(candidate["calls"]) <= 4
@@ -505,6 +511,9 @@ def compare(output, binding):
                     and all(isinstance(p, str) for p in c["sys_path"])
                     for c in candidate["calls"]
                 )
+                and (channel != probe_invocation.CONSTRUCTION_CHANNEL
+                     or probe_invocation.valid_request_phase(
+                         candidate["request_phase"], candidate["calls"], candidate["incomplete"]))
             ):
                 trace = candidate
         except (ValueError, TypeError):
@@ -522,7 +531,8 @@ def compare(output, binding):
         _, reason = observation_json({**result, "stdout": "null"})
         if result.get("setup_checks", {}).get("status") == "failed":
             reason = "setup_check_failed"
-        trace = {key: trace[key] for key in ("calls", "incomplete")}
+        trace = {key: trace[key] for key in ("calls", "incomplete", "request_phase")
+                 if key in trace}
     elif recorded:
         value = trace.get("observation")
         fields = {"count", "json", "error"} | ({"call_count"} if invoked else set())
@@ -545,7 +555,8 @@ def compare(output, binding):
                 reason = "observation_not_after_target_calls"
         if result.get("setup_checks", {}).get("status") == "failed":
             reason = "setup_check_failed"
-        trace = {key: trace[key] for key in ("calls", "incomplete")}
+        trace = {key: trace[key] for key in ("calls", "incomplete", "request_phase")
+                 if key in trace}
     if not trace["calls"] or trace["incomplete"]:
         reason = "declared_call_unobserved_or_incomplete"
     if (channel in probe_invocation.CAPTURE_CHANNELS

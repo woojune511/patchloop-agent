@@ -32,17 +32,23 @@ def offline(monkeypatch):
 
 
 @pytest.fixture
-def failed_request(gateway_factory):
+def failed_request(gateway_factory, request):
     gateway, journal, _ = gateway_factory()
     backend = gateway.probe_sandbox = CompletedFixtureProbe()
-    call = probe(gateway.public_task, "bad-request", source=(
-        f"observed_target()({TEXT!r}, option=False)\n"))
+    configuration = getattr(request, "param", "binding") == "configuration"
+    source = ("observed_target(expected_exceptions=[ValueError])\n" if configuration
+              else f"observed_target()({TEXT!r}, option=False)\n")
+    call = probe(gateway.public_task, "bad-request", source=source)
     result = gateway.execute(call)
     assert result.status == "succeeded", result
     assert result.output["status"] == "failed"
     trace = result.output["reproduction"]["call_observation"]
     assert trace["binding_method"] == probe_invocation.CHANNEL
-    assert trace["calls"][0]["target_started"] is False
+    if configuration:
+        assert trace["calls"] == []
+        assert trace["request_phase"] == {"settings_rejected": True, "target_entries": 0}
+    else:
+        assert trace["calls"][0]["target_started"] is False
     return gateway, journal, backend, call
 
 
@@ -52,6 +58,7 @@ def project(gateway, journal, *, events=None):
         public_task=gateway.public_task, run_id=journal.run_id)
 
 
+@pytest.mark.parametrize("failed_request", ["binding", "configuration"], indirect=True)
 def test_no_target_entry_retains_request_identity_but_never_verifies_task(failed_request):
     gateway, journal, backend, call = failed_request
     before = journal.path.read_bytes()
@@ -73,6 +80,7 @@ def test_no_target_entry_retains_request_identity_but_never_verifies_task(failed
     assert journal.path.read_bytes() == before
 
 
+@pytest.mark.parametrize("failed_request", ["binding", "configuration"], indirect=True)
 def test_correct_request_then_repair_can_verify_and_finish_without_erasing_attempt(
     failed_request,
 ):
@@ -97,6 +105,56 @@ def test_correct_request_then_repair_can_verify_and_finish_without_erasing_attem
     assert submitted.output["delivery_state"] == "cases_verified_delivery"
     assert submitted.output["submission_verification"]["request_attempt_count"] == 1
     assert backend.calls == 3
+
+
+@pytest.mark.parametrize("failed_request", ["configuration"], indirect=True)
+def test_configuration_attempt_requires_settled_typed_host_evidence(failed_request):
+    gateway, journal, _, _ = failed_request
+    original = journal.events()
+    for fault in ("absent", "legacy", "bool_entries", "inconsistent_entries", "untyped",
+                  "not_rejected", "truncated", "no_return"):
+        events = copy.deepcopy(original)
+        result = next(e["payload"]["result"] for e in events
+                      if e["event_type"] == "action_finished")
+        output = result["output"]
+        trace = output["reproduction"]["call_observation"]
+        if fault == "absent":
+            trace.pop("request_phase")
+        elif fault == "legacy":
+            start = next(e["payload"] for e in events if e["event_type"] == "action_started")
+            for binding in (start["reproduction_binding"], output["reproduction"]["binding"]):
+                binding["definition"]["observation_channel"] = probe_invocation.SIGNATURE_CHANNEL
+            trace["binding_method"] = probe_invocation.SIGNATURE_CHANNEL
+        elif fault in {"bool_entries", "inconsistent_entries"}:
+            trace["request_phase"]["target_entries"] = False if fault == "bool_entries" else 1
+        elif fault == "untyped":
+            trace["request_phase"]["settings_rejected"] = 1
+        elif fault == "not_rejected":
+            trace["request_phase"]["settings_rejected"] = False
+        elif fault == "truncated":
+            output["truncated"] = True
+        elif fault == "no_return":
+            events = [e for e in events if e["event_type"] != "action_finished"]
+        state = project(gateway, journal, events=events)
+        assert state["case_count"] == 1 and state["status"] == "unverified", fault
+        assert state.get("request_attempt_count", 0) == 0, fault
+        assert state["baseline_failure_case_ids"] == [], fault
+
+
+@pytest.mark.parametrize("source", [
+    "raise ValueError('invalid observed_target settings')\n",
+    f"observed_target()({TEXT!r})\nobserved_target(expected_exceptions=[ValueError])\n",
+])
+def test_text_or_settings_failure_after_target_entry_cannot_exclude_case(gateway_factory, source):
+    gateway, journal, _ = gateway_factory()
+    gateway.probe_sandbox = CompletedFixtureProbe()
+    result = gateway.execute(probe(gateway.public_task, "unproven", source=source))
+    phase = result.output["reproduction"]["call_observation"]["request_phase"]
+    assert phase in ({"settings_rejected": False, "target_entries": 0},
+                     {"settings_rejected": True, "target_entries": 1})
+    state = project(gateway, journal)
+    assert state["case_count"] == 1 and state["status"] == "unverified"
+    assert state.get("request_attempt_count", 0) == 0
 
 
 @pytest.mark.parametrize("fault", [

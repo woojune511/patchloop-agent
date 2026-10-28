@@ -78,6 +78,17 @@ Acquisition, first observation, general probes that can add a case, observation/
 correction and paired-test/test addition retain a labeled conservative adapter. They are not claimed
 to use the ordinary step model. Other cost policies remain unchanged.
 
+For a known original failure with no pending correction or required diagnosis,
+ordinary probes may release speculative future recovery just as source inspection
+can. Their minimum route still reserves the current probe, a prospective new case's
+post-edit replay, all existing originals, any missing mutation anchor, repair,
+required checks and finish. If the first original observation is still available,
+optional exploration preserves its response, action and execution time too.
+An `observe_original` replay uses the existing binding and introduces no new case.
+All response/action, monetary and execution-time bounds must fit; a larger monetary
+balance cannot compensate for missing action slots. Protected recovery remains
+preferred when all of those resources fit. The public route marks any release.
+
 Before counting or generation, reserve registered check timeouts plus five seconds
 per execution, probe timeout/cleanup, and 30 seconds per successor response.
 Selected comparisons reserve both executions. Test addition also retains its

@@ -127,7 +127,7 @@ def test_v1_through_v7_observer_bytes_remain_frozen():
 
 def test_fresh_observer_with_long_entrypoint_and_trace_stays_within_existing_limit():
     assert probe_invocation.BEHAVIOR_CHANNEL == "invoke-declared-call-v7"
-    assert probe_invocation.CHANNEL == "invoke-declared-call-v9"
+    assert probe_invocation.CHANNEL == "invoke-declared-call-v10"
     binding = {"case_id": "sha256:" + "c" * 64, "definition": {
         "entrypoint": "x." + "a" * 198, "observation_channel": probe_invocation.CHANNEL,
     }}

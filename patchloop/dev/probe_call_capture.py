@@ -329,6 +329,23 @@ def signature_observer(legacy):
     return source
 
 
+def construction_observer(legacy):
+    """v10 records settings rejection before call rows exist; v1-v9 stay exact."""
+    source = signature_observer(legacy)
+    source = source.replace('_r,_m=[],[False]\n', '_r,_m=[],[False]\n_cfg=[False]\n', 1)
+    source = source.replace('  raise ValueError("invalid observed_target settings")',
+                            '  _cfg[0]=True\n'
+                            '  raise ValueError("invalid observed_target settings")', 1)
+    source = source.replace('"observation":_ob},',
+                            '"observation":_ob,"request_phase":{'
+                            '"settings_rejected":_cfg[0],'
+                            '"target_entries":sum(c["target_started"] for c in _r)}},', 1)
+    # Keep the existing 8K host budget at the longest entrypoint, including trace
+    # hooks. These are private locals in fresh host source, not authored code.
+    return re.sub(r"\b(?:target|row|invoke)\b",
+                  lambda match: {"target": "t", "row": "r", "invoke": "v"}[match[0]], source)
+
+
 def valid(call):
     capture = call.get("capture")
     error = call.get("exception")

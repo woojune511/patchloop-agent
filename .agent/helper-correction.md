@@ -71,7 +71,7 @@ checks establish mechanics, not real-model uptake or F0010 repair gain.
 
 ## Original-call argument binding
 
-Fresh v9 `observed_target(...)` wrappers expose `target.signature()`: a bounded
+V9/v10 `observed_target(...)` wrappers expose `target.signature()`: a bounded
 actual callable signature string, or None if unavailable/oversized. Inspect it
 before choosing Python arguments. A zero-parameter CLI reads its own sys.argv;
 setting argv does not add a Python list parameter. No argument coercion occurs.
@@ -79,7 +79,7 @@ Each call records its actual signature again at binding time. `binding_error`
 marks only TypeError from Signature.bind with an available signature; target
 TypeError, import/snapshot errors and missing signatures are not this evidence.
 
-Before the first mutation, a settled original v9 invocation whose valid call rows
+Before the first mutation, a settled original v9/v10 invocation whose valid call rows
 all prove target_started=false and include an explicit binding error may create
 `original-argument-correction-v1`. Its action, input, program, diff and execution
 receipts must agree, with confirmed cleanup and no timeout/truncation/uncertainty.

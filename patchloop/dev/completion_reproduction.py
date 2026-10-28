@@ -155,7 +155,7 @@ def _pre_target_attempts(case, completed_actions):
                 or output.get("execution_policy", {}).get("cleanup_status") != "confirmed"
                 or trace.get("binding_method") != channel
                 or type(trace.get("incomplete")) is not bool
-                or not isinstance(calls, list) or not 1 <= len(calls) <= 4
+                or not isinstance(calls, list) or len(calls) > 4
                 or not all(probe_invocation.valid_call(
                     call, definition["entrypoint"], channel=channel)
                            for call in calls)
@@ -165,6 +165,17 @@ def _pre_target_attempts(case, completed_actions):
                        or call.get("capture", {}).get("status") != "incomplete"
                        for call in calls)):
             return None
+        phase = trace.get("request_phase")
+        configuration_failure = (
+            channel == probe_invocation.CONSTRUCTION_CHANNEL
+            and probe_invocation.valid_request_phase(phase, calls, trace["incomplete"])
+            and phase["settings_rejected"] and phase["target_entries"] == 0
+        )
+        if (channel == probe_invocation.CONSTRUCTION_CHANNEL
+                and not probe_invocation.valid_request_phase(phase, calls, trace["incomplete"])):
+            return None
+        if not calls and not configuration_failure:
+            return None
         attempts.append({
             "action_id": action_id, "input_hash": result["input_hash"],
             "case_id": binding["case_id"], "root_action_id": binding["root_action_id"],
@@ -172,6 +183,7 @@ def _pre_target_attempts(case, completed_actions):
             "diff_hash": result.get("workspace_diff_hash"),
             "status": "pre_target_request_failure", "target_started": False,
             "execution_status": output["status"], "exit_code": output["exit_code"],
+            **({"request_phase": copy.deepcopy(phase)} if configuration_failure else {}),
         })
     return attempts
 
