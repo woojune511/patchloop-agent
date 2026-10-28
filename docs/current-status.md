@@ -24,30 +24,31 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [ruleless path-diagnosis fix](history/2026-10-28-ruleless-path-diagnosis.md)
-connects a valid null-rule original reproduction to the existing bounded diagnosis
-and revision route. When the same captured failure persists and changed Python
-lines were measured but not reached, the model selects a captured call and public
-focus function. The host freezes the original and watches the changed functions.
-Call selection remains unverified and cannot renew preparation, rejection or
-execution allowances. Linked repair predictions use the next comparable original
-replay; canonical rule-based judgments retain their existing requirements.
+The [diagnosis exploration change](history/2026-10-28-diagnosis-exploration.md)
+lets the model inspect public callers and related tests, or observe the original
+call now, while path diagnosis is pending. Repeated reads use existing shared
+resources and preserve diagnosis, missing source evidence, repair, original replay,
+required checks, finish and unused request correction. The one-read quota is removed;
+one diagnostic execution and bounded rejected-request correction remain. Exploration
+cannot bypass original verification or grant repair credit.
 
-Pure re-projection of the saved Astroid-1333 receipts opens this route at candidate2
-(seq164), while candidate1/3 remain ineligible and all original verdicts stay
-refuted. A tiny local fixture verifies diagnosis, recovery without duplicate
-execution, linked repair, replay and delivery to model context. This establishes
-the local mechanism, not live-model uptake or Astroid repair success. The
-[processing comparison](history/2026-10-28-file-processing-results.md) remains
-public diagnostic evidence; its target-specific repair answer was not added to
-runtime prompts or selection logic.
+Already observed public caller/test bodies survive diagnosis projection within
+existing retention and input limits. Already registered dependency source stays
+separate and read-only through diagnosis and repair. Normal run_dev still does not
+automatically register prepared dependencies for source reads; that access gap is
+separate from this change. No new source scope or task-specific answer was added.
+
+Local controls check repeated reads, resource boundaries, recovery and actual input
+delivery. They do not establish model uptake or Astroid repair success. The
+[ruleless connection](history/2026-10-28-ruleless-path-diagnosis.md) and
+[processing comparison](history/2026-10-28-file-processing-results.md) remain
+supporting evidence; the latter shows why upstream selection must inform the repair.
 
 The [model trial](history/2026-10-28-post-reproduction-repair-results.md) stopped at
 three edits despite other resources remaining. First-edit observation with null
 rules, changed-failure diagnosis and final edit-cap continuation are unchanged.
-Whether this newly available earlier path diagnosis improves the model's next
-repair is unresolved. Previously exposed malformed-purpose and stale-example
-quick failures are corrected locally. No new provider execution is funded;
+Whether model-chosen exploration and observation improve the next repair within
+the same caps is unresolved. No new provider execution is funded;
 USD4.13241570 and all earlier allocations remain CLOSED.
 
 ## Supporting evidence

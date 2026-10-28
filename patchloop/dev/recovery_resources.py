@@ -24,6 +24,7 @@ def successor_resources(
     probe_seconds: float, optional_check_seconds: float = 0,
     acquisition_pending: bool = False, test_edit: bool = False,
     protect_failure: bool = False, test_comparison: bool = False,
+    preserve_pending_diagnosis: bool = False,
 ) -> RecoveryResources:
     """Reserve a successful route and at most one available public-failure revision.
 
@@ -37,7 +38,8 @@ def successor_resources(
     future_repair = state.requires_mutation and not editing or test_edit
     repairs = int(future_repair)
     preparation = int(future_repair and not state.anchor_available
-                      and tool not in {"read_file", "search_files"})
+                      and (tool not in {"read_file", "search_files"}
+                           or preserve_pending_diagnosis))
     failure = bool(protect_failure and tool != "finish_task")
     if failure:
         # One read, one repair and new checks. A known failed check is replayed
@@ -72,6 +74,10 @@ def successor_resources(
         replays += 3
         cases += 1
     elif tool in {"run_probe", "observe_original"}:
+        replays += 1
+    if preserve_pending_diagnosis:
+        # Optional caller/test reads leave both the original diagnostic and a
+        # missing current-source anchor ahead. A rejected request executes no probe.
         replays += 1
     if failure:
         checks += all_checks

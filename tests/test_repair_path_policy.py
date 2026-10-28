@@ -76,21 +76,26 @@ def test_diagnosis_preserves_edit_original_recheck_check_and_finish(short):
         assert "preparation_allowance_available" not in review["completion"]["repair_path"]
 
 
-def test_single_preparation_leaves_actual_diagnostic_available_and_has_no_edit_bypass():
+def test_preparation_repeats_until_completion_and_request_correction_use_remaining_budget():
     gateway = Gateway(initial=False)
     state = path_state(gateway)
-    policy = runner._tool_policy(gateway, counters(model=5, tools=6), DevLimits(), snapshot=state)
+    policy = runner._tool_policy(gateway, counters(model=8, tools=9), DevLimits(), snapshot=state)
     assert policy.allowed_tools == {"read_file", "search_files", "run_probe", "stop_task"}
     assert policy.max_parallel_reads == 1
     assert policy.repair_path_diagnosis["preparation_available"] is True
     assert policy.repair_path_diagnosis["preparation_blocked_reason"] is None
-    assert set(policy.tools_closing_after_this_turn) == {"read_file", "search_files"}
-    state.completion_verification["repair_path"]["preparation_available"] = False
-    after = runner._tool_policy(gateway, counters(model=4, tools=5), DevLimits(), snapshot=state)
+    assert policy.model_turns_available_for_exploration == 3
+    assert policy.tool_actions_available_for_exploration == 3
+    assert not policy.tools_closing_after_this_turn
+    state.completion_verification["repair_path"]["preparation_action_ids"] = ["read-1", "read-2"]
+    last = runner._tool_policy(gateway, counters(model=6, tools=7), DevLimits(), snapshot=state)
+    assert last.model_turns_available_for_exploration == 1
+    assert set(last.tools_closing_after_this_turn) == {"read_file", "search_files"}
+    after = runner._tool_policy(gateway, counters(model=5, tools=6), DevLimits(), snapshot=state)
     assert after.allowed_tools == {"run_probe", "stop_task"}
-    assert after.repair_path_diagnosis["preparation_allowance_available"] is False
+    assert after.repair_path_diagnosis["preparation_allowance_available"] is True
     assert after.repair_path_diagnosis["preparation_available"] is False
-    assert after.repair_path_diagnosis["preparation_blocked_reason"] == "allowance_spent"
+    assert after.repair_path_diagnosis["preparation_blocked_reason"] == "completion_horizon"
 
 
 @pytest.mark.parametrize("resource", [None, "model", "tool", "money"])
@@ -98,9 +103,9 @@ def test_unused_optional_preparation_is_offered_only_when_each_resource_funds_it
     gateway = Gateway(initial=False)
     state = path_state(gateway)
     policy = runner._tool_policy(
-        gateway, counters(model=4 if resource == "model" else 5,
-                          tools=5 if resource == "tool" else 6), DevLimits(), snapshot=state,
-        cost_ledger=ledger_for_slots(4 if resource == "money" else 5),
+        gateway, counters(model=5 if resource == "model" else 6,
+                          tools=6 if resource == "tool" else 7), DevLimits(), snapshot=state,
+        cost_ledger=ledger_for_slots(5 if resource == "money" else 6),
         completion_cost_policy=COMPLETION_MINIMUM_POLICY, _preview_inspection=False,
     )
     assert "run_probe" in policy.allowed_tools
@@ -133,7 +138,7 @@ def test_observation_correction_precedence_does_not_project_an_available_prepara
 
 
 @pytest.mark.parametrize("short", [None, "model", "tool", "money"])
-def test_required_anchor_read_fits_once_in_minimum_path(short):
+def test_required_anchor_remains_in_minimum_without_assuming_caller_read_acquires_it(short):
     gateway = Gateway(initial=False, anchor=False)
     state = path_state(gateway)
     policy = runner._tool_policy(
@@ -150,11 +155,10 @@ def test_required_anchor_read_fits_once_in_minimum_path(short):
         assert policy.workflow_gate == "verification_incomplete"
         assert policy.repair_path_diagnosis["preparation_available"] is False
     else:
-        assert policy.allowed_tools == {"read_file", "search_files", "run_probe", "stop_task"}
-        assert policy.repair_path_diagnosis["preparation_available"] is True
-        assert policy.max_parallel_reads == 1
-        assert policy.required_inspection_for_completion
-        assert "counted once" in runner._completion_guidance(state, policy)["message"]
+        assert policy.allowed_tools == {"run_probe", "stop_task"}
+        assert policy.repair_path_diagnosis["preparation_available"] is False
+        assert policy.max_parallel_reads == 0
+        assert not policy.required_inspection_for_completion
 
 
 @pytest.mark.parametrize("status", ["diagnosed", "verification_incomplete"])

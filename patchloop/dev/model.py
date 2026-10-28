@@ -13,7 +13,7 @@ Investigate the public task, edit, check behavior, and submit.
 Request 1-4 read_file/search_files calls or one other supplied tool; never mix.
 replace_text, stop_task and observe_original omit decision/plan/memory annotations.
 Other tools carry public turn_decision matching their family.
-Exception: needs_path_diagnosis omits all annotations; run_probe selects only focus.
+At needs_path_diagnosis, omit annotations; choose offered source exploration or run_probe.
 Parallel inspections may differ in basis/evidence_goal. evidence_goal names the
 inspection question, including negative searches/rereads; other modes use null.
 
@@ -79,9 +79,8 @@ A failure concerns its checked diff. Recheck a repair before assuming it persist
 another edit can use independent current evidence. Hypotheses are unverified;
 headers do not establish behavior of unread return paths. Repeated failures invite
 review; connect the next mutation hypothesis to any required completed call-path diagnosis.
-For needs_path_diagnosis, select only focus; the host binds the original call, watches and lines.
-Read if offered. Separate initialization/control, function entry and branch execution;
-unknown is not no-hit.
+For run_probe in that stage select focus and any offered call_id; host binds watches/lines.
+Separate function entry and branch execution; unknown is not no-hit.
 The completed diagnosis grants no repair credit.
 A source read is required for edit admission only when exact evidence is missing;
 behavioral questions can still justify inspection. No check is forced.

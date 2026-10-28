@@ -101,14 +101,16 @@ def test_selection_and_changed_call_attempt_cannot_refill_allowances():
             "repair_path_link": {**repair_path.link(initial), "call_id": call_id},
             "probe_request": {"status": "rejected"}}})
     current = repair_path.review(events, SOURCE, completion)
-    assert current["rejected_requests"] == 1 and not current["preparation_available"]
+    assert current["rejected_requests"] == 1 and current["preparation_available"]
+    assert current["preparation_action_ids"] == ["read"]
     selected = repair_path.validate(current, "run_probe", request("call-2"))
     events.append({"event_type": "action_started", "payload": {
         "action_id": "admitted", "tool": "run_probe", "repair_path_link": selected,
         "diagnosis_request": {"call_path": request("call-2")["call_path"]}}})
     fixed = repair_path.review(events, SOURCE, completion)
     assert fixed["call_id"] == "call-2" and not fixed["call_selection_required"]
-    assert fixed["rejected_requests"] == 1 and not fixed["preparation_available"]
+    assert fixed["rejected_requests"] == 1 and fixed["preparation_available"]
+    assert fixed["preparation_action_ids"] == ["read"]
     with pytest.raises(ContractError):
         repair_path.validate(fixed, "run_probe", request("call-1"))
     events.append({"event_type": "action_started", "payload": {

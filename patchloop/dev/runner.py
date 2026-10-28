@@ -118,7 +118,11 @@ from patchloop.dev.native_sources import (
 )
 from patchloop.dev.probe_observation import probe_observation, project_probe_result
 from patchloop.dev.public_history import NATIVE
-from patchloop.dev.recovery_resources import CHECK_OVERHEAD_SECONDS, successor_resources
+from patchloop.dev.recovery_resources import (
+    CHECK_OVERHEAD_SECONDS,
+    FOLLOWUP_SECONDS,
+    successor_resources,
+)
 from patchloop.dev.repair_recheck import (
     latest_repair_check,
     repair_recheck_context,
@@ -678,8 +682,11 @@ def _completion_guidance(
             "The host observes the selected call even outside focus and selects "
             "changed-function watches, parameter fields and executable lines, and binds "
             "the original replay. Omit general plan/memory annotations. "
-            "One optional preparation read, one actual diagnostic execution "
-            "and one rejected-request correction are bounded separately. "
+            "Explore public callers or tests with the offered reads/searches, or run the "
+            "trace when ready. Exploration uses the remaining shared budget and preserves "
+            "completion plus one unused rejected-request correction. Diagnostic execution "
+            "and request correction remain separately bounded. Capacity is a reservation forecast; "
+            "each action rechecks cost and time. "
             "Function entry, branch execution and behavior are "
             "different observations. A complete diagnosis must inform the next hypothesis before "
             "another repair; incomplete observation returns verification incomplete."
@@ -689,18 +696,18 @@ def _completion_guidance(
             message += (
                 " Select call_id from the captured call_choices. Its relation to the failure "
                 "is model-selected and unverified; selecting another call does not renew "
-                "preparation, execution or correction allowances.")
+                "the shared budget, execution or correction allowance.")
         if diagnosis.get("preparation_available"):
             message += (
-                " The offered preparation read can acquire the source anchor still required "
-                "for repair; that read is counted once in the minimum completion path."
+                " A current-source repair anchor is still required and remains reserved; "
+                "reading a caller or test does not establish it."
                 if diagnosis.get("preparation_required_for_completion") else
-                " One preparation read is offered if it can resolve a concrete question."
+                " Reads may continue while each next action fits the remaining budget."
             )
         else:
             message += (
-                " No preparation read is offered this turn; an unused allowance does not "
-                "make a read available."
+                " No preparation read is offered this turn; the remaining resources "
+                "are reserved for diagnosis, repair and verification."
             )
     elif (policy.repair_prediction or {}).get("status") == "needs_test_comparison":
         stage = policy.workflow_gate
@@ -887,8 +894,7 @@ def _tool_policy(
     path_diagnosis = verification.get("repair_path", {})
     path_blocked = bool(path_diagnosis.get("blocked") and not observation_blocked)
     path_available = bool(path_blocked and path_diagnosis.get("status") == "needs_path_diagnosis")
-    path_preparation = bool(path_available and path_diagnosis.get("preparation_available")
-                            and not _diagnostic_spent)
+    path_preparation = bool(path_available and path_diagnosis.get("preparation_available"))
     repair_prediction = verification.get("repair_prediction", {})
     test_comparison_pending = repair_prediction.get("status") == "needs_test_comparison"
     diagnosed_test_available = bool(
@@ -1090,7 +1096,8 @@ def _tool_policy(
     # A comparable original failure on this candidate earns one diagnostic turn.
     # Spend speculative recovery only, retaining the real minimum repair/check/
     # replay/finish path. The journal-derived credit is independent of restarts.
-    diagnostic_relaxes_inspection = (diagnostic_available and not _diagnostic_spent
+    diagnostic_relaxes_inspection = (diagnostic_available and not path_blocked
+                                    and not _diagnostic_spent
                                     and diagnostic.get("preparation_available", True)) and (
         remaining_model_calls - 1 < inspection_floor
         or remaining_tool_actions - 1 < inspection_tool_floor
@@ -1296,15 +1303,18 @@ def _tool_policy(
             allowed.add("run_probe")
             probe_floor = budget.minimum - 1
             probe_tool_floor = budget.minimum_tool_actions - 1
-            after_preparation = completion_budget(replace(completion_state, anchor_available=True))
-            if (path_preparation and remaining_model_calls - 1 >= after_preparation.minimum
-                    and remaining_tool_actions - 1 >= after_preparation.minimum_tool_actions):
+            # Caller/test exploration need not acquire a repair anchor. Preserve
+            # that missing read and the existing request-correction opportunity.
+            correction = int(completion_state.path_request_correction_available)
+            inspection_floor = budget.minimum + correction
+            inspection_tool_floor = budget.minimum_tool_actions + correction
+            inspection_model_slack = max(0, remaining_model_calls - inspection_floor)
+            inspection_tool_slack = max(0, remaining_tool_actions - inspection_tool_floor)
+            if path_preparation and inspection_model_slack and inspection_tool_slack:
                 allowed.update({"read_file", "search_files"})
                 inspection_allowed = True
-                max_parallel_reads = exploration_capacity = 1
-                inspection_model_slack = inspection_tool_slack = 1
-                inspection_floor = after_preparation.minimum
-                inspection_tool_floor = after_preparation.minimum_tool_actions
+                max_parallel_reads = 1
+                exploration_capacity = min(inspection_model_slack, inspection_tool_slack)
     if helper_blocked:
         workflow_gate = ("needs_original_argument_correction"
                          if helper_fix.get("policy") == helper_recovery.ARGUMENT_POLICY
@@ -1343,6 +1353,9 @@ def _tool_policy(
         minimum_cost_successors = {
             tool: minimum_successor_calls(completion_state, tool) for tool in allowed
         }
+        if path_available:
+            for tool in {"read_file", "search_files"} & allowed:
+                minimum_cost_successors[tool] = inspection_floor
         if repair_test_edit_enabled and "replace_text" in allowed:
             minimum_cost_successors["replace_text"] = max(
                 minimum_cost_successors["replace_text"], test_edit_budget.minimum - 1,
@@ -1387,7 +1400,9 @@ def _tool_policy(
                                      >= selected_test_tool_floor),
                     optional_check_seconds=max((float(getattr(s, "timeout_seconds", 0)) + 5
                                                 for s in suites), default=0),
-                    test_edit=repair_test_edit_enabled and tool == "replace_text")
+                    test_edit=repair_test_edit_enabled and tool == "replace_text",
+                    preserve_pending_diagnosis=(
+                        path_available and tool in {"read_file", "search_files"}))
                 route = successor_resources(completion_state, tool,
                                             protect_failure=recover, **options)
 
@@ -1405,7 +1420,8 @@ def _tool_policy(
                 # A useful immediate repair/check may spend speculative recovery.
                 # Optional exploration cannot consume that reserved revision.
                 if recover and not fits(route) and (tool in {"replace_text", "run_check"}
-                        or required_inspection and tool in {"read_file", "search_files"}):
+                        or required_inspection and not path_available
+                        and tool in {"read_file", "search_files"}):
                     route = successor_resources(completion_state, tool,
                                                 protect_failure=False, **options)
                 if tool in {"finish_task", "stop_task"} or fits(route):
@@ -1441,9 +1457,29 @@ def _tool_policy(
                 funded_calls - minimum_cost_successors["read_file"],
             )
             exploration_capacity = min(exploration_capacity, inspection_model_slack)
+            if path_available and completion_cost_policy == COMPLETION_RECOVERY_POLICY:
+                route = recovery_routes["read_file"]
+                reserved = sum(cost_ledger.future_call_reservation_nanos(output_ceiling=n)
+                               for n in route.output_ceilings) + correction_reserve
+                read_cost = cost_ledger.future_call_reservation_nanos(
+                    output_ceiling=correction_ceiling if correction_pending else finalization_floor)
+                # Count-only capacity is an upper bound; qualify it by the same
+                # conservative role reservation used to admit this actual read.
+                cost_reads = max(0, (cost_ledger.remaining_nanos - reserved) // read_cost)
+                inspection_model_slack = min(inspection_model_slack, cost_reads)
+                if remaining_seconds is not None:
+                    time_reads = max(0, int((remaining_seconds - route.seconds)
+                                           // FOLLOWUP_SECONDS))
+                    inspection_model_slack = min(inspection_model_slack, time_reads)
+                exploration_capacity = min(exploration_capacity, inspection_model_slack)
     if diagnostic_relaxes_inspection and inspection_allowed:
         inspection_model_slack = min(inspection_model_slack, 1)
         inspection_tool_slack = min(inspection_tool_slack, 1)
+    if path_available and inspection_allowed:
+        # This stage offers one read/search per response, so its visible model
+        # and action capacities share the tightest currently admitted resource.
+        exploration_capacity = min(inspection_model_slack, inspection_tool_slack)
+        inspection_model_slack = inspection_tool_slack = exploration_capacity
     if ((observation_blocked or path_blocked or helper_blocked) and not test_comparison_pending
             and "run_probe" not in allowed):
         workflow_gate = "verification_incomplete"
@@ -1538,9 +1574,12 @@ def _tool_policy(
                     or remaining_tool_actions - 1 < probe_budget.protected_tool_actions
                 ))
             )),
-            "limit": "One preparation read and one model diagnostic per refuted candidate "
+            "limit": ("Pending path diagnosis permits repeated reads within its projected "
+                      "shared completion budget; its diagnostic execution and request "
+                      "correction remain bounded separately." if path_blocked else
+                     "One preparation read and one model diagnostic per refuted candidate "
                      "may spend speculative recovery. The minimum repair, checks, replay and "
-                     "finish must still fit; request correction for path diagnosis is separate.",
+                     "finish must still fit; request correction for path diagnosis is separate."),
         } if diagnostic is not None else None),
         observation_correction=({
             **observation_fix, "offered_tools": sorted(allowed),
@@ -1550,6 +1589,10 @@ def _tool_policy(
             _repair_path_resources(
                 path_diagnosis, allowed, required_inspection=required_inspection,
                 closure_reason=closure_reason,
+                model_turns_available=(inspection_model_slack if inspection_allowed else 0),
+                tool_actions_available=(inspection_tool_slack if inspection_allowed else 0),
+                minimum_calls=budget.minimum, minimum_tool_actions=budget.minimum_tool_actions,
+                request_correction_reserved=completion_state.path_request_correction_available,
             ) if path_diagnosis.get("status") not in {None, "not_needed"}
             and not observation_blocked else None
         ),
@@ -1673,6 +1716,12 @@ def _tool_policy(
             "limit": "Minimum output admission, not a guarantee of useful output or task success.",
         })
     if inspection_allowed and _preview_inspection:
+        if path_available:
+            # One action per response; the forecast already incorporates the
+            # unchanged anchor, correction, monetary and nominal-time reserves.
+            # Do not assume a useful read or mutate the live cost ledger to preview it.
+            return replace(policy, tools_closing_after_this_turn=(
+                ("read_file", "search_files") if exploration_capacity == 1 else ()))
         # Advisory single-inspection forecast, not another admission rule. Reuse
         # the actual policy so optional probes/checks cannot disappear unannounced.
         # Evidence/gate stay unchanged; a useful read or a different action may
@@ -1716,8 +1765,11 @@ def _tool_policy(
 def _repair_path_resources(
     state: dict[str, Any], allowed_tools: set[str] | frozenset[str], *,
     required_inspection: bool, closure_reason: str | None,
+    model_turns_available: int = 0, tool_actions_available: int = 0,
+    minimum_calls: int = 0, minimum_tool_actions: int = 0,
+    request_correction_reserved: bool = False,
 ) -> dict[str, Any]:
-    """Qualify the durable unused allowance against this turn's actual tool offer."""
+    """Qualify pending exploration against this turn's actual resource admission."""
     allowance = bool(state.get("preparation_available"))
     pending = state.get("status") == "needs_path_diagnosis" and bool(state.get("blocked"))
     offered = bool(allowance and pending and {"read_file", "search_files"} & allowed_tools)
@@ -1725,6 +1777,12 @@ def _repair_path_resources(
         **state,
         "preparation_allowance_available": allowance,
         "preparation_available": offered,
+        "preparation_model_turns_available": model_turns_available if offered else 0,
+        "preparation_tool_actions_available": tool_actions_available if offered else 0,
+        "preparation_limit": "shared_completion_budget",
+        "preparation_completion_calls_reserved": minimum_calls if pending else 0,
+        "preparation_completion_tool_actions_reserved": minimum_tool_actions if pending else 0,
+        "preparation_request_correction_reserved": bool(pending and request_correction_reserved),
         "preparation_required_for_completion": bool(pending and required_inspection),
         "preparation_blocked_reason": (
             None if offered else "diagnosis_unavailable" if not pending
@@ -2264,6 +2322,10 @@ def _build_context(
         "recent_attempt_result_next_question": _cards(journal, correction),
         "public_task": package.public.model_dump(mode="json"),
     }
+    if getattr(gateway, "dependency_sources", None) is not None:
+        # Preserve the existing registered, independently bounded read-only pool.
+        # Never merge it into repository spans or acquire another source scope here.
+        payload["dependency_sources"] = gateway.dependency_context_spans()
     if gateway.public_task.test_suites:
         payload["recent_tests"] = recent_tests(journal.events(), summary.patch_hash)
     if planning_policy != "none":

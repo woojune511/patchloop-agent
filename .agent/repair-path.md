@@ -51,9 +51,13 @@ Test additions cannot become the implementation hypothesis. Unknown line coverag
 does not trigger a fabricated no-hit. A helper, old candidate, changed call,
 conflicting judgment or different file hash cannot trigger the diagnosis.
 
-The current candidate permits one preparation `read_file`/`search_files` when
-offered, one `run_probe` replay of the frozen original, and stop. Repair, checks and
-tests wait for the diagnosis. A fresh request supplies only `focus` (origin, path,
+The current candidate permits affordable `read_file`/`search_files` exploration,
+one `run_probe` replay of the frozen original, and stop. The model chooses whether
+to inspect public callers, callees or related tests, or observe execution now.
+Reads run one at a time in this stage and have no separate one-read quota. Every
+read still consumes the existing global resources. Repair, checks and test execution
+wait for the diagnosis; reading a test does not run it. A trace request supplies
+`focus` (origin, path,
 function), selecting a public function on the suspected failure path. The host
 maps current unobserved changed ranges to their innermost unique Python function
 frames and selects their parameter names, up to four watches and six fields each.
@@ -67,9 +71,10 @@ At least one watch must intersect the refuted mutation's unobserved changed rang
 The original program, arguments, expected output and failure declaration stay fixed.
 
 At `needs_path_diagnosis`, run_probe accepts focus, plus call_id only when selection
-is offered. Once admitted, that call is fixed for request recovery. Preparation,
-rejected-request and execution allowances belong to the candidate/case/failure/
-mutation, so another call ID cannot refill them. The original program still runs
+is offered. Once admitted, that call is fixed for request recovery. Read receipts
+retain their action identities; they do not grant new budget. Rejected-request and
+execution allowances belong to the candidate/case/failure/mutation, so another
+call ID cannot refill them. The original program still runs
 all its calls, and the full comparison and identities must remain consistent.
 All offered diagnosis tools omit turn_decision, plan and memory annotations, including
 the preparation read and stop. Explicit null annotations are rejected too. The parser,
@@ -100,9 +105,14 @@ silently discarded or changed to admit a request.
 
 The full public audit context stays in external CAS. The model's diagnosis view
 keeps the immutable task, original/current call observations and judgments, candidate
-patch, host watches, changed-file source, observed navigation headers, latest diagnostic
-or preparation results, offered tools, correction and remaining resources. General
+patch, host watches, already bounded public source bodies (including observed caller
+and test files), observed navigation headers, latest diagnostic or exploration
+results, offered tools, correction and remaining resources. General
 notes, plan and unrelated repair bookkeeping are absent. It reads no private evidence.
+Already registered dependency callers retain their separately bounded, read-only
+source/provenance field through diagnosis and repair. They are never merged into
+repository edit evidence. This does not register new dependencies in normal runs;
+the existing global input token/count limits still apply to the actual request.
 
 For segmented-v1, entering/leaving diagnosis starts a public-evidence segment with
 the appropriate system prompt. Diagnosis seeds do not import old reasoning or
@@ -197,8 +207,9 @@ must be unchanged, and a fresh current original must reproduce the same captured
 failure with identical binding, conditions, image and profile. Configuration,
 conftest, initialization or unproven/legacy edits cannot qualify. The reused trace
 keeps its historical diff/snapshot and `current_snapshot_trace=false`; it is not a
-new trace of the current snapshot. Unknown attempts and consumed request/preparation
-allowances carry forward too. Source changes still need their own current evidence.
+new trace of the current snapshot. Unknown attempts, consumed request allowances
+and charged read history carry forward too. Source changes still need
+their own current evidence.
 
 ## Selected tests
 
@@ -237,13 +248,19 @@ diagnosis path, ordinary selected tests retain their existing behavior.
 ## Resources and recovery
 
 Minimum completion includes the pending diagnostic once, followed by mutation,
-fresh required checks, original replay and finish. Protected capacity separately
-includes an optional preparation read and request correction. A read already
-reserved to acquire a missing repair anchor or for current repair is counted once.
-Optional preparation never inflates the minimum. Model-facing `preparation_available`
-means a read/search is actually offered after resource filtering, in both path-state
-locations. `preparation_allowance_available` separately retains the unspent durable
-slot; blocked reason and required-anchor status explain the difference. Lack of capacity
+fresh required checks, original replay and finish. Extra diagnosis-stage reads
+preserve that minimum plus unused diagnostic request correction; an arbitrary
+caller/test read is not assumed to supply a missing mutation anchor. Provider
+admission also reserves the successor's response roles and pending diagnostic
+execution time. Protected capacity retains its existing optional-read/recovery
+forecast; repeated exploration cannot refill any global limit.
+Model-facing `preparation_available` means a read/search is actually offered after
+resource filtering, in both path-state locations. The compatibility field
+`preparation_allowance_available` describes eligibility while diagnosis is pending,
+not an unused one-read ticket. `preparation_action_ids` remains the charged read
+history. Blocked reason and required-anchor status explain current availability.
+When surplus is exhausted, only the affordable diagnostic or stop is offered.
+Lack of completion capacity
 or incomplete diagnosis returns `VERIFICATION_INCOMPLETE`. Ordinary normal and
 protocol-correction output ceilings and monetary accounting are unchanged.
 
@@ -285,3 +302,6 @@ For refutation-linked revisions and test-only diagnosis reuse, use the short
 For null-rule call selection, linked prediction and recovery, use
 `uv run --locked pytest @tests/ruleless-diagnosis.txt --basetemp C:/pt/<unique>`;
 see the [local implementation record](../docs/history/2026-10-28-ruleless-path-diagnosis.md).
+For exploration choice, source delivery, recovery and resource boundaries, use
+`tests/diagnosis-exploration.txt`; see the
+[exploration implementation record](../docs/history/2026-10-28-diagnosis-exploration.md).

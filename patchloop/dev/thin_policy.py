@@ -13,7 +13,8 @@ read_file/search_files calls or exactly one supplied action. Do not mix these
 shapes. Use only tools offered on the current turn.
 replace_text, stop_task and observe_original omit decision/plan/memory annotations.
 At needs_path_diagnosis use its small schema without any plan/memory annotation;
-run_probe selects only focus. General note instructions pause for that stage.
+Choose offered caller/test reads or searches, or run_probe with focus and any offered
+call_id when ready to observe. General note instructions pause for that stage.
 
 Tool availability depends on current evidence and remaining budgets. Without
 current editable source evidence, replace_text is temporarily absent;

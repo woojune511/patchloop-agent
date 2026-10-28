@@ -366,7 +366,10 @@ def review(events, current_diff, completion):
         **({"diagnosis_evidence": evidence} if evidence else {}),
         **({"diagnosis_observation": _summary(diagnosis["output"]["call_path"])}
            if complete else {}),
-        "preparation_available": not preparations, "preparation_action_ids": preparations,
+        # Reads are exploration charged to the existing completion budget, not
+        # a one-use ticket. The runner qualifies availability before each turn.
+        "preparation_available": not complete and not exhausted,
+        "preparation_action_ids": preparations,
         "rejected_requests": len(rejected), "execution_attempted": bool(executed),
         "unobserved_changes": changes,
         "factual_refutation": {
@@ -386,7 +389,9 @@ def review(events, current_diff, completion):
                                  "expected_behavior"),
                              "status": "original_effect_refuted"},
         "interpretation": "The same original failure persists and changed lines were not "
-        "observed. Diagnose the failing call path before another edit. Function entry, branch "
+        "observed. Explore public callers and related tests or diagnose the original call "
+        "now, within the remaining completion budget. Diagnose before another edit. "
+        "Function entry, branch "
         "execution and repair correctness are separate claims.",
     }
 

@@ -110,7 +110,12 @@ def test_diagnosis_stage_correction_and_return_preserve_budgets(
     assert "working_plan" not in returned  # Ordinary repair now has its own compact view.
     plan_text = "Observe original, diagnose the missed branch, repair and verify."
     assert plan_text not in canonical_json(inputs[3])
-    assert before["diagnosis_stage"] == corrected["diagnosis_stage"]
+    original_stage = copy.deepcopy(before["diagnosis_stage"])
+    corrected_stage = copy.deepcopy(corrected["diagnosis_stage"])
+    for key in ("preparation_model_turns_available", "preparation_tool_actions_available"):
+        # A correction consumes resources, never original evidence or a diagnostic execution.
+        assert corrected_stage["path"].pop(key) <= original_stage["path"].pop(key)
+    assert original_stage == corrected_stage
     assert corrected["remaining_budget"]["model_calls"] == before["remaining_budget"][
         "model_calls"] - 1
     assert corrected["remaining_budget"]["tool_actions"] == before["remaining_budget"][

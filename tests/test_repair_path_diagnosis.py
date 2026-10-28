@@ -122,11 +122,12 @@ def test_failed_repair_requires_path_then_links_next_hypothesis(gateway_factory)
     blocked = gateway.execute(mutation_call(gateway, action_id="premature"))
     assert blocked.status == "failed" and gateway.accepted_mutations == 1
     assert gateway.execute(finish_call()).status == "failed"
-    # One source preparation does not consume the actual diagnostic attempt.
+    # Exploration does not consume the actual diagnostic attempt.
     read = read_calls()[1].model_copy(update={"action_id": "path-read"})
     assert gateway.execute(read).status == "succeeded"
-    assert not state(gateway)["preparation_available"] and not state(gateway)["execution_attempted"]
-    assert gateway.execute(read.model_copy(update={"action_id": "extra-read"})).status == "failed"
+    assert state(gateway)["preparation_available"] and not state(gateway)["execution_attempted"]
+    extra_read = read.model_copy(update={"action_id": "extra-read"})
+    assert gateway.execute(extra_read).status == "succeeded"
     result = gateway.execute(diagnosis(gateway))
     assert result.status == "succeeded", result
     trace = result.output["call_path"]
