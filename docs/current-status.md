@@ -76,10 +76,14 @@ tools remained available at finish. The subsequent [operator replay](history/202
 now confirms that the saved patch leaves the public failure unchanged: the same
 helper produces nine spaces before `my_id` on both original and candidate, versus
 the expected eight, with identical SQL output and L003 repeated-fix warning.
-The candidate patch identity and healthy executions were verified. This answers
-the candidate-behavior question; the changed branch's execution and why the edit
-has no observable effect remain unresolved. Public regression coverage missed this
-specific example. No runtime policy or budget was changed by this local replay.
+The [branch trace](history/2026-10-29-sqlfluff-branch-diagnosis.md) confirms that the
+changed L036 branch ran once and its fix was accepted, but produced the same
+observed intermediate SQL as the original. Later L003 additions create two
+four-space pieces; L039 reduces the second to one, then L003 replaces only the
+first with eight, leaving nine spaces. A repeated no-op fix is rejected as a seen
+state. The next repair question is whole-indent normalization and its regression
+coverage, not branch reachability or more budget. No repair, runtime policy or
+budget change was made by these operator diagnostics.
 This confirms delivery and the source-to-edit path in one run, not causal quality
 improvement. Protocol correction was unused, and the private failure cause is
 unestablished. No further paid invocation is authorized.
