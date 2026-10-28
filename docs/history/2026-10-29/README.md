@@ -19,3 +19,4 @@
 - [SQLFluff observation follow-up: accepted repair, five delivered cards, no post-edit replay](../2026-10-29-probe-followup-single-results.md)
 - [Why the SQLFluff repair succeeded: changed intermediate indentation and regression-scoped reuse](../2026-10-29-sqlfluff-success-mechanism.md)
 - [pvlib saved candidates: reported call repaired, boundary differences and unresolved acceptance failure](../2026-10-29-pvlib-saved-candidate-comparison.md)
+- [Private evaluation log retention and native pvlib A/B reassessment](../2026-10-29-private-evaluation-logs-pvlib-native.md)

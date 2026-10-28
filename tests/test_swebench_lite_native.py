@@ -1,12 +1,34 @@
+import hashlib
 import json
 
 import pytest
 
 from diagnostics.swebench_lite_native import (
     load_predictions,
+    preserve_log_manifest,
     restore_transport_bytes,
     validate_rows,
 )
+
+
+def test_native_operator_manifest_preserves_full_logs_and_rejects_overwrite(tmp_path):
+    log = tmp_path / "logs/test_output.txt"
+    log.parent.mkdir()
+    raw = b"x" * 100_000 + b"\nAssertionError: operator-only synthetic failure\n"
+    log.write_bytes(raw)
+    report = tmp_path / "logs/report.json"
+    report.write_text('{"resolved":false}')
+    receipt = preserve_log_manifest(tmp_path)
+    assert receipt["agent_context_reinjected"] is False
+    assert receipt["files"]["logs/test_output.txt"] == {
+        "sha256": hashlib.sha256(raw).hexdigest(), "bytes": len(raw),
+    }
+    assert log.read_bytes() == raw
+    assert json.loads((tmp_path / "operator-artifacts.json").read_text()) == receipt
+    before = (tmp_path / "operator-artifacts.json").read_bytes()
+    with pytest.raises(FileExistsError):
+        preserve_log_manifest(tmp_path)
+    assert (tmp_path / "operator-artifacts.json").read_bytes() == before
 
 
 @pytest.mark.parametrize("count", [1, 3, 20])

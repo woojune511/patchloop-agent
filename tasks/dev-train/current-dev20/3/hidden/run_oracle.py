@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import base64
+import hashlib
 import json
 import os
 import shutil
@@ -10,6 +12,25 @@ import sys
 import tempfile
 import types
 from pathlib import Path
+
+DIAGNOSTIC_STREAM_LIMIT_BYTES = 24_000
+
+
+def execution_log(stage, stdout, stderr):
+    """Keep private diagnostics in the evaluator receipt, never in solver feedback."""
+    streams = {}
+    for name, value in (("stdout", stdout), ("stderr", stderr)):
+        raw = value if isinstance(value, bytes) else (value or "").encode("utf-8")
+        kept = raw[-DIAGNOSTIC_STREAM_LIMIT_BYTES:]
+        streams[name] = {
+            "encoding": "base64",
+            "content": base64.b64encode(kept).decode("ascii"),
+            "sha256": hashlib.sha256(raw).hexdigest(),
+            "original_bytes": len(raw),
+            "retained_bytes": len(kept),
+            "omitted_prefix_bytes": len(raw) - len(kept),
+        }
+    return {"schema": "private-evaluation-log-v1", "stage": stage, **streams}
 
 
 def main():
@@ -48,7 +69,10 @@ def main():
             capture_output=True,
         )
         if applied.returncode:
-            print(json.dumps({"status": "ERROR", "reason": "original_test_patch_apply"}))
+            print(json.dumps({
+                "execution_log": execution_log("test_patch", applied.stdout, applied.stderr),
+                "status": "ERROR", "reason": "original_test_patch_apply",
+            }))
             return 2
         environment = dict(os.environ)
         environment["PYTHONPATH"] = os.pathsep.join([str(checkout / "src"), str(checkout)])
@@ -62,8 +86,11 @@ def main():
                 capture_output=True,
                 timeout=240,
             )
-        except subprocess.TimeoutExpired:
-            print(json.dumps({"status": "ERROR", "reason": "original_tests_timeout"}))
+        except subprocess.TimeoutExpired as error:
+            print(json.dumps({
+                "execution_log": execution_log("timeout", error.stdout, error.stderr),
+                "status": "ERROR", "reason": "original_tests_timeout",
+            }))
             return 2
         log = Path(temporary) / "test-output.txt"
         log.write_text(
@@ -79,18 +106,27 @@ def main():
             + str(result.returncode)
             + "\n"
         )
-        statuses, found = get_logs_eval(spec, str(log))
-        missing = [case for case in spec.FAIL_TO_PASS + spec.PASS_TO_PASS if case not in statuses]
-        report = get_eval_report(
-            spec,
-            {"instance_id": spec.instance_id, "model_patch": "submitted-workspace"},
-            str(log),
-            include_tests_status=True,
-        )[spec.instance_id]
+        try:
+            statuses, found = get_logs_eval(spec, str(log))
+            required = spec.FAIL_TO_PASS + spec.PASS_TO_PASS
+            missing = [case for case in required if case not in statuses]
+            report = get_eval_report(
+                spec,
+                {"instance_id": spec.instance_id, "model_patch": "submitted-workspace"},
+                str(log),
+                include_tests_status=True,
+            )[spec.instance_id]
+        except Exception as error:
+            print(json.dumps({
+                "execution_log": execution_log("grading", result.stdout, result.stderr),
+                "status": "ERROR", "reason": type(error).__name__, "detail": str(error),
+            }))
+            return 2
         complete = found and not missing and result.returncode in (0, 1)
         print(
             json.dumps(
                 {
+                    "execution_log": execution_log("tests", result.stdout, result.stderr),
                     "resolved": report["resolved"],
                     "complete": complete,
                     "test_exit": result.returncode,

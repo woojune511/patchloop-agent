@@ -3,10 +3,29 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
 from pathlib import Path
+
+
+def preserve_log_manifest(output: Path):
+    """Bind full native logs for operators, including unsuccessful evaluations."""
+    files = {}
+    for path in sorted(output.rglob("*")):
+        if path.is_file():
+            content = path.read_bytes()
+            files[path.relative_to(output).as_posix()] = {
+                "sha256": hashlib.sha256(content).hexdigest(), "bytes": len(content),
+            }
+    receipt = {
+        "schema": "native-operator-artifacts-v1", "agent_context_reinjected": False,
+        "files": files,
+    }
+    with (output / "operator-artifacts.json").open("x", encoding="utf-8") as stream:
+        json.dump(receipt, stream, indent=2)
+    return receipt
 
 
 def restore_transport_bytes(path: Path, expected: bytes):
@@ -217,6 +236,7 @@ def run(
             encoding="utf-8",
         )
         raw_client.close()
+        preserve_log_manifest(output)
         if remaining:
             raise RuntimeError("native control container cleanup unconfirmed")
 

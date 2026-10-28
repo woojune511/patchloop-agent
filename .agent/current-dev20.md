@@ -57,6 +57,17 @@ the submitted test bytes. Native SWE-bench evaluation uses a separately hashed
 source-only patch; the full submitted patch is preserved alongside it. Neither
 private results nor original/reference test patches enter solver context.
 
+Private oracle receipts retain each test stream's final 24,000 bytes, encoded as
+base64 with its full-stream hash, original length and omitted-prefix count. Patch
+application errors, timeouts and grading errors retain available output as well;
+exit 0/1/2 grading semantics remain unchanged. These operator artifacts use the
+existing evaluator CAS, never public tool feedback or model requests. Outer check
+capture limits still apply and remain explicit. Native SWE-bench runs preserve
+full test output, reports and runner logs in the external output directory, with
+an exclusive `operator-artifacts.json` hash manifest even after failure. Current
+dev20 adapters and declared adapter hashes are refreshed together; historical
+packages, original test patches and reference patches are not changed.
+
 ## Parallel stop and accounting
 
 Every worker has its own source checkout, journal, provider client, model context,

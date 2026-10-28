@@ -14,7 +14,7 @@ hidden_artifacts:
 - path: hidden/oracle.json
   sha256: sha256:4db089b972c5a6f8d0e992bb7c56828f9789d0f330bd65584b54cdf09db863b5
 - path: hidden/run_oracle.py
-  sha256: sha256:19d1bac629b80eb2262bad533c86e5082089846ad352583782c76ab042cac650
+  sha256: sha256:73600985f41ae4a32868b98c3ad5b5809e2ef033a756e3215ca7c5b257ff7220
 - path: hidden/SWE-bench-LICENSE
   sha256: sha256:718402e8efbe76604e613b6aad4bd30ce94ed23449ad6117c19f09b86e617e6e
 - path: hidden/vendor/swebench/__init__.py

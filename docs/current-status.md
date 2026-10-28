@@ -106,9 +106,13 @@ pre-edit observation and regression-driven revision are evidenced; card causalit
 remains unestablished because the first repair idea predates the card.
 The [pvlib saved-candidate comparison](history/2026-10-29-pvlib-saved-candidate-comparison.md)
 confirms both candidates repair the reported 100-degree call and preserve selected
-public expectations. Differences at zero absorption/grazing incidence and outside
-the geometric angle domain do not establish the historical acceptance failure's
-cause. Keep runtime unchanged; no replay mandate or budget increase follows.
+public expectations. The [native evaluation follow-up](history/2026-10-29-private-evaluation-logs-pvlib-native.md)
+now reproduces A PASS and B FAIL with all required cases reported; detailed logs
+identify the failing assertion and explain it from the saved code. Evaluator
+details stay in external operator artifacts, outside solver context. Private
+receipts now retain bounded diagnostic streams; native outputs retain full logs
+and hashes. This resolves the saved-candidate failure question, not the causal
+effect of submission policy. Keep solver rules and budgets unchanged.
 Helper return types and incomplete capture remain unresolved. Repeatability and
 held-out improvement remain unverified; unused funds authorize no further paid run.
 
