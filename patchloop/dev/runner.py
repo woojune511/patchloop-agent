@@ -270,6 +270,7 @@ class _ToolPolicy:
     selected_test_reserve_tool_actions: int | None = None
     selected_test_comparison_required: bool = False
     verification_policy: str = "reproduction-gated-v1"
+    edit_availability: dict[str, Any] | None = None
 
     @property
     def feedback_recovery_reserve_calls(self) -> int:
@@ -644,6 +645,41 @@ def _required_public_check_gaps(gateway, snapshot=None) -> list[dict[str, Any]]:
     return [dict(row) for row in rows if row["status"] != "PASS"]
 
 
+def _edit_availability(
+    *, allowed: set[str], remaining_mutations: int, untracked_files: bool,
+    has_current_source: bool, completion_possible: bool, workflow_gate: str,
+) -> dict[str, Any]:
+    """Describe edit capability from final admission without granting a new action."""
+    prerequisite = None
+    if "replace_text" in allowed:
+        reason = None
+    elif remaining_mutations <= 0:
+        reason = "mutation_limit_reached"
+    elif untracked_files:
+        reason = "workspace_scope_invalid"
+    elif workflow_gate not in {"needs_mutation", "needs_visible_checks", "ready_to_submit"}:
+        reason = "workflow_prerequisite"
+    elif not completion_possible:
+        reason = "completion_budget_unavailable"
+    elif not has_current_source:
+        reason = "needs_current_source"
+        inspections = sorted(allowed & {"read_file", "search_files"})
+        if inspections:
+            prerequisite = {
+                "tools": inspections,
+                "scope": "current_allowed_editable_source",
+                "effect": "reevaluate_edit_availability_with_remaining_budgets",
+            }
+    else:
+        reason = "current_state_or_budget"
+    return {
+        "tool": "replace_text",
+        "status": "offered" if "replace_text" in allowed else "not_offered",
+        "reason": reason,
+        "prerequisite": prerequisite,
+    }
+
+
 def _completion_guidance(
     snapshot: DevGatewayStateSnapshot, policy: _ToolPolicy,
 ) -> dict[str, Any]:
@@ -848,6 +884,8 @@ def _completion_guidance(
         )} if diagnostic_only else {}),
         "next_action": next_action,
         "message": message,
+        **({"edit_availability": policy.edit_availability}
+           if getattr(policy, "edit_availability", None) is not None else {}),
     }
 
 
@@ -1690,6 +1728,12 @@ def _tool_policy(
         and has_current_mutation_evidence
     )
     policy = _ToolPolicy(
+        edit_availability=_edit_availability(
+            allowed=allowed, remaining_mutations=remaining_mutations,
+            untracked_files=bool(summary.untracked_files),
+            has_current_source=has_current_mutation_evidence,
+            completion_possible=completion_possible, workflow_gate=workflow_gate,
+        ),
         verification_policy=verification_policy,
         workflow_gate=workflow_gate,
         allowed_tools=frozenset(allowed),

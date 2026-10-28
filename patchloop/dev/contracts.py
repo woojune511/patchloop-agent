@@ -152,6 +152,7 @@ def dev_tool_surface_hash(
             "public_check_failure_focus": "public-location-with-unknown-execution-boundary-v2",
             "public_failure_guidance": "diff-currency-and-actual-action-space-v1",
             "completion_guidance": "original-signature-correction-before-target-v11",
+            "edit_availability": "final-admission-source-prerequisite-v1",
             "completion_reproduction": "acquired-original-after-edit-shared-finish-replay-v2",
             "completion_reproduction_feedback": "bounded-current-observation-comparability-v1",
             "original_obligation": "task-bound-base-failure-and-current-replay-v1",

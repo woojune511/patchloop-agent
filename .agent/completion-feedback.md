@@ -11,6 +11,17 @@ Request/envelope/model identity binds the explicit policy; resume cannot switch 
 Delivery labels remain evidence labels, separate from unchanged evaluator acceptance.
 The new option is locally validated, without live comparative improvement evidence.
 
+`completion_guidance.edit_availability` is a compact capability fact computed from
+the final admitted tools. It records whether `replace_text` is offered and, when
+absent, distinguishes mutation exhaustion, invalid workspace scope, workflow or
+completion-budget constraints, and missing current editable source. Only a source
+gap with an offered read/search tool includes that acquisition prerequisite. A
+read reevaluates availability against the remaining budgets; it never promises
+permission to edit. Exact anchors and source coverage remain gateway checks.
+Thin projection and compact repair/correction/completion views retain this card
+even when they omit advisory `next_action` and `message`. No forced read, new
+tool admission, stop restriction or extra reserve is introduced.
+
 `target_outcome` projects bounded per-call outcome/capture/exception/exit-code
 summaries. An unexpected raised exception can be a positive current failure even
 when whole-case comparison is UNKNOWN. Qualification requires an acquired healthy

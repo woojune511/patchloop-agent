@@ -13,7 +13,7 @@ from test_dev_mutation_attempt_budget import _state
 from test_dev_notes_lifecycle_v15 import _gateway, _mutation, _read, _restart
 
 from patchloop.artifacts import ArtifactStore
-from patchloop.dev import runner
+from patchloop.dev import completion_context, repair_context, runner
 from patchloop.dev.contracts import (
     DevLimits,
     DevModelTurn,
@@ -68,9 +68,10 @@ def test_actual_inputs_explain_source_edit_check_submit_transitions(
             turn = super().next_turn(context, tools)
             for call in turn.tool_calls:
                 # Scripted public statements exercise transport, not model judgment quality.
-                call.turn_decision.plan_update = (
-                    unfinished_plan if call.name == "run_check" else None
-                )
+                if call.turn_decision is not None:
+                    call.turn_decision.plan_update = (
+                        unfinished_plan if call.name == "run_check" else None
+                    )
                 if call.name == "finish_task":
                     call.arguments["assessment"] = assessment
             return turn
@@ -97,7 +98,12 @@ def test_actual_inputs_explain_source_edit_check_submit_transitions(
     assert [g["stage"] for g in captured] == [
         "needs_source_evidence", "needs_mutation", "needs_visible_checks", "ready_to_submit",
     ]
-    assert all(i[0]["content"].startswith(DEV_SYSTEM_PROMPT) for i in inputs)
+    expected_prompts = [DEV_SYSTEM_PROMPT] * len(inputs)
+    if context_policy == "segmented-v1":
+        expected_prompts[1] = repair_context.system_prompt(states[1])
+        expected_prompts[-1] = completion_context.SYSTEM_PROMPT
+    assert all(item[0]["content"].startswith(prompt)
+               for item, prompt in zip(inputs, expected_prompts, strict=True))
     initial = states[0]
     assert initial["mutation_readiness"]["state"] == "needs_anchor_evidence"
     assert initial["action_horizon"]["completion_possible"]
@@ -121,7 +127,11 @@ def test_actual_inputs_explain_source_edit_check_submit_transitions(
     assert "check_result" in final["working_plan"]["review_request"]["reasons"]
     assert "unfinished verification" in final["completion_guidance"]["message"]
     system = inputs[-1][0]["content"]
-    if FROZEN_ARM is None:
+    if context_policy == "segmented-v1":
+        assert "Use the retained bounded plan for its requested review." in system
+        assert "Missing original verification can yield unverified_delivery." in system
+        assert "public verification is not independent acceptance." in system
+    elif FROZEN_ARM is None:
         normalized = " ".join(system.split())
         assert "Skipped checks remain unperformed." in normalized
         assert "Finish assessment cites current evidence/inference and gaps." in normalized
@@ -133,7 +143,8 @@ def test_actual_inputs_explain_source_edit_check_submit_transitions(
         assert "Skipped/rejected verification remains unperformed." in system
         assert "listing a limitation is insufficient" in system
         assert "This judgment needs no separate call or mandatory experiment." in system
-    assert "Keep unfinished verification" in system
+    if context_policy != "segmented-v1":
+        assert "Keep unfinished verification" in system
     results = [e["payload"]["result"] for e in journal.events()
                if e["event_type"] == "action_finished"]
     assert {result["tool"] for result in results[:2]} == {"search_files", "read_file"}

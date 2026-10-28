@@ -222,7 +222,7 @@ def test_thin_discloses_staged_tools_without_restoring_advice(
         ))
         projected = thin_policy.project_state(state, "thin")
         guidance = projected["completion_guidance"]
-        assert set(guidance) == {"stage", "diff_hash", "submission_ready"}
+        assert set(guidance) == {"stage", "diff_hash", "submission_ready", "edit_availability"}
         for key in ("mutation_readiness", "current_diff", "visible_check_status",
                     "remaining_budget", "available_tool_names"):
             assert projected[key] == state[key]

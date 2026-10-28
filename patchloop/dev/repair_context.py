@@ -109,7 +109,10 @@ def correction(code, issue, failure=None):
         "kind": "no_action" if fresh else "request_fields",
         "fresh_segment": fresh,
         "message": (
-            "No executable action was returned. Use an offered small action: replace_text "
+            "No executable action was returned. An offered source prerequisite in "
+            "edit_availability can be satisfied with its read/search tools on allowed "
+            "editable source; availability is then reevaluated. Choose an offered action: "
+            "read_file/search_files, replace_text "
             "with repair_prediction after diagnosis, the frozen run_tests when pending, "
             "observe_original if offered, or stop_task. Do not reconstruct plans or notes. "
             "The same remaining budget applies."

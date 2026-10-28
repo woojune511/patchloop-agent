@@ -58,9 +58,14 @@ only three passed isolated acceptance. All five safety verdicts were PASS.
 No shape-correction opportunity occurred, so live correction use remains untested.
 B's SQLFluff run stopped on its first response, claiming no edit tool before reading
 source. The actual thin request omitted the host's read-to-edit transition message;
-test that missing communication and helper/setup errors before increasing budgets.
-Keep the default unchanged: this small exposed
-panel does not establish a benefit from optional reproduction or general superiority.
+the [edit-availability fix](history/2026-10-29-edit-prerequisite-guidance.md) now
+preserves the current edit status, blocking reason and available source prerequisite
+through thin/compact requests, correction and recovery. Tool admission, host checks
+and budgets remain unchanged. Local request/transition tests and isolated mock
+smoke validate transport; live uptake and avoidance of premature stop are untested.
+Keep the default unchanged: this small exposed panel does not establish a benefit
+from optional reproduction or general superiority. Always-visible schemas are not
+introduced; first test whether the model uses the restored prerequisite information.
 Helper return types and incomplete output capture remain separate unresolved issues;
 this intervention does not repair those contracts. Repeatability and held-out
 improvement remain unverified. No further paid run is authorized by unused funds.
