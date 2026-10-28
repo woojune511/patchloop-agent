@@ -21,3 +21,4 @@
 - [pvlib saved candidates: reported call repaired, boundary differences and unresolved acceptance failure](../2026-10-29-pvlib-saved-candidate-comparison.md)
 - [Private evaluation log retention and native pvlib A/B reassessment](../2026-10-29-private-evaluation-logs-pvlib-native.md)
 - [Five public-selected tasks: frozen-agent evaluation prepared, new live approval pending](../2026-10-29-repair-five-plan.md)
+- [Five-task frozen-agent results: four accepted, one logging-contract failure](../2026-10-29-repair-five-results.md)
