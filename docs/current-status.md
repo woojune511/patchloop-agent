@@ -51,11 +51,11 @@ unchanged failure/desired declarations. Failed attempts remain unverified and sp
 the shared allowance. Public-check submission keeps this correction optional,
 without adding a diagnostic gate or reserve. Local evidence is not model uptake.
 
-The previously prepared USD27 six-run policy comparison is NOT_EXECUTED and its
-sealed runtime is now stale. Do not execute its old command or treat the pending
-approval question as authorization for this changed runtime. A later comparison
-needs fresh preparation/bindings and exact scope/cap approval; this implementation
-request does not start a paid run.
+The [fresh six-run policy comparison](history/2026-10-29-verification-policy-six-v2-plan.md)
+uses this runtime in both arms on pvlib, pydicom and SQLFluff. It compares required
+versus optional reproduction, while recording correction use separately. Proposed
+caps are USD4.50 per row and USD27 total. Preparation does not authorize execution;
+the v1 command and its unanswered approval remain stale. No paid run has started.
 Helper return types and incomplete output capture remain separate unresolved issues;
 this intervention does not repair those contracts. Repeatability, usefulness of
 optional diagnostics and held-out improvement remain unverified.

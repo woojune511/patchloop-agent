@@ -8,3 +8,4 @@
 - [Three-task result: one isolated PASS, no full verified chain; observation-contract defects](../2026-10-29-helper-transfer-three-results.md)
 - [Advisory reproduction and public-check submission; local validation and paired comparison](../2026-10-29-public-check-submission.md)
 - [Bounded JSON observation correction with preserved failure conditions and optional diagnostics](../2026-10-29-observation-shape-correction.md)
+- [Fresh six-run submission-policy comparison with shared observation correction; preparation only](../2026-10-29-verification-policy-six-v2-plan.md)
