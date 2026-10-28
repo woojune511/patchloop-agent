@@ -73,18 +73,23 @@ zero model calls. It is a public compatibility counterexample, not an inspection
 or explanation of the private evaluator's failure.
 
 Keep caller access and completion reservations, but reject this submitted repair
-as semantically incomplete. The [public-counterexample continuation](history/2026-10-28-public-counterexample-repair-plan.md)
-prepares a revision against caller behavior and its library contract together,
-including cases that must stay errors. It restores the candidate before finish
-and supplies public observations without an operator repair. The original global
-budget is retained, reserving one action and 35 seconds for a final public matrix.
-This is an operator-assisted diagnostic, not a fresh solve. Preparation also fixed
-completion projection dropping newly read source at a segment boundary: latest
-successful current-diff retrieval survives, while old bodies stay omitted.
-The actual restored read-to-follow-up input now contains bound source and public
-counterexamples with zero corrections; focused checks passed 37 in 22.619 seconds,
-including isolated mock evaluation. Existing-image preflight is READY. The fresh
-USD3.38078870 cap is unapproved; provider and target executions remain zero.
+as semantically incomplete. The [public-counterexample continuation](history/2026-10-28-public-counterexample-repair-results.md)
+delivered the counterexamples and current source, but made no new edit: five reads,
+two helper probes and normal finish resubmitted the same diff. All three public
+regressions and isolated acceptance still FAILED; safety passed. Original/public
+regression receipts were reused on the unchanged diff. New cost was USD0.599278
+of USD3.38078870; the allocation is CLOSED, including unspent funds.
+
+Latest successful current-diff read/search bodies now survive completion handoffs;
+local 37-test validation and live delivery support this fix. A separate defect
+remains: the second helper's captured stdout disappeared at a fresh completion
+segment. Exploration also reduced remaining responses to three, including one
+correction reserve; the host then removed editing because edit/check/finish no
+longer fit. Money/context/output were not exhausted. The model acknowledged the
+still-current public counterexamples in its assessment, but they were informational
+and did not block finish. Next investigate latest-helper delivery and diagnostic
+admission against the unresolved revision path. No additional run is funded; this
+assisted checkpoint result does not establish fresh-solve or general repair gain.
 
 ## Supporting evidence
 

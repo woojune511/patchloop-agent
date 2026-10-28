@@ -27,3 +27,4 @@
 - [Caller/completion live result: original and public tests pass, isolated acceptance fails](../2026-10-28-caller-completion-repair-results.md)
 - [Public path-contract comparison: candidate mistakes search roots for namespaces](../2026-10-28-caller-path-contract-results.md)
 - [Public counterexample revision: preserved budgets, delivery checks and preparation](../2026-10-28-public-counterexample-repair-plan.md)
+- [Public counterexample live result: unchanged submission, helper-output loss and closed edit window](../2026-10-28-public-counterexample-repair-results.md)
