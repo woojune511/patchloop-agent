@@ -95,12 +95,19 @@ Local boundary controls cover loss of any required resource and stale diff bindi
 Saved-state replay keeps helper/edit available at five remaining responses, then
 closes helper/test at four while preserving edit/finish. Focused controls passed
 36 and 52 tests; quick's two identity-pin failures passed narrow rechecks, and both
-isolated mock evaluations passed. Live model uptake and repair gain remain untested.
-A [same-checkpoint follow-up](history/2026-10-28-probe-revision-repair-plan.md) is
-prepared with the same model, public packet and limits. Offline request delivery,
-actual revision binding and environment preflight passed. The new USD3.38078870
-invocation cap is pending; no provider dispatch occurred. The earlier assisted
-failure does not establish fresh-solve or general repair gain.
+isolated mock evaluations passed. These are local mechanism checks, not repair-gain evidence.
+The [same-checkpoint live follow-up](history/2026-10-28-probe-revision-repair-results.md)
+made four reads and no edit/helper, then resubmitted the same candidate. At the
+last request, editing was still offered and its three-response completion path
+was affordable; optional exploration had closed as intended. The model acknowledged
+the three unresolved public counterexamples and chose finish. Final public checks
+passed 8/11 and all three regressions still failed; isolated acceptance FAILED,
+safety passed. Old original/public PASS receipts were reused on the unchanged diff.
+New cost USD0.34631750; the USD3.38078870 allocation and unused balance are CLOSED.
+The revision opportunity was exercised by admission, but not by the model; helper
+delivery uptake remains unexercised. Keep the mechanism fixes without claiming a
+repair gain. The unresolved issue is how known public failures affect verification
+and completion decisions. No additional run is funded.
 
 ## Supporting evidence
 
