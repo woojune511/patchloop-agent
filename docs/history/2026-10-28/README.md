@@ -36,3 +36,4 @@
 - [Clean-original result: reproduction and two edits, processing witness unresolved and tool horizon exhausted](../2026-10-28-autonomous-fresh-results.md)
 - [Clean-original analysis: caller evidence delivered, downstream repairs and unequal observation admission](../2026-10-28-autonomous-fresh-analysis.md)
 - [Observation opportunity: ruleless call choice, consistent minimum reserves and pre-target settings evidence](../2026-10-28-observation-opportunity.md)
+- [Clean-start observation-opportunity follow-up prepared under unchanged model and limits](../2026-10-28-observation-opportunity-fresh-plan.md)

@@ -71,8 +71,11 @@ limits while retaining the old UNKNOWN obligation. This is local mechanism evide
 
 The next live question is whether the model uses the restored choice to inspect
 file selection/processing and revise its repair hypothesis. Local mechanism checks
-do not answer it. No further provider execution is prepared or funded; prior
-allocations remain closed and benchmark candidates are unchanged.
+do not answer it. A [clean-start follow-up](history/2026-10-28-observation-opportunity-fresh-plan.md)
+is prepared for one full-model run with the same USD4.50/20-response/40-action/
+three-edit/2400-second limits. Offline first-request audit and read-only preflight
+pass. The new command/cap confirmation is pending; no provider execution has started.
+Prior allocations remain closed and benchmark candidates are unchanged.
 
 ## Supporting evidence
 
