@@ -90,7 +90,7 @@ def test_default_serialization_and_schema_identities_remain_exact():
         allowed_tools=list(MODES),
     )
     assert sha256_json(schemas) == (
-        "sha256:f0cf12f577333b3f546240c031d735feeffb9974c4b0d3636b5f53893b3d5061"
+        "sha256:038e2ebcbd33e824d3fee8b8f843f4e4aa6d2d04052cf563c3b238bd83a4c472"
         if FROZEN_ARM is None else
         "sha256:9757e80d1590c5274966a80011a24ed12e08340d23d2e202f0f099ea1be47955"
     )
@@ -101,7 +101,7 @@ def test_default_serialization_and_schema_identities_remain_exact():
             allowed_tools=list(MODES), read_range_only=True,
         )
         assert sha256_json(legacy) == (
-            "sha256:e696016b31ce6e1a6fa21182aaf5cb66df7c380d9270a7a222cd700cfadfa7b1"
+            "sha256:9f9bbd898a9c7be3d0cbc1461896dac444c36647f3f6b2ed2f46ad1368bd2d23"
         )
         minimal = {schema["name"]: schema["parameters"] for schema in schemas
                    if schema["name"] in {"replace_text", "stop_task"}}

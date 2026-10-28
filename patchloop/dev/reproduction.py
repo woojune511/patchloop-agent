@@ -104,6 +104,11 @@ DESCRIPTION = (
     "comparison_feedback lists bounded JSON Pointer differences (missing/extra/type/value); "
     "values remain in binding.definition and observed_json. It never changes declarations "
     "or certifies the selected channel, control or public-requirement mapping. "
+    "If observed JSON object fields differ from both frozen declarations, observation_error "
+    "reports a comparison-contract error, not a repair failure. Before editing source, "
+    "one fresh corrected observation program may use purpose.corrects_action_id from "
+    "reproduction_review.completion.observation_correction. Keep all declarations and "
+    "actual call conditions unchanged; reproduce the declared failure again on the base. "
     + REPLAY_DESCRIPTION + " Changing them creates a different experiment, not resolution "
     "of the old one. reproduction_review separates helpers, unobserved calls, changed setup "
     "and same-reproduction comparisons. At finish the host replays stale invocation-bound "
@@ -573,11 +578,17 @@ def compare(output, binding):
             actual = judgment["host_json"]
         else:
             reason = judgment["reason"]
+    observation_error = (probe_comparison.object_field_mismatch(binding["definition"], actual)
+                         if reason is None and rules is None
+                         and channel == probe_invocation.API_CHANNEL else None)
+    if observation_error is not None:
+        reason = "observation_shape_mismatch"
     result["reproduction"] = {
         "binding": binding,
         "call_observation": trace,
         "observed_json": actual,
         **({"judgment": judgment} if judgment is not None else {}),
+        **({"observation_error": observation_error} if observation_error is not None else {}),
         "comparison": (
             "not_compared"
             if reason
@@ -679,6 +690,12 @@ def review(events, current_diff, *, public_task=None):
             other_executions.append(_unbound_execution(result, current_diff))
             continue
         binding = repro["binding"]
+        # Interpret stored v11 shape mistakes without rewriting their receipts.
+        shape_error = (probe_comparison.object_field_mismatch(
+            binding["definition"], repro.get("observed_json"))
+            if binding["definition"].get("observation_channel") == probe_invocation.API_CHANNEL
+            and not binding["definition"].get("diagnostic_rules")
+            and repro.get("reason") in {None, "observation_shape_mismatch"} else None)
         row = {
             "action_id": result["action_id"],
             "diff_hash": result["workspace_diff_hash"],
@@ -688,6 +705,9 @@ def review(events, current_diff, *, public_task=None):
             **({"declared_failure_comparison": repro["declared_failure_comparison"]}
                if "declared_failure_comparison" in repro else {}),
         }
+        if shape_error is not None:
+            row.update(comparison="not_compared", declared_failure_comparison="not_compared",
+                       reason="observation_shape_mismatch", observation_error=shape_error)
         case = cases.setdefault(
             binding["case_id"], {
                 "binding": binding, "baseline": None, "latest": None, "observations": [],

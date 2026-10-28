@@ -1,5 +1,9 @@
 # Processing evidence and canonical diagnostic codes
 
+Original verification gates below apply to `reproduction-gated-v1`.
+`public-checks-v1` retains the evidence but makes diagnostic work optional; required
+public checks and honest delivery labels remain unchanged.
+
 Fresh diagnostic-presence originals declare `purpose.diagnostic_rules`: one to
 four `{field, call_id, code, role}` rules. `field` is a flat JSON key (1-64 chars),
 `call_id` is call-1 through call-4, and `code` is a stable diagnostic identifier
@@ -123,7 +127,34 @@ The provider schema requires explicit nullable `diagnostic_rules` and
 not change old bindings or observer programs. Fresh wire identity is v68; exact
 runtime recovery still forbids switching an existing run to new code.
 
-## Legacy correction before source repair
+## Object-field correction before source repair
+
+With v11 and null diagnostic rules, if expected and reported-failure JSON are
+objects with identical root keys but the observed object has different keys, the
+host reports `observation_shape_mismatch`, `observation_error` and bounded field
+differences. Both comparisons are `not_compared`. Values, array lengths, nested
+data and differing declared key sets retain ordinary comparison semantics: they
+can describe the actual bug. Raw values/captures remain available. Read-side views
+classify the same stored v11 mismatch without rewriting its action receipt.
+
+The existing run-wide single correction allowance also covers this error. Before
+any source edit, send changed observation code with `purpose.corrects_action_id`
+pointing to the malformed baseline. Keep all purpose fields, desired/failure JSON
+and actual call conditions fixed. Only a complete rerun on the unchanged base,
+matching the declared failure and the previous actual inputs/environment, can
+supersede that observation. Candidate verification then uses the corrected program.
+Malformed, incomplete, changed-condition or non-reproducing attempts do not retire
+the old case; they spend the allowance. A valid behavioral mismatch is not eligible.
+
+This does not run an old base after source edits: such correction is unavailable,
+and evidence stays unverified. It also does not certify the model's extractor or
+public-task mapping. In `public-checks-v1`, correction is an ordinary optional
+probe, with target/error/availability shown in the next model view. It adds no
+required stage or reserve and does not block unrelated probes, edits or finish.
+Explicit correction requests still validate their frozen declarations and quota.
+The default strict policy uses its existing correction/repair/check/finish reserve.
+
+## Legacy captured-judgment correction
 
 `observation_correction.py` derives one run-wide correction opportunity from a
 completed legacy original baseline conflict. Pending conflicts precede acquisition

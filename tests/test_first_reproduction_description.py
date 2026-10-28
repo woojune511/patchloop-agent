@@ -29,8 +29,8 @@ def test_original_stage_changes_description_only(agent_policy, probe_policy, exp
 
 
 @pytest.mark.parametrize("agent_policy,diagnosis,expected", [
-    ("current", False, "b96109f5ab8a473a486f7ed25c45ffde3752c41ecd097c6e4511e71713a1e867"),
-    ("thin", False, "49fbfc44e95375fcbe9da41f1b69c2a16cb9edbdfa10b47736f32e1ad057a4a7"),
+    ("current", False, "b0c44ac29de9822430e2b3f4463693c77906166b25aadbdf2059d7a8147d5a8b"),
+    ("thin", False, "7353b8ed4569a56728e36a27c687ab62ad7517b951b6240039f6a61457046cdd"),
     ("current", True, "9f7ea75adea8115540ee793197c00039b03672a1c91d437f277951c5faa873e0"),
     ("thin", True, "9f7ea75adea8115540ee793197c00039b03672a1c91d437f277951c5faa873e0"),
 ])
@@ -55,3 +55,17 @@ def test_first_description_keeps_environment_and_required_observation_apis():
     assert "TemporaryDirectory" not in description
     assert "purpose=null" not in description
     assert "At finish" not in description
+
+
+@pytest.mark.parametrize("agent_policy", ["current", "thin"])
+def test_optional_diagnostic_description_preserves_tool_schema(agent_policy):
+    options = {"finish_enabled": False, "allowed_tools": {"run_probe", "stop_task"},
+               "agent_policy": agent_policy}
+    strict = dev_tool_schemas(**options)
+    advisory = dev_tool_schemas(**options, verification_policy="public-checks-v1")
+    probe = next(row for row in advisory if row["name"] == "run_probe")
+    assert "No original replay is automatic" in probe["description"]
+    assert "blocks submission" not in probe["description"]
+    assert "purpose.corrects_action_id" in probe["description"]
+    probe["description"] = next(row["description"] for row in strict if row["name"] == "run_probe")
+    assert advisory == strict

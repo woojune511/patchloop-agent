@@ -150,7 +150,9 @@ def review(events, public_task, completion, *, acquisition="none", probe_availab
     if correction.get("blocked"):
         status = "unverified"
         stage = "needs_observation_correction"
-        acquisition_status = "judgment_conflict"
+        acquisition_status = ("observation_invalid"
+                              if correction.get("kind") == "object_field_mismatch"
+                              else "judgment_conflict")
         reason = correction["reason"]
     return {
         **identity, "status": status, "acquisition_policy": acquisition,

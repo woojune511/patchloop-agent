@@ -43,11 +43,19 @@ failure feedback reaches the next response. Source/mutation boundaries, recovery
 uncertain-execution stops, total budgets and private evaluation separation remain.
 The [helper API contract](history/2026-10-29-helper-api-contract.md) is unchanged.
 
-The selected comparison uses the same exposed dev-train rows 5/9/18, paired strict
-and advisory policies, one fresh run per arm/task. Preparation and local validation
-are separate from paid execution; its new USD27 total cap is not yet approved.
-The primary question is acceptance and regressions at unchanged per-run budgets,
-not whether more runs submit. See the change record for exact conditions and checks.
+The [bounded observation correction](history/2026-10-29-observation-shape-correction.md)
+now distinguishes incompatible v11 JSON object fields from a behavioral failure.
+Before source edits, one changed observation program can replace that invalid
+observation only after the same-condition original failure is reproduced, with
+unchanged failure/desired declarations. Failed attempts remain unverified and spend
+the shared allowance. Public-check submission keeps this correction optional,
+without adding a diagnostic gate or reserve. Local evidence is not model uptake.
+
+The previously prepared USD27 six-run policy comparison is NOT_EXECUTED and its
+sealed runtime is now stale. Do not execute its old command or treat the pending
+approval question as authorization for this changed runtime. A later comparison
+needs fresh preparation/bindings and exact scope/cap approval; this implementation
+request does not start a paid run.
 Helper return types and incomplete output capture remain separate unresolved issues;
 this intervention does not repair those contracts. Repeatability, usefulness of
 optional diagnostics and held-out improvement remain unverified.

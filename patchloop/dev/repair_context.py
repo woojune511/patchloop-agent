@@ -70,7 +70,7 @@ def packet(events, first_state):
             "action_id": result["action_id"], "diff_hash": result["workspace_diff_hash"],
             **{key: reproduction[key] for key in (
                 "binding", "observed_json", "comparison", "declared_failure_comparison",
-                "judgment", "call_observation",
+                "judgment", "call_observation", "reason", "observation_error",
             ) if key in reproduction},
         })
     # Keep the root even when the latest three results are different candidates.

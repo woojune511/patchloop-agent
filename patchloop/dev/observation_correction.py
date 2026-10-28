@@ -1,6 +1,6 @@
 """One bounded baseline-judgment correction, derived from immutable public receipts.
 
-A correction replaces only a proved conflicting observation version. It cannot
+A correction replaces only a proved conflicting or structurally invalid observation. It cannot
 retire a healthy failure, change a caller or weaken the frozen expected outcome.
 """
 
@@ -8,13 +8,23 @@ from __future__ import annotations
 
 import copy
 
-from patchloop.dev import probe_call_capture, probe_invocation, probe_requests
+from patchloop.dev import probe_call_capture, probe_comparison, probe_invocation, probe_requests
 from patchloop.util import sha256_bytes
 
 POLICY = "observation-correction-v1"
 JUDGMENT_POLICY = "captured-diagnostic-v1"
 EMPTY_DIFF = sha256_bytes(b"")
 MAX_ATTEMPTS = 1
+
+
+def shape_error(observation):
+    """Recompute narrow v11 observation validity from public values, not model labels."""
+    definition = observation.get("binding", {}).get("definition", {})
+    if (definition.get("observation_channel") != probe_invocation.API_CHANNEL
+            or definition.get("diagnostic_rules")
+            or observation.get("reason") not in {None, "observation_shape_mismatch"}):
+        return None
+    return probe_comparison.object_field_mismatch(definition, observation.get("observed_json"))
 
 
 def _reproduction(result):
@@ -58,7 +68,11 @@ def _is_conflict(result):
     judgment = reproduction.get("judgment", {})
     return (judgment.get("policy") == JUDGMENT_POLICY
             and judgment.get("status") == "conflict"
-            and reproduction.get("reason") == "observation_conflict")
+            and reproduction.get("reason") == "observation_conflict") or bool(
+                shape_error(reproduction)
+                and result.get("workspace_diff_hash") == EMPTY_DIFF
+                and reproduction.get("binding", {}).get("root_action_id")
+                == result.get("action_id"))
 
 
 def _baseline_conflict(result):
@@ -67,7 +81,8 @@ def _baseline_conflict(result):
     return (_is_conflict(result) and _complete(result)
             and result.get("workspace_diff_hash") == EMPTY_DIFF
             and binding.get("root_action_id") == result.get("action_id")
-            and bool(binding.get("definition", {}).get("diagnostic_rules")))
+            and (bool(binding.get("definition", {}).get("diagnostic_rules"))
+                 or bool(shape_error(reproduction))))
 
 
 def _correction_reason(previous, current, start):
@@ -91,13 +106,15 @@ def _correction_reason(previous, current, start):
     if not _complete(current):
         return "correction_execution_incomplete"
     judgment = after.get("judgment", {})
-    if (judgment.get("policy") != JUDGMENT_POLICY
-            or judgment.get("status") != "consistent" or after.get("reason") is not None):
+    object_fields = shape_error(before) is not None
+    if (after.get("reason") is not None or (not object_fields and (
+            judgment.get("policy") != JUDGMENT_POLICY
+            or judgment.get("status") != "consistent"))):
         return "correction_judgment_unresolved"
     if (after.get("comparison") != "mismatched"
             or after.get("declared_failure_comparison") != "matched"
-            or judgment.get("host_json") != new["definition"].get("reported_failure_json")
-            or after.get("observed_json") != judgment.get("host_json")):
+            or after.get("observed_json") != new["definition"].get("reported_failure_json")
+            or (not object_fields and after.get("observed_json") != judgment.get("host_json"))):
         return "correction_failure_not_reproduced"
     if probe_invocation.conditions(before["call_observation"]) != (
             probe_invocation.conditions(after["call_observation"])):
@@ -163,8 +180,11 @@ def review(events, current_diff):
         status, reason = "failed", "correction_allowance_spent"
     target_arguments = (starts.get(target["action_id"], {}).get("arguments", {})
                         if target is not None else {})
+    target_error = shape_error(_reproduction(target)) if target is not None else None
     return {
         "policy": POLICY, "status": status, "reason": reason,
+        **({"kind": target_error["kind"], "target_observation_error": target_error}
+           if target_error is not None else {}),
         "blocked": bool(unresolved), "pending_started": pending_started,
         "attempts_used": len(attempts), "max_attempts": MAX_ATTEMPTS,
         "target_action_id": target["action_id"] if target else None,
@@ -185,12 +205,15 @@ def note_updates(state):
     for action_id in state["target_action_ids"]:
         updates.setdefault(action_id, {
             "previous_action_id": action_id, "corrected_action_id": None,
-            "reason": "captured_output_conflicts_with_authored_judgment",
+            "reason": ("observation_fields_conflict_with_declarations"
+                       if state.get("kind") == "object_field_mismatch"
+                       else "captured_output_conflicts_with_authored_judgment"),
         })
     return updates
 
 
-def validate(binding, source, events, *, current_diff, action_id, replay=False):
+def validate(binding, source, events, *, current_diff, action_id, replay=False,
+             require_correction=True):
     """Admit only the one explicit fresh correction; completed-ID recovery is external."""
     # A persisted in-flight action owns its spent allowance. Its binding/source
     # identity is checked by the gateway before resuming its durable execution.
@@ -200,12 +223,12 @@ def validate(binding, source, events, *, current_diff, action_id, replay=False):
     state = review(prior, current_diff)
     corrects = (binding or {}).get("definition", {}).get("corrects_action_id")
     if replay:
-        if state["blocked"]:
+        if require_correction and state["blocked"]:
             raise probe_requests.error("Correct the conflicting observation with a fresh probe",
                                        "/replay_action_id", "/purpose/corrects_action_id")
         return
     if not corrects:
-        if state["blocked"]:
+        if require_correction and state["blocked"]:
             raise probe_requests.error("The unresolved observation requires corrects_action_id",
                                        "/purpose/corrects_action_id")
         return

@@ -13,6 +13,30 @@ _TYPES = {dict: "object", list: "array", str: "string", bool: "boolean",
           int: "integer", float: "float", type(None): "null"}
 
 
+def object_field_mismatch(definition: dict, observed_json: str | None) -> dict | None:
+    """Recognize incompatible observation fields, not differing behavior values.
+
+    Only a shared root-object contract is unambiguous here. Array lengths, value
+    types and different failure/desired key sets can themselves describe a bug.
+    """
+    values = [definition.get("expected_json"), definition.get("reported_failure_json"),
+              observed_json]
+    if not all(isinstance(value, str) for value in values):
+        return None
+    try:
+        expected, failure, observed = map(json.loads, values)
+    except (ValueError, TypeError):
+        return None
+    if (not all(isinstance(value, dict) for value in (expected, failure, observed))
+            or expected.keys() != failure.keys() or expected.keys() == observed.keys()):
+        return None
+    return {"kind": "object_field_mismatch",
+            "feedback": differences(values[0], values[2]),
+            "message": "Observed JSON fields differ from both frozen declarations. "
+                       "Correct the observation program, keeping the caller, inputs and "
+                       "failure/desired values unchanged. This is not a behavior verdict."}
+
+
 def differences(expected_json: str, observed_json: str) -> dict:
     """Explain already validated JSON; values remain in the original receipt.
 

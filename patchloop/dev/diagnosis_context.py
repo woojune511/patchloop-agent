@@ -48,7 +48,7 @@ def packet(path_state, events, read_source):
             "action_id": result["action_id"], "diff_hash": result["workspace_diff_hash"],
             **{key: reproduction[key] for key in (
                 "binding", "observed_json", "comparison", "declared_failure_comparison",
-                "judgment", "call_observation",
+                "judgment", "call_observation", "reason", "observation_error",
             ) if key in reproduction},
             "public_execution": output.get("public_execution"),
         })

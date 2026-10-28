@@ -50,6 +50,7 @@ def _healthy(result, observation):
         and output.get("setup_checks", {}).get("status") != "failed"
         and observation["comparison"] in {"matched", "mismatched"}
         and observation.get("reason") is None
+        and observation_correction.shape_error(observation) is None
         and probe_invocation.supports(trace.get("binding_method"))
         and trace["calls"] and not trace["incomplete"]
         and all(probe_invocation.valid_call(call, observation["binding"]["definition"][
@@ -62,12 +63,16 @@ def _compact(row, *, include_observation=False):
         return None
     result, observation = row
     trace = observation["call_observation"]
+    shape_error = observation_correction.shape_error(observation)
     return {
         "action_id": result["action_id"], "diff_hash": result["workspace_diff_hash"],
         "comparison": observation["comparison"], "reason": observation["reason"],
+        **({"comparison": "not_compared", "reason": "observation_shape_mismatch",
+            "observation_error": shape_error} if shape_error is not None else {}),
         **({"observed_json": observation.get("observed_json")} if include_observation else {}),
         "execution_status": result.get("output", {}).get("status"),
-        **({"declared_failure_comparison": observation["declared_failure_comparison"]}
+        **({"declared_failure_comparison": "not_compared" if shape_error is not None
+            else observation["declared_failure_comparison"]}
            if "declared_failure_comparison" in observation else {}),
         "execution_link": probe_invocation.summary(trace) if probe_invocation.supports(trace.get(
             "binding_method")) else {"status": "unbound_invocation"},
@@ -245,7 +250,9 @@ def review(events, current_diff, *, public_task=None, run_id):
         root_reason = "baseline_not_observed"
         eligible = False
         if root is not None:
-            root_reason = "baseline_not_healthy_invocation"
+            root_reason = ("observation_shape_mismatch"
+                           if observation_correction.shape_error(root[1]) is not None
+                           else "baseline_not_healthy_invocation")
             eligible = (probe_invocation.supports(binding["definition"].get("observation_channel"))
                         and _healthy(*root))
             if eligible:

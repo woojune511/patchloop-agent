@@ -265,12 +265,15 @@ def dev_tool_schemas(
     first_original_observation: dict[str, Any] | None = None,
     repair_test_edit_enabled: bool = False,
     agent_policy: str = "current",
+    verification_policy: str = "reproduction-gated-v1",
     history_search_policy: history_search.Policy = "none",
     read_range_only: bool = False,
     dependency_sources: Sequence[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     if agent_policy not in {"current", "thin"}:
         raise ContractError("unknown agent policy")
+    if verification_policy not in {"reproduction-gated-v1", "public-checks-v1"}:
+        raise ContractError("unknown verification policy")
     if agent_policy == "thin" and planning_policy != "none":
         raise ContractError("thin policy forbids planning state")
     if probe_policy not in {"none", *probe_cases.POLICIES}:
@@ -554,6 +557,15 @@ def dev_tool_schemas(
                     properties[name] = {"type": "null"}
             if "save_program" in properties:
                 properties["save_program"] = {"type": "boolean", "enum": [False]}
+        if verification_policy == "public-checks-v1":
+            schemas[-1]["description"] = schemas[-1]["description"].replace(
+                "At finish the host replays stale invocation-bound "
+                "cases; current comparable mismatch/conflict blocks submission. "
+                "Unknown remains unverified.",
+                "Original observations and their correction are optional diagnostics. "
+                "No original replay is automatic; required public checks determine submission "
+                "eligibility. Unknown or failed observations remain evidence, not verification.",
+            )
     if allowed_tools is not None and "observe_original" in allowed_tools:
         schemas.append(first_observation.schema(first_original_observation))
     if test_suite_ids:
@@ -3096,6 +3108,7 @@ class DevToolGateway:
                     reproduction_binding, (prepared_probe or probe_arguments).get("python_source"),
                     self.journal.events(), current_diff=baseline, action_id=call.action_id,
                     replay=replay_probe,
+                    require_correction=self.verification_policy == "reproduction-gated-v1",
                 )
                 execution_arguments = (
                     {key: prepared_probe[key] for key in ("question", "python_source")}

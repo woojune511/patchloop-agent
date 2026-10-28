@@ -87,7 +87,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
 @pytest.mark.parametrize(("names", "expected"), [
     pytest.param(
         ("read_file", "run_check", "run_probe", "search_files", "stop_task"),
-        "abfd29244a6aab3af1284203a48fa0fb78befdad4d0eac8871a97268817e5459"
+        "936cc963c2dabdc1a3990f2d6b77a18109fba4063967f869ed5572dbfc8c441a"
         if FROZEN_ARM is None else
         "544c19f4d8e63f8a8810efe1dd4cd0adf3dee51cdb0145a4509de554027739c2",
         id="names0-99567faf1ea920a9157e5ea6618c5d43e7d56e441820be941403a025d9b2abe9"
@@ -95,7 +95,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     ),
     pytest.param(
         ("finish_task", "read_file", "replace_text", "run_probe", "search_files", "stop_task"),
-        "39d8e0d87e675ad8634f7b386371d3c0b09f8a9f89247c66583b934391a235bd"
+        "b81546423252d7c68cbab9bb54039606f071e65f3c898c8a5818717f38e816f6"
         if FROZEN_ARM is None else
         "b817201c9d1aa8432575b0c1b55015dc01bc08a2b002e3e2cc09ab13bfa229c6",
         id="names1-de57dc4e83f8b26994c5df5f659cc208bbd3b348233d0ad3640493ffd5b90bd3"
@@ -103,7 +103,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     ),
     pytest.param(
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task"),
-        "4a401961e16d6c29252e25ab6665c20bf45e8ac44ddfadd144062e996ef6f1ab"
+        "26ce442f234ee0cedc342ac3f9ef598bbdf58e50a7cf4db8e7570aead61e850f"
         if FROZEN_ARM is None else
         "310f8ec3dd129c93fb10c2a0589decf38eb09ce60e395ef906ac814e399e5139",
         id="names2-923a71312af5fa8d677ce72762b2f045a47ff2ebc4e084caaf1f57a2c11e7032"
@@ -112,7 +112,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     pytest.param(
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task",
          "finish_task"),
-        "a8e0b69c3d7bd8fbbbe0bdc36298e63cff00ab74e567b57b344836c6666c0f76"
+        "898eeeb58b96e39cf89c332cd3f269050f8ee7f871317e209a40a4768d14f528"
         if FROZEN_ARM is None else
         "6302bc9d248be03d6e1430f0102a0e5c00ecb7883c25d453945f979f21fd3af7",
         id="names3-53d8c9ffaa20544b633c883b1e40010113b680722f23caebeb0ef991f1738caa"

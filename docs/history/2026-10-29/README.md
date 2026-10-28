@@ -7,3 +7,4 @@
 - [Frozen-runtime three-task preparation: pvlib, pydicom, SQLFluff; paid execution pending](../2026-10-29-helper-transfer-three-plan.md)
 - [Three-task result: one isolated PASS, no full verified chain; observation-contract defects](../2026-10-29-helper-transfer-three-results.md)
 - [Advisory reproduction and public-check submission; local validation and paired comparison](../2026-10-29-public-check-submission.md)
+- [Bounded JSON observation correction with preserved failure conditions and optional diagnostics](../2026-10-29-observation-shape-correction.md)

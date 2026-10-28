@@ -743,11 +743,12 @@ def _completion_guidance(
         stage = policy.workflow_gate
         next_action = {"tool": "run_probe"} if "run_probe" in allowed else None
         message = (
-            "Captured target diagnostics contradict the authored observation. Correct only the "
-            "extractor in a fresh original probe and supply purpose.corrects_action_id from "
-            "observation_correction. Preserve rules, expected/failure values, caller, fixtures "
-            "and environment. Re-execute on the unchanged base; source repair waits for a "
-            "consistent same-condition original failure. One correction is allowed in this run; "
+            "The observation has a declared JSON-key mismatch or conflicts with captured target "
+            "diagnostics. Correct only the extractor in a fresh original probe and supply "
+            "purpose.corrects_action_id from observation_correction. Preserve rules, expected/"
+            "failure values, caller, fixtures and environment. Re-execute before any source edit "
+            "on the unchanged base; source repair waits for a consistent same-condition original "
+            "failure. The two error types share one correction attempt in this run; "
             "a rejected or unsuccessful correction does not renew it. Unresolved or unaffordable "
             "correction returns verification incomplete."
         )
@@ -926,6 +927,7 @@ def _tool_policy(
     # Public evidence remains in the snapshot and completion metadata. Only the
     # admission forecast drops optional diagnostics from the required return path.
     verification = {} if diagnostic_only else raw_verification
+    observation_advice = raw_verification.get("observation_correction", {})
     observation_fix = verification.get("observation_correction", {})
     observation_blocked = bool(observation_fix.get("blocked"))
     observation_available = bool(
@@ -1760,9 +1762,21 @@ def _tool_policy(
                      "finish must still fit; request correction for path diagnosis is separate."),
         } if diagnostic is not None else None),
         observation_correction=({
-            **observation_fix, "offered_tools": sorted(allowed),
-            "uses_minimum_completion_reserve": "run_probe" in allowed,
-        } if observation_blocked else None),
+            **(observation_advice if diagnostic_only else observation_fix),
+            "offered_tools": sorted(allowed),
+            "uses_minimum_completion_reserve": not diagnostic_only and "run_probe" in allowed,
+            **({"required": False, "offered": (
+                observation_advice.get("status") == "pending"
+                and not observation_advice.get("pending_started") and "run_probe" in allowed),
+                "instruction": (
+                    "Optional: before a source edit, correct the observation extractor once "
+                    "using target_action_id as purpose.corrects_action_id. Keep the complete "
+                    "purpose, expected/failure values, caller and inputs unchanged. A successful "
+                    "same-condition baseline reproduction replaces the invalid observation; "
+                    "unresolved evidence does not gate submission under public-checks-v1."
+                )} if diagnostic_only else {}),
+        } if observation_blocked or (diagnostic_only and observation_advice.get("target_action_id"))
+        else None),
         repair_path_diagnosis=(
             _repair_path_resources(
                 path_diagnosis, allowed, required_inspection=required_inspection,
@@ -6140,6 +6154,7 @@ def _run_one_active(
             read_paths=policy.targeted_read_paths,
             planning_policy=request.planning_policy,
             agent_policy=request.agent_policy,
+            verification_policy=request.verification_policy,
             probe_policy=request.probe_policy,
             probe_recheck_policy=request.probe_recheck,
             probe_environment=getattr(gateway.probe_sandbox, "environment", None),

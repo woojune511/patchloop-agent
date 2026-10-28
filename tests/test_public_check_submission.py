@@ -71,14 +71,15 @@ def test_policy_has_distinct_identity_and_legacy_default_wire(tmp_path):
 def test_malformed_observation_does_not_poison_later_valid_case_or_finish(gateway_factory):
     gateway, journal, backend = gateway_for(gateway_factory)
     first = gateway.execute(malformed(gateway.public_task))
-    assert first.output["reproduction"]["declared_failure_comparison"] == "mismatched"
+    assert first.output["reproduction"]["declared_failure_comparison"] == "not_compared"
+    assert first.output["reproduction"]["reason"] == "observation_shape_mismatch"
     gateway.execute(probe(gateway.public_task))
     mutate(gateway)
     gateway.execute(probe(gateway.public_task, "bad-current", replay="malformed"))
     gateway.execute(probe(gateway.public_task, "good-current", replay="original"))
     checks(gateway)
     before = gateway.completion_verification(diff_hash=gateway.current_diff_hash)
-    assert before["status"] == "refuted"
+    assert before["status"] == "unverified"
     assert any(case["status"] == "verified" for case in before["cases"])
     calls = backend.calls
     result, _ = finish(gateway)

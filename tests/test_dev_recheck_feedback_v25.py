@@ -209,7 +209,7 @@ def test_feedback_changes_preserve_wire_limits_and_bounded_prompt():
     # Pin fresh inputs with shared helper API guidance; frozen arms stay exact.
     assert sha256_json(dev_tool_schemas(
         finish_enabled=True, allowed_tools=ALL_DEV_TOOLS, check_ids=["first", "second"],
-    )) == ("sha256:6d2db29fa312e8487aa42ffd634d3790063874bc12decd8fd52c509f0b32357a"
+    )) == ("sha256:9e546e337d585f98a7cdf8ac0740068ba4707595cade2948661e55301ad2c4ba"
            if FROZEN_ARM is None else
            "sha256:8b024770ed22b31b84e2e5b8890080e1aaad9f15ba9843f5c3ea3f1c12ee0fe0")
     assert dev_tool_surface_hash() != (

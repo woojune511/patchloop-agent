@@ -68,7 +68,7 @@ _RESULT_FIELDS = (
 )
 _REPRODUCTION_FIELDS = (
     "binding", "comparison", "declared_failure_comparison", "reason", "observed_json",
-    "judgment", "target_failure",
+    "judgment", "target_failure", "observation_error",
 )
 _PROBE_OUTPUT_FIELDS = (
     "question", "stdout", "stderr", "observed_json", "probe_stage", "verification_scope",
