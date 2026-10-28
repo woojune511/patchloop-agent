@@ -66,6 +66,10 @@ smoke validate transport; live uptake and avoidance of premature stop are untest
 Keep the default unchanged: this small exposed panel does not establish a benefit
 from optional reproduction or general superiority. Always-visible schemas are not
 introduced; first test whether the model uses the restored prerequisite information.
+The [single SQLFluff follow-up](history/2026-10-29-edit-prerequisite-single-plan.md)
+prepares that test on the same public-checks B settings and nominal limits, with
+a new proposed USD4.50 cap. Offline construction retains the card and unchanged
+first tool schemas; live execution awaits exact new command/cap approval.
 Helper return types and incomplete output capture remain separate unresolved issues;
 this intervention does not repair those contracts. Repeatability and held-out
 improvement remain unverified. No further paid run is authorized by unused funds.
