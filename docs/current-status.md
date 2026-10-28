@@ -24,19 +24,18 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [latest public-counterexample continuation](history/2026-10-28-probe-revision-repair-results.md)
-received three confirmed public regressions but resubmitted the unchanged candidate.
-At its final request a repair path still fit the remaining budget. It acknowledged
-those failures and chose finish because they were supplied as evidence, not included
-in the required-check registry. Public path preservation stayed 8/11; isolated
-acceptance FAILED and safety passed. The USD3.38078870 allocation is CLOSED.
+The [required-public-check continuation](history/2026-10-28-required-public-check-repair-results.md)
+repaired the saved candidate's three public regressions in two new edits. The first
+edit still failed the required matrix; its exact output reached the next request.
+The second edit passed all 11 required public cases while preserving the original
+call and positive processing evidence. Public regression passed 1231 tests; normal
+finish then reached isolated task acceptance PASS and safety PASS.
 
-The [required-public-check change](history/2026-10-28-required-public-checks.md)
-connects explicit host-registered public counterexamples to the existing execution,
-current-diff status, automatic repair feedback, completion and budget paths. The
-original task and original-call identity stay unchanged. Initial observed failures
-are cited imports, not fabricated executions. Recovery cannot drop or change their
-binding. Model notes and speculative questions remain advisory.
+The [required-public-check design](history/2026-10-28-required-public-checks.md)
+is retained: explicit host-registered public counterexamples join execution,
+current-diff status, automatic repair feedback, completion and budget paths.
+Initial imported failures retain their provenance; recovery preserves their binding.
+Model notes and speculative questions remain advisory.
 
 Known FAIL and required NOT_RUN block successful finish regardless of unused budget.
 An accepted edit needs the same check on the new diff; its result reaches the next
@@ -45,25 +44,19 @@ The frozen diagnostic's 11-case host assessment now runs before completion throu
 its prepared environment. The old separate final replay reservation is removed;
 normal check actions/time are budgeted, and final reporting reuses receipts.
 
-Focused controls passed 64 distinct cases across bounded selections. Quick passed
-763 checks and both isolated mock evaluations; its one documentation-size failure
-was fixed and all five documentation checks passed on recheck. Ruff passed.
-This establishes local enforcement and delivery, not live-model repair success.
+The authorized single run used five model responses, nine actions and USD0.90023750
+of its USD3.38078870 cap. Its allocation is CLOSED. This is a successful assisted
+checkpoint repair, not a fresh solve or a causal/generalization estimate. F0010
+already passed at the starting candidate. One preexisting public discrepancy stays
+excluded from the mandatory 11 and is still reported as FAIL.
 
 Caller-source access, original-call/processing verification, bounded exploration
-and shared completion-path reservations remain active. Public PASS, successful
-submission and independent acceptance remain different outcomes. The immediate
-question is whether the live model uses mandatory failure feedback to revise the
-candidate; local mechanism validation cannot answer it.
-
-The [single-run follow-up](history/2026-10-28-required-public-check-repair-plan.md)
-is prepared on the same saved candidate/model with a proposed fresh USD3.38078870
-cap. v3 passes offline request parity and read-only environment preflight; actual
-provider/target executions remain zero. Under the unchanged total limits, the
-first request offers repair/stop while optional exploration is closed. The old
-final replay slot/time now belongs to ordinary required checks. A preparation-only
-audit correction accepts that offered state without opening tools. New cost
-approval is pending; no additional run is funded.
+and shared completion-path reservations remain active. The first request allowed
+repair/stop; optional inspection reopened after the first failed repair. Successful
+delivery, public PASS, isolated acceptance and safety remain separate evidence.
+The next unresolved question is whether this completion policy helps from a clean
+original task without operator-selected counterexamples, within the same overall
+budget. No fresh run or broader comparison is prepared or funded.
 
 ## Supporting evidence
 
