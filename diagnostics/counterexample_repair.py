@@ -119,6 +119,27 @@ def run_branch(branch, packet, group, journal, store, first_hash, *, client=None
         return post.run_branch(branch, group, journal, store, first_hash, client=client)
 
 
+def read_delivery_audit(events, request):
+    require(not any(e["event_type"] == "protocol_correction" for e in events),
+            "offline read required protocol correction")
+    results = [e["payload"]["result"] for e in events
+               if e["event_type"] == "action_finished"
+               and e["payload"]["action_id"] == "public_counterexample_delivery_read"]
+    require(len(results) == 1 and results[0]["status"] == "succeeded"
+            and results[0]["tool"] == "read_file", "offline read did not succeed")
+    expected = results[0]
+    state = json.loads(request["input"][-1]["content"])["state"]
+    delivered = list(state["latest_tool_results"])
+    for exchange in post.public_exchanges(request["input"], archive_kind=post.PUBLIC_EVIDENCE_KIND):
+        if exchange.get("type") == "function_call_output":
+            delivered.append(json.loads(exchange["output"]))
+    require(any(isinstance(item, dict) and all(item.get(key) == expected[key]
+                for key in ("action_id", "input_hash", "status", "output")) for item in delivered),
+            "successful read result missing from following request")
+    return {"status": "PASS", "action_id": expected["action_id"],
+            "result_hash": sha256_json(expected), "protocol_corrections": 0}
+
+
 def prepare(source, cut, packet_root, env_file, output, result_root, cap):
     require(cap.is_finite() and cap > 0, "positive new cap required")
     packet = packet_api.build_packet(packet_root)
@@ -155,7 +176,7 @@ def prepare(source, cut, packet_root, env_file, output, result_root, cap):
     later_client = ScriptedClient([[{
         "name": "read_file", "action_id": "public_counterexample_delivery_read",
         "arguments": {"path": "astroid/modutils.py", "start_line": 1, "end_line": 12,
-                      "source_scope": "repository"},
+                      "source_scope": "repository", "memory_update": None},
     }], post.stop_client().steps[0]])
     with public_feedback(packet), post.public_checkpoint():
         later_receipt = exposure.rehearse(later, later_client)
@@ -165,6 +186,8 @@ def prepare(source, cut, packet_root, env_file, output, result_root, cap):
     for index, delivered in enumerate(later_client.created):
         feedback_audit(later, post.normalized_request(delivered), packet,
                        first_response=index == 0)
+    audit["later_read_delivery"] = read_delivery_audit(
+        later.journal.events()[later.inherited_events:], later_client.created[1])
     audit["later_response_delivery_checked"] = True
     plan = {"schema": SCHEMA, "official": False, "paid_execution_authorized": False,
         "source": source.record(), "cut_sequence": cut, "include_cut": False,

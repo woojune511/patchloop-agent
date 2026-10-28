@@ -15,6 +15,24 @@ from patchloop.errors import ContractError
 from patchloop.util import canonical_json
 
 
+def test_read_delivery_audit_requires_success_without_correction_and_exact_output():
+    result = {"action_id": "public_counterexample_delivery_read", "tool": "read_file",
+              "status": "succeeded", "input_hash": "bound", "output": {"text": "public source"}}
+    event = {"event_type": "action_finished", "payload": {
+        "action_id": result["action_id"], "result": result}}
+    request = {"input": [{"role": "user", "content": canonical_json(
+        {"state": {"latest_tool_results": [result]}})}]}
+    assert diagnostic.read_delivery_audit([event], request)["protocol_corrections"] == 0
+    with pytest.raises(ContractError, match="protocol correction"):
+        diagnostic.read_delivery_audit([{"event_type": "protocol_correction"}, event], request)
+    with pytest.raises(ContractError, match="did not succeed"):
+        diagnostic.read_delivery_audit([], request)
+    changed = copy.deepcopy(event)
+    changed["payload"]["result"]["input_hash"] = "different"
+    with pytest.raises(ContractError, match="missing from following request"):
+        diagnostic.read_delivery_audit([changed], request)
+
+
 def test_context_and_actual_input_receive_same_packet_without_changing_gate(monkeypatch):
     state = {"current_diff": {"patch_hash": "measured"}, "workflow_gate": "ready_to_submit",
              "visible_check_status": [{"status": "PASS"}],

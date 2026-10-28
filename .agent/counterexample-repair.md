@@ -27,7 +27,7 @@ cases, including correcting the three candidate regressions. One discrepancy tha
 already existed on the base is reported separately, not added as a new obligation.
 These examples are operator-provided development assistance, not hidden tests.
 
-Reserve one tool action and35 seconds for one final public matrix execution.
+Reserve one tool action and 35 seconds for one final public matrix execution.
 The diagnostic fork reduces its ordinary runner limits by those amounts before
 writing the new envelope, and binds the reserve in its hash-chained marker.
 Historical usage, model/edit/cost limits and evaluation reservation are unchanged;
