@@ -97,6 +97,13 @@ disclosed that gap at finish. This is one successful repair and live delivery,
 not evidence of replay uptake or causal improvement. Original-call verification
 remains unverified without downgrading the acceptance PASS. Keep budgets and
 submission policy unchanged; repeatability and the effect on choices remain open.
+The [saved-patch comparison](history/2026-10-29-sqlfluff-success-mechanism.md) now
+confirms the mechanism on public cases: the old edit still produces nine spaces;
+both new edits produce the expected eight immediately in L036, and the final
+SELECT-column guard also preserves two top-level regression cases. This operator
+diagnostic does not retroactively count as solver replay. The discriminating
+pre-edit observation and regression-driven revision are evidenced; card causality
+remains unestablished because the first repair idea predates the card.
 Helper return types and incomplete output capture remain separate unresolved issues;
 this intervention does not repair those contracts. Repeatability and held-out
 improvement remain unverified. No further paid run is authorized by unused funds.

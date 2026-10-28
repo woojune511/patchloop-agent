@@ -17,3 +17,4 @@
 - [SQLFluff branch diagnosis: accepted L036 edit, same intermediate output and split-indent failure](../2026-10-29-sqlfluff-branch-diagnosis.md)
 - [Pre-edit helper observations linked to current candidate and optional replay guidance](../2026-10-29-probe-followup-guidance.md)
 - [SQLFluff observation follow-up: accepted repair, five delivered cards, no post-edit replay](../2026-10-29-probe-followup-single-results.md)
+- [Why the SQLFluff repair succeeded: changed intermediate indentation and regression-scoped reuse](../2026-10-29-sqlfluff-success-mechanism.md)
