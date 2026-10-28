@@ -16,6 +16,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from diagnostics.checkpoint_continuation import ScriptedClient, _artifacts, inherited_reads
+from diagnostics.checkpoint_envelope import read_checkpoint_envelope
 from diagnostics.cleanup_information_checkpoint import restore_candidate
 from diagnostics.decision_sampler import require
 from diagnostics.declaration_checkpoint import Source, disjoint
@@ -26,6 +27,7 @@ from patchloop.deadline import ExecutionDeadline
 from patchloop.dev import completion_reproduction, original_obligation, runner
 from patchloop.dev.contracts import DevRunRequest
 from patchloop.dev.cost import DevCostLedger, pricing_for_model
+from patchloop.dev.dependency_sources import normalize_roots
 from patchloop.dev.state import DevJournal
 from patchloop.errors import ContractError
 from patchloop.repository import WorkspaceManager
@@ -212,12 +214,17 @@ def _settled_batch_state(prefix, old, package):
 
 
 def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
-          preserve_parent_configuration=False, model_override=None, after_tool_batch=False):
+          preserve_parent_configuration=False, model_override=None, after_tool_batch=False,
+          caller_source_roots=None):
     """Copy a settled prefix; bind current runtime without changing the parent."""
     require(
         model_override is None or preserve_parent_configuration,
         "model override requires preserved parent configuration",
     )
+    require(caller_source_roots is None or preserve_parent_configuration,
+            "caller source override requires preserved parent configuration")
+    caller_override = (normalize_roots(caller_source_roots)
+                       if caller_source_roots is not None else None)
     require(not after_tool_batch or preserve_parent_configuration,
             "after-batch continuation requires preserved parent configuration")
     require(arm in {"A", "B"}, "unknown exposure arm")
@@ -233,7 +240,9 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
         (source.public_path, source.public_hash),
     ):
         require(sha256_bytes(path.read_bytes()) == digest, "source identity changed")
-    events, old = historical.events(), historical.load_envelope()
+    events, old = historical.events(), read_checkpoint_envelope(source)
+    caller_roots = (caller_override if caller_override is not None else
+                    dict(old.caller_source_roots) if preserve_parent_configuration else {})
     require(
         old.provider == "openai"
         and old.split == "dev-train"
@@ -365,6 +374,7 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
             if old.prepared_probe_dependencies_path
             else None
         ),
+        caller_source_roots=caller_roots,
         enable_probes=old.probe_image_digest is not None,
         probe_policy=old.probe_policy,
         repair_recheck=old.repair_recheck,
@@ -421,6 +431,8 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
         marker["preserve_parent_configuration"] = True
     if model_override is not None:
         marker["model_override"] = model_override
+    if caller_override is not None:
+        marker["caller_source_roots_override"] = caller_override
     journal.append("observation_exposure_fork", marker)
     branch = SimpleNamespace(
         root=output,

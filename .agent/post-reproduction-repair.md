@@ -12,6 +12,12 @@ not an older prepared request. The public authored program, case, action/input
 identities and old JSONL bytes remain fixed. Nested fork CAS references are
 resolved through the parent's verified hash/size/media-type mapping.
 
+The diagnostic-only `checkpoint_envelope.py` reader accepts the exact predecessor
+completion-cost contract as historical metadata, with the source envelope hash and
+all remaining fields validated. It preserves the original contract and bytes. The
+fork writes a new envelope with the current contract; ordinary load/resume remains
+strict and still rejects the old contract. No historical execution is reauthorized.
+
 Preparation uses a fresh external branch and a finite scripted stop. The normal
 runner builds the first repair request through its existing public segment
 handoff. The audit compares the latest action/input identity and the complete
@@ -19,6 +25,12 @@ reproduction object, including desired/failure comparisons and captured calls,
 against the saved result. Historical encrypted reasoning is excluded; no target
 execution or provider/credential access is needed. The actual repair stage and
 available tools are derived normally, not prescribed by the diagnostic.
+
+An explicit repeatable `--caller-source distribution=directory` registers pinned
+prepared caller reads in the restored ordinary request. The normalized mapping is
+bound in the new fork marker, request/model identity, envelope, manifest and first
+counted/dispatched tool schemas. Collection uses the same mapping. Omission retains
+the parent mapping; it does not infer source roots or inject later operator findings.
 
 The sealed manifest binds source/runtime/diagnostic hashes, model, credential
 path, one repeat, new positive cap, inherited resources and first public request.

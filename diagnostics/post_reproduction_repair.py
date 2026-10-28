@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from contextlib import ExitStack, contextmanager
 from dataclasses import asdict
 from decimal import Decimal
@@ -17,12 +18,14 @@ from diagnostics import first_reproduction_comparison as original
 from diagnostics import observation_comparison as live
 from diagnostics import observation_exposure as exposure
 from diagnostics.checkpoint_continuation import ScriptedClient
+from diagnostics.checkpoint_envelope import read_checkpoint_envelope
 from diagnostics.decision_sampler import require
 from diagnostics.declaration_checkpoint import Source, disjoint
 from patchloop.agent.model import OpenAIResponsesAdapter
 from patchloop.artifacts import ArtifactStore
 from patchloop.dev import runner
 from patchloop.dev.cost import DevCostLedger, usd_to_nanos
+from patchloop.dev.dependency_sources import normalize_roots, parse_cli_roots
 from patchloop.dev.native_sources import PUBLIC_EVIDENCE_KIND, public_exchanges
 from patchloop.dev.state import DevJournal
 from patchloop.runtime import git_commit, repository_root
@@ -51,11 +54,12 @@ def public_checkpoint():
         yield
 
 
-def restore(source, cut, root, cap, env_file, *, funded=False):
+def restore(source, cut, root, cap, env_file, *, funded=False, caller_source_roots=None):
     return exposure._fork(
         source, cut, root, "B", new_cap_usd=cap,
         mode="funded-observation" if funded else "offline-scripted-only",
         env_file=env_file, preserve_parent_configuration=True, after_tool_batch=True,
+        caller_source_roots=caller_source_roots,
     )
 
 
@@ -150,6 +154,32 @@ def stop_client():
     }]])
 
 
+def caller_scope_audit(request, roots):
+    """Bind offered read/search schemas to the exact explicit registration."""
+    roots = normalize_roots(roots)
+    scopes = ["repository", *[f"dependency:{package}" for package in roots]]
+    offered = []
+    for tool in request["tools"]:
+        if tool["name"] not in {"read_file", "search_files"}:
+            continue
+        properties = tool["parameters"]["properties"]
+        if roots:
+            require(properties.get("source_scope", {}).get("enum") == scopes
+                    and "source_scope" in tool["parameters"]["required"],
+                    "caller source scopes differ from registration")
+            require(all(re.search(
+                        rf"dependency:{re.escape(package)} \S+ root={re.escape(root)}(?:; |\.$)",
+                        tool["description"])
+                        for package, root in roots.items()),
+                    "caller source roots missing from offered catalog")
+        else:
+            require("source_scope" not in properties, "unexpected caller source scope")
+        offered.append(tool["name"])
+    require(not roots or set(offered) == {"read_file", "search_files"},
+            "registered caller reads and searches must both be offered")
+    return {"caller_source_roots": roots, "offered_source_tools": offered}
+
+
 def preview(branch):
     client = stop_client()
     # A first preview uses the regular rehearsal, with the same public handoff.
@@ -158,19 +188,28 @@ def preview(branch):
     require(len(client.counted) == len(client.created) == 1
             and receipt["result"]["terminal"] == "AGENT_STOPPED"
             and not receipt["synthetic_probe_calls"], "offline preview did not stop cleanly")
+    require(client.counted[0]["tools"] == client.created[0]["tools"],
+            "counted and dispatched source schemas differ")
     request = normalized_request(client.created[0])
-    return request, feedback_audit(branch, request), receipt
+    audit = feedback_audit(branch, request)
+    if branch.request.caller_source_roots:
+        audit["caller_sources"] = caller_scope_audit(request, branch.request.caller_source_roots)
+    else:
+        caller_scope_audit(request, {})
+    return request, audit, receipt
 
 
-def prepare(source, cut, env_file, result_root, output, cap):
+def prepare(source, cut, env_file, result_root, output, cap, *, caller_source_roots=None):
     require(cap.is_finite() and usd_to_nanos(cap) > 0, "positive finite new cap required")
+    roots = normalize_roots(caller_source_roots) if caller_source_roots is not None else None
     disjoint(output, (repository_root(), source.root, source.public_path.parent, result_root))
     disjoint(result_root, (repository_root(), source.root, source.public_path.parent, output))
     output.mkdir()
-    branch = restore(source, cut, output / "preview", cap, env_file)
+    branch = restore(source, cut, output / "preview", cap, env_file, caller_source_roots=roots)
     request, audit, receipt = preview(branch)
     journal = DevJournal(output, "run_dev_postreproductionpreparation")
-    replay = restore(source, cut, output / "dispatch-rehearsal", cap, env_file)
+    replay = restore(source, cut, output / "dispatch-rehearsal", cap, env_file,
+                     caller_source_roots=roots)
     replay_receipt = run_branch(
         replay, DevCostLedger(cap, replay.pricing), journal, ArtifactStore(output / "artifacts"),
         sha256_json(request), client=stop_client(),
@@ -180,7 +219,7 @@ def prepare(source, cut, env_file, result_root, output, cap):
             "prepared first request differs from fresh offline dispatch")
     audit["fresh_offline_dispatch_match"] = True
     (output / "first-request.json").write_text(canonical_json(request), encoding="utf-8")
-    old = DevJournal(source.root, source.run_id).load_envelope()
+    old = read_checkpoint_envelope(source)
     plan = {
         "schema": SCHEMA, "official": False, "paid_execution_authorized": False,
         "source": source.record(), "cut_sequence": cut, "include_cut": True,
@@ -212,6 +251,8 @@ def prepare(source, cut, env_file, result_root, output, cap):
                             "execution or cleanup uncertainty", "normal runner terminal"],
         "scope": "Checkpoint repair only; no clean-start or generalization claim.",
     }
+    if roots is not None or branch.request.caller_source_roots:
+        plan["caller_source_roots"] = branch.request.caller_source_roots
     raw = (canonical_json(plan) + "\n").encode()
     (output / "manifest.json").write_bytes(raw)
     journal.append("post_reproduction_prepared", {
@@ -241,6 +282,9 @@ def validate(path, digest, cap=None):
     require(saved == source, "source bytes changed")
     request = json.loads((Path(plan["preparation_root"]) / "first-request.json").read_bytes())
     require(sha256_json(request) == plan["first_request_hash"], "first request changed")
+    roots = plan.get("caller_source_roots", read_checkpoint_envelope(source).caller_source_roots)
+    require(normalize_roots(roots) == roots, "caller source registration is not normalized")
+    caller_scope_audit(request, roots)
     require(not Path(plan["result_root"]).exists(), "result allocation already used")
     return plan
 
@@ -262,7 +306,8 @@ def collect(path, digest, cap):
         if preflight["status"] == "READY":
             try:
                 branch = restore(Source.from_record(plan["source"]), plan["cut_sequence"],
-                                 root / "repair", cap, env_file, funded=True)
+                                 root / "repair", cap, env_file, funded=True,
+                                 caller_source_roots=plan.get("caller_source_roots"))
                 require(branch.remaining_budget == plan["remaining_budget"],
                         "checkpoint budget changed")
                 result = run_branch(branch, group, journal, store, plan["first_request_hash"])
@@ -298,6 +343,7 @@ def main():
     prep.add_argument("--run-id", required=True)
     prep.add_argument("--cut-sequence", type=int, required=True)
     prep.add_argument("--new-cap-usd", type=Decimal, required=True)
+    prep.add_argument("--caller-source", action="append", metavar="DISTRIBUTION=DIRECTORY")
     for name in ("validate", "collect"):
         cmd = sub.add_parser(name)
         cmd.add_argument("--manifest", type=Path, required=True)
@@ -307,7 +353,9 @@ def main():
     if args.command == "prepare":
         result = prepare(original.source_record(args.source_root, args.run_id, args.public_task),
                          args.cut_sequence, args.env_file, args.result_root, args.output,
-                         args.new_cap_usd)
+                         args.new_cap_usd,
+                         caller_source_roots=(parse_cli_roots(args.caller_source)
+                                              if args.caller_source is not None else None))
     elif args.command == "collect":
         result = collect(args.manifest, args.manifest_hash, args.new_cap_usd)
     else:

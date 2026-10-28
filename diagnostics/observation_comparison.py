@@ -133,8 +133,10 @@ def clean_implementation():
 
 def check_environment(row, env_file):
     """Read-only admission; credential contents and provider construction are forbidden."""
+    from diagnostics.checkpoint_envelope import read_checkpoint_envelope
+
     source = Source.from_record(row["source"])
-    old = DevJournal(source.root, source.run_id).load_envelope()
+    old = read_checkpoint_envelope(source)
     checks = {}
     try:
         clean_implementation()
