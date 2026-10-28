@@ -312,9 +312,10 @@ def test_original_caller_observes_input_environment_and_current_edits(
         else:
             from patchloop.sandbox import probe_setup
 
-            program = (Path(probe_setup.__file__).read_text(encoding="utf-8")
+            program = (f"import runpy\nsetup = runpy.run_path({probe_setup.__file__!r})\n"
                        + f"\nimport sys; sys.path[:0] = {[str(repo), str(copied)]!r}\n"
-                       + '\ncheck_setup = SetupChecks({"request_hash": "fixture"}).check\n'
+                       + '\ncheck_setup = setup["SetupChecks"]('
+                       '{"request_hash": "fixture"}).invoke\n'
                        + PROGRAM)
             result = REAL_RUN([sys.executable, "-I", "-S", "-B", "-c", program],
                               capture_output=True, text=True, encoding="utf-8", check=True,

@@ -16,8 +16,10 @@ BEHAVIOR_CHANNEL = "invoke-declared-call-v7"
 EXCEPTION_CHANNEL = "invoke-declared-call-v8"
 SIGNATURE_CHANNEL = "invoke-declared-call-v9"
 CONSTRUCTION_CHANNEL = "invoke-declared-call-v10"
-CHANNEL = CONSTRUCTION_CHANNEL
-SIGNATURE_CHANNELS = (SIGNATURE_CHANNEL, CONSTRUCTION_CHANNEL)
+API_CHANNEL = "invoke-declared-call-v11"
+CHANNEL = API_CHANNEL
+CONSTRUCTION_CHANNELS = (CONSTRUCTION_CHANNEL, API_CHANNEL)
+SIGNATURE_CHANNELS = (SIGNATURE_CHANNEL, *CONSTRUCTION_CHANNELS)
 BEHAVIOR_CHANNELS = (BEHAVIOR_CHANNEL, EXCEPTION_CHANNEL, *SIGNATURE_CHANNELS)
 CAPTURE_CHANNELS = (CAPTURE_CHANNEL, STABLE_CHANNEL, DIAGNOSTIC_CHANNEL, CANONICAL_CHANNEL,
                     *BEHAVIOR_CHANNELS)
@@ -162,6 +164,8 @@ def supports(channel):
 def observer(channel):
     """Select frozen legacy bytes or bounded call capture for fresh cases."""
     if channel == CHANNEL:
+        return probe_call_capture.api_observer(OBSERVER_V2)
+    if channel == CONSTRUCTION_CHANNEL:
         return probe_call_capture.construction_observer(OBSERVER_V2)
     if channel == SIGNATURE_CHANNEL:
         return probe_call_capture.signature_observer(OBSERVER_V2)

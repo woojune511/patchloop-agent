@@ -449,7 +449,7 @@ def program(source, binding, call_path=False):
             new = new.replace("    value = target(*args, **kwargs)",
                               '    row["target_started"] = True\n'
                               "    value = target(*args, **kwargs)")
-        if channel == probe_invocation.CONSTRUCTION_CHANNEL:
+        if channel in probe_invocation.CONSTRUCTION_CHANNELS:
             old = old.replace('row[', 'r[').replace('target(', 't(')
             new = new.replace('row[', 'r[').replace('target(', 't(')
         if trace.count(old) != 1:
@@ -494,7 +494,7 @@ def compare(output, binding):
                 and set(candidate) == (
                     ({"calls", "incomplete", "observation"} if recorded
                      else {"calls", "incomplete"})
-                    | ({"request_phase"} if channel == probe_invocation.CONSTRUCTION_CHANNEL
+                    | ({"request_phase"} if channel in probe_invocation.CONSTRUCTION_CHANNELS
                        else set()))
                 and type(candidate["incomplete"]) is bool
                 and isinstance(candidate["calls"], list)
@@ -511,7 +511,7 @@ def compare(output, binding):
                     and all(isinstance(p, str) for p in c["sys_path"])
                     for c in candidate["calls"]
                 )
-                and (channel != probe_invocation.CONSTRUCTION_CHANNEL
+                and (channel not in probe_invocation.CONSTRUCTION_CHANNELS
                      or probe_invocation.valid_request_phase(
                          candidate["request_phase"], candidate["calls"], candidate["incomplete"]))
             ):

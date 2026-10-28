@@ -167,11 +167,11 @@ def _pre_target_attempts(case, completed_actions):
             return None
         phase = trace.get("request_phase")
         configuration_failure = (
-            channel == probe_invocation.CONSTRUCTION_CHANNEL
+            channel in probe_invocation.CONSTRUCTION_CHANNELS
             and probe_invocation.valid_request_phase(phase, calls, trace["incomplete"])
             and phase["settings_rejected"] and phase["target_entries"] == 0
         )
-        if (channel == probe_invocation.CONSTRUCTION_CHANNEL
+        if (channel in probe_invocation.CONSTRUCTION_CHANNELS
                 and not probe_invocation.valid_request_phase(phase, calls, trace["incomplete"])):
             return None
         if not calls and not configuration_failure:

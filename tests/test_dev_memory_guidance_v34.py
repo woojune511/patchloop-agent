@@ -48,11 +48,14 @@ def _assert_small_core(tool):
 
 def _legacy_compression_surface(tools):
     # Setup-helper guidance is tested separately; retired mutation fields are absent.
-    # Keep the earlier field/order/description bytes pinned at the memory boundary.
+    # Normalize only that guidance block. Frozen arms retain their original delimiter;
+    # current caller/API descriptions and every ordered wire value remain pinned below.
     for tool in tools:
         if tool["name"] == "run_probe":
             description = tool["description"]
-            start = description.index("Before exercising behavior, use the available ")
+            start = description.index(
+                "Helper mode automatically supplies only check_setup" if FROZEN_ARM is None
+                else "Before exercising behavior, use the available ")
             end = description.index("Compare actual input/output", start)
             tool["description"] = description[:start] + description[end:]
     return tools
@@ -84,7 +87,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
 @pytest.mark.parametrize(("names", "expected"), [
     pytest.param(
         ("read_file", "run_check", "run_probe", "search_files", "stop_task"),
-        "435798c40a0a78d2182ce6d8c7c748c6fd341be4ea42265e11c980f8409ea45d"
+        "abfd29244a6aab3af1284203a48fa0fb78befdad4d0eac8871a97268817e5459"
         if FROZEN_ARM is None else
         "544c19f4d8e63f8a8810efe1dd4cd0adf3dee51cdb0145a4509de554027739c2",
         id="names0-99567faf1ea920a9157e5ea6618c5d43e7d56e441820be941403a025d9b2abe9"
@@ -92,7 +95,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     ),
     pytest.param(
         ("finish_task", "read_file", "replace_text", "run_probe", "search_files", "stop_task"),
-        "8f8a8114b74edb726a3b86f119d1d9c68090a6bad970f0492d480cc7dda55c98"
+        "39d8e0d87e675ad8634f7b386371d3c0b09f8a9f89247c66583b934391a235bd"
         if FROZEN_ARM is None else
         "b817201c9d1aa8432575b0c1b55015dc01bc08a2b002e3e2cc09ab13bfa229c6",
         id="names1-de57dc4e83f8b26994c5df5f659cc208bbd3b348233d0ad3640493ffd5b90bd3"
@@ -100,7 +103,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     ),
     pytest.param(
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task"),
-        "25d5cd3d9203c462e806ac7c97aea8bf001fa16f0e734ba1c3300a14e02f29ac"
+        "4a401961e16d6c29252e25ab6665c20bf45e8ac44ddfadd144062e996ef6f1ab"
         if FROZEN_ARM is None else
         "310f8ec3dd129c93fb10c2a0589decf38eb09ce60e395ef906ac814e399e5139",
         id="names2-923a71312af5fa8d677ce72762b2f045a47ff2ebc4e084caaf1f57a2c11e7032"
@@ -109,7 +112,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     pytest.param(
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task",
          "finish_task"),
-        "84a026f3db740195f4f5cb35fb520a00b592317766982dbae29044713211ddbc"
+        "a8e0b69c3d7bd8fbbbe0bdc36298e63cff00ab74e567b57b344836c6666c0f76"
         if FROZEN_ARM is None else
         "6302bc9d248be03d6e1430f0102a0e5c00ecb7883c25d453945f979f21fd3af7",
         id="names3-53d8c9ffaa20544b633c883b1e40010113b680722f23caebeb0ef991f1738caa"
@@ -117,7 +120,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     ),
 ])
 def test_descriptions_outside_memory_and_schema_order_are_unchanged(names, expected):
-    # Pin current small-core/invocation guidance; preserve IDs and historical removal arms.
+    # Pin current small-core/shared API guidance; preserve IDs and historical removal arms.
     # OFF still has the prior four digests; argument shapes remain independently pinned.
     tools = dev_tool_schemas(finish_enabled="finish_task" in names, allowed_tools=names)
     tools = _legacy_compression_surface(tools)

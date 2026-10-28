@@ -23,7 +23,7 @@ from patchloop.deadline import ExecutionDeadline
 from patchloop.errors import ContractError
 from patchloop.prepared_probe_dependencies import MOUNT, PreparedDependencies, read_descriptor
 from patchloop.probe_runtime import runtime
-from patchloop.sandbox import call_path_trace, exception_frames, probe_setup
+from patchloop.sandbox import call_path_trace, exception_frames, probe_api, probe_setup
 from patchloop.sandbox.execution_feedback import (
     TRACE_WRAPPER,
     ReportChannel,
@@ -46,6 +46,7 @@ _SNAPSHOT_LIMIT_BYTES = 128 * 1024 * 1024
 _CLEANUP_SECONDS = 5.0
 _WRAPPER = Path(__file__).resolve().parents[2] / "docker" / "probe_runner.py"
 _SETUP_WRAPPER = Path(probe_setup.__file__)
+_API_WRAPPER = Path(probe_api.__file__)
 _EXCEPTION_WRAPPER = Path(exception_frames.__file__)
 EXCEPTION_REPORT_LIMIT_BYTES = 32 * 1024
 
@@ -94,6 +95,7 @@ def probe_profile(dependencies: ProbeDependencyIdentity | None = None) -> dict[s
         "line_trace_hash": sha256_bytes(TRACE_WRAPPER.read_bytes()),
         "call_path_trace_hash": sha256_bytes(call_path_trace.WRAPPER.read_bytes()),
         "setup_helper_hash": sha256_bytes(_SETUP_WRAPPER.read_bytes()),
+        "helper_api_hash": sha256_bytes(_API_WRAPPER.read_bytes()),
         "setup_report_limit_bytes": probe_setup.MAX_REPORT_BYTES,
         "exception_frames_hash": sha256_bytes(_EXCEPTION_WRAPPER.read_bytes()),
         "exception_report_limit_bytes": EXCEPTION_REPORT_LIMIT_BYTES,
@@ -583,6 +585,10 @@ class DockerProbeSandbox:
                 if sha256_bytes(setup_wrapper) != self._profile["setup_helper_hash"]:
                     raise ContractError("probe setup helper changed before execution")
                 (trusted / "probe_setup.py").write_bytes(setup_wrapper)
+                api_wrapper = _API_WRAPPER.read_bytes()
+                if sha256_bytes(api_wrapper) != self._profile["helper_api_hash"]:
+                    raise ContractError("probe API contract changed before execution")
+                (trusted / "probe_api.py").write_bytes(api_wrapper)
                 (trusted / "setup_request.json").write_text(
                     json.dumps(setup_request), encoding="utf-8",
                 )

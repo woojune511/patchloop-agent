@@ -13,6 +13,7 @@ from test_dev_probes import FakeProbe, context
 from test_dev_runner import _crash_journal_once, _enveloped_run_id, _SimulatedCrash
 from test_dev_segments import assert_submitted, configured
 from test_dev_tools import mutation_call, read_calls
+from test_probe_invocation import inject_api
 from typer.testing import CliRunner
 
 from patchloop.cli import app
@@ -73,7 +74,7 @@ class ExecutingProbe(FakeProbe):
                                     execution_identity=execution_identity)
         self.sources.append(python_source)
         output = LocalSandbox().run_check(workspace, RegisteredCheck(
-            id="trusted-test-probe", command=[sys.executable, "-c", python_source],
+            id="trusted-test-probe", command=[sys.executable, "-c", inject_api(python_source)],
             timeout_seconds=10, environment={"PYTHONPATH": str(workspace)},
         ), deadline=deadline, execution_identity=execution_identity)
         return {**receipt, "status": "passed" if output.passed else "failed",

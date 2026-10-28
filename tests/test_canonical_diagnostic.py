@@ -70,7 +70,7 @@ def test_fresh_wire_declares_codes_instead_of_message_substrings():
         "field", "call_id", "code", "role"}
     assert item["additionalProperties"] is False
     assert item["properties"]["code"]["maxLength"] == 32
-    assert probe_invocation.CHANNEL == "invoke-declared-call-v10"
+    assert probe_invocation.CHANNEL == "invoke-declared-call-v11"
     assert probe_invocation.CANONICAL_CHANNEL == "invoke-declared-call-v6"
     assert probe_invocation.DIAGNOSTIC_CHANNEL == "invoke-declared-call-v5"
 

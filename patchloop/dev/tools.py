@@ -90,7 +90,7 @@ from patchloop.dev.working_notes import (
 from patchloop.errors import ContractError, PatchLoopError, RecoveryError
 from patchloop.git_execution import GitExecutionUncertain, run_git
 from patchloop.repository import DiffSummary, WorkspaceManager
-from patchloop.sandbox import call_path_trace
+from patchloop.sandbox import call_path_trace, probe_api
 from patchloop.sandbox.execution_feedback import (
     MAX_FILES,
     MAX_LINES,
@@ -496,14 +496,9 @@ def dev_tool_schemas(
                 "not just repeat a registered example. For helper probes, state the expected "
                 "observation in the question and print or assert it in the experiment. "
                 "Execution completed means "
-                "normal exit, not behavior verified. Before exercising behavior, use the available "
-                "check_setup(label, actual, expected) helper on actual constructed settings. "
-                "It is already injected into the probe's global namespace: call it directly, "
-                "without importing or redefining it, e.g. "
-                "check_setup('mode', settings.mode, expected_mode). "
-                "It records up to 16 type-strict scalar comparisons (None/bool/int/finite float/"
-                "str; label <=120 chars, str <=256 chars, int <=256 bits; bounded report), "
-                "raising AssertionError on mismatch. Correct a setup mismatch before attributing "
+                "normal exit, not behavior verified. "
+                + helper_program.DESCRIPTION +
+                "Setup mismatch raises AssertionError. Correct it before attributing "
                 "it to candidate behavior. Passing setup checks do not verify behavior. "
                 "Print short observations as relevant steps complete and before a potentially "
                 "blocking call, e.g. print({'stage': 'before_call', 'value': actual_value}, "
@@ -512,8 +507,8 @@ def dev_tool_schemas(
                 "Compare actual input/output and relevant "
                 "line-entry ranges; missing observations are not proof of failure. "
                 "Results are diagnostics, not required visible-check verdicts. "
-                + helper_program.DESCRIPTION + " "
-                + probe_replay.DESCRIPTION + " " + reproduction.DESCRIPTION
+                + probe_replay.DESCRIPTION + " " + probe_api.OBSERVER_DESCRIPTION
+                + reproduction.DESCRIPTION
                 + " call_path is null here. A pending original-call diagnosis offers its own "
                 "small focus schema."
             ),
@@ -3114,10 +3109,15 @@ class DevToolGateway:
                     reproduction_binding=reproduction_binding,
                     call_path=path_request,
                 )
-                if (call.arguments.get("purpose") == {"kind": "helper"}
+                program_kind = (call.arguments["purpose"].get("kind")
+                                if isinstance(call.arguments.get("purpose"), dict) else None)
+                if (program_kind in {"helper", "original_requirement"}
                         and not replay_probe and not call.arguments.get("case_id")
                         and (pending is None or "helper_program_error" in pending)):
-                    helper_program.validate(execution_arguments["python_source"])
+                    helper_program.validate(
+                        execution_arguments["python_source"],
+                        mode="original" if program_kind == "original_requirement" else "helper",
+                    )
             except (PatchLoopError, ValidationError, ValueError) as exc:
                 preflight_error = exc
         if is_probe and ("purpose" in call.arguments

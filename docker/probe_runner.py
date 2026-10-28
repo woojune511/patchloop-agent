@@ -268,7 +268,8 @@ def _execute_child(code: object, collector=None, import_paths=None, setup=None,
             "__file__": "<patchloop-probe>",
         }
         if setup is not None:
-            namespace["check_setup"] = setup.check
+            namespace["check_setup"] = setup.invoke
+            namespace["_patchloop_validate_observer_settings"] = setup.validate_observer_settings
         if call_path is not None:
             namespace["_patchloop_call_path_begin"] = call_path.begin
             namespace["_patchloop_call_path_end"] = call_path.end

@@ -9,6 +9,7 @@ import sys
 
 import pytest
 from test_exception_frame_repair import no_external  # noqa: F401
+from test_probe_invocation import inject_api
 
 from patchloop.dev import probe_invocation, probe_judgment, reproduction
 from patchloop.errors import ContractError
@@ -74,7 +75,7 @@ def test_host_rejects_empty_result_even_when_control_was_processed(
 
 def execute(root, source, binding):
     process = subprocess.run(
-        [sys.executable, "-X", "utf8", "-c", reproduction.program(source, binding)],
+        [sys.executable, "-X", "utf8", "-c", inject_api(reproduction.program(source, binding))],
         cwd=root, env={**os.environ, "PYTHONPATH": str(root)}, capture_output=True,
         encoding="utf-8", timeout=10, check=False)
     assert process.returncode == 0, process.stderr

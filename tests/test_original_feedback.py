@@ -13,6 +13,7 @@ from test_finish_reproduction import (
     request,
     results_for,
 )
+from test_probe_invocation import inject_api
 
 from patchloop.contracts import RegisteredCheck
 from patchloop.dev import probe_invocation, reproduction, runner
@@ -42,7 +43,8 @@ class LaunchProbe(FakeProbe):
         self.sources.append(python_source)
         argv = ["30"] + (["host-line-tracing-request"] if self.calls > 1 else [])
         result = LocalSandbox().run_check(workspace, RegisteredCheck(
-            id="local-launch-control", command=[sys.executable, "-c", python_source, *argv],
+            id="local-launch-control",
+            command=[sys.executable, "-c", inject_api(python_source), *argv],
             timeout_seconds=10, environment={"PYTHONPATH": str(workspace)},
         ), deadline=deadline, execution_identity=execution_identity)
         return {**receipt, "status": "passed" if result.passed else "failed",

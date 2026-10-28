@@ -11,6 +11,7 @@ from pathlib import Path
 
 import pytest
 from test_dev_probe_sandbox import FakeProcess, backend, mock_launch, public_repo  # noqa: F401
+from test_probe_invocation import inject_api
 
 from patchloop.dev import probe_invocation, reproduction
 from patchloop.sandbox import exception_frames, probes
@@ -56,7 +57,7 @@ def execute(root, *, broken=False):
         f"capture=module['ExceptionCapture']({req!r},frames)\n"
         + ("capture.frames.capture=lambda error: 1/0\n" if broken else "")
         + "try:\n"
-        f" exec({program!r},{{'__name__':'__main__',"
+        f" exec({inject_api(program)!r},{{'__name__':'__main__',"
         "'_patchloop_exception_capture':capture.capture})\n"
         "finally:\n"
         " capture.finish()\n"

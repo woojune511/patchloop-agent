@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 import pytest
-from test_probe_invocation import review
+from test_probe_invocation import inject_api, review
 
 from patchloop.dev import probe_invocation, reproduction
 from patchloop.sandbox import line_trace
@@ -67,7 +67,8 @@ def execute(root, *, source=SOURCE, fixed=False, traced=False,
         f"sys.argv={host_argv!r}\n"
         "if collector: collector.start()\n"
         "try:\n"
-        f" exec({reproduction.program(source, binding)!r}, {{'__name__': '__main__'}})\n"
+        f" exec({inject_api(reproduction.program(source, binding))!r}, "
+        "{'__name__': '__main__'})\n"
         "finally:\n"
         " if collector: collector.finish()\n"
     )

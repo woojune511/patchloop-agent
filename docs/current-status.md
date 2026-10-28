@@ -25,70 +25,49 @@ and [evidence boundaries](evidence.md).
 ## Active decision
 
 Keep the [required-public-check design](history/2026-10-28-required-public-checks.md):
-known FAIL and required NOT_RUN block successful finish; accepted edits require
-fresh current-diff checks and deliver their failures to the next response.
-Model notes remain advisory. The [assisted continuation](history/2026-10-28-required-public-check-repair-results.md)
-passed11 required public cases,1231 regression tests and isolated acceptance/safety
-after two edits. That saved-candidate result is not a fresh solve or generalization
-estimate. Its allocation is CLOSED.
+known FAIL and required NOT_RUN block successful finish; edits require fresh
+current-diff checks and deliver their failures. The assisted saved-candidate
+[continuation](history/2026-10-28-required-public-check-repair-results.md) passed11
+public cases,1231 regressions and isolated acceptance/safety. That is not a fresh
+solve or generalization estimate; its allocation is CLOSED.
 
-The [clean-original follow-up](history/2026-10-28-autonomous-fresh-results.md)
-reproduced F0010, inspected source31 times and made two edits, but still failed its
-selected processing witness. Tool actions38/40 left two versus four needed for
-completion; USD1.549624/4.50 and656.865 active seconds were below their limits.
-Public regression, submission, isolated acceptance and safety are NOT_RUN.
-Its allocation is CLOSED; supplemental operator counterexamples were not injected.
-
-The [public-record analysis](history/2026-10-28-autonomous-fresh-analysis.md)
-found that the complete caller file and the first patch's negative feedback reached
-the model. Both edits treated the missing init file downstream without establishing
-that the caller selected and processed the real fixture file. An initial callee
-search fragment was lost before the second edit, but missing caller information
-does not explain the first edit. Exact repeated inspection requests were absent.
-
-After reproduction, ordinary probes were denied under protected recovery cost while
-reads could use a minimum-success path. The first-observation selector also stayed
-inactive for this ruleless case. Thus source-only exploration was partly a host
-action-set restriction, not simply model avoidance of available observation.
-An early helper configuration failure remained a separate UNKNOWN obligation;
-pure policy replay showed that this alone did not cause the probe denial.
-
+The prior [clean-original attempt](history/2026-10-28-autonomous-fresh-results.md)
+reproduced F0010 but left processing unverified after two downstream repairs and
+exhausted its tool horizon. The [public analysis](history/2026-10-28-autonomous-fresh-analysis.md)
+identified unequal read/probe cost admission and an inactive ruleless call selector.
 The [observation-opportunity change](history/2026-10-28-observation-opportunity.md)
-now exposes bounded captured-call selection for null diagnostic rules and aligns
-reading, general-probe and first-observation minimum-path admission. General probes
-reserve a prospective additional case; reading/probing preserves an available first
-observation. Response/action/cost/time and protocol-correction reserves remain real.
-Protected later-failure recovery is preferred when feasible; its release is explicit.
+restores those choices with shared minimum completion reservations and keeps the
+original verification requirement. Typed v10 settings rejection separates a known
+pre-target request error from UNKNOWN; it refunds no costs or attempts.
 
-Fresh v10 invocation evidence distinguishes host-confirmed settings rejection before
-any captured target entry from unknown execution. Such attempts retain their costs
-and counters but do not become replay obligations. Old v1-v9 programs and unknown
-receipts are preserved; saved v9 and fresh v10 argument correction remain supported.
-Original verification and required checks are not waived by selection or observation.
-Focused79 and quick792 checks pass, including isolated mock evaluation. Pure replay
-of the saved public state opens reading and both observation options under the same
-limits while retaining the old UNKNOWN obligation. This is local mechanism evidence.
+The [latest live follow-up](history/2026-10-29-observation-opportunity-fresh-results.md)
+ended EVALUATOR_FAIL/unverified_delivery: public regression1231 PASS, isolated task
+acceptance FAIL, safety PASS. It spent USD1.476264,12 responses,22 actions and851.269
+active seconds. Its allocation is CLOSED. Two helper construction errors prevented
+any original reproduction, so post-reproduction observation uptake remains untested.
+The first description omitted check_setup's signature; descriptions omitted input_paths
+maximum4, and the runtime message did not identify the offending field. The model
+corrected the first error, then hit the second constraint. Overall budget exhaustion
+was not the terminal cause.
 
-The [approved clean-start follow-up](history/2026-10-29-observation-opportunity-fresh-results.md)
-has now completed once under those unchanged limits: EVALUATOR_FAIL,
-unverified_delivery, public regression1231 PASS, isolated task acceptance FAIL and
-safety PASS. It spent USD1.476264,12 responses,22 actions and851.269 active seconds.
-The allocation is CLOSED. One patch was delivered, but no original failure or target
-processing was established, so post-reproduction observation uptake remains untested.
+The [helper API contract change](history/2026-10-29-helper-api-contract.md) now shares
+signatures, mode availability and limits between descriptions and trusted runtime.
+Definite direct-call mistakes are rejected before dispatch in both helper and
+original modes. Dynamic calls receive precise runtime errors: setup binding metadata
+or observed-target field/count/limit stderr. Both error paths reach the next counted
+model request, and corrected calls execute without resetting counters or replaying
+settled actions. Unknown execution and original verification remain independent.
 
-The live blocker occurred earlier: the first-only helper description omitted
-check_setup's required signature and all descriptions omitted input_paths maximum4.
-The model fixed the first API error from delivered feedback, then hit the undisclosed
-path limit. Two acquisition attempts ended before captured target entry. v10 correctly
-separated the typed settings rejection; the earlier setup error remained UNKNOWN.
-The original obligation stayed unverified through submission; public PASS did not
-discharge it. This is not evidence that the model ignored an offered original trace.
+Fresh v11 uses the same validator from a hash-bound trusted module; saved v1-v10
+programs stay byte-exact. Observer 8K, authored-source and total resource limits are
+unchanged. Core validation: 161 PASS in 42.162 seconds; quick integration: 855 PASS
+in 115.437 seconds, including isolated mock evaluation. Ruff passes. This is local
+mechanism evidence; commands and limits are in the linked implementation report.
+No live model call, benchmark rerun or new allocation was made for this change.
 
-The next engineering focus is a consistent helper API contract and precise field
-errors, followed by short local setup-correction checks. No new implementation or
-live allocation follows automatically. Preserve the unknown-evidence boundary and
-the original failure/processing verification requirement; higher overall limits are
-not supported as the immediate remedy by this result.
+The next live question is whether the corrected API contract allows valid original
+execution and then useful observation and repair under the same limits. It is not
+yet evidence of F0010 repair gain. Previous paid allocations remain closed.
 
 ## Supporting evidence
 

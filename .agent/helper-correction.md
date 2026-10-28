@@ -10,16 +10,43 @@ diagnostic opportunities. This contract addresses that first-repair bottleneck.
 Fresh `purpose={kind: helper}` programs have normal Python builtins and the shared
 `check_setup(label, actual, expected)` function. They import public project code
 and Python libraries normally. Use `tempfile.TemporaryDirectory` and `pathlib.Path`
-for helper fixtures. `reproduction_workspace`, `observed_target`, and
+for helper fixtures. `reproduction_workspace`, `reproduction_outputs`, `observed_target`, and
 `record_observation` belong to `original_requirement`; its frozen fixture and
 observation identity contract stays unchanged.
 
+`patchloop/sandbox/probe_api.py` owns the injected API signatures, mode availability and
+settings limits. Both ordinary and first-reproduction descriptions include its
+setup and observer contracts. The first description remains under the existing
+4K control with the default environment description; parameter schemas are unchanged.
+The live failure motivating this change is recorded in
+[the observation-opportunity result](../docs/history/2026-10-29-observation-opportunity-fresh-results.md).
+
 `helper_program.validate` compiles without execution and checks lexical bindings
-for those three original-only names. It rejects syntax errors and unbound uses
+for those four original-only names in helper mode. It rejects syntax errors and unbound uses
 before dispatch, naming `/python_source`, the source hash and available APIs.
+Fresh helper and original programs also check definite direct API calls: missing
+setup arguments, invalid observed-target keywords and literal count overflow.
+Errors retain the authored line and structured `helper_program_error.api_error`
+(API, parameter, error code, missing parameters or actual/maximum counts).
 Imports, local definitions and closure bindings are allowed. Dynamic namespace
 operations and wildcard imports make the name check inconclusive; syntax checking
-still applies. A valid source is not guaranteed to execute successfully.
+still applies. Aliases, argument expansion and shadowed names are not resolved by
+the call check. A valid source is not guaranteed to execute successfully.
+
+The trusted runner's setup wrapper binds the same signature before comparison;
+`inspect.signature(check_setup)` retains the real label/actual/expected parameters.
+Runtime binding errors return bounded `setup_checks.api_error`. They do not establish
+target nonexecution: arbitrary target code may have run before a setup call.
+Fresh v11 observed-target settings use the same validator and report the precise
+field, actual count and limit in stderr. The existing typed request phase remains
+the settings-rejection classification evidence. Stored v1-v10 programs retain
+their exact bytes and completed receipts remain idempotent.
+
+`input_paths` accepts at most 4 fixture roots and recursively snapshots directories.
+Related inputs may share one root; required files must not be omitted, generated
+outputs/ancestors remain excluded, and existing snapshot bounds remain enforced.
+The API module is copied beside the trusted setup helper and bound by
+`helper_api_hash` in the sandbox profile. No observer/source/resource limit increases.
 
 This is preflight correction, not a general runtime setup-error classifier.
 Traceback location, `check_setup` failure and absent changed-line hits cannot prove
@@ -64,14 +91,16 @@ durable return retains `RECOVERY_ERROR`, never an automatic retry. Pure forecast
 do not write state. Unresolved correction at an output/resource stop preserves the
 underlying stop cause and returns `VERIFICATION_INCOMPLETE`.
 
-Run `uv run --locked --offline pytest @tests/argument-correction.txt --basetemp C:/pt/<unique>`
+Run `uv run --locked --offline pytest @tests/helper-api.txt --basetemp C:/pt/<unique>`
+for short API-contract, dynamic-error, next-request delivery and recovery checks.
+Use `@tests/argument-correction.txt`
 for focused helper/original correction controls and isolated mock evaluation.
 The broader quick suite remains available for cross-feature integration. These
 checks establish mechanics, not real-model uptake or F0010 repair gain.
 
 ## Original-call argument binding
 
-V9/v10 `observed_target(...)` wrappers expose `target.signature()`: a bounded
+V9-v11 `observed_target(...)` wrappers expose `target.signature()`: a bounded
 actual callable signature string, or None if unavailable/oversized. Inspect it
 before choosing Python arguments. A zero-parameter CLI reads its own sys.argv;
 setting argv does not add a Python list parameter. No argument coercion occurs.
@@ -79,7 +108,7 @@ Each call records its actual signature again at binding time. `binding_error`
 marks only TypeError from Signature.bind with an available signature; target
 TypeError, import/snapshot errors and missing signatures are not this evidence.
 
-Before the first mutation, a settled original v9/v10 invocation whose valid call rows
+Before the first mutation, a settled original v9-v11 invocation whose valid call rows
 all prove target_started=false and include an explicit binding error may create
 `original-argument-correction-v1`. Its action, input, program, diff and execution
 receipts must agree, with confirmed cleanup and no timeout/truncation/uncertainty.

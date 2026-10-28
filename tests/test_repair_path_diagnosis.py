@@ -9,6 +9,7 @@ from test_dev_probes import FakeProbe
 from test_dev_tools import mutation_call, read_calls
 from test_finish_reproduction import finish_call
 from test_judgment_integration import diagnostic_probe
+from test_probe_invocation import inject_api
 from test_probe_purpose import probe
 
 from patchloop.contracts import RegisteredCheck
@@ -43,7 +44,7 @@ class TracedProbe(FakeProbe):
                                     execution_identity=execution_identity)
         # Local -c and traced launch differ in sys.path[0]; hold this fixture's
         # import condition fixed instead of weakening production comparability.
-        prefix = f"import sys\nsys.path[0] = {str(workspace)!r}\n"
+        prefix = inject_api(f"import sys\nsys.path[0] = {str(workspace)!r}\n")
         source = prefix + python_source
         bound = None
         if call_path_request is not None:

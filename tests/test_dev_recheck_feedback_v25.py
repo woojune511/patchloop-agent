@@ -39,9 +39,16 @@ def _failure(diff_hash):
 
 
 def _focus(failure, *, remaining=0, allowed=frozenset(), current="current"):
+    def completion_verification(*, diff_hash):
+        assert diff_hash == current
+        # These cases isolate public-check currency; original target failures have
+        # their own precedence controls in test_target_outcome.
+        return {"target_failure_count": 0, "target_failures": []}
+
     gateway = SimpleNamespace(
         _active_failed_check={"public_check_failure": failure},
         limits=DevLimits(), accepted_mutations=4 - remaining,
+        completion_verification=completion_verification,
     )
     return DevToolGateway.current_public_failure(
         gateway, diff_hash=current, allowed_tools=allowed,
@@ -199,10 +206,10 @@ def test_last_edit_feedback_survives_native_delivery_restart_and_action_replay(t
 def test_feedback_changes_preserve_wire_limits_and_bounded_prompt():
     # V34 compresses memory descriptions only; ordered input shapes and non-memory
     # descriptions are independently pinned in test_dev_memory_guidance_v34.
-    # Pin fresh minimal edit/stop inputs and original observation; frozen arms stay exact.
+    # Pin fresh inputs with shared helper API guidance; frozen arms stay exact.
     assert sha256_json(dev_tool_schemas(
         finish_enabled=True, allowed_tools=ALL_DEV_TOOLS, check_ids=["first", "second"],
-    )) == ("sha256:1c7ab5bdee95dc355957a58b9f7332bf1d792b95f21e6e5ef459de0a2e22b8e5"
+    )) == ("sha256:6d2db29fa312e8487aa42ffd634d3790063874bc12decd8fd52c509f0b32357a"
            if FROZEN_ARM is None else
            "sha256:8b024770ed22b31b84e2e5b8890080e1aaad9f15ba9843f5c3ea3f1c12ee0fe0")
     assert dev_tool_surface_hash() != (

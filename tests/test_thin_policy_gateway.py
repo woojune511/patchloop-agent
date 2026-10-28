@@ -15,7 +15,7 @@ from patchloop.dev.contracts import (
     dev_tool_surface_hash,
 )
 from patchloop.dev.model import MOCK_MUTATIONS
-from patchloop.dev.runner import _requested_tool_from_openai
+from patchloop.dev.runner import _provider_tool_arguments, _requested_tool_from_openai
 from patchloop.dev.tools import DevToolGateway, dev_tool_schemas, validate_tool_batch
 from patchloop.errors import ActionConflict, ContractError
 from patchloop.sandbox.runner import SandboxResult
@@ -90,18 +90,18 @@ def test_default_serialization_and_schema_identities_remain_exact():
         allowed_tools=list(MODES),
     )
     assert sha256_json(schemas) == (
-        "sha256:d6783021f0051dc99fd214a16dcca24edf53b3576b24af31f8423b1a8ac115e4"
+        "sha256:f0cf12f577333b3f546240c031d735feeffb9974c4b0d3636b5f53893b3d5061"
         if FROZEN_ARM is None else
         "sha256:9757e80d1590c5274966a80011a24ed12e08340d23d2e202f0f099ea1be47955"
     )
     if FROZEN_ARM is None:
-        # The selected-file default changes; bounded comparisons retain the old wire bytes.
+        # Range-only retains the earlier read shape with current shared helper API guidance.
         legacy = dev_tool_schemas(
             finish_enabled=True, check_ids=["public-check"], test_suite_ids=["public-tests"],
             allowed_tools=list(MODES), read_range_only=True,
         )
         assert sha256_json(legacy) == (
-            "sha256:264e216288ecf1aad660c86a8138f517363d3af93615e5c4c9c71fc039decc9b"
+            "sha256:e696016b31ce6e1a6fa21182aaf5cb66df7c380d9270a7a222cd700cfadfa7b1"
         )
         minimal = {schema["name"]: schema["parameters"] for schema in schemas
                    if schema["name"] in {"replace_text", "stop_task"}}
@@ -163,7 +163,7 @@ def test_thin_wire_round_trip_preserves_absence_and_explicit_null():
         validate_tool_batch([call("current").model_copy(update={"memory_update": None})])
 
 
-def test_current_provider_stray_root_memory_stays_an_operational_argument(gateway_factory):
+def test_current_provider_stray_root_memory_is_rejected_before_mutation(gateway_factory):
     proposed = mutation("current")
     wire = {
         **proposed.arguments,
@@ -173,18 +173,32 @@ def test_current_provider_stray_root_memory_stays_an_operational_argument(gatewa
     parsed = _requested_tool_from_openai(
         ProviderCall(proposed.name, proposed.action_id, wire), agent_policy="current",
     )
-    assert "memory_update" in parsed.arguments
-    assert parsed.arguments["memory_update"] is None
-    assert "memory_update" not in parsed.model_fields_set
-    assert validate_tool_batch([parsed]) == "single_action"
+    if FROZEN_ARM is None:
+        # Small actions preserve actual annotation presence at the transport
+        # boundary; current-policy validation rejects the stray root field.
+        assert "memory_update" not in parsed.arguments
+        assert "memory_update" in parsed.model_fields_set and parsed.memory_update is None
+        restored = RequestedTool.model_validate(parsed.model_dump(mode="json"))
+        assert _provider_tool_arguments(restored) == wire
+        with pytest.raises(ContractError, match="does not accept top-level memory_update"):
+            validate_tool_batch([restored])
+    else:
+        assert "memory_update" in parsed.arguments
+        assert parsed.arguments["memory_update"] is None
+        assert "memory_update" not in parsed.model_fields_set
+        assert validate_tool_batch([parsed]) == "single_action"
     gateway, _, workspace = gateway_factory()
     assert gateway.execute_batch([call("current")])[0].status == "succeeded"
     before = (workspace / PATH).read_bytes()
     diff_before = gateway.current_diff_hash
-    result, = gateway.execute_batch([parsed])
-    assert result.status == "failed"
-    assert "memory_update" in result.message
-    assert "Extra inputs are not permitted" in result.message
+    if FROZEN_ARM is None:
+        with pytest.raises(ContractError, match="does not accept top-level memory_update"):
+            gateway.execute_batch([parsed])
+    else:
+        result, = gateway.execute_batch([parsed])
+        assert result.status == "failed"
+        assert "memory_update" in result.message
+        assert "Extra inputs are not permitted" in result.message
     assert gateway.accepted_mutations == 0
     assert (workspace / PATH).read_bytes() == before
     assert gateway.current_diff_hash == diff_before

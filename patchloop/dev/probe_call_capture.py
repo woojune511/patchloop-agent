@@ -4,12 +4,15 @@ from __future__ import annotations
 
 import re
 
+from patchloop.sandbox.probe_api import MAX_EXPECTED_EXCEPTIONS, MAX_TARGET_CALLS
+
 CHANNEL = "invoke-declared-call-v3"
 CAPTURE_BYTES = 4096
 REPORT_BYTES = 10000
 
 EXCEPTION_DESCRIPTION = (
-    "expected_exceptions is a tuple of at most four Exception or SystemExit subclasses. "
+    f"expected_exceptions is a tuple of at most {MAX_EXPECTED_EXCEPTIONS} "
+    "Exception or SystemExit subclasses. "
     "For intended Exception observations, use expected_exceptions=(ValueError,); only exact "
     "listed types match, otherwise comparison is incomplete. SystemExit and its subclasses "
     "are always captured with "
@@ -344,6 +347,19 @@ def construction_observer(legacy):
     # hooks. These are private locals in fresh host source, not authored code.
     return re.sub(r"\b(?:target|row|invoke)\b",
                   lambda match: {"target": "t", "row": "r", "invoke": "v"}[match[0]], source)
+
+
+def api_observer(legacy):
+    """Fresh v11 shares settings validation; all saved v1-v10 bytes stay frozen."""
+    source = construction_observer(legacy)
+    source = source.replace('len(_r)>=4', f'len(_r)>={MAX_TARGET_CALLS}', 1)
+    start = source.index(' if (type(ip) not in (list,tuple)')
+    end = source.index(' ip,ek=tuple(ip),tuple(ek)', start)
+    return (source[:start] + ' try:\n'
+            '  _patchloop_validate_observer_settings(ip,ek,ee)\n'
+            ' except ValueError:\n'
+            '  _m[0]=_cfg[0]=True\n'
+            '  raise\n' + source[end:])
 
 
 def valid(call):

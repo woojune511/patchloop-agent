@@ -10,6 +10,7 @@ import pytest
 
 from patchloop.dev import probe_invocation, reproduction
 from patchloop.probe_limits import EXECUTION_LIMIT_CHARS
+from patchloop.sandbox import probe_api
 from patchloop.util import sha256_bytes
 
 SOURCE = '''import os, json
@@ -20,6 +21,12 @@ value = call_target(args=[p, json.loads(os.environ["FLAG"])],
 print("progress, not a verdict")
 record_observation(value)
 '''
+
+
+def inject_api(source):
+    """Mirror the trusted launcher's private validator for local fixture programs."""
+    return ("import runpy\n_patchloop_validate_observer_settings = runpy.run_path("
+            f"{probe_api.__file__!r})['validate_observer_settings']\n" + source)
 
 
 def execute(root, *, implementation="return False", source=SOURCE, entrypoint="public_api.entry",
@@ -43,7 +50,7 @@ def execute(root, *, implementation="return False", source=SOURCE, entrypoint="p
     wrapped = reproduction.program(source, binding)
     assert len(wrapped) <= EXECUTION_LIMIT_CHARS
     process = subprocess.run(
-        [sys.executable, "-X", "utf8", "-c", wrapped], cwd=root,
+        [sys.executable, "-X", "utf8", "-c", inject_api(wrapped)], cwd=root,
         env={**os.environ, "MODE": mode, "FLAG": flag, "PYTHONPATH": str(root)},
         capture_output=True, encoding="utf-8", timeout=10, check=False,
     )
