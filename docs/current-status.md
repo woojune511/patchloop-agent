@@ -43,7 +43,7 @@ Observer/source/resource limits are unchanged. Local evidence: focused 161 PASS 
 42.162 seconds, quick 855 PASS in 115.437 seconds including isolated mock evaluation,
 and Ruff PASS. That evidence is separate from the live outcome below.
 
-The [latest clean-start result](history/2026-10-29-helper-contract-fresh-results.md)
+The [Astroid clean-start result](history/2026-10-29-helper-contract-fresh-results.md)
 is EVALUATOR_PASS with cases_verified_delivery on Astroid-1333. The full model
 gpt-5.4-2026-03-05(xhigh) acquired original F0010 without API correction, made one
 edit to normalize caller-supplied search paths, and passed the identical original
@@ -60,13 +60,22 @@ responses were used before the first edit. Keep the contract fix; repeatability,
 observation usefulness and generalization remain unresolved by this one exposed
 development task. Prior paid allocations remain closed.
 
-Next, the [frozen-runtime three-task check](history/2026-10-29-helper-transfer-three-plan.md)
-is prepared on current-dev20 rows 5/9/18 (pvlib, pydicom, SQLFluff), one fresh run
-each. Model and per-task limits stay fixed; proposed caps are USD4.50 each and
-USD13.50 total. New dependencies, public capability checks, first-request audits
-and batch stop rules passed locally. Paid execution is NOT_RUN and exact new
-scope approval is pending. This exposed development panel cannot establish
-held-out generalization or a causal improvement over another agent.
+The [frozen-runtime three-task result](history/2026-10-29-helper-transfer-three-results.md)
+is complete: pvlib LIMIT_REACHED without submission, pydicom isolated PASS and
+SQLFluff isolated FAIL. Both submitted rows used unverified_delivery; none completed
+the original-to-verified-delivery-and-acceptance chain. Public checks passed 31,
+26 and 506 tests respectively. Total USD4.046135/13.50, all receipts settled;
+allocation CLOSED. Runtime and per-task settings stayed fixed.
+
+Priority is the pvlib observation-contract defect: a first malformed JSON case
+remained REFUTED despite later valid evidence, blocked finish and prompted more
+code repair. Its schema mismatch had no valid correction route. Helper return-type
+mistakes and incomplete argument/stream capture also prevented original acquisition
+on the other tasks. Audited errors reached subsequent actual requests. No response
+hit the context/output ceiling; increasing those caps is not the next supported
+intervention. Separate observation validity from behavioral failure, then test
+bounded correction locally before another paid run. This is a proposed change;
+no runtime fix or held-out/general improvement claim follows from this panel.
 
 ## Supporting evidence
 
@@ -98,8 +107,8 @@ submission, independent task acceptance and safety are separate. Mock safety is 
 
 Do not start Docker Desktop or pull/build evaluator images automatically. Preserve
 exact recovery identities, zero SDK retries and stop-all on count/transport/billing
-uncertainty. Saved-candidate and operator successes remain distinct from the single
-clean-start development success above. Repeated fresh-solve performance and held-out
+uncertainty. Saved-candidate and operator successes remain distinct from clean-start
+development outcomes above. Repeated fresh-solve performance and held-out
 improvement remain unverified.
 Public-check PASS, safety PASS and successful submission do not establish repair
 correctness. Linux CI and general improvement remain unverified.
