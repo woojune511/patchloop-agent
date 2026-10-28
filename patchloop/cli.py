@@ -115,6 +115,9 @@ def dev(
         Path | None, typer.Option("--prepared-probe-dependencies",
                                   help="Use immutable public wheel dependencies for probes.")
     ] = None,
+    caller_source: Annotated[list[str] | None, typer.Option(
+        "--caller-source", help="Read pinned caller source: distribution=directory; repeatable.",
+    )] = None,
     enable_probes: Annotated[
         bool, typer.Option("--enable-probes", help="Enable bounded clean-Python diagnostics.")
     ] = False,
@@ -191,6 +194,7 @@ def dev(
     """Run the unofficial mutable dev-head lane."""
 
     from patchloop.dev.contracts import DevRunRequest
+    from patchloop.dev.dependency_sources import parse_cli_roots
     from patchloop.dev.runner import run_dev
 
     _guarded(
@@ -207,6 +211,7 @@ def dev(
                 repeat=repeat,
                 prepared_source=prepared_source,
                 prepared_probe_dependencies=prepared_probe_dependencies,
+                caller_source_roots=parse_cli_roots(caller_source),
                 enable_probes=enable_probes,
                 reproduction_acquisition=reproduction_acquisition,
                 probe_policy=probe_policy,

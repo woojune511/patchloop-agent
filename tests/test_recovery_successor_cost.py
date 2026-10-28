@@ -79,7 +79,8 @@ def test_current_spend_cannot_consume_funded_repair_and_finish():
 def test_recovery_contract_binds_roles_without_changing_other_policies():
     contract = cost.completion_cost_contract(cost.COMPLETION_RECOVERY_POLICY,
                                              max_correction_output_tokens=25_000)
-    assert contract["reservation"] == "role-successors-plus-correction-v3"
+    assert contract["reservation"] == "required-or-one-failure-plus-correction-v1"
+    assert contract["horizon"] == "shared-completion-paths-v1"
     assert contract["future_output_tokens"] == 8_192
     assert contract["preparation_output_tokens"] == contract["finalization_output_tokens"] == 8_192
     assert contract["repair_output_tokens"] == "invocation-max-output-tokens"

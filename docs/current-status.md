@@ -24,45 +24,39 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [diagnosis exploration change](history/2026-10-28-diagnosis-exploration.md)
-lets the model inspect public callers and related tests, or observe the original
-call now, while path diagnosis is pending. Repeated reads use existing shared
-resources and preserve diagnosis, missing source evidence, repair, original replay,
-required checks, finish and unused request correction. The one-read quota is removed;
-one diagnostic execution and bounded rejected-request correction remain. Exploration
-cannot bypass original verification or grant repair credit.
+The [caller/completion implementation](history/2026-10-28-caller-completion-paths.md)
+connects registered dependency reads to ordinary `run_dev`. Use repeatable
+`--caller-source distribution=directory` with prepared pinned caller dependencies;
+no roots are inferred automatically. Actual counted/dispatched tools expose the
+scope, and observed source reaches the next model input. Caller bodies remain
+read-only, separately bounded, and cannot supply repository mutation anchors.
+Registration and prepared identity are immutable across recovery.
 
-Already observed public caller/test bodies survive diagnosis projection within
-existing retention and input limits. Already registered dependency source stays
-separate and read-only through diagnosis and repair. Normal run_dev still does not
-automatically register prepared dependencies for source reads; that access gap is
-separate from this change. No new source scope or task-specific answer was added.
+Ordinary `completion-recovery-v1` admission derives response/action counts,
+role-based cost and nominal time from shared completion-path steps. Required
+completion retains diagnosis, unused request correction, missing anchor, repair,
+original replay, fresh public checks and finish. One possible later original or
+public-check failure is separately protected when feasible. Known-original-failure
+exploration can release that speculative reserve; the selected guarantee is visible
+per action. Actual mandatory floors and global caps remain. Acquisition, first
+observation, general probes and special correction/test paths keep a labeled
+conservative adapter.
 
-The [same-budget model follow-up](history/2026-10-28-diagnosis-exploration-results.md)
-used repeated exploration and received diagnosis plus
-retained public source before revising. It still failed: two edits retained F0010;
-the third returned a namespace module but triggered a downstream caller exception.
-Empty diagnostic output was not credited as repair. Three accepted edits exhausted
-mutation capacity while responses, tools, time and money remained. Public regression,
-finish and isolated acceptance were NOT_RUN; final-failure feedback had no next response.
-
-The [caller/reservation analysis](history/2026-10-28-caller-budget-analysis.md)
-finds an ordinary-runner integration gap: prepared caller source is importable by
-probes but is not registered for direct reads/searches. The caller's ImportError
-handler does not change file selection, and a returned namespace AST lacks the
-source stream its consumer requires. Preserve original verification and handoff.
-
-Observation timing was constrained: reads closed by cost reservation before the
-first diagnosis and by response reservations before the second. Offline arithmetic
-shows the first could offer a read by releasing speculative later-revision
-protection while preserving current completion. The final response floor cannot
-be relaxed on that basis. Proposed next work: connect existing caller reads and
-align physical/cost/time forecasts by explicit completion paths, with a visible
-exploration-versus-future-recovery tradeoff. These changes are not implemented;
-neither more capacity nor source access alone is proven to fix this task.
-This cumulative, saved-checkpoint continuation establishes mechanism use, not a
-causal gain or clean-start success. New cost USD1.133929 of USD4.13241570;
-this allocation and all earlier allocations are CLOSED. No further run is funded.
+Local caller controls passed 39 tests (three platform skips); budget controls
+passed 97. Quick had 698 PASS and six contract/doc failures, all resolved by focused
+rechecks; both isolated mock evaluations passed. Saved-state policy replay opens
+reads at three previously closed points while preserving the final mandatory floor.
+This is local mechanism evidence, not model uptake or a successful F0010 repair. The previous
+[same-budget live follow-up](history/2026-10-28-diagnosis-exploration-results.md)
+still failed after three edits: two retained F0010 and the third produced a
+downstream caller exception. Public checks, finish and isolated acceptance were
+NOT_RUN. The [analysis](history/2026-10-28-caller-budget-analysis.md) found source
+access and inconsistent reservation constraints; neither alone proves the cause
+of every ineffective edit. Its final required-completion response floor remains
+binding. The unresolved question is whether the model now investigates the caller
+and repairs correctly within the same caps. Latest live cost USD1.133929 of
+USD4.13241570; this allocation and all earlier allocations are CLOSED. No further
+run is funded.
 
 ## Supporting evidence
 

@@ -104,6 +104,27 @@ caps. The optional description consumes the existing counted input budget.
 Neither caller preparation nor setup checks establish semantic correctness or
 model uptake. See the [local validation](../docs/history/2026-10-18-public-callers.md).
 
+### Caller source in ordinary runs
+
+Add repeatable `--caller-source distribution=directory` to the normal `patchloop dev`
+request to register up to eight caller source directories, for example
+`--caller-source pylint=pylint`. This requires enabled probes and the prepared
+dependency descriptor containing that caller's exact pin. Directory names are
+explicit site-packages-relative paths; distribution names do not imply import roots.
+Omission keeps the repository-only read surface. The Python request uses
+`caller_source_roots={"pylint": "pylint"}`.
+
+Existing read_file/search_files then offer `source_scope=dependency:<distribution>`.
+Only descriptor-indexed Python files within the registered directory can be read;
+selected bytes are hash checked without importing the package. Caller evidence has
+its own read-only provenance and bounded context pool. It cannot supply a repository
+mutation anchor or satisfy a check. Compact diagnosis and repair requests retain
+observed caller bodies within existing input limits.
+
+The mapping is bound into model/envelope identity together with the prepared
+dependency identity. Repeat it exactly on resume; changing/removing it is rejected.
+No new download, execution privilege, budget or original-verification credit is added.
+
 ### Select from an existing source lock
 
 Select

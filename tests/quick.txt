@@ -129,3 +129,5 @@ tests/test_behavior_diagnostic.py
 tests/test_pre_target_obligations.py
 tests/test_processing_observer.py
 tests/test_probe_exit_contract.py
+tests/test_caller_source_registration.py
+tests/test_completion_routes.py

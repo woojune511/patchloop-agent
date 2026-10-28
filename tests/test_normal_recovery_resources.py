@@ -72,7 +72,8 @@ def test_low_time_closes_exploration_but_keeps_a_verified_completion_route():
     roomy = choose(gateway)
     assert "read_file" in roomy.allowed_tools
     assert roomy.completion_cost["failure_recovery_reserved"]["read_file"]
-    limited = choose(gateway, seconds=420)
+    # Current response, check/finish successors and the unused protocol correction.
+    limited = choose(gateway, seconds=450)
     assert "replace_text" in limited.allowed_tools and "read_file" not in limited.allowed_tools
     assert not limited.completion_cost["failure_recovery_reserved"]["replace_text"]
     blocked = choose(gateway, seconds=360)

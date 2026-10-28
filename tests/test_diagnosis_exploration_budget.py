@@ -121,7 +121,7 @@ def test_role_cost_and_time_preserve_pending_diagnostic_missing_anchor_and_corre
 
     fits = choose(future_seconds + FOLLOWUP_SECONDS)
     assert "read_file" in fits.allowed_tools and fits.model_turns_available_for_exploration == 1
-    assert fits.completion_cost["successor_output_ceilings"]["read_file"] == list(outputs)
+    assert sorted(fits.completion_cost["successor_output_ceilings"]["read_file"]) == sorted(outputs)
     assert fits.completion_cost["future_cost_reserve_nanos"] == successor_cost
     assert fits.completion_cost["future_time_reserve_seconds"] == future_seconds
     assert fits.tools_closing_after_this_turn == ("read_file", "search_files")

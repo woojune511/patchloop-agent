@@ -14,12 +14,14 @@ from patchloop.contracts import Artifact, ProbeDependencyIdentity
 from patchloop.dev import (
     check_review,
     cost,
+    dependency_sources,
     history_search,
     probe_cases,
     probe_comparison,
     segments,
 )
 from patchloop.dev.context import RETAINED_SOURCE_CHARS, RetainedSourceChars
+from patchloop.errors import ContractError
 from patchloop.util import sha256_json
 
 DEV_RUN_SCHEMA = "dev-run-v1"
@@ -512,6 +514,9 @@ class RunRequest(StrictModel):
     state_root: Path | None = None
     prepared_source: Path | None = None
     prepared_probe_dependencies: Path | None = None
+    caller_source_roots: dict[str, str] = Field(
+        default_factory=dict, exclude_if=lambda value: not value,
+    )
     enable_probes: bool = False
     reproduction_acquisition: Literal["none", "bounded-v1"] = Field(
         default="none", exclude_if=lambda value: value == "none",
@@ -565,6 +570,16 @@ class RunRequest(StrictModel):
             raise ValueError("--segment-boundary-policy size-only-v1 requires segmented-v1")
         if self.prepared_probe_dependencies is not None and not self.enable_probes:
             raise ValueError("--prepared-probe-dependencies requires --enable-probes")
+        try:
+            self.caller_source_roots = dependency_sources.normalize_roots(self.caller_source_roots)
+        except ContractError as exc:
+            raise ValueError(str(exc)) from exc
+        if self.caller_source_roots and (
+            self.prepared_probe_dependencies is None or not self.enable_probes
+        ):
+            raise ValueError(
+                "--caller-source requires prepared probe dependencies and enabled probes"
+            )
         if self.reproduction_acquisition != "none" and not self.enable_probes:
             raise ValueError("--reproduction-acquisition requires --enable-probes")
         if self.probe_policy != "none" and not self.enable_probes:
@@ -635,6 +650,9 @@ class RunEnvelope(StrictModel):
     )
     probe_dependencies: ProbeDependencyIdentity | None = Field(
         default=None, exclude_if=lambda value: value is None,
+    )
+    caller_source_roots: dict[str, str] = Field(
+        default_factory=dict, exclude_if=lambda value: not value,
     )
     public_spec_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     task_content_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
@@ -750,6 +768,14 @@ class RunEnvelope(StrictModel):
             raise ValueError("prepared dependencies require enabled probes")
         if self.probe_dependencies is not None and self.prepared_probe_dependencies_path is None:
             raise ValueError("prepared dependency identity requires its source descriptor")
+        try:
+            self.caller_source_roots = dependency_sources.normalize_roots(self.caller_source_roots)
+        except ContractError as exc:
+            raise ValueError(str(exc)) from exc
+        if self.caller_source_roots and (
+            self.prepared_probe_dependencies_path is None or self.probe_dependencies is None
+        ):
+            raise ValueError("caller source roots require the prepared dependency snapshot")
         if self.cost_start_nanos > self.max_cost_nanos:
             raise ValueError("run envelope cost start exceeds its invocation cap")
         if self.provider == "openai":

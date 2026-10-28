@@ -11,6 +11,45 @@ from dataclasses import dataclass, replace
 
 
 @dataclass(frozen=True)
+class CompletionStep:
+    """One response, public tool action, or host execution on a forecast path."""
+
+    role: str
+    model_call: bool = True
+    tool_actions: int = 1
+    output_tokens: int = 0
+    execution_seconds: float = 0
+
+
+@dataclass(frozen=True)
+class CompletionRoute:
+    """A current action and its successors; all resource dimensions share these steps."""
+
+    name: str
+    current: CompletionStep
+    successors: tuple[CompletionStep, ...]
+    speculative_failure: bool = False
+    adapter: str | None = None
+
+    @property
+    def model_calls(self) -> int:
+        return sum(step.model_call for step in (self.current, *self.successors))
+
+    @property
+    def tool_actions(self) -> int:
+        return sum(step.tool_actions for step in (self.current, *self.successors))
+
+    @property
+    def output_ceilings(self) -> tuple[int, ...]:
+        return tuple(step.output_tokens for step in self.successors if step.model_call)
+
+    def seconds(self, followup_seconds: float) -> float:
+        # Current generation is admitted separately; current execution still must fit.
+        return (sum(step.execution_seconds for step in (self.current, *self.successors))
+                + followup_seconds * sum(step.model_call for step in self.successors))
+
+
+@dataclass(frozen=True)
 class CompletionState:
     check_count: int
     remaining_check_count: int

@@ -198,8 +198,9 @@ uv run patchloop task prepare-probe-dependencies <task-dir> `
 With no source lock, `--resolve` can resolve supported static public dependencies
 for Python 3.12/Linux. Preparation can download public wheels; execution uses only
 verified local copies without network/install. Add `--enable-probes
---prepared-probe-dependencies <descriptor>` to the approved request. Read the
-[dependency contract](../.agent/prepared-probe-dependencies.md) before preparation.
+--prepared-probe-dependencies <descriptor>` to the approved request. See the
+[dependency contract](../.agent/prepared-probe-dependencies.md).
+Caller reads: `--caller-source distribution=directory`.
 
 For other context, planning, cost or repair policies, read the relevant internal
 contract and CLI compatibility checks first. Opt-in `--completion-cost-policy

@@ -45,20 +45,38 @@ transport and billing uncertainty retain the existing stop-all behavior.
 
 ## Ordinary recovery cost and time admission
 
-`completion-recovery-v1` uses the existing physical call/action forecast, then
-prices the offered actions' actual successor roles. A required repair retains
+`completion-recovery-v1` constructs ordinary completion paths from shared steps.
+Each step states its model response, real tool action, output allowance and
+execution time. Admission derives all resource dimensions from these paths.
+A required repair retains
 the full ordinary output ceiling; preparation/check/finish retain min(8,192,
 ordinary ceiling). Correction retains its independent nonrenewable allowance.
 The 128-output monetary unit is only an initial slot-count upper bound, not the
 final reserve or a promised useful response. Other cost policies remain unchanged.
 
-When model/tool/edit capacity exists, the envelope includes one future public
-failure, a diagnostic read, revision, all new checks and acquired-original replays.
+Required completion retains current diagnosis and unused diagnostic request
+correction, a still-missing mutation anchor, repair, original replays, required
+checks and finish. Reading a caller or related test does not establish an anchor.
+Automatic replay/check steps retain actions and time while consuming no model
+response. A rejected diagnostic request retains a response/action without target
+execution time. The protocol correction remains a separate run-wide reserve.
+
+When capacity permits, alternative paths protect one later original or public-check
+failure and revision. Original failure may require another path diagnosis and its
+request correction; public-check failure does not acquire those unrelated steps.
+These alternatives are not concatenated as if all failures necessarily occur.
 An original-only failure cannot borrow automatic registered-check savings.
-Optional exploration must preserve this route. A required read/edit/check can
-release speculative recovery when needed to retain a viable immediate completion;
-the action-specific `failure_recovery_reserved` field records that distinction.
-No additional slots, retries or correctness credit are created.
+Known-original-failure exploration, as well as required preparation/repair/check,
+may release speculative future recovery when it does not fit, while preserving
+current completion. Per-action `completion_routes`, `released_reason` and
+`failure_recovery_reserved` report the selected guarantee. Releasing protection
+does not grant another revision if a later failure exceeds remaining capacity.
+The older multiple-failure physical forecast is advisory for these ordinary paths.
+No caps, retries or correctness credit are added.
+
+Acquisition, first observation, general probes that can add a case, observation/helper
+correction and paired-test/test addition retain a labeled conservative adapter. They are not claimed
+to use the ordinary step model. Other cost policies remain unchanged.
 
 Before counting or generation, reserve registered check timeouts plus five seconds
 per execution, probe timeout/cleanup, and 30 seconds per successor response.

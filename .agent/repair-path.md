@@ -252,8 +252,12 @@ fresh required checks, original replay and finish. Extra diagnosis-stage reads
 preserve that minimum plus unused diagnostic request correction; an arbitrary
 caller/test read is not assumed to supply a missing mutation anchor. Provider
 admission also reserves the successor's response roles and pending diagnostic
-execution time. Protected capacity retains its existing optional-read/recovery
-forecast; repeated exploration cannot refill any global limit.
+execution time. With `completion-recovery-v1`, ordinary paths use the same steps
+for response/action counts, cost and time. Known-original-failure exploration can
+release a speculative later revision if needed; the per-action route reports that
+tradeoff while preserving current diagnosis, correction and completion. See
+[completion resources](completion-resources.md). Repeated exploration cannot
+refill any global limit.
 Model-facing `preparation_available` means a read/search is actually offered after
 resource filtering, in both path-state locations. The compatibility field
 `preparation_allowance_available` describes eligibility while diagnosis is pending,

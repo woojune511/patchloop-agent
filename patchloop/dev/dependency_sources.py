@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import re
 import stat
 from pathlib import Path
+
+from packaging.utils import canonicalize_name
 
 from patchloop import probe_callers
 from patchloop.dev.source_glob import matches_source_glob
@@ -12,6 +15,51 @@ from patchloop.prepared_probe_dependencies import PreparedDependencies, read_des
 from patchloop.util import ensure_within, safe_relative_path, sha256_bytes, sha256_json
 
 MAX_SOURCE_BYTES = 2_000_000
+
+
+def normalize_roots(roots: dict[str, str]) -> dict[str, str]:
+    """Normalize explicit package/root pairs, never infer an import root from a pin."""
+    if not isinstance(roots, dict) or len(roots) > 8:
+        raise ContractError("caller source registration requires at most eight package roots")
+    normalized = {}
+    for package, root in roots.items():
+        if not isinstance(package, str) or not re.fullmatch(
+            r"[A-Za-z0-9][A-Za-z0-9._-]{0,199}", package,
+        ):
+            raise ContractError(
+                "caller source package must be a distribution name without a version"
+            )
+        package = canonicalize_name(package)
+        if package in normalized:
+            raise ContractError("caller source package must be unique")
+        root = _relative(root, field="caller source root")
+        if len(root) > 256 or any(char in root for char in "*?[]"):
+            raise ContractError("caller source root must be a bounded literal directory")
+        normalized[package] = root
+    return dict(sorted(normalized.items()))
+
+
+def parse_cli_roots(values: list[str] | None) -> dict[str, str]:
+    """Parse repeated --caller-source distribution=directory options explicitly."""
+    pairs = {}
+    for value in values or []:
+        package, separator, root = value.partition("=")
+        if not separator or "=" in root or package in pairs:
+            raise ContractError("--caller-source requires unique distribution=directory pairs")
+        pairs[package] = root
+    return normalize_roots(pairs)
+
+
+def for_run(
+    dependencies: PreparedDependencies | None, roots: dict[str, str],
+) -> DependencySources | None:
+    """Bind an ordinary run's explicit read scopes to its prepared caller snapshot."""
+    roots = normalize_roots(roots)
+    if not roots:
+        return None
+    if dependencies is None:
+        raise ContractError("caller source registration requires prepared probe dependencies")
+    return DependencySources(dependencies, roots)
 
 
 def _relative(value: str, *, field: str) -> str:
@@ -35,6 +83,7 @@ class DependencySources:
     """
 
     def __init__(self, dependencies: PreparedDependencies, roots: dict[str, str]) -> None:
+        roots = normalize_roots(roots)
         descriptor, identity = read_descriptor(dependencies.path)
         if identity != dependencies.identity:
             raise ContractError("prepared dependency identity changed")
