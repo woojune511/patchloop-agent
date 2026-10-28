@@ -54,7 +54,16 @@ Caller-source access, original-call/processing verification, bounded exploration
 and shared completion-path reservations remain active. Public PASS, successful
 submission and independent acceptance remain different outcomes. The immediate
 question is whether the live model uses mandatory failure feedback to revise the
-candidate; local mechanism validation cannot answer it. No additional run is funded.
+candidate; local mechanism validation cannot answer it.
+
+The [single-run follow-up](history/2026-10-28-required-public-check-repair-plan.md)
+is prepared on the same saved candidate/model with a proposed fresh USD3.38078870
+cap. v3 passes offline request parity and read-only environment preflight; actual
+provider/target executions remain zero. Under the unchanged total limits, the
+first request offers repair/stop while optional exploration is closed. The old
+final replay slot/time now belongs to ordinary required checks. A preparation-only
+audit correction accepts that offered state without opening tools. New cost
+approval is pending; no additional run is funded.
 
 ## Supporting evidence
 
