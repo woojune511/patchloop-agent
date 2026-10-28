@@ -51,14 +51,19 @@ unchanged failure/desired declarations. Failed attempts remain unverified and sp
 the shared allowance. Public-check submission keeps this correction optional,
 without adding a diagnostic gate or reserve. Local evidence is not model uptake.
 
-The [fresh six-run policy comparison](history/2026-10-29-verification-policy-six-v2-plan.md)
-uses this runtime in both arms on pvlib, pydicom and SQLFluff. It compares required
-versus optional reproduction, while recording correction use separately. Proposed
-caps are USD4.50 per row and USD27 total. Preparation does not authorize execution;
-the v1 command and its unanswered approval remain stale. No paid run has started.
+The [six-run policy result](history/2026-10-29-verification-policy-six-v2-results.md)
+is CLOSED at USD3.841041/27: A had two acceptance PASS and one FAIL; B had one PASS,
+one FAIL and one NOT_RUN. Five candidates passed public checks and submitted;
+only three passed isolated acceptance. All five safety verdicts were PASS.
+No shape-correction opportunity occurred, so live correction use remains untested.
+B's SQLFluff run stopped on its first response, claiming no edit tool before reading
+source. The actual thin request omitted the host's read-to-edit transition message;
+test that missing communication and helper/setup errors before increasing budgets.
+Keep the default unchanged: this small exposed
+panel does not establish a benefit from optional reproduction or general superiority.
 Helper return types and incomplete output capture remain separate unresolved issues;
-this intervention does not repair those contracts. Repeatability, usefulness of
-optional diagnostics and held-out improvement remain unverified.
+this intervention does not repair those contracts. Repeatability and held-out
+improvement remain unverified. No further paid run is authorized by unused funds.
 
 ## Supporting evidence
 
