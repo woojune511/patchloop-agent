@@ -39,19 +39,27 @@ automatically register prepared dependencies for source reads; that access gap i
 separate from this change. No new source scope or task-specific answer was added.
 
 The [same-budget model follow-up](history/2026-10-28-diagnosis-exploration-results.md)
-used repeated exploration, chose observation timing and received diagnosis plus
+used repeated exploration and received diagnosis plus
 retained public source before revising. It still failed: two edits retained F0010;
 the third returned a namespace module but triggered a downstream caller exception.
 Empty diagnostic output was not credited as repair. Three accepted edits exhausted
 mutation capacity while responses, tools, time and money remained. Public regression,
 finish and isolated acceptance were NOT_RUN; final-failure feedback had no next response.
 
-Preserve original verification and the evidence handoff. The unresolved question is
-whether caller file selection and consumption can be established before editing;
-ordinary-runner access to prepared dependency source remains a concrete gap.
-First-diagnosis reads were closed by cost reservation; repeated exploration was
-offered only in the second diagnosis. That allocation also needs examination.
-Neither more capacity nor the observed exploration is proven to fix this task.
+The [caller/reservation analysis](history/2026-10-28-caller-budget-analysis.md)
+finds an ordinary-runner integration gap: prepared caller source is importable by
+probes but is not registered for direct reads/searches. The caller's ImportError
+handler does not change file selection, and a returned namespace AST lacks the
+source stream its consumer requires. Preserve original verification and handoff.
+
+Observation timing was constrained: reads closed by cost reservation before the
+first diagnosis and by response reservations before the second. Offline arithmetic
+shows the first could offer a read by releasing speculative later-revision
+protection while preserving current completion. The final response floor cannot
+be relaxed on that basis. Proposed next work: connect existing caller reads and
+align physical/cost/time forecasts by explicit completion paths, with a visible
+exploration-versus-future-recovery tradeoff. These changes are not implemented;
+neither more capacity nor source access alone is proven to fix this task.
 This cumulative, saved-checkpoint continuation establishes mechanism use, not a
 causal gain or clean-start success. New cost USD1.133929 of USD4.13241570;
 this allocation and all earlier allocations are CLOSED. No further run is funded.

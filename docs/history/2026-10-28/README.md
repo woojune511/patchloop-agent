@@ -21,3 +21,4 @@
 - [Ruleless original failures: bounded call selection, diagnosis and revision linkage](../2026-10-28-ruleless-path-diagnosis.md)
 - [Model-chosen caller/test exploration before original-call diagnosis](../2026-10-28-diagnosis-exploration.md)
 - [Diagnosis exploration live result: mechanism used, downstream caller still fails](../2026-10-28-diagnosis-exploration-results.md)
+- [Caller contract and reservation analysis: source access gap and constrained observation timing](../2026-10-28-caller-budget-analysis.md)
