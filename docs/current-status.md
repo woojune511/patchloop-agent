@@ -54,13 +54,23 @@ Caller-source access, original-call/processing verification, bounded exploration
 and shared completion-path reservations remain active. The first request allowed
 repair/stop; optional inspection reopened after the first failed repair. Successful
 delivery, public PASS, isolated acceptance and safety remain separate evidence.
-The [clean-original follow-up](history/2026-10-28-autonomous-fresh-plan.md) is prepared
-to test the whole normal runner on Astroid-1333 with the same full model and original
-USD4.50/2400-second limits. It supplies no saved patch, prior observations or operator
-counterexamples; explicit read-only pylint access remains. No supplemental registry
-is injected, so the new required-counterexample mechanism is NOT_EXERCISED in this
-trial. Offline first-request audit and read-only preflight passed; exact command
-confirmation is pending. No new paid execution has started.
+The [clean-original follow-up](history/2026-10-28-autonomous-fresh-results.md) executed
+once with the full model and original USD4.50/2400-second limits. Without saved
+patches or operator counterexamples, it corrected request/helper errors and
+reproduced F0010. After31 inspections, its first edit removed F0010 but caused an
+unexpected FileNotFoundError. That failure reached the next model request; the
+second edit removed the exception but still lacked the selected processing witness.
+
+The run stopped with two tool actions left versus four needed for completion.
+Cost USD1.549624 and active time656.865 seconds were below their limits; output
+ceilings were not exhausted. Public regression, submission, isolated acceptance and
+safety are NOT_RUN. The allocation is CLOSED. The supplemental counterexample
+mechanism was NOT_EXERCISED because no such registry was injected.
+
+The next bounded investigation is why caller/test exploration did not redirect the
+repair toward actual file processing, and how it consumed revision opportunities.
+Inspect public evidence and reservation choices before adding a rule or increasing
+limits. No further run or runtime change is prepared or funded.
 
 ## Supporting evidence
 
