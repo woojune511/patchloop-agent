@@ -20,6 +20,7 @@ ARGUMENT_CHANNEL = "invoke-declared-call-v9"
 def _original_calls(start, result, execution_starts, execution_returns):
     """Accept only the exact, settled fresh original execution's valid call rows."""
     arguments = start.get("arguments", {})
+    purpose = arguments.get("purpose")
     binding = start.get("reproduction_binding") or {}
     definition = binding.get("definition", {})
     output = result.get("output") or {}
@@ -30,9 +31,9 @@ def _original_calls(start, result, execution_starts, execution_returns):
     returned = execution_returns.get(start.get("action_id"), [])
     source = arguments.get("python_source")
     if (start.get("tool") != "run_probe" or result.get("tool") != "run_probe"
-            or (arguments.get("purpose") or {}).get("kind") != "original_requirement"
-            or arguments.get("replay_action_id") is not None
             or start.get("probe_request", {}).get("status") != "accepted"
+            or not isinstance(purpose, dict) or purpose.get("kind") != "original_requirement"
+            or arguments.get("replay_action_id") is not None
             or result.get("status") != "succeeded"
             or not start.get("input_hash") or result.get("input_hash") != start["input_hash"]
             or result.get("action_id") != start.get("action_id")

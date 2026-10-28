@@ -6,7 +6,9 @@ from patchloop.dev import diagnosis_request
 
 SYSTEM_PROMPT = """You are diagnosing the supplied public coding task's original failure.
 The current repair did not remove that failure and its changed branch was not observed.
-Request run_probe with only focus: a public failure-path function's origin, path and function.
+Request run_probe with focus: a public function's origin, path and function. When offered,
+also select call_id from the captured call_choices. This is a model-selected hypothesis
+about the failure, not a host verdict. A different call selection grants no new budget.
 The host supplies changed-function watches, parameter fields and executable lines, and
 replays the frozen original invocation. Do not write helper code, plan or memory metadata.
 Watches cover the selected call even outside focus. Use an offered preparation read/search
@@ -76,10 +78,10 @@ def correction(code, issue, failure=None):
         "kind": "no_action" if fresh else "request_fields",
         "fresh_segment": fresh,
         "message": (
-            "No executable diagnostic call was returned. Select only focus for run_probe; "
+            "No executable diagnostic call was returned. Select focus and any offered call_id; "
             "do not repeat planning or helper construction. The same remaining budget applies."
             if fresh else f"{issue} Fix only the rejected request fields. "
-            "run_probe accepts only focus; omit plan, memory and all other probe fields."
+            "run_probe accepts focus and an offered call_id; omit plan, memory and other fields."
         ),
         "tool_contract_failure": failure,
     }

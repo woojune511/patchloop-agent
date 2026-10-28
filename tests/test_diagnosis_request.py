@@ -37,14 +37,13 @@ def focused(action="host-diagnosis", function="parse_rows"):
                                                "function": function}})
 
 
-def test_model_schema_selects_functions_and_fields_without_host_coordinates():
+def test_general_probe_keeps_path_diagnosis_in_its_separate_small_schema():
     tool = dev_tool_schemas(finish_enabled=False, allowed_tools={"run_probe"})[0]
     properties = tool["parameters"]["properties"]
-    shape = properties["call_path"]["anyOf"][1]
-    assert set(shape["properties"]) == set(shape["required"]) == {"focus", "watches"}
-    watch = shape["properties"]["watches"]["items"]
-    assert set(watch["required"]) == {"origin", "path", "function", "fields"}
-    assert "lines" not in watch["properties"]
+    assert properties["call_path"] == {"type": "null"}
+    pending = diagnosis_request.tool_schema()["parameters"]
+    assert set(pending["properties"]) == {"focus"}
+    assert set(pending["properties"]["focus"]["required"]) == {"origin", "path", "function"}
     assert properties["python_source"]["maxLength"] == 8000
     assert properties["replay_action_id"]["maxLength"] == 500  # Ordinary replay remains.
     assert [tool] == dev_tool_schemas(

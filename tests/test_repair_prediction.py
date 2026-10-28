@@ -106,6 +106,24 @@ def test_observed_prediction_and_original_failure_are_independent():
     assert prediction.assess(admission, result, identity)["status"] == "contradicted"
 
 
+@pytest.mark.parametrize("rules_present", [False, True])
+def test_missing_judgment_blocks_only_rule_based_assessment(rules_present):
+    _, _, admission, result, identity, _ = replay_case()
+    reproduction = result["reproduction"]
+    reproduction["judgment"] = None
+    if not rules_present:
+        reproduction["binding"]["definition"]["diagnostic_rules"] = None
+        admission["invocation_fingerprint"] = prediction._invocation_fingerprint(result)
+    assessed = prediction.assess(admission, result, identity)
+    assert assessed["status"] == ("unverified" if rules_present else "matched")
+    assert assessed["original_effect"] == ("unverified" if rules_present else "refuted")
+    assert assessed["semantic_correctness"] == "unverified"
+    # Ruleless comparison still requires the same invocation and a complete trace.
+    reproduction["call_observation"]["incomplete"] = True
+    assessed = prediction.assess(admission, result, identity)
+    assert assessed["status"] == assessed["original_effect"] == "unverified"
+
+
 @pytest.mark.parametrize("field,value", [
     ("status", "unknown"), ("scope", "selected_call_focus_launch_thread"),
     ("snapshot_hash", None), ("raw_request_hash", "different"),

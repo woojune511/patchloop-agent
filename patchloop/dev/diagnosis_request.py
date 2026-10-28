@@ -13,9 +13,9 @@ POLICY = "host-call-path-request-v1"
 NULL_FIELDS = ("question", "python_source", "replay_action_id", "purpose")
 
 
-def tool_schema():
+def tool_schema(state=None):
     """Expose only selections the model can change at the pending diagnosis gate."""
-    return {
+    tool = {
         "type": "function", "name": "run_probe", "strict": True,
         "description": (
             "Diagnose the pending original-call failure on the current candidate. "
@@ -34,6 +34,14 @@ def tool_schema():
             "additionalProperties": False,
         },
     }
+    if state and state.get("call_selection_required"):
+        tool["parameters"]["properties"]["call_id"] = {
+            "type": "string", "enum": [row["call_id"] for row in state["call_choices"]]}
+        tool["parameters"]["required"].append("call_id")
+        tool["description"] += (
+            " Also select call_id from the captured calls in diagnosis_stage.path.call_choices. "
+            "Their connection to the failure is your hypothesis, not a host judgment.")
+    return tool
 
 
 def symbolic(request):
@@ -41,14 +49,20 @@ def symbolic(request):
 
 
 def validate_selection(arguments):
-    """The same focus-only contract is used by fresh batch and execution admission."""
-    if set(arguments) != {"focus"}:
-        fields = sorted(set(arguments) - {"focus"}) or ["focus"]
-        raise ContractError("diagnosis selects only /focus; invalid fields: "
+    """Validate the small selection; execution admission binds offered call IDs."""
+    allowed = {"focus", "call_id"} if "call_id" in arguments else {"focus"}
+    if set(arguments) != allowed:
+        fields = sorted(set(arguments) - allowed) or ["focus"]
+        selection = "focus and an offered call_id" if "call_id" in arguments else "focus"
+        raise ContractError(f"diagnosis selects only {selection}; invalid fields: "
                             + ", ".join(f"/{key}" for key in fields),
                             details={"invalid_fields": [
-                                {"path": f"/{key}", "requirement": "only focus is accepted"}
+                                {"path": f"/{key}", "requirement": f"only {selection} is accepted"}
                                 for key in fields]})
+    if "call_id" in arguments and arguments["call_id"] not in (
+            "call-1", "call-2", "call-3", "call-4"):
+        raise ContractError("/call_id: select a captured call", details={"invalid_fields": [
+            {"path": "/call_id", "requirement": "select a captured call"}]})
     try:
         focus = arguments["focus"]
         call_path_trace.selection_request({"focus": focus, "watches": [
@@ -115,6 +129,13 @@ def prepare(arguments, state, workspace, source_preflight, *, deadline=None, rea
         raise ContractError("symbolic call_path requires a pending original-call diagnosis")
     if "focus" in arguments:
         validate_selection(arguments)
+    call_id = arguments.get("call_id", state.get("call_id"))
+    choices = [row["call_id"] for row in state.get("call_choices", [])]
+    if (state.get("call_selection_required") and call_id not in choices
+            or "call_id" in arguments and not state.get("call_selection_required")):
+        raise ContractError("/call_id: select the offered original call", details={
+            "invalid_fields": [{"path": "/call_id", "requirement":
+                                "select the offered call; selection grants no new budget"}]})
     invalid_fields = [
         {"path": f"/{key}", "requirement": "must be null for pending original-call diagnosis"}
         for key in (*NULL_FIELDS, "reproduction", "case_id", "reference_action_id")
@@ -140,7 +161,7 @@ def prepare(arguments, state, workspace, source_preflight, *, deadline=None, rea
             raise ContractError(host_watches["reason"], details={"watch_plan": host_watches})
         try:
             request = call_path_trace.selection_request(
-                {"focus": arguments["focus"], "watches": host_watches["watches"]}, state["call_id"])
+                {"focus": arguments["focus"], "watches": host_watches["watches"]}, call_id)
             request["scope"] = "selected_call"
         except ValueError as exc:
             raise ContractError(str(exc), details={"invalid_fields": [
@@ -150,7 +171,7 @@ def prepare(arguments, state, workspace, source_preflight, *, deadline=None, rea
         if not symbolic(arguments.get("call_path")):
             raise ContractError("diagnosis requires focus", details={"invalid_fields": [
                 {"path": "/focus", "requirement": "select a public failure-path function"}]})
-        request = call_path_trace.selection_request(arguments["call_path"], state["call_id"])
+        request = call_path_trace.selection_request(arguments["call_path"], call_id)
     try:
         bound = source_preflight(workspace, request, deadline=deadline,
                                  line_changes=state["unobserved_changes"])
@@ -162,7 +183,7 @@ def prepare(arguments, state, workspace, source_preflight, *, deadline=None, rea
         raise ContractError(f"/focus source binding: {exc}", details={"invalid_fields": [
             {"path": "/focus", "requirement": str(exc)}]}) from exc
     identity = ("origin", "path", "function", "file_hash")
-    resolved = {"call_id": state["call_id"],
+    resolved = {"call_id": call_id,
                 **({"scope": request["scope"]} if "scope" in request else {}),
                 "focus": {key: bound["focus"][key] for key in identity},
                 "watches": [{key: watch[key] for key in (*identity, "lines", "fields")}
@@ -182,6 +203,6 @@ def prepare(arguments, state, workspace, source_preflight, *, deadline=None, rea
 
 def arguments(raw, admission):
     """Keep raw model input immutable for action_id/input_hash recovery."""
-    return {**{key: value for key, value in raw.items() if key != "focus"},
+    return {**{key: value for key, value in raw.items() if key not in {"focus", "call_id"}},
             "replay_action_id": admission["replay_action_id"],
             "call_path": admission["call_path"]}

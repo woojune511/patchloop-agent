@@ -24,35 +24,31 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [saved-candidate processing comparison](history/2026-10-28-file-processing-results.md)
-locally observed the second and third Astroid-1333 candidates, with one real probe
-per candidate and no provider calls. Both omit file.py during file enumeration:
-project lookup raises ImportError, expand_modules falls back to is_namespace=false,
-and get_module_files(list_all=false) returns no files from the init-less directory.
-The selected list contains only the nonexistent __init__.py. Candidate3 changes
-only its AST construction: an empty module replaces the exception, so F0010
-disappears while file.py still never enters checking. The control file reaches
-AST construction and actual checking in both conditions.
+The [ruleless path-diagnosis fix](history/2026-10-28-ruleless-path-diagnosis.md)
+connects a valid null-rule original reproduction to the existing bounded diagnosis
+and revision route. When the same captured failure persists and changed Python
+lines were measured but not reached, the model selects a captured call and public
+focus function. The host freezes the original and watches the changed functions.
+Call selection remains unverified and cannot renew preparation, rejection or
+execution allowances. Linked repair predictions use the next comparable original
+replay; canonical rule-based judgments retain their existing requirements.
 
-All selected trace calls close, with no overflow or callback errors. Exact original
-call inputs, outputs, fixtures, image, dependencies and candidate snapshots match
-the saved receipts. This supports the selection-before-builder diagnosis for these
-two candidates; it does not establish a successful repair or benchmark acceptance.
-W0611 remains an added processing witness beyond the public issue's error absence.
+Pure re-projection of the saved Astroid-1333 receipts opens this route at candidate2
+(seq164), while candidate1/3 remain ineligible and all original verdicts stay
+refuted. A tiny local fixture verifies diagnosis, recovery without duplicate
+execution, linked repair, replay and delivery to model context. This establishes
+the local mechanism, not live-model uptake or Astroid repair success. The
+[processing comparison](history/2026-10-28-file-processing-results.md) remains
+public diagnostic evidence; its target-specific repair answer was not added to
+runtime prompts or selection logic.
 
-Keep the original processing check and failure delivery. The next repair hypothesis
-should address module resolution and traversal, rather than suppressing the builder
-exception. No production gate, repair, paid continuation or evaluation was added.
-The [model trial](history/2026-10-28-post-reproduction-repair-results.md) had stopped at
-three accepted edits, with context/output/time/cost remaining. Its final feedback
-did not reach another model turn; whether one extra edit or earlier path evidence
-helps remains untested. The USD4.13241570 allocation remains CLOSED.
-
-New diagnostic tests pass. The broader quick run exposed three existing failures:
-helper_recovery reads malformed purpose values as dicts (two cases), and one test
-expects the obsolete invocation example. Runtime and those tests were unchanged
-in this diagnostic. These must be addressed before calling quick validation green.
-No new provider-backed execution is currently funded.
+The [model trial](history/2026-10-28-post-reproduction-repair-results.md) stopped at
+three edits despite other resources remaining. First-edit observation with null
+rules, changed-failure diagnosis and final edit-cap continuation are unchanged.
+Whether this newly available earlier path diagnosis improves the model's next
+repair is unresolved. Previously exposed malformed-purpose and stale-example
+quick failures are corrected locally. No new provider execution is funded;
+USD4.13241570 and all earlier allocations remain CLOSED.
 
 ## Supporting evidence
 

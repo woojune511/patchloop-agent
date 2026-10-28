@@ -104,7 +104,9 @@ def test_silent_api_can_observe_actual_processed_return_value(tmp_path, smoke_pa
 
 
 def test_invocation_guidance_has_no_unsupported_keyword_or_no_error_only_example():
-    assert "call=target(['path'])" in reproduction.DESCRIPTION
+    assert "target.signature()" in reproduction.DESCRIPTION
+    assert "target(*args, **kwargs)" in reproduction.DESCRIPTION
+    assert "target() after setting sys.argv" in reproduction.DESCRIPTION
     assert "option=False" not in reproduction.DESCRIPTION
     assert "root=Path(reproduction_workspace())" in reproduction.DESCRIPTION
     assert "outputs=Path(reproduction_outputs())" in reproduction.DESCRIPTION

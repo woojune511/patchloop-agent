@@ -18,3 +18,4 @@
 - [Post-reproduction checkpoint restored, failure delivery checked and repair trial prepared](../2026-10-28-post-reproduction-repair-plan.md)
 - [Post-reproduction repair result: feedback delivered, error removed but processing witness absent](../2026-10-28-post-reproduction-repair-results.md)
 - [Saved candidate path comparison: file selection omits file.py before the empty-AST edit](../2026-10-28-file-processing-results.md)
+- [Ruleless original failures: bounded call selection, diagnosis and revision linkage](../2026-10-28-ruleless-path-diagnosis.md)

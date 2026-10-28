@@ -542,7 +542,7 @@ def dev_tool_schemas(
                     "cases never block finish or trigger automatic execution.", TOOL_DESCRIPTION,
                 )
         if path_diagnosis_pending:
-            schemas[-1] = diagnosis_request.tool_schema()
+            schemas[-1] = diagnosis_request.tool_schema(repair_revision)
         elif original_acquisition_pending:
             schema = schemas[-1]
             schema["description"] = first_reproduction.description(environment_description)

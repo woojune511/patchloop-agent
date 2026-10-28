@@ -669,7 +669,8 @@ def _completion_guidance(
           and (policy.repair_prediction or {}).get("status") != "needs_test_comparison"):
         diagnosis = policy.repair_path_diagnosis
         stage = policy.workflow_gate
-        next_action = ({"tool": "run_probe", "selection": "focus_only"}
+        next_action = ({"tool": "run_probe", "selection": (
+            "focus_and_call_id" if diagnosis.get("call_selection_required") else "focus_only")}
                        if "run_probe" in allowed else None)
         message = (
             "The same original failure persists and the modified branch was not observed. "
@@ -683,6 +684,12 @@ def _completion_guidance(
             "different observations. A complete diagnosis must inform the next hypothesis before "
             "another repair; incomplete observation returns verification incomplete."
         )
+        if diagnosis.get("call_selection_required"):
+            message = message.replace("Supply only focus", "Supply focus and call_id")
+            message += (
+                " Select call_id from the captured call_choices. Its relation to the failure "
+                "is model-selected and unverified; selecting another call does not renew "
+                "preparation, execution or correction allowances.")
         if diagnosis.get("preparation_available"):
             message += (
                 " The offered preparation read can acquire the source anchor still required "
@@ -5831,10 +5838,7 @@ def _run_one_active(
             original_acquisition_pending=policy.workflow_gate in {
                 "needs_original_reproduction", "needs_original_argument_correction"},
             repair_test_comparison_pending=policy.workflow_gate == "needs_test_comparison",
-            repair_revision=(
-                policy.repair_path_diagnosis if policy.repair_path_diagnosis
-                and policy.repair_path_diagnosis.get("status") == "diagnosed" else None
-            ),
+            repair_revision=policy.repair_path_diagnosis,
             repair_test_edit_enabled=policy.repair_test_edit_enabled,
             history_search_policy=request.history_search_policy,
         )

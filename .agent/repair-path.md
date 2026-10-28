@@ -41,8 +41,12 @@ Protocol correction keeps its existing run-global credit/output budget.
 
 `repair_path.review` derives state from immutable public receipts. It activates
 only for an acquired unchanged-base original, a healthy comparable current
-refutation with consistent host diagnostic judgment, and measured unobserved
+refutation with the same declared failure, and measured unobserved
 changed Python lines in the last implementation mutation's still-current file.
+When diagnostic rules exist, their host judgment must remain usable. A null-rule
+recorded observation may qualify through its healthy frozen original/current
+comparisons and exact invocation/condition identity; this does not create a host
+diagnostic judgment or upgrade the model-authored requirement mapping.
 Test additions cannot become the implementation hypothesis. Unknown line coverage
 does not trigger a fabricated no-hit. A helper, old candidate, changed call,
 conflicting judgment or different file hash cannot trigger the diagnosis.
@@ -55,11 +59,18 @@ maps current unobserved changed ranges to their innermost unique Python function
 frames and selects their parameter names, up to four watches and six fields each.
 Module-level/ambiguous changes or exceeded bounds remain unavailable; the host does
 not guess a function or collect unrestricted locals. The host binds the pending
-original root and failing call from public receipts.
+original root from public receipts. When diagnostic rules identify the call, that
+call remains fixed. With null rules, the model additionally selects `call_id` from
+the complete captured `call_choices`; the host does not guess which is the failure
+or control. This mapping stays `model_selected_unverified`, even after tracing.
 At least one watch must intersect the refuted mutation's unobserved changed range.
 The original program, arguments, expected output and failure declaration stay fixed.
 
-At `needs_path_diagnosis`, schema and validator both accept only focus for run_probe.
+At `needs_path_diagnosis`, run_probe accepts focus, plus call_id only when selection
+is offered. Once admitted, that call is fixed for request recovery. Preparation,
+rejected-request and execution allowances belong to the candidate/case/failure/
+mutation, so another call ID cannot refill them. The original program still runs
+all its calls, and the full comparison and identities must remain consistent.
 All offered diagnosis tools omit turn_decision, plan and memory annotations, including
 the preparation read and stop. Explicit null annotations are rejected too. The parser,
 gateway batch validator and attempt card preserve this absence through recovery.
@@ -113,7 +124,7 @@ native history; the fresh-segment behavior belongs to segmented-v1.
 
 The host binds regular tracked public Python source or verified prepared
 dependency members, source hashes and function locations. Fresh first-observation
-and focus-only diagnosis requests cover the selected invocation on its launch
+and small diagnosis requests cover the selected invocation on its launch
 thread, including watches outside focus. Saved requests without `scope` retain
 their focus-subtree meaning and raw input identity. Other invocations, threads
 and processes remain unmeasured. It records bounded named simple values, call
@@ -175,6 +186,10 @@ snapshot, execution identity, inputs, binding and environment must match. A remo
 function, partial trace or changed invocation gives unverified prediction feedback
 while preserving the original replay. Prediction and original-effect results are
 reported separately and never supply required-check credit.
+Rule-based replays still require a usable host judgment. Null-rule replays use
+their healthy frozen comparison and unchanged invocation fingerprint, so a linked
+repair prediction can be assessed without inventing a diagnostic judgment.
+The model-selected call mapping and semantic correctness remain unverified.
 
 Only host-admitted additive test mutations can carry a prior diagnosis across a
 full-diff change. Every incremental mutation receipt must agree, runtime source
@@ -234,12 +249,14 @@ protocol-correction output ceilings and monetary accounting are unchanged.
 
 `action_started.diagnosis_request` freezes the root, candidate, host watch plan,
 canonical request, source hashes and line-selection policy. The execution adapter
-removes focus from its derived replay arguments only. Raw `action_id + input_hash` stays bound
+removes focus and the top-level call_id from its derived replay arguments only;
+the selected call remains inside call_path. Raw `action_id + input_hash` stays bound
 to the model's original selection. Recovery reuses the frozen construction, rejects
 source drift and never recomputes coordinates. A durable rejected request cannot
 turn into a dispatch after interruption. Completed results replay; an uncertain
-dispatch does not retry. Legacy requests containing explicit call IDs/lines remain
-readable for recovery but are absent from the fresh model schema.
+dispatch does not retry. Legacy requests containing full call_path coordinates
+remain readable for recovery but are absent from the fresh model schema; a
+top-level call_id is offered only when the host has no rule-based mapping.
 
 A selected comparison reserves two physical executions and its completion successor
 before starting. Ordinary optional selections use the protected successor; the
@@ -265,3 +282,6 @@ For the first-repair path use `tests/first-repair.txt`; quick includes represent
 controls. Local scripts do not establish model uptake or F0010 repair success.
 For refutation-linked revisions and test-only diagnosis reuse, use the short
 `tests/repair-revision.txt` selection and [local record](../docs/history/2026-10-26-repair-revision.md).
+For null-rule call selection, linked prediction and recovery, use
+`uv run --locked pytest @tests/ruleless-diagnosis.txt --basetemp C:/pt/<unique>`;
+see the [local implementation record](../docs/history/2026-10-28-ruleless-path-diagnosis.md).

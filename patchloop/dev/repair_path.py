@@ -102,15 +102,15 @@ def _same_failure(before, after):
     return sha256_json(outputs(a)) == sha256_json(outputs(b))
 
 
-def _historical_links(starts, results, chain, link, failure, base):
+def _historical_links(starts, results, chain, link, failure, base, *, ruleless=False):
     if not chain:
         return {}
     histories = {}
     for start in starts.values():
         prior = start.get("repair_path_link") or {}
-        if prior == link or any(prior.get(key) != link[key] for key in (
-            "policy", "case_id", "replay_action_id", "mutation_action_id", "call_id"
-        )):
+        keys = ("policy", "case_id", "replay_action_id", "mutation_action_id")
+        if prior == link or any(prior.get(key) != link[key]
+                                for key in keys + (() if ruleless else ("call_id",))):
             continue
         position = next((i for i, step in enumerate(chain[:-1])
                          if step["mutation_expected_worktree_diff_hash"]
@@ -145,8 +145,15 @@ def _unchanged_failure(result, baseline, case_id, current_diff):
     if (result.get("workspace_diff_hash") != current_diff
             or observation.get("binding", {}).get("case_id") != case_id
             or observation.get("comparison") != "mismatched"
-            or observation.get("declared_failure_comparison") != "matched"
-            or not probe_judgment.is_usable(observation.get("judgment"))):
+            or observation.get("declared_failure_comparison") != "matched"):
+        return False
+    rules = observation.get("binding", {}).get("definition", {}).get("diagnostic_rules")
+    if rules is not None:
+        if not probe_judgment.is_usable(observation.get("judgment")):
+            return False
+    elif (observation.get("binding") != baseline.get("binding")
+          or observation.get("observed_json") != baseline.get("observed_json")
+          or not _paired_capture(observation, baseline)):
         return False
     return (completion_reproduction._healthy(result, observation)
             and reproduction.call_identity(observation["call_observation"])
@@ -159,8 +166,38 @@ def _call_id(observation):
     definition = observation["binding"]["definition"]
     expected = json.loads(definition["expected_json"])
     actual = json.loads(observation["observed_json"])
-    return next((rule["call_id"] for rule in definition.get("diagnostic_rules", [])
+    return next((rule["call_id"] for rule in (definition.get("diagnostic_rules") or [])
                  if actual.get(rule["field"]) != expected.get(rule["field"])), None)
+
+
+def _paired_capture(observation, baseline):
+    """Equal captured outcomes permit diagnosis, never authored-judgment promotion."""
+    traces = [value.get("call_observation", {}) for value in (observation, baseline)]
+    if any(trace.get("binding_method") not in probe_invocation.CAPTURE_CHANNELS
+           or trace.get("incomplete") is not False or not trace.get("calls")
+           or any(call.get("capture", {}).get("status") != "complete"
+                  or call.get("target_started") is False for call in trace["calls"])
+           for trace in traces):
+        return False
+    fields = ("call_id", "capture", "exception", "outcome", "exit_code")
+    return [{key: row.get(key) for key in fields} for row in traces[0]["calls"]] == [
+        {key: row.get(key) for key in fields} for row in traces[1]["calls"]]
+
+
+def _call_choices(observation):
+    return [{key: copy.deepcopy(call.get(key)) for key in (
+        "call_id", "argv", "arguments", "outcome", "exit_code")}
+        for call in observation["call_observation"]["calls"]
+        if call.get("capture", {}).get("status") == "complete"
+        and call.get("target_started") is not False][:4]
+
+
+def _same_link(prior, current, *, ruleless=False):
+    # Selection cannot create another preparation, rejection or execution allowance.
+    if not ruleless:
+        return prior == current
+    return isinstance(prior, dict) and all(prior.get(key) == value
+        for key, value in current.items() if key != "call_id")
 
 
 def _watched_changes(request, changes):
@@ -230,23 +267,37 @@ def review(events, current_diff, completion):
                        if row.get("path") == target_path and row.get("file_hash") == target_hash
                        and row.get("status") == "collected"
                        and row.get("not_observed_changed_ranges")]
-            call_id = _call_id(result["output"]["reproduction"])
-            if feedback.get("diff_hash") == current_diff and changes and call_id:
-                trigger = (case, result, changes, call_id)
+            observation = result["output"]["reproduction"]
+            call_id = _call_id(observation)
+            ruleless = observation["binding"]["definition"].get("diagnostic_rules") is None
+            choices = _call_choices(observation) if ruleless else []
+            if feedback.get("diff_hash") == current_diff and changes and (call_id or choices):
+                trigger = (case, result, changes, call_id, choices, ruleless)
                 break
         if trigger:
             break
     if trigger is None:
         return inactive
-    case, failure, changes, call_id = trigger
+    case, failure, changes, call_id, choices, ruleless = trigger
     link = {"policy": POLICY, "candidate_diff_hash": current_diff,
             "case_id": case["case_id"], "replay_action_id": case["root_action_id"],
             "failure_action_id": failure["action_id"], "mutation_action_id": mutation["action_id"],
             "call_id": call_id}
     history = _historical_links(starts, results, _test_only_chain(
-        events, mutation["action_id"], current_diff, results), link, failure, base)
-    linked = [start for start in starts.values() if start.get("repair_path_link") == link
+        events, mutation["action_id"], current_diff, results), link, failure, base,
+        ruleless=ruleless)
+    linked = [start for start in starts.values() if _same_link(
+        start.get("repair_path_link"), link, ruleless=ruleless)
               or start["action_id"] in history]
+    if ruleless:
+        allowed = {row["call_id"] for row in choices}
+        call_id = next((selected for start in linked
+                        if start.get("tool") == "run_probe"
+                        and start.get("probe_request", {}).get("status") != "rejected"
+                        and (selected := (start.get("diagnosis_request") or {}).get(
+                            "call_path", {}).get("call_id")) in allowed
+                        and start["repair_path_link"].get("call_id") == selected), None)
+        link["call_id"] = call_id
     preparations = [s["action_id"] for s in linked if s["tool"] in READ_TOOLS]
     attempts = [s for s in linked if s["tool"] == "run_probe"]
     dispatched = {e["payload"]["action_id"] for e in events
@@ -307,6 +358,8 @@ def review(events, current_diff, completion):
     return {
         **link, "status": "diagnosed" if complete else "verification_incomplete" if exhausted
         else "needs_path_diagnosis", "blocked": not complete,
+        **({"call_mapping": "model_selected_unverified", "call_choices": choices,
+            "call_selection_required": call_id is None} if ruleless else {}),
         "diagnosis_action_id": diagnosis["action_id"] if complete else None,
         "diagnosis_collection_status": collection_status,
         "original_effect_status": "original_effect_refuted",
@@ -362,9 +415,12 @@ def validate(state, tool, arguments):
             return link(state)
         if (tool == "run_probe" and isinstance(request, dict)
                 and arguments.get("replay_action_id") == state["replay_action_id"]
-                and request.get("call_id") == state["call_id"]
+                and (request.get("call_id") in {row["call_id"]
+                     for row in state.get("call_choices", [])}
+                     if state.get("call_selection_required")
+                     else request.get("call_id") == state["call_id"])
                 and _watched_changes(request, state["unobserved_changes"])):
-            return link(state)
+            return {**link(state), "call_id": request["call_id"]}
     raise ContractError(
         "Resolve the bounded original-call path diagnosis before another repair or verification "
         "action.", details={"repair_path": copy.deepcopy(state)},
