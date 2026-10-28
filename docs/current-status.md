@@ -73,11 +73,18 @@ zero model calls. It is a public compatibility counterexample, not an inspection
 or explanation of the private evaluator's failure.
 
 Keep caller access and completion reservations, but reject this submitted repair
-as semantically incomplete. The next decision is to test repair against the caller
-behavior and its library contract together, including a case that must stay an
-error. A bounded revision supplied with these public counterexamples would be an
-operator-assisted diagnostic, not a fresh solve. No new gate, larger budget,
-target patch or further paid run has been implemented or authorized.
+as semantically incomplete. The [public-counterexample continuation](history/2026-10-28-public-counterexample-repair-plan.md)
+prepares a revision against caller behavior and its library contract together,
+including cases that must stay errors. It restores the candidate before finish
+and supplies public observations without an operator repair. The original global
+budget is retained, reserving one action and 35 seconds for a final public matrix.
+This is an operator-assisted diagnostic, not a fresh solve. Preparation also fixed
+completion projection dropping newly read source at a segment boundary: latest
+successful current-diff retrieval survives, while old bodies stay omitted.
+The actual restored read-to-follow-up input now contains bound source and public
+counterexamples with zero corrections; focused checks passed 37 in 22.619 seconds,
+including isolated mock evaluation. Existing-image preflight is READY. The fresh
+USD3.38078870 cap is unapproved; provider and target executions remain zero.
 
 ## Supporting evidence
 
