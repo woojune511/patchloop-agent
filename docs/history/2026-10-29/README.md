@@ -12,3 +12,4 @@
 - [Six-run policy results: A two accepted, B one accepted; early stop and unexercised correction](../2026-10-29-verification-policy-six-v2-results.md)
 - [Edit prerequisite guidance retained in compact requests without changing admission](../2026-10-29-edit-prerequisite-guidance.md)
 - [Single SQLFluff edit-prerequisite follow-up prepared; new execution approval pending](../2026-10-29-edit-prerequisite-single-plan.md)
+- [SQLFluff follow-up: edit guidance delivered, public checks and submission passed, acceptance failed](../2026-10-29-edit-prerequisite-single-results.md)

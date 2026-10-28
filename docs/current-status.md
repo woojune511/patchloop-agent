@@ -62,14 +62,20 @@ the [edit-availability fix](history/2026-10-29-edit-prerequisite-guidance.md) no
 preserves the current edit status, blocking reason and available source prerequisite
 through thin/compact requests, correction and recovery. Tool admission, host checks
 and budgets remain unchanged. Local request/transition tests and isolated mock
-smoke validate transport; live uptake and avoidance of premature stop are untested.
+smoke validate transport; the live follow-up below checks actual delivery and actions.
 Keep the default unchanged: this small exposed panel does not establish a benefit
 from optional reproduction or general superiority. Always-visible schemas are not
-introduced; first test whether the model uses the restored prerequisite information.
-The [single SQLFluff follow-up](history/2026-10-29-edit-prerequisite-single-plan.md)
-prepares that test on the same public-checks B settings and nominal limits, with
-a new proposed USD4.50 cap. Offline construction retains the card and unchanged
-first tool schemas; live execution awaits exact new command/cap approval.
+introduced; inspect the candidate-verification gap below before widening the action set.
+The [single SQLFluff follow-up](history/2026-10-29-edit-prerequisite-single-results.md)
+is CLOSED at USD0.587558/4.50. All 11 actual request cards and count/dispatch
+identities matched; the model searched, received the edit tool, edited once,
+passed 506 public tests and submitted. Independent acceptance FAIL, safety PASS.
+One baseline helper observed the reported indentation problem, but the candidate
+was not replayed on that public example before submission. Inspect that saved
+candidate behavior next; budgets and further tools remained available at finish.
+This confirms delivery and the source-to-edit path in one run, not causal quality
+improvement. Protocol correction was unused, and the private failure cause is
+unestablished. No further paid invocation is authorized.
 Helper return types and incomplete output capture remain separate unresolved issues;
 this intervention does not repair those contracts. Repeatability and held-out
 improvement remain unverified. No further paid run is authorized by unused funds.
