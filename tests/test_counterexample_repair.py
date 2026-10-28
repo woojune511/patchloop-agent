@@ -139,14 +139,20 @@ def test_gateway_factory_adds_registered_check_without_mutating_task(
 
 
 @pytest.mark.parametrize("first_response", [True, False])
+@pytest.mark.parametrize("exploration_offered", [True, False])
 def test_feedback_audit_accepts_current_required_failure_and_rejects_finish(
-    saved, first_response,  # noqa: F811
+    saved, first_response, exploration_offered,  # noqa: F811
 ):
     packet = diagnostic.packet_api.build_packet(saved["root"])
     entry = diagnostic.check_api.required_check(packet)
     state = {
         "current_diff": {"patch_hash": packet["candidate_diff_hash"]},
         "workflow_gate": "needs_visible_checks",
+        "mutation_readiness": {"state": "ready_to_attempt",
+                               "current_anchor_evidence_paths": ["astroid/modutils.py"]},
+        "current_sources": [{"path": "astroid/modutils.py", "file_hash": "current-source",
+                             "edit_permission": "allowed", "inline_spans": [{
+                                 "start_line": 1, "end_line": 1, "content": "editable = 1\n"}]}],
         "visible_check_status": [{"check_id": "base-regression", "status": "PASS"},
                                  {"check_id": entry.check.id, "status": "FAIL"}],
         "supplemental_required_checks": [{"check": entry.check.model_dump(mode="json"),
@@ -161,12 +167,41 @@ def test_feedback_audit_accepts_current_required_failure_and_rejects_finish(
     assert state[diagnostic.FIELD]["required_check_status"] == "FAIL"
     assert state[diagnostic.FIELD]["new_verification_required"] is True
     assert "program_text" not in state[diagnostic.FIELD]
+    names = ["replace_text", "stop_task"]
+    if exploration_offered:
+        names += ["read_file", "search_files"]
     request = {"input": [{"role": "user", "content": canonical_json({"state": state})}],
                "tools": [{"name": name, "parameters": {"properties": {}}}
-                         for name in ("replace_text", "read_file", "search_files", "stop_task")]}
+                         for name in names]}
     branch = SimpleNamespace(request=SimpleNamespace(caller_source_roots={}))
     audit = diagnostic.feedback_audit(branch, request, packet, first_response=first_response)
     assert audit["confirmed_failure_blocks_finish"] is True
+    assert audit["available_tools"] == sorted(names)
+    assert audit["caller_sources"]["status"] == ("PASS" if exploration_offered else "NOT_OFFERED")
+    if first_response:
+        assert audit["initial_source_projection"]["spans"][0]["content_chars"] > 0
     request["tools"].append({"name": "finish_task"})
     with pytest.raises(ContractError, match="permits successful finish"):
         diagnostic.feedback_audit(branch, request, packet, first_response=first_response)
+
+
+def test_unoffered_read_rehearsal_never_restores_or_dispatches(monkeypatch):
+    def forbidden(*args, **kwargs):
+        pytest.fail("unavailable read must not create or dispatch a rehearsal")
+    monkeypatch.setattr(diagnostic, "restore", forbidden)
+    monkeypatch.setattr(diagnostic.exposure, "rehearse", forbidden)
+    request = {"tools": [{"name": "replace_text"}, {"name": "stop_task"}]}
+    audit, receipt = diagnostic.rehearse_later_read(None, 212, None, None, None, None, request)
+    assert audit["later_read_delivery"]["status"] == receipt["status"] == "NOT_EXERCISED"
+    assert not audit["later_response_delivery_checked"]
+    caller = diagnostic._caller_scope_audit(request, {"pylint": "pylint"})
+    assert caller["offered_source_tools"] == [] and caller["status"] == "NOT_OFFERED"
+
+
+def test_initial_source_audit_rejects_headers_without_delivered_body():
+    state = {"mutation_readiness": {"state": "ready_to_attempt",
+                                   "current_anchor_evidence_paths": ["public.py"]},
+             "current_sources": [{"path": "public.py", "file_hash": "current",
+                                  "edit_permission": "allowed", "headers": [{"start_line": 1}]}]}
+    with pytest.raises(ContractError, match="lacks current delivered editable source"):
+        diagnostic._initial_source_audit(state)

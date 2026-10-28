@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import copy
 import json
+import re
 from contextlib import contextmanager
 from dataclasses import asdict
 from decimal import Decimal
@@ -97,6 +98,45 @@ def restore(source, cut, output, cap, env_file, *, funded=False):
         env_file=env_file, preserve_parent_configuration=True)
 
 
+def _caller_scope_audit(request, roots):
+    """Validate any offered source tools without requiring optional exploration."""
+    roots = post.normalize_roots(roots)
+    source_tools = [tool for tool in request["tools"]
+                    if tool["name"] in {"read_file", "search_files"}]
+    for tool in source_tools:
+        properties = tool["parameters"]["properties"]
+        if roots:
+            require(properties.get("source_scope", {}).get("enum")
+                    == ["repository", *[f"dependency:{name}" for name in roots]]
+                    and "source_scope" in tool["parameters"]["required"],
+                    "caller source scopes differ from registration")
+            require(all(re.search(
+                rf"dependency:{re.escape(name)} \S+ root={re.escape(root)}(?:; |\.$)",
+                tool["description"]) for name, root in roots.items()),
+                "caller source roots missing from offered catalog")
+        else:
+            require("source_scope" not in properties, "unexpected caller source scope")
+    return {"caller_source_roots": roots,
+            "offered_source_tools": [tool["name"] for tool in source_tools],
+            "status": "PASS" if source_tools else "NOT_OFFERED"}
+
+
+def _initial_source_audit(state):
+    """Record real source bodies in the prepared fresh segment, not just headers."""
+    readiness = state.get("mutation_readiness", {})
+    anchors = set(readiness.get("current_anchor_evidence_paths", []))
+    delivered = [{"path": source["path"], "file_hash": source["file_hash"],
+                  "start_line": span["start_line"], "end_line": span["end_line"],
+                  "content_hash": sha256_bytes(span["content"].encode()),
+                  "content_chars": len(span["content"])}
+                 for source in state.get("current_sources", [])
+                 if source.get("path") in anchors and source.get("edit_permission") == "allowed"
+                 for span in source.get("inline_spans", []) if span.get("content", "").strip()]
+    require(readiness.get("state") == "ready_to_attempt" and delivered,
+            "initial request lacks current delivered editable source")
+    return {"status": "PASS", "spans": delivered, "projection_hash": sha256_json(delivered)}
+
+
 def feedback_audit(branch, request, packet, *, first_response=True):
     state = json.loads(request["input"][-1]["content"])["state"]
     # Only the restored boundary discards historical opaque state. Later native
@@ -127,15 +167,17 @@ def feedback_audit(branch, request, packet, *, first_response=True):
     tools = {tool["name"] for tool in request["tools"]}
     require("finish_task" not in tools and state["workflow_gate"] != "ready_to_submit",
             "known required public failure still permits successful finish")
-    require({"replace_text", "read_file", "search_files", "stop_task"} <= tools,
-            "revision or exploration is unavailable")
-    callers = post.caller_scope_audit(request, branch.request.caller_source_roots)
+    require({"replace_text", "stop_task"} <= tools, "revision or stop is unavailable")
+    callers = _caller_scope_audit(request, branch.request.caller_source_roots)
+    source_audit = (_initial_source_audit(state) if first_response else {
+        "status": "NOT_CHECKED", "reason": "initial projection checked separately"})
     return {"status": "PASS", "packet_hash": sha256_json(packet),
             "candidate_diff_hash": packet["candidate_diff_hash"],
             "regressions": packet["regressions"], "original_status": completion["status"],
             "baseline_failure_case_ids": completion["baseline_failure_case_ids"],
             "workflow_gate": state["workflow_gate"], "available_tools": sorted(tools),
             "caller_sources": callers, "context_field": FIELD,
+            "initial_source_projection": source_audit,
             "original_task_checks_unchanged": True,
             "completion_adds_required_public_check": True,
             "required_public_check": check_api.CHECK_ID,
@@ -172,6 +214,30 @@ def read_delivery_audit(events, request):
             "result_hash": sha256_json(expected), "protocol_corrections": 0}
 
 
+def rehearse_later_read(source, cut, output, cap, env_file, packet, request):
+    if "read_file" not in {tool["name"] for tool in request["tools"]}:
+        unavailable = {"status": "NOT_EXERCISED", "reason": "read_file_not_offered"}
+        return {"later_read_delivery": unavailable,
+                "later_response_delivery_checked": False}, unavailable
+    later = restore(source, cut, output/"later-response", cap, env_file)
+    later_client = ScriptedClient([[{
+        "name": "read_file", "action_id": "public_counterexample_delivery_read",
+        "arguments": {"path": "astroid/modutils.py", "start_line": 1, "end_line": 12,
+                      "source_scope": "repository", "memory_update": None},
+    }], post.stop_client().steps[0]])
+    with public_feedback(packet), post.public_checkpoint():
+        later_receipt = exposure.rehearse(later, later_client)
+    require(len(later_client.created) == len(later_client.counted) == 2
+            and later_receipt["result"]["terminal"] == "AGENT_STOPPED"
+            and not later_receipt["synthetic_probe_calls"], "later offline delivery not verified")
+    for index, delivered in enumerate(later_client.created):
+        feedback_audit(later, post.normalized_request(delivered), packet,
+                       first_response=index == 0)
+    return {"later_read_delivery": read_delivery_audit(
+        later.journal.events()[later.inherited_events:], later_client.created[1]),
+        "later_response_delivery_checked": True}, later_receipt
+
+
 def prepare(source, cut, packet_root, env_file, output, result_root, cap):
     require(cap.is_finite() and cap > 0, "positive new cap required")
     packet = packet_api.build_packet(packet_root)
@@ -204,23 +270,9 @@ def prepare(source, cut, packet_root, env_file, output, result_root, cap):
             and check["result"]["terminal"] == "AGENT_STOPPED",
             "offline dispatch differs from preparation")
     audit["fresh_offline_dispatch_match"] = True
-    later = restore(source, cut, output/"later-response", cap, env_file)
-    later_client = ScriptedClient([[{
-        "name": "read_file", "action_id": "public_counterexample_delivery_read",
-        "arguments": {"path": "astroid/modutils.py", "start_line": 1, "end_line": 12,
-                      "source_scope": "repository", "memory_update": None},
-    }], post.stop_client().steps[0]])
-    with public_feedback(packet), post.public_checkpoint():
-        later_receipt = exposure.rehearse(later, later_client)
-    require(len(later_client.created) == len(later_client.counted) == 2
-            and later_receipt["result"]["terminal"] == "AGENT_STOPPED"
-            and not later_receipt["synthetic_probe_calls"], "later offline delivery not verified")
-    for index, delivered in enumerate(later_client.created):
-        feedback_audit(later, post.normalized_request(delivered), packet,
-                       first_response=index == 0)
-    audit["later_read_delivery"] = read_delivery_audit(
-        later.journal.events()[later.inherited_events:], later_client.created[1])
-    audit["later_response_delivery_checked"] = True
+    later_audit, later_receipt = rehearse_later_read(
+        source, cut, output, cap, env_file, packet, request)
+    audit.update(later_audit)
     plan = {"schema": SCHEMA, "official": False, "paid_execution_authorized": False,
         "source": source.record(), "cut_sequence": cut, "include_cut": False,
         "task": str(source.public_path), "split": "dev-train", "repeat": 1,

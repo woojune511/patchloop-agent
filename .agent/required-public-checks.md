@@ -39,3 +39,9 @@ the ordinary completion path now budgets each required execution, including chec
 timeout and standard overhead. Final reporting reads the current receipt without
 executing the matrix again. Old sealed experiment manifests do not authorize this
 changed diagnostic.
+
+Preparation audits the actually offered tools: repair and stop must remain available,
+but optional exploration may close under the unchanged completion horizon. The first
+request must carry current editable source bodies and matching anchor metadata.
+Only rehearse a subsequent source read when read_file is offered; otherwise record
+that delivery path as NOT_EXERCISED. Never open a tool or alter budgets for rehearsal.
