@@ -26,29 +26,9 @@ and [evidence boundaries](evidence.md).
 
 Keep the [required-public-check design](history/2026-10-28-required-public-checks.md):
 known FAIL and required NOT_RUN block successful finish; edits require fresh
-current-diff checks and deliver their failures. The assisted saved-candidate
-[continuation](history/2026-10-28-required-public-check-repair-results.md) passed11
-public cases,1231 regressions and isolated acceptance/safety. That is not a fresh
-solve or generalization estimate; its allocation is CLOSED.
-
-The prior [clean-original attempt](history/2026-10-28-autonomous-fresh-results.md)
-reproduced F0010 but left processing unverified after two downstream repairs and
-exhausted its tool horizon. The [public analysis](history/2026-10-28-autonomous-fresh-analysis.md)
-identified unequal read/probe cost admission and an inactive ruleless call selector.
-The [observation-opportunity change](history/2026-10-28-observation-opportunity.md)
-restores those choices with shared minimum completion reservations and keeps the
-original verification requirement. Typed v10 settings rejection separates a known
-pre-target request error from UNKNOWN; it refunds no costs or attempts.
-
-The [latest live follow-up](history/2026-10-29-observation-opportunity-fresh-results.md)
-ended EVALUATOR_FAIL/unverified_delivery: public regression1231 PASS, isolated task
-acceptance FAIL, safety PASS. It spent USD1.476264,12 responses,22 actions and851.269
-active seconds. Its allocation is CLOSED. Two helper construction errors prevented
-any original reproduction, so post-reproduction observation uptake remains untested.
-The first description omitted check_setup's signature; descriptions omitted input_paths
-maximum4, and the runtime message did not identify the offending field. The model
-corrected the first error, then hit the second constraint. Overall budget exhaustion
-was not the terminal cause.
+current-diff checks and deliver their failures. Keep the restored caller observation
+choices and minimum completion admission from the
+[observation-opportunity change](history/2026-10-28-observation-opportunity.md).
 
 The [helper API contract change](history/2026-10-29-helper-api-contract.md) now shares
 signatures, mode availability and limits between descriptions and trusted runtime.
@@ -58,19 +38,27 @@ or observed-target field/count/limit stderr. Both error paths reach the next cou
 model request, and corrected calls execute without resetting counters or replaying
 settled actions. Unknown execution and original verification remain independent.
 
-Fresh v11 uses the same validator from a hash-bound trusted module; saved v1-v10
-programs stay byte-exact. Observer 8K, authored-source and total resource limits are
-unchanged. Core validation: 161 PASS in 42.162 seconds; quick integration: 855 PASS
-in 115.437 seconds, including isolated mock evaluation. Ruff passes. This is local
-mechanism evidence; commands and limits are in the linked implementation report.
-No live model call, benchmark rerun or new allocation was made for this change.
+Fresh v11 uses a hash-bound trusted module; saved v1-v10 programs remain byte-exact.
+Observer/source/resource limits are unchanged. Local evidence: focused 161 PASS in
+42.162 seconds, quick 855 PASS in 115.437 seconds including isolated mock evaluation,
+and Ruff PASS. That evidence is separate from the live outcome below.
 
-The [clean-start helper follow-up](history/2026-10-29-helper-contract-fresh-plan.md)
-is prepared for Astroid-1333, the same full model and limits, one run and a proposed
-new USD 4.50 cap. Offline first-request and read-only identity preflight pass; new
-exact execution/cap approval is pending. It asks whether valid original execution
-now enables useful observation and repair. No live call or F0010 repair gain is
-established. Previous paid allocations remain closed.
+The [latest clean-start result](history/2026-10-29-helper-contract-fresh-results.md)
+is EVALUATOR_PASS with cases_verified_delivery on Astroid-1333. The full model
+gpt-5.4-2026-03-05(xhigh) acquired original F0010 without API correction, made one
+edit to normalize caller-supplied search paths, and passed the identical original
+replay with F0010 absent and W0611 processing markers in both calls. Current-diff
+regression passed 1231 tests; isolated acceptance and safety both passed.
+It spent USD 2.0153455/4.50, 18 responses, 32 actions and 609.474 active seconds.
+The allocation is CLOSED. No prior patch, checkpoint or operator observations were seeded.
+
+The model chose observe_original, but call tracing hit its 200000-event limit and
+remained UNKNOWN/insufficient. A general helper also caught an AttributeError in
+result formatting. Do not describe the repair as confirmed by a complete call trace.
+API correction and failed-repair/regression revision were NOT_EXERCISED. Fifteen
+responses were used before the first edit. Keep the contract fix; repeatability,
+observation usefulness and generalization remain unresolved by this one exposed
+development task. Prior paid allocations remain closed.
 
 ## Supporting evidence
 
@@ -102,8 +90,8 @@ submission, independent task acceptance and safety are separate. Mock safety is 
 
 Do not start Docker Desktop or pull/build evaluator images automatically. Preserve
 exact recovery identities, zero SDK retries and stop-all on count/transport/billing
-uncertainty. Earlier saved candidates failed isolated acceptance; the clean-source operator
-resolver candidate passes. The saved-evidence A model trial now passes acceptance;
-fresh-solve and held-out improvement remain unverified.
+uncertainty. Saved-candidate and operator successes remain distinct from the single
+clean-start development success above. Repeated fresh-solve performance and held-out
+improvement remain unverified.
 Public-check PASS, safety PASS and successful submission do not establish repair
 correctness. Linux CI and general improvement remain unverified.
