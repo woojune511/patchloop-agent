@@ -96,8 +96,11 @@ Saved-state replay keeps helper/edit available at five remaining responses, then
 closes helper/test at four while preserving edit/finish. Focused controls passed
 36 and 52 tests; quick's two identity-pin failures passed narrow rechecks, and both
 isolated mock evaluations passed. Live model uptake and repair gain remain untested.
-No additional run is funded;
-the earlier assisted failure does not establish fresh-solve or general repair gain.
+A [same-checkpoint follow-up](history/2026-10-28-probe-revision-repair-plan.md) is
+prepared with the same model, public packet and limits. Offline request delivery,
+actual revision binding and environment preflight passed. The new USD3.38078870
+invocation cap is pending; no provider dispatch occurred. The earlier assisted
+failure does not establish fresh-solve or general repair gain.
 
 ## Supporting evidence
 
