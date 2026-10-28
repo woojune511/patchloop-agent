@@ -60,6 +60,14 @@ responses were used before the first edit. Keep the contract fix; repeatability,
 observation usefulness and generalization remain unresolved by this one exposed
 development task. Prior paid allocations remain closed.
 
+Next, the [frozen-runtime three-task check](history/2026-10-29-helper-transfer-three-plan.md)
+is prepared on current-dev20 rows 5/9/18 (pvlib, pydicom, SQLFluff), one fresh run
+each. Model and per-task limits stay fixed; proposed caps are USD4.50 each and
+USD13.50 total. New dependencies, public capability checks, first-request audits
+and batch stop rules passed locally. Paid execution is NOT_RUN and exact new
+scope approval is pending. This exposed development panel cannot establish
+held-out generalization or a causal improvement over another agent.
+
 ## Supporting evidence
 
 - [Security maintenance](history/2026-10-23-security.md): refreshed host dependencies
