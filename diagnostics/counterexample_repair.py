@@ -4,7 +4,6 @@ from __future__ import annotations
 import argparse
 import copy
 import json
-import re
 from contextlib import contextmanager
 from dataclasses import asdict
 from decimal import Decimal
@@ -100,25 +99,12 @@ def restore(source, cut, output, cap, env_file, *, funded=False):
 
 def _caller_scope_audit(request, roots):
     """Validate any offered source tools without requiring optional exploration."""
-    roots = post.normalize_roots(roots)
     source_tools = [tool for tool in request["tools"]
                     if tool["name"] in {"read_file", "search_files"}]
-    for tool in source_tools:
-        properties = tool["parameters"]["properties"]
-        if roots:
-            require(properties.get("source_scope", {}).get("enum")
-                    == ["repository", *[f"dependency:{name}" for name in roots]]
-                    and "source_scope" in tool["parameters"]["required"],
-                    "caller source scopes differ from registration")
-            require(all(re.search(
-                rf"dependency:{re.escape(name)} \S+ root={re.escape(root)}(?:; |\.$)",
-                tool["description"]) for name, root in roots.items()),
-                "caller source roots missing from offered catalog")
-        else:
-            require("source_scope" not in properties, "unexpected caller source scope")
-    return {"caller_source_roots": roots,
-            "offered_source_tools": [tool["name"] for tool in source_tools],
-            "status": "PASS" if source_tools else "NOT_OFFERED"}
+    if not source_tools:
+        return {"caller_source_roots": post.normalize_roots(roots),
+                "offered_source_tools": [], "status": "NOT_OFFERED"}
+    return {**post.caller_scope_audit(request, roots), "status": "PASS"}
 
 
 def _initial_source_audit(state):
