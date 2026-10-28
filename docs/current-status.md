@@ -58,6 +58,12 @@ and repairs correctly within the same caps. Latest live cost USD1.133929 of
 USD4.13241570; this allocation and all earlier allocations are CLOSED. No further
 run is funded.
 
+The [caller/completion checkpoint follow-up](history/2026-10-28-caller-completion-repair-plan.md)
+is prepared with explicit pylint source registration. Two offline restorations
+match the first request, 26 fixed conditions match the prior trial, and read-only
+environment checks are READY. One new USD4.13241570 invocation is proposed; exact
+cap approval is pending. No paid call or target execution has occurred.
+
 ## Supporting evidence
 
 - [Security maintenance](history/2026-10-23-security.md): refreshed host dependencies

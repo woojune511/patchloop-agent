@@ -5,7 +5,7 @@
 - Origin Skill: academic-research-suite / experiment-agent
 - Origin Mode: preparation for a requested code experiment
 - Origin Date: 2026-10-28, Asia/Seoul
-- Verification Status: PREPARING; paid execution NOT_RUN
+- Verification Status: PREPARED; paid execution NOT_RUN, exact cap approval pending
 - Version Label: caller_completion_repair_plan_v1
 - Scope: one dev-train checkpoint continuation, official=false, claim-ineligible
 
@@ -74,15 +74,34 @@ exact predecessor cost contract as historical metadata; ordinary resume remains
 strict. The new fork uses the current contract. These changes do not rewrite any
 source journal or reopen prior funding.
 
-Local bridge controls passed17 tests in19.259s; historical-metadata controls
-passed5 tests in0.94s. They cover inherited/explicit/cleared mappings, malformed
+Local bridge controls passed 17 tests in 19.259s; historical-metadata controls
+passed 5 tests in 0.94s. They cover inherited/explicit/cleared mappings, malformed
 and shorter-prefix root changes, actual count/dispatch schema equality, retained
 public failure, absent unsolicited caller body injection, immutable source bytes
 and ordinary rejection of the predecessor contract. Ruff/diff checks passed.
 No model, target or Docker execution was used by these tests.
 
-Preparation artifacts and read-only environment checks will be recorded at
-`C:/pt/caller-completion-repair-plan-v1`; the proposed result root is
-`C:/pt/caller-completion-repair-run-v1`. The manifest and exact command will be sealed
-after local validation. The user's experiment request authorizes preparation;
-the new exact positive invocation cap remains pending under AGENTS.md Hard gate 5.
+Prepared at `C:/pt/caller-completion-repair-plan-v1`; result root
+`C:/pt/caller-completion-repair-run-v1` remains absent. Core implementation commit:
+`2a7acd5dab48e78089922148899f32621902516b`; checkpoint bridge/preparation commit:
+`6f5786ee`. Manifest:
+`sha256:527fb7ddb8a55baa2738edb38ad9c6a99c4bf9f1cf0ae052ab265ccd22421902`.
+Exact proposed command:
+`& 'C:/pt/caller-completion-repair-plan-v1/run.ps1'`.
+
+Preparation restored the checkpoint twice, matched first count/dispatch tool
+schemas and public evidence, and preserved original failure/action/capture identity.
+Both read and search are available with `dependency:pylint`; no caller source body
+or later operator conclusion is preloaded. The 26 fixed manifest fields match the
+prior experiment, including all remaining budgets and source/image identities.
+Read-only environment checks returned READY: tracked task/runtime, local prepared
+source, dependency identity and existing evaluator/probe images passed. No image
+was pulled/built, no container target was executed and no credential contents were
+read. Paid calls and target executions remain zero.
+
+The external `preflight.json` hash is
+`sha256:21a265472ac84631091407117b260c35bca92dd34ef98e9e3053fe4f6d5c836d`.
+Preparation and environment receipts are in the append-only `dev-run-v1` journal
+`run_dev_postreproductionpreparation`. The user's experiment request authorizes
+preparation; the new exact positive invocation cap remains pending under
+AGENTS.md Hard gate 5. The sealed script has not been executed.
