@@ -65,9 +65,12 @@ in 115.437 seconds, including isolated mock evaluation. Ruff passes. This is loc
 mechanism evidence; commands and limits are in the linked implementation report.
 No live model call, benchmark rerun or new allocation was made for this change.
 
-The next live question is whether the corrected API contract allows valid original
-execution and then useful observation and repair under the same limits. It is not
-yet evidence of F0010 repair gain. Previous paid allocations remain closed.
+The [clean-start helper follow-up](history/2026-10-29-helper-contract-fresh-plan.md)
+is prepared for Astroid-1333, the same full model and limits, one run and a proposed
+new USD 4.50 cap. Offline first-request and read-only identity preflight pass; new
+exact execution/cap approval is pending. It asks whether valid original execution
+now enables useful observation and repair. No live call or F0010 repair gain is
+established. Previous paid allocations remain closed.
 
 ## Supporting evidence
 
