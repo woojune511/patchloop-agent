@@ -145,3 +145,5 @@ tests/test_counterexample_check.py
 tests/test_public_check_submission.py
 tests/test_observation_shape_correction.py
 tests/test_edit_availability.py
+tests/test_probe_followup.py
+tests/test_probe_followup_wire.py

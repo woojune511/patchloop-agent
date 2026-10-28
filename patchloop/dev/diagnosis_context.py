@@ -65,6 +65,9 @@ def project(state):
         "remaining_budget", "current_diff", "diagnosis_stage", "protocol_correction",
         "source_spans", "dependency_sources", "observed_source_index", "segment_handoff",
     ) if key in state}
+    followup = state.get("reproduction_review", {}).get("probe_followup")
+    if followup is not None:
+        view["reproduction_review"] = {"probe_followup": followup}
     # Current source spans already have a host retention bound. Keep them inline:
     # references into discarded native segments would not be evidence delivery.
     view["latest_tool_results"] = [row for row in state.get("latest_tool_results", [])

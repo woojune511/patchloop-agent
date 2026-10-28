@@ -31,6 +31,7 @@ from patchloop.dev import (
     observation_correction,
     original_obligation,
     probe_cases,
+    probe_followup,
     probe_replay,
     probe_requests,
     repair_path,
@@ -495,8 +496,9 @@ def dev_tool_schemas(
                 "subprocess, multiprocessing process workers, fork, exec and shell commands "
                 "are unavailable. Import and call a Python entry point in this process when "
                 "its dependencies are available. "
-                "Choose a public input variation that could falsify an implementation assumption, "
-                "not just repeat a registered example. For helper probes, state the expected "
+                "After an edit, replay a relevant prior public example to test the repair's "
+                "effect; for a new question, choose an input that could falsify an assumption. "
+                "For helper probes, state the expected "
                 "observation in the question and print or assert it in the experiment. "
                 "Execution completed means "
                 "normal exit, not behavior verified. "
@@ -4585,9 +4587,11 @@ class DevToolGateway:
                 self.requires_alternative = True
 
     def reproduction_review(self, *, diff_hash: str) -> dict[str, Any]:
+        followup = probe_followup.review(self.journal.events(), diff_hash)
         return {
             **reproduction.review(self.journal.events(), diff_hash, public_task=self.public_task),
             "completion": self.completion_verification(diff_hash=diff_hash),
+            **({"probe_followup": followup} if followup is not None else {}),
         }
 
     def completion_verification(self, *, diff_hash: str) -> dict[str, Any]:

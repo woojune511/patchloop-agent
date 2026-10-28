@@ -29,8 +29,8 @@ def test_original_stage_changes_description_only(agent_policy, probe_policy, exp
 
 
 @pytest.mark.parametrize("agent_policy,diagnosis,expected", [
-    ("current", False, "b0c44ac29de9822430e2b3f4463693c77906166b25aadbdf2059d7a8147d5a8b"),
-    ("thin", False, "7353b8ed4569a56728e36a27c687ab62ad7517b951b6240039f6a61457046cdd"),
+    ("current", False, "3f466bc3576cebaa99b691af15c192d3d73bfa32b19a41b1d65dfb55fd0ef07d"),
+    ("thin", False, "05c10a05a34a2be49f76b76a34a9b990252d838ca65b11c21ed4e97c43ed1886"),
     ("current", True, "9f7ea75adea8115540ee793197c00039b03672a1c91d437f277951c5faa873e0"),
     ("thin", True, "9f7ea75adea8115540ee793197c00039b03672a1c91d437f277951c5faa873e0"),
 ])

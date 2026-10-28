@@ -95,6 +95,9 @@ def project(state):
         "recent_attempt_result_next_question", "recent_probes", "recent_checks",
         "latest_tool_results", "inspection_focus",
     ) if key in state}
+    followup = state.get("reproduction_review", {}).get("probe_followup")
+    if followup is not None:
+        view["reproduction_review"] = {"probe_followup": followup}
     notes = state.get("working_notes", {})
     view["repair_intent"] = {key: notes[key] for key in (
         "open_question", "findings", "hypotheses", "verification",

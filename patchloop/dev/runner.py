@@ -38,6 +38,7 @@ from patchloop.dev import (
     history_search,
     inspection_focus,
     native_compaction,
+    probe_followup,
     probe_recheck,
     repair_context,
     segments,
@@ -2069,8 +2070,21 @@ def _repair_path_resources(
 
 def _reproduction_review_resources(
     review: dict[str, Any], policy: _ToolPolicy,
+    *, probe_policy: str = "none",
 ) -> dict[str, Any]:
     """Keep the duplicate model-facing path state consistent without changing its ledger."""
+    if review.get("probe_followup") is not None:
+        restricted = policy.workflow_gate not in {
+            "needs_mutation", "needs_visible_checks", "ready_to_submit", "verification_incomplete",
+        } or (policy.verification_policy != "public-checks-v1" and any(
+            (value or {}).get("blocked") for value in (
+                policy.helper_correction, policy.observation_correction,
+            )
+        ))
+        review = {**review, "probe_followup": probe_followup.with_guidance(
+            review["probe_followup"], offered="run_probe" in policy.allowed_tools,
+            restricted=restricted, probe_policy=probe_policy,
+        )}
     if policy.verification_policy == "public-checks-v1":
         return {**review, "verification_policy": policy.verification_policy,
                 "submission_gate": False, "interpretation": (
@@ -2667,6 +2681,7 @@ def _build_context(
         ]
     payload["reproduction_review"] = _reproduction_review_resources(
         gateway.reproduction_review(diff_hash=summary.patch_hash), active_policy,
+        probe_policy=gateway.probe_policy,
     )
     if diagnosis_context.pending(payload):
         payload["diagnosis_stage"] = diagnosis_context.packet(

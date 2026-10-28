@@ -22,6 +22,22 @@ Thin projection and compact repair/correction/completion views retain this card
 even when they omit advisory `next_action` and `message`. No forced read, new
 tool admission, stop restriction or extra reserve is introduced.
 
+`reproduction_review.probe_followup` retains one completed helper from before the
+latest accepted edit, its question/action/program/diff identities, and up to 1,000
+characters from each output channel with explicit omitted counts. Selection is by
+recency, not inferred relevance or correctness. The current candidate separately
+records no same-program execution, observed output, partial output or unresolved
+execution. Required checks do not answer this helper's question. Conditions and
+completeness remain visible; no preview equality or semantic verdict is inferred.
+The card is rebuilt from the journal and survives thin, repair, diagnosis and
+completion projections. It uses the existing action-ID replay resolver. Only an
+offered general probe route receives replay tool arguments, including the fields
+for its selected case policy; ordinary turn/memory annotations still follow the
+offered schema. Specialized diagnostic stages and uncertain references receive no
+replay suggestion. This card starts no execution, changes no admission or reserve,
+and creates no required check or finish gate. Model choice and live repair gains
+remain separate from local delivery validation.
+
 `target_outcome` projects bounded per-call outcome/capture/exception/exit-code
 summaries. An unexpected raised exception can be a positive current failure even
 when whole-case comparison is UNKNOWN. Qualification requires an acquired healthy

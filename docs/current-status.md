@@ -84,6 +84,12 @@ first with eight, leaving nine spaces. A repeated no-op fix is rejected as a see
 state. The next repair question is whole-indent normalization and its regression
 coverage, not branch reachability or more budget. No repair, runtime policy or
 budget change was made by these operator diagnostics.
+The [observation follow-up change](history/2026-10-29-probe-followup-guidance.md)
+now connects a pre-edit helper's bounded observations to current-patch reexecution
+status in ordinary and compact requests. Existing replay references are advertised
+only on an offered general probe route. This adds no automatic execution, reserve,
+check credit or submission gate. Local delivery/recovery evidence does not show
+that a live model chooses replay or repairs the failure; that is the next question.
 This confirms delivery and the source-to-edit path in one run, not causal quality
 improvement. Protocol correction was unused, and the private failure cause is
 unestablished. No further paid invocation is authorized.
