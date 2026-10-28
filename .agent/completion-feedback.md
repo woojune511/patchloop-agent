@@ -52,8 +52,13 @@ identities and existing retrieval tools. Latest successful `read_file`/`search_f
 results bound to the current diff retain their exact bounded output, including
 repository/dependency spans and provenance, even when a fresh compact segment
 omits the native exchange. Existing native-result deduplication avoids a second
-delivery when that exchange remains. Failed, stale or unbound results stay summaries;
-older source bodies remain omitted. No retrieval permission, verdict or budget changes.
+delivery when that exchange remains. The latest current-diff `run_probe` also keeps
+bounded stdout/stderr, the existing host observation, setup/exception/path diagnostics,
+reproduction observations and completeness flags. Failed or partial probe output is
+still evidence: retain failure, timeout, truncation and unknown comparison without
+granting success or verification credit. Failed reads and stale/unbound results stay
+summaries; older source bodies, probe programs and full execution policies remain
+omitted. No retrieval permission, verdict or budget changes.
 The journal is unchanged. Other context policies compact current state
 but do not acquire segmented history-reset behavior.
 

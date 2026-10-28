@@ -22,6 +22,15 @@ first count/dispatch parity and delivery after a subsequent read response. Exist
 tool schemas, original replay, public checks, finish eligibility and evaluation
 remain ordinary. A model can stop or submit without repairing; record that outcome.
 
+The same overlay binds `requested_revision_diff_hash` to the sealed packet's
+candidate when it contains regressions. On that unchanged candidate, optional
+exploration also reserves edit, original replay, fresh public checks and finish
+through the shared [completion resource forecast](completion-resources.md).
+Response, action, cost and time limits stay fixed; optional tools can close before
+the last affordable edit window. This is a budget-only revision opportunity, not
+new verification credit or a gate requiring all counterexamples to pass. A changed
+diff makes the old observations historical and removes this particular reserve.
+
 The diagnosed case partition is frozen: preserve all eleven baseline-correct
 cases, including correcting the three candidate regressions. One discrepancy that
 already existed on the base is reported separately, not added as a new obligation.

@@ -122,13 +122,13 @@ def test_case_policy_extends_current_probe_schema_without_changing_prompt():
         "sha256:be1012933d3448903e70edb181c229547f0f8c5e9f285f159e50e7582b825a2e"
     )
     assert dev_tool_surface_hash() == (
-        "sha256:7922057439ab59f26761bd7a6c88993ba4c256e2dc469a06c84be4a20563f551"
+        "sha256:7c4401a0a3af6908294aeb8d39e52a41013bc2457a1afa235540518975a66638"
         if FROZEN_ARM is None else
         "sha256:57193859890419b79cb7f4927c37796d044bc4bf7159c51ddf17723849529e26"
     )
     # Probe policy cannot change the exact prompt of the selected frozen arm.
     assert sha256_bytes(DEV_SYSTEM_PROMPT.encode()) == (
-        "sha256:63ed052099375137c734cccbd04811179c6dcc2772709b19a9914b1aea20d2a0"
+        "sha256:22516c9c0a2796fd55cc5568ec39d7338ea879a5dad35c1157e0bee6ee6f18c6"
         if FROZEN_ARM is None else {
         "E0J0": "sha256:84a795485c40cbc9024d938335a6b1b349231d6a20c069590527be606122ef72",
         "E1J0": "sha256:64c42360807cdf8c13e75c39fc7395fa077c6d71f8970eb05ae74398c4dcbfe4",

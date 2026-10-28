@@ -89,6 +89,29 @@ These are nominal execution allowances, not a worst-case promise about every Git
 filesystem or container setup delay. The separately reserved isolated-evaluation
 deadline remains independent.
 
+## Host-bound revision opportunity
+
+The internal `requested_revision_diff_hash` policy argument lets an operator
+diagnostic reserve a revision opportunity for its measured current candidate.
+It defaults to absent and activates only in `completion-recovery-v1` with a cost
+ledger, `ready_to_submit`, remaining edit capacity and an equal current diff hash.
+The public-counterexample diagnostic supplies it from its sealed failure packet;
+model notes cannot activate it. Ordinary runs have no new default reserve.
+
+Optional source/history reads, helper probes and selected tests must then leave
+one successful revision path: a still-missing source anchor, edit, all original
+replays, fresh public checks and finish. The same steps determine response/action
+counts, role-based output costs and nominal execution time. Existing adapter
+floors remain per-dimension maxima, not added duplicate paths; all monetary
+alternatives remain funded. The unused protocol correction reserve is unchanged.
+
+This is budget admission, not a new failure or completion gate. Direct edit,
+finish and stop retain their ordinary rules. Changed diffs deactivate this
+measured-candidate reserve; rejected/no-op edits retain it. Restoring the same
+hash restores the same binding, so this is not a new run-wide consumable credit.
+No counters, limits or verification receipts are changed. The guarantee covers
+one successful path, not malformed actions, another failed repair or model uptake.
+
 ## One diagnostic opportunity for a refuted candidate
 
 A nonempty candidate with a comparable current refutation of an acquired original

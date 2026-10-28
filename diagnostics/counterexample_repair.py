@@ -55,8 +55,9 @@ def inject(state, packet):
 
 @contextmanager
 def public_feedback(packet):
-    """Visible context only; no tool, gate, original obligation or check is altered."""
+    """Public feedback and a bound revision reserve; verification gates stay ordinary."""
     build_context, build_input = runner._build_context, runner._build_model_input
+    tool_policy = runner._tool_policy
 
     def context(**kwargs):
         return canonical_json(inject(json.loads(build_context(**kwargs)), packet))
@@ -69,8 +70,14 @@ def public_feedback(packet):
         items[-1]["content"] = canonical_json(current)
         return items
 
+    def policy(*args, **kwargs):
+        kwargs["requested_revision_diff_hash"] = (
+            packet.get("candidate_diff_hash") if packet.get("regressions") else None)
+        return tool_policy(*args, **kwargs)
+
     with patch.object(runner, "_build_context", context), \
-            patch.object(runner, "_build_model_input", model_input):
+            patch.object(runner, "_build_model_input", model_input), \
+            patch.object(runner, "_tool_policy", policy):
         yield
 
 

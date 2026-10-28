@@ -80,16 +80,24 @@ regressions and isolated acceptance still FAILED; safety passed. Original/public
 regression receipts were reused on the unchanged diff. New cost was USD0.599278
 of USD3.38078870; the allocation is CLOSED, including unspent funds.
 
-Latest successful current-diff read/search bodies now survive completion handoffs;
-local 37-test validation and live delivery support this fix. A separate defect
-remains: the second helper's captured stdout disappeared at a fresh completion
-segment. Exploration also reduced remaining responses to three, including one
-correction reserve; the host then removed editing because edit/check/finish no
-longer fit. Money/context/output were not exhausted. The model acknowledged the
-still-current public counterexamples in its assessment, but they were informational
-and did not block finish. Next investigate latest-helper delivery and diagnostic
-admission against the unresolved revision path. No additional run is funded; this
-assisted checkpoint result does not establish fresh-solve or general repair gain.
+The [helper-delivery and revision-reservation follow-up](history/2026-10-28-probe-delivery-revision-reservation.md)
+preserves latest current-diff helper observations across completion handoffs,
+including failed/partial output and its completeness flags. Saved-data assembly
+now delivers the previously lost 684-character stdout exactly once; existing
+verdicts, budgets and original verification remain unchanged.
+
+For the sealed public-counterexample diagnostic, optional exploration now reserves
+an affordable edit/original-replay/public-check/finish path on the measured current
+diff. Response/action counts, cost and nominal time use the same completion steps;
+legacy adapter floors and the unused correction reserve remain. This is a budget
+opportunity, not a new finish gate, and ordinary runs have no blanket new reserve.
+Local boundary controls cover loss of any required resource and stale diff binding.
+Saved-state replay keeps helper/edit available at five remaining responses, then
+closes helper/test at four while preserving edit/finish. Focused controls passed
+36 and 52 tests; quick's two identity-pin failures passed narrow rechecks, and both
+isolated mock evaluations passed. Live model uptake and repair gain remain untested.
+No additional run is funded;
+the earlier assisted failure does not establish fresh-solve or general repair gain.
 
 ## Supporting evidence
 

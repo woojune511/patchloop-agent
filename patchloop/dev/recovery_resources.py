@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from patchloop.dev.completion_budget import CompletionRoute, CompletionState, CompletionStep
 from patchloop.dev.cost import FINALIZATION_OUTPUT_FLOOR, recovery_successor_output_ceilings
@@ -18,14 +18,78 @@ class RecoveryResources:
     failure_recovery: bool
     routes: tuple[CompletionRoute, ...] = ()
     adapter_reason: str | None = None
+    physical_model_floor: int | None = None
+    physical_tool_floor: int | None = None
+    additional_output_options: tuple[tuple[int, ...], ...] = ()
 
     @property
     def model_calls(self) -> int | None:
-        return max((route.model_calls for route in self.routes), default=None)
+        values = [route.model_calls for route in self.routes]
+        if self.physical_model_floor is not None:
+            values.append(self.physical_model_floor)
+        return max(values, default=None)
 
     @property
     def tool_actions(self) -> int | None:
-        return max((route.tool_actions for route in self.routes), default=None)
+        values = [route.tool_actions for route in self.routes]
+        if self.physical_tool_floor is not None:
+            values.append(self.physical_tool_floor)
+        return max(values, default=None)
+
+    @property
+    def output_options(self) -> tuple[tuple[int, ...], ...]:
+        """Retain every funding alternative, including adapters without step routes."""
+        return tuple(dict.fromkeys((self.output_ceilings, *self.additional_output_options,
+                                    *(route.output_ceilings for route in self.routes))))
+
+
+def requested_revision_resources(
+    state: CompletionState, tool: str, *, max_output_tokens: int,
+    check_seconds: tuple[float, ...], probe_seconds: float,
+    optional_check_seconds: float = 0, test_comparison: bool = False,
+) -> RecoveryResources:
+    """Reserve one requested revision after exploration, without creating an obligation.
+
+    The runner supplies the current-diff request and excludes special gates. An
+    optional caller/test read cannot promise an edit anchor; all original replays
+    and checks invalidated by the future edit still belong to its completion path.
+    """
+    if tool not in {"read_file", "search_files", "search_history", "run_probe", "run_tests"}:
+        raise ValueError(f"not a requested-revision exploration tool: {tool}")
+    route, = ordinary_completion_routes(
+        replace(state, requires_mutation=True), tool, max_output_tokens=max_output_tokens,
+        check_seconds=check_seconds, remaining_check_seconds=check_seconds,
+        probe_seconds=probe_seconds, preserve_read_anchor=True,
+    )
+    if tool == "run_tests":
+        executions = 2 if test_comparison else 1
+        route = replace(route, current=replace(
+            route.current, role="selected_test", tool_actions=executions,
+            execution_seconds=optional_check_seconds * executions,
+        ))
+    route = replace(route, name="requested_revision")
+    return RecoveryResources(route.output_ceilings, route.seconds(FOLLOWUP_SECONDS), False,
+                             (route,))
+
+
+def merge_resources(
+    existing: RecoveryResources, requested: RecoveryResources, *,
+    model_floor: int = 0, tool_floor: int = 0,
+) -> RecoveryResources:
+    """Preserve independent lower bounds using maxima, never concatenate their work."""
+    options = tuple(dict.fromkeys((*existing.output_options, *requested.output_options)))
+    primary = max(options, key=lambda ceilings: (len(ceilings), sum(ceilings)))
+    routes = tuple(dict.fromkeys((*existing.routes, *requested.routes)))
+    return RecoveryResources(
+        output_ceilings=primary, seconds=max(existing.seconds, requested.seconds),
+        failure_recovery=existing.failure_recovery or requested.failure_recovery,
+        routes=routes, adapter_reason=existing.adapter_reason or requested.adapter_reason,
+        physical_model_floor=max(
+            model_floor, existing.model_calls or 0, requested.model_calls or 0),
+        physical_tool_floor=max(
+            tool_floor, existing.tool_actions or 0, requested.tool_actions or 0),
+        additional_output_options=tuple(option for option in options if option != primary),
+    )
 
 
 def ordinary_route_supported(

@@ -122,7 +122,9 @@ from patchloop.dev.public_history import NATIVE
 from patchloop.dev.recovery_resources import (
     CHECK_OVERHEAD_SECONDS,
     FOLLOWUP_SECONDS,
+    merge_resources,
     ordinary_route_supported,
+    requested_revision_resources,
     successor_resources,
 )
 from patchloop.dev.repair_recheck import (
@@ -867,6 +869,7 @@ def _tool_policy(
     desired_output_ceiling: int = DEFAULT_OUTPUT_CEILING,
     max_correction_output_tokens: int | None = None,
     remaining_seconds: float | None = None,
+    requested_revision_diff_hash: str | None = None,
     _preview_inspection: bool = True,
     _cost_call_limit: int | None = None,
     _diagnostic_spent: bool = False,
@@ -1362,6 +1365,16 @@ def _tool_policy(
     recovery_routes = {}
     resource_rejections = {}
     released_failure_recovery = {}
+    # This host-bound request reserves an opportunity, not verification credit.
+    # Its measured diff must still be current; finish and original gates stay ordinary.
+    requested_revision = bool(
+        completion_cost_policy == COMPLETION_RECOVERY_POLICY and cost_ledger is not None
+        and workflow_gate == "ready_to_submit" and mutation_capacity
+        and requested_revision_diff_hash is not None
+        and requested_revision_diff_hash == summary.patch_hash
+    )
+    revision_exploration = {"read_file", "search_files", history_search.TOOL,
+                            "run_probe", "run_tests"}
     if (completion_cost_policy in {COMPLETION_MINIMUM_POLICY, COMPLETION_RECOVERY_POLICY}
             and funded_calls is not None):
         # Keep physical model/action recovery slots independent of money. Offer
@@ -1395,6 +1408,7 @@ def _tool_policy(
                          for check in checks}
             suites = getattr(gateway.public_task, "test_suites", ())
             for tool in allowed:
+                reserve_revision = requested_revision and tool in revision_exploration
                 calls = minimum_cost_successors[tool]
                 extra = 2 + completion_state.check_count - int(repair_recheck
                     and completion_state.check_count > 0
@@ -1408,7 +1422,7 @@ def _tool_policy(
                 legacy_tool_minimum = (mutation_budget.minimum_tool_actions
                                        if tool == "replace_text"
                                        else budget.minimum_tool_actions)
-                recover = bool(tool not in {"finish_task", "stop_task"}
+                recover = bool(not reserve_revision and tool not in {"finish_task", "stop_task"}
                     and spare_edits > 0
                     and (completion_state.unused_check_count
                          or completion_state.reproduction_case_count)
@@ -1432,10 +1446,27 @@ def _tool_policy(
                     preserve_read_anchor=shared_failure_exploration)
                 route = successor_resources(completion_state, tool,
                                             protect_failure=recover, **options)
+                if reserve_revision:
+                    revision = requested_revision_resources(
+                        completion_state, tool, max_output_tokens=desired_output_ceiling,
+                        check_seconds=tuple(durations.values()),
+                        probe_seconds=PROBE_TIMEOUT_SECONDS + CHECK_OVERHEAD_SECONDS,
+                        optional_check_seconds=options["optional_check_seconds"],
+                        test_comparison=options["test_comparison"])
+                    floors = {
+                        "read_file": (inspection_floor, inspection_tool_floor),
+                        "search_files": (inspection_floor, inspection_tool_floor),
+                        history_search.TOOL: (budget.protected, budget.protected_tool_actions),
+                        "run_probe": (probe_floor, probe_tool_floor),
+                        "run_tests": (selected_test_floor, selected_test_tool_floor),
+                    }
+                    model_floor, tool_floor = floors[tool]
+                    current_actions = 2 if tool == "run_tests" and options["test_comparison"] else 1
+                    route = merge_resources(route, revision, model_floor=1+model_floor,
+                                            tool_floor=current_actions+tool_floor)
 
                 def fits(candidate):
-                    outputs = ([r.output_ceilings for r in candidate.routes]
-                               if candidate.routes else [candidate.output_ceilings])
+                    outputs = candidate.output_options
                     money = max(sum(cost_ledger.future_call_reservation_nanos(output_ceiling=n)
                                     for n in ceilings) for ceilings in outputs) + correction_reserve
                     output = (correction_ceiling if correction_pending else desired_output_ceiling
@@ -1510,11 +1541,10 @@ def _tool_policy(
                 funded_calls - minimum_cost_successors["read_file"],
             )
             exploration_capacity = min(exploration_capacity, inspection_model_slack)
-            if ((path_available or shared_failure_exploration)
+            if ((path_available or shared_failure_exploration or requested_revision)
                     and completion_cost_policy == COMPLETION_RECOVERY_POLICY):
                 route = recovery_routes["read_file"]
-                outputs = ([r.output_ceilings for r in route.routes]
-                           if route.routes else [route.output_ceilings])
+                outputs = route.output_options
                 reserved = max(sum(cost_ledger.future_call_reservation_nanos(output_ceiling=n)
                                    for n in ceilings) for ceilings in outputs) + correction_reserve
                 read_cost = cost_ledger.future_call_reservation_nanos(
@@ -1710,14 +1740,14 @@ def _tool_policy(
             routes = {tool: recovery_routes[tool] for tool in allowed}
             role_costs = {tool: max(
                 sum(cost_ledger.future_call_reservation_nanos(output_ceiling=n) for n in ceilings)
-                for ceilings in ([r.output_ceilings for r in route.routes]
-                                 if route.routes else [route.output_ceilings]))
+                for ceilings in route.output_options)
                           for tool, route in routes.items()}
             policy.completion_cost.update({
                 "basis": "largest_offered_action_role_successor",
                 "future_output_tokens": finalization_floor,
                 "funded_calls_basis": "minimum-unit-upper-bound-before-role-admission",
-                "future_calls_reserved": max(len(r.output_ceilings) for r in routes.values()),
+                "future_calls_reserved": max(len(o) for r in routes.values()
+                                              for o in r.output_options),
                 "future_cost_reserve_nanos": max(role_costs.values()) + correction_reserve,
                 "successor_output_ceilings": {t: list(r.output_ceilings)
                                              for t, r in routes.items()},
@@ -1728,12 +1758,18 @@ def _tool_policy(
                 "remaining_seconds": remaining_seconds,
                 "resource_rejections": resource_rejections,
                 "completion_routes": {tool: {
-                    "kind": ("one_failure_revision" if route.failure_recovery
+                    "kind": ("requested_revision" if requested_revision
+                             and tool in revision_exploration else
+                             "one_failure_revision" if route.failure_recovery
                              else "required_completion"),
                     "model_calls": route.model_calls,
                     "tool_actions": route.tool_actions,
-                    "required_model_calls": route.routes[0].model_calls if route.routes else None,
-                    "required_tool_actions": route.routes[0].tool_actions if route.routes else None,
+                    "required_model_calls": (route.model_calls if requested_revision
+                        and tool in revision_exploration else
+                        route.routes[0].model_calls if route.routes else None),
+                    "required_tool_actions": (route.tool_actions if requested_revision
+                        and tool in revision_exploration else
+                        route.routes[0].tool_actions if route.routes else None),
                     "released_reason": released_failure_recovery.get(tool),
                     "adapter": route.adapter_reason,
                 } for tool, route in routes.items()},
@@ -1750,6 +1786,16 @@ def _tool_policy(
                 "limit": "Nominal check timeouts, follow-up floors and output allowances are "
                          "reserved within existing caps; useful output and repair are unproven.",
             })
+            if requested_revision:
+                policy.completion_cost["requested_revision"] = {
+                    "diff_hash": requested_revision_diff_hash,
+                    "scope": "preserve_one_successful_revision_after_exploration",
+                    "verification_credit": False,
+                    "finish_gate_changed": False,
+                    "successor_output_options": {
+                        tool: [list(o) for o in route.output_options]
+                        for tool, route in routes.items() if tool in revision_exploration},
+                }
     elif funded_calls is not None:
         successors = [0]  # Stop and a successful finish need no subsequent call.
         if ("finish_task" in allowed and verification.get("pending_count", 0)
@@ -1824,6 +1870,7 @@ def _tool_policy(
             max_correction_output_tokens=max_correction_output_tokens,
             remaining_seconds=remaining_seconds,
             _preview_inspection=False,
+            requested_revision_diff_hash=requested_revision_diff_hash,
             _cost_call_limit=(max(0, funded_calls - 1) if funded_calls is not None else None),
             _diagnostic_spent=True,
         )
