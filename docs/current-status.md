@@ -71,8 +71,15 @@ is CLOSED at USD0.587558/4.50. All 11 actual request cards and count/dispatch
 identities matched; the model searched, received the edit tool, edited once,
 passed 506 public tests and submitted. Independent acceptance FAIL, safety PASS.
 One baseline helper observed the reported indentation problem, but the candidate
-was not replayed on that public example before submission. Inspect that saved
-candidate behavior next; budgets and further tools remained available at finish.
+was not replayed on that public example before submission; budgets and further
+tools remained available at finish. The subsequent [operator replay](history/2026-10-29-sqlfluff-public-candidate-replay.md)
+now confirms that the saved patch leaves the public failure unchanged: the same
+helper produces nine spaces before `my_id` on both original and candidate, versus
+the expected eight, with identical SQL output and L003 repeated-fix warning.
+The candidate patch identity and healthy executions were verified. This answers
+the candidate-behavior question; the changed branch's execution and why the edit
+has no observable effect remain unresolved. Public regression coverage missed this
+specific example. No runtime policy or budget was changed by this local replay.
 This confirms delivery and the source-to-edit path in one run, not causal quality
 improvement. Protocol correction was unused, and the private failure cause is
 unestablished. No further paid invocation is authorized.
