@@ -38,18 +38,23 @@ separate and read-only through diagnosis and repair. Normal run_dev still does n
 automatically register prepared dependencies for source reads; that access gap is
 separate from this change. No new source scope or task-specific answer was added.
 
-Local controls check repeated reads, resource boundaries, recovery and actual input
-delivery. They do not establish model uptake or Astroid repair success. The
-[ruleless connection](history/2026-10-28-ruleless-path-diagnosis.md) and
-[processing comparison](history/2026-10-28-file-processing-results.md) remain
-supporting evidence; the latter shows why upstream selection must inform the repair.
+The [same-budget model follow-up](history/2026-10-28-diagnosis-exploration-results.md)
+used repeated exploration, chose observation timing and received diagnosis plus
+retained public source before revising. It still failed: two edits retained F0010;
+the third returned a namespace module but triggered a downstream caller exception.
+Empty diagnostic output was not credited as repair. Three accepted edits exhausted
+mutation capacity while responses, tools, time and money remained. Public regression,
+finish and isolated acceptance were NOT_RUN; final-failure feedback had no next response.
 
-The [model trial](history/2026-10-28-post-reproduction-repair-results.md) stopped at
-three edits despite other resources remaining. First-edit observation with null
-rules, changed-failure diagnosis and final edit-cap continuation are unchanged.
-Whether model-chosen exploration and observation improve the next repair within
-the same caps is unresolved. No new provider execution is funded;
-USD4.13241570 and all earlier allocations remain CLOSED.
+Preserve original verification and the evidence handoff. The unresolved question is
+whether caller file selection and consumption can be established before editing;
+ordinary-runner access to prepared dependency source remains a concrete gap.
+First-diagnosis reads were closed by cost reservation; repeated exploration was
+offered only in the second diagnosis. That allocation also needs examination.
+Neither more capacity nor the observed exploration is proven to fix this task.
+This cumulative, saved-checkpoint continuation establishes mechanism use, not a
+causal gain or clean-start success. New cost USD1.133929 of USD4.13241570;
+this allocation and all earlier allocations are CLOSED. No further run is funded.
 
 ## Supporting evidence
 
