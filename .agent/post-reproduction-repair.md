@@ -1,5 +1,9 @@
 # Repair after an acquired original failure
 
+For a saved edited candidate with additional operator-authored public failures,
+see the separate [counterexample revision diagnostic](counterexample-repair.md).
+It uses the existing prepared-request cut and does not broaden this unchanged-base path.
+
 `diagnostics/post_reproduction_repair.py` prepares one explicitly funded
 continuation after a completed original-reproduction tool batch. It does not
 change ordinary resume admission, agent defaults or repair policy.

@@ -25,7 +25,7 @@ from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import Artifact
 from patchloop.deadline import ExecutionDeadline
 from patchloop.dev import completion_reproduction, original_obligation, runner
-from patchloop.dev.contracts import DevRunRequest
+from patchloop.dev.contracts import DevLimits, DevRunRequest
 from patchloop.dev.cost import DevCostLedger, pricing_for_model
 from patchloop.dev.dependency_sources import normalize_roots
 from patchloop.dev.state import DevJournal
@@ -215,7 +215,7 @@ def _settled_batch_state(prefix, old, package):
 
 def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
           preserve_parent_configuration=False, model_override=None, after_tool_batch=False,
-          caller_source_roots=None):
+          caller_source_roots=None, reserved_tool_actions=0, reserved_wall_seconds=0):
     """Copy a settled prefix; bind current runtime without changing the parent."""
     require(
         model_override is None or preserve_parent_configuration,
@@ -225,6 +225,14 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
             "caller source override requires preserved parent configuration")
     caller_override = (normalize_roots(caller_source_roots)
                        if caller_source_roots is not None else None)
+    require(all(type(value) is int and value >= 0
+                for value in (reserved_tool_actions, reserved_wall_seconds)),
+            "diagnostic resource reserves must be nonnegative integers")
+    resource_reserve = {"tool_actions": reserved_tool_actions,
+                        "wall_time_seconds": reserved_wall_seconds}
+    has_reserve = any(resource_reserve.values())
+    require(not has_reserve or preserve_parent_configuration,
+            "diagnostic resource reservation requires preserved parent configuration")
     require(not after_tool_batch or preserve_parent_configuration,
             "after-batch continuation requires preserved parent configuration")
     require(arm in {"A", "B"}, "unknown exposure arm")
@@ -349,6 +357,21 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
         and old.limits.max_accepted_mutations - len(accepted) == budget["accepted_mutations"],
         "restored action allowances differ",
     )
+    limits = old.limits
+    if has_reserve:
+        require(reserved_tool_actions <= budget["tool_actions"]
+                and reserved_wall_seconds <= min(budget["active_wall_time_seconds"],
+                                                 budget["total_active_wall_time_seconds"]),
+                "diagnostic reserve exceeds the checkpoint's remaining resources")
+        limits = DevLimits.model_validate({
+            **old.limits.model_dump(mode="json"),
+            "max_tool_actions": old.limits.max_tool_actions - reserved_tool_actions,
+            "wall_time_seconds": old.limits.wall_time_seconds - reserved_wall_seconds,
+        })
+        budget = copy.deepcopy(budget)
+        budget["tool_actions"] -= reserved_tool_actions
+        budget["active_wall_time_seconds"] -= reserved_wall_seconds
+        budget["total_active_wall_time_seconds"] -= reserved_wall_seconds
     model = model_override or (
         old.model if preserve_parent_configuration else "gpt-5.4-2026-03-05"
     )
@@ -367,7 +390,7 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
         max_cost_usd=Decimal(ledger.cap_nanos) / 10**9,
         state_root=output,
         resume_run_id=source.run_id,
-        limits=old.limits,
+        limits=limits,
         prepared_source=manager.prepared_source,
         prepared_probe_dependencies=(
             Path(old.prepared_probe_dependencies_path)
@@ -433,6 +456,8 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
         marker["model_override"] = model_override
     if caller_override is not None:
         marker["caller_source_roots_override"] = caller_override
+    if has_reserve:
+        marker["diagnostic_resource_reserve"] = resource_reserve
     journal.append("observation_exposure_fork", marker)
     branch = SimpleNamespace(
         root=output,
