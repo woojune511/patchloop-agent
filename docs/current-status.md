@@ -113,6 +113,12 @@ details stay in external operator artifacts, outside solver context. Private
 receipts now retain bounded diagnostic streams; native outputs retain full logs
 and hashes. This resolves the saved-candidate failure question, not the causal
 effect of submission policy. Keep solver rules and budgets unchanged.
+The [five-task frozen-agent plan](history/2026-10-29-repair-five-plan.md) is prepared
+for other current-dev20 issues: 1, 3, 10, 11 and 15, selected from public material.
+Ordinary API/public-test capability checks and offline first requests pass. No
+live row has run. Proposed scope is one fresh solve each with the last follow-up's
+model/settings, USD4.50 per task and USD22.50 total; exact new approval is pending.
+This is a descriptive development panel, not held-out evidence or a policy A/B.
 Helper return types and incomplete capture remain unresolved. Repeatability and
 held-out improvement remain unverified; unused funds authorize no further paid run.
 
