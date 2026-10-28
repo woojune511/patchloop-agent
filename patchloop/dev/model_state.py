@@ -26,7 +26,7 @@ _MODEL_INPUT_FIELDS = frozenset({
     "commitment_signal", "available_tool_names", "last_failed_mutation",
     "last_successful_mutation", "current_diff", "recent_checks", "public_execution_summary",
     "latest_tool_results", "source_spans", "dependency_sources",
-    "recent_attempt_result_next_question", "public_task",
+    "recent_attempt_result_next_question", "public_task", "supplemental_required_checks",
     "working_plan", "probe_cases", "repair_recheck", "probe_recheck",
     "recent_probes", "recent_tests", "reproduction_review",
     "latest_tool_results_delivery", "segment_handoff", "protocol_correction",

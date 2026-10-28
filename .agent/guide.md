@@ -5,8 +5,8 @@ Source/tests own behavior. Read relevant sections only.
 
 ## Choosing the next improvement
 
-Diagnose public failures with bounded changes. Record significant investigations
-once in history; current status holds active decisions and evidence links.
+Diagnose public failures with bounded changes. Keep investigations in history,
+active decisions in current status.
 
 ## Source map
 
@@ -27,11 +27,10 @@ once in history; current status holds active decisions and evidence links.
 | Patch/test comparison | `patchloop/repair_verification.py` |
 | Task/manifest contracts and isolated evaluation | `patchloop/contracts.py`, `patchloop/task_loader.py`, `patchloop/verifier/` |
 
-Use public task inputs for agent work. Private task material and evaluator internals
-never enter coding-agent context, including through diagnostics or repair hints.
+Never expose private task/evaluator material through context, diagnostics or hints.
 
-Completion forecasts are pure. The runner owns tool admission;
-`dev/cost.py` owns provider admission. Preserve exact-envelope runtime identity.
+Forecasts are pure; runner admits tools, `dev/cost.py` admits provider work.
+Preserve exact-envelope runtime identity.
 
 ## Loop and mutation contract
 
@@ -68,6 +67,8 @@ decode quoted/NUL-delimited Git paths without changing diff bytes.
 Retired requirement/case annotations remain for exact legacy recovery, not fresh requests.
 
 Submit a nonempty tracked diff only after all required checks pass on it.
+Host-registered counterexamples use the same registry; see
+[required public checks](required-public-checks.md). Speculative notes stay advisory.
 `finish_task.assessment` and `plan_review` bind judgment and plan to the submitted diff.
 Plan replacements need `plan_update_reason`; invalid reasons preserve the prior plan.
 Latest predecessor/reason stays visible; see [planning](planning-experiment.md).
@@ -220,9 +221,9 @@ Live repair requires exact public-request/cost approval; live dev requires dev-t
 
 ## Validation checklist
 
-Use quick plus changed-owner tests; slow A/B matrices stay in owner/full suites.
-Run full regression for broad integration changes. Quick includes isolated mock
-smoke; do not repeat it separately. Docs-only: `test_documentation_layout.py`.
+Use quick plus changed-owner tests; broad integrations require full regression.
+Quick includes isolated mock smoke; do not repeat it. Slow A/B matrices stay in
+owner/full suites. Docs-only: `test_documentation_layout.py`.
 Keep focused validation under two minutes and freeze runtime during provenance checks.
 Use short unique external basetemps; never sweep durable evidence or a parent directory.
 

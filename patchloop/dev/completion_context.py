@@ -52,7 +52,8 @@ def active(state: dict[str, Any]) -> bool:
 
 
 _PRESERVED = (
-    "public_task", "workflow_gate", "completion_guidance", "available_tool_names",
+    "public_task", "supplemental_required_checks", "workflow_gate", "completion_guidance",
+    "available_tool_names",
     "remaining_budget", "action_horizon", "current_diff", "visible_check_status",
     "remaining_visible_check_ids", "current_public_failure", "pending_recheck",
     "reproduction_review", "working_notes", "working_plan", "protocol_correction",

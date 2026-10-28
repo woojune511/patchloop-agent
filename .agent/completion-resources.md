@@ -95,8 +95,11 @@ The internal `requested_revision_diff_hash` policy argument lets an operator
 diagnostic reserve a revision opportunity for its measured current candidate.
 It defaults to absent and activates only in `completion-recovery-v1` with a cost
 ledger, `ready_to_submit`, remaining edit capacity and an equal current diff hash.
-The public-counterexample diagnostic supplies it from its sealed failure packet;
-model notes cannot activate it. Ordinary runs have no new default reserve.
+Model notes cannot activate it. Ordinary runs have no new default reserve.
+The current public-counterexample diagnostic instead registers its confirmed
+failure as a [required check](required-public-checks.md), so the ordinary failed-check
+repair path owns completion and its resource reservation. The internal opportunity
+adapter remains available for nonmandatory operator requests.
 
 Optional source/history reads, helper probes and selected tests must then leave
 one successful revision path: a still-missing source anchor, edit, all original

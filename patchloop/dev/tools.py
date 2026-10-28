@@ -63,6 +63,7 @@ from patchloop.dev.contracts import (
 )
 from patchloop.dev.dependency_sources import DependencySources
 from patchloop.dev.path_policy import mutation_path_allowed
+from patchloop.dev.required_checks import RequiredPublicCheck, bind_checks, public_context
 from patchloop.dev.source_glob import matches_source_glob
 from patchloop.dev.source_rebinding import SourceReplacement
 from patchloop.dev.state import DevJournal
@@ -788,9 +789,11 @@ class DevToolGateway:
         history_search_policy: history_search.Policy = "none",
         read_range_only: bool = False,
         dependency_sources: DependencySources | None = None,
+        supplemental_checks: tuple[RequiredPublicCheck, ...] = (),
     ) -> None:
         self.workspace = workspace.resolve()
         self.public_task = public_task
+        self.supplemental_checks = copy.deepcopy(tuple(supplemental_checks))
         self.sandbox = sandbox
         self.journal = journal
         self.limits = limits
@@ -851,15 +854,50 @@ class DevToolGateway:
         self._working_notes_turns: dict[str, dict[str, Any]] = {}
         self._next_working_note_id = 1
         self._legacy_working_note_ids: dict[str, str] = {}
+        bind_checks(
+            journal, self.supplemental_checks,
+            task_check_ids={check.id for check in public_task.visible_checks},
+            current_diff_hash=lambda: self.current_diff_hash,
+        )
+        self._import_public_failures()
         self._hydrate()
         if reproduction_acquisition != "none":
             original_obligation.ensure(journal, public_task, reproduction_acquisition)
             if probe_sandbox is None:
                 original_obligation.release(journal, public_task, "probe_unavailable")
 
+    @property
+    def registered_checks(self) -> tuple[RegisteredCheck, ...]:
+        return (*self.public_task.visible_checks,
+                *(entry.check for entry in self.supplemental_checks))
+
+    def required_check_context(self) -> list[dict[str, Any]]:
+        return public_context(self.supplemental_checks)
+
+    def _import_public_failures(self) -> None:
+        imported = {event["payload"]["observation_id"] for event in self.journal.events()
+                    if event["event_type"] == "public_check_imported"}
+        for entry in self.supplemental_checks:
+            if entry.observation is None or entry.observation_id in imported:
+                continue
+            output = copy.deepcopy(entry.observation)
+            output.update(origin="imported_public_observation", binding_hash=entry.binding_hash)
+            signature = output.get("failure_signature") or sha256_json(output)
+            output["failure_signature"] = signature
+            output["public_check_failure"] = self._public_check_failure(
+                check=entry.check, diff_hash=output["diff_hash"], failure_signature=signature,
+                stdout=output.get("stdout", ""), stderr=output.get("stderr", ""),
+            )
+            self.journal.append("public_check_imported", {
+                "observation_id": entry.observation_id, "output": output,
+            })
+
     def _hydrate(self) -> None:
         action_starts: dict[str, dict[str, Any]] = {}
         for event in self.journal.events():
+            if event["event_type"] == "public_check_imported":
+                self._remember_check(event["payload"]["output"])
+                continue
             if event["event_type"] == "working_notes_updated":
                 self._restore_working_notes(event["payload"])
                 continue
@@ -2514,7 +2552,7 @@ class DevToolGateway:
             "state": "ready_to_attempt" if paths else "needs_anchor_evidence",
             "readiness_basis": "current_delivered_editable_source_evidence",
             "current_anchor_evidence_paths": paths,
-            "visible_check_contract_available": bool(self.public_task.visible_checks),
+            "visible_check_contract_available": bool(self.registered_checks),
             "rule": (
                 "ready_to_attempt means this input delivers non-empty current editable source. "
                 "The exact proposed replacement still requires contiguous evidence validation "
@@ -2637,7 +2675,7 @@ class DevToolGateway:
         return self.current_diff.patch_hash
 
     def visible_checks_pass(self, *, diff_hash: str | None = None) -> bool:
-        expected = {check.id for check in self.public_task.visible_checks}
+        expected = {check.id for check in self.registered_checks}
         if not expected:
             return bool(self.current_diff.patch)
         current_hash = diff_hash if diff_hash is not None else self.current_diff_hash
@@ -2648,7 +2686,7 @@ class DevToolGateway:
         current_hash = diff_hash if diff_hash is not None else self.current_diff_hash
         rows = self.checks_by_diff.get(current_hash, {})
         status: list[dict[str, Any]] = []
-        for check in self.public_task.visible_checks:
+        for check in self.registered_checks:
             row = rows.get(check.id)
             if row is None:
                 status.append(
@@ -4229,7 +4267,7 @@ class DevToolGateway:
     def _run_check(
         self, check_id: str, *, execution_identity: dict[str, str] | None = None,
     ) -> dict[str, Any]:
-        checks = {check.id: check for check in self.public_task.visible_checks}
+        checks = {check.id: check for check in self.registered_checks}
         try:
             check = checks[check_id]
         except KeyError as exc:
@@ -4580,7 +4618,11 @@ class DevToolGateway:
                 "cannot submit with untracked files: " + ", ".join(summary.untracked_files)
             )
         if not self.visible_checks_pass(diff_hash=summary.patch_hash):
-            raise ContractError("all visible checks must pass against the current diff")
+            raise ContractError(
+                "all visible checks must pass against the current diff",
+                details={"required_check_status": self.visible_check_status(
+                    diff_hash=summary.patch_hash)},
+            )
         verification = self.completion_verification(diff_hash=summary.patch_hash)
         if (verification["status"] in {"pending", "refuted"}
                 or verification.get("target_failure_count")):

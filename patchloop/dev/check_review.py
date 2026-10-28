@@ -91,16 +91,21 @@ def _source_ranges(path: str, spans: list[dict[str, Any]]) -> dict[str, Any]:
 def link_check_evidence(view: dict[str, Any]) -> None:
     """Enrich the existing bounded check rows; original receipts and gates stay exact."""
     checks = view.get("public_task", {}).get("visible_checks", [])
-    definitions = {check["id"]: (index, check) for index, check in enumerate(checks)}
+    definitions = {check["id"]: (f"public_task.visible_checks[{index}]", check)
+                   for index, check in enumerate(checks)}
+    for index, descriptor in enumerate(view.get("supplemental_required_checks", [])):
+        check = descriptor.get("check")
+        if isinstance(check, dict) and check.get("id") not in definitions:
+            definitions[check["id"]] = (f"supplemental_required_checks[{index}].check", check)
     for row in view.get("recent_checks", []):
         definition = definitions.get(row.get("check_id"))
         if definition is None:
             continue  # Legacy/minimal contexts cannot gain a guessed definition.
-        index, check = definition
+        reference, check = definition
         command = check.get("command", [])
         kind, positions = _selection(command)
         review: dict[str, Any] = {
-            "definition_ref": f"public_task.visible_checks[{index}]",
+            "definition_ref": reference,
             "command_hash": sha256_json(command), "selection_kind": kind,
             "declared_targets": [], "omitted_target_count": 0,
             "coverage_status": "not_assessed",

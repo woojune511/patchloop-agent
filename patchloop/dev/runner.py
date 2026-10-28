@@ -128,10 +128,12 @@ from patchloop.dev.recovery_resources import (
     successor_resources,
 )
 from patchloop.dev.repair_recheck import (
+    check_observations,
     latest_repair_check,
     repair_recheck_context,
     select_repair_recheck,
 )
+from patchloop.dev.required_checks import registered_checks
 from patchloop.dev.state import DevJournal
 from patchloop.dev.test_selection import recent_tests
 from patchloop.dev.tools import (
@@ -574,28 +576,26 @@ def _recent_checks(
     # output ages out. Preserve the existing diff/check selection and order;
     # repeated actions for one check only update that row's latest identity.
     current_hash = diff_hash if diff_hash is not None else gateway.current_diff_hash
-    action_ids: dict[tuple[str, str], str] = {}
-    for event in gateway.journal.events():
-        if event["event_type"] != "action_finished":
-            continue
-        result = event["payload"]["result"]
-        if result["tool"] != "run_check" or result["status"] != "succeeded":
-            continue
-        value = result["output"]
-        action_ids[(value["diff_hash"], value["check_id"])] = result["action_id"]
+    observations = {}
+    for _, observation in check_observations(gateway.journal.events()):
+        value = observation.output
+        observations[(value["diff_hash"], value["check_id"])] = observation
     rows: list[dict[str, Any]] = []
     for diff_hash, checks in gateway.checks_by_diff.items():
         currency = (
             "current" if diff_hash == current_hash else "historical"
         ) if diff_hash and current_hash else "unknown"
         for value in checks.values():
+            observation = observations[(diff_hash, value["check_id"])]
             failure = value.get("public_check_failure")
             location = failure.get("public_location") if isinstance(failure, dict) else None
             stdout, stdout_clipped = output_tail(value.get("stdout", ""), 4_000)
             stderr, stderr_clipped = output_tail(value.get("stderr", ""), 4_000)
             rows.append(
                 {
-                    "action_id": action_ids[(diff_hash, value["check_id"])],
+                    "action_id": observation.action_id,
+                    **({"origin": observation.origin, "observation_id": observation.action_id}
+                       if observation.origin is not None else {}),
                     "check_id": value["check_id"],
                     "diff_hash": diff_hash,
                     "passed": value["passed"],
@@ -631,6 +631,14 @@ def _workflow_gate(summary: Any, *, ready_to_submit: bool) -> str:
     if ready_to_submit:
         return "ready_to_submit"
     return "needs_visible_checks"
+
+
+def _required_public_check_gaps(gateway, snapshot=None) -> list[dict[str, Any]]:
+    """Expose unresolved registered additions without changing ordinary terminal bytes."""
+    if not getattr(gateway, "supplemental_checks", ()):
+        return []
+    rows = snapshot.visible_check_status if snapshot is not None else gateway.visible_check_status()
+    return [dict(row) for row in rows if row["status"] != "PASS"]
 
 
 def _completion_guidance(
@@ -844,7 +852,7 @@ def _minimum_completion_calls(
     )
     return completion_budget(
         CompletionState(
-            check_count=len(gateway.public_task.visible_checks),
+            check_count=len(registered_checks(gateway)),
             remaining_check_count=len(remaining_visible_check_ids),
             unused_check_count=0,
             unrun_recoverable_check=False,
@@ -1016,11 +1024,11 @@ def _tool_policy(
         repair_recheck and current_check_failed and getattr(gateway, "journal", None) is not None
         and latest_repair_check(
             gateway.journal.events(), baseline=summary.patch_hash,
-            registered_checks={check.id for check in gateway.public_task.visible_checks},
+            registered_checks={check.id for check in registered_checks(gateway)},
         ) is not None
     )
     completion_state = CompletionState(
-        check_count=len(gateway.public_task.visible_checks),
+        check_count=len(registered_checks(gateway)),
         remaining_check_count=len(remaining_check_ids),
         unused_check_count=len(unused_check_ids),
         unrun_recoverable_check=bool(set(unrun_checks) & set(unused_check_ids)),
@@ -1402,7 +1410,7 @@ def _tool_policy(
             if "run_probe" in allowed:
                 minimum_cost_successors["run_probe"] = probe_budget.minimum
         if completion_cost_policy == COMPLETION_RECOVERY_POLICY:
-            checks = gateway.public_task.visible_checks
+            checks = registered_checks(gateway)
             durations = {check.id: float(getattr(check, "timeout_seconds", 0))
                          + CHECK_OVERHEAD_SECONDS
                          for check in checks}
@@ -2079,6 +2087,8 @@ def _completion_horizon_payload(
         "minimum_completion_calls": policy.minimum_completion_calls,
         **_completion_resources_payload(policy),
         "blocking_resources": blocking_resources,
+        **({"required_public_checks": gaps}
+           if (gaps := _required_public_check_gaps(gateway, snapshot)) else {}),
         **_completion_cost_payload(policy),
     }
 
@@ -2443,6 +2453,8 @@ def _build_context(
         "recent_attempt_result_next_question": _cards(journal, correction),
         "public_task": package.public.model_dump(mode="json"),
     }
+    if getattr(gateway, "supplemental_checks", ()):
+        payload["supplemental_required_checks"] = gateway.required_check_context()
     if getattr(gateway, "dependency_sources", None) is not None:
         # Preserve the existing registered, independently bounded read-only pool.
         # Never merge it into repository spans or acquire another source scope here.
@@ -4557,7 +4569,7 @@ def _run_repair_recheck(
     """
     selected = select_repair_recheck(
         journal, latest_results,
-        registered_checks={check.id for check in gateway.public_task.visible_checks},
+        registered_checks={check.id for check in registered_checks(gateway)},
     )
     if selected is None:
         return None, None
@@ -6739,6 +6751,7 @@ def _run_one_active(
         for index, artifact in enumerate(probe_evidence)
     }
     if stop_result is not None:
+        gaps = _required_public_check_gaps(gateway)
         terminal = _terminal(
             journal=journal,
             terminal=DevTerminal.AGENT_STOPPED,
@@ -6749,6 +6762,7 @@ def _run_one_active(
             message=(f"{stop_result.output['reason_code']}: {stop_result.output['summary']}"),
             artifacts=probe_artifact_hashes,
             active_elapsed_ms=active_elapsed_ms(),
+            completion_horizon=({"required_public_checks": gaps} if gaps else None),
         )
         return _OneRunResult(_public_result(run_id, terminal), False)
 
@@ -6795,6 +6809,11 @@ def _run_one_active(
                         "helper_correction": verification["helper_correction"],
                     }
                     terminal_code = DevTerminal.VERIFICATION_INCOMPLETE
+        gaps = _required_public_check_gaps(gateway)
+        if gaps:
+            terminal_completion_horizon = {
+                **(terminal_completion_horizon or {}), "required_public_checks": gaps,
+            }
         terminal = _terminal(
             journal=journal,
             terminal=terminal_code or DevTerminal.TASK_FAILED,

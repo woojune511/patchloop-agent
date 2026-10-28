@@ -12,37 +12,64 @@ from patchloop.util import sha256_json
 
 
 @dataclass(frozen=True)
+class CheckObservation:
+    """A check execution or a cited prior public observation, never a fake action."""
+
+    action_id: str
+    output: dict[str, Any]
+    origin: str | None = None
+
+
+def check_observations(events):
+    for event in events:
+        if event["event_type"] == "public_check_imported":
+            payload = event["payload"]
+            output = payload.get("output")
+            if (not isinstance(payload.get("observation_id"), str)
+                    or not isinstance(output, dict)
+                    or output.get("origin") != "imported_public_observation"):
+                raise RecoveryError("imported public check observation is invalid")
+            yield event["sequence"], CheckObservation(
+                payload["observation_id"], output, "imported_public_observation")
+        elif event["event_type"] == "action_finished":
+            result = DevToolResult.model_validate(event["payload"]["result"])
+            if result.tool == "run_check" and result.status == "succeeded":
+                yield event["sequence"], CheckObservation(result.action_id, result.output)
+
+
+@dataclass(frozen=True)
 class RepairRecheck:
     parent_action_id: str
     previous_check_action_id: str
     check_id: str
     baseline_diff_hash: str
     candidate_diff_hash: str
+    previous_check_origin: str | None = None
+
+    def _identity(self) -> dict[str, Any]:
+        # Preserve the exact existing action hash/payload for ordinary check parents.
+        return {key: value for key, value in asdict(self).items() if value is not None}
 
     def call(self, run_id: str) -> RequestedTool:
-        identity = sha256_json({"run_id": run_id, **asdict(self)})[7:39]
+        identity = sha256_json({"run_id": run_id, **self._identity()})[7:39]
         return RequestedTool(
             name="run_check", action_id=f"harness_recheck_{identity}",
             arguments={"check_id": self.check_id},
         )
 
     def payload(self, run_id: str) -> dict[str, Any]:
-        return {"origin": "harness", "action_id": self.call(run_id).action_id, **asdict(self)}
+        return {"origin": "harness", "action_id": self.call(run_id).action_id, **self._identity()}
 
 
 def latest_repair_check(
     events: list[dict[str, Any]], *, baseline: str, registered_checks: set[str],
-) -> DevToolResult | None:
+) -> CheckObservation | None:
     """Return the current registered failure eligible for an accepted repair's child."""
-    checks: dict[str, tuple[int, DevToolResult]] = {}
-    for event in events:
-        if event["event_type"] != "action_finished":
-            continue
-        result = DevToolResult.model_validate(event["payload"]["result"])
+    checks: dict[str, tuple[int, CheckObservation]] = {}
+    for sequence, result in check_observations(events):
         check_id = result.output.get("check_id")
-        if (result.tool == "run_check" and result.status == "succeeded"
-                and check_id in registered_checks and result.output.get("diff_hash") == baseline):
-            checks[check_id] = (event["sequence"], result)
+        if check_id in registered_checks and result.output.get("diff_hash") == baseline:
+            checks[check_id] = (sequence, result)
     failed = [row for row in checks.values() if row[1].output.get("passed") is False
               and not row[1].output.get("deadline_exhausted")
               and not row[1].output.get("cleanup_failed")]
@@ -85,7 +112,7 @@ def select_repair_recheck(
     return RepairRecheck(
         parent_action_id=mutation.action_id, previous_check_action_id=previous.action_id,
         check_id=previous.output["check_id"], baseline_diff_hash=baseline,
-        candidate_diff_hash=candidate,
+        candidate_diff_hash=candidate, previous_check_origin=previous.origin,
     )
 
 
@@ -98,6 +125,8 @@ def repair_recheck_context(journal: DevJournal, diff_hash: str) -> dict[str, Any
             "origin", "action_id", "parent_action_id", "previous_check_action_id",
             "check_id", "baseline_diff_hash", "candidate_diff_hash", "status", "passed",
         )}
+        if finished.get("previous_check_origin") is not None:
+            last["previous_check_origin"] = finished["previous_check_origin"]
         last["evidence_currency"] = (
             "current" if finished["candidate_diff_hash"] == diff_hash else "historical"
         )

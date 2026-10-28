@@ -64,7 +64,8 @@ def packet(events, first_state):
 
 def project(state):
     view = {key: state[key] for key in (
-        "public_task", "workflow_gate", "completion_guidance", "available_tool_names",
+        "public_task", "supplemental_required_checks", "workflow_gate", "completion_guidance",
+        "available_tool_names",
         "remaining_budget", "action_horizon", "current_diff", "repair_stage",
         "protocol_correction", "source_spans", "dependency_sources", "observed_source_index",
         "segment_handoff",

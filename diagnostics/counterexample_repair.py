@@ -4,13 +4,13 @@ from __future__ import annotations
 import argparse
 import copy
 import json
-import time
 from contextlib import contextmanager
 from dataclasses import asdict
 from decimal import Decimal
 from pathlib import Path
 from unittest.mock import patch
 
+from diagnostics import counterexample_check as check_api
 from diagnostics import counterexample_packet as packet_api
 from diagnostics import first_reproduction_comparison as original
 from diagnostics import observation_comparison as live
@@ -21,28 +21,23 @@ from diagnostics.checkpoint_envelope import read_checkpoint_envelope
 from diagnostics.decision_sampler import require
 from diagnostics.declaration_checkpoint import Source, disjoint
 from patchloop.artifacts import ArtifactStore
-from patchloop.contracts import ProbeDependencyIdentity
-from patchloop.deadline import ExecutionDeadline
 from patchloop.dev import runner
 from patchloop.dev.cost import DevCostLedger, usd_to_nanos
 from patchloop.dev.state import DevJournal
-from patchloop.prepared_probe_dependencies import load_dependencies
 from patchloop.repository import WorkspaceManager
 from patchloop.runtime import git_commit, repository_root
-from patchloop.sandbox.probes import DockerProbeSandbox
 from patchloop.util import canonical_json, sha256_bytes, sha256_json
 
-SCHEMA = "public-counterexample-repair-v1"
+SCHEMA = "public-counterexample-repair-v2"
 FIELD = "operator_public_counterexamples"
-RESERVED_ACTIONS = 1
-RESERVED_SECONDS = 35
 INSTRUCTION = (
     "An operator supplied additional public counterexamples on the saved candidate. "
     "Revise the candidate to satisfy these public examples while preserving the original "
     "caller behavior and existing public checks. Use the available source and test tools. "
     "The observations apply only to measured_diff; after an edit they are historical, "
-    "not verification of the new diff. The attached public program can be rerun. "
-    "One separate final public replay is reserved. No implementation is prescribed."
+    "not verification of the new diff. The frozen public-path-counterexamples check is "
+    "required before successful finish. Its current result is in visible_check_status; "
+    "after each edit, it must pass again. No implementation is prescribed."
 )
 
 
@@ -50,14 +45,34 @@ def inject(state, packet):
     result = copy.deepcopy(state)
     current = result["current_diff"]["patch_hash"]
     result[FIELD] = {**packet_api.model_visible(packet, current), "request": INSTRUCTION}
+    result[FIELD].pop("program_text", None)
+    result[FIELD]["program_definition_ref"] = {
+        "check_id": check_api.CHECK_ID,
+        "field": "supplemental_required_checks[].check.command[2]",
+        "program_hash": packet["program_hash"],
+    }
+    status = next((row["status"] for row in state.get("visible_check_status", [])
+                   if row.get("check_id") == check_api.CHECK_ID), "NOT_RUN")
+    result[FIELD]["required_check_status"] = status
+    result[FIELD]["new_verification_required"] = status != "PASS"
     return result
 
 
 @contextmanager
 def public_feedback(packet):
-    """Public feedback and a bound revision reserve; verification gates stay ordinary."""
+    """Register one immutable public check while preserving the original task."""
+    packet = copy.deepcopy(packet)
+    entry = check_api.required_check(packet)
     build_context, build_input = runner._build_context, runner._build_model_input
-    tool_policy = runner._tool_policy
+    gateway_type = runner.DevToolGateway
+
+    class RequiredCheckGateway(gateway_type):
+        def __init__(self, **kwargs):
+            require(not kwargs.get("supplemental_checks"), "unexpected supplemental check binding")
+            kwargs["supplemental_checks"] = (entry,)
+            kwargs["sandbox"] = check_api.CheckSandbox(
+                kwargs["sandbox"], kwargs.get("probe_sandbox"), kwargs["journal"], packet)
+            super().__init__(**kwargs)
 
     def context(**kwargs):
         return canonical_json(inject(json.loads(build_context(**kwargs)), packet))
@@ -70,22 +85,16 @@ def public_feedback(packet):
         items[-1]["content"] = canonical_json(current)
         return items
 
-    def policy(*args, **kwargs):
-        kwargs["requested_revision_diff_hash"] = (
-            packet.get("candidate_diff_hash") if packet.get("regressions") else None)
-        return tool_policy(*args, **kwargs)
-
     with patch.object(runner, "_build_context", context), \
             patch.object(runner, "_build_model_input", model_input), \
-            patch.object(runner, "_tool_policy", policy):
+            patch.object(runner, "DevToolGateway", RequiredCheckGateway):
         yield
 
 
 def restore(source, cut, output, cap, env_file, *, funded=False):
     return exposure._fork(source, cut, output, "B", new_cap_usd=cap,
         mode="funded-observation" if funded else "offline-scripted-only",
-        env_file=env_file, preserve_parent_configuration=True,
-        reserved_tool_actions=RESERVED_ACTIONS, reserved_wall_seconds=RESERVED_SECONDS)
+        env_file=env_file, preserve_parent_configuration=True)
 
 
 def feedback_audit(branch, request, packet, *, first_response=True):
@@ -97,7 +106,7 @@ def feedback_audit(branch, request, packet, *, first_response=True):
                 "historical opaque reasoning remains")
     require(state["current_diff"]["patch_hash"] == packet["candidate_diff_hash"],
             "restored candidate differs from measured counterexamples")
-    expected = inject({"current_diff": state["current_diff"]}, packet)[FIELD]
+    expected = inject(state, packet)[FIELD]
     require(state.get(FIELD) == expected, "public counterexample delivery changed")
     completion = state["reproduction_review"]["completion"]
     require(completion["status"] == "cases_verified" and completion["cases"],
@@ -105,9 +114,19 @@ def feedback_audit(branch, request, packet, *, first_response=True):
     require(all(case["current"]["comparison"] == "matched"
                 and case["comparability"]["status"] == "same" for case in completion["cases"]),
             "original call comparability or successful observation changed")
-    require(all(check["status"] == "PASS" for check in state["visible_check_status"]),
+    checks = {check["check_id"]: check for check in state["visible_check_status"]}
+    require(checks.get(check_api.CHECK_ID, {}).get("status") == "FAIL"
+            and all(check["status"] == "PASS" for name, check in checks.items()
+                    if name != check_api.CHECK_ID),
             "prior public checks are not represented accurately")
+    entry = check_api.required_check(packet)
+    registered = state.get("supplemental_required_checks", [])
+    require(len(registered) == 1 and registered[0]["check"] == entry.check.model_dump(mode="json")
+            and registered[0]["binding_hash"] == entry.binding_hash,
+            "required public check missing from actual model input")
     tools = {tool["name"] for tool in request["tools"]}
+    require("finish_task" not in tools and state["workflow_gate"] != "ready_to_submit",
+            "known required public failure still permits successful finish")
     require({"replace_text", "read_file", "search_files", "stop_task"} <= tools,
             "revision or exploration is unavailable")
     callers = post.caller_scope_audit(request, branch.request.caller_source_roots)
@@ -117,7 +136,11 @@ def feedback_audit(branch, request, packet, *, first_response=True):
             "baseline_failure_case_ids": completion["baseline_failure_case_ids"],
             "workflow_gate": state["workflow_gate"], "available_tools": sorted(tools),
             "caller_sources": callers, "context_field": FIELD,
-            "original_checks_or_gate_overridden": False,
+            "original_task_checks_unchanged": True,
+            "completion_adds_required_public_check": True,
+            "required_public_check": check_api.CHECK_ID,
+            "required_check_binding_hash": entry.binding_hash,
+            "confirmed_failure_blocks_finish": True,
             "provider_calls": 0, "target_executions": 0}
 
 
@@ -207,8 +230,11 @@ def prepare(source, cut, packet_root, env_file, output, result_root, cap):
         "active_elapsed_ms": branch.active_elapsed_ms, "remaining_budget": branch.remaining_budget,
         "combined_limits": old.limits.model_dump(mode="json"),
         "limits": branch.request.limits.model_dump(mode="json"),
-        "reserved_final_public_check": {"tool_actions": RESERVED_ACTIONS,
-                                         "wall_time_seconds": RESERVED_SECONDS, "max_runs": 1},
+        "required_public_check": {
+            "check": check_api.required_check(packet).check.model_dump(mode="json"),
+            "binding": check_api.required_check(packet).binding,
+            "binding_hash": check_api.required_check(packet).binding_hash},
+        "final_public_execution": "none; summarize current registered receipt",
         "max_output_tokens": old.max_output_tokens,
         "max_correction_output_tokens": old.max_correction_output_tokens,
         "max_context_tokens": 60000, "evaluation_reserve_seconds": old.evaluation_reserve_seconds,
@@ -224,7 +250,7 @@ def prepare(source, cut, packet_root, env_file, output, result_root, cap):
                                      "profile_hash": old.probe_profile_hash},
         "pricing": {key: str(value) for key, value in asdict(branch.pricing).items()},
         "sdk_retries": 0, "automatic_resume": False,
-        "intervention": "Operator-authored public counterexample feedback before normal finish",
+        "intervention": "Frozen public counterexamples registered as a required visible check",
         "stop_conditions": ["count uncertainty", "transport or billing uncertainty",
                             "execution or cleanup uncertainty", "normal runner terminal"],
         "scope": "Assisted checkpoint revision; no clean-start or causal repair-gain claim"}
@@ -255,6 +281,10 @@ def validate(path, digest, cap=None):
     prepared = Path(plan["preparation_root"])
     require(sha256_json(packet) == plan["packet_hash"]
             and json.loads((prepared/"packet.json").read_bytes()) == packet, "packet changed")
+    entry = check_api.required_check(packet)
+    require(plan["required_public_check"] == {
+        "check": entry.check.model_dump(mode="json"), "binding": entry.binding,
+        "binding_hash": entry.binding_hash}, "required public check binding changed")
     request = json.loads((prepared/"first-request.json").read_bytes())
     require(sha256_json(request) == plan["first_request_hash"], "first request changed")
     require(not Path(plan["result_root"]).exists(), "single-use allocation already used")
@@ -262,54 +292,15 @@ def validate(path, digest, cap=None):
 
 
 def final_public_check(branch, packet, plan, journal, store, result):
-    """One final observation; it is not injected as private evaluation feedback."""
+    """Summarize the current required receipt; no post-finish target execution."""
+    del plan, journal, store
+    if branch is None or result.get("stop_remaining") or not result.get("billing_known"):
+        return {"status": "INCOMPLETE", "reason": "continuation did not settle",
+                "additional_final_executions": 0}
+    current = WorkspaceManager.diff_summary(branch.workspace).patch_hash
     submitted = result.get("result", {}).get("artifact_hashes", {}).get("submitted_patch")
-    if not submitted or result.get("stop_remaining") or not result.get("billing_known"):
-        return {"status": "NOT_RUN", "reason": "no settled submitted candidate"}
-    started = time.monotonic()
-    deadline = ExecutionDeadline(started + RESERVED_SECONDS)
-    events = branch.journal.events()
-    used = runner._restore_counters(branch.journal).tool_actions
-    require(used + 1 <= plan["combined_limits"]["max_tool_actions"], "host tool slot missing")
-    active_ms = DevJournal.latest_active_elapsed_ms(branch.journal)
-    seconds = min(RESERVED_SECONDS,
-                  plan["combined_limits"]["wall_time_seconds"] - active_ms / 1000)
-    require(seconds > 0, "no final public-check time remains")
-    deadline = ExecutionDeadline(min(deadline.expires_at, started + seconds))
-    deadline.check()
-    current = WorkspaceManager.diff_summary(branch.workspace, deadline=deadline)
-    require(current.patch_hash == submitted, "final workspace differs from submitted patch")
-    require(not any(e["event_type"] == "counterexample_final_started"
-                    for e in journal.events()), "final public execution already attempted")
-    identity = {"run_id": journal.run_id, "action_id": "final-public-counterexamples",
-                "input_hash": sha256_json({"packet": plan["packet_hash"], "diff": submitted})}
-    journal.append("counterexample_final_started", {"execution_identity": identity,
-        "submitted_patch": submitted, "max_seconds": seconds, "ordinary_tool_actions": used})
-    dependencies = load_dependencies(Path(branch.envelope.prepared_probe_dependencies_path),
-        branch.package.public,
-        ProbeDependencyIdentity.model_validate(branch.envelope.probe_dependencies))
-    probe = DockerProbeSandbox(dependencies=dependencies)
-    require(probe.preflight(deadline=deadline) == plan["executing_probe_identity"],
-            "final public probe identity changed")
-    receipt = probe.run_probe(branch.workspace, "Do the public path-contract cases hold?",
-        packet["program_text"], deadline=deadline, execution_identity=identity)
-    reference = store.put_json(receipt).model_dump(mode="json")
-    journal.append("counterexample_final_finished", {"receipt": reference})
-    require(all(receipt.get(key) == value for key, value
-                in plan["executing_probe_identity"].items())
-            and receipt.get("execution_policy", {}).get("dependencies")
-                == packet["environment"]["dependencies"], "final public environment changed")
-    rows = packet_api.parse_receipt(receipt, packet["program_hash"])["rows"]
-    assessment = packet_api.assess_rows(packet, rows)
-    require(WorkspaceManager.diff_summary(branch.workspace, deadline=deadline) == current,
-            "diagnostic changed source")
-    elapsed = time.monotonic() - started
-    require(elapsed <= seconds and active_ms + elapsed * 1000
-            <= plan["combined_limits"]["wall_time_seconds"] * 1000, "combined time limit exceeded")
-    return {**assessment, "receipt": reference, "candidate_diff_hash": submitted,
-            "ordinary_tool_actions": used, "combined_tool_actions": used + 1,
-            "additional_seconds": elapsed, "ordinary_active_elapsed_ms": active_ms,
-            "source_event_count": len(events), "feedback_to_model": False}
+    require(not submitted or current == submitted, "final workspace differs from submitted patch")
+    return check_api.summary(branch.journal, packet, current)
 
 
 def collect(path, digest, cap):

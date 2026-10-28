@@ -24,90 +24,37 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [caller/completion implementation](history/2026-10-28-caller-completion-paths.md)
-connects registered dependency reads to ordinary `run_dev`. Use repeatable
-`--caller-source distribution=directory` with prepared pinned caller dependencies;
-no roots are inferred automatically. Actual counted/dispatched tools expose the
-scope, and observed source reaches the next model input. Caller bodies remain
-read-only, separately bounded, and cannot supply repository mutation anchors.
-Registration and prepared identity are immutable across recovery.
+The [latest public-counterexample continuation](history/2026-10-28-probe-revision-repair-results.md)
+received three confirmed public regressions but resubmitted the unchanged candidate.
+At its final request a repair path still fit the remaining budget. It acknowledged
+those failures and chose finish because they were supplied as evidence, not included
+in the required-check registry. Public path preservation stayed 8/11; isolated
+acceptance FAILED and safety passed. The USD3.38078870 allocation is CLOSED.
 
-Ordinary `completion-recovery-v1` admission derives response/action counts,
-role-based cost and nominal time from shared completion-path steps. Required
-completion retains diagnosis, unused request correction, missing anchor, repair,
-original replay, fresh public checks and finish. One possible later original or
-public-check failure is separately protected when feasible. Known-original-failure
-exploration can release that speculative reserve; the selected guarantee is visible
-per action. Actual mandatory floors and global caps remain. Acquisition, first
-observation, general probes and special correction/test paths keep a labeled
-conservative adapter.
+The [required-public-check change](history/2026-10-28-required-public-checks.md)
+connects explicit host-registered public counterexamples to the existing execution,
+current-diff status, automatic repair feedback, completion and budget paths. The
+original task and original-call identity stay unchanged. Initial observed failures
+are cited imports, not fabricated executions. Recovery cannot drop or change their
+binding. Model notes and speculative questions remain advisory.
 
-Local caller controls passed 39 tests (three platform skips); budget controls
-passed 97. Quick had 698 PASS and six contract/doc failures, all resolved by focused
-rechecks; both isolated mock evaluations passed. Saved-state policy replay opens
-reads at three previously closed points while preserving the final mandatory floor.
-This is local mechanism evidence. The subsequent
-[caller/completion live follow-up](history/2026-10-28-caller-completion-repair-results.md)
-used caller search and read, made one edit, and passed the frozen original call
-with positive file-processing evidence plus its normal-package control. Captures,
-authored verdict and unchanged call conditions agree. The next model response
-received that result; public regression passed 1,231 tests and normal finish and
-submission completed. Isolated task acceptance nevertheless FAILED; safety passed.
-Successful public case delivery is not a successful task repair.
+Known FAIL and required NOT_RUN block successful finish regardless of unused budget.
+An accepted edit needs the same check on the new diff; its result reaches the next
+model response. Resource exhaustion or explicit stop preserves unresolved status.
+The frozen diagnostic's 11-case host assessment now runs before completion through
+its prepared environment. The old separate final replay reservation is removed;
+normal check actions/time are budgeted, and final reporting reuses receipts.
 
-The same-checkpoint continuation used eight new responses and 20 actions, costing
-USD0.813929 of the approved USD4.13241570. It ended without output/context exhaustion
-or protocol correction. The allocation is CLOSED, including its unspent balance;
-no further run is funded. Caller access and completion reservations changed
-together, so this single run cannot isolate their effects. No additional
-model-selected probe ran; observation-timing uptake remains untested.
+Focused controls passed 64 distinct cases across bounded selections. Quick passed
+763 checks and both isolated mock evaluations; its one documentation-size failure
+was fixed and all five documentation checks passed on recheck. Ruff passed.
+This establishes local enforcement and delivery, not live-model repair success.
 
-The [public path-contract comparison](history/2026-10-28-caller-path-contract-results.md)
-now confirms a candidate regression: the new fallback treats a search root as the
-module itself. Three negative path cases change from ImportError to a false
-namespace result; reversing two leaf roots changes which false result is returned.
-Normal root, child, regular-package and namespace-portion controls remain intact.
-One empty-path discrepancy predates the patch and is recorded separately. The
-12-case base/candidate comparison used two local probes, 18.220s probe time and
-zero model calls. It is a public compatibility counterexample, not an inspection
-or explanation of the private evaluator's failure.
-
-Keep caller access and completion reservations, but reject this submitted repair
-as semantically incomplete. The [public-counterexample continuation](history/2026-10-28-public-counterexample-repair-results.md)
-delivered the counterexamples and current source, but made no new edit: five reads,
-two helper probes and normal finish resubmitted the same diff. All three public
-regressions and isolated acceptance still FAILED; safety passed. Original/public
-regression receipts were reused on the unchanged diff. New cost was USD0.599278
-of USD3.38078870; the allocation is CLOSED, including unspent funds.
-
-The [helper-delivery and revision-reservation follow-up](history/2026-10-28-probe-delivery-revision-reservation.md)
-preserves latest current-diff helper observations across completion handoffs,
-including failed/partial output and its completeness flags. Saved-data assembly
-now delivers the previously lost 684-character stdout exactly once; existing
-verdicts, budgets and original verification remain unchanged.
-
-For the sealed public-counterexample diagnostic, optional exploration now reserves
-an affordable edit/original-replay/public-check/finish path on the measured current
-diff. Response/action counts, cost and nominal time use the same completion steps;
-legacy adapter floors and the unused correction reserve remain. This is a budget
-opportunity, not a new finish gate, and ordinary runs have no blanket new reserve.
-Local boundary controls cover loss of any required resource and stale diff binding.
-Saved-state replay keeps helper/edit available at five remaining responses, then
-closes helper/test at four while preserving edit/finish. Focused controls passed
-36 and 52 tests; quick's two identity-pin failures passed narrow rechecks, and both
-isolated mock evaluations passed. These are local mechanism checks, not repair-gain evidence.
-The [same-checkpoint live follow-up](history/2026-10-28-probe-revision-repair-results.md)
-made four reads and no edit/helper, then resubmitted the same candidate. At the
-last request, editing was still offered and its three-response completion path
-was affordable; optional exploration had closed as intended. The model acknowledged
-the three unresolved public counterexamples and chose finish. Final public checks
-passed 8/11 and all three regressions still failed; isolated acceptance FAILED,
-safety passed. Old original/public PASS receipts were reused on the unchanged diff.
-New cost USD0.34631750; the USD3.38078870 allocation and unused balance are CLOSED.
-The revision opportunity was exercised by admission, but not by the model; helper
-delivery uptake remains unexercised. Keep the mechanism fixes without claiming a
-repair gain. The unresolved issue is how known public failures affect verification
-and completion decisions. No additional run is funded.
+Caller-source access, original-call/processing verification, bounded exploration
+and shared completion-path reservations remain active. Public PASS, successful
+submission and independent acceptance remain different outcomes. The immediate
+question is whether the live model uses mandatory failure feedback to revise the
+candidate; local mechanism validation cannot answer it. No additional run is funded.
 
 ## Supporting evidence
 

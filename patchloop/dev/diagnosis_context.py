@@ -60,7 +60,8 @@ def packet(path_state, events, read_source):
 def project(state):
     """Project already public audit data, keeping source bodies self-contained."""
     view = {key: state[key] for key in (
-        "public_task", "workflow_gate", "completion_guidance", "available_tool_names",
+        "public_task", "supplemental_required_checks", "workflow_gate", "completion_guidance",
+        "available_tool_names",
         "remaining_budget", "current_diff", "diagnosis_stage", "protocol_correction",
         "source_spans", "dependency_sources", "observed_source_index", "segment_handoff",
     ) if key in state}

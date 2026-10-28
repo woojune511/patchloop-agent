@@ -1,4 +1,4 @@
-"""Public feedback changes context only and final check failures remain failures."""
+"""Required public feedback uses normal gates and never adds a final target run."""
 from __future__ import annotations
 
 import copy
@@ -6,10 +6,9 @@ import json
 from types import SimpleNamespace
 
 import pytest
-from test_counterexample_packet import receipt, rows, saved  # noqa: F401
+from test_counterexample_packet import saved  # noqa: F401
 
 from diagnostics import counterexample_repair as diagnostic
-from patchloop.artifacts import ArtifactStore
 from patchloop.dev.state import DevJournal
 from patchloop.errors import ContractError
 from patchloop.util import canonical_json
@@ -39,11 +38,15 @@ def test_read_delivery_audit_requires_success_without_correction_and_exact_outpu
         diagnostic.read_delivery_audit([changed], request)
 
 
-def test_context_and_actual_input_receive_same_packet_without_changing_gate(monkeypatch):
+def test_context_and_actual_input_receive_same_packet_without_changing_gate(
+    saved, monkeypatch,  # noqa: F811
+):
     state = {"current_diff": {"patch_hash": "measured"}, "workflow_gate": "ready_to_submit",
              "visible_check_status": [{"status": "PASS"}],
              "reproduction_review": {"completion": {"status": "cases_verified"}}}
     before = copy.deepcopy(state)
+    packet = diagnostic.packet_api.build_packet(saved["root"])
+    packet["diff"] = "measured"
     monkeypatch.setattr(diagnostic.packet_api, "model_visible", lambda packet, current: {
         "measured_diff": packet["diff"], "current_diff": current,
         "measurement_is_current": current == packet["diff"]})
@@ -52,7 +55,7 @@ def test_context_and_actual_input_receive_same_packet_without_changing_gate(monk
         {"state": state})}]
     monkeypatch.setattr(diagnostic.runner, "_build_context", context)
     monkeypatch.setattr(diagnostic.runner, "_build_model_input", model_input)
-    with diagnostic.public_feedback({"diff": "measured"}):
+    with diagnostic.public_feedback(packet):
         canonical = json.loads(diagnostic.runner._build_context())
         actual = json.loads(diagnostic.runner._build_model_input()[-1]["content"])["state"]
         assert canonical == actual
@@ -68,89 +71,102 @@ def test_context_and_actual_input_receive_same_packet_without_changing_gate(monk
 
 
 @pytest.mark.parametrize("result", [
-    {"billing_known": True, "result": {}},
-    {"billing_known": False, "result": {"artifact_hashes": {"submitted_patch": "x"}}},
-    {"billing_known": True, "stop_remaining": True,
-     "result": {"artifact_hashes": {"submitted_patch": "x"}}},
+    {"billing_known": False}, {"billing_known": True, "stop_remaining": True},
 ])
-def test_no_final_execution_after_uncertainty_or_missing_submission(result):
+def test_no_summary_claim_after_uncertainty(result):
     outcome = diagnostic.final_public_check(None, None, None, None, None, result)
-    assert outcome["status"] == "NOT_RUN"
+    assert outcome["status"] == "INCOMPLETE"
+    assert outcome["additional_final_executions"] == 0
 
 
-def test_final_check_rejects_drift_and_exhausted_host_slot(tmp_path, monkeypatch):
-    branch = SimpleNamespace(workspace=tmp_path, journal=DevJournal(tmp_path, "run_dev_test"))
-    result = {"billing_known": True,
-              "result": {"artifact_hashes": {"submitted_patch": "submitted"}}}
-    monkeypatch.setattr(diagnostic.runner, "_restore_counters",
-                        lambda journal: SimpleNamespace(tool_actions=26))
-    monkeypatch.setattr(diagnostic.DevJournal, "latest_active_elapsed_ms", lambda journal: 621651)
-    plan = {"combined_limits": {"max_tool_actions": 40, "wall_time_seconds": 2400}}
-    monkeypatch.setattr(diagnostic.WorkspaceManager, "diff_summary",
-                        lambda workspace, **kwargs: SimpleNamespace(patch_hash="different"))
-    with pytest.raises(ContractError, match="differs from submitted"):
-        diagnostic.final_public_check(branch, {}, plan, None, None, result)
-    monkeypatch.setattr(diagnostic.WorkspaceManager, "diff_summary",
-                        lambda workspace, **kwargs: SimpleNamespace(patch_hash="submitted"))
-    monkeypatch.setattr(diagnostic.runner, "_restore_counters",
-                        lambda journal: SimpleNamespace(tool_actions=40))
-    with pytest.raises(ContractError, match="host tool slot"):
-        diagnostic.final_public_check(branch, {}, {"combined_limits": {"max_tool_actions": 40}},
-                                      None, None, result)
+def test_restore_no_longer_removes_final_only_resources(monkeypatch):
+    captured = {}
+    monkeypatch.setattr(diagnostic.exposure, "_fork", lambda *a, **kw: captured.update(kw))
+    diagnostic.restore(None, 212, None, 1, None)
+    assert "reserved_tool_actions" not in captured
+    assert "reserved_wall_seconds" not in captured
+    assert captured["preserve_parent_configuration"] is True
 
 
-@pytest.mark.parametrize("repaired", [False, True])
-def test_final_assessment_is_independent_and_cannot_dispatch_twice(
-    saved, tmp_path, monkeypatch, repaired,  # noqa: F811
+def test_v1_approval_cannot_execute_v2(tmp_path):
+    path = tmp_path / "manifest.json"
+    path.write_text(canonical_json({"schema": "public-counterexample-repair-v1", "repeat": 1}))
+    with pytest.raises(ContractError, match="unsupported manifest"):
+        diagnostic.validate(path, diagnostic.sha256_bytes(path.read_bytes()))
+
+
+def test_final_summary_uses_imported_current_receipt_without_target_execution(
+    saved, tmp_path, monkeypatch,  # noqa: F811
 ):
     packet = diagnostic.packet_api.build_packet(saved["root"])
-    branch = SimpleNamespace(workspace=tmp_path,
-        journal=DevJournal(tmp_path/"branch", "run_dev_branch"),
-        envelope=SimpleNamespace(prepared_probe_dependencies_path="unused",
-            probe_dependencies={"manifest_hash": "sha256:"+"1"*64,
-                "content_hash": "sha256:"+"2"*64, "python": "3.9",
-                "platform": "linux/amd64", "runtime_profile": "python39-v1",
-                "source_roots": ["astroid"]}), package=SimpleNamespace(public=None))
-    result = {"billing_known": True,
-              "result": {"artifact_hashes": {"submitted_patch": "submitted"}}}
-    plan = {"packet_hash": "packet", "combined_limits": {
-        "max_tool_actions": 40, "wall_time_seconds": 2400},
-        "executing_probe_identity": {"image_digest": "image", "profile_hash": "profile"}}
-    monkeypatch.setattr(diagnostic.runner, "_restore_counters",
-                        lambda journal: SimpleNamespace(tool_actions=39))
-    monkeypatch.setattr(diagnostic.DevJournal, "latest_active_elapsed_ms", lambda journal: 621651)
-    deadlines, dispatches = [], []
+    entry = diagnostic.check_api.required_check(packet)
+    journal = DevJournal(tmp_path / "branch", "run_dev_branch")
+    journal.append("public_check_imported", {"observation_id": entry.observation_id,
+        "output": {**entry.observation, "binding_hash": entry.binding_hash}})
+    branch = SimpleNamespace(workspace=tmp_path, journal=journal)
+    current = packet["candidate_diff_hash"]
+    monkeypatch.setattr(diagnostic.WorkspaceManager, "diff_summary",
+                        lambda workspace: SimpleNamespace(patch_hash=current))
+    result = {"billing_known": True, "result": {"artifact_hashes": {}}}
+    report = diagnostic.final_public_check(branch, packet, {}, None, None, result)
+    assert report["status"] == "FAIL"
+    assert report["source"] == "imported_observation" and not report["new_execution"]
+    assert report["additional_final_executions"] == 0
+    current = "sha256:" + "2" * 64
+    later = diagnostic.final_public_check(branch, packet, {}, None, None, result)
+    assert later["status"] == "NOT_RUN"
 
-    def diff(workspace, *, deadline):
-        deadlines.append(deadline.expires_at)
-        deadline.check()
-        return SimpleNamespace(patch_hash="submitted")
 
-    class Probe:
+def test_gateway_factory_adds_registered_check_without_mutating_task(
+    saved, tmp_path, monkeypatch,  # noqa: F811
+):
+    packet = diagnostic.packet_api.build_packet(saved["root"])
+    task, delegate, probe = object(), object(), object()
+    journal = DevJournal(tmp_path, "run_dev_factory")
+    class Gateway:
         def __init__(self, **kwargs):
-            pass
+            self.kwargs = kwargs
+    monkeypatch.setattr(diagnostic.runner, "DevToolGateway", Gateway)
+    with diagnostic.public_feedback(packet):
+        gateway = diagnostic.runner.DevToolGateway(
+            public_task=task, sandbox=delegate, probe_sandbox=probe, journal=journal)
+    assert gateway.kwargs["public_task"] is task
+    assert len(gateway.kwargs["supplemental_checks"]) == 1
+    assert gateway.kwargs["supplemental_checks"][0].check.id == diagnostic.check_api.CHECK_ID
+    assert gateway.kwargs["sandbox"].delegate is delegate
+    assert gateway.kwargs["sandbox"].probe is probe
+    assert diagnostic.runner.DevToolGateway is Gateway
 
-        def preflight(self, *, deadline):
-            deadlines.append(deadline.expires_at)
-            return plan["executing_probe_identity"]
 
-        def run_probe(self, workspace, question, source, *, deadline, execution_identity):
-            assert source == packet["program_text"]
-            deadlines.append(deadline.expires_at)
-            dispatches.append(execution_identity)
-            return receipt(rows(not repaired), saved["program_hash"])
-
-    monkeypatch.setattr(diagnostic.WorkspaceManager, "diff_summary", diff)
-    monkeypatch.setattr(diagnostic, "load_dependencies", lambda *args: None)
-    monkeypatch.setattr(diagnostic, "DockerProbeSandbox", Probe)
-    journal = DevJournal(tmp_path/"collector", "run_dev_collector")
-    store = ArtifactStore(tmp_path/"objects")
-    outcome = diagnostic.final_public_check(branch, packet, plan, journal, store, result)
-    assert outcome["status"] == ("PASS" if repaired else "FAIL")
-    assert outcome["preexisting"]["status"] == "FAIL"
-    assert outcome["preexisting"]["mandatory"] is False
-    assert outcome["combined_tool_actions"] == 40 and outcome["feedback_to_model"] is False
-    assert len(set(deadlines)) == 1 and len(dispatches) == 1
-    with pytest.raises(ContractError, match="already attempted"):
-        diagnostic.final_public_check(branch, packet, plan, journal, store, result)
-    assert len(dispatches) == 1
+@pytest.mark.parametrize("first_response", [True, False])
+def test_feedback_audit_accepts_current_required_failure_and_rejects_finish(
+    saved, first_response,  # noqa: F811
+):
+    packet = diagnostic.packet_api.build_packet(saved["root"])
+    entry = diagnostic.check_api.required_check(packet)
+    state = {
+        "current_diff": {"patch_hash": packet["candidate_diff_hash"]},
+        "workflow_gate": "needs_visible_checks",
+        "visible_check_status": [{"check_id": "base-regression", "status": "PASS"},
+                                 {"check_id": entry.check.id, "status": "FAIL"}],
+        "supplemental_required_checks": [{"check": entry.check.model_dump(mode="json"),
+                                         "binding_hash": entry.binding_hash}],
+        "reproduction_review": {"completion": {
+            "status": "cases_verified", "baseline_failure_case_ids": ["original-case"],
+            "cases": [{"current": {"comparison": "matched"},
+                       "comparability": {"status": "same"}}],
+        }},
+    }
+    state = diagnostic.inject(state, packet)
+    assert state[diagnostic.FIELD]["required_check_status"] == "FAIL"
+    assert state[diagnostic.FIELD]["new_verification_required"] is True
+    assert "program_text" not in state[diagnostic.FIELD]
+    request = {"input": [{"role": "user", "content": canonical_json({"state": state})}],
+               "tools": [{"name": name, "parameters": {"properties": {}}}
+                         for name in ("replace_text", "read_file", "search_files", "stop_task")]}
+    branch = SimpleNamespace(request=SimpleNamespace(caller_source_roots={}))
+    audit = diagnostic.feedback_audit(branch, request, packet, first_response=first_response)
+    assert audit["confirmed_failure_blocks_finish"] is True
+    request["tools"].append({"name": "finish_task"})
+    with pytest.raises(ContractError, match="permits successful finish"):
+        diagnostic.feedback_audit(branch, request, packet, first_response=first_response)
