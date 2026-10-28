@@ -1,5 +1,16 @@
 # Current failure and finalization
 
+With `verification_policy=public-checks-v1`, original-call and diagnostic feedback
+below remains evidence for model judgment, not a submission prerequisite. The
+runner starts no new automatic original replay and does not force correction or
+repair from that evidence. Required current-diff public checks, their failure
+feedback and execution-uncertainty handling remain unchanged. The default
+`reproduction-gated-v1` retains the mandatory diagnostic behavior described below.
+The CLI default stays strict for compatibility and the comparison control.
+Request/envelope/model identity binds the explicit policy; resume cannot switch it.
+Delivery labels remain evidence labels, separate from unchanged evaluator acceptance.
+The new option is locally validated, without live comparative improvement evidence.
+
 `target_outcome` projects bounded per-call outcome/capture/exception/exit-code
 summaries. An unexpected raised exception can be a positive current failure even
 when whole-case comparison is UNKNOWN. Qualification requires an acquired healthy

@@ -26,6 +26,7 @@ from patchloop.util import sha256_json
 
 DEV_RUN_SCHEMA = "dev-run-v1"
 DEV_RUNTIME_ID = "dev-head"
+VerificationPolicy = Literal["reproduction-gated-v1", "public-checks-v1"]
 DEV_READ_TOOLS = frozenset({"search_files", "read_file"})
 DEV_SINGLE_ACTION_TOOLS = frozenset({
     "replace_text", "run_check", "run_tests", "run_probe", "observe_original",
@@ -518,6 +519,10 @@ class RunRequest(StrictModel):
         default_factory=dict, exclude_if=lambda value: not value,
     )
     enable_probes: bool = False
+    verification_policy: VerificationPolicy = Field(
+        default="reproduction-gated-v1",
+        exclude_if=lambda value: value == "reproduction-gated-v1",
+    )
     reproduction_acquisition: Literal["none", "bounded-v1"] = Field(
         default="none", exclude_if=lambda value: value == "none",
     )
@@ -639,6 +644,10 @@ class RunEnvelope(StrictModel):
     runtime_id: Literal["dev-head"] = "dev-head"
     run_id: str = Field(pattern=r"^run_dev_[a-zA-Z0-9_-]+$")
     provider: Literal["mock", "openai"]
+    verification_policy: VerificationPolicy = Field(
+        default="reproduction-gated-v1",
+        exclude_if=lambda value: value == "reproduction-gated-v1",
+    )
     task_path: str
     task_id: str
     task_version: int = Field(ge=1)

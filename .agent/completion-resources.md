@@ -1,5 +1,13 @@
 # Completion resources and bounded original-failure diagnosis
 
+The diagnostic reservations below describe `reproduction-gated-v1` (the compatible
+default). With explicit `verification_policy=public-checks-v1`, original-call
+evidence remains in the model view and journal, while admission forecasts exclude
+optional acquisition, original replay, diagnostic correction and required path
+diagnosis. Required public checks, successful return capacity, bounded public-check
+recovery, total limits and pre-dispatch cost accounting remain in force. Optional
+diagnostics consume ordinary available resources; they receive no extra budget.
+
 `completion_budget.py` is a pure forecast; `runner.py` admits real model/tool work
 and cost. `completion_reproduction.py` projects public invocation evidence and
 durable diagnostic consumption. Runtime hashes bind these changes on resume.

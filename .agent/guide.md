@@ -35,8 +35,8 @@ Preserve exact-envelope runtime identity.
 ## Loop and mutation contract
 
 Only mutable `dev-head` runs, always `official=false`.
-Gates: `needs_mutation`, `needs_visible_checks`, `ready_to_submit`, and opt-in
-`needs_original_reproduction`.
+Gates: `needs_mutation`, `needs_visible_checks`, `ready_to_submit`, and, under
+`reproduction-gated-v1`, opt-in `needs_original_reproduction`.
 Gates and resource horizons expose registered tools, never unrestricted shell.
 
 `TextReplacementIntent` preserves explicit/absent fields, legacy annotations,
@@ -75,7 +75,10 @@ Latest predecessor/reason stays visible; see [planning](planning-experiment.md).
 Check PASS alone certifies no requirement coverage. Label source inference.
 See [evidence recovery](evidence-recovery.md) for opt-in source restoration and
 fixed probe comparisons.
-Replay acquired originals after edits, before inference; reuse receipts at finish.
+`--verification-policy public-checks-v1` makes diagnostics advisory; public checks
+still gate submission. See [policy and evidence](completion-feedback.md).
+The following diagnostic gates apply to the default `reproduction-gated-v1`:
+replay acquired originals after edits; reuse receipts at finish.
 Known failure blocks; missing/incomplete evidence stays unverified. See linked
 contract for v4 identity and budget bounds.
 `original_obligation.py` retains the public-task obligation separately from cases.
@@ -102,15 +105,12 @@ Advisory line feedback decodes those paths and binds script filenames at launch,
 preserving arguments and tracking across chdir.
 
 Reserve minimum completion and bounded recovery; count model calls and real tool
-actions separately. Healthy acquired originals replay early and reuse receipts at
-finish; pending/mixed/unknown cases keep fallback. A comparable current original
-failure permits separate preparation and probe slots from minimum reserves;
-replay cannot renew them. See [resources](completion-resources.md).
-See [completion feedback](completion-feedback.md) for target exceptions, finalization and reuse.
-With measured unobserved changed lines, use [call-path diagnosis](repair-path.md)
-before another repair. Keep source anchors and fresh original/check results.
-Before the first edit, optional `observe_original` tests path premises on the frozen
-original. See [limits, evidence and recovery](repair-path.md); it grants no repair credit.
+actions separately. Diagnostic reservations below apply to `reproduction-gated-v1`.
+See [resources](completion-resources.md) for replay reuse and bounded preparation,
+and [completion feedback](completion-feedback.md) for failures and finalization.
+Measured unobserved changed lines require [call-path diagnosis](repair-path.md)
+before another repair. Optional first-edit `observe_original` tests path premises
+on the frozen original without granting repair credit.
 
 ## Context and recovery
 

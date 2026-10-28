@@ -142,3 +142,4 @@ tests/test_requested_revision_policy.py::test_no_request_stale_diff_and_zero_edi
 tests/test_required_public_checks.py
 tests/test_required_check_runner.py
 tests/test_counterexample_check.py
+tests/test_public_check_submission.py

@@ -126,6 +126,12 @@ def dev(
             "--reproduction-acquisition", help="Reserve bounded original-call investigation."
         ),
     ] = "none",
+    verification_policy: Annotated[
+        Literal["reproduction-gated-v1", "public-checks-v1"], typer.Option(
+            "--verification-policy",
+            help="Use reproduction gates or advisory diagnostics with required public checks.",
+        ),
+    ] = "reproduction-gated-v1",
     probe_policy: Annotated[
         Literal["none", "cases-v1", "reference-cases-v1"],
         typer.Option("--probe-policy", help="Opt-in reusable reference/candidate experiments."),
@@ -214,6 +220,7 @@ def dev(
                 caller_source_roots=parse_cli_roots(caller_source),
                 enable_probes=enable_probes,
                 reproduction_acquisition=reproduction_acquisition,
+                verification_policy=verification_policy,
                 probe_policy=probe_policy,
                 repair_recheck=repair_recheck,
                 probe_recheck=probe_recheck,

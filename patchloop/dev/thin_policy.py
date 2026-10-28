@@ -96,8 +96,39 @@ def contract() -> dict:
     }
 
 
+def _verification_prompt(prompt: str, verification_policy: str) -> str:
+    """Replace only the old policy's narration, never source or observed evidence."""
+    if verification_policy != "public-checks-v1":
+        return prompt
+    replacement = (
+        "Original reproduction, call-path observations and diagnostic corrections are optional\n"
+        "evidence. Their pending/refuted/blocked statuses do not gate edits or submission.\n"
+        "Use them when they can inform a correct repair; malformed or missing observations\n"
+        "do not establish a code failure. A nonempty scoped patch with current required-public-\n"
+        "check PASS permits finish_task. No original replay is automatically started. Report\n"
+        "unresolved evidence honestly; submission and independent acceptance remain separate.\n"
+    )
+    # Both public prompts have one contiguous policy-specific paragraph. Keep all
+    # other task, source, evidence and tool instructions byte-for-byte unchanged.
+    if prompt.startswith(SYSTEM_PROMPT):
+        start = "finish_task returns unverified_delivery unless"
+        end = "finish_task submits the current candidate."
+        replacement += "Preserve actual sys.argv for CLI calls.\n"
+    else:
+        start = "reproduction_review.completion retains cases"
+        end = "For CLI observed_target,"
+    prefix, separator, remainder = prompt.partition(start)
+    if not separator:
+        raise ValueError("verification prompt boundary missing")
+    _, separator, suffix = remainder.partition(end)
+    if not separator:
+        raise ValueError("verification prompt ending missing")
+    return prefix + replacement + end + suffix
+
+
 def system_prompt(agent_policy: str = "current", planning_policy: str = "none",
-                  history_search_policy: str = "none") -> str:
+                  history_search_policy: str = "none",
+                  verification_policy: str = "reproduction-gated-v1") -> str:
     from patchloop.dev import history_search
     from patchloop.dev.model import DEV_SYSTEM_PROMPT
     from patchloop.dev.working_plan import instructions
@@ -105,7 +136,7 @@ def system_prompt(agent_policy: str = "current", planning_policy: str = "none",
     if agent_policy == "thin":
         if planning_policy != "none":
             raise ValueError("thin policy does not carry a working plan")
-        return SYSTEM_PROMPT
+        return _verification_prompt(SYSTEM_PROMPT, verification_policy)
     if agent_policy != "current":
         raise ValueError("unknown agent policy")
     prompt = (DEV_SYSTEM_PROMPT + "\n\n" + instructions(planning_policy)
@@ -114,7 +145,7 @@ def system_prompt(agent_policy: str = "current", planning_policy: str = "none",
         if history_search_policy != history_search.POLICY:
             raise ValueError("unknown history search policy")
         prompt += "\n\n" + history_search.INSTRUCTIONS
-    return prompt
+    return _verification_prompt(prompt, verification_policy)
 
 
 def project_state(state: dict, agent_policy: str = "current") -> dict:

@@ -29,6 +29,27 @@ If current, reuse a suitable exact draft and correct the request shape; submit o
 """
 
 
+def system_prompt(state):
+    if state.get("completion_guidance", {}).get("verification_policy") != "public-checks-v1":
+        return SYSTEM_PROMPT
+    return SYSTEM_PROMPT.replace(
+        "After a refuted repair's diagnosis, repair_prediction selects one changed observable\n"
+        "or a bounded test addition. The host binds the counterevidence. A test addition leaves\n"
+        "the source repair unresolved; use the frozen run_tests comparison when pending.\n"
+        "PASS/PASS is non-discriminating. Prediction support never replaces "
+        "original/control checks.",
+        "Original-call observations, call-path diagnosis and test comparisons are optional tools\n"
+        "for choosing a repair. Their pending/refuted status does not force a diagnostic stage.\n"
+        "PASS/PASS is non-discriminating; prediction support is not task correctness.",
+    ).replace(
+        "After editing, original replay and required current-diff checks "
+        "still determine completion.",
+        "After editing, required current-diff public checks determine submission eligibility.\n"
+        "No original replay is automatically started. Report unresolved evidence honestly;\n"
+        "submission does not certify correctness and independent evaluation decides acceptance.",
+    )
+
+
 def pending(state):
     return (state.get("workflow_gate") in {"needs_mutation", "needs_test_comparison"}
             and bool({"replace_text", "observe_original", "run_tests"}

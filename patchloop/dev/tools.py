@@ -780,6 +780,7 @@ class DevToolGateway:
         probe_sandbox: DockerProbeSandbox | None = None,
         probe_policy: str = "none",
         reproduction_acquisition: str = "none",
+        verification_policy: str = "reproduction-gated-v1",
         retained_source_chars: RetainedSourceChars = RETAINED_SOURCE_CHARS,
         agent_policy: str = "current",
         history_search_policy: history_search.Policy = "none",
@@ -819,6 +820,9 @@ class DevToolGateway:
         if reproduction_acquisition not in {"none", original_obligation.ACQUISITION}:
             raise ContractError("unknown reproduction acquisition policy")
         self.reproduction_acquisition = reproduction_acquisition
+        if verification_policy not in {"reproduction-gated-v1", "public-checks-v1"}:
+            raise ContractError("unknown verification policy")
+        self.verification_policy = verification_policy
         self._lock = threading.RLock()
         self.spans: dict[str, dict[str, Any]] = {}
         self._observation_seq = 0
@@ -2938,6 +2942,7 @@ class DevToolGateway:
                                             details=copy.deepcopy(recorded_error["details"]))
         if pending is None:
             verification = self.completion_verification(diff_hash=baseline)
+            gate_diagnostics = self.verification_policy == "reproduction-gated-v1"
             first_state = verification["first_observation"]
             if call.name == "observe_original":
                 if first_state.get("available"):
@@ -2960,19 +2965,20 @@ class DevToolGateway:
                               "observation_status": first_state["observation"]["status"]}
             path_state = verification["repair_path"]
             prediction_state = verification["repair_prediction"]
-            pending_comparison = prediction_state["status"] == "needs_test_comparison"
+            pending_comparison = (gate_diagnostics
+                                  and prediction_state["status"] == "needs_test_comparison")
             if pending_comparison and call.name not in {"run_tests", "stop_task"} and not (
                 call.name == "run_probe" and call.action_id.startswith("completion-reproduction-")
             ):
                 preflight_error = ContractError(
                     "Compare the added test on before/after source before another edit")
-            if path_state.get("blocked") and call.name != "stop_task":
+            if gate_diagnostics and path_state.get("blocked") and call.name != "stop_task":
                 # Record rejected requests too, without treating them as executions.
                 path_link = repair_path.link(path_state)
             try:
                 if call.name == "run_probe" and (
                     "focus" in call.arguments or diagnosis_request.symbolic(path_request)
-                    or (path_state.get("status") == "needs_path_diagnosis"
+                    or (gate_diagnostics and path_state.get("status") == "needs_path_diagnosis"
                         and path_request is None)
                 ):
                     path_admission = diagnosis_request.prepare(
@@ -2984,25 +2990,27 @@ class DevToolGateway:
                     probe_call_arguments = diagnosis_request.arguments(
                         call.arguments, path_admission)
                     path_request = probe_call_arguments["call_path"]
-                if not (pending_comparison and call.name == "run_tests"):
+                if (gate_diagnostics and not (pending_comparison and call.name == "run_tests")
+                        or path_admission is not None):
                     path_link = repair_path.validate(
                         path_state, call.name,
                         call.arguments if call.name == "observe_original" else probe_call_arguments,
                     )
-                if call.name == "replace_text":
+                if gate_diagnostics and call.name == "replace_text":
                     repair_intent = repair_prediction.admit(
                         path_state, prediction_state, call.arguments, public_task=self.public_task)
-                elif call.name == "run_tests":
+                elif gate_diagnostics and call.name == "run_tests":
                     repair_test_link = repair_prediction.validate_test(
                         prediction_state, path_state, call.arguments)
             except (PatchLoopError, ValueError, OSError, SyntaxError) as exc:
                 preflight_error = exc
             helper_state = verification["helper_correction"]
-            if helper_state.get("blocked") and call.name != "stop_task":
+            if gate_diagnostics and helper_state.get("blocked") and call.name != "stop_task":
                 helper_link = helper_recovery.link(helper_state)
             try:
-                helper_recovery.validate(helper_state, call.name, call.arguments,
-                                         original_obligation=verification["original_obligation"])
+                if gate_diagnostics:
+                    helper_recovery.validate(helper_state, call.name, call.arguments,
+                                             original_obligation=verification["original_obligation"])
             except ContractError as exc:
                 preflight_error = exc
             if call.name == "run_probe" and preflight_error is None:
@@ -3018,8 +3026,9 @@ class DevToolGateway:
         mutation_requirement_reference = None
         mutation_behavior_cases = None
         correction = observation_correction.review(self.journal.events(), baseline)
-        if correction["blocked"] and call.name not in {
-                "run_probe", "observe_original", "stop_task"}:
+        if (self.verification_policy == "reproduction-gated-v1"
+                and correction["blocked"] and call.name not in {
+                "run_probe", "observe_original", "stop_task"}):
             preflight_error = ContractError(
                 "Correct the contradictory observation before exploration, repair or finish.",
                 details={"observation_correction": correction},
@@ -4579,6 +4588,9 @@ class DevToolGateway:
             repair_path.review(self.journal.events(), diff_hash, review))
         return {
             **{key: value for key, value in review.items() if key != "pending_cases"},
+            **({"verification_policy": self.verification_policy,
+                "blocks_submission": False} if self.verification_policy == "public-checks-v1"
+               else {}),
             "repair_path": path,
             "repair_prediction": repair_prediction.review(self.journal.events(), diff_hash, path),
             "first_observation": first_observation.review(self.journal.events(), diff_hash, review),
@@ -4594,6 +4606,8 @@ class DevToolGateway:
         original_obligation.release(self.journal, self.public_task, reason)
 
     def _require_acquisition_released(self, diff_hash: str) -> None:
+        if self.verification_policy == "public-checks-v1":
+            return
         verification = self.completion_verification(diff_hash=diff_hash)
         correction = verification.get("observation_correction", {})
         if correction.get("blocked"):
@@ -4626,8 +4640,9 @@ class DevToolGateway:
                     diff_hash=summary.patch_hash)},
             )
         verification = self.completion_verification(diff_hash=summary.patch_hash)
-        if (verification["status"] in {"pending", "refuted"}
-                or verification.get("target_failure_count")):
+        if (self.verification_policy == "reproduction-gated-v1"
+                and (verification["status"] in {"pending", "refuted"}
+                     or verification.get("target_failure_count"))):
             raise ContractError(
                 "Original-case verification is " + verification["status"]
                 + "; a helper or regression PASS cannot close it.",

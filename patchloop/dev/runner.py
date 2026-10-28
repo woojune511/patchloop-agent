@@ -269,6 +269,7 @@ class _ToolPolicy:
     repair_test_edit_minimum_tool_actions: int = 0
     selected_test_reserve_tool_actions: int | None = None
     selected_test_comparison_required: bool = False
+    verification_policy: str = "reproduction-gated-v1"
 
     @property
     def feedback_recovery_reserve_calls(self) -> int:
@@ -341,6 +342,8 @@ def _model_hash(request: RunRequest, pricing: ModelPricing | None) -> str:
                if request.probe_recheck != "none" else {}),
             **({"reproduction_acquisition": request.reproduction_acquisition}
                if request.reproduction_acquisition != "none" else {}),
+            **({"verification_policy": request.verification_policy}
+               if request.verification_policy != "reproduction-gated-v1" else {}),
             "transport_max_retries": 0 if request.provider == "openai" else None,
             "service_tier": "default",
             "api_base_url": "https://api.openai.com/v1",
@@ -652,9 +655,11 @@ def _completion_guidance(
         "No completion action is currently offered under the current state and budgets. "
         "stop_task abandons without submission or evaluation."
     )
+    diagnostic_only = policy.verification_policy == "public-checks-v1"
     needs_mutation = policy.workflow_gate == "needs_mutation" or any(
         row["status"] == "FAIL" for row in snapshot.visible_check_status
-    ) or (snapshot.completion_verification or {}).get("status") == "refuted"
+    ) or (not diagnostic_only
+          and (snapshot.completion_verification or {}).get("status") == "refuted")
     if policy.helper_correction and policy.helper_correction.get("blocked"):
         correction = policy.helper_correction
         stage = policy.workflow_gate
@@ -773,7 +778,7 @@ def _completion_guidance(
             message += (
                 "Use run_probe when it could change this judgment."
             )
-        if (snapshot.completion_verification or {}).get("pending_count", 0):
+        if not diagnostic_only and (snapshot.completion_verification or {}).get("pending_count", 0):
             message += (
                 " Submitting automatically replays stale original-requirement cases. "
                 "A current comparable mismatch returns to repair; unknown remains unverified."
@@ -817,13 +822,29 @@ def _completion_guidance(
             "Use run_check; PASS on a different diff does not count toward completion. "
             "Submission becomes available when all required checks pass on this scoped patch."
         )
+    if diagnostic_only:
+        message += (
+            " Original reproduction and call-path observations are optional diagnostic evidence, "
+            "not submission prerequisites. Review valid observed failures when choosing further "
+            "repair or testing; malformed or missing observations do not establish a code failure. "
+            "finish_task submits the scoped candidate after required public checks and does not "
+            "certify task correctness; independent evaluation decides acceptance. No original "
+            "replay is automatically started at submission. Report unresolved evidence honestly."
+        )
     return {
         "diff_hash": snapshot.diff.patch_hash,
         "stage": stage,
         "submission_ready": (snapshot.ready_to_submit and "finish_task" in allowed
-                             and (snapshot.completion_verification or {}).get("status")
-                             != "refuted" and not (snapshot.completion_verification or {}).get(
-                                 "target_failure_count")),
+                             and (diagnostic_only or (
+                                 (snapshot.completion_verification or {}).get("status") != "refuted"
+                                 and not (snapshot.completion_verification or {}).get(
+                                     "target_failure_count")))),
+        **({"verification_policy": policy.verification_policy, "submission_rule": (
+            "A nonempty scoped candidate and current required-public-check PASS permit submission. "
+            "Original reproduction and diagnostic corrections are optional evidence; their raw "
+            "blocked/pending/refuted status is not a submission gate. No new original replay is "
+            "automatic. Report unresolved evidence honestly; independent acceptance is separate."
+        )} if diagnostic_only else {}),
         "next_action": next_action,
         "message": message,
     }
@@ -899,7 +920,12 @@ def _tool_policy(
         ready_to_submit = snapshot.ready_to_submit
         has_current_mutation_evidence = bool(snapshot.mutation_evidence_paths)
     workflow_gate = _workflow_gate(summary, ready_to_submit=ready_to_submit)
-    verification = (snapshot.completion_verification or {}) if snapshot is not None else {}
+    raw_verification = (snapshot.completion_verification or {}) if snapshot is not None else {}
+    verification_policy = getattr(gateway, "verification_policy", "reproduction-gated-v1")
+    diagnostic_only = verification_policy == "public-checks-v1"
+    # Public evidence remains in the snapshot and completion metadata. Only the
+    # admission forecast drops optional diagnostics from the required return path.
+    verification = {} if diagnostic_only else raw_verification
     observation_fix = verification.get("observation_correction", {})
     observation_blocked = bool(observation_fix.get("blocked"))
     observation_available = bool(
@@ -917,7 +943,7 @@ def _tool_policy(
         and not test_comparison_pending
     )
     diagnosed_test_bound = bool(path_diagnosis.get("status") == "diagnosed" and repair_prediction)
-    first_observation = verification.get("first_observation", {})
+    first_observation = raw_verification.get("first_observation", {})
     first_available = bool(first_observation.get("available")
                            and getattr(gateway, "probe_sandbox", None) is not None)
     helper_fix = verification.get("helper_correction", {})
@@ -1134,7 +1160,7 @@ def _tool_policy(
         inspection_tool_floor = budget.minimum_tool_actions + request_fix
     # Preserve one optional original observation before exploration closes. This
     # shares the existing protected slack, rather than adding a second reserve.
-    if first_available:
+    if first_available and not diagnostic_only:
         inspection_floor = max(inspection_floor, inspection_budget.minimum + 1)
         inspection_tool_floor = max(
             inspection_tool_floor, inspection_budget.minimum_tool_actions + 1)
@@ -1281,7 +1307,7 @@ def _tool_policy(
         ):
             allowed.add("run_tests")
 
-    if first_available:
+    if first_available and not diagnostic_only:
         # A rejected first edit can consume mutation retry protection until the
         # protected path equals the minimum. Every optional diagnostic must still
         # leave the observation slot; reads already account for acquired anchors.
@@ -1409,7 +1435,7 @@ def _tool_policy(
             minimum_cost_successors["replace_text"] = max(
                 minimum_cost_successors["replace_text"], test_edit_budget.minimum - 1,
             )
-        if first_available:
+        if first_available and not diagnostic_only:
             for tool in _FIRST_OBSERVATION_EXPLORATION & allowed:
                 # The shared inspection floor already retained the first
                 # observation. Other tools still need that separate successor.
@@ -1437,7 +1463,7 @@ def _tool_policy(
                     and not completion_state.reproduction_case_count and not acquisition_pending)
                 spare_edits = remaining_mutations - int(requires_mutation
                     or tool == "replace_text") - int(repair_test_edit_enabled)
-                ordinary = not first_available and ordinary_route_supported(
+                ordinary = (diagnostic_only or not first_available) and ordinary_route_supported(
                     completion_state, tool, acquisition_pending=acquisition_pending,
                     test_edit=repair_test_edit_enabled and tool == "replace_text",
                     test_comparison=test_comparison_pending)
@@ -1662,6 +1688,7 @@ def _tool_policy(
         and has_current_mutation_evidence
     )
     policy = _ToolPolicy(
+        verification_policy=verification_policy,
         workflow_gate=workflow_gate,
         allowed_tools=frozenset(allowed),
         check_ids=available_check_ids,
@@ -1754,7 +1781,8 @@ def _tool_policy(
                             "offered": "observe_original" in allowed,
                             "minimum_route_calls": budget.minimum + 1,
                             "minimum_route_tool_actions": budget.minimum_tool_actions + 1,
-                            "reservation": "shared_protected_slack_one_observation"}
+                            "reservation": ("optional_action_only" if diagnostic_only
+                                            else "shared_protected_slack_one_observation")}
                            if first_observation.get("status") not in {None, "not_needed"}
                            else None),
     )
@@ -1985,6 +2013,12 @@ def _reproduction_review_resources(
     review: dict[str, Any], policy: _ToolPolicy,
 ) -> dict[str, Any]:
     """Keep the duplicate model-facing path state consistent without changing its ledger."""
+    if policy.verification_policy == "public-checks-v1":
+        return {**review, "verification_policy": policy.verification_policy,
+                "submission_gate": False, "interpretation": (
+                    "Diagnostic evidence only. Raw statuses describe observations and their "
+                    "strict-policy obligations, not required work under public-checks-v1."
+                )}
     completion = review.get("completion", {})
     path_state = completion.get("repair_path")
     if not isinstance(path_state, dict) or "preparation_available" not in path_state:
@@ -3078,8 +3112,12 @@ def _build_model_input(
     return assemble_model_input(
         system_prompt=(completion_context.SYSTEM_PROMPT
                        if completion_context.active(json.loads(context)) else
-                       repair_context.SYSTEM_PROMPT if repair_context.pending(json.loads(context))
-                       else thin_policy.system_prompt(agent_policy, planning_policy)),
+                       repair_context.system_prompt(json.loads(context))
+                       if repair_context.pending(json.loads(context))
+                       else thin_policy.system_prompt(agent_policy, planning_policy,
+                           verification_policy=json.loads(context).get(
+                               "completion_guidance", {}).get(
+                                   "verification_policy", "reproduction-gated-v1"))),
         state=thin_policy.project_state(state, agent_policy), history=new_history,
         previous_input=previous_input, context_policy=context_policy,
         window=compact_window,
@@ -3174,9 +3212,12 @@ def _build_segmented_model_input(
         "repair_correction", {}).get("fresh_segment"):
         reason = "repair_no_action"
     compact_stage = diagnosing or repairing or finalizing
-    prompt = (diagnosis_context.SYSTEM_PROMPT if diagnosing else repair_context.SYSTEM_PROMPT
+    prompt = (diagnosis_context.SYSTEM_PROMPT if diagnosing else
+              repair_context.system_prompt(current)
               if repairing else completion_context.SYSTEM_PROMPT if finalizing else
-              thin_policy.system_prompt(agent_policy, planning_policy, history_search_policy))
+              thin_policy.system_prompt(agent_policy, planning_policy, history_search_policy,
+                  current.get("completion_guidance", {}).get(
+                      "verification_policy", "reproduction-gated-v1")))
     replace_pending = force_reason in {"omit_optional_evidence", "shrink_history_result"}
     old_manifest = handoff.get("evidence_manifest", {}) if handoff else {}
     omit_optional = force_reason == "omit_optional_evidence" or (
@@ -4147,6 +4188,7 @@ def _run_envelope(
         probe_policy=request.probe_policy,
         context_policy=request.context_policy,
         reproduction_acquisition=request.reproduction_acquisition,
+        verification_policy=request.verification_policy,
         retained_source_chars=request.retained_source_chars,
         completion_cost_policy=request.completion_cost_policy,
         completion_cost_contract=(
@@ -4240,7 +4282,9 @@ def _selected_test_reserve(policy):
     explicit = getattr(policy, "selected_test_reserve_tool_actions", None)
     reserve = policy.completion_budget_tool_actions if explicit is None else explicit
     first = getattr(policy, "first_observation", None)
-    if first and first.get("available"):
+    if (first and first.get("available")
+            and getattr(policy, "verification_policy", "reproduction-gated-v1")
+            != "public-checks-v1"):
         reserve = max(reserve, policy.minimum_completion_tool_actions + 1)
     return reserve
 
@@ -4777,6 +4821,8 @@ def _execute_completion_batch(
         _replay_original_cases(
             journal=journal, gateway=gateway, counters=counters,
             active_elapsed_ms=active_elapsed_ms,
+            admit_new=getattr(gateway, "verification_policy", "reproduction-gated-v1")
+            != "public-checks-v1",
         )
         return gateway.execute_batch(calls)
     finally:
@@ -4902,7 +4948,8 @@ def _run_original_recheck(
             active_elapsed_ms=active_elapsed_ms, acquired_only=True,
             # This is already reserved completion work, not an extra optional
             # model probe. Reconcile durable children even when admission closes.
-            admit_new=policy.completion_possible,
+            admit_new=(policy.completion_possible
+                       and policy.verification_policy != "public-checks-v1"),
         )
     except _CompletionVerificationAbort as exc:
         return exc.terminal, str(exc)
@@ -5534,6 +5581,7 @@ def _run_one_active(
         probe_policy=request.probe_policy,
         retained_source_chars=request.retained_source_chars,
         reproduction_acquisition=request.reproduction_acquisition,
+        verification_policy=request.verification_policy,
         agent_policy=request.agent_policy,
         history_search_policy=request.history_search_policy,
         dependency_sources=caller_sources,
@@ -5926,7 +5974,9 @@ def _run_one_active(
             max_correction_output_tokens=request.max_correction_output_tokens,
             remaining_seconds=remaining_active_seconds(),
         )
-        if ((snapshot.completion_verification or {}).get("original_obligation", {}).get("stage")
+        if (request.verification_policy != "public-checks-v1"
+                and (snapshot.completion_verification or {}).get(
+                    "original_obligation", {}).get("stage")
                 == "pending" and "run_probe" not in policy.allowed_tools):
             # The phase cannot consume the protected repair/check/return path.
             # Persist this release only on the real loop, never a forecast preview.
@@ -6204,7 +6254,7 @@ def _run_one_active(
                 request_payload = (openai_adapter.request_payload(
                     model_input, schemas, system_prompt=thin_policy.system_prompt(
                         request.agent_policy, request.planning_policy,
-                        request.history_search_policy),
+                        request.history_search_policy, request.verification_policy),
                 ) if openai_adapter is not None else {
                     "model": request.model, "input": model_input, "tools": schemas,
                     "max_output_tokens": request.max_output_tokens,
@@ -6262,7 +6312,7 @@ def _run_one_active(
                 request_payload = openai_adapter.request_payload(
                     model_input, schemas, system_prompt=thin_policy.system_prompt(
                         request.agent_policy, request.planning_policy,
-                        request.history_search_policy),
+                        request.history_search_policy, request.verification_policy),
                 )
                 request_payload["parallel_tool_calls"] = _parallel_tool_calls(policy)
                 request_payload["tool_choice"] = "required"
@@ -6427,7 +6477,8 @@ def _run_one_active(
                                        model_input, schemas,
                                        system_prompt=thin_policy.system_prompt(
                                            request.agent_policy, request.planning_policy,
-                                           request.history_search_policy),
+                                           request.history_search_policy,
+                                           request.verification_policy),
                                    ))
             except Exception as exc:
                 terminal_code = DevTerminal.TASK_FAILED
@@ -6831,7 +6882,7 @@ def _run_one_active(
         # A physical/output limit can stop the loop before the next policy
         # projection. Retain that stop cause while reporting the unresolved
         # observation; transport/count/billing uncertainty keeps its own terminal.
-        if terminal_code in {
+        if request.verification_policy != "public-checks-v1" and terminal_code in {
             DevTerminal.LIMIT_REACHED, DevTerminal.COST_CAP_REACHED,
             DevTerminal.INCOMPLETE_RESPONSE, DevTerminal.PROTOCOL_VIOLATION,
         }:
