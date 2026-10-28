@@ -81,10 +81,13 @@ def restore(source, cut, output, cap, env_file, *, funded=False):
         reserved_tool_actions=RESERVED_ACTIONS, reserved_wall_seconds=RESERVED_SECONDS)
 
 
-def feedback_audit(branch, request, packet):
+def feedback_audit(branch, request, packet, *, first_response=True):
     state = json.loads(request["input"][-1]["content"])["state"]
-    require(request["input"] == original.public_input(request["input"]),
-            "historical opaque reasoning remains")
+    # Only the restored boundary discards historical opaque state. Later native
+    # continuations belong to this new run and must retain normal model history.
+    if first_response:
+        require(request["input"] == original.public_input(request["input"]),
+                "historical opaque reasoning remains")
     require(state["current_diff"]["patch_hash"] == packet["candidate_diff_hash"],
             "restored candidate differs from measured counterexamples")
     expected = inject({"current_diff": state["current_diff"]}, packet)[FIELD]
@@ -159,8 +162,9 @@ def prepare(source, cut, packet_root, env_file, output, result_root, cap):
     require(len(later_client.created) == len(later_client.counted) == 2
             and later_receipt["result"]["terminal"] == "AGENT_STOPPED"
             and not later_receipt["synthetic_probe_calls"], "later offline delivery not verified")
-    for delivered in later_client.created:
-        feedback_audit(later, post.normalized_request(delivered), packet)
+    for index, delivered in enumerate(later_client.created):
+        feedback_audit(later, post.normalized_request(delivered), packet,
+                       first_response=index == 0)
     audit["later_response_delivery_checked"] = True
     plan = {"schema": SCHEMA, "official": False, "paid_execution_authorized": False,
         "source": source.record(), "cut_sequence": cut, "include_cut": False,
