@@ -16,3 +16,4 @@
 - [Saved SQLFluff candidate replay: public indentation remains nine spaces before and after](../2026-10-29-sqlfluff-public-candidate-replay.md)
 - [SQLFluff branch diagnosis: accepted L036 edit, same intermediate output and split-indent failure](../2026-10-29-sqlfluff-branch-diagnosis.md)
 - [Pre-edit helper observations linked to current candidate and optional replay guidance](../2026-10-29-probe-followup-guidance.md)
+- [SQLFluff observation follow-up: accepted repair, five delivered cards, no post-edit replay](../2026-10-29-probe-followup-single-results.md)

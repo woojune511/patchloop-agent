@@ -81,18 +81,22 @@ changed L036 branch ran once and its fix was accepted, but produced the same
 observed intermediate SQL as the original. Later L003 additions create two
 four-space pieces; L039 reduces the second to one, then L003 replaces only the
 first with eight, leaving nine spaces. A repeated no-op fix is rejected as a seen
-state. The next repair question is whole-indent normalization and its regression
-coverage, not branch reachability or more budget. No repair, runtime policy or
-budget change was made by these operator diagnostics.
+state. These diagnostics establish ineffective intermediate behavior in the old
+candidate, not L003 normalization as the only viable repair. No repair, runtime
+policy or budget change was made by these operator diagnostics.
 The [observation follow-up change](history/2026-10-29-probe-followup-guidance.md)
 now connects a pre-edit helper's bounded observations to current-patch reexecution
 status in ordinary and compact requests. Existing replay references are advertised
 only on an offered general probe route. This adds no automatic execution, reserve,
-check credit or submission gate. Local delivery/recovery evidence does not show
-that a live model chooses replay or repairs the failure; that is the next question.
-This confirms delivery and the source-to-edit path in one run, not causal quality
-improvement. Protocol correction was unused, and the private failure cause is
-unestablished. No further paid invocation is authorized.
+check credit or submission gate. The [single live follow-up](history/2026-10-29-probe-followup-single-results.md)
+is CLOSED at USD1.18095550/4.50 with independent acceptance/safety PASS. The first
+L036 edit failed two public tests; a second edit narrowed indentation reuse and
+passed all 506, followed by normal submission. All five eligible requests carried
+the card; four offered replay, but the model performed no post-edit helper and
+disclosed that gap at finish. This is one successful repair and live delivery,
+not evidence of replay uptake or causal improvement. Original-call verification
+remains unverified without downgrading the acceptance PASS. Keep budgets and
+submission policy unchanged; repeatability and the effect on choices remain open.
 Helper return types and incomplete output capture remain separate unresolved issues;
 this intervention does not repair those contracts. Repeatability and held-out
 improvement remain unverified. No further paid run is authorized by unused funds.
