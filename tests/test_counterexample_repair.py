@@ -17,7 +17,9 @@ from patchloop.util import canonical_json
 
 def test_read_delivery_audit_requires_success_without_correction_and_exact_output():
     result = {"action_id": "public_counterexample_delivery_read", "tool": "read_file",
-              "status": "succeeded", "input_hash": "bound", "output": {"text": "public source"}}
+              "status": "succeeded", "input_hash": "bound", "workspace_diff_hash": "current",
+              "output": {"spans": [{"path": "public.py", "file_hash": "source-hash",
+                                     "start_line": 1, "end_line": 1, "content": "public source"}]}}
     event = {"event_type": "action_finished", "payload": {
         "action_id": result["action_id"], "result": result}}
     request = {"input": [{"role": "user", "content": canonical_json(
@@ -29,6 +31,10 @@ def test_read_delivery_audit_requires_success_without_correction_and_exact_outpu
         diagnostic.read_delivery_audit([], request)
     changed = copy.deepcopy(event)
     changed["payload"]["result"]["input_hash"] = "different"
+    with pytest.raises(ContractError, match="missing from following request"):
+        diagnostic.read_delivery_audit([changed], request)
+    changed["payload"]["result"]["input_hash"] = "bound"
+    changed["payload"]["result"]["output"]["spans"][0]["content"] = "different body"
     with pytest.raises(ContractError, match="missing from following request"):
         diagnostic.read_delivery_audit([changed], request)
 

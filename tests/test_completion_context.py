@@ -1,6 +1,7 @@
 """Small, provider-free controls for evidence-preserving finalization context."""
 
 import copy
+import json
 
 import pytest
 
@@ -186,3 +187,98 @@ def test_context_contract_is_explicit_and_each_call_is_independent():
     declared["preserved"].clear()
     assert completion_context.contract()["preserved"]
     assert "unverified_delivery" in completion_context.SYSTEM_PROMPT
+
+
+def source_result(tool="read_file", scope="repository"):
+    span = {"path": "source.py", "file_hash": FILE, "start_line": 1, "end_line": 2,
+            "content": "LATEST_SOURCE_BODY\nreturn value"}
+    key = "spans" if scope == "repository" else "dependency_spans"
+    output = {"source_scope": scope, key: [span], "truncated": False}
+    if tool == "read_file":
+        output.update(path="source.py", start_line=1, end_line=2, line_count=2,
+                      eof=False, next_start_line=None, diagnostic=None)
+    else:
+        output.update(query="value", path_glob="**/*.py", searched_file_count=1)
+    if scope != "repository":
+        output.update(read_only=True, dependency_source_identity="registered-identity")
+        span.update(source_scope=scope, read_only=True, provenance={"scope": scope,
+                    "path": "source.py", "file_hash": FILE})
+    return {"tool": tool, "action_id": "latest-source", "input_hash": FILE,
+            "status": "succeeded", "workspace_diff_hash": DIFF, "output": output}
+
+
+@pytest.mark.parametrize("tool", ["read_file", "search_files"])
+@pytest.mark.parametrize("scope", ["repository", "dependency:caller"])
+def test_latest_successful_current_source_output_survives_completion_projection(tool, scope):
+    original = state()
+    result = source_result(tool, scope)
+    original["latest_tool_results"] = [result]
+    before = copy.deepcopy(original)
+    projected = completion_context.project(original)
+    assert projected["latest_tool_results"] == [result]
+    assert projected["completion_stage"]["source_retrieval"]["source_bodies_delivered"] is True
+    assert completion_context.project(projected) == projected
+    assert original == before
+    assert SOURCE_BODY not in canonical_json(projected)
+    for key in ("workflow_gate", "available_tool_names", "remaining_budget", "current_diff",
+                "visible_check_status", "reproduction_review"):
+        assert projected[key] == original[key]
+    projected["latest_tool_results"][0]["output"]["truncated"] = True
+    assert original == before
+
+
+@pytest.mark.parametrize("change", [
+    {"status": "failed"}, {"workspace_diff_hash": "old"},
+    {"workspace_diff_hash": None}, {"historical": True}, {"tool": "run_probe"},
+])
+def test_latest_source_exception_does_not_retain_failed_stale_unbound_or_other_bulk(change):
+    original = state()
+    original["latest_tool_results"] = [{**source_result(), **change}]
+    projected = completion_context.project(original)
+    assert "LATEST_SOURCE_BODY" not in canonical_json(projected)
+    assert projected["latest_tool_results"][0]["output"] == {"truncated": False}
+    assert projected["completion_stage"]["source_retrieval"]["source_bodies_delivered"] is False
+
+
+def test_no_current_diff_cannot_retain_source_body_and_later_batch_does_not_reuse_it():
+    original = state()
+    original["latest_tool_results"] = [source_result()]
+    projected = completion_context.project(original)
+    projected["latest_tool_results"] = [{"tool": "run_check", "status": "succeeded",
+                                        "workspace_diff_hash": DIFF, "output": {"passed": True}}]
+    assert "LATEST_SOURCE_BODY" not in canonical_json(completion_context.project(projected))
+    original["current_diff"].pop("patch_hash")
+    assert "LATEST_SOURCE_BODY" not in canonical_json(completion_context.project(original))
+
+
+@pytest.mark.parametrize("native", [False, True])
+def test_actual_segment_view_delivers_latest_read_once_with_or_without_native_exchange(native):
+    from patchloop.dev import runner, segments
+    from patchloop.dev.contracts import DevToolResult
+    from patchloop.dev.conversation import assemble_model_input, reconstruct_state
+
+    original = state()
+    original["working_notes"] = {"findings": [], "verification": {"items": []}}
+    result = source_result()
+    original["latest_tool_results"] = [result]
+    history = ([{"type": "function_call", "call_id": result["action_id"], "name": "read_file",
+                 "arguments": canonical_json({"path": "source.py"})},
+                {"type": "function_call_output", "call_id": result["action_id"],
+                 "output": canonical_json(result)}] if native else [])
+    before = copy.deepcopy(history)
+    view = runner._segment_current_view(completion_context.project(original), history,
+                                        [DevToolResult.model_validate(result)])
+    request_input = assemble_model_input(system_prompt=completion_context.SYSTEM_PROMPT,
+                                        state=view, history=history, context_policy=segments.POLICY)
+    actual = reconstruct_state(request_input, context_policy=segments.POLICY)
+    assert canonical_json(request_input).count("LATEST_SOURCE_BODY") == 1
+    assert "source-body-must-not-repeat" not in canonical_json(request_input)
+    assert history == before
+    if native:
+        assert actual["latest_tool_results"] == []
+        assert actual["latest_tool_results_delivery"]["action_ids"] == [result["action_id"]]
+        delivered = [json.loads(row["output"]) for row in request_input
+                     if row.get("type") == "function_call_output"]
+    else:
+        delivered = actual["latest_tool_results"]
+    assert delivered[0]["output"]["spans"] == result["output"]["spans"]

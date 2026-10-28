@@ -133,8 +133,10 @@ def read_delivery_audit(events, request):
     for exchange in post.public_exchanges(request["input"], archive_kind=post.PUBLIC_EVIDENCE_KIND):
         if exchange.get("type") == "function_call_output":
             delivered.append(json.loads(exchange["output"]))
-    require(any(isinstance(item, dict) and all(item.get(key) == expected[key]
-                for key in ("action_id", "input_hash", "status", "output")) for item in delivered),
+    require(any(isinstance(item, dict) and all(item.get(key) == expected.get(key)
+                for key in ("action_id", "input_hash", "tool", "status", "workspace_diff_hash"))
+                and item.get("output", {}).get("spans") == expected["output"].get("spans")
+                and bool(expected["output"].get("spans")) for item in delivered),
             "successful read result missing from following request")
     return {"status": "PASS", "action_id": expected["action_id"],
             "result_hash": sha256_json(expected), "protocol_corrections": 0}

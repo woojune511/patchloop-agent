@@ -48,8 +48,13 @@ Quick retains the cheap collector, legacy-byte and model-packet checks.
 a compact segment on entry and after a no-action completion correction. Keep the
 public task, actual current patch, required checks, original verification/outcomes,
 unresolved notes/plan and budgets. Omit old source/probe bulk; retain source lookup
-identities and existing retrieval tools. Explicit new reads still deliver native
-results. The journal is unchanged. Other context policies compact current state
+identities and existing retrieval tools. Latest successful `read_file`/`search_files`
+results bound to the current diff retain their exact bounded output, including
+repository/dependency spans and provenance, even when a fresh compact segment
+omits the native exchange. Existing native-result deduplication avoids a second
+delivery when that exchange remains. Failed, stale or unbound results stay summaries;
+older source bodies remain omitted. No retrieval permission, verdict or budget changes.
+The journal is unchanged. Other context policies compact current state
 but do not acquire segmented history-reset behavior.
 
 `completion-recovery-v1` reserves role-specific output within the existing cap:
