@@ -62,12 +62,22 @@ no further run is funded. Caller access and completion reservations changed
 together, so this single run cannot isolate their effects. No additional
 model-selected probe ran; observation-timing uptake remains untested.
 
-Keep the implemented access and reservation behavior, but do not claim repair
-efficacy. The next unresolved question is the public verification scope: the
-submitted fallback handles only particular explicit path shapes, while the frozen
-caller and existing tests passed. Review the public resolver contract and design
-discriminating public cases before another paid run. The private failure cause was
-not inspected and must not be inferred from this result.
+The [public path-contract comparison](history/2026-10-28-caller-path-contract-results.md)
+now confirms a candidate regression: the new fallback treats a search root as the
+module itself. Three negative path cases change from ImportError to a false
+namespace result; reversing two leaf roots changes which false result is returned.
+Normal root, child, regular-package and namespace-portion controls remain intact.
+One empty-path discrepancy predates the patch and is recorded separately. The
+12-case base/candidate comparison used two local probes, 18.220s probe time and
+zero model calls. It is a public compatibility counterexample, not an inspection
+or explanation of the private evaluator's failure.
+
+Keep caller access and completion reservations, but reject this submitted repair
+as semantically incomplete. The next decision is to test repair against the caller
+behavior and its library contract together, including a case that must stay an
+error. A bounded revision supplied with these public counterexamples would be an
+operator-assisted diagnostic, not a fresh solve. No new gate, larger budget,
+target patch or further paid run has been implemented or authorized.
 
 ## Supporting evidence
 
