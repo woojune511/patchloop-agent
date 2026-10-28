@@ -24,3 +24,4 @@
 - [Caller contract and reservation analysis: source access gap and constrained observation timing](../2026-10-28-caller-budget-analysis.md)
 - [Ordinary caller reads and shared completion reservations](../2026-10-28-caller-completion-paths.md)
 - [Caller-source and completion-reservation checkpoint follow-up: preparation](../2026-10-28-caller-completion-repair-plan.md)
+- [Caller/completion live result: original and public tests pass, isolated acceptance fails](../2026-10-28-caller-completion-repair-results.md)

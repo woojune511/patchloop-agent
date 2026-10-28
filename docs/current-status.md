@@ -46,23 +46,28 @@ Local caller controls passed 39 tests (three platform skips); budget controls
 passed 97. Quick had 698 PASS and six contract/doc failures, all resolved by focused
 rechecks; both isolated mock evaluations passed. Saved-state policy replay opens
 reads at three previously closed points while preserving the final mandatory floor.
-This is local mechanism evidence, not model uptake or a successful F0010 repair. The previous
-[same-budget live follow-up](history/2026-10-28-diagnosis-exploration-results.md)
-still failed after three edits: two retained F0010 and the third produced a
-downstream caller exception. Public checks, finish and isolated acceptance were
-NOT_RUN. The [analysis](history/2026-10-28-caller-budget-analysis.md) found source
-access and inconsistent reservation constraints; neither alone proves the cause
-of every ineffective edit. Its final required-completion response floor remains
-binding. The unresolved question is whether the model now investigates the caller
-and repairs correctly within the same caps. Latest live cost USD1.133929 of
-USD4.13241570; this allocation and all earlier allocations are CLOSED. No further
-run is funded.
+This is local mechanism evidence. The subsequent
+[caller/completion live follow-up](history/2026-10-28-caller-completion-repair-results.md)
+used caller search and read, made one edit, and passed the frozen original call
+with positive file-processing evidence plus its normal-package control. Captures,
+authored verdict and unchanged call conditions agree. The next model response
+received that result; public regression passed 1,231 tests and normal finish and
+submission completed. Isolated task acceptance nevertheless FAILED; safety passed.
+Successful public case delivery is not a successful task repair.
 
-The [caller/completion checkpoint follow-up](history/2026-10-28-caller-completion-repair-plan.md)
-is prepared with explicit pylint source registration. Two offline restorations
-match the first request, 26 fixed conditions match the prior trial, and read-only
-environment checks are READY. One new USD4.13241570 invocation is proposed; exact
-cap approval is pending. No paid call or target execution has occurred.
+The same-checkpoint continuation used eight new responses and 20 actions, costing
+USD0.813929 of the approved USD4.13241570. It ended without output/context exhaustion
+or protocol correction. The allocation is CLOSED, including its unspent balance;
+no further run is funded. Caller access and completion reservations changed
+together, so this single run cannot isolate their effects. No additional
+model-selected probe ran; observation-timing uptake remains untested.
+
+Keep the implemented access and reservation behavior, but do not claim repair
+efficacy. The next unresolved question is the public verification scope: the
+submitted fallback handles only particular explicit path shapes, while the frozen
+caller and existing tests passed. Review the public resolver contract and design
+discriminating public cases before another paid run. The private failure cause was
+not inspected and must not be inferred from this result.
 
 ## Supporting evidence
 
