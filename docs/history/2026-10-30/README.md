@@ -1,5 +1,6 @@
 # 2026-10-30 investigations
 
+- [Latest SQLFluff patch: public counterexamples](../2026-10-30-latest-sqlfluff-public-counterexamples.md)
 - [Evidence reuse: tasks 3, 9 and 16](../2026-10-30-evidence-reuse-3916-results.md)
 - [Integrated tasks 3, 9 and 16](../2026-10-30-integrated-3916-results.md)
 - [Allowed test edits and exact restoration](../2026-10-30-test-validation-fixes.md)

@@ -55,22 +55,28 @@ probe, then used RAISE plus a valid control and replaced its mock regression wit
 actual RawDataElement input. Its final public file ran 27 PASS. These file-level
 receipts do not establish line-entry coverage; tracking remained unknown.
 
-SQLFluff public checks ran 167 PASS, but its sole probe still used only adjacent
-`;;` and a normal `;`. This patch adds an allow_trailing guard to its empty-section
-return; the new success return still lacks a min_delimiters guard and a sibling
-failed-match return still uses mutated_segments. Full implementation and option
-tests were delivered before editing, and probe output was retained before finish.
-Missing source or lost output does not explain this attempt's narrow verification.
-The exact patch's gap/minimum cases were not dynamically rerun: residual concerns
-are static, and the exact independent failure remains unknown. The earlier
-[public paired diagnosis](history/2026-10-30-sqlfluff1517-public-contract-diagnosis.md)
-proved those cases on a different patch, not on this submission.
+SQLFluff public checks ran 167 PASS, but its sole live probe still used only adjacent
+`;;` and a normal `;`. The [latest-patch public replay](history/2026-10-30-latest-sqlfluff-public-counterexamples.md)
+now confirms the residual defects on this exact submission: whitespace/newline/comment
+between semicolons still causes token-loss RuntimeError. The added allow_trailing=False
+guard correctly rejects adjacent delimiters while preserving input, but the new early
+success return accepts bar.. with min_delimiters=3, a success-condition regression.
+Other failed-match/minimum paths still lose the consumed prefix. Normal lists,
+sufficient minimum counts and allowed trailing delimiters remain valid controls.
 
-The next unresolved question is how already-read failure paths and success guards
-become discriminating checks before a narrow patch is accepted. Compare public
-plans/check questions with actual cases before adding prompts, tools or gates;
-replay this exact patch publicly before asserting its residual behavior. Provider
-dispatch still occupied 78-80% of task time. No automatic paid repeat is pending.
+This paired public-only diagnosis took 48.496 s, with no model calls or private
+re-evaluation. All 1,699 copied files match except delimited.py. Both conditions
+collected the identical added test: original 1 FAIL / 166 PASS, candidate 167 PASS.
+The test covers adjacent delimiters, not the separated cases or generic options.
+Thus test omission and stale imports do not explain the reproduced gap. The exact
+independent evaluation failure remains unknown; no operator repair was applied.
+
+Full implementation and option tests were delivered during the live run, and probe
+output survived before finish. The next unresolved question is how already-read
+failure paths and success guards become discriminating checks: compare public
+plans/check questions with actual cases before adding prompts, tools or gates.
+Failure input preservation and success-option validity are separate obligations.
+Provider dispatch occupied 78-80% of live task time. No automatic paid repeat is pending.
 
 Keep [advisory test-selection feedback and batched source tracking](history/2026-10-30-test-execution-visibility-and-latency.md).
 The [earlier 3/13/18 run](history/2026-10-30-integrated-selection-results.md) observed
