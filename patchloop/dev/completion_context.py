@@ -5,6 +5,8 @@ from __future__ import annotations
 import copy
 from typing import Any
 
+from patchloop.dev.mutation_tools import MUTATION_TOOLS
+
 POLICY = "small-completion-context-v1"
 
 SYSTEM_PROMPT = """Review the current candidate against the supplied public task and evidence.
@@ -16,8 +18,10 @@ If finish_task is offered, follow its schema and report the candidate's evidence
 gaps truthfully. Missing original verification can yield unverified_delivery. A known failure
 does not become verified through submission, plan edits or prose. stop_task abandons the task.
 Use offered source retrieval only to resolve a material remaining question. Source identifiers
-are navigation metadata, not delivered source bodies. Earlier source/probe bodies are omitted
-from this view; do not reconstruct them or infer that an omitted observation passed.
+are navigation metadata, not delivered source bodies. When a mutation tool is offered, the
+already selected current source remains available within its existing retention limit.
+Otherwise earlier source bodies are omitted. Older probe bodies remain omitted; do not
+reconstruct omitted content or infer that an omitted observation passed.
 New successful reads/searches on the current candidate retain their bounded tool output.
 The latest current probe also retains its observations, including failures and partial output;
 execution completion alone does not establish that its diagnostic question was answered.
@@ -37,6 +41,7 @@ def contract() -> dict[str, Any]:
                       "original_verification_and_target_failures", "bounded_notes_and_plan",
                       "current_protocol_correction", "remaining_budgets_and_offered_tools",
                       "latest_successful_current_source_results",
+                      "bounded_current_source_when_mutation_offered",
                       "latest_current_probe_observations"],
         "omitted": ["historical_source_bodies", "historical_bulk_tool_results",
                     "inspection_history", "probe_programs"],
@@ -165,12 +170,19 @@ def project(state: dict[str, Any]) -> dict[str, Any]:
 
     No verdict, unresolved concern, plan, or original-case result is interpreted or
     reclassified here. The current patch is retained for final assessment; complete
-    source files and old tool streams remain in their existing durable records.
+    unselected source and old tool streams remain in their existing durable records.
+    Already bounded current source stays available while mutation tools are offered.
     Latest current-candidate source retrieval and probe observations remain evidence.
     """
     if not active(state):
         return copy.deepcopy(state)
     view = _select(state, _PRESERVED)
+    if MUTATION_TOOLS.intersection(state.get("available_tool_names", [])):
+        # The gateway already validates currency and selects bounded source before
+        # admitting tools. Do not discard that selection while repairs remain offered.
+        view.update(_select(state, (
+            "source_spans", "observed_source_index", "context_projection",
+        )))
     current_hash = state.get("current_diff", {}).get("patch_hash")
     old_stage = state.get("completion_stage", {})
     prior_omissions = (old_stage.get("omitted_historical_records", {})
@@ -189,6 +201,8 @@ def project(state: dict[str, Any]) -> dict[str, Any]:
         view["latest_tool_results"] = [_latest_result(row, current_hash)
                                        for row in state["latest_tool_results"]]
     source_bodies_delivered = any(
+        span.get("content") for span in view.get("source_spans", [])
+    ) or any(
         row.get("output", {}).get(key)
         for row in view.get("latest_tool_results", [])
         for key in ("spans", "dependency_spans")

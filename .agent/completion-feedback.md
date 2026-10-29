@@ -85,8 +85,12 @@ Quick retains the cheap collector, legacy-byte and model-packet checks.
 `completion_context` activates at host `ready_to_submit`. Segmented requests start
 a compact segment on entry and after a no-action completion correction. Keep the
 public task, actual current patch, required checks, original verification/outcomes,
-unresolved notes/plan and budgets. Omit old source/probe bulk; retain source lookup
-identities and existing retrieval tools. Latest successful `read_file`/`search_files`
+unresolved notes/plan and budgets. While any mutation tool is offered, retain the
+gateway's already selected current `source_spans`, `observed_source_index` and
+`context_projection`. This preserves the existing currency/retention bounds and
+omission metadata without reading more source or reopening tools. Otherwise omit
+older source bodies; always omit old probe bulk. Retain source lookup identities
+and existing retrieval tools. Latest successful `read_file`/`search_files`
 results bound to the current diff retain their exact bounded output, including
 repository/dependency spans and provenance, even when a fresh compact segment
 omits the native exchange. Existing native-result deduplication avoids a second
@@ -95,8 +99,8 @@ bounded stdout/stderr, the existing host observation, setup/exception/path diagn
 reproduction observations and completeness flags. Failed or partial probe output is
 still evidence: retain failure, timeout, truncation and unknown comparison without
 granting success or verification credit. Failed reads and stale/unbound results stay
-summaries; older source bodies, probe programs and full execution policies remain
-omitted. No retrieval permission, verdict or budget changes.
+summaries; unselected source bodies, probe programs and full execution policies
+remain omitted. No retrieval permission, verdict or budget changes.
 The journal is unchanged. Other context policies compact current state
 but do not acquire segmented history-reset behavior.
 

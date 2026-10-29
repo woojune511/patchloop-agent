@@ -1,5 +1,7 @@
 # 2026-10-29 investigations
 
+- [Public repair alternative, source availability and budget comparison readiness](../2026-10-29-public-alternative-and-budget-readiness.md)
+
 - [File lifecycle and cleanup](../2026-10-29-file-lifecycle-followup.md)
 - [Finish choice and edit allowance](../2026-10-29-finish-choice-local-audit.md)
 

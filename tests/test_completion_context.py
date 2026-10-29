@@ -119,6 +119,96 @@ def test_source_and_old_bulk_are_removed_but_current_outcomes_and_retrieval_ids_
                                       "kind": "function", "name": "parse", "start_line": 10}]}]
 
 
+@pytest.mark.parametrize("mutation_tool", ["replace_text", "edit_files"])
+def test_offered_repair_keeps_selected_current_source_without_reopening_reads(mutation_tool):
+    original = state()
+    original["available_tool_names"] = [mutation_tool, "run_check", "finish_task", "stop_task"]
+    original["context_projection"] = {
+        "retained_content_chars": len(SOURCE_BODY), "retained_content_limit": 24_000,
+        "omitted_observed_line_count": 3,
+    }
+    before = copy.deepcopy(original)
+    projected = completion_context.project(original)
+    for field in ("source_spans", "observed_source_index", "context_projection",
+                  "available_tool_names", "remaining_budget"):
+        assert projected[field] == original[field]
+    source = projected["completion_stage"]["source_retrieval"]
+    assert source["source_bodies_delivered"] is True
+    assert source["available_tools"] == []
+    assert "old-probe-bulk-must-not-repeat" not in canonical_json(projected)
+    assert "must-not-enter-finalization" not in canonical_json(projected)
+    assert completion_context.project(projected) == projected
+    projected["source_spans"][0]["content"] = "changed derived view"
+    assert original == before
+
+
+@pytest.mark.parametrize("context_policy", ["append-v1", "segmented-v1"])
+@pytest.mark.parametrize("mutation_tool", ["replace_text", "edit_files"])
+def test_actual_completion_request_retains_selected_anchor_when_repair_is_offered(
+    tmp_path, context_policy, mutation_tool,
+):
+    from patchloop.artifacts import ArtifactStore
+    from patchloop.dev import runner
+    from patchloop.dev.conversation import reconstruct_state
+    from patchloop.dev.state import DevJournal
+
+    original = state()
+    original["available_tool_names"] = [mutation_tool, "run_check", "finish_task", "stop_task"]
+    original["latest_tool_results"] = []
+    original["working_notes"] = {"findings": [], "verification": {"items": []}}
+    original["source_spans"][0]["content"] = "CURRENT_REPAIR_ANCHOR"
+    original["source_spans"][0]["end_line"] = 10
+    journal = DevJournal(tmp_path, "run_dev_completionanchor")
+    store = ArtifactStore(tmp_path / "artifacts")
+    with journal.execution_lock():
+        request_input = runner._build_model_input(
+            journal=journal, artifact_store=store, context=canonical_json(original),
+            latest_tool_results=[], context_policy=context_policy,
+            planning_policy="none", agent_policy="thin",
+        )
+    actual = reconstruct_state(request_input, context_policy=context_policy)
+    assert canonical_json(request_input).count("CURRENT_REPAIR_ANCHOR") == 1
+    assert actual["current_sources"][0]["inline_spans"][0]["content"] == "CURRENT_REPAIR_ANCHOR"
+    assert actual["available_tool_names"] == original["available_tool_names"]
+    assert "read_file" not in actual["available_tool_names"]
+
+
+def test_repair_source_reuses_exact_native_body_and_closes_with_mutation_tools():
+    from patchloop.dev import runner, segments
+    from patchloop.dev.conversation import assemble_model_input, reconstruct_state
+
+    original = state()
+    result = source_result()
+    original["available_tool_names"] = ["replace_text", "finish_task", "stop_task"]
+    original["working_notes"] = {"findings": [], "verification": {"items": []}}
+    original["latest_tool_results"] = []
+    original["source_spans"] = copy.deepcopy(result["output"]["spans"])
+    original["observed_source_index"] = {"entries": [], "omitted_count": 0}
+    history = [
+        {"type": "function_call", "call_id": result["action_id"], "name": "read_file",
+         "arguments": "{}"},
+        {"type": "function_call_output", "call_id": result["action_id"],
+         "output": canonical_json(result)},
+    ]
+    before = copy.deepcopy(history)
+    projected = completion_context.project(original)
+    view = runner._segment_current_view(projected, history, [])
+    request_input = assemble_model_input(
+        system_prompt=completion_context.SYSTEM_PROMPT, state=view, history=history,
+        context_policy=segments.POLICY,
+    )
+    actual = reconstruct_state(request_input, context_policy=segments.POLICY)
+    assert canonical_json(request_input).count("LATEST_SOURCE_BODY") == 1
+    assert actual["current_sources"][0]["content_delivery"] == {
+        result["action_id"]: {"output.spans[0]": [[1, 2]]},
+    }
+    assert history == before
+    projected["available_tool_names"] = ["finish_task", "stop_task"]
+    closed = completion_context.project(projected)
+    assert "LATEST_SOURCE_BODY" not in canonical_json(closed)
+    assert closed["completion_stage"]["source_retrieval"]["source_bodies_delivered"] is False
+
+
 @pytest.mark.parametrize("gate", [
     None, "needs_mutation", "needs_visible_checks", "verification_incomplete",
 ])

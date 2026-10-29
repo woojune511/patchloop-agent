@@ -1,6 +1,9 @@
 """Final decision delivery and fixed-cap admission, with no live model claims."""
 from __future__ import annotations
 
+import copy
+import json
+
 import pytest
 from test_dev_completion_cost import ledger_for_slots
 from test_dev_completion_resources import Gateway, counters
@@ -9,6 +12,7 @@ from test_dev_segments import assert_submitted, configured, records
 
 from patchloop.dev import cost, runner
 from patchloop.dev.contracts import DevLimits
+from patchloop.dev.mutation_tools import MUTATION_TOOLS
 
 
 def choose(gateway, ledger, counts, ceiling=40_000):
@@ -72,10 +76,37 @@ def test_exact_count_ready_floor_clips_to_configured_ceiling_and_blocks_insuffic
 
 
 @pytest.mark.parametrize("resume", [False, True])
-def test_finalization_and_no_action_correction_use_fresh_compact_segment(
-    tmp_path, monkeypatch, resume,
+@pytest.mark.parametrize("repair_available", [False, True])
+def test_finalization_and_correction_preserve_only_offered_repair_source(
+    tmp_path, monkeypatch, resume, repair_available,
 ):
     request, inputs, counted, views = configured(monkeypatch, tmp_path, incomplete_at=(3,))
+    request = request.model_copy(update={"limits": request.limits.model_copy(update={
+        "max_accepted_mutations": 3 if repair_available else 1,
+    })})
+    raw_ready, count_payloads, dispatch_payloads = [], [], []
+    build = runner._build_context
+    adapter = runner.OpenAIResponsesAdapter
+    count, dispatch = adapter.count_input_tokens_v2, adapter.execute_request
+
+    def capture_context(**kwargs):
+        context = build(**kwargs)
+        state = json.loads(context)
+        if state["workflow_gate"] == "ready_to_submit":
+            raw_ready.append(state)
+        return context
+
+    def capture_count(self, payload, **kwargs):
+        count_payloads.append(copy.deepcopy(payload))
+        return count(self, payload, **kwargs)
+
+    def capture_dispatch(self, payload, **kwargs):
+        dispatch_payloads.append(copy.deepcopy(payload))
+        return dispatch(self, payload, **kwargs)
+
+    monkeypatch.setattr(runner, "_build_context", capture_context)
+    monkeypatch.setattr(adapter, "count_input_tokens_v2", capture_count)
+    monkeypatch.setattr(adapter, "execute_request", capture_dispatch)
     if resume:
         _crash_journal_once(monkeypatch, event_type="context_segment_started", when="after",
                             predicate=lambda p: p["reason"] == "completion_no_action")
@@ -84,15 +115,38 @@ def test_finalization_and_no_action_correction_use_fresh_compact_segment(
         journal, _ = records(request)
         request = request.model_copy(update={"resume_run_id": journal.run_id})
     assert_submitted(runner.run_dev(request)["runs"][0])
-    assert inputs == counted
+    assert inputs == counted and count_payloads == dispatch_payloads
     ready = [view for view in views if view["workflow_gate"] == "ready_to_submit"]
     assert len(ready) == 2
     assert [view["segment_handoff"]["reason"] for view in ready] == [
         "completion_stage_entered", "completion_no_action"]
     assert all(view["completion_stage"]["active"] for view in ready)
-    assert all(not view.get("current_sources") and not view.get("recent_probes") for view in ready)
+    assert raw_ready[0]["source_spans"]  # Selected current evidence exists in both controls.
+    selected = [{key: span[key] for key in (
+        "path", "file_hash", "start_line", "end_line", "content",
+    )} for span in raw_ready[0]["source_spans"]]
+    for view in ready:
+        assert bool(MUTATION_TOOLS.intersection(view["available_tool_names"])) == repair_available
+        assert not view.get("recent_probes")
+        source = view["completion_stage"]["source_retrieval"]
+        assert source["source_bodies_delivered"] == repair_available
+        if repair_available:
+            delivered = [{"path": group["path"], "file_hash": group["file_hash"], **span}
+                         for group in view["current_sources"]
+                         for span in group.get("inline_spans", [])]
+            assert delivered == selected
+            assert view["context_projection"]["retained_content_limit"] == (
+                request.retained_source_chars
+            )
+        else:
+            assert not view.get("current_sources") and "context_projection" not in view
     assert ready[0]["current_diff"] == ready[1]["current_diff"]
     assert ready[1]["visible_check_status"][0]["status"] == "PASS"
     assert ready[1]["protocol_correction"]["completion_correction"]["fresh_segment"]
     assert not any(item.get("type") in {"reasoning", "function_call_output"}
                    for item in inputs[-1])
+    journal, _ = records(request)
+    actions = [event["payload"]["result"]["tool"] for event in journal.events()
+               if event["event_type"] == "action_finished"]
+    assert actions.count("read_file") == actions.count("replace_text") == 1
+    assert actions[-3:] == ["replace_text", "run_check", "finish_task"]

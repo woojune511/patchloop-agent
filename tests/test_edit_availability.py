@@ -17,6 +17,7 @@ from patchloop.contracts import PublicTestSuite
 from patchloop.dev import repair_context, runner, segments, thin_policy
 from patchloop.dev.contracts import DevLimits
 from patchloop.dev.conversation import reconstruct_state
+from patchloop.dev.mutation_tools import MUTATION_TOOLS
 
 
 @pytest.fixture(autouse=True)
@@ -133,6 +134,14 @@ def test_count_and_dispatch_keep_edit_card_through_small_repair_path(
         )
     assert states[-1]["completion_guidance"]["submission_ready"]
     assert states[-1]["visible_check_status"][0]["status"] == "PASS"
+    # A successful public check does not remove the current source needed by an
+    # offered final repair, even though the latest tool result is no longer a read.
+    final = states[-1]
+    assert MUTATION_TOOLS.intersection(final["available_tool_names"])
+    assert final["current_sources"]
+    assert any(group.get("inline_spans") for group in final["current_sources"])
+    assert final["completion_stage"]["source_retrieval"]["source_bodies_delivered"]
+    assert final["context_projection"]["retained_content_chars"] <= request.retained_source_chars
     journal, _ = records(request)
     actions = [event["payload"]["result"]["tool"] for event in journal.events()
                if event["event_type"] == "action_finished"]

@@ -24,34 +24,46 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [file lifecycle follow-up](history/2026-10-29-file-lifecycle-followup.md)
-adds `edit_files`: exact observed replacements across allowed files, new regular
-UTF-8 files, and receipt-based undo. A batch or undo spends one accepted edit;
-full-diff scope, test preservation, check currency and action identity still apply.
-Crash recovery recognizes only saved before/after images. Unconfirmed rollback
-stops remaining repetitions. New source/test files travel through submission and
-separate evaluation; original-test grading temporarily excludes agent-added tests.
+The [public alternative and readiness study](history/2026-10-29-public-alternative-and-budget-readiness.md)
+found a one-line relative-search-root normalization that repairs the actual public
+pylint caller on local Windows copies of Astroid-1333. Exact base and saved
+candidate reproduce F0010; both normalized arms inspect file.py without F0010.
+Eight caller/control assertions pass. Each public modutils regression run has
+43 passes and the same three host symlink errors. This is operator-authored local
+evidence, not solver improvement, clean full regression or private acceptance.
 
-The [prior usability change](history/2026-10-29-runtime-usability-followup.md)
-normalizes fresh/legacy contracts, explains action-specific budget consequences,
-sets a configurable 12-edit default and paginates reads by characters. Explicit
-historical limits remain unchanged. These are locally tested capabilities, not
-measured repair gains. See the follow-up for the current validation scope.
-The frozen quick suite, including isolated mock evaluation, passed 1,094 tests;
-Ruff passed. A completed full-suite result and live behavior remain unverified.
+The correct source line was observed earlier but is absent from the actual A247,
+B261 and B277 public model inputs. A could still spend read/edit/check/finish;
+B's three ordinary calls already exclude read/search. Thus delivered failure
+stdout and generic edit eligibility do not establish sufficient repair source.
+The new B clone's canonical context already selects the helper in current
+source lines261–470: 22,155/24,000 characters, zero omitted lines. Completion projection
+then removed it while edits remained offered. This defect is corrected by retaining
+the existing selected source and its metadata whenever a mutation tool is offered.
+No new read, retention allowance, source prioritization or gate is introduced.
+The model's internal reason for finishing remains unknown.
 
-The obsolete boundary-panel paid execution path is retired; its all-turn delivery
-check and shared utilities remain. This removes an incompatible diagnostic driver
-without silently weakening its treatment assertion. Journal prefix reuse remains
-locally measured; total runtime improvement has not been established.
+Forecast OFF/ON was rehearsed through the current runner with a synthetic stop:
+actual requests differ only by action_horizon.action_budget under a fixed clock;
+prepared/count/dispatch projections agree. No real provider/count/target execution
+occurred. The post-fix v3 rehearsal also passes: both inputs retain the naturally
+selected helper, exclude the operator replacement, and differ only in the forecast.
+The prompt describes corrected source delivery; it adds no behavioral instruction
+or global gate. Real token/cost admission and repair benefit remain untested.
 
-The [public finish-choice audit](history/2026-10-29-finish-choice-local-audit.md)
-separates three obstructions: A received the failure and could still edit but
-submitted; B spent its last edit/check/finish response route on a probe; dev20
-row 9 actually exhausted its three edits. Four edits already reopen that row's
-minimum route. More edits cannot fix B's response shortage, and no record shows
-that 12 is optimal or that the forecast changes model choices. No new global
-verification gate or prompt is adopted from these few decisions.
+A public census of all 20 dev20 runs finds only row9 exhausted three edits:
+one implementation edit and two test revisions. Every run was capped at three,
+so neither four-edit sufficiency nor a benefit for twelve is demonstrated. New
+edit_files batching also changes the unit. If later authorized, a current-runtime
+cap4 diagnostic must precede a quota efficacy comparison.
+
+The [file lifecycle](history/2026-10-29-file-lifecycle-followup.md) and
+[usability](history/2026-10-29-runtime-usability-followup.md) changes remain selected:
+new files/multi-file edits/receipt undo, exact recovery, action-specific forecasts,
+character-paged reads and a configurable 12-edit default. The frozen quick suite
+after the source correction passed 1,101 tests in 276.40 seconds, including
+isolated mock evaluation; Ruff passed. A full
+suite completion, live-model benefit and end-to-end speed gain remain unverified.
 
 The [last dev20 measurement](history/2026-10-29-repair-dev20-results.md) stays CLOSED:
 10 PASS, 9 FAIL, 1 unsubmitted/NOT_RUN; USD11.7967235. Its 20 responses/40 actions/
@@ -74,12 +86,11 @@ independent evaluation and stop-on-uncertainty. public-checks-v1 remains the mea
 panel policy; reproduction-gated-v1 remains the compatible request default. No new
 mandatory diagnostic gate, paid run or global verification-policy switch is adopted.
 
-Next questions: establish a concrete public-source repair alternative at A's
-failure-before-finish boundary; test forecast delivery alone on a response-limited
-choice; compare 4 versus 12 only on tasks that bind on edit quota; measure batched
-independent literal searches without treating all zero-coverage searches as waste.
-No paid comparison is authorized. Each needs exact current task/model/credential/
-repeat/cap scope and a fixed comparison design.
+Next: compare forecast delivery alone on the corrected current decision input if
+authorized. Investigate cap4 on a quota-bound task
+before proposing 4-versus-12. Batched independent literal-search latency remains
+unmeasured. Exact current task/model/credential/repeat/cap authorization is required
+for paid work; no old allocation carries forward.
 
 ## Supporting evidence
 
