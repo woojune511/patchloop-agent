@@ -30,17 +30,20 @@ on a small set of public development tasks from start to finish. Review task
 acceptance, regressions, cost and elapsed time; use observed failures to choose the
 next fix. This is the default development loop, not a sequence of one-factor studies.
 
-The [latest integrated run of tasks 3, 9 and 16](history/2026-10-30-integrated-3916-results.md)
-is CLOSED. pvlib1154 and pydicom1694 passed independent acceptance; SQLFluff1517
-failed. Safety passed for all three. USD1.899919 settled against USD12; all 33 model
-calls and 33 input counts settled and linked, with no retry. Two-worker wall time:
-10 min 32 s. The roster differs from earlier panels, so batch totals are not a
-matched comparison or a general success rate.
+The [latest shared-guidance run of tasks 3, 9 and 16](history/2026-10-30-contract-guidance-3916-results.md)
+is CLOSED: pvlib1154 and pydicom1694 acceptance PASS; SQLFluff1517 FAIL; safety all
+PASS. USD2.66038 settled against USD12, with all 40 calls and 40 input counts linked,
+no retry or pending action. Two-worker wall time: 14 min 43 s. The previous
+[same-roster run](history/2026-10-30-integrated-3916-results.md) had the same verdicts,
+USD1.899919, 33 calls and 10 min 32 s. Cost rose 40.0% and time 39.6%; one exposed
+attempt per condition cannot establish a causal prompt effect or general accuracy.
 
-pvlib used 10 calls / 245.563 s, with no mutation rejection or undo, and explicitly
-ran its new file. It created that file immediately, so exact-restoration use was
-not exercised. Pydicom repaired its implementation once and corrected its new test
-twice before acceptance PASS; this does not establish an edit-cap effect.
+pvlib added its test inside the existing file, and the fixed wrapper ran 99 PASS,
+exercising that projection path live. Pydicom's first added test used the correct
+strict validation setting and ran 27 PASS; its first two probes used WARN mode and
+did not distinguish the repair. The later RAISE-mode probe checked suppression and
+the preserved valid value. No edit-cap effect or comparable original-case evidence
+is established; all three deliveries were unverified_delivery.
 
 The [SQLFluff1517 public diagnosis](history/2026-10-30-sqlfluff1517-public-contract-diagnosis.md)
 confirmed an incomplete repair: adjacent `;;` no longer crashes, but `; ;`, newline
@@ -51,19 +54,29 @@ candidate 167 PASS. This is narrow coverage, not missing execution. Exact CLI re
 also supports crash avoidance for adjacent `;;`; its parse violation alone is not
 a defect established by the public issue. Public-only paired diagnosis took 50.1 s,
 with no model calls or private evaluation. Exact independent failure remains unknown.
-The [shared repair guidance](history/2026-10-30-repair-contract-guidance.md) now asks
+The [shared repair guidance](history/2026-10-30-repair-contract-guidance.md) asks
 the agent to derive small checks from affected public contracts, related paths and
 boundaries, and observe preserved results/state. General current/thin, compact
 repair and completion all receive it. Existing tools, budgets and finish rules
-stay unchanged; SQLFluff-specific hints are absent. No SQLFluff repair or live
-agent-level quality benefit is claimed. Next live assessment should inspect actual
-verification choices and independent acceptance alongside cost/time.
+stay unchanged; SQLFluff-specific hints are absent. Its live benefit remains
+unproven. SQLFluff again changed only the empty-section return, corrected a new
+test's expected segment type, and reached 167 public PASS plus 1 directly selected
+test PASS. Five probes stayed on the same adjacent-semicolon pair, including one
+helper API error and repeated observations. The other failure returns and missing
+trailing/minimum guard remain in source; the prior dynamic counterexamples were
+not rerun on this distinct patch. Exact private failure remains unknown.
+
+Next inspect how existing verification selects a different affected return or
+option boundary and reuses an adequate observation. More probes, another generic
+prompt expansion or a new completion gate is not justified by this result alone.
+No automatic paid repeat is pending; the guidance remains an unproven instruction.
 
 Keep [advisory test-selection feedback and batched source tracking](history/2026-10-30-test-execution-visibility-and-latency.md).
 The [earlier 3/13/18 run](history/2026-10-30-integrated-selection-results.md) observed
 explicit selection of previously omitted file types but also exposed the two
 validation conflicts below. Provider dispatch still occupied 68-74% of task time
-in the latest run; lower Git latency alone is not an end-to-end speed claim.
+in the preceding 3/9/16 run and 66-79% in the latest run; lower Git latency alone
+is not an end-to-end speed claim.
 
 The [two test-validation conflicts](history/2026-10-30-test-validation-fixes.md)
 are fixed locally. Exact original-byte restoration now uses one shared rule for
@@ -71,9 +84,10 @@ both mutation tools. pvlib's wrapper pins the projection target and local anchor
 allowing admitted test additions while the shared policy preserves original tests.
 Replaying the previously rejected first candidate reached pytest: 99 PASS; original
 source with the identical added test gave 1 FAIL / 98 PASS. This used no model or
-private evaluation. The live follow-up had no validation conflict, but used a
-different test-edit path; causal benefit remains unproven. Another paid ablation
-is not a prerequisite for development.
+private evaluation. The latest pvlib run exercised additions in the existing
+projection-target file without conflict; exact original-byte restoration was not
+requested. Causal quality benefit remains unproven; another paid ablation is not
+a prerequisite for development.
 
 No forecast OFF/ON repeat, cap4 diagnostic or 4-vs-12 comparison is a prerequisite
 for continuing with the selected 12-edit configuration. Isolate a condition only
