@@ -29,3 +29,4 @@
 - [Local follow-up: inherited caller capabilities, bounded failure blocks and grounded test guidance](../2026-10-29-dev20-followup-implementation.md)
 - [Dev20 caller/test-guidance pilot preparation](../2026-10-29-dev20-followup-pilot-plan.md)
 - [Dev20 pilot results: caller used without repair confirmation; pydicom corrected its public test and passed acceptance](../2026-10-29-dev20-followup-pilot-results.md)
+- [Saved Astroid public diagnosis: lookup failed before the edited branch; same F0010 before and after](../2026-10-29-astroid-pilot-path-diagnosis.md)

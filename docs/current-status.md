@@ -70,6 +70,14 @@ tested only. Neither this selected two-task repeat nor its bundled changes estab
 causal gains; the original dev20 score remains 10/20. Private details stay operator-only.
 No output exhaustion occurred; a blanket budget/context increase is unsupported.
 
+The [saved Astroid public diagnosis](history/2026-10-29-astroid-pilot-path-diagnosis.md)
+confirms unchanged missing-initializer selection and F0010 before/after the patch.
+The edited function ran, but lookup raised before its added branch; pylint's
+fallback selected the nonexistent file. Complete trace/plain outputs agreed.
+Investigate module-name/search-root handling and delivery of post-edit replay results;
+no source repair, model follow-up or new finish gate is validated. One failed operator
+trace was preserved and replaced by a smaller observer; API cost was zero.
+
 Benchmark acceptance is the primary repair outcome; diagnostic completeness is
 separate. [public-checks-v1](history/2026-10-29-public-check-submission.md) uses
 current required public checks and scoped diff for submission. Reproduction,
