@@ -30,28 +30,32 @@ on a small set of public development tasks from start to finish. Review task
 acceptance, regressions, cost and elapsed time; use observed failures to choose the
 next fix. This is the default development loop, not a sequence of one-factor studies.
 
-The user has approved a [fresh integrated run of tasks 3, 9 and 16](history/2026-10-30-integrated-3916-results.md):
-pvlib1154, pydicom1694 and SQLFluff1517, each once, maximum two workers, USD4 per
-task / USD12 total. It keeps the selected current settings above and the repository
-`.env`, with no automatic retry or follow-up. Fresh preflight passed; the approved
-batch is ready to dispatch. Results and allocation closure will replace this status.
+The [latest integrated run of tasks 3, 9 and 16](history/2026-10-30-integrated-3916-results.md)
+is CLOSED. pvlib1154 and pydicom1694 passed independent acceptance; SQLFluff1517
+failed. Safety passed for all three. USD1.899919 settled against USD12; all 33 model
+calls and 33 input counts settled and linked, with no retry. Two-worker wall time:
+10 min 32 s. The roster differs from earlier panels, so batch totals are not a
+matched comparison or a general success rate.
 
-The [latest integrated test-selection run](history/2026-10-30-integrated-selection-results.md)
-is CLOSED: pvlib1154, Astroid1333 and SQLFluff1733 each completed one fresh run
-with independent acceptance/safety PASS. USD5.424037 settled against USD12; all 64
-model calls and 65 input counts settled, with no API retry. Two-worker wall time was
-23 min 36 s, versus 16 min 45 s / USD3.80521 in the
-[preceding run](history/2026-10-30-integrated-dev3-results.md). No end-to-end speed
-or cost gain was observed; this is not feature attribution or a general success rate.
+pvlib used 10 calls / 245.563 s, with no mutation rejection or undo, and explicitly
+ran its new file. It created that file immediately, so exact-restoration use was
+not exercised. Pydicom repaired its implementation once and corrected its new test
+twice before acceptance PASS; this does not establish an edit-cap effect.
 
-The model explicitly ran pvlib's new test file (1 PASS) and SQLFluff's modified
-file outside automatic discovery (4 PASS), on their final submitted diffs.
-The [selection feedback](history/2026-10-30-test-execution-visibility-and-latency.md)
-reached actual model inputs before those choices. Astroid retained directory
-discovery only. This establishes observed use, not a causal reduction in omissions.
-Keep the advisory feedback and batched Git/source tracking; neither adds a gate.
-The earlier local validation speedup remains valid, but provider waits still
-accounted for 61-84% of task time and pvlib used 27 calls instead of nine.
+Next investigation: SQLFluff1517's public-evidence/correctness gap. Its 167-PASS
+public check and candidate API probe preceded acceptance FAIL. The probe supports
+crash avoidance for the double-semicolon example; broader delimiter handling and
+token/tree preservation remain unverified. The public issue leaves the desired
+duplicate-semicolon handling open, so a parse error alone is not a proven defect.
+Inspect public contracts and examples; no private evaluator content or new funded
+run is needed to frame that diagnosis. Its new test has directory-discovery evidence
+only, not a separate file selection. Do not turn this into another blanket gate.
+
+Keep [advisory test-selection feedback and batched source tracking](history/2026-10-30-test-execution-visibility-and-latency.md).
+The [earlier 3/13/18 run](history/2026-10-30-integrated-selection-results.md) observed
+explicit selection of previously omitted file types but also exposed the two
+validation conflicts below. Provider dispatch still occupied 68-74% of task time
+in the latest run; lower Git latency alone is not an end-to-end speed claim.
 
 The [two test-validation conflicts](history/2026-10-30-test-validation-fixes.md)
 are fixed locally. Exact original-byte restoration now uses one shared rule for
@@ -59,8 +63,9 @@ both mutation tools. pvlib's wrapper pins the projection target and local anchor
 allowing admitted test additions while the shared policy preserves original tests.
 Replaying the previously rejected first candidate reached pytest: 99 PASS; original
 source with the identical added test gave 1 FAIL / 98 PASS. This used no model or
-private evaluation. Whether these fixes reduce model detours, calls or total time
-remains unmeasured; another paid ablation is not a prerequisite for development.
+private evaluation. The live follow-up had no validation conflict, but used a
+different test-edit path; causal benefit remains unproven. Another paid ablation
+is not a prerequisite for development.
 
 No forecast OFF/ON repeat, cap4 diagnostic or 4-vs-12 comparison is a prerequisite
 for continuing with the selected 12-edit configuration. Isolate a condition only
@@ -90,7 +95,7 @@ The current runtime's quick regression passed 1,208 tests, including isolated mo
 evaluation, and skipped one unavailable symlink check: 332.31 seconds with four
 file-grouped workers and no failures. Both validation fixes are included. Ruff
 passed. Full-suite completion, Linux validation and causal quality/speed benefit
-remain unverified; the latest integrated model run was slower.
+remain unverified; changing task rosters cannot establish a batch speed gain.
 The historical dev20 measurement stays [closed](history/2026-10-29-repair-dev20-results.md):
 10 PASS, 9 FAIL, 1 unsubmitted/NOT_RUN; USD11.7967235. It is development context,
 not a causal baseline for the combined current configuration.
