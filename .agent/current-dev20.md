@@ -67,6 +67,10 @@ full test output, reports and runner logs in the external output directory, with
 an exclusive `operator-artifacts.json` hash manifest even after failure. Current
 dev20 adapters and declared adapter hashes are refreshed together; historical
 packages, original test patches and reference patches are not changed.
+The package test loads all twenty current packages, checking declared artifact
+hashes as well as byte equality with the adapter template. Failure capture adds
+up to eight assertion blocks and 12KB per stream to the existing tail, with
+omission/coverage metadata; it never feeds the solver or changes grading.
 
 ## Parallel stop and accounting
 

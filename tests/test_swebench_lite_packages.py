@@ -5,6 +5,17 @@ import yaml
 
 from diagnostics.swebench_lite_packages import build_package
 from patchloop.runtime import repository_root
+from patchloop.task_loader import load_task_package
+
+
+def test_current_dev20_packages_admit_the_shipped_evaluation_adapter():
+    root = repository_root()
+    adapter = (root / "diagnostics/swebench_lite_oracle.py").read_bytes()
+    for index in range(1, 21):
+        task = root / "tasks/dev-train/current-dev20" / str(index)
+        assert (task / "hidden/run_oracle.py").read_bytes() == adapter
+        package = load_task_package(task)
+        assert package.public.split == "dev-train"
 
 
 def test_public_selection_is_independent_and_private_original_bytes_are_preserved(tmp_path):
