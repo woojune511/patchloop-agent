@@ -43,7 +43,7 @@ def audit_case(monkeypatch):
         "current_diff": {"patch_hash": "sha256:candidate"},
         "visible_check_status": [{"check_id": "base-regression", "status": "PASS",
                                   "diff_hash": "sha256:candidate"}],
-        "latest_tool_results": [copy.deepcopy(result)],
+        "latest_tool_results": [diagnostic.runner.project_probe_result(copy.deepcopy(result))],
         "segment_handoff": {"segment_id": "segment_123"},
     })
     request = {"input": [{"role": "user", "content": canonical_json({"state": state})}],
@@ -129,7 +129,7 @@ def test_audit_accepts_exact_public_archive_delivery(audit_case):
             "kind": PUBLIC_EVIDENCE_KIND,
             "referenced_public_exchanges": [{
                 "type": "function_call_output", "call_id": result["action_id"],
-                "output": canonical_json(result),
+                "output": canonical_json(diagnostic.runner.project_probe_result(result)),
             }],
         }),
     })

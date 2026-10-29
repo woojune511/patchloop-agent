@@ -72,3 +72,12 @@ reasoning unresolved. Stop all rows on count, transport, billing, execution or
 cleanup uncertainty; zero SDK retries and no automatic resume.
 
 Validation receipts and sealed execution command are added after preparation.
+
+The first local preparation (`C:/pt/astroid-replay-feedback-plan-v1`) captured the
+helper once in 11,198 ms and passed A's original-input and dispatch checks. B's
+audit stopped because it incorrectly expected the sandbox `passed` label in the
+model view. Normal `project_probe_result` removes that ambiguous label and adds
+the canonical observation; compact context also omits redundant replay metadata.
+The audit now checks the canonical observation plus exact stdout/stderr and
+execution identities. The corrected preparation reuses the sealed capture rather
+than executing the helper again. No provider call or private evaluation occurred.

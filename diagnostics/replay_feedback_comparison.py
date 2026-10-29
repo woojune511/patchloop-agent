@@ -91,11 +91,17 @@ def feedback_audit(branch, request, packet=None):
         require(actual is not None, "replay action missing from next request")
         for key in ("tool", "input_hash", "status", "workspace_diff_hash", "error_code"):
             require(actual.get(key) == result.get(key), f"replay {key} changed in next request")
-        for key in ("stdout", "stderr", "status", "exit_code", "source_hash", "snapshot_hash",
+        for key in ("stdout", "stderr", "exit_code", "source_hash", "snapshot_hash",
                     "timed_out", "truncated", "cleanup_failed", "deadline_exhausted",
-                    "question", "replayed_from"):
+                    "question"):
             require(actual["output"].get(key) == result["output"].get(key),
                     f"replay output {key} changed in next request")
+        projected = runner.project_probe_result({key: value for key, value in result.items()
+                                                if key != "replayed"})
+        require(actual.get("observation") == projected["observation"],
+                "canonical helper observation changed in next request")
+        require("status" not in actual["output"],
+                "sandbox PASS must not replace the canonical helper observation")
         replay_delivered = True
     elapsed = branch.active_elapsed_ms + (packet["elapsed_ms"] if packet else 0)
     max_solver_seconds = (branch.request.limits.wall_time_seconds -
@@ -163,7 +169,7 @@ def preview(branch, packet=None):
     return normalized_request(counted[0]), audit, receipt
 
 
-def prepare(source, cut, target_action_id, env_file, result_root, output, cap):
+def prepare(source, cut, target_action_id, env_file, result_root, output, cap, *, packet_path=None):
     require(cap.is_finite() and usd_to_nanos(cap) > 0, "positive new allowance required")
     output, result_root = output.resolve(), result_root.resolve()
     disjoint(output, (repository_root(), source.root, source.public_path.parent, result_root))
@@ -182,7 +188,11 @@ def prepare(source, cut, target_action_id, env_file, result_root, output, cap):
     seed = restore(source, cut, output / "public-replay", cap, env_file)
     require(usd_to_nanos(cap) == old.max_cost_nanos - seed.initial_spent_nanos,
             "new funding differs from original remaining ceiling")
-    packet = checkpoint.capture(seed, target_action_id)
+    if packet_path is None:
+        packet = checkpoint.capture(seed, target_action_id)
+    else:
+        packet = json.loads(packet_path.read_bytes())
+        checkpoint.attach(seed, packet)  # Verify the same candidate and immutable capture.
     (output / "public-replay.json").write_text(canonical_json(packet), encoding="utf-8")
     journal.append("public_replay_prepared", {"packet_hash": sha256_json(packet),
                                              "actual_provider_calls": 0})
@@ -249,7 +259,9 @@ def prepare(source, cut, target_action_id, env_file, result_root, output, cap):
     (output / "manifest.json").write_bytes(raw)
     result = {"manifest": str(output / "manifest.json"), "manifest_hash": sha256_bytes(raw),
               "new_cap_nanos": plan["new_cap_nanos"], "preflight": preflight,
-              "actual_provider_calls": 0, "public_helper_executions": 1,
+              "actual_provider_calls": 0,
+              "public_helper_executions": int(packet_path is None),
+              "reused_public_helper_executions": int(packet_path is not None),
               "paid_execution_authorized": False, "rows": rows}
     journal.append("preparation_finished", result)
     (output / "preparation.json").write_text(canonical_json(result), encoding="utf-8")
