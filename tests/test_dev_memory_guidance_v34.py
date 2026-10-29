@@ -202,10 +202,10 @@ def test_compact_guidance_keeps_optional_evidence_lifecycle_and_concern_boundari
 
 
 def test_guidance_identity_changes_without_changing_run_schema_or_limits():
-    # Registered edits and conditional completion-source delivery change the surface;
+    # Registered selection review and completion-source delivery change the surface;
     # argument and description identities remain independently pinned above.
     assert dev_tool_surface_hash() == (
-        "sha256:bba5c4022076bd08ff02e14a340d960349978f6f181ccfeaee5e3108252de4a0"
+        "sha256:ba96122e880e6d6962fb5fc9bcba696dbe1c8fabf531c59dd032ebab2a555766"
         if FROZEN_ARM is None else
         "sha256:57193859890419b79cb7f4927c37796d044bc4bf7159c51ddf17723849529e26"
     )

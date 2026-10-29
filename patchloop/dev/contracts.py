@@ -206,7 +206,7 @@ def dev_tool_surface_hash(
             "working_note_guidance": "compact-reusable-facts-and-lifecycle-guidance-v2",
             "verification_concerns": "original-question-progress-note-exact-noop-v2",
             "check_evidence_identity": "retained-action-check-diff-explicit-completion-currency-v2",
-            "check_definition_review": "registered-selection-requirement-scope-unassessed-v2",
+            "check_definition_review": "registered-pytest-selection-and-changed-test-receipts-v3",
             "check_definition_review_bounds": [
                 check_review.MAX_TARGETS, check_review.MAX_RANGES,
                 check_review.MAX_TARGET_CHARS, check_review.MAX_REVIEW_CHARS,

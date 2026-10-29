@@ -25,6 +25,7 @@ _VALUE_OPTIONS = {
 _SWITCHES = {"-q", "-v", "-s", "-x", "--quiet", "--verbose", "--exitfirst",
              "--disable-warnings", "--disable-pytest-warnings", "--strict-markers",
              "--strict-config"}
+_PYTHON_SWITCHES = {"-B", "-E", "-I", "-O", "-OO", "-s", "-S", "-u"}
 
 
 def _selection(command: list[str]) -> tuple[str, list[int]]:
@@ -40,6 +41,10 @@ def _selection(command: list[str]) -> tuple[str, list[int]]:
         index = 3
     else:
         return "unresolved", []
+    return _pytest_positions(command, index)
+
+
+def _pytest_positions(command: list[str], index: int) -> tuple[str, list[int]]:
     positional: list[int] = []
     while index < len(command):
         arg = command[index]
@@ -60,19 +65,134 @@ def _selection(command: list[str]) -> tuple[str, list[int]]:
     return "pytest_literals", positional
 
 
-def _target(argument: str, directory: str) -> tuple[str, str | None] | None:
+def _inline_prefix(command: list[str]) -> list[str] | None:
+    """Find only the Python invocation boundary, without interpreting its program."""
+    if not command or not _PYTHON.fullmatch(command[0].replace("\\", "/").rsplit("/", 1)[-1]):
+        return None
+    index = 1
+    while index < len(command) and command[index] in _PYTHON_SWITCHES:
+        index += 1
+    if command[index:index + 1] == ["-c"] and index + 1 < len(command):
+        return command[:index + 2]
+    return None
+
+
+def _registered_selection(
+    check: dict[str, Any], suites: list[dict[str, Any]],
+) -> tuple[str, list[int]]:
+    command = check.get("command", [])
+    kind, positions = _selection(command)
+    prefix = _inline_prefix(command)
+    if prefix is not None and any(
+        suite.get("runner") == "pytest"
+        and suite.get("working_directory", ".") == check.get("working_directory", ".")
+        and _inline_prefix(suite.get("command", [])) == prefix
+        for suite in suites
+    ):
+        # Registration establishes the pytest argument contract. In particular,
+        # suite-only options need not occur in a required check using this wrapper.
+        kind, positions = _pytest_positions(command, len(prefix))
+        if kind == "pytest_literals":
+            kind = "registered_pytest_arguments"
+    return kind, positions
+
+
+def _target(argument: str, directory: str) -> tuple[str, str | None, str] | None:
     if len(argument) > MAX_TARGET_CHARS:
         return None
     raw_path, separator, node = argument.partition("::")
     raw_path = raw_path.replace("\\", "/")
     path = PurePosixPath(directory) / raw_path
-    if (path.is_absolute() or ".." in path.parts or not raw_path.endswith(".py")
+    if (not raw_path or path.is_absolute() or ".." in path.parts
+            or any(ord(char) < 32 for char in argument)
             or any(char in str(path) for char in ":*?[]${}")):
         return None
     # The registered working directory is already a validated relative path.
     if len(str(path)) > MAX_TARGET_CHARS:
         return None
-    return str(path), node if separator else None
+    kind = "file" if raw_path.endswith(".py") else "discovery"
+    if separator and kind != "file":
+        return None
+    return str(path), node if separator else None, kind
+
+
+def _changed_test_review(
+    view: dict[str, Any], definitions: dict[str, tuple[str, dict[str, Any]]],
+    suites: list[dict[str, Any]],
+) -> None:
+    """Describe visible selection receipts, never infer collection or execution coverage."""
+    diff = view.get("current_diff", {})
+    current_hash = diff.get("patch_hash")
+    if not current_hash:
+        return
+    review: dict[str, Any] = {
+        "files": [], "omitted_file_count": 0,
+        "basis": (
+            "Visible current-diff receipts only; missing does not mean never executed. "
+            "File/node selection and command PASS do not prove collected test cases. "
+            "Directory discovery is unknown; run_tests can explicitly select these files."
+        ),
+    }
+    for path in dict.fromkeys(diff.get("changed_files", [])):
+        target = _target(path, ".")
+        if target is None or target[2] != "file":
+            continue
+        path = target[0]
+        if any(part.startswith((".", "-")) for part in PurePosixPath(path).parts):
+            continue  # These cannot be selected by the registered run_tests contract.
+        matching = [suite for suite in suites if suite.get("runner") == "pytest"
+                    and PurePosixPath(path).is_relative_to(suite.get("working_directory", "."))
+                    and any(PurePosixPath(path).is_relative_to(root)
+                            for root in suite.get("test_roots", []))]
+        if not matching:
+            continue
+        if len(review["files"]) == MAX_TARGETS:
+            review["omitted_file_count"] += 1
+            continue
+        receipts = []
+        for tool, key in (("run_check", "recent_checks"), ("run_tests", "recent_tests")):
+            for row in view.get(key, []):
+                if (row.get("diff_hash") != current_hash
+                        or row.get("evidence_currency", "current") != "current"):
+                    continue
+                if tool == "run_check":
+                    definition = definitions.get(row.get("check_id"))
+                    if definition is None:
+                        continue
+                    check = definition[1]
+                    _, positions = _registered_selection(check, suites)
+                    targets = [_target(check["command"][i], check.get("working_directory", "."))
+                               for i in positions]
+                else:
+                    targets = [_target(item, ".") for item in row.get("targets", [])]
+                for selected in targets:
+                    if selected is None:
+                        continue
+                    selected_path, node, kind = selected
+                    if selected_path == path and kind == "file":
+                        selection = "partial_nodes" if node is not None else "explicit_file"
+                    elif kind == "discovery" and PurePosixPath(path).is_relative_to(selected_path):
+                        selection = "discovery_unknown"
+                    else:
+                        continue
+                    receipts.append({
+                        "action_id": row.get("action_id"), "tool": tool, "selection": selection,
+                        "node_selector": node, "command_passed": row.get("passed"),
+                        **({"test_status": row["test_status"]} if "test_status" in row else {}),
+                    })
+        status = next((kind for kind in ("explicit_file", "partial_nodes", "discovery_unknown")
+                       if any(r["selection"] == kind for r in receipts)), "not_confirmed")
+        review["files"].append({
+            "path": path, "selection_status": status,
+            "run_tests_selection": {"suite_id": matching[0]["id"], "targets": [path]},
+            "visible_receipts": receipts[-MAX_RANGES:],
+            "omitted_receipt_count": max(0, len(receipts) - MAX_RANGES),
+        })
+    while len(canonical_json(review)) > MAX_REVIEW_CHARS and review["files"]:
+        review["files"].pop()
+        review["omitted_file_count"] += 1
+    if review["files"] or review["omitted_file_count"]:
+        diff["test_execution_review"] = review
 
 
 def _source_ranges(path: str, spans: list[dict[str, Any]]) -> dict[str, Any]:
@@ -91,6 +211,7 @@ def _source_ranges(path: str, spans: list[dict[str, Any]]) -> dict[str, Any]:
 def link_check_evidence(view: dict[str, Any]) -> None:
     """Enrich the existing bounded check rows; original receipts and gates stay exact."""
     checks = view.get("public_task", {}).get("visible_checks", [])
+    suites = view.get("public_task", {}).get("test_suites", [])
     definitions = {check["id"]: (f"public_task.visible_checks[{index}]", check)
                    for index, check in enumerate(checks)}
     for index, descriptor in enumerate(view.get("supplemental_required_checks", [])):
@@ -103,7 +224,7 @@ def link_check_evidence(view: dict[str, Any]) -> None:
             continue  # Legacy/minimal contexts cannot gain a guessed definition.
         reference, check = definition
         command = check.get("command", [])
-        kind, positions = _selection(command)
+        kind, positions = _registered_selection(check, suites)
         review: dict[str, Any] = {
             "definition_ref": reference,
             "command_hash": sha256_json(command), "selection_kind": kind,
@@ -122,12 +243,14 @@ def link_check_evidence(view: dict[str, Any]) -> None:
             if target is None or len(review["declared_targets"]) == MAX_TARGETS:
                 review["omitted_target_count"] += 1
                 continue
-            path, node = target
+            path, node, target_kind = target
             review["declared_targets"].append({
                 "command_argument_index": position, "path": path, "node_selector": node,
+                "selection": target_kind,
                 "current_source_view": _source_ranges(path, view.get("source_spans", [])),
             })
         while len(canonical_json(review)) > MAX_REVIEW_CHARS and review["declared_targets"]:
             review["declared_targets"].pop()
             review["omitted_target_count"] += 1
         row["evidence_review"] = review
+    _changed_test_review(view, definitions, suites)

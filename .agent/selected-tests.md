@@ -1,6 +1,7 @@
 # Selected public tests
 
-`run_tests` selects existing public pytest files or node IDs. A task declares
+`run_tests` selects tracked public pytest files or node IDs, including files created
+with `edit_files` in the current run. A task declares
 `test_suites` in its public spec; no new CLI flag is needed. The tool is offered
 only for declared suites and when its action leaves the protected completion
 budget intact. An absent or empty list retains legacy public serialization.
@@ -81,6 +82,20 @@ base and candidate source; original-test restoration for isolated evaluation sti
 applies. Accepting an addition does not establish that its expectation is correct.
 
 ## Evidence and recovery
+
+Check `evidence_review` distinguishes explicit file/node selection from directory
+discovery. Direct pytest commands and the exact Python launcher registered by a
+public pytest suite expose their literal arguments; arbitrary Python wrappers are
+not interpreted. A directory selection does not confirm which files pytest collected.
+
+`current_diff.test_execution_review` lists bounded changed Python files under
+registered test roots, visible current-diff selection receipts, and an existing
+`run_tests` selector for each file. An explicit file selection, partial node selection
+and unknown directory discovery remain distinct. Missing visible receipts do not
+mean the file was never executed: recent check/test history is bounded. These hints
+do not assert testcase coverage, add required-check credit or change finish eligibility.
+Explicitly selecting a newly created file can check it even when the required check's
+fixed targets or automatic filename discovery omit it.
 
 Results preserve suite, targets, action/input identity, current diff, exit code,
 output and execution flags. `test_status` is PASS for exit zero, FAIL for exit one,

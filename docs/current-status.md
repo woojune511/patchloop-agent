@@ -37,14 +37,19 @@ two-worker wall time was 16 min 45 s. All 53 model calls settled, with no retrie
 The combined current configuration was exercised; this is not feature attribution
 or a general success-rate estimate. Accepted edits were 1/2/1, all within 12.
 
-The next concrete gap is test-execution visibility: two agents created new test
-files but did not execute them, while the registered checks omitted those files.
-Existing run_tests can select them. Make actual check selection clearer before
-adding capabilities or gates. Separate operator-selected runs of both omitted
-files passed, with zero new model calls and unchanged candidates/solver journals.
-Model dispatch-to-return consumed 62-76% of each
-task's elapsed time; unnecessary model turns are a latency candidate, not a proven
-optimization. Astroid did recover from a public symlink regression and submit.
+The [test selection and host latency follow-up](history/2026-10-30-test-execution-visibility-and-latency.md)
+addresses two observed gaps together. Changed test files now show current visible
+selection receipts and existing run_tests selectors. Registered Python pytest
+wrappers expose literal targets; directory discovery stays unknown. This adds no
+gate or automatic test execution. The earlier two omitted files passed separate
+operator-selected checks; whether models now choose them remains unmeasured.
+
+Source validation now queries the Git index once per inspection, then checks
+current bytes as before; search visits tracked paths instead of walking the whole
+tree. SQLFluff's local validation median fell from 2.998 to 0.076 seconds (47 Git
+calls to one), with identical validated spans. All 36 replayed search outputs also
+matched. These are host-function measurements, not whole-run speed gains. Model
+dispatch-to-return consumed 62-76% of each prior task's time and is unchanged.
 
 No forecast OFF/ON repeat, cap4 diagnostic or 4-vs-12 comparison is a prerequisite
 for continuing with the selected 12-edit configuration. Isolate a condition only
@@ -70,10 +75,13 @@ and [usability](history/2026-10-29-runtime-usability-followup.md) changes also r
 new/multiple files and receipt undo, exact recovery, accurate action forecasts,
 character-paged reads and the configurable 12-edit default.
 
-The frozen runtime's quick suite passed 1,101 tests in 276.40 seconds, including
-isolated mock evaluation; Ruff passed. No runtime code changed in this experiment.
-Full-suite completion, broader repair benefit and end-to-end speed gain remain
-unverified. The historical dev20 measurement stays [closed](history/2026-10-29-repair-dev20-results.md):
+The changed runtime's quick run passed 1,172 tests, including isolated mock
+evaluation, and skipped one unavailable symlink check. Its only two failures were
+stale current-surface hash expectations; both were updated and the focused rerun
+passed all 16 selected checks. Ruff passed. The final formatting-only source change
+has an identical AST to the measured implementation. Full-suite completion, live
+benefit from these changes and end-to-end speed gain remain unverified.
+The historical dev20 measurement stays [closed](history/2026-10-29-repair-dev20-results.md):
 10 PASS, 9 FAIL, 1 unsubmitted/NOT_RUN; USD11.7967235. It is development context,
 not a causal baseline for the combined current configuration.
 

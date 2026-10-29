@@ -35,7 +35,7 @@ def source_gateway(tmp_path, monkeypatch):
         sandbox=None, journal=journal, limits=DevLimits(),
     )
 
-    def tracked(path, *, deadline=None):
+    def tracked(path, *, deadline=None, tracked_paths=None):
         if deadline is not None:
             deadline.check()
         if path not in raw_sources:
@@ -43,6 +43,7 @@ def source_gateway(tmp_path, monkeypatch):
         return path, SimpleNamespace(read_bytes=lambda: raw_sources[path])
 
     monkeypatch.setattr(gateway, "_tracked_path", tracked)
+    monkeypatch.setattr(DevToolGateway, "_tracked_paths", lambda self: set(raw_sources))
     # The synthetic workspace has no Git repository. Cover explicit bounded
     # metadata reads as well as the current_diff property used by projection.
     monkeypatch.setattr(

@@ -1829,6 +1829,7 @@ class DevToolGateway:
 
         with self._lock:
             candidates = [dict(span) for span in self.spans.values()]
+        tracked_paths = self._tracked_paths() if candidates else set()
         sources: dict[str, tuple[list[str], str] | None] = {}
         valid: list[dict[str, Any]] = []
         for span in candidates:
@@ -1837,7 +1838,7 @@ class DevToolGateway:
                 continue
             if path not in sources:
                 try:
-                    _, current = self._tracked_path(path)
+                    _, current = self._tracked_path(path, tracked_paths=tracked_paths)
                     raw = current.read_bytes()
                     sources[path] = (source_lines(raw.decode("utf-8")), sha256_bytes(raw))
                 except (ExecutionDeadlineExceeded, GitExecutionUncertain):
@@ -3691,18 +3692,34 @@ class DevToolGateway:
             return self._stop_task(arguments)
         raise ContractError(f"unknown dev-head tool: {name}")
 
+    def _tracked_paths(self) -> set[str]:
+        """Read the current index once; callers retain it only for one inspection."""
+        tracked = run_git(self.workspace, "ls-files", "-z", text=False, deadline=self.deadline)
+        return set(filter(None, tracked.stdout.decode(
+            "utf-8", errors="surrogateescape",
+        ).split("\0")))
+
     def _tracked_path(
         self, relative: str, *, deadline: ExecutionDeadline | None = None,
+        tracked_paths: set[str] | None = None,
     ) -> tuple[str, Path]:
         normalized = safe_relative_path(relative)
         if normalized.startswith(".patchloop-hidden/"):
             raise ContractError("private evaluator paths are never agent-readable")
         path = ensure_within(self.workspace, normalized)
-        tracked = run_git(
-            self.workspace, "--literal-pathspecs", "ls-files", "--error-unmatch", "--", normalized,
-            check=False, deadline=deadline if deadline is not None else self.deadline,
-        )
-        if tracked.returncode != 0 or not path.is_file() or path.is_symlink():
+        if tracked_paths is None:
+            tracked = run_git(
+                self.workspace, "--literal-pathspecs", "ls-files", "--error-unmatch",
+                "--", normalized,
+                check=False, deadline=deadline if deadline is not None else self.deadline,
+            )
+            is_tracked = tracked.returncode == 0
+        else:
+            effective_deadline = deadline if deadline is not None else self.deadline
+            if effective_deadline is not None:
+                effective_deadline.check()
+            is_tracked = normalized in tracked_paths
+        if not is_tracked or not path.is_file() or path.is_symlink():
             raise ContractError(f"path is not a tracked public file: {normalized}")
         return normalized, path
 
@@ -3788,35 +3805,42 @@ class DevToolGateway:
         pattern = safe_relative_path(path_glob, field_name="search path_glob")
         if source_scope != "repository":
             return self._search_dependency_files(query, pattern, source_scope)
-        tracked = run_git(
-            self.workspace, "ls-files", "-z", text=False, deadline=self.deadline,
-        )
-        tracked_paths = set(tracked.stdout.decode("utf-8", errors="surrogateescape").split("\0"))
+        tracked_paths = self._tracked_paths()
         spans: list[dict[str, Any]] = []
         content_chars = 0
         searched_file_count = 0
         truncated = False
-        for selected in sorted(self.workspace.rglob("*")):
+        for relative in sorted(tracked_paths, key=Path):
             if self.deadline is not None:
                 self.deadline.check()
             if len(spans) >= 20 or content_chars >= 24_000:
                 truncated = True
                 break
-            if not selected.is_file() or selected.is_symlink():
-                continue
-            relative = selected.relative_to(self.workspace).as_posix()
-            if ".git" in selected.relative_to(self.workspace).parts:
+            parts = Path(relative).parts
+            if ".git" in parts:
                 continue
             if relative.startswith(".patchloop-hidden/") or not matches_source_glob(
                 relative, pattern
             ):
                 continue
-            if relative not in tracked_paths or selected.stat().st_size > 1_000_000:
-                continue
             try:
+                # rglob did not descend through directory symlinks. Direct index
+                # traversal must keep that boundary, including Windows junctions.
+                selected = self.workspace
+                linked = False
+                for part in parts:
+                    selected /= part
+                    if selected.is_symlink() or selected.is_junction():
+                        linked = True
+                        break
+                if linked:
+                    continue
+                selected = ensure_within(self.workspace, relative)
+                if not selected.is_file() or selected.stat().st_size > 1_000_000:
+                    continue
                 raw = selected.read_bytes()
                 text = raw.decode("utf-8")
-            except (OSError, UnicodeDecodeError):
+            except (ContractError, OSError, UnicodeDecodeError):
                 continue
             searched_file_count += 1
             lines = source_lines(text)
