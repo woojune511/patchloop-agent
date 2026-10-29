@@ -89,7 +89,9 @@ supported. The [completion-guidance preparation](history/2026-10-29-completion-g
 holds the public replay fixed in both arms and varies only generic guidance on
 submission eligibility versus remaining repair questions. The diagnostic intervention
 does not change ordinary defaults, tools, budgets or finish eligibility. Local
-validation and a sealed plan precede any new paid allocation; repair benefit is untested.
+preparation is READY: real A/B request equality outside the prompt, fresh dispatch
+guards and two-turn native continuation passed. New USD3.397541/arm (USD6.795082 total)
+funding awaits approval; actual provider calls remain zero and repair benefit is untested.
 
 Benchmark acceptance is the primary repair outcome; diagnostic completeness is
 separate. [public-checks-v1](history/2026-10-29-public-check-submission.md) uses

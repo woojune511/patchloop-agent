@@ -5,7 +5,7 @@
 - Origin Skill: academic-research-suite / experiment-agent.
 - Origin Mode: bounded code-experiment preparation.
 - Origin Date: 2026-10-29.
-- Verification Status: preparation in progress; live repair benefit NOT_RUN.
+- Verification Status: local preparation PASS; live repair benefit NOT_RUN.
 - Version Label: completion_guidance_v1; official=false, claim-ineligible.
 
 ## Question and reason
@@ -85,4 +85,37 @@ Stop all remaining rows on count, transport, billing, execution or cleanup uncer
 zero SDK retries, no automatic resume, no evaluator feedback to the repair model.
 
 No new provider call, target execution or private evaluation is part of preparation.
-Sealed commands and local receipts will be recorded when validation completes.
+
+## Sealed preparation
+
+Status: READY; exact new live scope/cap approval pending. Implementation commit
+`a3145422`; ordinary runtime unchanged at
+`sha256:c9fd20d950163c453aea27e0d050fcc19f40b92a76c4338ffffd900ffd8c4169`.
+
+- Manifest: `C:/pt/completion-guidance-plan-v1/manifest.json`, hash
+  `sha256:9f30758c5de15a1a99b2e637ca96496e1be2356c151e5ce04b78259ef2b53cd4`.
+- Command: `& 'C:/pt/completion-guidance-plan-v1/run.ps1'`.
+- Fresh, unused result allocation: `C:/pt/completion-guidance-run-v1`.
+- A first-request hash: `sha256:fcd890c96a348249ddeb7371744d974b4a802481ffcd0bc597b65ee2988cfaf7`,
+  exactly matching the previous sealed replay condition after the existing normalization.
+- B first-request hash: `sha256:9cfb20fe7c8557ac9e5910c79eeac3fd2aea177b8c82a9be6890d117c40c6f45`.
+- Actual first-request payloads passed full equality after reverting only B's
+  selected system paragraph; real tool schemas, public state and observations,
+  policies, output ceiling, action/edit/response/cost allowances are unchanged.
+  Elapsed-time fields and derived segment IDs use the existing normalizer.
+- Both fresh funded-path offline rehearsals matched the prepared first request and
+  enforced successful count before dispatch. A separate B read-then-stop rehearsal
+  validated two actual native input bindings, delivered the read result, retained
+  the new completion prompt and left host-only feedback handling after the first
+  model decision. All counts/responses were finite synthetic fixtures, not OpenAI.
+- Focused guidance/input audits: 30 tests PASS, below two minutes. Ruff,
+  whitespace and quick suite PASS, including isolated mock evaluation. Existing
+  images/dependencies/task/runtime preflight is READY. The command parsed, sealed
+  plan validation passed, and wrong manifest/cap values were rejected before allocation.
+- New provider calls, paid cost, public-helper executions and private evaluations:
+  zero. The one previously captured helper result is attached to each condition
+  with the same one-action and 11.198-second charge.
+
+Current outcome is implemented and locally validated. Model behavior, further
+repair, public checks after any edit and acceptance are unexecuted. No default
+prompt adoption or quality improvement is claimed.
