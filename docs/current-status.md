@@ -30,13 +30,21 @@ on a small set of public development tasks from start to finish. Review task
 acceptance, regressions, cost and elapsed time; use observed failures to choose the
 next fix. This is the default development loop, not a sequence of one-factor studies.
 
-The next prepared batch is current-dev20 tasks 3 (pvlib1154), 13 (Astroid1333)
-and 18 (SQLFluff1733), one fresh run each with the selected baseline above and
-public-checks-v1. Two workers share the stop boundary; fixed USD4 allocations
-sum to USD12, without transfers or retries. Preparation is provider-free at
-`C:/pt/integrated3-20261030-v1/manifest.final.json`; it awaits confirmation of this
-exact paid scope. Existing isolated evaluation is reused without a second native
-evaluation. No live call has been made for this batch.
+The [integrated three-task run](history/2026-10-30-integrated-dev3-results.md) is
+CLOSED: pvlib1154, Astroid1333 and SQLFluff1733 each completed one fresh run with
+independent acceptance/safety PASS. USD3.80521 settled against the USD12 cap;
+two-worker wall time was 16 min 45 s. All 53 model calls settled, with no retries.
+The combined current configuration was exercised; this is not feature attribution
+or a general success-rate estimate. Accepted edits were 1/2/1, all within 12.
+
+The next concrete gap is test-execution visibility: two agents created new test
+files but did not execute them, while the registered checks omitted those files.
+Existing run_tests can select them. Make actual check selection clearer before
+adding capabilities or gates. Separate operator-selected runs of both omitted
+files passed, with zero new model calls and unchanged candidates/solver journals.
+Model dispatch-to-return consumed 62-76% of each
+task's elapsed time; unnecessary model turns are a latency candidate, not a proven
+optimization. Astroid did recover from a public symlink regression and submit.
 
 No forecast OFF/ON repeat, cap4 diagnostic or 4-vs-12 comparison is a prerequisite
 for continuing with the selected 12-edit configuration. Isolate a condition only
