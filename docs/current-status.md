@@ -85,9 +85,11 @@ helper output and canonical observation, acknowledged the unchanged path, then
 finished without further exploration or repair despite available tools and budget.
 This selected pair supports delivery, not repair gain. Keep optional replay and
 public-check submission; a blanket budget increase or global replay gate is not
-supported. Next investigate completion-stage interpretation of submission eligibility
-versus unresolved repair evidence, without injecting operator diagnosis. No new paid
-allocation or prompt intervention is active.
+supported. The [completion-guidance preparation](history/2026-10-29-completion-guidance-preparation.md)
+holds the public replay fixed in both arms and varies only generic guidance on
+submission eligibility versus remaining repair questions. The diagnostic intervention
+does not change ordinary defaults, tools, budgets or finish eligibility. Local
+validation and a sealed plan precede any new paid allocation; repair benefit is untested.
 
 Benchmark acceptance is the primary repair outcome; diagnostic completeness is
 separate. [public-checks-v1](history/2026-10-29-public-check-submission.md) uses

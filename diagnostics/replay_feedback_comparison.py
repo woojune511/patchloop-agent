@@ -1,8 +1,8 @@
-"""One settled checkpoint, optional replay versus a sealed public helper receipt.
+"""Bounded replay-feedback and completion-guidance checkpoint comparisons.
 
-The replay is collected once during preparation, on the exact candidate. Its real
-action and elapsed time are charged to B when reused. No operator diagnosis or
-private evaluation evidence is added to either repair stream.
+The replay is collected once on the exact candidate. Its real action and elapsed
+time are charged to each receiving arm. The guidance comparison gives both arms
+the same receipt. No operator diagnosis or private evaluation reaches either model.
 """
 from __future__ import annotations
 
@@ -14,10 +14,11 @@ from decimal import Decimal
 from pathlib import Path
 from unittest.mock import patch
 
+from diagnostics import completion_guidance as guidance
 from diagnostics import observation_comparison as live
 from diagnostics import observation_exposure as exposure
 from diagnostics import replay_feedback_checkpoint as checkpoint
-from diagnostics.checkpoint_continuation import ScriptedClient
+from diagnostics.checkpoint_continuation import ScriptedClient, inherited_reads
 from diagnostics.checkpoint_envelope import read_checkpoint_envelope
 from diagnostics.decision_sampler import require
 from diagnostics.declaration_checkpoint import Source, disjoint
@@ -39,14 +40,20 @@ from patchloop.sandbox import LocalSandbox
 from patchloop.util import canonical_json, sha256_bytes, sha256_json
 
 SCHEMA = "replay-feedback-comparison-v1"
+GUIDANCE_SCHEMA = "completion-guidance-comparison-v1"
 
 
-def restore(source, cut, output, cap, env_file, *, funded=False, packet=None):
+def restore(source, cut, output, cap, env_file, *, funded=False, packet=None,
+            completion_guidance="baseline"):
     branch = exposure._fork(
         source, cut, output, "B", new_cap_usd=cap,
         mode="funded-observation" if funded else "offline-scripted-only",
         env_file=env_file, preserve_parent_configuration=True,
     )
+    if completion_guidance != "baseline":
+        guidance.install(branch, completion_guidance)
+    else:
+        branch.completion_guidance = "baseline"
     if packet is not None:
         checkpoint.attach(branch, packet)
         branch.feedback_packet = packet
@@ -122,6 +129,7 @@ def feedback_audit(branch, request, packet=None):
 def run_branch(branch, group, journal, store, label, first_hash, *, client=None):
     """The funded collector and the finite offline audit use the same dispatch guard."""
     with ExitStack() as stack:
+        stack.enter_context(guidance.activate(branch))
         stack.enter_context(patch.object(live, "normalized", normalized_request))
         if client is not None:
             require(type(client) is ScriptedClient, "finite offline client required")
@@ -156,6 +164,7 @@ def preview(branch, packet=None):
             return super().count_input_tokens_v2(payload, **kwargs)
 
     with ExitStack() as stack:
+        stack.enter_context(guidance.activate(branch))
         stack.enter_context(patch.object(exposure, "OpenAIResponsesAdapter", CapturedAdapter))
         if packet is not None:
             stack.enter_context(checkpoint.host_handoff(branch, packet))
@@ -169,7 +178,46 @@ def preview(branch, packet=None):
     return normalized_request(counted[0]), audit, receipt
 
 
-def prepare(source, cut, target_action_id, env_file, result_root, output, cap, *, packet_path=None):
+def continuation_rehearsal(branch, packet, first_hash, journal, store):
+    """Exercise the transition from host feedback to a real native tool exchange."""
+    edit = next(event["payload"] for event in reversed(branch.journal.events())
+                if event["event_type"] == "action_started"
+                and event["payload"]["tool"] == "replace_text")
+    read = {"name": "read_file", "action_id": "offline_guidance_read",
+            "arguments": {"path": edit["arguments"]["path"], "start_line": 1,
+                          "end_line": 8, "source_scope": "repository", "memory_update": None}}
+    client = ScriptedClient([[read], *stop_client().steps])
+    result = run_branch(branch, DevCostLedger(
+        Decimal(branch.ledger.remaining_nanos) / 10**9, branch.pricing),
+        journal, store, "B-native-continuation", first_hash, client=client)
+    require(result["result"]["terminal"] == "AGENT_STOPPED"
+            and result["input_counts"] == result["dispatches"] == 2,
+            "two-turn native continuation failed")
+    with inherited_reads(branch):
+        turns = [event["payload"] for event in branch.journal.events()
+                 if event["sequence"] > branch.inherited_events
+                 and event["event_type"] == "turn_started"]
+        require(len(turns) == 2, "native continuation turn count differs")
+        for turn in turns:
+            items = runner._load_active_model_input(turn, branch.store,
+                                                   context_policy="segmented-v1")
+            require(items[0]["content"].startswith(
+                guidance.selected_prompt("investigate-v1") + "\n"),
+                "completion guidance disappeared on a subsequent response")
+    require("offline_guidance_read" in canonical_json(client.created[1]["input"]),
+            "the second request lost the native read result")
+    return {"status": "PASS", "synthetic_responses": 2,
+            "provider_calls": 0, "target_executions": 0,
+            "native_bindings_verified": 2, "read_result_delivered": True,
+            "same_prompt_after_new_model_decision": True, "replay_packet": sha256_json(packet)}
+
+
+def prepare(source, cut, target_action_id, env_file, result_root, output, cap, *, packet_path=None,
+            baseline_plan_path=None):
+    """With a baseline plan, hold its replay fixed and vary only completion guidance."""
+    guidance_comparison = baseline_plan_path is not None
+    require(not guidance_comparison or packet_path is not None,
+            "guidance comparison reuses one sealed observation in both arms")
     require(cap.is_finite() and usd_to_nanos(cap) > 0, "positive new allowance required")
     output, result_root = output.resolve(), result_root.resolve()
     disjoint(output, (repository_root(), source.root, source.public_path.parent, result_root))
@@ -201,20 +249,41 @@ def prepare(source, cut, target_action_id, env_file, result_root, output, cap, *
     read_parent = exposure._parent_reader(source, parent_events[:cut - 1])
     original_request = json.loads(read_parent(Artifact.model_validate(
         cut_event["payload"]["artifact"])))["request"]
-    rows = []
+    baseline_binding = None
+    if guidance_comparison:
+        raw_baseline = baseline_plan_path.read_bytes()
+        baseline = json.loads(raw_baseline)
+        reference_path = baseline_plan_path.parent / "B-first.json"
+        reference = json.loads(reference_path.read_bytes())
+        require(baseline["schema"] == SCHEMA and baseline["source"] == source.record()
+                and baseline["cut_sequence"] == cut
+                and baseline["public_replay_hash"] == sha256_json(packet),
+                "prior observation comparison differs from this checkpoint")
+        require(sha256_json(reference) == next(row["first_request_hash"]
+                for row in baseline["rows"] if row["label"] == "B"),
+                "prior replay-condition first request changed")
+        original_request = reference
+        baseline_binding = {"plan_path": str(baseline_plan_path.resolve()),
+                            "plan_hash": sha256_bytes(raw_baseline),
+                            "request_path": str(reference_path.resolve()),
+                            "request_hash": sha256_json(reference)}
+    rows, requests = [], {}
     for label in ("A", "B"):
-        evidence = packet if label == "B" else None
+        evidence = packet if guidance_comparison or label == "B" else None
+        variant = "investigate-v1" if guidance_comparison and label == "B" else "baseline"
         branch = restore(source, cut, output / f"preview-{label}", cap, env_file,
-                         packet=evidence)
+                         packet=evidence, completion_guidance=variant)
         branch.preview_counters = runner._restore_counters(branch.journal)
         first, audit, receipt = preview(branch, evidence)
         if label == "A":
             require(first == normalized_request(original_request),
-                    "baseline first request differs from parent beyond elapsed time")
-            audit["parent_request_preserved"] = True
+                    "baseline first request differs from the reference beyond elapsed time")
+            audit["reference_request_preserved" if guidance_comparison
+                  else "parent_request_preserved"] = True
+        requests[label] = first
         (output / f"{label}-first.json").write_text(canonical_json(first), encoding="utf-8")
         rehearsal = restore(source, cut, output / f"dispatch-{label}", cap, env_file,
-                            funded=True, packet=evidence)
+                            funded=True, packet=evidence, completion_guidance=variant)
         replay = run_branch(rehearsal, DevCostLedger(cap, rehearsal.pricing), journal,
                             ArtifactStore(output / "artifacts"), label,
                             sha256_json(first), client=stop_client())
@@ -225,9 +294,23 @@ def prepare(source, cut, target_action_id, env_file, result_root, output, cap, *
                        "preview": receipt, "dispatch_rehearsal": replay,
                        "synthetic_accounting_only": True, "actual_provider_calls": 0})
         rows.append({"label": label, "new_cap_nanos": usd_to_nanos(cap),
-                     "first_request_hash": sha256_json(first), "audit": audit})
+                     "first_request_hash": sha256_json(first), "audit": audit,
+                     **({"completion_guidance": variant} if guidance_comparison else {})})
+    if guidance_comparison:
+        guidance.assert_pair(requests["A"], requests["B"])
+        journal.append("prompt_only_pair_verified", {
+            "contract": guidance.contract(),
+            "same_public_evidence_tools_state_and_allowances": True,
+            "elapsed_time_and_derived_segment_identity_normalized": True,
+        })
+        continuation = restore(source, cut, output / "native-continuation-B", cap, env_file,
+                               funded=True, packet=packet, completion_guidance="investigate-v1")
+        journal.append("native_continuation_verified", continuation_rehearsal(
+            continuation, packet, sha256_json(requests["B"]), journal,
+            ArtifactStore(output / "artifacts")))
     plan = {
-        "schema": SCHEMA, "official": False, "paid_execution_authorized": False,
+        "schema": GUIDANCE_SCHEMA if guidance_comparison else SCHEMA,
+        "official": False, "paid_execution_authorized": False,
         "source": source.record(), "cut_sequence": cut, "target_action_id": target_action_id,
         "model": old.model, "reasoning_effort": old.reasoning_effort,
         "task": str(source.public_path), "split": "dev-train", "repeat_per_arm": 1,
@@ -246,14 +329,22 @@ def prepare(source, cut, target_action_id, env_file, result_root, output, cap, *
         "executing_probe_identity": row["executing_probe_identity"],
         "pricing": {key: str(value) for key, value in asdict(seed.pricing).items()},
         "sdk_retries": 0, "automatic_resume": False,
-        "intervention": "A optional replay; B receives the exact helper replay collected during "
-                        "preparation on this candidate, charged one action and actual active time",
+        "intervention": ("Both receive the same sealed helper replay and resource charge; "
+                         "A retains completion guidance, B distinguishes submission eligibility "
+                         "from whether further diagnosis or repair is warranted"
+                         if guidance_comparison else
+                         "A optional replay; B receives the exact helper replay collected during "
+                         "preparation on this candidate, charged one action and elapsed time"),
         "stop_conditions": ["count uncertainty", "transport or billing uncertainty",
                             "execution or cleanup uncertainty", "normal runner terminal"],
         "scope": "Selected exposed checkpoint; no fresh solve-rate or generalization claim.",
         "material_passport": {"inputs": "public task, parent prefix, model-authored helper",
             "excluded": "operator diagnosis, CLI result, traces, hidden tests and evaluator logs",
-            "reuse": "one current-diff receipt, bytes and actual resource cost sealed for B"},
+            "reuse": ("same current-diff receipt and actual resource cost in both arms"
+                      if guidance_comparison else
+                      "one current-diff receipt, bytes and actual resource cost sealed for B")},
+        **({"completion_guidance_contract": guidance.contract(),
+            "baseline_binding": baseline_binding} if guidance_comparison else {}),
     }
     raw = (canonical_json(plan) + "\n").encode()
     (output / "manifest.json").write_bytes(raw)
@@ -272,7 +363,7 @@ def validate(path, digest, cap):
     raw = path.read_bytes()
     require(sha256_bytes(raw) == digest, "approved manifest differs")
     plan = json.loads(raw)
-    require(plan["schema"] == SCHEMA and plan["repeat_per_arm"] == 1
+    require(plan["schema"] in {SCHEMA, GUIDANCE_SCHEMA} and plan["repeat_per_arm"] == 1
             and [row["label"] for row in plan["rows"]] == ["A", "B"], "unsupported plan")
     require(usd_to_nanos(cap) == plan["new_cap_nanos"] > 0
             and sum(row["new_cap_nanos"] for row in plan["rows"]) == plan["new_cap_nanos"],
@@ -294,6 +385,16 @@ def validate(path, digest, cap):
     for row in plan["rows"]:
         require(sha256_json(json.loads((prepared / f'{row["label"]}-first.json').read_bytes()))
                 == row["first_request_hash"], "prepared first input changed")
+    if plan["schema"] == GUIDANCE_SCHEMA:
+        require(plan["completion_guidance_contract"] == guidance.contract()
+                and [row["completion_guidance"] for row in plan["rows"]]
+                == ["baseline", "investigate-v1"], "guidance intervention changed")
+        binding = plan["baseline_binding"]
+        require(sha256_bytes(Path(binding["plan_path"]).read_bytes()) == binding["plan_hash"]
+                and sha256_json(json.loads(Path(binding["request_path"]).read_bytes()))
+                == binding["request_hash"], "historical baseline request changed")
+        guidance.assert_pair(json.loads((prepared / "A-first.json").read_bytes()),
+                             json.loads((prepared / "B-first.json").read_bytes()))
     require(not Path(plan["result_root"]).exists(), "single-use allocation already used")
     return plan, packet
 
@@ -317,7 +418,9 @@ def collect(path, digest, cap):
                 require(preflight["status"] == "READY", "environment preflight failed")
                 branch = restore(Source.from_record(plan["source"]), plan["cut_sequence"],
                     root / row["label"], Decimal(row["new_cap_nanos"]) / 10**9, env_file,
-                    funded=True, packet=packet if row["label"] == "B" else None)
+                    funded=True, packet=packet if plan["schema"] == GUIDANCE_SCHEMA
+                    or row["label"] == "B" else None,
+                    completion_guidance=row.get("completion_guidance", "baseline"))
                 result = run_branch(branch, group, journal, store, row["label"],
                                     row["first_request_hash"])
             except Exception as exc:
