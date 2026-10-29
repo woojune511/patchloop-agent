@@ -33,3 +33,4 @@
 - [Astroid checkpoint replay-feedback comparison preparation](../2026-10-29-astroid-replay-feedback-preparation.md)
 - [Astroid replay-feedback A/B results: delivered observation, unchanged submissions, both acceptance FAIL](../2026-10-29-astroid-replay-feedback-results.md)
 - [Completion guidance comparison with identical public observations: preparation](../2026-10-29-completion-guidance-preparation.md)
+- [Completion guidance results: both observed failure, A submitted unchanged and B stopped without repair](../2026-10-29-completion-guidance-results.md)

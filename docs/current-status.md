@@ -85,13 +85,15 @@ helper output and canonical observation, acknowledged the unchanged path, then
 finished without further exploration or repair despite available tools and budget.
 This selected pair supports delivery, not repair gain. Keep optional replay and
 public-check submission; a blanket budget increase or global replay gate is not
-supported. The [completion-guidance preparation](history/2026-10-29-completion-guidance-preparation.md)
-holds the public replay fixed in both arms and varies only generic guidance on
-submission eligibility versus remaining repair questions. The diagnostic intervention
-does not change ordinary defaults, tools, budgets or finish eligibility. Local
-preparation is READY: real A/B request equality outside the prompt, fresh dispatch
-guards and two-turn native continuation passed. New USD3.397541/arm (USD6.795082 total)
-funding awaits approval; actual provider calls remain zero and repair benefit is untested.
+supported. The [completion-guidance A/B](history/2026-10-29-completion-guidance-results.md)
+is CLOSED: both observed remaining F0010, neither edited. A submitted unchanged and
+failed acceptance; B read two source regions, probed, then stopped without evaluation.
+Cost USD0.416045; six settled calls. First requests differed only in the prompt.
+B's probe left two ordinary responses against an edit/check/finish minimum of
+three after correction reservation; edit was removed despite money/time/edit slots.
+A still had repair tools and budget. Read bodies reached subsequent requests.
+Probe choice lacked a forecast of later edit loss; audit that gap locally.
+This pair supports no prompt adoption or repair gain. Runtime/finish policy is unchanged.
 
 Benchmark acceptance is the primary repair outcome; diagnostic completeness is
 separate. [public-checks-v1](history/2026-10-29-public-check-submission.md) uses
