@@ -30,6 +30,12 @@ on a small set of public development tasks from start to finish. Review task
 acceptance, regressions, cost and elapsed time; use observed failures to choose the
 next fix. This is the default development loop, not a sequence of one-factor studies.
 
+The user has approved a [fresh integrated run of tasks 3, 9 and 16](history/2026-10-30-integrated-3916-results.md):
+pvlib1154, pydicom1694 and SQLFluff1517, each once, maximum two workers, USD4 per
+task / USD12 total. It keeps the selected current settings above and the repository
+`.env`, with no automatic retry or follow-up. Fresh preflight passed; the approved
+batch is ready to dispatch. Results and allocation closure will replace this status.
+
 The [latest integrated test-selection run](history/2026-10-30-integrated-selection-results.md)
 is CLOSED: pvlib1154, Astroid1333 and SQLFluff1733 each completed one fresh run
 with independent acceptance/safety PASS. USD5.424037 settled against USD12; all 64
