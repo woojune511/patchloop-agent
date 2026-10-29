@@ -30,60 +30,53 @@ on a small set of public development tasks from start to finish. Review task
 acceptance, regressions, cost and elapsed time; use observed failures to choose the
 next fix. This is the default development loop, not a sequence of one-factor studies.
 
-The [latest shared-guidance run of tasks 3, 9 and 16](history/2026-10-30-contract-guidance-3916-results.md)
-is CLOSED: pvlib1154 and pydicom1694 acceptance PASS; SQLFluff1517 FAIL; safety all
-PASS. USD2.66038 settled against USD12, with all 40 calls and 40 input counts linked,
-no retry or pending action. Two-worker wall time: 14 min 43 s. The previous
-[same-roster run](history/2026-10-30-integrated-3916-results.md) had the same verdicts,
-USD1.899919, 33 calls and 10 min 32 s. Cost rose 40.0% and time 39.6%; one exposed
-attempt per condition cannot establish a causal prompt effect or general accuracy.
+The [latest evidence-reuse run of tasks 3, 9 and 16](history/2026-10-30-evidence-reuse-3916-results.md)
+is CLOSED: pvlib1154 and pydicom1694 acceptance PASS, SQLFluff1517 FAIL; safety all
+PASS. USD2.221501 settled against USD12, with all 33 calls/counts and 53 actions
+linked, no retry or pending action. Two-worker elapsed time: 15 min 9 s. The
+[preceding same-roster run](history/2026-10-30-contract-guidance-3916-results.md)
+had the same verdicts, USD2.66038, 40 calls and 14 min 43 s. This attempt cost
+16.5% less but took 3.0% longer. One exposed attempt per condition cannot establish
+causal benefit, stable efficiency or general accuracy. All three submissions were
+unverified_delivery; no comparable unchanged-base reproduction was supplied.
 
-pvlib added its test inside the existing file, and the fixed wrapper ran 99 PASS,
-exercising that projection path live. Pydicom's first added test used the correct
-strict validation setting and ran 27 PASS; its first two probes used WARN mode and
-did not distinguish the repair. The later RAISE-mode probe checked suppression and
-the preserved valid value. No edit-cap effect or comparable original-case evidence
-is established; all three deliveries were unverified_delivery.
+The [bounded observation-retention fix](history/2026-10-30-verification-evidence-reuse.md)
+now has live delivery evidence: pvlib and SQLFluff completion handoffs retained
+concrete earlier probe output after intervening actions, and final assessments
+used it. Pydicom's failed probe output also survived. Keep this repair of a
+reproduced context-loss defect; do not equate it with broader verification or
+correct repair. Existing size bounds, historical exclusion and native deduplication
+remain; no tool, persistent store or finish gate was added.
 
-The [SQLFluff1517 public diagnosis](history/2026-10-30-sqlfluff1517-public-contract-diagnosis.md)
-confirmed an incomplete repair: adjacent `;;` no longer crashes, but `; ;`, newline
-and comment gaps still lose the consumed prefix and raise the same RuntimeError.
-The new partial-match return also bypasses trailing/minimum delimiter conditions.
-The added test was collected in replay: original 1 FAIL / 166 PASS,
-candidate 167 PASS. This is narrow coverage, not missing execution. Exact CLI replay
-also supports crash avoidance for adjacent `;;`; its parse violation alone is not
-a defect established by the public issue. Public-only paired diagnosis took 50.1 s,
-with no model calls or private evaluation. Exact independent failure remains unknown.
-The [shared repair guidance](history/2026-10-30-repair-contract-guidance.md) asks
-the agent to derive small checks from affected public contracts, related paths and
-boundaries, and observe preserved results/state. General current/thin, compact
-repair and completion all receive it. Existing tools, budgets and finish rules
-stay unchanged; SQLFluff-specific hints are absent. Its live benefit remains
-unproven. SQLFluff again changed only the empty-section return, corrected a new
-test's expected segment type, and reached 167 public PASS plus 1 directly selected
-test PASS. Five probes stayed on the same adjacent-semicolon pair, including one
-helper API error and repeated observations. The other failure returns and missing
-trailing/minimum guard remain in source; the prior dynamic counterexamples were
-not rerun on this distinct patch. Exact private failure remains unknown.
+Pvlib ran the same full test file twice on the same diff (99 PASS each), then
+checked distinct array/scalar conditions. Duplicate test execution remains a
+specific latency opportunity. Pydicom again began with a misconfigured WARN-mode
+probe, then used RAISE plus a valid control and replaced its mock regression with
+actual RawDataElement input. Its final public file ran 27 PASS. These file-level
+receipts do not establish line-entry coverage; tracking remained unknown.
 
-The [public delivery audit and reuse fix](history/2026-10-30-verification-evidence-reuse.md)
-found the relevant sibling returns/options and input-preservation helper were
-delivered before the edit; the current grammar was also delivered at verification.
-Missing source does not explain this case. After a later test, however, a fresh
-completion segment discarded the successful probe's actual output while retaining
-its ID/question and earlier failures. Current-diff recent probe summaries now
-survive this transition, with existing size bounds, failure states, explicit output
-omissions and native deduplication. No tool, persistent state or finish gate is added.
-Existing shared guidance now separates output/state from success conditions and
-asks the next probe's existing question to identify an untested condition.
-Local replay restores the lost observation; broader case selection, fewer calls
-and live repair gain remain unproven. No automatic paid repeat is pending.
+SQLFluff public checks ran 167 PASS, but its sole probe still used only adjacent
+`;;` and a normal `;`. This patch adds an allow_trailing guard to its empty-section
+return; the new success return still lacks a min_delimiters guard and a sibling
+failed-match return still uses mutated_segments. Full implementation and option
+tests were delivered before editing, and probe output was retained before finish.
+Missing source or lost output does not explain this attempt's narrow verification.
+The exact patch's gap/minimum cases were not dynamically rerun: residual concerns
+are static, and the exact independent failure remains unknown. The earlier
+[public paired diagnosis](history/2026-10-30-sqlfluff1517-public-contract-diagnosis.md)
+proved those cases on a different patch, not on this submission.
+
+The next unresolved question is how already-read failure paths and success guards
+become discriminating checks before a narrow patch is accepted. Compare public
+plans/check questions with actual cases before adding prompts, tools or gates;
+replay this exact patch publicly before asserting its residual behavior. Provider
+dispatch still occupied 78-80% of task time. No automatic paid repeat is pending.
 
 Keep [advisory test-selection feedback and batched source tracking](history/2026-10-30-test-execution-visibility-and-latency.md).
 The [earlier 3/13/18 run](history/2026-10-30-integrated-selection-results.md) observed
 explicit selection of previously omitted file types but also exposed the two
 validation conflicts below. Provider dispatch still occupied 68-74% of task time
-in the preceding 3/9/16 run and 66-79% in the latest run; lower Git latency alone
+in the preceding 3/9/16 run and 66-79% in the shared-guidance run; lower Git latency alone
 is not an end-to-end speed claim.
 
 The [two test-validation conflicts](history/2026-10-30-test-validation-fixes.md)
