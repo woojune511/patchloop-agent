@@ -101,6 +101,15 @@ still evidence: retain failure, timeout, truncation and unknown comparison witho
 granting success or verification credit. Failed reads and stale/unbound results stay
 summaries; unselected source bodies, probe programs and full execution policies
 remain omitted. No retrieval permission, verdict or budget changes.
+The existing last-three `recent_probes` summaries also survive intervening reads,
+tests and fresh completion segments when their diff matches the current candidate
+and they are not historical. Keep question, bounded output tails and unassessed
+observations for failures as well as completed executions. Each output tail stays
+at 2,000 characters; omitted-character counts and execution-limit flags distinguish
+a summary from complete output. Existing native-result deduplication removes
+duplicate bodies. Programs and bulk call traces remain omitted; action-ID replay
+already retrieves an exact prior program. Diff changes do not restore old evidence
+as current. This adds no check credit, tool, action, state store or finish gate.
 The journal is unchanged. Other context policies compact current state
 but do not acquire segmented history-reset behavior.
 

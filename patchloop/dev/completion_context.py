@@ -22,10 +22,11 @@ does not become verified through submission, plan edits or prose. stop_task aban
 Use offered source retrieval only to resolve a material remaining question. Source identifiers
 are navigation metadata, not delivered source bodies. When a mutation tool is offered, the
 already selected current source remains available within its existing retention limit.
-Otherwise earlier source bodies are omitted. Older probe bodies remain omitted; do not
-reconstruct omitted content or infer that an omitted observation passed.
+Otherwise earlier source bodies are omitted. Old probe programs/bulk remain omitted;
+do not reconstruct omitted content or infer that an omitted observation passed.
 New successful reads/searches on the current candidate retain their bounded tool output.
-The latest current probe also retains its observations, including failures and partial output;
+Recent current-diff probe summaries survive intervening reads/tests and fresh segments.
+Reuse their actual observations, including failures and partial output, before another probe;
 execution completion alone does not establish that its diagnostic question was answered.
 Use the retained bounded plan for its requested review. Follow the offered tool schema without
 rebuilding unrelated plans or notes. The same run budgets and recovery allowances still apply.
@@ -44,7 +45,7 @@ def contract() -> dict[str, Any]:
                       "current_protocol_correction", "remaining_budgets_and_offered_tools",
                       "latest_successful_current_source_results",
                       "bounded_current_source_when_mutation_offered",
-                      "latest_current_probe_observations"],
+                      "latest_current_probe_observations", "bounded_recent_current_probes"],
         "omitted": ["historical_source_bodies", "historical_bulk_tool_results",
                     "inspection_history", "probe_programs"],
         "source_retrieval_policy": "existing-offered-registered-tools-no-new-permission",
@@ -88,6 +89,10 @@ _PROBE_OUTPUT_FIELDS = (
 _PROBE_REPRODUCTION_FIELDS = (
     *_REPRODUCTION_FIELDS, "call_observation", "comparison_feedback", "requirement_mapping",
     "reported_failure_match", "repair_success", "interpretation",
+)
+_RECENT_PROBE_FIELDS = (
+    *_RESULT_FIELDS, "question", "diagnostic_only", "observation", "stdout", "stderr",
+    "stdout_omitted_chars", "stderr_omitted_chars",
 )
 
 
@@ -189,15 +194,22 @@ def project(state: dict[str, Any]) -> dict[str, Any]:
     old_stage = state.get("completion_stage", {})
     prior_omissions = (old_stage.get("omitted_historical_records", {})
                        if old_stage.get("policy") == POLICY else {})
-    omitted = {}
-    for name in ("recent_checks", "recent_tests"):
+    omitted = copy.deepcopy(prior_omissions)
+    for name in ("recent_checks", "recent_tests", "recent_probes"):
         if name not in state:
             continue
         rows = state[name]
         # An absent current hash is not evidence that a row is current.
         current = [row for row in rows if current_hash is not None
-                   and row.get("diff_hash") == current_hash]
-        view[name] = [_result_summary(row) for row in current]
+                   and row.get("diff_hash") == current_hash
+                   and (name != "recent_probes" or not row.get("historical"))]
+        if name == "recent_probes":
+            # The gateway already bounds these three observations. Keep them across
+            # a test/read and segment reset; native-result deduplication still applies.
+            if current:
+                view[name] = [_select(row, _RECENT_PROBE_FIELDS) for row in current]
+        else:
+            view[name] = [_result_summary(row) for row in current]
         omitted[name] = len(rows) - len(current) + prior_omissions.get(name, 0)
     if "latest_tool_results" in state:
         view["latest_tool_results"] = [_latest_result(row, current_hash)

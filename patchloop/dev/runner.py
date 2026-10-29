@@ -2702,11 +2702,16 @@ def _build_context(
                 "historical": result["workspace_diff_hash"] != summary.patch_hash,
                 "diagnostic_only": True,
                 "observation": probe_observation(result),
+                **{key: result["output"][key] for key in (
+                    "timed_out", "deadline_exhausted", "cleanup_failed", "truncated",
+                ) if key in result["output"]},
                 **({"delivery": "latest_tool_result"} if result["action_id"] in latest_ids else {
                     "question": result["output"].get("question"),
                     "exit_code": result["output"].get("exit_code"),
                     "stdout": result["output"].get("stdout", "")[-2_000:],
                     "stderr": result["output"].get("stderr", "")[-2_000:],
+                    "stdout_omitted_chars": max(0, len(result["output"].get("stdout", "")) - 2_000),
+                    "stderr_omitted_chars": max(0, len(result["output"].get("stderr", "")) - 2_000),
                     "message": result.get("message"),
                     **({"call_path": result["output"]["call_path"]}
                        if "call_path" in result["output"] else {}),

@@ -104,7 +104,7 @@ def test_source_and_old_bulk_are_removed_but_current_outcomes_and_retrieval_ids_
     assert "old-probe-bulk-must-not-repeat" not in serialized
     assert "must-not-enter-finalization" not in serialized
     assert len(serialized) < len(canonical_json(original)) // 8
-    assert "recent_probes" not in projected and "source_spans" not in projected
+    assert not projected.get("recent_probes") and "source_spans" not in projected
     assert projected["recent_checks"] == [{"action_id": "check", "diff_hash": DIFF,
                                            "check_id": "required", "passed": True, "exit_code": 0}]
     assert projected["recent_tests"][0]["comparison"]["status"] == "PASSED_BOTH"
@@ -467,10 +467,11 @@ def test_stale_or_unbound_probe_body_is_not_reintroduced_as_current_evidence(cha
     assert "observation" not in projected["latest_tool_results"][0]
 
 
-def test_missing_current_diff_or_later_batch_does_not_retain_previous_probe_body():
+def test_missing_current_diff_or_absent_recent_record_does_not_invent_previous_probe_body():
     from patchloop.dev.probe_observation import project_probe_result
 
     original = state()
+    original.pop("recent_probes")
     original["latest_tool_results"] = [project_probe_result(probe_result())]
     projected = completion_context.project(original)
     projected["latest_tool_results"] = [{"tool": "run_check", "status": "succeeded",
@@ -478,3 +479,145 @@ def test_missing_current_diff_or_later_batch_does_not_retain_previous_probe_body
     assert "LATEST_PROBE_STDOUT" not in canonical_json(completion_context.project(projected))
     original["current_diff"].pop("patch_hash")
     assert "LATEST_PROBE_STDOUT" not in canonical_json(completion_context.project(original))
+
+
+def recent_probe_record(outcome="passed"):
+    """Match the bounded public row produced by runner._build_context."""
+    from patchloop.dev.probe_observation import probe_observation
+
+    result = probe_result(outcome)
+    return {
+        "action_id": result["action_id"], "diff_hash": DIFF, "historical": False,
+        "diagnostic_only": True, "observation": probe_observation(result),
+        "question": result["output"]["question"],
+        "exit_code": result["output"]["exit_code"],
+        "stdout": result["output"]["stdout"][-2_000:],
+        "stderr": result["output"]["stderr"][-2_000:], "message": None,
+    }
+
+
+@pytest.mark.parametrize("outcome", [
+    "passed", "failed", "timeout", "output_limit", "cleanup_failed",
+])
+def test_recent_current_probe_survives_later_test_without_promoting_its_outcome(outcome):
+    original = state()
+    recent = recent_probe_record(outcome)
+    original["recent_probes"] = [recent]
+    original["latest_tool_results"] = [{
+        "tool": "run_tests", "action_id": "later-test", "status": "succeeded",
+        "workspace_diff_hash": DIFF, "output": {"test_status": "PASS", "exit_code": 0},
+    }]
+    # Neither a program nor bulk tracing belongs in the retained observation.
+    recent.update(python_source=SOURCE_BODY, call_path={"events": BULK_OUTPUT})
+    before = copy.deepcopy(original)
+    projected = completion_context.project(original)
+    retained = projected["recent_probes"][0]
+    for key in ("action_id", "diff_hash", "question", "stdout", "stderr", "exit_code",
+                "observation", "diagnostic_only"):
+        assert retained[key] == recent[key]
+    assert retained["observation"]["behavior_verdict"] == "not_assessed"
+    assert retained["observation"]["execution_status"] == (
+        "completed" if outcome == "passed" else outcome)
+    assert "python_source" not in retained and "call_path" not in retained
+    assert SOURCE_BODY not in canonical_json(projected)
+    assert BULK_OUTPUT not in canonical_json(projected)
+    assert completion_context.project(projected) == projected
+    assert original == before
+    for field in ("workflow_gate", "remaining_budget", "available_tool_names",
+                  "visible_check_status", "reproduction_review"):
+        assert projected[field] == original[field]
+    retained["observation"]["behavior_verdict"] = "changed-derived-view"
+    assert original == before
+
+
+@pytest.mark.parametrize("change", [
+    {"diff_hash": "old"}, {"diff_hash": None}, {"historical": True},
+])
+def test_recent_probe_with_stale_or_unknown_identity_is_not_current_evidence(change):
+    original = state()
+    original["latest_tool_results"] = []
+    original["recent_probes"] = [{**recent_probe_record(), **change}]
+    projected = completion_context.project(original)
+    assert not projected.get("recent_probes")
+    assert "LATEST_PROBE_STDOUT" not in canonical_json(projected)
+
+
+@pytest.mark.parametrize("patch_hash", [None, "new-diff"])
+def test_retained_probe_is_dropped_when_current_diff_becomes_unknown_or_changes(patch_hash):
+    original = state()
+    original["latest_tool_results"] = []
+    original["recent_probes"] = [recent_probe_record()]
+    projected = completion_context.project(original)
+    assert projected["recent_probes"][0]["stdout"].startswith("LATEST_PROBE_STDOUT")
+    projected["current_diff"]["patch_hash"] = patch_hash
+    updated = completion_context.project(projected)
+    assert not updated.get("recent_probes")
+    assert "LATEST_PROBE_STDOUT" not in canonical_json(updated)
+
+
+@pytest.mark.parametrize("later_tool", ["run_tests", "read_file"])
+@pytest.mark.parametrize("context_policy", ["append-v1", "segmented-v1"])
+def test_fresh_completion_request_keeps_recent_probe_after_an_intervening_action(
+    tmp_path, later_tool, context_policy,
+):
+    from patchloop.artifacts import ArtifactStore
+    from patchloop.dev import runner
+    from patchloop.dev.conversation import reconstruct_state
+    from patchloop.dev.state import DevJournal
+
+    original = state()
+    original["working_notes"] = {"findings": [], "verification": {"items": []}}
+    original["recent_probes"] = [recent_probe_record()]
+    original["latest_tool_results"] = [{
+        "tool": later_tool, "action_id": "intervening-action", "status": "succeeded",
+        "workspace_diff_hash": DIFF, "output": {"exit_code": 0},
+    }]
+    journal = DevJournal(tmp_path, "run_dev_completionrecentprobe")
+    store = ArtifactStore(tmp_path / "artifacts")
+    # This is the fresh segment/snapshot after probe -> intervening action. No old
+    # native exchange can substitute for the bounded current public observation.
+    with journal.execution_lock():
+        request_input = runner._build_model_input(
+            journal=journal, artifact_store=store, context=canonical_json(original),
+            latest_tool_results=[], context_policy=context_policy,
+            planning_policy="none", agent_policy="thin",
+        )
+    actual = reconstruct_state(request_input, context_policy=context_policy)
+    assert canonical_json(request_input).count("LATEST_PROBE_STDOUT") == 1
+    assert actual["recent_probes"][0]["question"] == original["recent_probes"][0]["question"]
+    assert actual["recent_probes"][0]["observation"]["behavior_verdict"] == "not_assessed"
+    assert actual["available_tool_names"] == original["available_tool_names"]
+
+
+def test_recent_probe_output_is_not_repeated_when_exact_native_result_is_visible():
+    from patchloop.dev import runner, segments
+    from patchloop.dev.conversation import assemble_model_input, reconstruct_state
+    from patchloop.dev.probe_observation import project_probe_result
+
+    original = state()
+    original["working_notes"] = {"findings": [], "verification": {"items": []}}
+    original["latest_tool_results"] = [{
+        "tool": "run_tests", "action_id": "later-test", "status": "succeeded",
+        "workspace_diff_hash": DIFF, "output": {"passed": True},
+    }]
+    original["recent_probes"] = [recent_probe_record()]
+    raw = probe_result()
+    raw["output"]["diff_hash"] = DIFF
+    result = project_probe_result(raw)
+    history = [
+        {"type": "function_call", "call_id": result["action_id"], "name": "run_probe",
+         "arguments": "{}"},
+        {"type": "function_call_output", "call_id": result["action_id"],
+         "output": canonical_json(result)},
+    ]
+    before = copy.deepcopy(history)
+    view = runner._segment_current_view(completion_context.project(original), history, [])
+    request_input = assemble_model_input(
+        system_prompt=completion_context.SYSTEM_PROMPT, state=view, history=history,
+        context_policy=segments.POLICY,
+    )
+    actual = reconstruct_state(request_input, context_policy=segments.POLICY)
+    assert canonical_json(request_input).count("LATEST_PROBE_STDOUT") == 1
+    assert "stdout" not in actual["recent_probes"][0]
+    assert actual["recent_probes"][0]["delivery"] == "preceding_function_call_output"
+    assert history == before

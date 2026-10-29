@@ -140,7 +140,7 @@ def test_surrounding_action_guidance_identity():
     # and the complete prompt keeps the 8,000-character bound.
     # Historical J0/J1 arms retain their exact earlier surrounding-guidance identities.
     assert hashlib.sha256(canonical_json([prefix, suffix]).encode()).hexdigest() == (
-        "00653429f141acb6ed68973e7009f305117fbfde156b339f3cb9a6b42541fbc0"
+        "5092c98d89d091a2a1e0764cba9ceda84a3539fb9473259240aafa8771fcb3d0"
         if FROZEN_ARM is None else
         "2d0a9063da8d508a3c1218903cae12e33aa5db97f4d5655ca645fd5d52dc1331"
         if JUDGMENT else "c6439ce32e7724ed5d4c08dc1f207186b45e34234947c2867d7a65f096ce10a3"
@@ -205,7 +205,7 @@ def test_guidance_identity_changes_without_changing_run_schema_or_limits():
     # Registered selection review and completion-source delivery change the surface;
     # argument and description identities remain independently pinned above.
     assert dev_tool_surface_hash() == (
-        "sha256:ba96122e880e6d6962fb5fc9bcba696dbe1c8fabf531c59dd032ebab2a555766"
+        "sha256:b79cec16c8f4244550ba465788425e2977abcab15373316be8efad1e1270d885"
         if FROZEN_ARM is None else
         "sha256:57193859890419b79cb7f4927c37796d044bc4bf7159c51ddf17723849529e26"
     )

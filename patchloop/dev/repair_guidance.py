@@ -1,9 +1,9 @@
 """Shared repair guidance; no new tool, verification gate or execution authority."""
 
-INSTRUCTIONS = """For any mutation, ground intended and preserved behavior in public requirements
-or callers.
-Trace changed returns, conditions or state updates through related paths and boundaries.
-Choose a small check that could refute the repair and a relevant normal control; observe
-required results and preserved state, not only absence of errors. Reuse evidence and
-group useful cases within budget. This adds no fixed probe count or completion gate.
+INSTRUCTIONS = """Ground repairs in public requirements or callers. Distinguish required outputs,
+preserved state and success/failure conditions. Test a related failure path or option
+boundary that could refute the patch, plus a normal control; group cases in one check.
+Before another probe, name the still-untested condition in its question. Reuse adequate
+same-diff results and observed APIs. One input does not cover other paths. No probe quota
+or new completion gate.
 """

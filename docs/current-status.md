@@ -66,10 +66,18 @@ helper API error and repeated observations. The other failure returns and missin
 trailing/minimum guard remain in source; the prior dynamic counterexamples were
 not rerun on this distinct patch. Exact private failure remains unknown.
 
-Next inspect how existing verification selects a different affected return or
-option boundary and reuses an adequate observation. More probes, another generic
-prompt expansion or a new completion gate is not justified by this result alone.
-No automatic paid repeat is pending; the guidance remains an unproven instruction.
+The [public delivery audit and reuse fix](history/2026-10-30-verification-evidence-reuse.md)
+found the relevant sibling returns/options and input-preservation helper were
+delivered before the edit; the current grammar was also delivered at verification.
+Missing source does not explain this case. After a later test, however, a fresh
+completion segment discarded the successful probe's actual output while retaining
+its ID/question and earlier failures. Current-diff recent probe summaries now
+survive this transition, with existing size bounds, failure states, explicit output
+omissions and native deduplication. No tool, persistent state or finish gate is added.
+Existing shared guidance now separates output/state from success conditions and
+asks the next probe's existing question to identify an untested condition.
+Local replay restores the lost observation; broader case selection, fewer calls
+and live repair gain remain unproven. No automatic paid repeat is pending.
 
 Keep [advisory test-selection feedback and batched source tracking](history/2026-10-30-test-execution-visibility-and-latency.md).
 The [earlier 3/13/18 run](history/2026-10-30-integrated-selection-results.md) observed
@@ -113,10 +121,10 @@ and [usability](history/2026-10-29-runtime-usability-followup.md) changes also r
 new/multiple files and receipt undo, exact recovery, accurate action forecasts,
 character-paged reads and the configurable 12-edit default.
 
-The current runtime's quick regression passed 1,236 tests, including isolated mock
-evaluation, and skipped one check: 234.40 seconds with four file-grouped workers
-and no failures. Both validation fixes and shared contract-derived repair guidance
-are included. Focused validation and Ruff passed. Full-suite completion, Linux
+The current runtime's quick regression passed 1,252 tests, including isolated mock
+evaluation, and skipped one check: 326.05 seconds with four file-grouped workers
+and no failures. Validation fixes, shared repair guidance and recent-probe evidence
+reuse are included. Focused validation: 124 PASS / 84.91 s; Ruff passed. Full-suite completion, Linux
 validation and causal quality/speed benefit
 remain unverified; changing task rosters cannot establish a batch speed gain.
 The historical dev20 measurement stays [closed](history/2026-10-29-repair-dev20-results.md):
