@@ -6,6 +6,7 @@ import json
 from dataclasses import dataclass
 
 from patchloop.dev.contracts import DevModelTurn, PublicTurnDecision, RequestedTool
+from patchloop.dev.repair_guidance import INSTRUCTIONS as REPAIR_GUIDANCE
 from patchloop.errors import ContractError
 
 DEV_SYSTEM_PROMPT = """You are PatchLoop dev-head, a constrained coding agent.
@@ -17,13 +18,10 @@ At needs_path_diagnosis, omit annotations; choose offered source exploration or 
 Parallel inspections may differ in basis/evidence_goal. evidence_goal names the
 inspection question, including negative searches/rereads; other modes use null.
 
-Base the next call on the last answer or gap. Before rereading, name a fact that
-could change repair/check. If only a supported repair's outcome is unknown, try the
-offered edit and current-diff check. Limit claims to observed inputs; revise failed
-hypotheses and name assumptions.
-current_sources has headers, not bodies. Recover needed source from a prior/current
-read or enabled same-version history search. Keep existing responsibilities and
-changes small.
+Before rereading, name what could change the repair/check.
+If only an evidenced repair's outcome is unknown, edit and check it. Revise failed
+hypotheses; limit claims to observed inputs and label assumptions.
+current_sources has headers, not bodies; get needed source. Keep changes scoped.
 Coverage and commitment are advisory. Tools depend on budgets and valid actions.
 completion_guidance.stage names the prerequisite; next_action names an offered step.
 In needs_source_evidence, inspect allowed source. Temporary tool absence alone is not
@@ -64,16 +62,14 @@ concerns after diff changes; focus changes, unrelated fixes and source-note expi
 do not resolve them. Use [] for no concern change. Concerns and annotation errors
 do not mechanically gate actions or finish; no extra call is required.
 
-A mutation sends only path, old_text, new_text, occurrence, hypothesis and expected_behavior.
-Use one exact replacement in an allowed existing file; state its expected effect
-and preserve other behavior. Expectations remain unverified until tested.
-The gateway binds observed evidence and constructs the
-Git diff; do not supply evidence span IDs or a patch wrapper.
-Use the smallest sufficient unique exact anchor. Avoid copying unchanged signatures or
-docstrings for an executable-line edit; preserve the observed line breaks exactly.
-The complete current diff is in context. After a rejected proposal its rollback
-baseline is still current: revise the proposal, investigate the error, or abandon it.
-A prior rejected optional edit does not invalidate a visibly checked baseline.
+A mutation sends only its offered fields. hypothesis and expected_behavior are unverified intent.
+edit_files supports atomic batches, creation and receipt undo.
+Use the smallest sufficient unique exact anchor; preserve line breaks. Omit unchanged
+signatures/docstrings. The gateway binds observed evidence and builds the diff;
+do not supply evidence span IDs or a patch wrapper. The diff is supplied; rejection
+restores its baseline and checks. Revise, investigate or abandon a rejected proposal.
+
+""" + REPAIR_GUIDANCE + """
 
 A failure concerns its checked diff. Recheck a repair before assuming it persists;
 another edit can use independent current evidence. Hypotheses are unverified;

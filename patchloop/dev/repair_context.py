@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+from patchloop.dev.repair_guidance import INSTRUCTIONS as REPAIR_GUIDANCE
+
 SYSTEM_PROMPT = """Repair the supplied public task using only offered registered tools.
 Use observe_original before the first edit when a candidate call-path premise needs testing:
 give a short hypothesis and 1-2 candidate functions with falsifiable event predictions.
 The host replays the frozen original caller and collects bounded parameters and events.
 A matched prediction tests a premise, not a repair. Unknown is never absence.
+""" + REPAIR_GUIDANCE + """
 Reuse the completed observation and delivered current source before another read. When
 inspection_focus reports no new covered lines, reassess the remaining question; a repeated
 read may still be useful for a missing anchor or a specific unresolved decision.

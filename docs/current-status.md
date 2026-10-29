@@ -51,9 +51,13 @@ candidate 167 PASS. This is narrow coverage, not missing execution. Exact CLI re
 also supports crash avoidance for adjacent `;;`; its parse violation alone is not
 a defect established by the public issue. Public-only paired diagnosis took 50.1 s,
 with no model calls or private evaluation. Exact independent failure remains unknown.
-Next, address failure-return input preservation and affected grammar contracts;
-consider existing verification guidance before adding a new gate. No repair or
-agent-level quality benefit is claimed from this diagnosis.
+The [shared repair guidance](history/2026-10-30-repair-contract-guidance.md) now asks
+the agent to derive small checks from affected public contracts, related paths and
+boundaries, and observe preserved results/state. General current/thin, compact
+repair and completion all receive it. Existing tools, budgets and finish rules
+stay unchanged; SQLFluff-specific hints are absent. No SQLFluff repair or live
+agent-level quality benefit is claimed. Next live assessment should inspect actual
+verification choices and independent acceptance alongside cost/time.
 
 Keep [advisory test-selection feedback and batched source tracking](history/2026-10-30-test-execution-visibility-and-latency.md).
 The [earlier 3/13/18 run](history/2026-10-30-integrated-selection-results.md) observed
@@ -95,10 +99,11 @@ and [usability](history/2026-10-29-runtime-usability-followup.md) changes also r
 new/multiple files and receipt undo, exact recovery, accurate action forecasts,
 character-paged reads and the configurable 12-edit default.
 
-The current runtime's quick regression passed 1,208 tests, including isolated mock
-evaluation, and skipped one unavailable symlink check: 332.31 seconds with four
-file-grouped workers and no failures. Both validation fixes are included. Ruff
-passed. Full-suite completion, Linux validation and causal quality/speed benefit
+The current runtime's quick regression passed 1,236 tests, including isolated mock
+evaluation, and skipped one check: 234.40 seconds with four file-grouped workers
+and no failures. Both validation fixes and shared contract-derived repair guidance
+are included. Focused validation and Ruff passed. Full-suite completion, Linux
+validation and causal quality/speed benefit
 remain unverified; changing task rosters cannot establish a batch speed gain.
 The historical dev20 measurement stays [closed](history/2026-10-29-repair-dev20-results.md):
 10 PASS, 9 FAIL, 1 unsubmitted/NOT_RUN; USD11.7967235. It is development context,

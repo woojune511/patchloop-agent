@@ -6,10 +6,12 @@ import copy
 from typing import Any
 
 from patchloop.dev.mutation_tools import MUTATION_TOOLS
+from patchloop.dev.repair_guidance import INSTRUCTIONS as REPAIR_GUIDANCE
 
 POLICY = "small-completion-context-v1"
 
 SYSTEM_PROMPT = """Review the current candidate against the supplied public task and evidence.
+""" + REPAIR_GUIDANCE + """
 Use the current diff, required-check verdicts, original-call outcomes, and unresolved notes/plan.
 A required-check PASS does not establish that the original failure was repaired. Preserve
 unexpected exceptions, mismatches, unknown observations and condition differences in your
