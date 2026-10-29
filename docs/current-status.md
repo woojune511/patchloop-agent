@@ -42,14 +42,18 @@ ran its new file. It created that file immediately, so exact-restoration use was
 not exercised. Pydicom repaired its implementation once and corrected its new test
 twice before acceptance PASS; this does not establish an edit-cap effect.
 
-Next investigation: SQLFluff1517's public-evidence/correctness gap. Its 167-PASS
-public check and candidate API probe preceded acceptance FAIL. The probe supports
-crash avoidance for the double-semicolon example; broader delimiter handling and
-token/tree preservation remain unverified. The public issue leaves the desired
-duplicate-semicolon handling open, so a parse error alone is not a proven defect.
-Inspect public contracts and examples; no private evaluator content or new funded
-run is needed to frame that diagnosis. Its new test has directory-discovery evidence
-only, not a separate file selection. Do not turn this into another blanket gate.
+The [SQLFluff1517 public diagnosis](history/2026-10-30-sqlfluff1517-public-contract-diagnosis.md)
+confirmed an incomplete repair: adjacent `;;` no longer crashes, but `; ;`, newline
+and comment gaps still lose the consumed prefix and raise the same RuntimeError.
+The new partial-match return also bypasses trailing/minimum delimiter conditions.
+The added test was collected in replay: original 1 FAIL / 166 PASS,
+candidate 167 PASS. This is narrow coverage, not missing execution. Exact CLI replay
+also supports crash avoidance for adjacent `;;`; its parse violation alone is not
+a defect established by the public issue. Public-only paired diagnosis took 50.1 s,
+with no model calls or private evaluation. Exact independent failure remains unknown.
+Next, address failure-return input preservation and affected grammar contracts;
+consider existing verification guidance before adding a new gate. No repair or
+agent-level quality benefit is claimed from this diagnosis.
 
 Keep [advisory test-selection feedback and batched source tracking](history/2026-10-30-test-execution-visibility-and-latency.md).
 The [earlier 3/13/18 run](history/2026-10-30-integrated-selection-results.md) observed
