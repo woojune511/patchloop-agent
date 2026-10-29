@@ -24,108 +24,63 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-Treat benchmark acceptance as the primary repair outcome; report diagnostic
-completeness separately. The [three-task result](history/2026-10-29-helper-transfer-three-results.md)
-was one isolated PASS, one FAIL and one NOT_RUN. Its additional full verified-chain
-criterion was 0/3; that does not mean zero benchmark successes. The allocation is CLOSED.
+Measure the complete current configuration on the historical 20-task development
+roster. The [dev20 plan](history/2026-10-29-repair-dev20-plan.md) prepares all
+current-dev20 indices 1-20, once each from original source, with the recent
+five-task settings frozen: gpt-5.4-2026-03-05/xhigh, public-checks-v1, thin,
+segmented-v1, completion-recovery-v1, input60K, output40K/correction25K,
+20 responses/40 actions/3 edits, and 2,400 seconds including 390 for evaluation.
+Proposed caps are USD4.50/task and USD90 total with no transfer. No live work is
+authorized yet. Earlier five-task outcomes will not be pooled into this score.
 
-The [submission-policy change](history/2026-10-29-public-check-submission.md) adds
-explicit `public-checks-v1`: current required public checks and scoped diff govern
-submission; original reproduction, path diagnosis and observation corrections are
-advisory evidence. No new original replay is automatic or reserved. Evidence and
-honest delivery labels remain visible; independent evaluator acceptance is unchanged.
-The compatible CLI default/control remains `reproduction-gated-v1`. This is an
-implemented comparison option, not a globally switched default or proven quality gain.
+The latest [full-roster PatchLoop run](history/2026-10-16-patchloop-mini-dev20-results.md)
+had 8 PASS, 10 FAIL and 2 NOT_RUN; original
+[mini-SWE-agent](history/2026-10-16-mini-swe-dev20-results.md) had 10 PASS,
+5 FAIL and 5 NOT_RUN. Models, budgets, policies and environments differ from the
+proposed current configuration. Per-task comparisons are descriptive, not causal
+architecture gains or held-out generalization. Report PASS/20 and retain all
+FAIL/ERROR/NOT_RUN outcomes, costs and completion states.
 
-Keep the [required-public-check contract](history/2026-10-28-required-public-checks.md):
+Benchmark acceptance is the primary repair outcome; diagnostic completeness is
+separate. [public-checks-v1](history/2026-10-29-public-check-submission.md) uses
+current required public checks and scoped diff for submission. Reproduction,
+path diagnosis and observation correction remain advisory evidence, with honest
+delivery labels. The compatible CLI default is still reproduction-gated-v1.
+No global default switch or quality improvement is claimed.
+
+Keep the [required public check contract](history/2026-10-28-required-public-checks.md):
 known FAIL and required NOT_RUN block finish, edits invalidate old PASS, and fresh
-failure feedback reaches the next response. Source/mutation boundaries, recovery,
-uncertain-execution stops, total budgets and private evaluation separation remain.
-The [helper API contract](history/2026-10-29-helper-api-contract.md) is unchanged.
+public failures reach the next response. Keep source/mutation boundaries,
+recovery identities, uncertain-execution stops and total budgets.
+The [helper API contract](history/2026-10-29-helper-api-contract.md),
+[bounded observation correction](history/2026-10-29-observation-shape-correction.md),
+[edit prerequisite delivery](history/2026-10-29-edit-prerequisite-guidance.md) and
+[optional observation/replay guidance](history/2026-10-29-probe-followup-guidance.md)
+remain implemented. Guidance adds no automatic replay, reserve or submission gate.
+Availability and delivery do not prove model use or repair correctness.
 
-The [bounded observation correction](history/2026-10-29-observation-shape-correction.md)
-now distinguishes incompatible v11 JSON object fields from a behavioral failure.
-Before source edits, one changed observation program can replace that invalid
-observation only after the same-condition original failure is reproduced, with
-unchanged failure/desired declarations. Failed attempts remain unverified and spend
-the shared allowance. Public-check submission keeps this correction optional,
-without adding a diagnostic gate or reserve. Local evidence is not model uptake.
+The [SQLFluff follow-up](history/2026-10-29-probe-followup-single-results.md)
+repaired the task and passed acceptance after public regression feedback prompted
+a second edit. The model did not replay its pre-edit helper; the later
+[saved-patch comparison](history/2026-10-29-sqlfluff-success-mechanism.md) is an
+operator diagnostic. Card causality and repeatability remain unresolved.
+The [pvlib native reassessment](history/2026-10-29-private-evaluation-logs-pvlib-native.md)
+reproduced A PASS/B FAIL and retained exact operator-only diagnostics. Detailed
+private receipts/logs stay outside solver feedback; acceptance is unchanged.
 
-The [six-run policy result](history/2026-10-29-verification-policy-six-v2-results.md)
-is CLOSED at USD3.841041/27: A had two acceptance PASS and one FAIL; B had one PASS,
-one FAIL and one NOT_RUN. Five candidates passed public checks and submitted;
-only three passed isolated acceptance. All five safety verdicts were PASS.
-No shape-correction opportunity occurred, so live correction use remains untested.
-B's SQLFluff run stopped on its first response, claiming no edit tool before reading
-source. The actual thin request omitted the host's read-to-edit transition message;
-the [edit-availability fix](history/2026-10-29-edit-prerequisite-guidance.md) now
-preserves the current edit status, blocking reason and available source prerequisite
-through thin/compact requests, correction and recovery. Tool admission, host checks
-and budgets remain unchanged. Local request/transition tests and isolated mock
-smoke validate transport; the live follow-up below checks actual delivery and actions.
-Keep the default unchanged: this small exposed panel does not establish a benefit
-from optional reproduction or general superiority. Always-visible schemas are not
-introduced; inspect the candidate-verification gap below before widening the action set.
-The [single SQLFluff follow-up](history/2026-10-29-edit-prerequisite-single-results.md)
-is CLOSED at USD0.587558/4.50. All 11 actual request cards and count/dispatch
-identities matched; the model searched, received the edit tool, edited once,
-passed 506 public tests and submitted. Independent acceptance FAIL, safety PASS.
-One baseline helper observed the reported indentation problem, but the candidate
-was not replayed on that public example before submission; budgets and further
-tools remained available at finish. The subsequent [operator replay](history/2026-10-29-sqlfluff-public-candidate-replay.md)
-now confirms that the saved patch leaves the public failure unchanged: the same
-helper produces nine spaces before `my_id` on both original and candidate, versus
-the expected eight, with identical SQL output and L003 repeated-fix warning.
-The [branch trace](history/2026-10-29-sqlfluff-branch-diagnosis.md) confirms that the
-changed L036 branch ran once and its fix was accepted, but produced the same
-observed intermediate SQL as the original. Later L003 additions create two
-four-space pieces; L039 reduces the second to one, then L003 replaces only the
-first with eight, leaving nine spaces. A repeated no-op fix is rejected as a seen
-state. These diagnostics establish ineffective intermediate behavior in the old
-candidate, not L003 normalization as the only viable repair. No repair, runtime
-policy or budget change was made by these operator diagnostics.
-The [observation follow-up change](history/2026-10-29-probe-followup-guidance.md)
-now connects a pre-edit helper's bounded observations to current-patch reexecution
-status in ordinary and compact requests. Existing replay references are advertised
-only on an offered general probe route. This adds no automatic execution, reserve,
-check credit or submission gate. The [single live follow-up](history/2026-10-29-probe-followup-single-results.md)
-is CLOSED at USD1.18095550/4.50 with independent acceptance/safety PASS. The first
-L036 edit failed two public tests; a second edit narrowed indentation reuse and
-passed all 506, followed by normal submission. All five eligible requests carried
-the card; four offered replay, but the model performed no post-edit helper and
-disclosed that gap at finish. This is one successful repair and live delivery,
-not evidence of replay uptake or causal improvement. Original-call verification
-remains unverified without downgrading the acceptance PASS. Keep budgets and
-submission policy unchanged; repeatability and the effect on choices remain open.
-The [saved-patch comparison](history/2026-10-29-sqlfluff-success-mechanism.md) now
-confirms the mechanism on public cases: the old edit still produces nine spaces;
-both new edits produce the expected eight immediately in L036, and the final
-SELECT-column guard also preserves two top-level regression cases. This operator
-diagnostic does not retroactively count as solver replay. The discriminating
-pre-edit observation and regression-driven revision are evidenced; card causality
-remains unestablished because the first repair idea predates the card.
-The [pvlib saved-candidate comparison](history/2026-10-29-pvlib-saved-candidate-comparison.md)
-confirms both candidates repair the reported 100-degree call and preserve selected
-public expectations. The [native evaluation follow-up](history/2026-10-29-private-evaluation-logs-pvlib-native.md)
-now reproduces A PASS and B FAIL with all required cases reported; detailed logs
-identify the failing assertion and explain it from the saved code. Evaluator
-details stay in external operator artifacts, outside solver context. Private
-receipts now retain bounded diagnostic streams; native outputs retain full logs
-and hashes. This resolves the saved-candidate failure question, not the causal
-effect of submission policy. Keep solver rules and budgets unchanged.
-The [five-task frozen-agent result](history/2026-10-29-repair-five-results.md) is
-CLOSED at USD2.5451965/22.50: 4 acceptance PASS, 1 FAIL, all five public checks and
-submissions PASS. Pydicom's settled oracle failure is a logging-contract/coverage
-gap; its private details remain operator-only. The [public logging comparison](history/2026-10-29-pydicom-public-logging.md)
-confirms user configuration is preserved and duplicate output changes 2 to 1;
-default debug output changes 1 to 0 while level/flag switching remains intact.
-The benchmark FAIL stands; additional acceptance expectations are not solver hints.
-Astroid used feedback to revise; Pyvista observed its public list call improve.
-Formal original obligations stay unverified without erasing those observations
-or acceptance. All 54 calls/costs reconcile. Keep rules and budgets unchanged;
-this exposed panel has no control or repeatability evidence.
-Helper return types and incomplete capture remain unresolved. Repeatability and
-held-out improvement remain unverified; unused funds authorize no further paid run.
+The [five-task result](history/2026-10-29-repair-five-results.md) is CLOSED:
+4 acceptance PASS/1 FAIL, all public checks and submissions PASS, USD2.5451965.
+All 54 provider calls/costs reconcile. The
+[pydicom public comparison](history/2026-10-29-pydicom-public-logging.md) confirms
+preserved user configuration and duplicate output reduced from two to one, while
+default debug output changed from one to zero. This task-specific behavior does
+not justify a new general solver rule. The benchmark FAIL remains, and private
+acceptance expectations are not repair hints. Formal original obligations remain
+unverified without erasing public observations or acceptance PASS.
+
+Keep runtime rules and budgets unchanged during this measurement. Helper return
+types, incomplete capture, repeated-run reliability and held-out improvement
+remain unresolved. Unused previous funds authorize no further paid run.
 
 ## Supporting evidence
 
