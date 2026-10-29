@@ -30,6 +30,14 @@ on a small set of public development tasks from start to finish. Review task
 acceptance, regressions, cost and elapsed time; use observed failures to choose the
 next fix. This is the default development loop, not a sequence of one-factor studies.
 
+The next prepared batch is current-dev20 tasks 3 (pvlib1154), 13 (Astroid1333)
+and 18 (SQLFluff1733), one fresh run each with the selected baseline above and
+public-checks-v1. Two workers share the stop boundary; fixed USD4 allocations
+sum to USD12, without transfers or retries. Preparation is provider-free at
+`C:/pt/integrated3-20261030-v1/manifest.final.json`; it awaits confirmation of this
+exact paid scope. Existing isolated evaluation is reused without a second native
+evaluation. No live call has been made for this batch.
+
 No forecast OFF/ON repeat, cap4 diagnostic or 4-vs-12 comparison is a prerequisite
 for continuing with the selected 12-edit configuration. Isolate a condition only
 when an important design decision remains unresolved after inspecting a real
