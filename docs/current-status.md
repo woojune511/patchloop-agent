@@ -24,79 +24,53 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [forecast-only live plan](history/2026-10-30-forecast-only-comparison-plan.md)
-fixes Astroid checkpoint OFF/ON, GPT-5.4/xhigh, repository .env and one branch per
-condition. Proposed new allowance: USD3.3184995 each, USD6.636999 total. Exact paid
-allocation confirmation is pending; no paid call has been made. Runtime stays
-frozen while the final manifest is prepared after the plan commit.
+The [forecast-only comparison](history/2026-10-30-forecast-only-comparison-results.md)
+is CLOSED: Astroid checkpoint OFF/ON, GPT-5.4/xhigh, one branch each. New cost was
+USD0.5311435 of the approved USD6.636999 cap, all settled. Both chose run_probe
+and made zero new edits/checks. OFF submitted the unchanged patch: independent
+acceptance FAIL, safety PASS. ON observed the original F0010 and stopped without
+submission; independent acceptance/safety NOT_RUN. Unused funds are closed.
 
-The [public alternative and readiness study](history/2026-10-29-public-alternative-and-budget-readiness.md)
-found a one-line relative-search-root normalization that repairs the actual public
-pylint caller on local Windows copies of Astroid-1333. Exact base and saved
-candidate reproduce F0010; both normalized arms inspect file.py without F0010.
-Eight caller/control assertions pass. Each public modutils regression run has
-43 passes and the same three host symlink errors. This is operator-authored local
-evidence, not solver improvement, clean full regression or private acceptance.
+Actual first-request count/prepared/dispatch bindings passed. After declared time
+normalization, only the forecast field differed; both inputs contained the same
+current helper source. The forecast did not preserve the edit/check/finish route
+or produce a repair in this pair. ON's different diagnosis/closure cannot be
+attributed to the forecast from one stochastic pair. No general effect is established.
 
-The correct source line was observed earlier but is absent from the actual A247,
-B261 and B277 public model inputs. A could still spend read/edit/check/finish;
-B's three ordinary calls already exclude read/search. Thus delivered failure
-stdout and generic edit eligibility do not establish sufficient repair source.
-The new B clone's canonical context already selects the helper in current
-source lines261–470: 22,155/24,000 characters, zero omitted lines. Completion projection
-then removed it while edits remained offered. This defect is corrected by retaining
-the existing selected source and its metadata whenever a mutation tool is offered.
-No new read, retention allowance, source prioritization or gate is introduced.
-The model's internal reason for finishing remains unknown.
+A controlled public follow-up identifies the OFF false-success mechanism. Its
+probe adds the fixture's absolute root to sys.path. Removing only that line
+restores the directory F0010 on the same candidate; the direct-file control passes
+in both conditions. Snapshot/profile/cwd/arguments stay fixed. This is public
+operator evidence, separate from independent acceptance. No extra model call or
+source repair was made. No new prompt, gate or quota change is adopted.
 
-Forecast OFF/ON was rehearsed through the current runner with a synthetic stop:
-actual requests differ only by action_horizon.action_budget under a fixed clock;
-prepared/count/dispatch projections agree. No real provider/count/target execution
-occurred. The post-fix v3 rehearsal also passes: both inputs retain the naturally
-selected helper, exclude the operator replacement, and differ only in the forecast.
-The prompt describes corrected source delivery; it adds no behavioral instruction
-or global gate. Real token/cost admission and repair benefit remain untested.
+The next correctness question is how to preserve the public caller's reproduction
+conditions when constructing diagnostics. ON shows existing tools can reproduce
+the failure; a new execution capability has not been shown necessary. Do not
+continue this allocation or repeat the pair merely because money remains.
 
-A public census of all 20 dev20 runs finds only row9 exhausted three edits:
-one implementation edit and two test revisions. Every run was capped at three,
-so neither four-edit sufficiency nor a benefit for twelve is demonstrated. New
-edit_files batching also changes the unit. If later authorized, a current-runtime
-cap4 diagnostic must precede a quota efficacy comparison.
+The [source-delivery fix](history/2026-10-29-public-alternative-and-budget-readiness.md)
+remains selected: completion retains already bounded current source while mutation
+tools are offered. It repairs a delivery defect; live repair benefit is unproven.
+The operator's one-line Astroid alternative remains a separate local result, not
+an agent-generated repair. The [file lifecycle](history/2026-10-29-file-lifecycle-followup.md)
+and [usability](history/2026-10-29-runtime-usability-followup.md) changes also remain:
+new/multiple files and receipt undo, exact recovery, accurate action forecasts,
+character-paged reads and the configurable 12-edit default.
 
-The [file lifecycle](history/2026-10-29-file-lifecycle-followup.md) and
-[usability](history/2026-10-29-runtime-usability-followup.md) changes remain selected:
-new files/multi-file edits/receipt undo, exact recovery, action-specific forecasts,
-character-paged reads and a configurable 12-edit default. The frozen quick suite
-after the source correction passed 1,101 tests in 276.40 seconds, including
-isolated mock evaluation; Ruff passed. A full
-suite completion, live-model benefit and end-to-end speed gain remain unverified.
-
-The [last dev20 measurement](history/2026-10-29-repair-dev20-results.md) stays CLOSED:
-10 PASS, 9 FAIL, 1 unsubmitted/NOT_RUN; USD11.7967235. Its 20 responses/40 actions/
-3 edits, 2,400 seconds, public-checks-v1, thin and completion-recovery-v1 settings
-are historical measurement conditions, not the new default or fresh authorization.
-All 19 submitted candidates passed required public checks; acceptance remained
-independent. No held-out generalization or causal comparison is established.
-
-The [failure analysis](history/2026-10-29-repair-dev20-failure-analysis.md) and
-[two-task pilot](history/2026-10-29-dev20-followup-pilot-results.md) motivate separating
-caller/expectation mistakes from resource loss. The
-[completion-guidance A/B](history/2026-10-29-completion-guidance-results.md) established
-that one optional probe can spend the last edit/check/finish response route while
-money, time and edits remain. The new forecast makes that consequence explicit;
-its effect on actual model choices is untested. The other arm still had repair
-tools but submitted unchanged, so budget explanations alone are not a repair solution.
+The frozen runtime's quick suite passed 1,101 tests in 276.40 seconds, including
+isolated mock evaluation; Ruff passed. No runtime code changed in this experiment.
+Full-suite completion, broader repair benefit and end-to-end speed gain remain
+unverified. The historical dev20 measurement stays [closed](history/2026-10-29-repair-dev20-results.md):
+10 PASS, 9 FAIL, 1 unsubmitted/NOT_RUN; USD11.7967235. It is not a causal baseline
+for the new defaults. Only one of its 20 traces exhausted three edits (one source,
+two test revisions); a current cap4 diagnostic must precede any proposed 4-vs-12
+comparison. No such new paid scope is authorized.
 
 Keep current-diff required public checks, source/mutation scope, action identity,
 independent evaluation and stop-on-uncertainty. public-checks-v1 remains the measured
-panel policy; reproduction-gated-v1 remains the compatible request default. No new
-mandatory diagnostic gate, paid run or global verification-policy switch is adopted.
-
-Next: compare forecast delivery alone on the corrected current decision input if
-authorized. Investigate cap4 on a quota-bound task
-before proposing 4-versus-12. Batched independent literal-search latency remains
-unmeasured. Exact current task/model/credential/repeat/cap authorization is required
-for paid work; no old allocation carries forward.
+panel policy; reproduction-gated-v1 remains the compatible request default. Future
+paid work needs a new exact task/model/credential/repeat/cap scope.
 
 ## Supporting evidence
 
@@ -121,7 +95,7 @@ for paid work; no old allocation carries forward.
 ## Execution and claim boundaries
 
 All prior paid allocations are closed. The [older interrupted call](history/2026-09-28-expectation-review-results.md)
-retains unknown billing; later settled allocations do not resolve it. The latest
+retains unknown billing; later settled allocations do not resolve it. An older
 source-ready diagnostic also retains one unsettled response.
 
 Fresh solves, seeded repairs, funded continuations, saved-patch evaluations,
