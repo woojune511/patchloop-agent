@@ -20,7 +20,7 @@ from test_verification_scope_state import observation, unbound
 
 from diagnostics import verification_state_off as off
 from diagnostics import verification_state_panel as panel
-from patchloop.dev import evidence_focus, model, reproduction, runner
+from patchloop.dev import evidence_focus, model, reproduction, runner, working_plan
 from patchloop.dev.contracts import RequestedTool
 from patchloop.dev.conversation import assemble_model_input, reconstruct_state
 from patchloop.dev.model_state import compact_model_state
@@ -42,16 +42,19 @@ def no_provider(monkeypatch):
 
 @contextmanager
 def frozen_prompt(ref=off.BASE):
-    """Supply the closed comparison's public input without changing its drift guard."""
-    source = subprocess.check_output([
-        "git", "show", ref + ":patchloop/dev/model.py",
-    ], text=True)
-    assignment = next(n for n in ast.parse(source).body if isinstance(n, ast.Assign)
-                      and any(getattr(t, "id", "") == "DEV_SYSTEM_PROMPT" for t in n.targets))
-    prompt = ast.literal_eval(assignment.value)
+    """Restore both closed prompt components without changing their drift guard."""
+    def constant(path, name):
+        source = subprocess.check_output(["git", "show", ref + ":" + path], text=True)
+        assignment = next(n for n in ast.parse(source).body if isinstance(n, ast.Assign)
+                          and any(getattr(t, "id", "") == name for t in n.targets))
+        return ast.literal_eval(assignment.value)
+
+    prompt = constant("patchloop/dev/model.py", "DEV_SYSTEM_PROMPT")
+    plan = constant("patchloop/dev/working_plan.py", "INSTRUCTIONS")
     with (patch.object(model, "DEV_SYSTEM_PROMPT", prompt),
           patch.object(runner, "DEV_SYSTEM_PROMPT", prompt),
-          patch.object(off, "_ON_PROMPT", prompt)):
+          patch.object(off, "_ON_PROMPT", prompt),
+          patch.object(working_plan, "INSTRUCTIONS", plan)):
         yield prompt
 
 

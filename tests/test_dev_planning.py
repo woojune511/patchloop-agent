@@ -55,12 +55,12 @@ def view(journal, diff="d1", gate="needs_mutation"):
 
 def test_off_wire_and_prompt_are_unchanged():
     assert dev_tool_surface_hash() == (
-        "sha256:8230342e4bbf12fe7799534d69615bc31f12612b8b583a0cea1b9c8577e5af96"
+        "sha256:b79cec16c8f4244550ba465788425e2977abcab15373316be8efad1e1270d885"
         if FROZEN_ARM is None else
         "sha256:57193859890419b79cb7f4927c37796d044bc4bf7159c51ddf17723849529e26"
     )
     assert sha256_json(dev_tool_schemas(finish_enabled=True, check_ids=["check"])) == (
-        "sha256:17d1c96572f33332e0da28adaaa948a4538082ea9269177be153bdcb078f0c06"
+        "sha256:8642d2ff0dd7e872e0749c7c7ea5264ca93381fc644d4f3460e54d6fc6464335"
         if FROZEN_ARM is None else
         "sha256:e8ac4db103389896d6df2061340f328e1c400ee83cb439a4c4f1ed4529f50036"
     )
@@ -78,7 +78,11 @@ def test_enabled_schema_only_adds_annotation():
     before = dev_tool_schemas(finish_enabled=True, check_ids=["c"])
     after = dev_tool_schemas(finish_enabled=True, check_ids=["c"], planning_policy=plans.POLICY)
     for tool in after:
-        decision = tool["parameters"]["properties"]["turn_decision"]
+        properties = tool["parameters"]["properties"]
+        if FROZEN_ARM is None and "turn_decision" not in properties:
+            assert "plan_update" not in properties and "plan_update_reason" not in properties
+            continue
+        decision = properties["turn_decision"]
         assert decision["properties"].pop("plan_update") == plans.update_schema()
         assert decision["properties"].pop("plan_update_reason") == plans.reason_schema()
         assert decision["required"].pop() == "plan_update_reason"
@@ -88,13 +92,19 @@ def test_enabled_schema_only_adds_annotation():
 
 
 def test_plan_guidance_connects_public_results_to_remaining_work():
-    assert "current hypotheses or untested assumptions" in plans.INSTRUCTIONS
-    assert "observation or public check that could settle them" in plans.INSTRUCTIONS
-    assert "confirmed, contradicted, or left unresolved" in plans.INSTRUCTIONS
-    assert "remaining work and verification" in plans.INSTRUCTIONS
-    assert "Do not invent a change" in plans.INSTRUCTIONS
-    assert "null keeps it when there is no useful revision" in plans.INSTRUCTIONS
-    assert "not a generic inspect/edit/check outline" in plans.INSTRUCTIONS
+    guidance = " ".join(plans.INSTRUCTIONS.split())
+    assert "current hypotheses or untested assumptions" in guidance
+    assert "observation or public check that could settle them" in guidance
+    assert ("contract -> case/setup -> expected observation -> actual evidence or untested"
+            in guidance)
+    assert "sibling failure paths and guards bypassed by early success" in guidance
+    assert ("state preservation from success eligibility; do not invent either obligation"
+            in guidance)
+    assert "program must observe the property its question names" in guidance
+    assert "support, contradict or leave open" in guidance
+    assert "material untested contracts" in guidance
+    assert "null keeps it when there is no useful revision" in guidance
+    assert "not a generic inspect/edit/check outline" in guidance
     # Guidance is task-independent; it must not import repairs from diagnostic runs.
     for hint in ("pyfakefs", "loguru", "hf-hub", "parent-traversal", "0o700"):
         assert hint not in plans.INSTRUCTIONS
@@ -244,6 +254,7 @@ def test_native_plan_delivery_and_mock_end_to_end(tmp_path, policy):
     previous = None
     plans_seen = []
     receipts_seen = []
+    repair_turns = 0
     for event in events:
         if event["event_type"] != "turn_started":
             continue
@@ -251,9 +262,12 @@ def test_native_plan_delivery_and_mock_end_to_end(tmp_path, policy):
         context = input_context(items)
         assert "hidden-multiline-csv" not in json.dumps(context)
         assert "reference_patch" not in json.dumps(context)
-        assert ("working_plan" in context) == (policy != "none")
+        repairing = (FROZEN_ARM is None and context.get("repair_stage", {}).get("policy")
+                     == "small-repair-context-v1")
+        repair_turns += repairing
+        assert ("working_plan" in context) == (policy != "none" and not repairing)
         assert (plans.INSTRUCTIONS in items[0]["content"]) == (policy != "none")
-        if policy != "none":
+        if policy != "none" and not repairing:
             assert context["working_plan"]["policy"] == policy
             plans_seen.append(context["working_plan"]["plan"])
             receipts_seen.append(context["working_plan"]["last_update_result"])
@@ -263,6 +277,7 @@ def test_native_plan_delivery_and_mock_end_to_end(tmp_path, policy):
         # The public plan has no private task input even though evaluation runs later.
         assert "reference_patch" not in json.dumps(context.get("working_plan"))
     if policy != "none":
+        assert len(plans_seen) == (3 if FROZEN_ARM is None else 4)
         assert plans_seen[0] is None
         assert all(p is not None for p in plans_seen[1:])
         outputs = [json.loads(i["output"]) for i in previous
@@ -270,9 +285,18 @@ def test_native_plan_delivery_and_mock_end_to_end(tmp_path, policy):
         assert not any("plan_update_result" in r for r in outputs)
         durable = [event["payload"]["receipt"] for event in events
                    if event["event_type"] == plans.EVENT]
-        assert receipts_seen == [None, *durable[:3]]
+        assert len(durable) == 4
+        if FROZEN_ARM is None:
+            # The compact repair turn omits the plan and the edit has no annotation.
+            # Its unchanged receipt is delivered when normal post-edit planning returns.
+            assert durable[1]["status"] == "not_requested"
+            assert durable[1]["revision"] == durable[0]["revision"]
+            assert receipts_seen == [None, *durable[1:3]]
+        else:
+            assert receipts_seen == [None, *durable[:3]]
     else:
         assert not any(e["event_type"] == plans.EVENT for e in events)
+    assert repair_turns == (1 if FROZEN_ARM is None else 0)
 
 
 def test_bad_annotation_does_not_add_model_correction(tmp_path, monkeypatch):

@@ -53,7 +53,7 @@ def record(journal, text, *, turn="t1", calls=None, diff="d1", gate="needs_mutat
 def test_old_contract_and_schema_unchanged_new_guidance_is_task_independent(tmp_path, monkeypatch):
     assert plans.instructions() == plans.INSTRUCTIONS
     assert dev_tool_surface_hash(planning_policy=plans.POLICY) == (
-        "sha256:9c915c29a24dc3fdb94518b6f18550c07c67f3188bfdb60f723a09ba01b677c5"
+        "sha256:c9fc62c1d0ea9ef8bd768b7021bb674c7b3f6025219163145951c47a530be6eb"
         if FROZEN_ARM is None else
         "sha256:b1a9019f91a6bfe219714658b96300c9fce579ac3bc2e85a88ce9c5eaa115d5d"
         if JUDGMENT else

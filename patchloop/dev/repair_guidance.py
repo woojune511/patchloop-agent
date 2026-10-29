@@ -1,9 +1,13 @@
 """Shared repair guidance; no new tool, verification gate or execution authority."""
 
-INSTRUCTIONS = """Ground repairs in public requirements or callers. Distinguish required outputs,
-preserved state and success/failure conditions. Test a related failure path or option
-boundary that could refute the patch, plus a normal control; group cases in one check.
-Before another probe, name the still-untested condition in its question. Reuse adequate
-same-diff results and observed APIs. One input does not cover other paths. No probe quota
-or new completion gate.
-"""
+INSTRUCTIONS = (
+    "Map changed behavior to a public contract, a refuting input/setup "
+    "and an expected observation.\n"
+    "Check sibling failures and bypassed guards; separate required state preservation "
+    "from success conditions.\n"
+    "Have the probe question and program compare/print that property; "
+    "setup checks alone cannot verify it.\n"
+    "Group relevant cases with a normal control; reuse adequate same-diff observations "
+    "and observed APIs.\n"
+    "Keep untested contracts open in plan/assessment. No probe quota or new completion gate.\n"
+)

@@ -140,7 +140,7 @@ def test_surrounding_action_guidance_identity():
     # and the complete prompt keeps the 8,000-character bound.
     # Historical J0/J1 arms retain their exact earlier surrounding-guidance identities.
     assert hashlib.sha256(canonical_json([prefix, suffix]).encode()).hexdigest() == (
-        "5092c98d89d091a2a1e0764cba9ceda84a3539fb9473259240aafa8771fcb3d0"
+        "6bfd5c9b6cc5372ded9db069882167358eee69080f5b2afea9d2354d0f293b75"
         if FROZEN_ARM is None else
         "2d0a9063da8d508a3c1218903cae12e33aa5db97f4d5655ca645fd5d52dc1331"
         if JUDGMENT else "c6439ce32e7724ed5d4c08dc1f207186b45e34234947c2867d7a65f096ce10a3"

@@ -78,7 +78,7 @@ Host-registered counterexamples use the same registry; see
 [required public checks](required-public-checks.md). Speculative notes stay advisory.
 `finish_task.assessment` and `plan_review` bind judgment and plan to the submitted diff.
 Plan replacements need `plan_update_reason`; invalid reasons preserve the prior plan.
-Latest predecessor/reason stays visible; see [planning](planning-experiment.md).
+Plan review and advisory contract/case mapping: [planning](planning-experiment.md).
 Check PASS alone certifies no requirement coverage. Label source inference.
 See [evidence recovery](evidence-recovery.md) for opt-in source restoration and
 fixed probe comparisons.

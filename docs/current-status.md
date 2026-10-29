@@ -71,12 +71,16 @@ The test covers adjacent delimiters, not the separated cases or generic options.
 Thus test omission and stale imports do not explain the reproduced gap. The exact
 independent evaluation failure remains unknown; no operator repair was applied.
 
-Full implementation and option tests were delivered during the live run, and probe
-output survived before finish. The next unresolved question is how already-read
-failure paths and success guards become discriminating checks: compare public
-plans/check questions with actual cases before adding prompts, tools or gates.
-Failure input preservation and success-option validity are separate obligations.
-Provider dispatch occupied 78-80% of live task time. No automatic paid repeat is pending.
+Full implementation and probe output were delivered; the public plan instead narrowed
+to suite PASS and the original example, and its probe did not directly observe the
+preservation property named in its question. The [contract-to-observation change](history/2026-10-30-contract-observation-guidance.md)
+now connects current diff/public source -> contract -> refuting setup -> expected
+observable -> actual evidence or untested status in existing post-mutation planning.
+Shared guidance carries the same distinction through general, repair and completion
+contexts: required state preservation and success eligibility are separate. No new
+tool, schema, quota, model round or finish gate is added. Local delivery/authority
+validation is recorded in the linked follow-up; actual selection and repair benefit
+remain untested with a live model. No automatic paid repeat is pending.
 
 Keep [advisory test-selection feedback and batched source tracking](history/2026-10-30-test-execution-visibility-and-latency.md).
 The [earlier 3/13/18 run](history/2026-10-30-integrated-selection-results.md) observed

@@ -3,11 +3,12 @@
 import pytest
 
 from patchloop.artifacts import ArtifactStore
-from patchloop.dev import completion_context, repair_context, runner, thin_policy
+from patchloop.dev import completion_context, repair_context, runner, thin_policy, working_plan
+from patchloop.dev.contracts import PublicTurnDecision, RequestedTool
 from patchloop.dev.conversation import reconstruct_state
 from patchloop.dev.repair_guidance import INSTRUCTIONS
 from patchloop.dev.state import DevJournal
-from patchloop.dev.tools import dev_tool_schemas
+from patchloop.dev.tools import dev_tool_schemas, validate_tool_batch
 from patchloop.util import canonical_json
 
 
@@ -85,3 +86,116 @@ def test_guidance_uses_existing_intents_for_both_mutation_tools(
         for field in ("hypothesis", "expected_behavior"):
             assert parameters["properties"][field]["minLength"] == 1
             assert parameters["properties"][field]["maxLength"] == 1_500
+
+
+@pytest.mark.parametrize("context_policy", ["append-v1", "segmented-v1"])
+def test_post_edit_contract_survives_pass_and_setup_only_probe_until_completion(
+    tmp_path, context_policy,
+):
+    """Authored cases stay unverified; transport cannot infer a checked property."""
+    diff = "sha256:" + "c" * 64
+    journal = DevJournal(tmp_path, "run_dev_contractreview")
+    store = ArtifactStore(tmp_path / "artifacts")
+
+    def decision(text, action, *, finish=False):
+        return RequestedTool(
+            name="finish_task" if finish else "read_file", action_id=action, arguments={},
+            turn_decision=PublicTurnDecision(
+                mode="finish" if finish else "inspect", basis="Public fixture contract.",
+                evidence_goal=None if finish else "Distinguish a wrong success result.",
+                plan_update=text,
+                plan_update_reason="Retain the untested input and observable outcome.",
+            ),
+        )
+
+    working_plan.record(
+        journal, [decision("Inspect the public return contract.", "initial-plan")],
+        turn_id="initial", diff_hash="original", gate="needs_mutation",
+    )
+    journal.append("action_finished", {"result": {
+        "tool": "edit_files", "status": "succeeded", "action_id": "edit",
+        "workspace_diff_hash": diff, "output": {},
+    }})
+    authority = {
+        "available_tool_names": ["read_file", "run_check", "run_probe", "finish_task", "stop_task"],
+        "remaining_budget": {"model_calls": 3, "tool_actions": 5, "accepted_mutations": 1},
+    }
+    state = {
+        **authority,
+        "public_task": {"task_id": "public-fixture", "issue": "Preserve the public contract."},
+        "workflow_gate": "needs_visible_checks",
+        "completion_guidance": {"verification_policy": "public-checks-v1"},
+        "current_diff": {"patch_hash": diff, "patch": "-return old\n+return new\n",
+                         "changed_files": ["public_source.py"]},
+        "working_notes": {"findings": [], "verification": {"items": []}},
+        "latest_tool_results": [],
+        "working_plan": working_plan.project(
+            journal.events(), diff_hash=diff, gate="needs_visible_checks",
+        ),
+    }
+    assert state["working_plan"]["review_request"]["reasons"] == ["mutation_result"]
+    with journal.execution_lock():
+        post_edit = runner._build_model_input(
+            journal=journal, artifact_store=store, context=canonical_json(state),
+            latest_tool_results=[], context_policy=context_policy,
+            planning_policy=working_plan.POLICY,
+        )
+    # The selected brief-v1 plan guidance reaches the actual next useful response.
+    assert post_edit[0]["content"].count(working_plan.instructions()) == 1
+
+    plan_text = (
+        "Changed early return: success requires the documented minimum. "
+        "Public contract: a failed match retains the input. "
+        "Refuting setup: one item below that minimum, with a valid control. "
+        "Observe success=false and unchanged returned input separately. "
+        "UNTESTED: setup existence does not establish either behavior."
+    )
+    working_plan.record(
+        journal, [decision(plan_text, "contract-plan")], turn_id="post-edit",
+        diff_hash=diff, gate="needs_visible_checks",
+    )
+    for tool, action, output in (
+        ("run_check", "suite-pass", {"passed": True, "exit_code": 0}),
+        ("run_probe", "setup-probe", {"exit_code": 0, "stdout": "setup_exists=True"}),
+    ):
+        journal.append("action_finished", {"result": {
+            "tool": tool, "status": "succeeded", "action_id": action,
+            "workspace_diff_hash": diff, "output": output,
+        }})
+    state["workflow_gate"] = "ready_to_submit"
+    state["working_plan"] = working_plan.project(
+        journal.events(), diff_hash=diff, gate="ready_to_submit",
+    )
+    state["recent_probes"] = [{
+        "action_id": "setup-probe", "diff_hash": diff, "exit_code": 0,
+        "question": "Does failure preserve the input?", "stdout": "setup_exists=True",
+        "observation": {"behavior_verdict": "not_assessed"},
+    }]
+    with journal.execution_lock():
+        completion = runner._build_model_input(
+            journal=journal, artifact_store=store, context=canonical_json(state),
+            latest_tool_results=[], context_policy=context_policy,
+            planning_policy=working_plan.POLICY,
+        )
+    actual = reconstruct_state(completion, context_policy=context_policy)
+    assert actual["working_plan"]["plan"]["text"] == plan_text
+    assert actual["working_plan"]["interpretation_status"] == "model_authored_unverified"
+    assert set(actual["working_plan"]["review_request"]["reasons"]) >= {
+        "check_result", "probe_result", "first_ready_to_submit",
+    }
+    assert actual["recent_probes"][0]["stdout"] == "setup_exists=True"
+    assert actual["recent_probes"][0]["observation"]["behavior_verdict"] == "not_assessed"
+    assert completion[0]["content"].count(INSTRUCTIONS) == 1
+    for key, value in authority.items():
+        assert actual[key] == value
+
+    # Guidance cannot become a required schema, probe quota or submission gate.
+    finish = decision(None, "finish", finish=True)
+    assert validate_tool_batch([finish]) == "single_action"
+    receipt = working_plan.record(
+        journal, [finish], turn_id="finish", diff_hash=diff, gate="ready_to_submit",
+    )
+    assert receipt["status"] == "not_requested"
+    submission = working_plan.submission_review(journal.events(), diff)
+    assert submission["plan"]["text"] == plan_text
+    assert submission["verification_status"] == "not_inferred_from_submission"

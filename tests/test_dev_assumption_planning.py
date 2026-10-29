@@ -56,11 +56,11 @@ def test_instruction_only_contrast_preserves_old_identities_and_schemas(tmp_path
     }
     if FROZEN_ARM is None:
         old_hashes = {
-            "none": "sha256:8230342e4bbf12fe7799534d69615bc31f12612b8b583a0cea1b9c8577e5af96",
+            "none": "sha256:b79cec16c8f4244550ba465788425e2977abcab15373316be8efad1e1270d885",
             plans.POLICY:
-                "sha256:9c915c29a24dc3fdb94518b6f18550c07c67f3188bfdb60f723a09ba01b677c5",
+                "sha256:c9fc62c1d0ea9ef8bd768b7021bb674c7b3f6025219163145951c47a530be6eb",
             plans.EVIDENCE_POLICY:
-                "sha256:e6b9f7c5834d3701647241552c62092f0fe77f420aa2da2e80b6ee10673b6b1b",
+                "sha256:cddab4f52ecf130980a5f004fc91bda667b127234c47d8df3cf866092c9643a0",
         }
     assert {p: dev_tool_surface_hash(planning_policy=p) for p in old_hashes} == old_hashes
     old = plans.instructions(plans.EVIDENCE_POLICY)
@@ -165,7 +165,13 @@ def test_post_edit_plan_delivery_exact_resume_and_no_new_gate(tmp_path, monkeypa
 
     def authored(self, context, tools):
         turn = original(self, context, tools)
-        view = json.loads(context)["working_plan"]
+        state = json.loads(context)
+        if FROZEN_ARM is None and "working_plan" not in state:
+            assert state["repair_stage"]["policy"] == "small-repair-context-v1"
+            assert [call.name for call in turn.tool_calls] == ["replace_text"]
+            assert turn.tool_calls[0].turn_decision is None
+            return turn
+        view = state["working_plan"]
         update = INITIAL if view["plan"] is None else None
         if "mutation_result" in view["review_request"]["reasons"]:
             update = POST_EDIT
@@ -195,21 +201,36 @@ def test_post_edit_plan_delivery_exact_resume_and_no_new_gate(tmp_path, monkeypa
     assert_submitted(result)  # Synthetic image is not promoted to successful private evaluation.
     assert result["accepted_mutations"] == 1
     assert inputs == counted and len(inputs) == 4
-    assert views[2]["working_plan"]["review_request"]["reasons"] == ["mutation_result"]
+    assert views[2]["working_plan"]["review_request"]["reasons"] == (
+        ["context_handoff", "mutation_result"] if FROZEN_ARM is None else ["mutation_result"]
+    )
     final = views[-1]["working_plan"]
     assert final["plan"]["text"] == POST_EDIT
     assert final["plan"]["revision"] == 2
     assert final["plan"]["text_hash"] == sha256_json(POST_EDIT)
     assert final["interpretation_status"] == "model_authored_unverified"
-    assert "context_handoff" in final["review_request"]["reasons"]
-    assert "check_result" in final["review_request"]["reasons"]
+    if FROZEN_ARM is None:
+        assert final["review_request"]["reasons"] == ["check_result", "first_ready_to_submit"]
+    else:
+        assert "context_handoff" in final["review_request"]["reasons"]
+        assert "check_result" in final["review_request"]["reasons"]
     assert views[-1]["workflow_gate"] == "ready_to_submit"  # An open assumption is not a gate.
-    for items in inputs:
-        assert plans.instructions(POLICY) in items[0]["content"]
+    for items, state in zip(inputs, views, strict=True):
+        if FROZEN_ARM is None and "repair_stage" in state:
+            from patchloop.dev import repair_context
+            assert items[0]["content"].startswith(repair_context.system_prompt(state))
+            assert "working_plan" not in state
+        elif FROZEN_ARM is None and state["workflow_gate"] == "ready_to_submit":
+            from patchloop.dev import completion_context
+            assert items[0]["content"].startswith(completion_context.SYSTEM_PROMPT)
+        else:
+            assert plans.instructions(POLICY) in items[0]["content"]
         for sentinel in ("hidden-multiline-csv", "reference_patch", "reasoning_transcript"):
             assert sentinel not in canonical_json(items)
     receipts = [e for e in journal.events() if e["event_type"] == plans.EVENT]
     assert len(receipts) == len({e["payload"]["turn_id"] for e in receipts}) == 4
+    assert sum(e["event_type"] == "action_started" and e["payload"]["tool"] == "replace_text"
+               for e in journal.events()) == 1
     before = journal.path.read_bytes()
     assert runner.run_dev(resumed)["runs"][0] == result
     assert journal.path.read_bytes() == before and len(inputs) == 4

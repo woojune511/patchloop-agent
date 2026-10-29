@@ -22,9 +22,14 @@ A nonempty plan up to 3,000 characters replaces the whole plan. It should state
 the public task goal, remaining work/current hypotheses, verification and untested
 assumptions, not raw reasoning. Content guidance now asks for concrete unfinished
 work and the observation/check that could settle an assumption, not a generic
-inspect/edit/check outline. After a review signal, describe what the observed result
-confirmed, contradicted or left unresolved and the resulting remaining work and
-verification. Do not keep a completed-action log or invent changes to raise revision
+inspect/edit/check outline. Current brief guidance connects a return/condition in the
+current diff to a public contract, refuting input/setup, expected observation and actual
+evidence or untested status. At the existing mutation review, consider sibling failures
+and bypassed guards; required state preservation and success eligibility are distinct.
+The probe program must observe the property named by its question. After results, keep
+other material untested contracts open; setup/check completion alone does not settle them.
+Group related cases with a normal control and reuse adequate current-diff evidence.
+Do not keep a completed-action log or invent changes to raise revision
 counts. This is task-independent guidance, not a required section schema or semantic
 validator. Null keeps the existing plan when there is no useful revision. Identical text is
 recorded as unchanged, not counted as a new substantive review. The first non-null

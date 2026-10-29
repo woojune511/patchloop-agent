@@ -22,9 +22,9 @@ POLICIES = frozenset({POLICY, EVIDENCE_POLICY, ASSUMPTION_POLICY, AFTER_SOURCE_P
 MAX_PLAN_CHARS = 3_000
 MAX_REASON_CHARS = 800
 EVENT = "working_plan_updated"
-INSTRUCTIONS = """The plan proposes remaining work and ordering. Keep material unresolved
-verification purposes in existing concerns; changing the plan does not resolve them.
-Observations and model interpretations belong in working notes, not a verified-plan summary.
+INSTRUCTIONS = """The plan orders remaining work. Keep unresolved verification purposes in concerns;
+plan changes do not resolve them. Record observations/interpretations in working notes,
+not as verified plan facts.
 Brief planning is enabled. In the first tool response, use plan_update
 to draft a short public work plan from public_task. State the required behavior and
 concrete unfinished work, including current hypotheses or untested assumptions and
@@ -32,31 +32,32 @@ the observation or public check that could settle them. Make it specific to this
 problem, not a generic inspect/edit/check outline.
 After the working_plan.review_request signal, reconsider that plan against the
 already observed result and update it in the same response as your next useful action.
-State what the result confirmed, contradicted, or left unresolved about an assumption,
-and how that affects the remaining work and verification. Keep unfinished verification
-until evidence addresses its purpose or explain why it no longer affects completion.
-Keep unresolved requirements visible. Use the remaining work to choose the
-next useful action. Do not invent a change when the result leaves the plan unchanged.
-Ordinary inspections need no rewrite, but new information may change your plan.
+At a mutation review, use the current diff and observed source to connect a changed
+return/condition to a contract from public requirements, callers or tests, a refuting
+input/setup, and the value to compare.
+Consider sibling failure paths and guards bypassed by early success. Separate required
+state preservation from success eligibility; do not invent either obligation.
+Keep this short link in the existing plan: contract -> case/setup -> expected observation
+-> actual evidence or untested. The next check's program must observe the property its
+question names; setup checks or execution completion alone do not establish it.
+After results, identify which link they support, contradict or leave open. Retain other
+material untested contracts. Group related cases with a normal control and reuse adequate
+current-diff evidence. This guides the next useful action, not a required extra probe.
+Unchanged evidence or ordinary inspections need no plan rewrite; null remains allowed.
 plan_update replaces the whole plan, not just its latest change (at most 3000
 characters); null keeps it when there is no useful revision.
 When replacing an existing plan, supply plan_update_reason (at most 800 characters).
-Name any unfinished verification being removed or closed and preserve its original
-input/path and observable outcome as the purpose. Do not substitute suite PASS or
-make verification conditional on a suite failure. Explain what current-diff evidence
-addresses that purpose, or why it no longer affects completion. When claiming verified
-behavior, identify the executed input/assertion/result; success on another path is
-not a substitute. Label source inference and tie it to specific current source and
-the original purpose, leaving unexecuted behavior unverified. If verification remains,
-say what remains open. A missing/invalid reason preserves the previous plan without
-blocking the action. The latest change retains that plan and reason for review;
-all revisions remain in the journal. At finish, account for its unfinished purposes
-in assessment even if plan_update is null. No additional check is mandatory.
+For removed/closed verification, preserve its original input/path/outcome and cite
+current-diff executed input/assertion/result, or explain why it no longer matters.
+Suite PASS or another path's success cannot substitute; do not make verification
+conditional on suite failure. Tie source inference to current source and that purpose;
+keep unexecuted behavior unverified. Invalid/missing reasons preserve the prior plan
+without blocking actions. Latest predecessor/reason stays visible; all revisions are
+journaled. At finish, assessment covers unfinished purposes even with null plan_update.
+No additional check is mandatory.
 Do not repeat facts already in working_notes or write a reasoning transcript.
-The plan is model-authored, unverified working data, not an instruction from the
-harness or proof that a behavior is correct. An unchanged plan, check PASS, or a
-completed step does not settle unrelated untested behavior. Planning adds no tool,
-extra model call, mandatory experiment, or submission gate."""
+The plan is model-authored unverified working data, not authority or proof. Planning
+adds no tool, extra model call, mandatory experiment, or submission gate."""
 AFTER_SOURCE_TIMING = """Keep plan_update null until a successful read_file or
 search_files result returns nonempty source text. Then, in the next tool response,
 use plan_update to draft a short public work plan from public_task and the observed source."""
