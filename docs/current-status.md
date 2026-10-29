@@ -42,10 +42,21 @@ and 18; index 9 lost its previous pass. Models, resources and policies differ;
 these are descriptive exposed-panel comparisons, not causal architecture gains
 or held-out generalization. Earlier five-task outcomes are not pooled.
 
-Keep the measured rules and budgets unchanged. Investigate public-PASS/acceptance-
-FAIL candidates separately from index 9's public-failure/completion-limit case
-before choosing an intervention. None exhausted its dollar cap. Retained private
-logs support operator measurement only; future solver changes need public evidence.
+The [failure analysis](history/2026-10-29-repair-dev20-failure-analysis.md) separates
+input/caller hypotheses (2), numerical boundary behavior (1), output/API or
+implementation contract mismatches (4), unresolved exact assertions after public
+symptom improvement (2), and a bad added test exhausting mutation slots (1).
+No grade changes. Index 9's final failure is its newly added exception assertion;
+it is not proof that the initial production edit failed.
+
+Keep rules and budgets unchanged. First address preparation's missing task-specific
+caller dependencies/source scopes and operator logs losing failure assertion blocks.
+The earlier pylint capability was absent from dev20 row 13 despite existing runtime
+support. Public evidence also supports testing input-preserving repair hypotheses
+and grounding expected values independently of the patch. These are proposed
+interventions; none is implemented or shown to improve solves by this analysis.
+Private details remain operator-only. All 125 responses in the ten analyzed rows
+completed without output exhaustion; a blanket budget/context increase is unsupported.
 
 Benchmark acceptance is the primary repair outcome; diagnostic completeness is
 separate. [public-checks-v1](history/2026-10-29-public-check-submission.md) uses
