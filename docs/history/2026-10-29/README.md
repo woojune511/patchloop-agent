@@ -22,3 +22,4 @@
 - [Private evaluation log retention and native pvlib A/B reassessment](../2026-10-29-private-evaluation-logs-pvlib-native.md)
 - [Five public-selected tasks: frozen-agent evaluation prepared, new live approval pending](../2026-10-29-repair-five-plan.md)
 - [Five-task frozen-agent results: four accepted, one logging-contract failure](../2026-10-29-repair-five-results.md)
+- [Pydicom public logging comparison: import symptom repaired, default debug output changed](../2026-10-29-pydicom-public-logging.md)

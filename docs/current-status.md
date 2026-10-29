@@ -116,12 +116,14 @@ effect of submission policy. Keep solver rules and budgets unchanged.
 The [five-task frozen-agent result](history/2026-10-29-repair-five-results.md) is
 CLOSED at USD2.5451965/22.50: 4 acceptance PASS, 1 FAIL, all five public checks and
 submissions PASS. Pydicom's settled oracle failure is a logging-contract/coverage
-gap; its private details remain operator-only. Astroid used delivered observations
-to revise; Pyvista observed the same public list call fail before and succeed
-after editing. Formal original obligations remain unverified without erasing
-those observations or acceptance outcomes. All 54 model calls and costs reconcile.
-Keep rules and budgets unchanged; analyze the failed public contract before a new
-intervention. This exposed panel has no control or repeatability evidence.
+gap; its private details remain operator-only. The [public logging comparison](history/2026-10-29-pydicom-public-logging.md)
+confirms user configuration is preserved and duplicate output changes 2 to 1;
+default debug output changes 1 to 0 while level/flag switching remains intact.
+The benchmark FAIL stands; additional acceptance expectations are not solver hints.
+Astroid used feedback to revise; Pyvista observed its public list call improve.
+Formal original obligations stay unverified without erasing those observations
+or acceptance. All 54 calls/costs reconcile. Keep rules and budgets unchanged;
+this exposed panel has no control or repeatability evidence.
 Helper return types and incomplete capture remain unresolved. Repeatability and
 held-out improvement remain unverified; unused funds authorize no further paid run.
 
