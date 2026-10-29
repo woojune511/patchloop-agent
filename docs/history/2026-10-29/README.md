@@ -28,3 +28,4 @@
 - [Dev20 failure analysis: repair hypotheses, contract mismatches, missing caller preparation and cropped diagnostics](../2026-10-29-repair-dev20-failure-analysis.md)
 - [Local follow-up: inherited caller capabilities, bounded failure blocks and grounded test guidance](../2026-10-29-dev20-followup-implementation.md)
 - [Dev20 caller/test-guidance pilot preparation](../2026-10-29-dev20-followup-pilot-plan.md)
+- [Dev20 pilot results: caller used without repair confirmation; pydicom corrected its public test and passed acceptance](../2026-10-29-dev20-followup-pilot-results.md)

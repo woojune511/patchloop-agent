@@ -55,16 +55,20 @@ scopes, plus pre-dispatch readiness checks. It adds bounded operator failure-blo
 capture to the current twenty evaluation adapters, preserving grading and private
 separation. Tool guidance now distinguishes input drift, independently grounded
 expectations, literal search and function-local test imports. Mutation accounting,
-total caps and submission policy remain unchanged. Local validation cannot establish
-model uptake or solve gains; no new live experiment or candidate reevaluation ran.
-New task/runtime identities require fresh preparation and execution authorization.
-The [two-task pilot](history/2026-10-29-dev20-followup-pilot-plan.md) is prepared for
-13 then 9, one fresh solve each at the same USD4.50/task limits (USD9 total), pending
-new approval. Preparation found and corrected stale adapter hash declarations;
-all twenty packages now load. Both first-request audits and public capability
-checks passed; no paid solve or candidate evaluation has run for this pilot.
-Private details remain operator-only. All 125 responses in the ten analyzed rows
-completed without output exhaustion; a blanket budget/context increase is unsupported.
+total caps and submission policy remain unchanged. Preparation also corrected stale
+adapter hash declarations; all twenty current task packages now load.
+The [two-task pilot result](history/2026-10-29-dev20-followup-pilot-results.md) is
+CLOSED: Astroid 13 FAIL, pydicom 9 PASS, both public checks/submissions PASS,
+USD1.832737 within USD9. All 29 provider calls settled. Astroid actually read pylint
+and observed its wrong path selection before editing, but did not replay after
+editing despite an offered opportunity. Caller availability alone was insufficient.
+pydicom used a function-local import, retained its third edit for a public exception
+expectation failure, received that failure in the next request and passed recheck
+and acceptance. Its first helper used different validation settings from its test.
+One captured operator failure block was complete; large-log recovery remains locally
+tested only. Neither this selected two-task repeat nor its bundled changes establish
+causal gains; the original dev20 score remains 10/20. Private details stay operator-only.
+No output exhaustion occurred; a blanket budget/context increase is unsupported.
 
 Benchmark acceptance is the primary repair outcome; diagnostic completeness is
 separate. [public-checks-v1](history/2026-10-29-public-check-submission.md) uses
