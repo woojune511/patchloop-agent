@@ -31,3 +31,4 @@
 - [Dev20 pilot results: caller used without repair confirmation; pydicom corrected its public test and passed acceptance](../2026-10-29-dev20-followup-pilot-results.md)
 - [Saved Astroid public diagnosis: lookup failed before the edited branch; same F0010 before and after](../2026-10-29-astroid-pilot-path-diagnosis.md)
 - [Astroid checkpoint replay-feedback comparison preparation](../2026-10-29-astroid-replay-feedback-preparation.md)
+- [Astroid replay-feedback A/B results: delivered observation, unchanged submissions, both acceptance FAIL](../2026-10-29-astroid-replay-feedback-results.md)

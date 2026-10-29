@@ -78,14 +78,16 @@ Investigate module-name/search-root handling and delivery of post-edit replay re
 no source repair, model follow-up or new finish gate is validated. One failed operator
 trace was preserved and replaced by a smaller observer; API cost was zero.
 
-Next is the [checkpoint replay-feedback comparison preparation](history/2026-10-29-astroid-replay-feedback-preparation.md):
-same post-edit/public-check candidate, A optional replay versus B receiving a sealed
-replay of its own helper. Charge B's action and elapsed time; exclude operator
-diagnosis and private evidence. Restoration now preserves the parent submission
-policy. Preparation is READY: A preserves the original request; B's raw output and
-canonical observation reach its actual next request. Both offline dispatch guards
-passed. New funding of USD3.397541/arm, USD6.795082 total awaits approval; actual
-provider calls remain zero and repair gain is unverified.
+The [checkpoint replay-feedback A/B](history/2026-10-29-astroid-replay-feedback-results.md)
+is CLOSED: both submitted the unchanged candidate and received acceptance FAIL,
+USD0.0657315 new cost across two settled responses. B received the exact public
+helper output and canonical observation, acknowledged the unchanged path, then
+finished without further exploration or repair despite available tools and budget.
+This selected pair supports delivery, not repair gain. Keep optional replay and
+public-check submission; a blanket budget increase or global replay gate is not
+supported. Next investigate completion-stage interpretation of submission eligibility
+versus unresolved repair evidence, without injecting operator diagnosis. No new paid
+allocation or prompt intervention is active.
 
 Benchmark acceptance is the primary repair outcome; diagnostic completeness is
 separate. [public-checks-v1](history/2026-10-29-public-check-submission.md) uses
