@@ -63,7 +63,8 @@ def counters(model=8, tools=58, **kwargs):
 
 def policy(gateway, counts=None, *, auto=True, **kwargs):
     return runner._tool_policy(
-        gateway, counts or counters(), DevLimits(), repair_recheck=auto, **kwargs,
+        gateway, counts or counters(), DevLimits(max_accepted_mutations=4),
+        repair_recheck=auto, **kwargs,
     )
 
 
@@ -166,7 +167,9 @@ def test_horizon_names_tool_exhaustion_even_when_current_automatic_recheck_saves
     counts = counters(model=2, tools=2, check_recovery_used_ids={"check-0"})
     selected = policy(gateway, counts)
     assert not selected.completion_possible
-    payload = runner._completion_horizon_payload(gateway, counts, DevLimits(), selected)
+    payload = runner._completion_horizon_payload(
+        gateway, counts, DevLimits(max_accepted_mutations=4), selected,
+    )
     assert payload["blocking_resources"] == ["tool_actions"]
     assert payload["minimum_completion_calls"] == 2
     assert payload["minimum_completion_tool_actions"] == 3

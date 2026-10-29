@@ -1,5 +1,7 @@
 # History
 
+- [Runtime usability and local overhead](2026-10-29-runtime-usability-followup.md)
+
 - [October daily investigations](2026-10/README.md)
 - [Requests](2026-10-23-requests.md), [CVE](2026-10-23-security.md)
 - [Retry](2026-10-23-repro-recovery.md), [live](2026-10-23-repro-live.md), [oracles](2026-10-23-oracles.md), [pilot](2026-10-23-oracle-live.md), [audit](2026-10-23-request.md)

@@ -85,7 +85,9 @@ def test_runtime_prompt_and_limits_match_selected_contract():
     assert (ablation.E1_HELP in DEV_SYSTEM_PROMPT) == EVIDENCE
     limits = DevLimits()
     assert (limits.max_model_calls, limits.max_tool_actions,
-            limits.max_accepted_mutations, limits.wall_time_seconds) == (40, 100, 4, 1800)
+            limits.max_accepted_mutations, limits.wall_time_seconds) == (
+                40, 100, 4 if FROZEN_ARM is not None else 12, 1800,
+            )
     assert (segments.MAX_INPUT_TOKENS, segments.MAX_REQUEST_BYTES,
             segments.MAX_ENCRYPTED_ITEM_BYTES) == (60000, 1048576, 262144)
     schema = memory_update_schema()["properties"]["open_question"]

@@ -55,15 +55,18 @@ see [contract](thin-policy-reference.md). Execution gates stay shared.
 Notes/plans are unverified; never reasoning transcripts.
 One consecutive protocol/incomplete correction; reset on valid batches.
 
-Reads: null bounds select 24k-char pages; ranges allow 400 lines.
+Reads: null bounds and explicit ranges use 24k-character complete-line pages;
+follow next_start_line for omitted content. Fresh ranges have no separate line cap.
 Search: literal queries, rooted component-aware globs; one tracked-path scan/uncached call.
-Edits require delivered current public source. `replace_text` requires an exact occurrence
-in a tracked,
-allowed file, a hypothesis and expected behavior (each 1-1,500 characters in both
-schemas). Bind the contiguous observed anchor, enforce canonical full-diff scope,
+Edits require delivered current public source. `replace_text` accepts an exact occurrence
+in a tracked, allowed file, a hypothesis and expected behavior (each 1-1,500 characters
+in both schemas). Bind each contiguous observed anchor, enforce canonical full-diff scope,
 and restore the pre-image on rejection. No fuzzy matching, unseen source, new paths
 or model-selected mutation evidence IDs. Exact reads/previews use literal Git pathspecs;
 decode quoted/NUL-delimited Git paths without changing diff bytes.
+`occurrence="all"` changes all exact matches in one file as one accepted edit;
+every match needs current observed source, and rollback/recovery use admitted offsets.
+Fresh dev/repair defaults allow 12 edits; explicit task/invocation limits still apply.
 Retired requirement/case annotations remain for exact legacy recovery, not fresh requests.
 
 Submit a nonempty tracked diff only after all required checks pass on it.
@@ -81,20 +84,12 @@ The following diagnostic gates apply to the default `reproduction-gated-v1`:
 replay acquired originals after edits; reuse receipts at finish.
 Known failure blocks; missing/incomplete evidence stays unverified. See linked
 contract for v4 identity and budget bounds.
-`original_obligation.py` retains the public-task obligation separately from cases.
-`--reproduction-acquisition bounded-v1` requires probes. Before edits it permits two
-actual original dispatches and two rejected requests. Six preparations then close reads;
-only an original request or stop remains. Shared budgets can release it earlier.
-Receipts separate requests, dispatch and results.
-Original purposes bind the host-owned issue and distinct failure/desired JSON.
-Acquisition needs both unchanged-base comparisons. Rejections create no case;
-uncertainty stays unverified.
-Request correction certifies validity only. See [first-call descriptions](first-reproduction-comparison.md).
-For helper source errors, see [bounded preflight correction](helper-correction.md).
-See [host judgment](observation-judgment.md) for processing, input scope and pre-target errors.
-Legacy unknown dispatches reserve slots without becoming execution evidence. Releases
-preserve unmet verification. Journal roots and action/release identities survive recovery;
-forecasts never write them.
+`original_obligation.py` separates the public-task obligation from acquired cases.
+Optional bounded acquisition allows two original dispatches, two rejected requests
+and six preparations within shared budgets. Rejections create no evidence; releases
+preserve unmet verification. Public failure/desired comparisons remain distinct.
+See [acquisition](first-reproduction-comparison.md), [helper correction](helper-correction.md)
+and [host judgment](observation-judgment.md). Identity and uncertainty survive recovery.
 Only an unchanged-base failure plus comparable current support permits
 `cases_verified_delivery`; otherwise finish returns `unverified_delivery`.
 Delivery, selected-case verification and independent acceptance stay separate.
@@ -106,6 +101,9 @@ preserving arguments and tracking across chdir.
 
 Reserve minimum completion and bounded recovery; count model calls and real tool
 actions separately. Diagnostic reservations below apply to `reproduction-gated-v1`.
+`action_horizon.action_budget` explains the call/tool slots left after offered
+exploration, including read batches and paired tests, against an edit/check/finish
+route. These conditional forecasts grant no tools and do not predict outcomes.
 See [resources](completion-resources.md) for replay reuse and bounded preparation,
 and [completion feedback](completion-feedback.md) for failures and finalization.
 Measured unobserved changed lines require [call-path diagnosis](repair-path.md)
@@ -132,6 +130,8 @@ only primary results; note/plan receipts have separate state fields. Annotation
 failures cannot change action outcomes. Preserve legacy outputs/replay bytes.
 
 External state is append-only, hash-chained `dev-run-v1` JSONL with immutable envelopes.
+Journal reads reuse decoded events only for a byte-identical validated prefix;
+all bytes are still read, changed prefixes are revalidated, and callers receive copies.
 Preserve `action_id + input_hash`: replay completed mutations/checks, reject conflicting
 reuse, and reconcile admitted mutations after crashes without applying them twice.
 Never rewrite journals, old envelopes or native outputs. Reads/appends share the
@@ -204,16 +204,11 @@ CLI defaults are defined by `DevRunRequest` and differ from the selected baselin
 in current status. The reviewed full GPT-5.4 snapshot requires segmented-v1 and its
 counted input bound. Reading diagnostics never authorizes live work or changes defaults.
 
-Read relevant optional notes only; current source/status supersede historical plans:
-
-- Context: [handoffs](plans/evidence-preserving-handoff.md), [native window](plans/native-context-window.md).
-- Planning and probes: [planning](planning-experiment.md), [probe replay/cases](probe-cases.md),
-  [saved-program recheck](probe-recheck.md),
-  [setup](probe-setup.md), [dependencies](prepared-probe-dependencies.md), [threads](probe-threads.md).
-- Public test selection: [registered pytest suites](selected-tests.md).
-- Current dev20 capability and task parallelism: [bounded panel](current-dev20.md).
-- Closed discovery, completion and candidate experiments remain indexed in
-  [history](../docs/history/README.md); their detailed contracts remain under `.agent/`.
+Optional details: [native context](plans/native-context-window.md),
+[planning](planning-experiment.md), [probe cases](probe-cases.md),
+[recheck](probe-recheck.md), [dependencies](prepared-probe-dependencies.md),
+[selected tests](selected-tests.md), and [current panel](current-dev20.md).
+Closed investigations remain in [history](../docs/history/README.md).
 
 Public [repair and repair-verify](../examples/repair/README.md) return public evidence,
 acceptance `NOT_RUN`. Verification compares unchanged submitted tests without a model.

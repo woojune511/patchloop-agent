@@ -6,7 +6,15 @@ import json
 from types import SimpleNamespace
 
 from patchloop.contracts import Artifact
-from patchloop.dev import runner, segments, working_plan
+from patchloop.dev import (
+    completion_context,
+    diagnosis_context,
+    repair_context,
+    runner,
+    segments,
+    thin_policy,
+    working_plan,
+)
 from patchloop.dev.conversation import reconstruct_state
 from patchloop.dev.state import DevJournal
 from patchloop.util import sha256_json
@@ -28,9 +36,13 @@ def verify_turn(event, events, store, *, actual_input=None):
     journal = SimpleNamespace(events=lambda: prefix)
     latest = DevJournal.latest_tool_batch_results(journal)
     binding = turn["context_segment"]["binding"]
+    agent_policy = binding.get("agent_policy", "current")
     expected = copy.deepcopy(canonical)
+    diagnosing = diagnosis_context.pending(expected)
+    repairing = repair_context.pending(expected)
+    finalizing = completion_context.active(expected)
     policy = expected.get("working_plan", {}).get("policy", "none")
-    if policy != "none":
+    if policy != "none" and not (diagnosing or repairing or finalizing):
         expected["working_plan"] = working_plan.project(
             prefix, diff_hash=expected["current_diff"]["patch_hash"],
             gate=expected["workflow_gate"], policy=policy)
@@ -40,14 +52,30 @@ def verify_turn(event, events, store, *, actual_input=None):
         "previous_reasoning_available": False,
         "interpretation": "public execution facts and unverified model-authored notes/plan",
     }
-    expected = runner._segment_current_view(expected, items[3:], latest)
+    if diagnosing:
+        expected = diagnosis_context.project(expected)
+        expected["segment_handoff"].update(
+            review_requested=False, interpretation="public original-call diagnosis only")
+    elif repairing:
+        expected = repair_context.project(expected)
+        expected["segment_handoff"].update(
+            review_requested=False, interpretation="public repair evidence and explicit hypothesis")
+    elif finalizing:
+        expected = completion_context.project(expected)
+        expected["segment_handoff"].update(
+            review_requested=False,
+            interpretation="public candidate, checks and unresolved outcomes")
+    expected = thin_policy.project_state(
+        runner._segment_current_view(expected, items[3:], latest, agent_policy), agent_policy)
     delivered = reconstruct_state(items, context_policy=segments.POLICY)
     if delivered != expected:
         changed = sorted(k for k in set(delivered) | set(expected)
                          if delivered.get(k) != expected.get(k))
         raise ValueError("projected public state differs: " + ", ".join(changed))
     for key in ("public_task", "current_diff", "visible_check_status"):
-        if delivered[key] != canonical[key]:
+        # Diagnosis intentionally omits the check table. Equality above still
+        # rejects an injected table or an omission in a phase that preserves it.
+        if key in expected and delivered[key] != canonical[key]:
             raise ValueError("public authority differs: " + key)
     return {"turn_id": turn["turn_id"], "input_hash": sha256_json(items),
             "projected_state_hash": sha256_json(delivered),
@@ -58,8 +86,17 @@ def verify_turn(event, events, store, *, actual_input=None):
 def initial_signature(wire):
     """Compare fresh starts, excluding model and measured/derived run identities."""
     state = reconstruct_state(wire["input"], context_policy=segments.POLICY)
-    if (state["current_diff"]["patch"] or state["working_plan"]["plan"] is not None
-            or state["working_notes"]["findings"]
+    notes_key = "repair_intent" if repair_context.pending(state) else "working_notes"
+    notes = state.get(notes_key)
+    if not isinstance(notes, dict) or not isinstance(notes.get("findings"), list):
+        raise ValueError("fresh solve is missing its phase's explicit findings")
+    plan = state.get("working_plan")
+    if "working_plan" in state and (not isinstance(plan, dict) or "plan" not in plan):
+        raise ValueError("fresh solve contains invalid plan state")
+    if (state["workflow_gate"] != "needs_mutation" or state["current_diff"]["patch"]
+            or state["current_diff"]["untracked_files"]
+            or plan is not None and plan["plan"] is not None
+            or notes["findings"]
             or any(row["status"] != "NOT_RUN" for row in state["visible_check_status"])
             or "candidate_reconsideration" in state):
         raise ValueError("fresh solve contains previous candidate or memory")

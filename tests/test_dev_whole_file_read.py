@@ -15,6 +15,7 @@ def source_reader(tmp_path, monkeypatch):
     source.write_bytes(b"first\nsecond\n")
     gateway = object.__new__(DevToolGateway)
     gateway.read_range_only = False
+    gateway.dependency_sources = None
     monkeypatch.setattr(gateway, "_tracked_path", lambda path: (path, source))
     return gateway, source
 
@@ -56,6 +57,8 @@ def test_whole_file_over_400_lines_preserves_explicit_range_output(source_reader
     assert set(bounded) == set(whole)
     assert bounded["end_line"] == 400 and bounded["truncated"] is False
     assert bounded["spans"][0]["content"] == "\n".join(lines[:400])
+    assert gateway._read_file("src.py", 1, 675) == whole
+    gateway.read_range_only = True
     with pytest.raises(ContractError, match="1-400"):
         gateway._read_file("src.py", 1, 401)
 
@@ -86,7 +89,7 @@ def test_pages_are_contiguous_complete_lines_with_character_not_byte_limit(sourc
 
 @pytest.mark.parametrize("start,end", [
     (None, 1), (True, None), (1, False), (1.0, None), ("1", None),
-    (0, None), (-1, None), (2, 1), (1, 401), (None, False),
+    (0, None), (-1, None), (2, 1), (None, False),
 ])
 def test_invalid_or_half_specified_bounds_fail_before_read(source_reader, monkeypatch, start, end):
     gateway, _ = source_reader

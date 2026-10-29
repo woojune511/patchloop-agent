@@ -136,8 +136,9 @@ def test_dependency_paging_search_limits_and_retained_context(gateway_factory, d
     assert search.status == "succeeded"
     assert len(search.output["dependency_spans"]) == 20 and search.output["truncated"]
     assert sum(len(item["content"]) for item in search.output["dependency_spans"]) <= 24_000
-    rejected = gateway.execute(source_call("too-wide", start_line=1, end_line=401))
-    assert rejected.status == "failed" and "400" in rejected.message
+    wide = gateway.execute(source_call("wide", start_line=1, end_line=401))
+    assert wide.status == "succeeded"
+    assert sum(len(span["content"]) for span in wide.output["dependency_spans"]) <= 24_000
 
 
 def test_repository_zero_file_search_hint_is_only_enabled_for_registered_sources(

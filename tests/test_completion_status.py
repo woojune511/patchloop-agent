@@ -38,6 +38,8 @@ def test_only_completion_advice_changes(stage, allowed, failed):
     )
     policy = SimpleNamespace(
         allowed_tools=allowed, workflow_gate="needs_visible_checks", check_ids=("public-check",),
+        verification_policy="reproduction-gated-v1", helper_correction=None,
+        repair_path_diagnosis=None, repair_prediction=None,
     )
     guidance = runner._completion_guidance(snapshot, policy)
     before = copy.deepcopy(guidance)

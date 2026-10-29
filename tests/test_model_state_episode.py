@@ -44,6 +44,8 @@ def episodes(gateway_factory, monkeypatch):
     result = []
     for arm in "ACBD":
         gateway, journal, _ = gateway_factory()
+        # Preserve the historical episode budget before constructing its initial input.
+        gateway.limits.max_accepted_mutations = 4
         active = engine.ActiveClock(lambda: 0)
         gateway.deadline = ExecutionDeadline.from_remaining(1800, clock=active)
         branch = episode.Episode(

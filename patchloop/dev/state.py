@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import errno
 import json
 import math
@@ -82,6 +83,8 @@ class DevJournal:
         self.lock_path = self.run_dir / f".{run_id}.lock"
         self.execution_lock_path = self.run_dir / f".{run_id}.execution.lock"
         self.run_dir.mkdir(parents=True, exist_ok=True)
+        self._verified_bytes = b""
+        self._verified_events: list[dict[str, Any]] = []
 
     @contextmanager
     def execution_lock(self) -> Iterator[None]:
@@ -178,19 +181,27 @@ class DevJournal:
         """Read a snapshot while the caller holds the process lock."""
         if not self.path.exists():
             return []
-        events: list[dict[str, Any]] = []
-        previous_hash: str | None = None
         try:
-            text = self.path.read_bytes().decode("utf-8")
+            raw = self.path.read_bytes()
         except (OSError, UnicodeDecodeError) as exc:
             raise RecoveryError("development journal is unreadable") from exc
-        if not text:
+        if not raw:
             return []
-        if not text.endswith("\n"):
+        if not raw.endswith(b"\n"):
             raise RecoveryError("development journal contains invalid JSONL")
+        # Reuse only a byte-identical verified prefix, never mtime/size metadata.
+        # Reads still notice edits anywhere in the file and external appends.
+        retained = raw.startswith(self._verified_bytes)
+        events = list(self._verified_events) if retained else []
+        suffix = raw[len(self._verified_bytes):] if retained else raw
+        try:
+            text = suffix.decode("utf-8")
+        except UnicodeDecodeError as exc:
+            raise RecoveryError("development journal is unreadable") from exc
+        previous_hash = events[-1]["event_hash"] if events else None
         # Only LF frames records; Unicode line separators are valid JSON string data.
-        lines = text[:-1].split("\n")
-        for expected_sequence, line in enumerate(lines, start=1):
+        lines = text[:-1].split("\n") if text else []
+        for expected_sequence, line in enumerate(lines, start=len(events) + 1):
             try:
                 event = json.loads(line)
             except json.JSONDecodeError as exc:
@@ -208,7 +219,10 @@ class DevJournal:
             event["event_hash"] = claimed_hash
             previous_hash = claimed_hash
             events.append(event)
-        return events
+        self._verified_bytes = raw
+        self._verified_events = events
+        # Callers may annotate observations; never let that mutate verified state.
+        return copy.deepcopy(events)
 
     def append(self, event_type: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
         with _PROCESS_LOCK, _exclusive_file_lock(self.lock_path):

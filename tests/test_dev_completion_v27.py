@@ -175,6 +175,8 @@ def test_guidance_is_advisory_and_recommends_only_an_offered_action(
     )
     policy = SimpleNamespace(
         workflow_gate=gate, allowed_tools=frozenset(allowed), check_ids=("contract",),
+        verification_policy="reproduction-gated-v1", helper_correction=None,
+        repair_path_diagnosis=None, repair_prediction=None,
     )
     before = copy.deepcopy((snapshot, policy))
     result = runner._completion_guidance(snapshot, policy)
@@ -218,7 +220,7 @@ def test_completion_descriptions_preserve_tool_order_and_current_input_shapes():
         return value
 
     assert sha256_json(without_descriptions(schemas)) == (
-        "sha256:02e0df8de3465b2666d21c6cd24f689ca163bd8e50aa7306b54ab96b24ed2cbb"
+        "sha256:e6050dea4b89fa715cf141792794b8229850f1c7e0c2ffb63a6fa2728d8ff568"
         if FROZEN_ARM is None else
         "sha256:99d8179c31989d8d5caabaed81902ce9d2a8fad60af8caf594f685122e9beeac"
     )

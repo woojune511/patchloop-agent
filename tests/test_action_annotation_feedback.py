@@ -76,6 +76,29 @@ def _outputs(items, policy):
             if item.get("type") == "function_call_output"}
 
 
+def _delivered_result(items, policy, action_id, *, compact_repair):
+    state = reconstruct_state(items, context_policy=policy)
+    native = _outputs(items, policy)
+    if compact_repair and policy == segments.POLICY:
+        # Entering repair starts a compact segment with the current result inline.
+        assert native == {}
+        assert [row["action_id"] for row in state["latest_tool_results"]] == [action_id]
+        return state["latest_tool_results"][0]
+    assert set(native) == {action_id}
+    assert state["latest_tool_results"] == []
+    return native[action_id]
+
+
+def _assert_compact_repair_notes(state, notes):
+    assert "working_notes" not in state and "working_plan" not in state
+    assert state["repair_intent"] == {
+        **{key: notes[key] for key in (
+            "open_question", "findings", "hypotheses", "verification",
+        ) if key in notes},
+        "interpretation": "model_authored_unverified",
+    }
+
+
 def _bad_note_call(primary):
     # The source has not been observed yet. A simultaneous read cannot authorize this note.
     update = source_note("The first declaration has been observed.")
@@ -120,11 +143,15 @@ def test_optional_note_rejection_does_not_replace_primary_result(
         assert update["receipt"]["note_ids_after_update"] == []
         delivered = _build(gateway, store, policy, [result])
 
-        outcome = _outputs(delivered, policy)[call.action_id]
+        compact_repair = primary == "read_file"
+        outcome = _delivered_result(
+            delivered, policy, call.action_id, compact_repair=compact_repair,
+        )
         assert not ANNOTATIONS.intersection(outcome)
-        assert outcome["status"] == result.status
-        assert outcome["error_code"] == result.error_code
-        assert outcome["message"] == result.message
+        recorded = result.model_dump(mode="json", exclude={"replayed"})
+        for key in ("action_id", "input_hash", "tool", "status", "error_code", "message",
+                    "workspace_diff_hash"):
+            assert outcome[key] == recorded[key]
         if primary == "run_probe":
             assert outcome["status"] == "failed" and outcome["error_code"] == "CONTRACT_ERROR"
             assert outcome["message"] == (
@@ -134,32 +161,42 @@ def test_optional_note_rejection_does_not_replace_primary_result(
             assert outcome["status"] == "succeeded" and outcome["error_code"] is None
             assert "header = 0" in canonical_json(outcome["output"])
         state = reconstruct_state(delivered, context_policy=policy)
-        notes = state["working_notes"]
+        notes = gateway.working_notes()
         assert notes["last_update_result"] == update["receipt"]
         assert notes["available_note_ids"] == []
-        assert "last_update_diagnostics" not in notes
         assert notes["last_update_result"]["scope"] == "before_tool_batch"
         assert notes["last_update_result"]["action_id"] == call.action_id
+        if compact_repair:
+            _assert_compact_repair_notes(state, notes)
+        else:
+            assert state["working_notes"]["last_update_result"] == update["receipt"]
+            assert state["working_notes"]["available_note_ids"] == []
+            assert "last_update_diagnostics" not in state["working_notes"]
 
         # Rebuilding after restart neither repeats an action nor rewrites durable input/results.
         saved = gateway.journal.path.read_bytes()
         before = copy.deepcopy(delivered)
         gateway = _restart(gateway)
+        assert gateway.working_notes()["last_update_result"] == update["receipt"]
         assert _build(gateway, store, policy, [result]) == delivered
         assert gateway.journal.path.read_bytes() == saved and delivered == before
 
         if policy == segments.POLICY:
             handed_off = _build(gateway, store, policy, [result], handoff=True)
             assert not any(item.get("type") == "function_call_output" for item in handed_off)
-            # A fresh handoff quotes the canonical result, not its native read projection.
-            quoted = _outputs(handed_off, policy)[call.action_id]
-            recorded = result.model_dump(mode="json", exclude={"replayed"})
+            quoted = _delivered_result(
+                handed_off, policy, call.action_id, compact_repair=compact_repair,
+            )
             assert {key: quoted[key] for key in recorded} == recorded
             assert not ANNOTATIONS.intersection(quoted)
-            handoff_notes = reconstruct_state(handed_off, context_policy=policy)["working_notes"]
-            assert handoff_notes["last_update_result"] == update["receipt"]
-            assert handoff_notes["available_note_ids"] == []
-            assert "last_update_diagnostics" not in handoff_notes
+            handoff_state = reconstruct_state(handed_off, context_policy=policy)
+            if compact_repair:
+                _assert_compact_repair_notes(handoff_state, notes)
+            else:
+                handoff_notes = handoff_state["working_notes"]
+                assert handoff_notes["last_update_result"] == update["receipt"]
+                assert handoff_notes["available_note_ids"] == []
+                assert "last_update_diagnostics" not in handoff_notes
             saved = gateway.journal.path.read_bytes()
             assert _build(_restart(gateway), store, policy, [result]) == handed_off
             assert gateway.journal.path.read_bytes() == saved
@@ -175,7 +212,7 @@ def test_optional_note_rejection_does_not_replace_primary_result(
 
 
 @pytest.mark.parametrize("policy", POLICIES)
-def test_optional_plan_rejection_stays_in_current_plan_state(tmp_path, policy):
+def test_optional_plan_rejection_stays_durable_across_compact_repair(tmp_path, policy):
     gateway = _gateway(tmp_path)
     store = ArtifactStore(tmp_path / "artifacts")
     call = note_call("read-with-bad-plan", None)
@@ -189,17 +226,35 @@ def test_optional_plan_rejection_stays_in_current_plan_state(tmp_path, policy):
         )
         _, result = _batch(gateway, call, turn)
         delivered = _build(gateway, store, policy, [result], planning=working_plan.POLICY)
-        outcome = _outputs(delivered, policy)[call.action_id]
+        outcome = _delivered_result(delivered, policy, call.action_id, compact_repair=True)
         assert outcome["status"] == "succeeded" and not ANNOTATIONS.intersection(outcome)
-        plan = reconstruct_state(delivered, context_policy=policy)["working_plan"]
+        state = reconstruct_state(delivered, context_policy=policy)
+        _assert_compact_repair_notes(state, gateway.working_notes())
+        plan = working_plan.project(
+            gateway.journal.events(), diff_hash=gateway.current_diff_hash,
+            gate=state["workflow_gate"], policy=working_plan.POLICY,
+        )
         assert plan["last_update_result"] == update
         assert plan["last_update_result"]["status"] == "rejected"
         assert plan["plan"] is None
+        recorded = result.model_dump(mode="json", exclude={"replayed"})
+        for key in ("action_id", "input_hash", "tool", "error_code", "message",
+                    "workspace_diff_hash"):
+            assert outcome[key] == recorded[key]
+        assert "header = 0" in canonical_json(outcome["output"])
+        saved = gateway.journal.path.read_bytes()
+        restarted = _restart(gateway)
+        assert working_plan.project(
+            restarted.journal.events(), diff_hash=restarted.current_diff_hash,
+            gate=state["workflow_gate"], policy=working_plan.POLICY,
+        ) == plan
+        assert _build(restarted, store, policy, [result], planning=working_plan.POLICY) == delivered
+        assert gateway.journal.path.read_bytes() == saved
         if policy == segments.POLICY:
             handed_off = _build(gateway, store, policy, [result], handoff=True,
                                 planning=working_plan.POLICY)
-            current = reconstruct_state(handed_off, context_policy=policy)["working_plan"]
-            assert current["last_update_result"] == update
-            assert current["plan"] is None
-            assert _outputs(handed_off, policy)[call.action_id] == result.model_dump(
-                mode="json", exclude={"replayed"})
+            current = reconstruct_state(handed_off, context_policy=policy)
+            _assert_compact_repair_notes(current, gateway.working_notes())
+            assert _delivered_result(
+                handed_off, policy, call.action_id, compact_repair=True,
+            ) == recorded

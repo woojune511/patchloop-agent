@@ -43,8 +43,10 @@ def snapshot(gateway, *, status="pending", case_count=1, pending_count=1):
 
 
 def policy(gateway, state, *, model=8, tools=8):
+    # Gateway's consumed-edit fixture is expressed against a four-edit budget.
     return runner._tool_policy(
-        gateway, counters(model=model, tools=tools), DevLimits(), snapshot=state,
+        gateway, counters(model=model, tools=tools), DevLimits(max_accepted_mutations=4),
+        snapshot=state,
         repair_recheck=False, _preview_inspection=False,
     )
 
@@ -180,7 +182,8 @@ def test_finish_dispatch_cannot_spend_its_advertised_replay_failure_recovery_fun
     gateway = Gateway(("PASS",), initial=False, mutations=1)
     ledger = ledger_for_slots(7)
     selected = runner._tool_policy(
-        gateway, counters(model=7, tools=9), DevLimits(), snapshot=snapshot(gateway),
+        gateway, counters(model=7, tools=9), DevLimits(max_accepted_mutations=4),
+        snapshot=snapshot(gateway),
         cost_ledger=ledger, completion_cost_policy=COMPLETION_RESERVE_POLICY,
     )
     assert selected.protected_completion_possible
@@ -192,7 +195,7 @@ def test_finish_dispatch_cannot_spend_its_advertised_replay_failure_recovery_fun
     ledger.settle(input_tokens=60_000, cached_input_tokens=0,
                   output_tokens=admission.output_ceiling)
     failed = runner._tool_policy(
-        gateway, counters(model=6, tools=7), DevLimits(),
+        gateway, counters(model=6, tools=7), DevLimits(max_accepted_mutations=4),
         snapshot=snapshot(gateway, status="refuted", pending_count=0),
         cost_ledger=ledger, completion_cost_policy=COMPLETION_RESERVE_POLICY,
     )

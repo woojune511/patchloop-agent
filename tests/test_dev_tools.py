@@ -1219,7 +1219,7 @@ def test_inline_public_failure_is_mapped_and_survives_read_and_restart(
     assert projected["public_location"]["statement"] == "assert value == 1"
     assert projected["mutation_pressure"] == {
         "same_public_failure_site": False,
-        "accepted_mutations_remaining": 4,
+        "accepted_mutations_remaining": 12,
         "guidance": "This check failed on the current diff.",
     }
 

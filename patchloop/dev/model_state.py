@@ -168,7 +168,7 @@ def compact_model_state(
             "repair_path_diagnosis", "helper_correction", "first_observation",
             "model_turns_available_for_exploration", "tool_actions_available_for_exploration",
             "closure_reason", "tools_closing_after_this_turn", "tool_closure_prediction_basis",
-            "tool_policy_transition", "max_parallel_reads_this_turn",
+            "tool_policy_transition", "max_parallel_reads_this_turn", "action_budget",
         ))
     if "mutation_readiness" in view:
         view["mutation_readiness"] = _select(view["mutation_readiness"], (

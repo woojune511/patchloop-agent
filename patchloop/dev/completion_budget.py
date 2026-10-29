@@ -208,6 +208,67 @@ def mutation_attempt_budget(state: CompletionState) -> CompletionBudget:
     ))
 
 
+def action_budget_explanations(
+    state: CompletionState, *, offered_tools: frozenset[str], total_model_calls: int,
+    correction_model_calls: int, remaining_tool_actions: int, max_parallel_reads: int,
+    test_comparison_enabled: bool, test_comparison_required: bool = False,
+) -> dict:
+    """Explain slot consequences without predicting outcomes or changing admission.
+
+    Use the same successful mutation path as tool admission. An exploration result
+    may change the obligations or source eligibility, so fitting this counterfactual
+    never promises a future edit. Do not reserve new work or guess token/time usage.
+    """
+    ordinary = max(0, total_model_calls - correction_model_calls)
+    route = mutation_attempt_budget(state)
+    actions = {}
+    for tool in sorted(offered_tools):
+        if tool not in {"read_file", "search_files", "search_history", "run_probe",
+                        "observe_original", "run_tests"}:
+            continue
+        counts = [1]
+        if tool in {"read_file", "search_files"}:
+            counts = list(range(1, max_parallel_reads + 1))
+        elif tool == "run_tests":
+            if test_comparison_required:
+                counts = [2]
+            elif test_comparison_enabled:
+                counts.append(2)
+        actions[tool] = [{
+            "tool_actions": count,
+            "variant": ("comparison" if count == 2 else "single") if tool == "run_tests"
+                       else "read_search_batch" if tool in {"read_file", "search_files"}
+                       else "single",
+            "ordinary_calls_after": max(0, ordinary - 1),
+            "tool_actions_after": max(0, remaining_tool_actions - count),
+            "edit_route_shortfalls": [
+                name for name, available, required in (
+                    ("model_calls", ordinary - 1, route.minimum),
+                    ("tool_actions", remaining_tool_actions - count, route.minimum_tool_actions),
+                    ("accepted_mutations", state.remaining_mutations, 1),
+                ) if available < required
+            ],
+        } for count in counts]
+    return {
+        "total_calls_remaining": total_model_calls,
+        "correction_calls_reserved": correction_model_calls,
+        "ordinary_calls_remaining": ordinary,
+        "edit_route_required": {
+            "model_calls": route.minimum, "tool_actions": route.minimum_tool_actions,
+            "basis": "with_current_source_anchor_successful_edit_checks_finish",
+        },
+        "after_exploration": actions,
+        "assumptions": (
+            "One valid response; read/search batches use one response and N actions. "
+            "Current obligations and correction reservation unchanged; an edit anchor is "
+            "available. Selected-test comparison uses two executions. Additional host replays, "
+            "changed evidence, cost and time require reassessment. Empty shortfalls do not "
+            "promise edit availability or correctness. A model-call shortfall means exploring "
+            "now loses the later edit/check/finish route under these assumptions."
+        ),
+    }
+
+
 def test_addition_budget(state: CompletionState) -> CompletionBudget:
     """Count a test edit, paired comparison, and the still-required source repair.
 

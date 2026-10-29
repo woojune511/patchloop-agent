@@ -50,6 +50,7 @@ from patchloop.dev.check_feedback import output_tail
 from patchloop.dev.compaction import CompactionAdapter
 from patchloop.dev.completion_budget import (
     CompletionState,
+    action_budget_explanations,
     completion_budget,
     minimum_successor_calls,
     mutation_attempt_budget,
@@ -272,6 +273,7 @@ class _ToolPolicy:
     selected_test_comparison_required: bool = False
     verification_policy: str = "reproduction-gated-v1"
     edit_availability: dict[str, Any] | None = None
+    action_budget: dict[str, Any] | None = None
 
     @property
     def feedback_recovery_reserve_calls(self) -> int:
@@ -649,6 +651,7 @@ def _required_public_check_gaps(gateway, snapshot=None) -> list[dict[str, Any]]:
 def _edit_availability(
     *, allowed: set[str], remaining_mutations: int, untracked_files: bool,
     has_current_source: bool, completion_possible: bool, workflow_gate: str,
+    resource_reason: str | None = None,
 ) -> dict[str, Any]:
     """Describe edit capability from final admission without granting a new action."""
     prerequisite = None
@@ -660,6 +663,8 @@ def _edit_availability(
         reason = "workspace_scope_invalid"
     elif workflow_gate not in {"needs_mutation", "needs_visible_checks", "ready_to_submit"}:
         reason = "workflow_prerequisite"
+    elif resource_reason is not None:
+        reason = resource_reason
     elif not completion_possible:
         reason = "completion_budget_unavailable"
     elif not has_current_source:
@@ -1728,12 +1733,25 @@ def _tool_policy(
         and counters.commitment_diff_hash == current_diff_hash
         and has_current_mutation_evidence
     )
+    ordinary_call_slots = max(
+        0, limits.max_model_calls - counters.model_calls - correction_model_reserve)
+    edit_resource_reason = (
+        "model_calls_insufficient_for_edit_completion"
+        if ordinary_call_slots < mutation_budget.minimum else
+        "tool_actions_insufficient_for_edit_completion"
+        if remaining_tool_actions < mutation_budget.minimum_tool_actions else
+        "cost_insufficient_for_edit_completion"
+        if remaining_model_calls < mutation_budget.minimum else
+        (f"{resource_rejections['replace_text']}_insufficient_for_edit_completion"
+         if "replace_text" in resource_rejections else None)
+    )
     policy = _ToolPolicy(
         edit_availability=_edit_availability(
             allowed=allowed, remaining_mutations=remaining_mutations,
             untracked_files=bool(summary.untracked_files),
             has_current_source=has_current_mutation_evidence,
             completion_possible=completion_possible, workflow_gate=workflow_gate,
+            resource_reason=edit_resource_reason,
         ),
         verification_policy=verification_policy,
         workflow_gate=workflow_gate,
@@ -1990,6 +2008,14 @@ def _tool_policy(
             "basis": "largest_offered_action_successor",
             "limit": "Minimum output admission, not a guarantee of useful output or task success.",
         })
+    policy = replace(policy, action_budget=action_budget_explanations(
+        completion_state, offered_tools=policy.allowed_tools,
+        total_model_calls=max(0, limits.max_model_calls - counters.model_calls),
+        correction_model_calls=correction_model_reserve,
+        remaining_tool_actions=remaining_tool_actions, max_parallel_reads=max_parallel_reads,
+        test_comparison_enabled=_test_comparison_enabled(policy, counters, limits),
+        test_comparison_required=policy.selected_test_comparison_required,
+    ))
     if inspection_allowed and _preview_inspection:
         if path_available or shared_failure_exploration:
             # One action per response; the forecast already incorporates the
@@ -2318,11 +2344,16 @@ def _tool_policy_transition(
         )
         from_state = "execution_only"
         to_state = "execution_only"
+    removed = previous - current
+    edit_reason = (policy.edit_availability or {}).get("reason")
+    if ("replace_text" in removed and edit_reason
+            and "insufficient_for_edit_completion" in edit_reason):
+        reason = edit_reason
     return {
         "from": from_state,
         "to": to_state,
         "reason": reason,
-        "removed_tools": sorted(previous - current),
+        "removed_tools": sorted(removed),
         "added_tools": sorted(current - previous),
         "remaining_tools": sorted(current),
     }
@@ -2515,6 +2546,7 @@ def _build_context(
             ),
         },
         "action_horizon": {
+            "action_budget": active_policy.action_budget,
             **_repair_inspection_payload(active_policy),
             **_completion_resources_payload(active_policy),
             "minimum_completion_calls": active_policy.minimum_completion_calls,
@@ -3158,6 +3190,13 @@ def _build_model_input(
     # Re-project only derived references. Earlier native results/receipts remain
     # byte-identical, with their original action, file and diff identities.
     state = json.loads(exchange[-1]["content"])
+    raw_context = json.loads(context)
+    if diagnosis_context.pending(raw_context):
+        state = diagnosis_context.project(state)
+    elif repair_context.pending(raw_context):
+        state = repair_context.project(state)
+    elif completion_context.active(raw_context):
+        state = completion_context.project(state)
     public_history = list(public_exchanges(history, archive_kind=archive_kind))
     output_ids = {item["call_id"] for item in public_history
                   if item.get("type") == "function_call_output"}
@@ -3173,22 +3212,13 @@ def _build_model_input(
     )
     state = reference_native_sources(state, history, archive_kind=archive_kind)
     state = compact_model_state(state, history, archive_kind=archive_kind)
-    if diagnosis_context.pending(json.loads(context)):
-        state = compact_model_state(diagnosis_context.project(json.loads(context)), history,
-                                    archive_kind=archive_kind)
-    elif repair_context.pending(json.loads(context)):
-        state = compact_model_state(repair_context.project(json.loads(context)), history,
-                                    archive_kind=archive_kind)
-    elif completion_context.active(json.loads(context)):
-        state = compact_model_state(completion_context.project(json.loads(context)), history,
-                                    archive_kind=archive_kind)
     return assemble_model_input(
         system_prompt=(completion_context.SYSTEM_PROMPT
-                       if completion_context.active(json.loads(context)) else
-                       repair_context.system_prompt(json.loads(context))
-                       if repair_context.pending(json.loads(context))
+                       if completion_context.active(raw_context) else
+                       repair_context.system_prompt(raw_context)
+                       if repair_context.pending(raw_context)
                        else thin_policy.system_prompt(agent_policy, planning_policy,
-                           verification_policy=json.loads(context).get(
+                           verification_policy=raw_context.get(
                                "completion_guidance", {}).get(
                                    "verification_policy", "reproduction-gated-v1"))),
         state=thin_policy.project_state(state, agent_policy), history=new_history,

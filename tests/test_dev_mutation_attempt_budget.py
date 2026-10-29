@@ -62,7 +62,7 @@ def _state(
 
 
 def _policy(gateway, counters):
-    return runner._tool_policy(gateway, counters, DevLimits())
+    return runner._tool_policy(gateway, counters, DevLimits(max_accepted_mutations=4))
 
 
 @cache

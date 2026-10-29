@@ -150,3 +150,7 @@ tests/test_observation_shape_correction.py
 tests/test_edit_availability.py
 tests/test_probe_followup.py
 tests/test_probe_followup_wire.py
+tests/test_replacement_schema.py
+tests/test_file_freedom.py
+tests/test_action_budget_explanations.py
+tests/test_journal_verified_prefix.py

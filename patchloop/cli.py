@@ -13,6 +13,7 @@ from typing import Annotated, Literal
 import typer
 from pydantic import ValidationError
 
+from patchloop.dev.contracts import DEFAULT_ACCEPTED_MUTATIONS, DevLimits
 from patchloop.dev.cost import (
     DEFAULT_OUTPUT_CEILING,
     MAX_OUTPUT_CEILING,
@@ -99,6 +100,10 @@ def dev(
             help="Independent protocol-correction cap; requires completion-recovery-v1.",
         ),
     ] = None,
+    max_accepted_mutations: Annotated[int, typer.Option(
+        "--max-accepted-mutations", min=1,
+        help="Accepted edits allowed; model, action, scope, cost and time limits still apply.",
+    )] = DEFAULT_ACCEPTED_MUTATIONS,
     env_file: Annotated[
         Path | None,
         typer.Option("--env-file", exists=True, dir_okay=False),
@@ -212,6 +217,7 @@ def dev(
                 reasoning_effort=reasoning_effort,
                 max_output_tokens=max_output_tokens,
                 max_correction_output_tokens=max_correction_output_tokens,
+                limits=DevLimits(max_accepted_mutations=max_accepted_mutations),
                 env_file=env_file,
                 max_cost_usd=_parse_cost(max_cost_usd),
                 repeat=repeat,

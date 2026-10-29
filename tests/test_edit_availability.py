@@ -168,14 +168,14 @@ def test_thin_card_reaches_real_local_mock_isolated_acceptance(tmp_path):
 
 
 @pytest.mark.parametrize("limits,reason", [
-    ({"model": 3}, "completion_budget_unavailable"),
-    ({"tools": 3}, "completion_budget_unavailable"),
+    ({"model": 3}, "model_calls_insufficient_for_edit_completion"),
+    ({"tools": 3}, "tool_actions_insufficient_for_edit_completion"),
     ({"mutations": 0}, "mutation_limit_reached"),
     ({"untracked": True}, "workspace_scope_invalid"),
 ])
 def test_closed_budget_or_scope_does_not_promise_a_read_unlock(limits, reason):
     gateway, counters = _state(("FAIL", "NOT_RUN"), anchor=False, **limits)
-    policy = runner._tool_policy(gateway, counters, DevLimits())
+    policy = runner._tool_policy(gateway, counters, DevLimits(max_accepted_mutations=4))
     assert policy.allowed_tools == {"stop_task"}
     snapshot = SimpleNamespace(
         diff=gateway.current_diff, ready_to_submit=gateway.ready_to_submit(),

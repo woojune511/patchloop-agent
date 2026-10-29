@@ -47,7 +47,7 @@ def _focus(failure, *, remaining=0, allowed=frozenset(), current="current"):
 
     gateway = SimpleNamespace(
         _active_failed_check={"public_check_failure": failure},
-        limits=DevLimits(), accepted_mutations=4 - remaining,
+        limits=DevLimits(max_accepted_mutations=4), accepted_mutations=4 - remaining,
         completion_verification=completion_verification,
     )
     return DevToolGateway.current_public_failure(
@@ -107,7 +107,7 @@ def test_last_mutation_keeps_conditional_check_check_finish_path(order, remainin
     gateway = PolicyGateway()
     gateway.accepted_mutations = 4
     gateway.statuses = {"first": "NOT_RUN", "second": "NOT_RUN"}
-    limits = DevLimits()
+    limits = DevLimits(max_accepted_mutations=4)
     counters = runner._RunCounters(model_calls=40 - remaining_calls, tool_actions=33)
     stop = RequestedTool(
         name="stop_task", action_id="voluntary-stop",
@@ -144,7 +144,8 @@ def test_real_failure_or_insufficient_completion_budget_still_closes_dispatch(
     gateway.accepted_mutations = 4
     gateway.statuses = statuses
     policy = runner._tool_policy(
-        gateway, runner._RunCounters(model_calls=40 - remaining_calls), DevLimits(),
+        gateway, runner._RunCounters(model_calls=40 - remaining_calls),
+        DevLimits(max_accepted_mutations=4),
     )
     assert not policy.completion_possible
     assert policy.allowed_tools == {"stop_task"}
@@ -209,7 +210,7 @@ def test_feedback_changes_preserve_wire_limits_and_bounded_prompt():
     # Pin fresh inputs with grounded check/test guidance; frozen arms stay exact.
     assert sha256_json(dev_tool_schemas(
         finish_enabled=True, allowed_tools=ALL_DEV_TOOLS, check_ids=["first", "second"],
-    )) == ("sha256:7e9bcd03d7b946e5f9c39c9f28acfa7bc9a9a45fddb8254fc59ca3a932ecf88f"
+    )) == ("sha256:7073639f2889ffbade142652a9a4e05692c3d7f5f792cdbbb8c4cb29c01f9f99"
            if FROZEN_ARM is None else
            "sha256:8b024770ed22b31b84e2e5b8890080e1aaad9f15ba9843f5c3ea3f1c12ee0fe0")
     assert dev_tool_surface_hash() != (
@@ -221,4 +222,6 @@ def test_feedback_changes_preserve_wire_limits_and_bounded_prompt():
     assert "mutation_completion_horizon describes another edit" in DEV_SYSTEM_PROMPT
     limits = DevLimits()
     assert (limits.max_model_calls, limits.max_tool_actions,
-            limits.max_accepted_mutations, limits.wall_time_seconds) == (40, 100, 4, 1800)
+            limits.max_accepted_mutations, limits.wall_time_seconds) == (
+                40, 100, 4 if FROZEN_ARM is not None else 12, 1800,
+            )

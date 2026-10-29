@@ -12,7 +12,7 @@ import pytest
 from patchloop.dev import probe_invocation, reproduction
 from patchloop.errors import ContractError
 from patchloop.sandbox import call_path_trace as trace
-from patchloop.sandbox import probes
+from patchloop.sandbox import probe_api, probes
 from patchloop.sandbox.execution_feedback import make_request
 from patchloop.sandbox.line_trace import LineTrace
 from patchloop.sandbox.probes import _OutputCollector
@@ -548,7 +548,10 @@ def test_optional_observer_keeps_default_bytes_and_original_capture(tmp_path, mo
     assert wrapped != plain
     value = collector(bound, roots)
     namespace = {"_patchloop_call_path_begin": value.begin,
-                 "_patchloop_call_path_end": value.end}
+                 "_patchloop_call_path_end": value.end,
+                 # Mirror the trusted probe launcher's v11 API injection. The
+                 # rendered observer and historical channel bytes stay unchanged.
+                 "_patchloop_validate_observer_settings": probe_api.validate_observer_settings}
     exec(wrapped, namespace)
     assert namespace["result"].stdout == namespace["result"].stderr == ""
     assert namespace["result"].value == "skip"

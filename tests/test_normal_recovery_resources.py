@@ -59,7 +59,9 @@ def test_test_addition_preserves_pair_and_both_mutations_host_checks():
 
 
 def choose(gateway, *, seconds=1800, money="4.50", counts=None):
-    return runner._tool_policy(gateway, counts or counters(model=18, tools=38), DevLimits(),
+    # The synthetic Gateway counts consumed edits from four, independently of CLI defaults.
+    return runner._tool_policy(gateway, counts or counters(model=18, tools=38),
+        DevLimits(max_accepted_mutations=4),
         cost_ledger=cost.DevCostLedger(Decimal(money), cost.pricing_for_model(
             "gpt-5.4-mini-2026-03-17")), completion_cost_policy=cost.COMPLETION_RECOVERY_POLICY,
         desired_output_ceiling=40000, max_correction_output_tokens=25000,

@@ -251,7 +251,7 @@ def test_projection_preserves_current_ordered_tool_inputs_and_limits():
     # Ordered fresh inputs include minimal edit/stop and optional original observation.
     encoded = json.dumps(structure(schemas), separators=(",", ":"), ensure_ascii=False).encode()
     assert hashlib.sha256(encoded).hexdigest() == (
-        "c459f81229fd29c1ac90cba08c3334e0e829b13ac00a0d13e0d467b08b9f99a5"
+        "095518e25060a00bbb56fe9042a719c2cafe23b837888f5d0abc3a3d3761dafa"
         if FROZEN_ARM is None else
         "acdcc28623f92006faaa95a0c58015095e28b851093d0eb983e8d59bcd303222"
     )
@@ -262,4 +262,6 @@ def test_projection_preserves_current_ordered_tool_inputs_and_limits():
     assert DEV_RUN_SCHEMA == "dev-run-v1"
     limits = DevLimits()
     assert (limits.max_model_calls, limits.max_tool_actions, limits.max_accepted_mutations,
-            limits.wall_time_seconds) == (40, 100, 4, 1800)
+            limits.wall_time_seconds) == (
+                40, 100, 4 if FROZEN_ARM is not None else 12, 1800,
+            )

@@ -7,6 +7,7 @@ import difflib
 import inspect
 import re
 import threading
+from bisect import bisect_left
 from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
@@ -144,6 +145,19 @@ class _ValidatedReplacement:
     postimage_start_line: int
     anchor_evidence_span_id: str
     anchor_evidence_span_ids: tuple[str, ...] = ()
+    anchor_offsets: tuple[int, ...] = ()
+
+    def source_replacement(self) -> SourceReplacement:
+        before = self.before_bytes.decode("utf-8").replace("\r\n", "\n")
+        after = self.after_bytes.decode("utf-8").replace("\r\n", "\n")
+        end = self.anchor_offsets[-1] + len(self.intent.old_text)
+        after_end = end + len(self.anchor_offsets) * (
+            len(self.intent.new_text) - len(self.intent.old_text)
+        )
+        return SourceReplacement(
+            self.before_bytes, self.after_bytes, self.anchor_offset,
+            before[self.anchor_offset:end], after[self.anchor_offset:after_end],
+        )
 
 
 @dataclass(frozen=True)
@@ -242,8 +256,10 @@ def _read_line_bounds(start_line=None, end_line=None, *, range_only=False):
         return start_line, None
     if type(start_line) is not int or type(end_line) is not int:
         raise ContractError("read_file line bounds must be integers")
-    if start_line < 1 or end_line < start_line or end_line - start_line + 1 > 400:
-        raise ContractError("read_file accepts a 1-400 line inclusive range")
+    if start_line < 1 or end_line < start_line:
+        raise ContractError("read_file requires a positive, ordered inclusive line range")
+    if range_only and end_line - start_line + 1 > 400:
+        raise ContractError("legacy read_file accepts a 1-400 line inclusive range")
     return start_line, end_line
 
 
@@ -332,8 +348,9 @@ def dev_tool_schemas(
                 "Read a selected tracked public source file. Set both line bounds to null "
                 "to read from the beginning; the 24000-character output limit returns only "
                 "complete lines. If truncated, continue with next_start_line and end_line null. "
-                "For an explicit inclusive range, supply both integers and request at most "
-                "400 lines. Returned spans cover only the lines actually delivered."
+                "For an explicit inclusive range, supply both positive ordered integers. "
+                "The character limit paginates large ranges. "
+                "Returned spans cover only the lines actually delivered."
             ),
             "strict": True,
             "parameters": {
@@ -373,7 +390,9 @@ def dev_tool_schemas(
             "type": "function",
             "name": "replace_text",
             "description": (
-                "Replace one exact occurrence in one tracked, allowed public file. The "
+                "Replace an exact occurrence in one tracked, allowed public file, or set "
+                "occurrence='all' to replace every non-overlapping match in that file in "
+                "one atomic edit. Every selected match must have current observed source. The "
                 "gateway validates the current anchor and constructs the canonical Git "
                 "diff; never provide diff syntax or patch wrappers. The minimal plan, "
                 "hypothesis, and exact current source anchor are part of this mutation. "
@@ -1187,7 +1206,8 @@ class DevToolGateway:
         occurrence_value = arguments.get("occurrence")
         occurrence = (
             occurrence_value
-            if type(occurrence_value) is int and 1 <= occurrence_value <= 100
+            if occurrence_value == "all" or (
+                type(occurrence_value) is int and 1 <= occurrence_value <= 100)
             else None
         )
         causal_revision = arguments.get("causal_revision")
@@ -3278,6 +3298,9 @@ class DevToolGateway:
                         validated.anchor_offset
                         if call.name == "replace_text" and mutation_admitted is True else None
                     ),
+                    **({"mutation_anchor_offsets": list(validated.anchor_offsets)}
+                       if call.name == "replace_text" and mutation_admitted is True
+                       and validated.intent.occurrence == "all" else {}),
                     "execution_identity": (
                         {"run_id": self.journal.run_id, "action_id": call.action_id}
                         if call.name in {"run_check", "run_tests", "run_probe", "observe_original"}
@@ -3958,16 +3981,23 @@ class DevToolGateway:
         positions = [
             match.start() for match in re.finditer(re.escape(intent.old_text), anchor_text)
         ]
-        if len(positions) < intent.occurrence:
+        if not positions or (intent.occurrence != "all" and len(positions) < intent.occurrence):
             raise ContractError("exact edit anchor is stale or absent from the current source")
-        position = positions[intent.occurrence - 1]
+        selected = positions if intent.occurrence == "all" else [positions[intent.occurrence - 1]]
+        position = selected[0]
         anchor_start_line = anchor_text[:position].count("\n") + 1
-        anchor_end_line = anchor_text[:position + len(intent.old_text) - 1].count("\n") + 1
-        after_text = (
-            anchor_text[:position]
-            + intent.new_text
-            + anchor_text[position + len(intent.old_text) :]
+        anchor_end_line = anchor_text[:selected[-1] + len(intent.old_text) - 1].count("\n") + 1
+        replacement_byte_delta = (
+            len(intent.new_text.replace("\n", newline).encode("utf-8"))
+            - len(intent.old_text.replace("\n", newline).encode("utf-8"))
         )
+        if (intent.occurrence == "all"
+                and len(before_bytes) + len(selected) * replacement_byte_delta > 2_000_000):
+            raise ContractError("all-match replacement exceeds the 2 MB source size bound")
+        after_text = (anchor_text.replace(intent.old_text, intent.new_text)
+                      if intent.occurrence == "all" else
+                      anchor_text[:position] + intent.new_text
+                      + anchor_text[position + len(intent.old_text):])
         after_bytes = after_text.replace("\n", newline).encode("utf-8")
         constraints = self.public_task.constraints
         if constraints.additive_test_roots and (
@@ -4006,17 +4036,17 @@ class DevToolGateway:
                     str(span["span_id"]),
                 ),
             )
-        if not spans_cover_range(covering_spans, anchor_start_line, anchor_end_line):
-            raise ContractError(
-                "current evidence spans do not cover the exact replacement anchor contiguously",
-                details={
-                    "required_anchor": {
-                        "path": anchor_path,
-                        "start_line": anchor_start_line,
-                        "end_line": anchor_end_line,
-                    }
-                },
-            )
+        line_breaks = [match.start() for match in re.finditer("\n", anchor_text)]
+        for offset in selected:
+            start = bisect_left(line_breaks, offset) + 1
+            end = bisect_left(line_breaks, offset + len(intent.old_text) - 1) + 1
+            if not spans_cover_range(covering_spans, start, end):
+                raise ContractError(
+                    "current evidence spans do not cover the exact replacement anchor contiguously",
+                    details={"required_anchor": {
+                        "path": anchor_path, "start_line": start, "end_line": end,
+                    }},
+                )
         return _ValidatedReplacement(
             intent=intent,
             path=anchor_path,
@@ -4029,6 +4059,7 @@ class DevToolGateway:
             postimage_start_line=anchor_start_line,
             anchor_evidence_span_id=str(covering_spans[0]["span_id"]),
             anchor_evidence_span_ids=tuple(str(span["span_id"]) for span in covering_spans),
+            anchor_offsets=tuple(selected),
         )
 
     def _mutation_result_output(
@@ -4048,7 +4079,7 @@ class DevToolGateway:
             self._mutation_postimage_evidence(
                 path=path,
                 focus_start_line=postimage_start_line,
-                focus_line_count=max(1, intent.new_text.count("\n") + 1),
+                focus_line_count=max(1, source_replacement.new_text.count("\n") + 1),
                 diff_hash=summary.patch_hash,
                 deadline=deadline,
             )
@@ -4082,6 +4113,8 @@ class DevToolGateway:
             ),
             "changed_files": summary.changed_files,
             "diff_hash": summary.patch_hash,
+            **({"replacement_count": source_replacement.old_text.count(intent.old_text)}
+               if intent.occurrence == "all" else {}),
         }
         output = {
             "patch_hash": sha256_bytes(generated_patch.encode("utf-8")),
@@ -4152,10 +4185,7 @@ class DevToolGateway:
                 path=validated.path,
                 postimage_start_line=validated.postimage_start_line,
                 summary=summary,
-                source_replacement=SourceReplacement(
-                    validated.before_bytes, validated.after_bytes, validated.anchor_offset,
-                    validated.intent.old_text, validated.intent.new_text,
-                ),
+                source_replacement=validated.source_replacement(),
             )
         except Exception as exc:
             WorkspaceManager.atomic_replace_source(
@@ -4257,15 +4287,34 @@ class DevToolGateway:
         if newline not in {"\n", "\r\n"}:
             raise RecoveryError("mutation recovery is missing its original newline style")
         offset = pending.get("mutation_anchor_offset")
-        if (
-            type(offset) is not int or not 0 <= offset <= len(text)
-            or text[offset:offset + len(intent.new_text)] != intent.new_text
-        ):
+        offsets = (pending.get("mutation_anchor_offsets") if intent.occurrence == "all"
+                   else [offset])
+        if (not isinstance(offsets, list) or not offsets or offsets[0] != offset
+                or any(type(value) is not int or value < 0 for value in offsets)
+                or any(b < a + len(intent.old_text)
+                       for a, b in zip(offsets, offsets[1:], strict=False))):
             raise RecoveryError("mutation recovery is missing its admitted replacement offset")
-        before = (text[:offset] + intent.old_text + text[offset + len(intent.new_text):])
+        pieces, cursor = [], 0
+        delta = len(intent.new_text) - len(intent.old_text)
+        for index, original_offset in enumerate(offsets):
+            current_offset = original_offset + index * delta
+            if (not cursor <= current_offset <= len(text)
+                    or text[current_offset:current_offset + len(intent.new_text)]
+                    != intent.new_text):
+                raise RecoveryError("mutation recovery does not match admitted positions")
+            pieces.extend((text[cursor:current_offset], intent.old_text))
+            cursor = current_offset + len(intent.new_text)
+        pieces.append(text[cursor:])
+        before = "".join(pieces)
         before_bytes = before.replace("\n", newline).encode("utf-8")
         if sha256_bytes(before_bytes) != pending.get("mutation_preimage_file_hash"):
             raise RecoveryError("mutation recovery does not match the admitted preimage")
+        if intent.occurrence == "all" and offsets != [
+            match.start() for match in re.finditer(re.escape(intent.old_text), before)
+        ]:
+            raise RecoveryError("mutation recovery does not cover every admitted match")
+        before_end = offsets[-1] + len(intent.old_text)
+        after_end = before_end + len(offsets) * delta
         scope = verify_scope(summary, self.public_task.constraints)
         if not scope.passed:
             # Undo only the exact admitted replacement, never arbitrary workspace drift.
@@ -4299,7 +4348,8 @@ class DevToolGateway:
             postimage_start_line=int(pending.get("mutation_postimage_start_line", 1)),
             summary=summary,
             source_replacement=SourceReplacement(
-                before_bytes, after_bytes, offset, intent.old_text, intent.new_text,
+                before_bytes, after_bytes, offset,
+                before[offset:before_end], text[offset:after_end],
             ),
             recovered_after_crash=True,
             deadline=deadline,

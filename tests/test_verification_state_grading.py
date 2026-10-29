@@ -12,6 +12,7 @@ from test_verification_state_comparison import frozen_prompt
 from diagnostics import verification_state_execution as execution
 from diagnostics import verification_state_grading as grading
 from diagnostics import verification_state_panel as panel
+from patchloop.dev.contracts import DevLimits
 from patchloop.dev.conversation import assemble_model_input
 from patchloop.dev.state import DevJournal
 from patchloop.errors import ContractError
@@ -291,6 +292,12 @@ def test_serial_dispatch_binds_count_caps_and_stops_unknown_billing(
         execution.collect(tmp_path, "digest", auth, rates)
 
 
+def test_closed_comparison_rejects_current_default_edit_budget():
+    assert DevLimits().max_accepted_mutations == 12
+    with frozen_prompt(), pytest.raises(ContractError, match="limits changed"):
+        panel.prior.invariants()
+
+
 def test_reduced_manifest_rejects_changed_roster_caps_or_spec(monkeypatch, tmp_path):
     current = {"head": "test-commit"}
     monkeypatch.setattr(panel, "identity", lambda *_: current)
@@ -316,7 +323,11 @@ def test_reduced_manifest_rejects_changed_roster_caps_or_spec(monkeypatch, tmp_p
     assert validate(packet)["total_cap_usd"] == "5.28"
     requests = [r["request"] for r in packet["rows"]]
     assert all(r["max_cost_usd"] == "0.88" and r["repeat"] == 1 for r in requests)
-    with frozen_prompt():
+    # The closed comparison requires its explicit historical edit allowance;
+    # current defaults must not silently change the experiment being tested.
+    with frozen_prompt(), monkeypatch.context() as historical:
+        historical.setattr(panel.prior, "DevLimits",
+                           lambda: DevLimits(max_accepted_mutations=4))
         assert len(requests) == 6 and panel.prior.invariants()["references"] == 2
     for field, value in (
         ("repeat_per_arm", 6), ("order", list(panel.ORDER)),

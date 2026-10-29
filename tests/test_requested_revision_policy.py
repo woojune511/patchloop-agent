@@ -24,7 +24,9 @@ def policy(*, calls=5, tools=8, money="20", seconds=2000, requested="candidate",
     state.completion_verification.update(early_replay_reusable=True,
         early_reproduction_count=1, baseline_failure_case_ids=["original"])
     return runner._tool_policy(gateway, counters(model=calls, tools=tools),
-        DevLimits(max_protocol_recoveries=correction), snapshot=state, repair_recheck=True,
+        # Gateway's `edits` argument uses a fixed four-edit fixture budget.
+        DevLimits(max_protocol_recoveries=correction, max_accepted_mutations=4),
+        snapshot=state, repair_recheck=True,
         cost_ledger=DevCostLedger(Decimal(money), pricing_for_model("gpt-5.4-2026-03-05")),
         completion_cost_policy="completion-recovery-v1", desired_output_ceiling=40_000,
         max_correction_output_tokens=25_000, remaining_seconds=seconds,

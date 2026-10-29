@@ -135,10 +135,20 @@ The selected baseline is a working configuration, not a change to CLI defaults:
 | Repeat | 1, maximum 6 |
 | Automatic compaction | Disabled |
 
-Per-run defaults: 40 model calls, 100 tool actions, four accepted mutations and
+Per-run defaults: 40 model calls, 100 tool actions, 12 accepted mutations and
 1,800 active seconds. Output includes reasoning (128..128,000 desired tokens);
 cost admission can lower it. Full GPT-5.4 requires `segmented-v1`.
 See [CLI options](../patchloop/cli.py) and [request contracts](../patchloop/dev/contracts.py).
+
+Explicit approved limits remain authoritative; historical three/four-edit runs are
+unchanged. `--max-accepted-mutations` configures dev's new limit. `occurrence="all"`
+changes all exact observed matches in one existing file as one edit, preserving scope
+and test checks. Fresh reads paginate at 24,000 characters via `next_start_line`,
+without a separate 400-line cap. New files and atomic multi-file edits remain unsupported.
+
+`action_horizon.action_budget` separates ordinary/correction response slots and
+shows exploration's effect on the edit/check/finish route. Forecasts assume unchanged
+obligations/current anchors; evidence, cost and time are reassessed after execution.
 
 `--history-search public-v1` requires `segmented-v1` and the current agent policy.
 It offers a singleton search of already delivered public evidence from this run,
@@ -202,22 +212,13 @@ verified local copies without network/install. Add `--enable-probes
 [dependency contract](../.agent/prepared-probe-dependencies.md).
 Task callers are inherited; CLI adds source scopes.
 
-For other context, planning, cost or repair policies, read the relevant internal
-contract and CLI compatibility checks first. Opt-in `--completion-cost-policy
-completion-minimum-v1` requires segmented-v1: retain recovery slots and reserve
-successful minimum check/finish successors before dispatch. `completion-recovery-v1`
-reserves one model slot and one correction at 60K input + output allowance. Set
-`--max-correction-output-tokens 25000` independently of `--max-output-tokens 40000`;
-omitting it preserves the coupled ceiling. The first correction consumes it;
-restart cannot renew it. No repair guarantee; see the [contract](../.agent/completion-resources.md).
-Reusable probe cases have a separate
-[case contract](../.agent/probe-cases.md). Optional `--probe-recheck saved-program-v1`
-requires enabled probes and `cases-v1`; it reruns the last saved program after edits
-within existing budgets and never gates submission. Defaults remain off; see the
-[recheck contract](../.agent/probe-recheck.md). Compaction needs a compatible mini
-configuration and conditional model-limit reservation acknowledgement; it is not
-part of the selected baseline. Repeat every selected option on resume. Interface
-availability and local tests alone do not demonstrate an acceptance improvement.
+Optional completion policies require compatible context settings. See
+[completion resources](../.agent/completion-resources.md) for ordinary/correction
+reservations and independent output ceilings; restart never renews correction credit.
+See [cases](../.agent/probe-cases.md) and [saved-program recheck](../.agent/probe-recheck.md)
+for opt-in replay. Compaction requires a compatible mini configuration and explicit
+reservation acknowledgement. Repeat all selected options on resume; local tests do
+not establish acceptance improvement.
 
 ## Submission, evidence and interpretation
 
@@ -233,20 +234,16 @@ tracked diff, no untracked files, all required checks passing on that diff, and 
 assessment (1–1,500 characters) connecting evidence to requirements and remaining
 gaps. Resolve material gaps when feasible; edits require fresh checks. Regression
 PASS, notes and probes do not establish task coverage or replace required checks.
-Finish replays stale original cases and controls with deterministic action IDs,
+Under reproduction-gated-v1, finish replays stale original cases with bound action IDs,
 within the solver budget and without another model call. Current mismatch/conflict
-rejects finish. `stop_task` abandons without submission/evaluation.
+rejects finish. Under public-checks-v1 these diagnostics are advisory.
+`stop_task` abandons without submission/evaluation.
 
-`--enable-probes --reproduction-acquisition bounded-v1` permits two original dispatches,
-two rejected requests and six total investigations before edits; requests are not
-executions. Completion budgets can release it earlier (default `none`). Release or
-helper/normal PASS cannot discharge the obligation. Caller receipts bind sys.argv,
-arguments, cwd and selected
-input/environment identities. See the [contract](../.agent/evidence-recovery.md).
-Fresh original purposes bind distinct failure/desired JSON values. Acquisition needs
-a healthy unchanged-base failure match and desired mismatch. Third values stay
-unverified; mapping remains model-authored. Rejected requests create no case; accepted
-uncertain executions remain unverified.
+Optional `--enable-probes --reproduction-acquisition bounded-v1` allows two original
+dispatches, two rejected requests and six preparations within shared budgets.
+Acquisition needs comparable unchanged-base failure/desired observations; requests,
+helper PASS and releases are not proof. Uncertainty remains unverified. See the
+[identity and acquisition contract](../.agent/evidence-recovery.md).
 
 Finish, repair receipts and dev results expose `delivery_state`, `original_verification`
 and `submission_verification`. An unchanged-base failure plus current case support

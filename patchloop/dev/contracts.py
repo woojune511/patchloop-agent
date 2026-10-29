@@ -6,7 +6,7 @@ from datetime import datetime
 from decimal import Decimal
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_serializer, model_validator
 
@@ -115,7 +115,8 @@ def dev_tool_surface_hash(
             "current_source_catalog": "file-hash-delivery-groups-with-mutation-path-permission-v2",
             "native_source_delivery": "exact-path-hash-line-union-references-v1",
             "native_source_reference_limit": 16,
-            "public_read_range": "whole-file-pages-or-inclusive-1-to-400-lines-v2",
+            "public_read_range": "character-bounded-inclusive-ranges-v3",
+            "replacement_occurrence": "integer-or-all-observed-matches-v1",
             "reasoning_context_evidence": "provider-reported-mode-or-null-v1",
             "reads": sorted(DEV_READ_TOOLS),
             "single_actions": sorted(DEV_SINGLE_ACTION_TOOLS),
@@ -262,10 +263,13 @@ class DevTerminal(StrEnum):
     AGENT_STOPPED = "AGENT_STOPPED"
 
 
+DEFAULT_ACCEPTED_MUTATIONS = 12
+
+
 class DevLimits(StrictModel):
     max_model_calls: int = Field(default=40, ge=1)
     max_tool_actions: int = Field(default=100, ge=1)
-    max_accepted_mutations: int = Field(default=4, ge=1)
+    max_accepted_mutations: int = Field(default=DEFAULT_ACCEPTED_MUTATIONS, ge=1)
     wall_time_seconds: int = Field(default=1_800, ge=1)
     max_protocol_recoveries: int = Field(default=1, ge=0, le=1)
     max_parallel_reads: int = Field(default=4, ge=1, le=4)
@@ -282,7 +286,7 @@ class TextReplacementIntent(StrictModel):
     path: str = Field(min_length=1, max_length=1_000)
     old_text: str = Field(min_length=1, max_length=20_000)
     new_text: str = Field(max_length=20_000)
-    occurrence: int = Field(default=1, ge=1, le=100)
+    occurrence: Annotated[int, Field(ge=1, le=100)] | Literal["all"] = 1
     hypothesis: str = Field(min_length=1, max_length=1_500)
     expected_behavior: str = Field(min_length=1, max_length=1_500)
     repair_prediction: dict[str, Any] | None = None

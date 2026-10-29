@@ -1820,7 +1820,17 @@ def test_mock_end_to_end_isolated_evaluator_and_public_context(tmp_path, monkeyp
         "public_execution_summary",
         "reproduction_review",
     }
-    assert all(set(json.loads(context)) == context_keys for context in contexts)
+    # Only the post-read mutation turn has a repair-stage packet. Keep an exact
+    # public allowlist per turn, so adding it does not admit arbitrary state fields.
+    states = [json.loads(context) for context in contexts]
+    assert [set(state) for state in states] == [
+        context_keys, context_keys | {"repair_stage"}, context_keys, context_keys,
+    ]
+    assert states[1]["repair_stage"] == {
+        "policy": "small-repair-context-v1",
+        "first_observation": {},
+        "original_observations": [],
+    }
     assert all(json.loads(context)["reproduction_review"]["required"]["status"] == "UNKNOWN"
                for context in contexts)
     assert json.loads(contexts[-1])["public_execution_summary"]["observation_count"] == 1

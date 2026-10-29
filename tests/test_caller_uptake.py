@@ -14,6 +14,7 @@ from diagnostics import caller_uptake_execution as execution
 from diagnostics import caller_uptake_grading as grading
 from diagnostics import caller_uptake_prepare as preparation
 from patchloop.artifacts import ArtifactStore
+from patchloop.dev.contracts import DevLimits
 from patchloop.errors import ContractError
 from patchloop.util import canonical_json, sha256_bytes, sha256_json
 
@@ -147,15 +148,27 @@ def test_input_layout_and_setup_are_required():
     assert grade(receipt)["status"] == "ERROR"
 
 
-def test_requests_keep_exact_budget_order_and_only_dependency_location_differs(tmp_path):
-    requests = [panel.request(tmp_path / "deps", tmp_path / "live", row) for row in panel.ORDER]
+def test_requests_keep_exact_budget_order_and_only_dependency_location_differs(
+    tmp_path, monkeypatch,
+):
+    with frozen_prompt(CALLER_EXECUTION_COMMIT), monkeypatch.context() as historical:
+        historical.setattr(panel, "DevLimits", lambda: DevLimits(max_accepted_mutations=4))
+        requests = [panel.request(tmp_path / "deps", tmp_path / "live", row) for row in panel.ORDER]
+        assert panel.invariants()["references"] == 2
     assert panel.ORDER[:4] == ("A-r1-t13", "B-r1-t13", "B-r2-t13", "A-r2-t13")
     assert len(requests) == 12 and sum(r.max_cost_usd for r in requests) == panel.CAP
     data = [r.model_dump(exclude={"state_root", "prepared_probe_dependencies"}) for r in requests]
     assert all(r == data[0] for r in data)
-    with frozen_prompt(CALLER_EXECUTION_COMMIT):
-        assert panel.invariants()["references"] == 2
+    assert all(r.limits.max_accepted_mutations == 4 for r in requests)
     assert requests[0].evaluation_reserve_seconds == 330
+
+
+def test_closed_caller_panel_rejects_current_default_edit_budget():
+    assert DevLimits().max_accepted_mutations == 12
+    with frozen_prompt(CALLER_EXECUTION_COMMIT), pytest.raises(
+        ContractError, match="limits changed",
+    ):
+        panel.invariants()
 
 
 def settled(cost=880000000, **updates):
