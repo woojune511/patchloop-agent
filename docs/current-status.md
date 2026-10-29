@@ -78,6 +78,12 @@ Investigate module-name/search-root handling and delivery of post-edit replay re
 no source repair, model follow-up or new finish gate is validated. One failed operator
 trace was preserved and replaced by a smaller observer; API cost was zero.
 
+Next is the [checkpoint replay-feedback comparison preparation](history/2026-10-29-astroid-replay-feedback-preparation.md):
+same post-edit/public-check candidate, A optional replay versus B receiving a sealed
+replay of its own helper. Charge B's action and elapsed time; exclude operator
+diagnosis and private evidence. Restoration now preserves the parent submission
+policy. This is local preparation, with paid execution and repair gain unverified.
+
 Benchmark acceptance is the primary repair outcome; diagnostic completeness is
 separate. [public-checks-v1](history/2026-10-29-public-check-submission.md) uses
 current required public checks and scoped diff for submission. Reproduction,

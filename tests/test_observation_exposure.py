@@ -32,7 +32,7 @@ from patchloop.sandbox import LocalSandbox
 from patchloop.util import sha256_bytes, sha256_json
 
 
-def branch_for(source, tmp_path, arm="A", cap="1"):
+def branch_for(source, tmp_path, arm="A", cap="1", *, preserve_parent_configuration=False):
     journal = DevJournal(source.root, source.run_id)
     cut = [e for e in journal.events() if e["event_type"] == "model_input_prepared"][-1]
     task_dir, package = runner._resolve_task_file(source.public_path)
@@ -45,8 +45,27 @@ def branch_for(source, tmp_path, arm="A", cap="1"):
     )
     with patch.object(runner, "_resolve_task_file", lambda _: (task_dir, package)):
         return diagnostic.fork(
-            source, cut["sequence"], tmp_path / arm, arm, synthetic_cap_usd=Decimal(cap)
+            source, cut["sequence"], tmp_path / arm, arm, synthetic_cap_usd=Decimal(cap),
+            preserve_parent_configuration=preserve_parent_configuration,
         )
+
+
+@pytest.mark.parametrize("parent_policy", ["public-checks-v1", "reproduction-gated-v1"])
+@pytest.mark.parametrize("preserve_parent_configuration", [True, False])
+def test_fork_preserves_parent_verification_policy_only_when_requested(
+    source, tmp_path, monkeypatch, parent_policy, preserve_parent_configuration,
+):
+    parent = diagnostic.read_checkpoint_envelope(source).model_copy(
+        update={"verification_policy": parent_policy},
+    )
+    monkeypatch.setattr(diagnostic, "read_checkpoint_envelope", lambda _: parent)
+    branch = branch_for(
+        source, tmp_path, preserve_parent_configuration=preserve_parent_configuration,
+    )
+    expected = parent_policy if preserve_parent_configuration else "reproduction-gated-v1"
+    assert branch.request.verification_policy == expected
+    assert branch.envelope.verification_policy == expected
+    assert branch.journal.load_envelope().verification_policy == expected
 
 
 def test_receipt_scope_requires_bound_fork_and_preserves_ordinary_resume(source, tmp_path):
