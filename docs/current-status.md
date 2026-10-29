@@ -24,22 +24,28 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-Measure the complete current configuration on the historical 20-task development
-roster. The [dev20 plan](history/2026-10-29-repair-dev20-plan.md) prepares all
-current-dev20 indices 1-20, once each from original source, with the recent
-five-task settings frozen: gpt-5.4-2026-03-05/xhigh, public-checks-v1, thin,
-segmented-v1, completion-recovery-v1, input60K, output40K/correction25K,
-20 responses/40 actions/3 edits, and 2,400 seconds including 390 for evaluation.
-Proposed caps are USD4.50/task and USD90 total with no transfer. No live work is
-authorized yet. Earlier five-task outcomes will not be pooled into this score.
+The [current dev20 measurement](history/2026-10-29-repair-dev20-results.md) is CLOSED:
+**10/20 acceptance PASS, 9 FAIL, 1 unsubmitted/NOT_RUN**, USD11.7967235 within
+USD4.50/task and USD90 total. All 20 ran once from original source with
+gpt-5.4-2026-03-05/xhigh, public-checks-v1, thin, segmented-v1,
+completion-recovery-v1, input60K, output40K/correction25K, 20 responses/40 actions/
+3 edits, and 2,400 seconds including 390 for evaluation. All 223 provider calls
+settled; all 19 submitted candidates passed public checks and received complete
+original SWE-bench evaluation. Index 9 exhausted its three edits with a remaining
+public regression failure and did not submit. Runtime stayed frozen.
 
-The latest [full-roster PatchLoop run](history/2026-10-16-patchloop-mini-dev20-results.md)
+The preceding [full-roster PatchLoop run](history/2026-10-16-patchloop-mini-dev20-results.md)
 had 8 PASS, 10 FAIL and 2 NOT_RUN; original
 [mini-SWE-agent](history/2026-10-16-mini-swe-dev20-results.md) had 10 PASS,
-5 FAIL and 5 NOT_RUN. Models, budgets, policies and environments differ from the
-proposed current configuration. Per-task comparisons are descriptive, not causal
-architecture gains or held-out generalization. Report PASS/20 and retain all
-FAIL/ERROR/NOT_RUN outcomes, costs and completion states.
+5 FAIL and 5 NOT_RUN. New passes versus preceding PatchLoop are indices 11, 14
+and 18; index 9 lost its previous pass. Models, resources and policies differ;
+these are descriptive exposed-panel comparisons, not causal architecture gains
+or held-out generalization. Earlier five-task outcomes are not pooled.
+
+Keep the measured rules and budgets unchanged. Investigate public-PASS/acceptance-
+FAIL candidates separately from index 9's public-failure/completion-limit case
+before choosing an intervention. None exhausted its dollar cap. Retained private
+logs support operator measurement only; future solver changes need public evidence.
 
 Benchmark acceptance is the primary repair outcome; diagnostic completeness is
 separate. [public-checks-v1](history/2026-10-29-public-check-submission.md) uses
@@ -78,9 +84,8 @@ not justify a new general solver rule. The benchmark FAIL remains, and private
 acceptance expectations are not repair hints. Formal original obligations remain
 unverified without erasing public observations or acceptance PASS.
 
-Keep runtime rules and budgets unchanged during this measurement. Helper return
-types, incomplete capture, repeated-run reliability and held-out improvement
-remain unresolved. Unused previous funds authorize no further paid run.
+Helper return types, incomplete capture, repeated-run reliability and held-out
+improvement remain unresolved. Unused previous funds authorize no further paid run.
 
 ## Supporting evidence
 

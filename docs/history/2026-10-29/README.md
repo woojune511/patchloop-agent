@@ -24,3 +24,4 @@
 - [Five-task frozen-agent results: four accepted, one logging-contract failure](../2026-10-29-repair-five-results.md)
 - [Pydicom public logging comparison: import symptom repaired, default debug output changed](../2026-10-29-pydicom-public-logging.md)
 - [Historical dev20 roster: current-configuration measurement prepared, new live scope pending](../2026-10-29-repair-dev20-plan.md)
+- [Current dev20 results: ten accepted, nine failed, one unsubmitted; all twenty attempts settled](../2026-10-29-repair-dev20-results.md)
