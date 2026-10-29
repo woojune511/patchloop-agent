@@ -1,7 +1,7 @@
 # File transactions
 
 Source: `patchloop/dev/file_edits.py`, `file_transaction.py`; tests: `test_file_edits.py`,
-`test_file_transaction.py`, `test_file_edit_boundaries.py`.
+`test_file_transaction.py`, `test_file_edit_boundaries.py`, `test_test_restoration.py`.
 
 `edit_files` is a singleton alternative to `replace_text`, sharing its admission,
 completion forecast and accepted-edit quota. Supply either 1–16 distinct `edits`
@@ -18,6 +18,13 @@ later unrelated edits survive, but changed target files cause rejection. Origina
 tests cannot be deleted or weakened. New additive test modules require declared
 test roots; original-test isolated grading removes those modules temporarily.
 No arbitrary delete/rename or unrestricted shell is exposed.
+
+Both mutation tools use the shared test validator. Restoring an existing test file
+to its exact original HEAD bytes is permitted, including removing a run-added test
+while moving it into a new module in the same batch. This does not require undoing
+the source repair. The current source observation, path/scope, quota and transaction
+checks still apply. Equivalent AST or whitespace-only changes are not exact restoration;
+deleting an original test file remains forbidden.
 
 Atomic here means one logical action under the execution lock: ordinary write
 failure rolls back the whole batch; a crash may leave mixed before/after files.

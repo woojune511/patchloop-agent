@@ -47,15 +47,14 @@ Keep the advisory feedback and batched Git/source tracking; neither adds a gate.
 The earlier local validation speedup remains valid, but provider waits still
 accounted for 61-84% of task time and pvlib used 27 calls instead of nine.
 
-Next fix: reconcile two concrete test-edit boundaries exposed by pvlib. The public
-check adapter's whole-file fingerprint rejected an allowed test-function addition
-before pytest ran. Attempts to move that new function then hit an earlier additive
-validator before the existing exact-original-restoration exception, causing seven
-rejections. Public receipt reconstruction ruled out whitespace/line-ending drift.
-The agent eventually undid the full transaction and rebuilt with a new test file.
-Make restoration validation consistent and align the adapter with allowed test
-additions while preserving original tests and its declared expectation projection.
-Both issues are diagnosed but unfixed; another paid comparison is not a prerequisite.
+The [two test-validation conflicts](history/2026-10-30-test-validation-fixes.md)
+are fixed locally. Exact original-byte restoration now uses one shared rule for
+both mutation tools. pvlib's wrapper pins the projection target and local anchor,
+allowing admitted test additions while the shared policy preserves original tests.
+Replaying the previously rejected first candidate reached pytest: 99 PASS; original
+source with the identical added test gave 1 FAIL / 98 PASS. This used no model or
+private evaluation. Whether these fixes reduce model detours, calls or total time
+remains unmeasured; another paid ablation is not a prerequisite for development.
 
 No forecast OFF/ON repeat, cap4 diagnostic or 4-vs-12 comparison is a prerequisite
 for continuing with the selected 12-edit configuration. Isolate a condition only
@@ -81,12 +80,11 @@ and [usability](history/2026-10-29-runtime-usability-followup.md) changes also r
 new/multiple files and receipt undo, exact recovery, accurate action forecasts,
 character-paged reads and the configurable 12-edit default.
 
-The changed runtime's quick run passed 1,172 tests, including isolated mock
-evaluation, and skipped one unavailable symlink check. Its only two failures were
-stale current-surface hash expectations; both were updated and the focused rerun
-passed all 16 selected checks. Ruff passed. The final formatting-only source change
-has an identical AST to the measured implementation. Full-suite completion and
-causal quality/speed benefit remain unverified; the latest integrated run was slower.
+The current runtime's quick regression passed 1,208 tests, including isolated mock
+evaluation, and skipped one unavailable symlink check: 332.31 seconds with four
+file-grouped workers and no failures. Both validation fixes are included. Ruff
+passed. Full-suite completion, Linux validation and causal quality/speed benefit
+remain unverified; the latest integrated model run was slower.
 The historical dev20 measurement stays [closed](history/2026-10-29-repair-dev20-results.md):
 10 PASS, 9 FAIL, 1 unsubmitted/NOT_RUN; USD11.7967235. It is development context,
 not a causal baseline for the combined current configuration.

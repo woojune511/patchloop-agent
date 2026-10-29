@@ -94,15 +94,12 @@ def _check_test(gateway, change):
     if not (_is_test_path(change.path) or any(
             change.path.startswith(root + "/") for root in constraints.additive_test_roots)):
         return
-    # Undo may remove only a file whose recorded preimage was absent. Base tests
-    # are never deleted, and restoring their exact base bytes is not tampering.
-    from patchloop.git_execution import run_git
-
-    base = run_git(gateway.workspace, "show", f"HEAD:{change.path}", text=False,
-                   check=False, deadline=gateway.deadline)
-    if base.returncode == 0 and change.after == base.stdout:
-        return
     if change.after is None:
+        # Undo may remove only a file whose recorded preimage was absent.
+        from patchloop.git_execution import run_git
+
+        base = run_git(gateway.workspace, "show", f"HEAD:{change.path}", text=False,
+                       check=False, deadline=gateway.deadline)
         if base.returncode == 0:
             raise ContractError("undo cannot remove an original test file")
         return

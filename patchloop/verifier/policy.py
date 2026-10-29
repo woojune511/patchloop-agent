@@ -129,15 +129,19 @@ def validate_test_addition(
     *,
     deadline: ExecutionDeadline | None = None,
 ) -> None:
+    entry = run_git(workspace, "--literal-pathspecs", "ls-tree", "HEAD", "--", path,
+                    text=False, deadline=deadline).stdout
+    before = (run_git(workspace, "show", f"HEAD:{path}", text=False, deadline=deadline).stdout
+              if entry else b"")
+    # Restoring an existing file to its exact original bytes preserves every test.
+    # Keep this shared by replacement admission, file batches and final validation.
+    if entry and after == before:
+        return
     roots = constraints.additive_test_roots
     if not path.endswith(".py") or not any(path.startswith(root + "/") for root in roots):
         raise UnsupportedTestChange("test edits require a declared additive test root")
     if PurePosixPath(path).name == "conftest.py":
         raise UnsupportedTestChange("existing test fixtures cannot be changed")
-    entry = run_git(workspace, "--literal-pathspecs", "ls-tree", "HEAD", "--", path,
-                    text=False, deadline=deadline).stdout
-    before = (run_git(workspace, "show", f"HEAD:{path}", text=False, deadline=deadline).stdout
-              if entry else b"")
     if not added_tests(before, after, path, suite_additions=True, new_file=not bool(entry)):
         raise UnsupportedTestChange("test edit must add a test function or literal parameter cases")
 

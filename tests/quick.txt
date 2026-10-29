@@ -165,3 +165,5 @@ tests/test_selected_test_comparison.py::test_pre_state_reverses_undo_of_created_
 tests/test_repair_prediction.py::test_added_test_reuses_diagnosis_then_compares_same_test_before_source_edit
 tests/test_dev_check_review.py
 tests/test_dev_search_v16.py
+tests/test_test_restoration.py
+tests/test_public_regression_projection.py

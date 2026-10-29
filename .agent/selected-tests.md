@@ -81,6 +81,14 @@ change which addition is compared. The repair comparison runs added cases agains
 base and candidate source; original-test restoration for isolated evaluation still
 applies. Accepting an addition does not establish that its expectation is correct.
 
+For pvlib1154, the required public copy wrapper projects the registered GHI-zero
+expectation only inside the original `test_reindl` function. It pins that function's
+body/signature AST and exact local anchor, not the whole file hash, so admitted test
+additions remain in the copied file and execute. The shared mutation/final-diff policy
+preserves original tests, imports, fixtures and decorators; the wrapper does not
+replace that policy. pvlib's selectable pytest suite uses the same projection.
+Other tasks' ordinary copy wrappers are unchanged.
+
 ## Evidence and recovery
 
 Check `evidence_review` distinguishes explicit file/node selection from directory
