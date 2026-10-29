@@ -4,6 +4,7 @@ from pathlib import Path
 import yaml
 
 from diagnostics.swebench_lite_packages import build_package
+from patchloop.runtime import repository_root
 
 
 def test_public_selection_is_independent_and_private_original_bytes_are_preserved(tmp_path):
@@ -35,6 +36,9 @@ def test_public_selection_is_independent_and_private_original_bytes_are_preserve
     oracle = json.loads((target / "hidden/oracle.json").read_text())
     assert oracle["test_patch"] == row["test_patch"]
     assert oracle["test_command"] == ["pytest", "-rA", "private_case"]
+    assert (target / "hidden/run_oracle.py").read_bytes() == (
+        repository_root() / "diagnostics/swebench_lite_oracle.py"
+    ).read_bytes()
     assert (target / "reference.patch").read_bytes() == row["patch"].encode()
     assert package.public.task_id.endswith("1072")
     assert Path(package.root) == target.resolve()

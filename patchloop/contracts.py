@@ -13,6 +13,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from patchloop import probe_callers
+from patchloop.errors import ContractError
 from patchloop.util import safe_relative_path, sha256_json
 
 
@@ -134,6 +136,29 @@ class TaskConstraints(StrictModel):
         return values
 
 
+class PublicCallerRequirement(StrictModel):
+    """Task-owned caller capability selected from public issue/source evidence."""
+
+    requirement: str
+    source_root: str
+
+    @field_validator("requirement")
+    @classmethod
+    def exact_public_pin(cls, value: str) -> str:
+        try:
+            return probe_callers.requirements([value], project_name="")[0]
+        except ContractError as exc:
+            raise ValueError(str(exc)) from exc
+
+    @field_validator("source_root")
+    @classmethod
+    def explicit_source_root(cls, value: str) -> str:
+        try:
+            return probe_callers.source_root(value)
+        except ContractError as exc:
+            raise ValueError(str(exc)) from exc
+
+
 class PublicTask(StrictModel):
     schema_version: Literal["task-public-v1", "task-public-v2"] = "task-public-v1"
     task_id: str = Field(pattern=r"^[a-z0-9][a-z0-9-]+$")
@@ -157,9 +182,15 @@ class PublicTask(StrictModel):
         exclude_if=lambda value: not value,
     )
     tags: list[str] = Field(default_factory=list)
+    caller_requirements: list[PublicCallerRequirement] = Field(
+        default_factory=list, max_length=8, exclude_if=lambda value: not value,
+    )
 
     @model_validator(mode="after")
     def bind_probe_profiles_to_v2(self) -> PublicTask:
+        callers = [caller.requirement.split("==")[0] for caller in self.caller_requirements]
+        if len(callers) != len(set(callers)):
+            raise ValueError("task caller distributions must be unique")
         if self.schema_version in {"task-public-v1", "task-public-v2"}:
             check_ids = [check.id for check in self.visible_checks]
             if len(check_ids) != len(set(check_ids)):

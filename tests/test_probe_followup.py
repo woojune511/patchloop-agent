@@ -188,6 +188,8 @@ def test_general_probe_guidance_changes_no_argument_schema_or_other_tool(agent_p
     tool["description"] = before.replace(
         "After an edit, replay a relevant prior public example to test the repair's "
         "effect; for a new question, choose an input that could falsify an assumption. "
+        "Keep caller, input representation and setup comparable. A changed-input "
+        "failure is a separate diagnosis even when the error text matches. "
         "For helper probes, state the expected ",
         "Choose a public input variation that could falsify an implementation assumption, "
         "not just repeat a registered example. For helper probes, state the expected ",

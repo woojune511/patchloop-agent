@@ -29,12 +29,14 @@ def test_original_stage_changes_description_only(agent_policy, probe_policy, exp
 
 
 @pytest.mark.parametrize("agent_policy,diagnosis,expected", [
-    ("current", False, "3f466bc3576cebaa99b691af15c192d3d73bfa32b19a41b1d65dfb55fd0ef07d"),
-    ("thin", False, "05c10a05a34a2be49f76b76a34a9b990252d838ca65b11c21ed4e97c43ed1886"),
+    ("current", False, "e9810bc2a505c8565142f3b33f2697543e808c22193ee89ecd557aa4c5afe375"),
+    ("thin", False, "fc1769f437ca028548d9e44d8d4d7c96f8f48a791a832dad6dd99d192fc3d3eb"),
     ("current", True, "9f7ea75adea8115540ee793197c00039b03672a1c91d437f277951c5faa873e0"),
     ("thin", True, "9f7ea75adea8115540ee793197c00039b03672a1c91d437f277951c5faa873e0"),
 ])
 def test_other_probe_stages_match_current_contract(agent_policy, diagnosis, expected):
+    # Current general descriptions include comparable-input guidance; diagnostic
+    # stages and all argument shapes retain their existing contract.
     schemas = dev_tool_schemas(
         finish_enabled=False, allowed_tools={"run_probe", "stop_task"},
         agent_policy=agent_policy, path_diagnosis_pending=diagnosis,

@@ -49,12 +49,15 @@ symptom improvement (2), and a bad added test exhausting mutation slots (1).
 No grade changes. Index 9's final failure is its newly added exception assertion;
 it is not proof that the initial production edit failed.
 
-Keep rules and budgets unchanged. First address preparation's missing task-specific
-caller dependencies/source scopes and operator logs losing failure assertion blocks.
-The earlier pylint capability was absent from dev20 row 13 despite existing runtime
-support. Public evidence also supports testing input-preserving repair hypotheses
-and grounding expected values independently of the patch. These are proposed
-interventions; none is implemented or shown to improve solves by this analysis.
+The [local follow-up](history/2026-10-29-dev20-followup-implementation.md) implements
+task-owned caller declarations inherited by preparation and ordinary-run source
+scopes, plus pre-dispatch readiness checks. It adds bounded operator failure-block
+capture to the current twenty evaluation adapters, preserving grading and private
+separation. Tool guidance now distinguishes input drift, independently grounded
+expectations, literal search and function-local test imports. Mutation accounting,
+total caps and submission policy remain unchanged. Local validation cannot establish
+model uptake or solve gains; no new live experiment or candidate reevaluation ran.
+New task/runtime identities require fresh preparation and execution authorization.
 Private details remain operator-only. All 125 responses in the ten analyzed rows
 completed without output exhaustion; a blanket budget/context increase is unsupported.
 

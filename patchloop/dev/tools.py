@@ -301,7 +301,13 @@ def dev_tool_schemas(
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "query": {"type": "string", "minLength": 1},
+                    "query": {
+                        "type": "string", "minLength": 1,
+                        "description": (
+                            "Literal text, not regex or boolean syntax. "
+                            "Use separate searches for alternatives; OR is literal."
+                        ),
+                    },
                     "path_glob": {
                         "type": "string", "default": "**/*",
                         "description": (
@@ -373,7 +379,13 @@ def dev_tool_schemas(
                 "hypothesis, and exact current source anchor are part of this mutation. "
                 "The gateway binds the anchor to the contiguous union of current observed "
                 "public source. An accepted mutation's bounded post-image is current evidence "
-                "for a same-file repair; there is no separate planning tool."
+                "for a same-file repair; there is no separate planning tool. "
+                "Ground expected_behavior in the public issue or existing API/caller/test "
+                "conventions; label a new assumption rather than treating your own test as "
+                "independent confirmation. For additive-only tests, preserve existing imports, "
+                "fixtures and tests; put new imports inside the new test function. "
+                "Consider checking its setup and expected result with an offered probe before "
+                "insertion. Every accepted edit, including test fixes, uses a mutation slot."
             ),
             "strict": True,
             "parameters": _replacement_parameters(),
@@ -498,6 +510,8 @@ def dev_tool_schemas(
                 "its dependencies are available. "
                 "After an edit, replay a relevant prior public example to test the repair's "
                 "effect; for a new question, choose an input that could falsify an assumption. "
+                "Keep caller, input representation and setup comparable. A changed-input "
+                "failure is a separate diagnosis even when the error text matches. "
                 "For helper probes, state the expected "
                 "observation in the question and print or assert it in the experiment. "
                 "Execution completed means "
@@ -3966,6 +3980,7 @@ class DevToolGateway:
             except UnsupportedTestChange as exc:
                 raise ContractError(
                     "Test additions must preserve existing tests, imports, fixtures and helpers. "
+                    "Put new imports inside the new test function, leaving shared imports intact. "
                     "Add a new test_ function/method, test class, or literal parameter cases "
                     "in an existing file. New pytest.param cases allow literal arguments and "
                     "an optional string id, but no marks: "

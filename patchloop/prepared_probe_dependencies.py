@@ -308,6 +308,7 @@ def load_dependencies(path: Path, public: PublicTask,
         public.repository.url, public.repository.base_commit,
     ):
         raise ContractError("prepared probe dependencies do not match the task source")
+    probe_callers.verify_task_snapshot(public, descriptor)
     return PreparedDependencies(path.resolve(), identity, public.repository.url,
                                 public.repository.base_commit,
                                 tuple(probe_project_files.records(descriptor)),
@@ -385,6 +386,7 @@ def prepare_dependencies(*, public: PublicTask, prepared_source: Path, output: P
     from patchloop.probe_runtime import runtime
     from patchloop.runtime import repository_root
 
+    caller_requirements = probe_callers.task_requirements(public, caller_requirements)
     python, image = runtime(runtime_profile)
     if generated_wheel_receipt is not None and runtime_profile != "python312-v1":
         raise ContractError("generated wheel receipt targets the default probe runtime only")
@@ -549,6 +551,7 @@ def prepare_dependencies(*, public: PublicTask, prepared_source: Path, output: P
             **({"installed_byte_limit": installed_byte_limit}
                if installed_byte_limit != MAX_BYTES else {}),
         }
+        probe_callers.verify_task_snapshot(public, descriptor)
         manifest = output / MANIFEST
         body = canonical_json(descriptor) + "\n"
         journal.append("probe_dependencies_prepared", {

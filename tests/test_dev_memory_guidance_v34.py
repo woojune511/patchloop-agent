@@ -87,7 +87,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
 @pytest.mark.parametrize(("names", "expected"), [
     pytest.param(
         ("read_file", "run_check", "run_probe", "search_files", "stop_task"),
-        "5c1b1d845eb1a0669f948cea63d52ce4324debb79568882b9544b2e814df4eaa"
+        "5a393be3c1e36503d06eb03d9b113838719c9c4fd99b6f8971a5dac939295661"
         if FROZEN_ARM is None else
         "544c19f4d8e63f8a8810efe1dd4cd0adf3dee51cdb0145a4509de554027739c2",
         id="names0-99567faf1ea920a9157e5ea6618c5d43e7d56e441820be941403a025d9b2abe9"
@@ -95,7 +95,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     ),
     pytest.param(
         ("finish_task", "read_file", "replace_text", "run_probe", "search_files", "stop_task"),
-        "d83217b245f91345e7b141d479fe96c3177481dc040f93f1f4f253295e293acd"
+        "cc11e5a1db2dee873ae9bc975129318d9a42987e656b02aaf6f9a683ab601c7e"
         if FROZEN_ARM is None else
         "b817201c9d1aa8432575b0c1b55015dc01bc08a2b002e3e2cc09ab13bfa229c6",
         id="names1-de57dc4e83f8b26994c5df5f659cc208bbd3b348233d0ad3640493ffd5b90bd3"
@@ -103,7 +103,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     ),
     pytest.param(
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task"),
-        "2f02a3fa9c3ba103ddf7ae00fcab3d7be1c90cb7461f30d5df17887602f3d54c"
+        "7496677e0938ba71678f99546788ad3c5b3bed2d802f9b87a3322145cfebc08e"
         if FROZEN_ARM is None else
         "310f8ec3dd129c93fb10c2a0589decf38eb09ce60e395ef906ac814e399e5139",
         id="names2-923a71312af5fa8d677ce72762b2f045a47ff2ebc4e084caaf1f57a2c11e7032"
@@ -112,7 +112,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     pytest.param(
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task",
          "finish_task"),
-        "06b7ad90c3f1cc58c9d69b78d053bfbe7e0b4c6cc54a145037063b4b29ac9ca2"
+        "43d8d3067f96f2109c7594628eac1ef8b55027ea6ddfdb932dd108fb87bd04d1"
         if FROZEN_ARM is None else
         "6302bc9d248be03d6e1430f0102a0e5c00ecb7883c25d453945f979f21fd3af7",
         id="names3-53d8c9ffaa20544b633c883b1e40010113b680722f23caebeb0ef991f1738caa"
@@ -120,7 +120,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     ),
 ])
 def test_descriptions_outside_memory_and_schema_order_are_unchanged(names, expected):
-    # Pin current small-core/replay guidance; preserve IDs and historical removal arms.
+    # Pin current grounded check/test guidance; preserve IDs and historical removal arms.
     # OFF still has the prior four digests; argument shapes remain independently pinned.
     tools = dev_tool_schemas(finish_enabled="finish_task" in names, allowed_tools=names)
     tools = _legacy_compression_surface(tools)

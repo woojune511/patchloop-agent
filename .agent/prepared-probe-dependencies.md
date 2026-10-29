@@ -106,8 +106,18 @@ model uptake. See the [local validation](../docs/history/2026-10-18-public-calle
 
 ### Caller source in ordinary runs
 
+Public tasks may declare `caller_requirements` entries with an exact `requirement`
+(for example `pylint==2.12.2`) and explicit `source_root` (`pylint`). Select these
+from public issue/source evidence, never evaluator expectations. Preparation merges
+the pins into caller resolution; ordinary runs inherit the source registrations.
+Missing caller pins, indexed Python sources or conflicting overrides fail before
+provider dispatch. No-requirement tasks retain their prior serialized identity.
+The task hash binds declarations; `execution_prepared.registered_dependency_sources`
+records the resolved catalog actually offered in read/search schemas. Declaration
+does not install a dependency during execution or prove import/behavior correctness.
+
 Add repeatable `--caller-source distribution=directory` to the normal `patchloop dev`
-request to register up to eight caller source directories, for example
+request for additional caller source directories, up to eight combined, for example
 `--caller-source pylint=pylint`. This requires enabled probes and the prepared
 dependency descriptor containing that caller's exact pin. Directory names are
 explicit site-packages-relative paths; distribution names do not imply import roots.

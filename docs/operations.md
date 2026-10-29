@@ -200,7 +200,7 @@ for Python 3.12/Linux. Preparation can download public wheels; execution uses on
 verified local copies without network/install. Add `--enable-probes
 --prepared-probe-dependencies <descriptor>` to the approved request. See the
 [dependency contract](../.agent/prepared-probe-dependencies.md).
-Caller reads: `--caller-source distribution=directory`.
+Task callers are inherited; CLI adds source scopes.
 
 For other context, planning, cost or repair policies, read the relevant internal
 contract and CLI compatibility checks first. Opt-in `--completion-cost-policy

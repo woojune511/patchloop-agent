@@ -136,6 +136,9 @@ tests/test_pre_target_obligations.py
 tests/test_processing_observer.py
 tests/test_probe_exit_contract.py
 tests/test_caller_source_registration.py
+tests/test_task_caller_readiness.py
+tests/test_swebench_lite_oracle.py
+tests/test_swebench_lite_packages.py
 tests/test_completion_routes.py
 tests/test_requested_revision_policy.py::test_probe_before_last_edit_window_is_closed_but_edit_and_finish_stay_available
 tests/test_requested_revision_policy.py::test_no_request_stale_diff_and_zero_edits_preserve_ordinary_policy

@@ -64,6 +64,11 @@ keywords, unpacking, aliases or computed values. Existing cases, including their
 marks and IDs, must remain structurally unchanged and in their original order.
 Existing test bodies, imports, fixtures and decorators stay protected. New imports
 needed by a new test belong inside that test.
+The tool description and rejection feedback expose this option. Every successful
+test insertion or correction still consumes one accepted mutation; completed-action
+replay consumes none. Consider trying a new test's setup and independently grounded
+expectation in an available probe before spending the last edit. Existing required
+FAIL remains blocking; there is no test-edit exemption or new mandatory probe.
 
 Pre-existing duplicate definitions may remain unchanged in their original order.
 An unrelated, uniquely named test or method can still be added. Changing either

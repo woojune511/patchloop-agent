@@ -5588,6 +5588,14 @@ def _run_one_active(
     probe_sandbox = None
     caller_sources = None
     try:
+        dependencies = (
+            load_dependencies(request.prepared_probe_dependencies, package.public,
+                              envelope.probe_dependencies)
+            if request.enable_probes and request.prepared_probe_dependencies is not None else None
+        )
+        caller_sources = caller_sources_for_run(
+            dependencies, request.caller_source_roots, package.public,
+        )
         if isinstance(request, RepairRunRequest):
             sandbox = prepared_sandbox(request, deadline=deadline)
             if request.provider == "openai" and remaining_active_seconds() > 0:
@@ -5602,12 +5610,6 @@ def _run_one_active(
         else:
             sandbox = LocalSandbox()
         if request.enable_probes:
-            dependencies = (
-                load_dependencies(request.prepared_probe_dependencies, package.public,
-                                  envelope.probe_dependencies)
-                if request.prepared_probe_dependencies is not None else None
-            )
-            caller_sources = caller_sources_for_run(dependencies, request.caller_source_roots)
             probe_sandbox = (DockerProbeSandbox(dependencies=dependencies)
                              if dependencies is not None else DockerProbeSandbox())
             if remaining_active_seconds() > 0:
@@ -5642,7 +5644,11 @@ def _run_one_active(
         )
         return _OneRunResult(_public_result(run_id, terminal), False)
 
-    journal.append("execution_prepared", {"active_elapsed_ms": active_elapsed_ms()})
+    journal.append("execution_prepared", {
+        "active_elapsed_ms": active_elapsed_ms(),
+        **({"registered_dependency_sources": caller_sources.catalog()}
+           if caller_sources is not None else {}),
+    })
     gateway = DevToolGateway(
         workspace=workspace,
         public_task=package.public,

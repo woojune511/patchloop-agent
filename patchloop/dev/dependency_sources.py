@@ -9,6 +9,7 @@ from pathlib import Path
 from packaging.utils import canonicalize_name
 
 from patchloop import probe_callers
+from patchloop.contracts import PublicTask
 from patchloop.dev.source_glob import matches_source_glob
 from patchloop.errors import ContractError
 from patchloop.prepared_probe_dependencies import PreparedDependencies, read_descriptor
@@ -32,10 +33,7 @@ def normalize_roots(roots: dict[str, str]) -> dict[str, str]:
         package = canonicalize_name(package)
         if package in normalized:
             raise ContractError("caller source package must be unique")
-        root = _relative(root, field="caller source root")
-        if len(root) > 256 or any(char in root for char in "*?[]"):
-            raise ContractError("caller source root must be a bounded literal directory")
-        normalized[package] = root
+        normalized[package] = probe_callers.source_root(root)
     return dict(sorted(normalized.items()))
 
 
@@ -52,13 +50,21 @@ def parse_cli_roots(values: list[str] | None) -> dict[str, str]:
 
 def for_run(
     dependencies: PreparedDependencies | None, roots: dict[str, str],
+    public: PublicTask | None = None,
 ) -> DependencySources | None:
-    """Bind an ordinary run's explicit read scopes to its prepared caller snapshot."""
+    """Bind task/request read scopes to the prepared caller snapshot before dispatch."""
     roots = normalize_roots(roots)
+    if public is not None:
+        roots = normalize_roots(probe_callers.task_source_roots(public, roots))
     if not roots:
         return None
     if dependencies is None:
-        raise ContractError("caller source registration requires prepared probe dependencies")
+        raise ContractError(
+            "caller source registration requires prepared probe dependencies and enabled probes"
+        )
+    if public is not None:
+        descriptor, _ = read_descriptor(dependencies.path)
+        probe_callers.verify_task_snapshot(public, descriptor)
     return DependencySources(dependencies, roots)
 
 

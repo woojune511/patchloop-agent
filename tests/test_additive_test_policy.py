@@ -109,5 +109,20 @@ def test_gateway_rejects_rewrite_before_mutation_and_accepts_new_test(gateway_fa
     with pytest.raises(ContractError, match="preserve existing"):
         gateway._validate_replacement_intent(args)
     assert path.read_bytes() == BASE
-    args["new_text"] = ADDED.decode()
-    assert gateway._validate_replacement_intent(args).after_bytes == ADDED
+    args["new_text"] = "import math\n" + ADDED.decode()
+    rejected = gateway.execute(RequestedTool(
+        name="replace_text", action_id="shared-import", arguments=dict(args),
+    ))
+    assert rejected.status == "failed"
+    assert "imports inside the new test function" in rejected.message
+    assert path.read_bytes() == BASE and gateway.accepted_mutations == 0
+
+    candidate = BASE + b"\ndef test_added():\n    import math\n    assert math.sqrt(4) == 2\n"
+    args["new_text"] = candidate.decode()
+    request = RequestedTool(name="replace_text", action_id="local-import", arguments=dict(args))
+    accepted = gateway.execute(request)
+    assert accepted.status == "succeeded", accepted.message
+    assert path.read_bytes() == candidate and gateway.accepted_mutations == 1
+    replayed = gateway.execute(request)
+    assert replayed.replayed and replayed.output == accepted.output
+    assert path.read_bytes() == candidate and gateway.accepted_mutations == 1

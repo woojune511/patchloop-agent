@@ -29,6 +29,9 @@ issue:
     \ __pkginfo__; print(__pkginfo__.version)\"` output\r\n2.9.1\r\n\r\n`python 3.9.1`\r\
     \n`pylint 2.12.2 `\r\n\r\n\r\n\r\nThis issue has been observed with astroid `2.9.1`\
     \ and `2.9.2`\n"
+caller_requirements:
+- requirement: pylint==2.12.2
+  source_root: pylint
 constraints:
   allowed_paths:
   - astroid/**
