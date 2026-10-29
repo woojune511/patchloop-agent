@@ -65,7 +65,7 @@ prefix and first normalized request hashes are bound in the manifest. A docs-onl
 commit also changes HEAD and requires fresh preparation; no guard is relaxed.
 
 - External launcher: `C:/pt/forecast_live_comparison.py`.
-- Final preparation: `C:/pt/forecast-live-preparation-20261030-v1/manifest.json`.
+- Final preparation: `C:/pt/forecast-live-preparation-20261030-v2/manifest.json`.
 - Fresh result root: `C:/pt/forecast-live-20261030-v1`.
 - The final manifest is generated after this plan's commit. Its hash is supplied
   in the approval and collector command, avoiding a document/hash dependency cycle.
@@ -101,5 +101,11 @@ Stop all remaining rows on count, transport, usage, billing, continuation, targe
 execution or cleanup uncertainty, failed preflight, collector exception or process
 interruption. Preserve completed effects and unknown billing; do not retry, resume,
 extend resources or substitute a row automatically. Fresh output roots are single-use.
+
+Pre-execution review found that the reused collector can return a settled
+`PROVIDER_CONTINUATION_ERROR` with `stop_remaining=false`. The external launcher
+explicitly stops the pair on this terminal too. This enforces the declared
+comparison boundary without changing the frozen agent runtime. Earlier prepared
+manifests are superseded, preserved and not authorized for collection.
 
 The experiment can begin after the user confirms this exact new allocation.
