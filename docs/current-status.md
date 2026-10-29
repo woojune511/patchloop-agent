@@ -1,6 +1,6 @@
 # Current status
 
-Updated: 2026-10-29. Runtime source owns behavior. Historical reports are evidence,
+Updated: 2026-10-30. Runtime source owns behavior. Historical reports are evidence,
 not an active queue.
 
 ## Product and working baseline
@@ -23,6 +23,12 @@ See [guide](../.agent/guide.md), [operations](operations.md), [product](product.
 and [evidence boundaries](evidence.md).
 
 ## Active decision
+
+The [forecast-only live plan](history/2026-10-30-forecast-only-comparison-plan.md)
+fixes Astroid checkpoint OFF/ON, GPT-5.4/xhigh, repository .env and one branch per
+condition. Proposed new allowance: USD3.3184995 each, USD6.636999 total. Exact paid
+allocation confirmation is pending; no paid call has been made. Runtime stays
+frozen while the final manifest is prepared after the plan commit.
 
 The [public alternative and readiness study](history/2026-10-29-public-alternative-and-budget-readiness.md)
 found a one-line relative-search-root normalization that repairs the actual public
