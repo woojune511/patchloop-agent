@@ -82,7 +82,10 @@ Next is the [checkpoint replay-feedback comparison preparation](history/2026-10-
 same post-edit/public-check candidate, A optional replay versus B receiving a sealed
 replay of its own helper. Charge B's action and elapsed time; exclude operator
 diagnosis and private evidence. Restoration now preserves the parent submission
-policy. This is local preparation, with paid execution and repair gain unverified.
+policy. Preparation is READY: A preserves the original request; B's raw output and
+canonical observation reach its actual next request. Both offline dispatch guards
+passed. New funding of USD3.397541/arm, USD6.795082 total awaits approval; actual
+provider calls remain zero and repair gain is unverified.
 
 Benchmark acceptance is the primary repair outcome; diagnostic completeness is
 separate. [public-checks-v1](history/2026-10-29-public-check-submission.md) uses

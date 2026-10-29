@@ -1,6 +1,6 @@
 # Astroid post-edit helper feedback comparison preparation
 
-Status: local preparation; paid A/B execution is not authorized by this record.
+Status: READY local preparation; paid A/B execution awaits its exact new allocation.
 Official=false, claim-ineligible. Material is the exposed dev-train current-dev20/13
 task, public source and an ordinary saved agent checkpoint.
 
@@ -71,7 +71,12 @@ test before adoption. Both failing would leave raw-evidence sufficiency and repa
 reasoning unresolved. Stop all rows on count, transport, billing, execution or
 cleanup uncertainty; zero SDK retries and no automatic resume.
 
-Validation receipts and sealed execution command are added after preparation.
+The diagnostic host handoff also keeps its host action out of native provider
+history. Only for the inherited fresh completion segment, it validates the actual
+old model-call results and ignores the bound host batch in transient segment-cursor
+bookkeeping. Current state, durable events, counters and raw helper output remain
+unchanged. After a new model decision, ordinary continuation behavior resumes.
+This fixes a local preparation failure without fabricating a model tool call.
 
 The first local preparation (`C:/pt/astroid-replay-feedback-plan-v1`) captured the
 helper once in 11,198 ms and passed A's original-input and dispatch checks. B's
@@ -81,3 +86,35 @@ the canonical observation; compact context also omits redundant replay metadata.
 The audit now checks the canonical observation plus exact stdout/stderr and
 execution identities. The corrected preparation reuses the sealed capture rather
 than executing the helper again. No provider call or private evaluation occurred.
+
+## Sealed preparation evidence
+
+- Preparation: `C:/pt/astroid-replay-feedback-plan-v2/manifest.json`.
+- Manifest: `sha256:bc9b091f9952b86f7fa5a0cbda45d85257c90848b04a8e103684624faa8d06d2`.
+- Exact command: `& 'C:/pt/astroid-replay-feedback-plan-v2/run.ps1'`.
+- Unused result allocation: `C:/pt/astroid-replay-feedback-run-v2`.
+- Credential path: `C:/Users/geonj/Documents/PatchLoop/.env`.
+- Implementation commits: `c29fdb84`, `9ce5c991`; ordinary runtime unchanged at
+  `sha256:c9fd20d950163c453aea27e0d050fcc19f40b92a76c4338ffffd900ffd8c4169`.
+- A's normalized first request exactly matches the parent's prepared request;
+  only elapsed-time fields and derived segment identity are normalized.
+- B's next request retains exact action/input/current-diff identities,
+  stdout/stderr, question, execution-completeness fields and canonical observation.
+  It has six responses, 14 actions, two edits and about 1,648 solver seconds left.
+  A has six responses, 15 actions, two edits and about 1,659 solver seconds left.
+  Both retain the 390-second isolated-evaluation reserve.
+- Both fresh funded-path offline rehearsals passed their first-input hash and
+  count-to-dispatch equality guards. Counts/responses were synthetic, not OpenAI
+  usage or evidence of live token fit.
+- Focused tests: restoration 21, replay capture/handoff 5, input audit 17 PASS;
+  each focused selection remained below two minutes. Ruff, whitespace and quick
+  suite PASS; quick includes the mock smoke through isolated evaluation.
+- Task/runtime, existing images and dependencies passed read-only preflight.
+  The sealed command/manifest check passed and the result directory does not exist.
+  Total new actual provider calls/cost: zero. One actual public helper execution
+  was captured in v1 and reused in v2; no candidate edits or private evaluations.
+
+Prepared outcome only: feedback delivery is locally established. Model adoption,
+repair correctness, public checks after further edits and acceptance remain NOT_RUN.
+Human approval must specify this command and the new USD6.795082 total allocation
+before the one A and one B paid continuation.
