@@ -5,6 +5,7 @@ from __future__ import annotations
 import copy
 from typing import TYPE_CHECKING, Any
 
+from patchloop.dev.mutation_tools import MUTATION_TOOLS
 from patchloop.util import sha256_json
 
 if TYPE_CHECKING:
@@ -187,8 +188,8 @@ def project(
             continue
         result = event["payload"]["result"]
         tool = result["tool"]
-        if tool in {"replace_text", "run_check", "run_tests", "run_probe"}:
-            reason = ("mutation_result" if tool == "replace_text" else
+        if tool in {"replace_text", "edit_files", "run_check", "run_tests", "run_probe"}:
+            reason = ("mutation_result" if tool in MUTATION_TOOLS else
                       "check_result" if tool == "run_check" else
                       "test_result" if tool == "run_tests" else "probe_result")
             if reason not in reasons:

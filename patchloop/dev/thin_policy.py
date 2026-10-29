@@ -11,7 +11,7 @@ registered tools: investigate the relevant source, make a correct scoped repair,
 verify its behavior, and submit it. Each response requests either 1–4 supplied
 read_file/search_files calls or exactly one supplied action. Do not mix these
 shapes. Use only tools offered on the current turn.
-replace_text, stop_task and observe_original omit decision/plan/memory annotations.
+replace_text, edit_files, stop_task and observe_original omit decision/plan/memory annotations.
 At needs_path_diagnosis use its small schema without any plan/memory annotation;
 Choose offered caller/test reads or searches, or run_probe with focus and any offered
 call_id when ready to observe. General note instructions pause for that stage.

@@ -12,6 +12,7 @@ from typing import Any
 
 from patchloop.dev.check_review import link_check_evidence
 from patchloop.dev.evidence_focus import project_interpretations
+from patchloop.dev.mutation_tools import MUTATION_TOOLS
 from patchloop.dev.native_sources import public_exchanges
 from patchloop.dev.path_policy import mutation_path_allowed
 
@@ -253,7 +254,7 @@ def compact_model_state(
     failed = view.get("last_failed_mutation")
     if isinstance(failed, dict):
         result = results.get(failed.get("action_id"), {})
-        if result.get("tool") == "replace_text" and result.get("status") == "failed":
+        if result.get("tool") in MUTATION_TOOLS and result.get("status") == "failed":
             view["last_failed_mutation"] = {
                 **_select(failed, (
                     "action_id", "baseline_diff_hash", "error_code", "error_location",
@@ -266,7 +267,7 @@ def compact_model_state(
     successful = view.get("last_successful_mutation")
     if isinstance(successful, dict) and "diff_hash" in successful:
         result = next((r for r in reversed(list(results.values()))
-                       if r.get("tool") == "replace_text" and r.get("status") == "succeeded"
+                       if r.get("tool") in MUTATION_TOOLS and r.get("status") == "succeeded"
                        and r["output"].get("worktree_diff_hash") == successful["diff_hash"]), None)
         if result is not None:
             view["last_successful_mutation"] = {

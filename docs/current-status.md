@@ -24,23 +24,34 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-The [runtime usability follow-up](history/2026-10-29-runtime-usability-followup.md)
-normalizes fresh versus legacy contract tests, explains action-specific budget
-consequences, and gives new dev/repair requests a 12-edit default. Exact all-match
-replacement handles repeated changes in one observed file; fresh read ranges use
-character pagination without a separate 400-line cap. Explicit historical run limits
-are unchanged. These are local engineering changes, not demonstrated repair gains.
+The [file lifecycle follow-up](history/2026-10-29-file-lifecycle-followup.md)
+adds `edit_files`: exact observed replacements across allowed files, new regular
+UTF-8 files, and receipt-based undo. A batch or undo spends one accepted edit;
+full-diff scope, test preservation, check currency and action identity still apply.
+Crash recovery recognizes only saved before/after images. Unconfirmed rollback
+stops remaining repetitions. New source/test files travel through submission and
+separate evaluation; original-test grading temporarily excludes agent-added tests.
 
-Phase projection precedes native-result deduplication instead of replacing its
-output. Journal reads reuse only byte-identical validated prefixes, retaining full
-byte checks, detached returned objects, fsync and uncertainty boundaries. The local
-unchanged-journal benchmark improved; end-to-end speed remains unmeasured.
+The [prior usability change](history/2026-10-29-runtime-usability-followup.md)
+normalizes fresh/legacy contracts, explains action-specific budget consequences,
+sets a configurable 12-edit default and paginates reads by characters. Explicit
+historical limits remain unchanged. These are locally tested capabilities, not
+measured repair gains. See the follow-up for the current validation scope.
+The frozen quick suite, including isolated mock evaluation, passed 1,094 tests;
+Ruff passed. A completed full-suite result and live behavior remain unverified.
 
-The quick manifest plus isolated-evaluator mock passed 1,022 tests. Current contract
-and audit fixes have focused local coverage; the full suite is not verified green.
-The old boundary-panel B driver loses its planning treatment in compact phase prompts;
-its failing delivery assertion is retained as an incompatibility detector. See the
-follow-up for baseline reproduction, executed checks and remaining limitations.
+The obsolete boundary-panel paid execution path is retired; its all-turn delivery
+check and shared utilities remain. This removes an incompatible diagnostic driver
+without silently weakening its treatment assertion. Journal prefix reuse remains
+locally measured; total runtime improvement has not been established.
+
+The [public finish-choice audit](history/2026-10-29-finish-choice-local-audit.md)
+separates three obstructions: A received the failure and could still edit but
+submitted; B spent its last edit/check/finish response route on a probe; dev20
+row 9 actually exhausted its three edits. Four edits already reopen that row's
+minimum route. More edits cannot fix B's response shortage, and no record shows
+that 12 is optimal or that the forecast changes model choices. No new global
+verification gate or prompt is adopted from these few decisions.
 
 The [last dev20 measurement](history/2026-10-29-repair-dev20-results.md) stays CLOSED:
 10 PASS, 9 FAIL, 1 unsubmitted/NOT_RUN; USD11.7967235. Its 20 responses/40 actions/
@@ -63,11 +74,12 @@ independent evaluation and stop-on-uncertainty. public-checks-v1 remains the mea
 panel policy; reproduction-gated-v1 remains the compatible request default. No new
 mandatory diagnostic gate, paid run or global verification-policy switch is adopted.
 
-Next questions: effect of larger edit allowance on quota-limited tasks; new-file,
-atomic multi-file and undo lifecycle; why observed failure does not lead to another
-repair; which diagnostic layers can be removed; redundant model turns and stage
-latency. See the follow-up's ordered work list and validation boundaries. Every
-live comparison needs new exact task/model/credential/repeat/cap authorization.
+Next questions: establish a concrete public-source repair alternative at A's
+failure-before-finish boundary; test forecast delivery alone on a response-limited
+choice; compare 4 versus 12 only on tasks that bind on edit quota; measure batched
+independent literal searches without treating all zero-coverage searches as waste.
+No paid comparison is authorized. Each needs exact current task/model/credential/
+repeat/cap scope and a fixed comparison design.
 
 ## Supporting evidence
 

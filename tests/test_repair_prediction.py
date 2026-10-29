@@ -239,7 +239,10 @@ def test_prediction_replay_recovers_without_duplicate_and_keeps_original_result(
     assert gateway.execute(call).replayed and backend.calls == 4
 
 
-def test_added_test_reuses_diagnosis_then_compares_same_test_before_source_edit(gateway_factory):
+@pytest.mark.parametrize("new_module", [False, True])
+def test_added_test_reuses_diagnosis_then_compares_same_test_before_source_edit(
+    gateway_factory, new_module,
+):
     def configured():
         gateway, journal, workspace = gateway_factory()
         gateway.public_task.constraints.allowed_paths = ["**"]
@@ -255,10 +258,12 @@ def test_added_test_reuses_diagnosis_then_compares_same_test_before_source_edit(
 
     gateway, journal, workspace, _ = setup(configured)
     assert gateway.execute(diagnosis(gateway)).status == "succeeded"
-    path = "tests/test_csvlite.py"
-    assert gateway.execute(RequestedTool(name="read_file", action_id="read-tests", arguments={
-        "path": path, "start_line": 1, "end_line": 200})).status == "succeeded"
-    original = (workspace / path).read_text()
+    path = "tests/test_added.py" if new_module else "tests/test_csvlite.py"
+    original = ""
+    if not new_module:
+        assert gateway.execute(RequestedTool(name="read_file", action_id="read-tests", arguments={
+            "path": path, "start_line": 1, "end_line": 200})).status == "succeeded"
+        original = (workspace / path).read_text()
     added = original + ("\n\ndef test_control_revision():\n"
                         "    from mini_data_utils.csvlite import parse_rows\n"
                         "    assert parse_rows('h,v\\na,b\\n') == [['h', 'v'], ['a', 'b']]\n")
@@ -268,6 +273,14 @@ def test_added_test_reuses_diagnosis_then_compares_same_test_before_source_edit(
         "expected_behavior": "Compare the same assertion on both source versions.",
         "repair_prediction": {"kind": "test", "suite_id": "public-tests",
                               "targets": [path + "::test_control_revision"]}})
+    if new_module:
+        call = RequestedTool(name="edit_files", action_id="add-test", arguments={
+            "edits": [{"path": path, "old_text": None,
+                       "new_text": '"""New public test module."""\nimport math\n' + added,
+                       "occurrence": 1}], "undo_action_id": None,
+            **{key: call.arguments[key] for key in (
+                "hypothesis", "expected_behavior", "repair_prediction")},
+        })
     mislabeled = call.model_copy(deep=True, update={"action_id": "test-as-source"})
     mislabeled.arguments["repair_prediction"] = {
         "kind": "source", "target": -1, "event": "original_failure_absent"}

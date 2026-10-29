@@ -94,7 +94,7 @@ def test_last_edit_does_not_reserve_an_impossible_extra_revision():
 def test_optional_inspection_cannot_starve_the_current_full_repair():
     gateway = Gateway()
     selected = choose(gateway, money="0.60")
-    assert selected.allowed_tools == {"replace_text", "stop_task"}
+    assert selected.allowed_tools == {"replace_text", "edit_files", "stop_task"}
     details = selected.completion_cost
     ledger = cost.DevCostLedger(Decimal("0.60"), cost.pricing_for_model(
         "gpt-5.4-mini-2026-03-17"))

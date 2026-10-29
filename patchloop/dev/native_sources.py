@@ -117,7 +117,7 @@ class _SourceIndex:
             return
         if (
             not isinstance(result, dict) or result.get("status") != "succeeded"
-            or result.get("tool") not in {"read_file", "search_files", "replace_text"}
+            or result.get("tool") not in {"read_file", "search_files", "replace_text", "edit_files"}
             or result.get("action_id") != item.get("call_id")
             or not isinstance(result.get("output"), dict)
         ):

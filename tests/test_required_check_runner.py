@@ -212,7 +212,7 @@ def test_required_check_cost_and_time_exact_fit_preserve_repair_and_correction(r
         gateway.registered_checks[1].timeout_seconds += 10
         assert (policy().completion_cost["future_time_reserve_seconds"]
                 == roomy.completion_cost["future_time_reserve_seconds"] + 10)
-    assert exact.allowed_tools == {"replace_text", "stop_task"}
+    assert exact.allowed_tools == {"replace_text", "edit_files", "stop_task"}
     assert short.allowed_tools == {"stop_task"}
     assert short.completion_cost["resource_rejections"]["replace_text"] == resource
 

@@ -422,7 +422,8 @@ class WorkspaceManager:
         if not content.strip():
             return digest
         result = run_git(
-            workspace, "apply", "--whitespace=nowarn", str(Path(patch_path).resolve()),
+            workspace, "apply", "--intent-to-add", "--whitespace=nowarn",
+            str(Path(patch_path).resolve()),
             check=False, deadline=deadline,
         )
         if result.returncode != 0:
@@ -469,44 +470,22 @@ class WorkspaceManager:
         baseline_diff_hash: str,
         deadline: ExecutionDeadline | None = None,
     ) -> DiffSummary:
-        """Hash the complete candidate using a disposable index, without source writes."""
+        """Hash a candidate using the same index view as multi-file transactions."""
+        from patchloop.dev.file_transaction import FileChange, checked_target, preview_changes
 
-        normalized = safe_relative_path(path)
-        with tempfile.TemporaryDirectory(
-            prefix="mutation-index-", dir=workspace.parent, ignore_cleanup_errors=True,
-        ) as root:
-            environment = {**os.environ, "GIT_INDEX_FILE": str(Path(root) / "index")}
-
-            def git(*args: str, content: bytes | None = None) -> str:
-                completed = run_git(
-                    workspace, *args, env=environment, input=content, text=False,
-                    check=False, deadline=deadline,
-                )
-                if completed.returncode:
-                    raise ContractError("candidate Git preview failed")
-                output = completed.stdout.decode("utf-8")
-                return output if "-z" in args else output.replace("\r\n", "\n")
-
-            git("read-tree", "HEAD")
-            git("add", "-u", "--", ".")
-            baseline = git("diff", "--cached", "HEAD", "--no-ext-diff", "--binary")
-            if sha256_bytes(baseline.encode("utf-8")) != baseline_diff_hash:
+        normalized, target = checked_target(workspace, path)
+        if not target.is_file():
+            raise ContractError("candidate target is not a tracked regular file")
+        before = target.read_bytes()
+        if before == after_bytes:
+            summary = WorkspaceManager.diff_summary(workspace, deadline=deadline)
+            if summary.patch_hash != baseline_diff_hash:
                 raise RecoveryError("workspace changed before candidate admission")
-            entry = git("--literal-pathspecs", "ls-files", "--stage", "-z", "--", normalized)
-            if not entry or len(entry.rstrip("\0").split("\0")) != 1:
-                raise ContractError("candidate target has no unique tracked entry")
-            mode = entry.split(" ", 1)[0]
-            if mode not in {"100644", "100755"}:
-                raise ContractError("candidate target is not a tracked regular file")
-            blob = git("hash-object", "-w", "--stdin", f"--path={normalized}", content=after_bytes)
-            git("update-index", "--cacheinfo", mode, blob.strip(), normalized)
-            candidate = git("diff", "--cached", "HEAD", "--no-ext-diff", "--binary")
-            numstat = git("diff", "--cached", "HEAD", "--numstat", "-z")
-            changed, added, deleted = _parse_numstat(numstat)
-            return DiffSummary(
-                changed, added, deleted, candidate,
-                WorkspaceManager.untracked_files(workspace, deadline=deadline),
-            )
+            return summary
+        return preview_changes(
+            workspace, [FileChange(normalized, before, after_bytes)],
+            baseline_diff_hash=baseline_diff_hash, deadline=deadline,
+        )
 
     @staticmethod
     def atomic_replace_source(workspace: Path, path: str, content: bytes) -> None:
@@ -547,14 +526,15 @@ class WorkspaceManager:
     def diff_summary(
         workspace: Path, *, deadline: ExecutionDeadline | None = None,
     ) -> DiffSummary:
-        patch = _git(
+        patch = run_git(
             workspace,
             "diff",
             "HEAD",
             "--no-ext-diff",
             "--binary",
+            text=False,
             deadline=deadline,
-        ).stdout
+        ).stdout.decode("utf-8")
         numstat = run_git(
             workspace, "diff", "HEAD", "--numstat", "-z", text=False, deadline=deadline,
         ).stdout.decode("utf-8")

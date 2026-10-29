@@ -11,7 +11,7 @@ from pathlib import Path, PurePosixPath
 from patchloop.contracts import TaskConstraints
 from patchloop.deadline import ExecutionDeadline
 from patchloop.git_execution import run_git
-from patchloop.repository import DiffSummary, WorkspaceManager
+from patchloop.repository import DiffSummary
 from patchloop.test_additions import UnsupportedTestChange, added_tests
 
 DEPENDENCY_FILES = {
@@ -134,8 +134,11 @@ def validate_test_addition(
         raise UnsupportedTestChange("test edits require a declared additive test root")
     if PurePosixPath(path).name == "conftest.py":
         raise UnsupportedTestChange("existing test fixtures cannot be changed")
-    before = run_git(workspace, "show", f"HEAD:{path}", text=False, deadline=deadline).stdout
-    if not added_tests(before, after, path, suite_additions=True):
+    entry = run_git(workspace, "--literal-pathspecs", "ls-tree", "HEAD", "--", path,
+                    text=False, deadline=deadline).stdout
+    before = (run_git(workspace, "show", f"HEAD:{path}", text=False, deadline=deadline).stdout
+              if entry else b"")
+    if not added_tests(before, after, path, suite_additions=True, new_file=not bool(entry)):
         raise UnsupportedTestChange("test edit must add a test function or literal parameter cases")
 
 
@@ -185,20 +188,27 @@ def original_test_view(workspace: Path, outcome: PolicyOutcome, *, deadline=None
     Only the isolated evaluator checkout is changed, after submitted-diff identity
     and additive integrity have been checked. Restore even on evaluator failure.
     """
-    saved = {}
+    from patchloop.dev.file_transaction import FileChange, apply_changes, reverse_changes
+
+    changes = []
+    applied = False
     try:
         if outcome.passed and outcome.details.get("policy") == "additions-preserve-base-tests-v1":
             for path in outcome.details["test_files"]:
                 target = workspace / path
-                before = run_git(
-                    workspace, "show", f"HEAD:{path}", text=False, deadline=deadline
-                ).stdout
-                saved[path] = target.read_bytes()
-                WorkspaceManager.atomic_replace_source(workspace, path, before)
+                entry = run_git(workspace, "--literal-pathspecs", "ls-tree", "HEAD", "--",
+                                path, text=False, deadline=deadline).stdout
+                before = (run_git(workspace, "show", f"HEAD:{path}", text=False,
+                                  deadline=deadline).stdout if entry else None)
+                changes.append(FileChange(path, target.read_bytes(), before,
+                                          target.stat().st_mode & 0o777))
+            if changes:
+                apply_changes(workspace, changes, deadline=deadline)
+                applied = True
         yield
     finally:
-        for path, content in saved.items():
-            WorkspaceManager.atomic_replace_source(workspace, path, content)
+        if applied:
+            apply_changes(workspace, reverse_changes(changes))
 
 
 def _signature_map(source: str) -> dict[str, str]:

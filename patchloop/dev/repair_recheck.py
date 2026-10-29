@@ -6,6 +6,7 @@ from dataclasses import asdict, dataclass
 from typing import Any
 
 from patchloop.dev.contracts import DevToolResult, RequestedTool
+from patchloop.dev.mutation_tools import MUTATION_TOOLS
 from patchloop.dev.state import DevJournal
 from patchloop.errors import RecoveryError
 from patchloop.util import sha256_json
@@ -88,7 +89,7 @@ def select_repair_recheck(
     if len(latest_results) != 1:
         return None
     mutation = latest_results[0]
-    if mutation.tool != "replace_text" or mutation.status != "succeeded":
+    if mutation.tool not in MUTATION_TOOLS or mutation.status != "succeeded":
         return None
     baseline = mutation.output.get("baseline_diff_hash")
     candidate = mutation.output.get("worktree_diff_hash")

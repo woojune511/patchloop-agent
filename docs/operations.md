@@ -144,7 +144,10 @@ Explicit approved limits remain authoritative; historical three/four-edit runs a
 unchanged. `--max-accepted-mutations` configures dev's new limit. `occurrence="all"`
 changes all exact observed matches in one existing file as one edit, preserving scope
 and test checks. Fresh reads paginate at 24,000 characters via `next_start_line`,
-without a separate 400-line cap. New files and atomic multi-file edits remain unsupported.
+without a separate 400-line cap. `edit_files` can create allowed files, change up
+to 16 paths or undo an accepted action. Each batch/undo spends one edit, without
+refund. Task constraints and exact recovery remain; see the
+[file lifecycle contract](../.agent/file-transactions.md).
 
 `action_horizon.action_budget` separates ordinary/correction response slots and
 shows exploration's effect on the edit/check/finish route. Forecasts assume unchanged

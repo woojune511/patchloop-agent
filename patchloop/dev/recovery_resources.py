@@ -6,6 +6,7 @@ from dataclasses import dataclass, replace
 
 from patchloop.dev.completion_budget import CompletionRoute, CompletionState, CompletionStep
 from patchloop.dev.cost import FINALIZATION_OUTPUT_FLOOR, recovery_successor_output_ceilings
+from patchloop.dev.mutation_tools import MUTATION_TOOLS
 
 FOLLOWUP_SECONDS = 30
 CHECK_OVERHEAD_SECONDS = 5
@@ -140,7 +141,7 @@ def ordinary_completion_routes(
                  else model("public_check", seconds))
                 for index, seconds in enumerate(durations)]
 
-    role = {"replace_text": "repair", "run_check": "public_check",
+    role = {"replace_text": "repair", "edit_files": "repair", "run_check": "public_check",
             "run_probe": "diagnosis", "observe_original": "diagnosis",
             "finish_task": "finish", "stop_task": "stop"}.get(tool, "source_read")
     current = model(role, probe_seconds if tool in {"run_probe", "observe_original"}
@@ -157,13 +158,13 @@ def ordinary_completion_routes(
             future.append(model("diagnostic_request_rejection"))
     if state.path_diagnosis_pending and tool != "run_probe":
         future.append(model("diagnosis", probe_seconds))
-    future_repair = state.requires_mutation and tool != "replace_text"
+    future_repair = state.requires_mutation and tool not in MUTATION_TOOLS
     if future_repair:
         if not state.anchor_available and (tool not in {"read_file", "search_files"}
                                            or preserve_read_anchor):
             future.append(model("source_anchor"))
         future.append(model("repair"))
-    mutation = future_repair or tool == "replace_text"
+    mutation = future_repair or tool in MUTATION_TOOLS
     if mutation:
         future.extend(replays())
         future.extend(checks(check_seconds, automatic=(state.automatic_recheck
@@ -247,7 +248,7 @@ def successor_resources(
                                  any(route.speculative_failure for route in routes), routes)
     if tool == "stop_task":
         return RecoveryResources((), 0, False)
-    editing = tool == "replace_text"
+    editing = tool in MUTATION_TOOLS
     future_repair = state.requires_mutation and not editing or test_edit
     repairs = int(future_repair)
     preparation = int(future_repair and not state.anchor_available

@@ -9,6 +9,7 @@ from __future__ import annotations
 import copy
 
 from patchloop.dev.history_search import MAX_ORIGINAL_CHARS, MAX_RESULT_CHARS, PublicHistory, tokens
+from patchloop.dev.mutation_tools import MUTATION_TOOLS
 from patchloop.dev.question_support import observed_functions
 from patchloop.util import canonical_json
 
@@ -40,11 +41,13 @@ def separate(body):
     # Only owned envelopes are classified. Never recursively remove arbitrary
     # keys from source spans, captured JSON, setup checks or supplied observations.
     tool = body.get("call", {}).get("tool")
-    if tool in {"read_file", "search_files", "replace_text", "run_probe", "run_check", "run_tests"}:
+    if tool in MUTATION_TOOLS | {
+        "read_file", "search_files", "run_probe", "run_check", "run_tests",
+    }:
         move(("call", "arguments"), ("turn_decision", "memory_update"))
     if tool in {"read_file", "search_files"}:
         move(("result", "output"), ("inspection_intent", "inspection_intent_ref"))
-    if tool == "replace_text":
+    if tool in MUTATION_TOOLS:
         move(("call", "arguments"), MUTATION_ANNOTATIONS)
         move(("result", "output", "mutation"), MUTATION_ANNOTATIONS)
     if tool == "run_probe":

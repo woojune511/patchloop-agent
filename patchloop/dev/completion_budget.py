@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 
+from patchloop.dev.mutation_tools import MUTATION_TOOLS
+
 
 @dataclass(frozen=True)
 class CompletionStep:
@@ -314,7 +316,7 @@ def minimum_successor_calls(state: CompletionState, tool: str) -> int:
         return completion_budget(replace(state, anchor_available=True)).minimum
     if tool in {"search_history", "run_probe", "run_tests", "observe_original"}:
         return completion_budget(state).minimum
-    if tool == "replace_text":
+    if tool in MUTATION_TOOLS:
         return mutation_attempt_budget(state).minimum - 1
     if tool == "run_check":
         if state.requires_mutation:

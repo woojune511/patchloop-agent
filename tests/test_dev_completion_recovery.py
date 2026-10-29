@@ -75,7 +75,7 @@ def test_one_no_action_response_preserves_full_correction_and_successor_checks(o
     ledger = funding(3, output=output)
     counts = counters(model=4, tools=3)
     before = select(gateway, ledger, counts=counts, output=output)
-    assert before.allowed_tools == {"replace_text", "stop_task"}
+    assert before.allowed_tools == {"replace_text", "edit_files", "stop_task"}
     assert before.minimum_completion_tool_actions == 3  # No tool action for an invalid response.
     assert before.completion_cost["correction_model_calls_reserved"] == 1
     normal = admit(ledger, before, output=output)
@@ -84,7 +84,7 @@ def test_one_no_action_response_preserves_full_correction_and_successor_checks(o
     counts.model_calls += 1
     counts.protocol_recoveries = counts.protocol_corrections_total = 1
     after = select(gateway, ledger, counts=counts, output=output)
-    assert after.allowed_tools == {"replace_text", "stop_task"}
+    assert after.allowed_tools == {"replace_text", "edit_files", "stop_task"}
     assert after.completion_cost["correction_pending"]
     assert after.completion_cost["correction_credits_remaining"] == 0
     corrected = admit(ledger, after, output=output)
@@ -120,7 +120,7 @@ def test_disabled_or_spent_correction_credit_does_not_tax_later_valid_actions():
         gateway, ledger, counts=counters(protocol_recoveries=1, protocol_corrections_total=2),
     )
     for selected in (disabled, spent, later_error):
-        assert selected.allowed_tools == {"replace_text", "stop_task"}
+        assert selected.allowed_tools == {"replace_text", "edit_files", "stop_task"}
         assert selected.completion_cost["correction_credits_remaining"] == 0
         assert selected.completion_cost["correction_cost_reserved_nanos"] == 0
         assert not selected.completion_cost["correction_pending"]

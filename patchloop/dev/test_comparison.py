@@ -12,6 +12,7 @@ from pathlib import Path
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import Artifact
 from patchloop.dev.check_feedback import output_tail
+from patchloop.dev.mutation_tools import MUTATION_TOOLS
 from patchloop.errors import ContractError, RecoveryError
 from patchloop.git_execution import run_git
 from patchloop.repair_verification import _observation, compare_selected_observations
@@ -66,11 +67,11 @@ def _mutation_chain(events, mutation_id):
     starts, completed = {}, []
     for event in events:
         payload = event["payload"]
-        if event["event_type"] == "action_started" and payload.get("tool") == "replace_text":
+        if event["event_type"] == "action_started" and payload.get("tool") in MUTATION_TOOLS:
             starts[payload["action_id"]] = payload
         elif event["event_type"] == "action_finished":
             result = payload["result"]
-            if result["tool"] == "replace_text" and result["status"] == "succeeded":
+            if result["tool"] in MUTATION_TOOLS and result["status"] == "succeeded":
                 start = starts.get(result["action_id"])
                 if start is None or start["input_hash"] != result["input_hash"]:
                     raise RecoveryError("comparison mutation has no matching admission")
@@ -150,12 +151,12 @@ def _prepare(gateway, selection, check, targets, identity, store):
     if request.baseline == "before_mutation":
         chain = _mutation_chain(events, request.mutation_action_id)
         selected_start, _ = chain[0]
-        mutation_path = selected_start.get("mutation_target_path", "")
-        if not mutation_path or any(mutation_path.startswith(root + "/")
-               for root in gateway.public_task.constraints.additive_test_roots) or any(
-            mutation_path.startswith(root + "/")
-            for suite in gateway.public_task.test_suites for root in suite.test_roots
-        ):
+        mutation_paths = selected_start.get("mutation_target_paths") or [
+            selected_start.get("mutation_target_path", "")]
+        roots = [*gateway.public_task.constraints.additive_test_roots,
+                 *(root for suite in gateway.public_task.test_suites for root in suite.test_roots)]
+        if not any(path and not any(path.startswith(root + "/") for root in roots)
+                   for path in mutation_paths):
             raise ContractError(
                 "before_mutation must select an implementation edit, not a test edit")
         if summary.patch:
@@ -168,7 +169,7 @@ def _prepare(gateway, selection, check, targets, identity, store):
             delta = start.get("mutation_generated_patch")
             if not isinstance(delta, str):
                 raise RecoveryError("selected mutation has no exact reversible patch")
-            run_git(baseline, "apply", "--reverse", "--whitespace=nowarn", "-",
+            run_git(baseline, "apply", "--reverse", "--intent-to-add", "--whitespace=nowarn", "-",
                     input=delta.encode(), deadline=gateway.deadline)
             current = WorkspaceManager.diff_summary(baseline, deadline=gateway.deadline).patch_hash
             if current != start.get("baseline_diff_hash"):
@@ -178,9 +179,14 @@ def _prepare(gateway, selection, check, targets, identity, store):
     for workspace in (baseline, candidate):
         for path, reference in test_files.items():
             destination = workspace / path
-            if not destination.is_file() or destination.is_symlink():
-                raise ContractError("comparison test overlay requires an existing regular file")
-            destination.write_bytes(_read(store, reference))
+            from patchloop.dev.file_transaction import FileChange, apply_changes, checked_target
+
+            _, destination = checked_target(workspace, path)
+            content = _read(store, reference)
+            before = destination.read_bytes() if destination.is_file() else None
+            if before != content:
+                apply_changes(workspace, [FileChange(path, before, content)],
+                              deadline=gateway.deadline)
     script = (Path(__file__).parents[1] / "sandbox/pytest_report.py").read_text(encoding="utf-8")
     phases = []
     for phase, workspace in (("baseline", baseline), ("candidate", candidate)):

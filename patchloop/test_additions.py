@@ -1,4 +1,4 @@
-"""Conservative structural separation of additions to existing pytest files."""
+"""Structural separation of additive pytest cases and explicitly new test modules."""
 
 from __future__ import annotations
 
@@ -165,10 +165,22 @@ def _added_statements(old, new, path, *, suite_additions):
     return additions
 
 
-def added_tests(before: bytes, after: bytes, path: str, *, suite_additions=False) -> list[dict]:
+def added_tests(
+    before: bytes, after: bytes, path: str, *, suite_additions=False, new_file=False,
+) -> list[dict]:
     """Separate additive tests; repair-verify retains its top-level selector contract."""
     try:
         old, new = ast.parse(before), ast.parse(after)
     except (SyntaxError, ValueError) as exc:
         raise UnsupportedTestChange(f"test file cannot be parsed: {exc}") from exc
+    if new_file:
+        if before:
+            raise UnsupportedTestChange("new test module must have no original file bytes")
+        # A new module can import its dependencies without changing existing
+        # setup. Only the AST walk uses these declarations; executed bytes stay exact.
+        old.body = [node for node in new.body if isinstance(node, (ast.Import, ast.ImportFrom))]
+        if (new.body and isinstance(new.body[0], ast.Expr)
+                and isinstance(new.body[0].value, ast.Constant)
+                and isinstance(new.body[0].value.value, str)):
+            old.body.insert(0, new.body[0])
     return _added_statements(old.body, new.body, path, suite_additions=suite_additions)

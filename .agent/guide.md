@@ -61,13 +61,17 @@ Search: literal queries, rooted component-aware globs; one tracked-path scan/unc
 Edits require delivered current public source. `replace_text` accepts an exact occurrence
 in a tracked, allowed file, a hypothesis and expected behavior (each 1-1,500 characters
 in both schemas). Bind each contiguous observed anchor, enforce canonical full-diff scope,
-and restore the pre-image on rejection. No fuzzy matching, unseen source, new paths
+and restore the pre-image on rejection. No fuzzy matching, unseen source
 or model-selected mutation evidence IDs. Exact reads/previews use literal Git pathspecs;
 decode quoted/NUL-delimited Git paths without changing diff bytes.
 `occurrence="all"` changes all exact matches in one file as one accepted edit;
 every match needs current observed source, and rollback/recovery use admitted offsets.
 Fresh dev/repair defaults allow 12 edits; explicit task/invocation limits still apply.
 Retired requirement/case annotations remain for exact legacy recovery, not fresh requests.
+
+`edit_files` supports creation, multi-file edits and receipt undo. Each accepted
+batch/undo spends one edit; uncertain rollback remains pending.
+See [file transactions](file-transactions.md) for fields and recovery.
 
 Submit a nonempty tracked diff only after all required checks pass on it.
 Host-registered counterexamples use the same registry; see

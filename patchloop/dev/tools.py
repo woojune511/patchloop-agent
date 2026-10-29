@@ -64,6 +64,7 @@ from patchloop.dev.contracts import (
     TextReplacementIntent,
 )
 from patchloop.dev.dependency_sources import DependencySources
+from patchloop.dev.mutation_tools import MUTATION_TOOLS
 from patchloop.dev.path_policy import mutation_path_allowed
 from patchloop.dev.required_checks import RequiredPublicCheck, bind_checks, public_context
 from patchloop.dev.source_glob import matches_source_glob
@@ -118,7 +119,7 @@ _INLINE_PYTHON = re.compile(r"python(?:\d+(?:\.\d+)*)?(?:\.exe)?", re.IGNORECASE
 _INLINE_PYTHON_FRAME = re.compile(
     r'File "<string>", line (?P<line>\d+)(?:, in (?P<scope>[^\r\n]+))?'
 )
-_MUTATION_TOOLS = frozenset({"replace_text", "apply_git_diff"})
+_MUTATION_TOOLS = MUTATION_TOOLS | {"apply_git_diff"}
 
 
 def _requested_source_scope(tool: str, arguments: dict[str, Any]) -> str:
@@ -437,11 +438,17 @@ def dev_tool_schemas(
             },
         },
     ]
+    from patchloop.dev.file_edits import schema as file_edit_schema
+
+    schemas.append(file_edit_schema())
     if repair_revision and repair_revision.get("status") == "diagnosed":
-        parameters = next(s["parameters"] for s in schemas if s["name"] == "replace_text")
-        parameters["properties"]["repair_prediction"] = repair_prediction.schema(
-            repair_revision, test_enabled=repair_test_edit_enabled, suite_ids=test_suite_ids)
-        parameters["required"].append("repair_prediction")
+        for schema in schemas:
+            if schema["name"] in MUTATION_TOOLS:
+                parameters = schema["parameters"]
+                parameters["properties"]["repair_prediction"] = repair_prediction.schema(
+                    repair_revision, test_enabled=repair_test_edit_enabled,
+                    suite_ids=test_suite_ids)
+                parameters["required"].append("repair_prediction")
     if finish_enabled:
         schemas.append(
             {
@@ -647,6 +654,7 @@ def dev_tool_schemas(
         "run_tests": "verify",
         "run_probe": "verify",
         "replace_text": "mutate",
+        "edit_files": "mutate",
         "finish_task": "finish",
         "stop_task": "stop",
     }
@@ -683,7 +691,7 @@ def dev_tool_schemas(
                 # path enum cannot also represent registered dependency paths.
                 parameters["properties"]["path"].pop("enum", None)
         if (path_diagnosis_pending or repair_test_comparison_pending
-                or name in {"replace_text", "stop_task", "observe_original"}):
+                or name in {"replace_text", "edit_files", "stop_task", "observe_original"}):
             projected.append(schema)
             continue
         if agent_policy == "thin":
@@ -743,18 +751,18 @@ def validate_tool_batch(
                 diagnosis_request.validate_selection(call.arguments)
     elif agent_policy == "thin":
         if any({"turn_decision", "rejected_turn_decision"} & call.model_fields_set
-               and call.name not in {"replace_text", "stop_task", "observe_original"}
+               and call.name not in {"replace_text", "edit_files", "stop_task", "observe_original"}
                for call in calls):
             raise ContractError("thin policy does not accept turn_decision")
         if any("memory_update" not in call.model_fields_set
-               and call.name not in {"replace_text", "stop_task", "observe_original"}
+               and call.name not in {"replace_text", "edit_files", "stop_task", "observe_original"}
                for call in calls):
             raise ContractError("thin policy requires nullable top-level memory_update")
     else:
         if any("memory_update" in call.model_fields_set for call in calls):
             raise ContractError("current policy does not accept top-level memory_update")
         if any(call.turn_decision is None
-               and call.name not in {"replace_text", "stop_task", "observe_original"}
+               and call.name not in {"replace_text", "edit_files", "stop_task", "observe_original"}
                for call in calls):
             raise ContractError("every tool call requires one bounded public turn_decision")
     expected_modes = {
@@ -766,6 +774,7 @@ def validate_tool_batch(
         "run_probe": "verify",
         "observe_original": "verify",
         "replace_text": "mutate",
+        "edit_files": "mutate",
         "finish_task": "finish",
         "stop_task": "stop",
     }
@@ -1237,7 +1246,7 @@ class DevToolGateway:
                 "Repair or explicitly replace this failed mutation using the preserved exact "
                 "replacement and typed feedback. Available inspection remains budget-governed."
             )
-        return {
+        context = {
             "action_id": action_id,
             "input_hash": input_hash,
             "baseline_diff_hash": (
@@ -1268,6 +1277,22 @@ class DevToolGateway:
             ),
             "next_action": next_action,
         }
+        if result.tool == "edit_files":
+            raw = {key: arguments.get(key) for key in ("edits", "undo_action_id")}
+            # Preserve the operation identity without repeating up to 16 file bodies.
+            edits = arguments.get("edits")
+            context.update(
+                replacement={"undo_action_id": cls._bounded_string(
+                    arguments.get("undo_action_id"), 500), "edits": [
+                        {"path": cls._bounded_string(edit.get("path"), 1_000),
+                         "operation": "create" if edit.get("old_text") is None else "replace"}
+                        for edit in edits[:16] if isinstance(edit, dict)
+                    ] if isinstance(edits, list) else None},
+                replacement_hash=sha256_json(raw), replacement_truncated=True,
+                next_action="Use the typed feedback to correct the failed file transaction; "
+                            "reinspect current source when an exact anchor is missing.",
+            )
+        return context
 
     @staticmethod
     def _cache_key(input_hash: str, workspace_diff_hash: str) -> tuple[str, str]:
@@ -2030,7 +2055,7 @@ class DevToolGateway:
                 continue
             result = event["payload"].get("result", {})
             if result.get("status") != "succeeded" or result.get("tool") not in {
-                *READ_TOOLS, "replace_text",
+                *READ_TOOLS, *MUTATION_TOOLS,
             }:
                 continue
             output = result.get("output", {})
@@ -2901,6 +2926,8 @@ class DevToolGateway:
             return [future.result() for future in futures]
 
     def execute(self, call: RequestedTool) -> DevToolResult:
+        from patchloop.dev import file_edits, file_transaction
+
         source_scope = _requested_source_scope(call.name, call.arguments)
         is_probe = call.name in {"run_probe", "observe_original"}
         turn_decision = (
@@ -2928,20 +2955,22 @@ class DevToolGateway:
             self.deadline.check()
         action_read_deadline = (
             self._recovery_read_deadline()
-            if pending is not None and call.name == "replace_text" else self.deadline
+            if pending is not None and call.name in MUTATION_TOOLS else self.deadline
         )
         baseline_summary = WorkspaceManager.diff_summary(
             self.workspace, deadline=action_read_deadline,
         )
         baseline = (
             str(pending["baseline_diff_hash"])
-            if pending is not None and call.name == "replace_text"
+            if pending is not None and call.name in MUTATION_TOOLS
             else baseline_summary.patch_hash
         )
         preflight_error: Exception | None = None
         mutation_admitted: bool | None = None
         mutation_anchor_evidence_span_id: str | None = None
         candidate_summary: DiffSummary | None = None
+        prepared_edit = None
+        file_packet = pending.get("file_transaction") if pending else None
         prepared_probe: dict[str, Any] | None = None
         reproduction_binding: dict[str, Any] | None = None
         request_validation: dict[str, Any] | None = None
@@ -3007,7 +3036,7 @@ class DevToolGateway:
                     path_request = probe_call_arguments["call_path"]
                 except (PatchLoopError, ValueError, OSError, SyntaxError) as exc:
                     preflight_error = exc
-            elif call.name == "replace_text" and first_state.get("observation"):
+            elif call.name in MUTATION_TOOLS and first_state.get("observation"):
                 first_link = {**first_observation.link(first_state),
                               "observation_action_id": first_state["observation"]["action_id"],
                               "observation_status": first_state["observation"]["status"]}
@@ -3044,9 +3073,12 @@ class DevToolGateway:
                         path_state, call.name,
                         call.arguments if call.name == "observe_original" else probe_call_arguments,
                     )
-                if gate_diagnostics and call.name == "replace_text":
+                if gate_diagnostics and call.name in MUTATION_TOOLS:
                     repair_intent = repair_prediction.admit(
-                        path_state, prediction_state, call.arguments, public_task=self.public_task)
+                        path_state, prediction_state,
+                        file_edits.prediction_arguments(call.arguments)
+                        if call.name == "edit_files" else call.arguments,
+                        public_task=self.public_task)
                 elif gate_diagnostics and call.name == "run_tests":
                     repair_test_link = repair_prediction.validate_test(
                         prediction_state, path_state, call.arguments)
@@ -3218,6 +3250,34 @@ class DevToolGateway:
                         baseline_diff_hash=baseline,
                         deadline=self.deadline,
                     )
+                    file_packet = file_transaction.save_changes(
+                        ArtifactStore(self.journal.root / "artifacts"),
+                        [file_transaction.FileChange(validated.path, validated.before_bytes,
+                                                     validated.after_bytes)],
+                        workspace=self.workspace,
+                    )
+                    mutation_admitted = True
+                except (PatchLoopError, ValidationError, ValueError, OSError) as exc:
+                    preflight_error = exc
+                    mutation_admitted = False
+            elif call.name == "edit_files":
+                try:
+                    if preflight_error is not None:
+                        raise preflight_error
+                    self._require_acquisition_released(baseline)
+                    prepared_edit = file_edits.prepare(self, call.arguments, baseline)
+                    if (repair_intent is not None
+                            and (repair_intent["kind"] == "test") != prepared_edit.test_only):
+                        raise ContractError("repair_prediction.kind must match the transaction")
+                    if repair_intent is not None and repair_intent["kind"] == "test":
+                        if len(prepared_edit.changes) != 1:
+                            raise ContractError("a diagnosed test addition edits one selected file")
+                        change = prepared_edit.changes[0]
+                        repair_prediction.validate_addition(
+                            change.path, change.before or b"", change.after or b"",
+                            repair_intent["selection"], new_file=change.before is None)
+                    candidate_summary = prepared_edit.candidate
+                    file_packet = prepared_edit.packet
                     mutation_admitted = True
                 except (PatchLoopError, ValidationError, ValueError, OSError) as exc:
                     preflight_error = exc
@@ -3233,7 +3293,7 @@ class DevToolGateway:
                        if "turn_decision" in call.model_fields_set
                        or (not call.preserve_annotation_presence
                            and "memory_update" not in call.model_fields_set
-                           and call.name not in {"replace_text", "stop_task", "observe_original"})
+                           and call.name not in MUTATION_TOOLS | {"stop_task", "observe_original"})
                        else {}),
                     **({"memory_update": call.memory_update}
                        if "memory_update" in call.model_fields_set else {}),
@@ -3348,12 +3408,23 @@ class DevToolGateway:
                         if call.name == "replace_text" and mutation_admitted is True
                         else None
                     ),
+                    **({"file_transaction": file_packet} if file_packet is not None else {}),
+                    **(file_edits.admission(prepared_edit)
+                       if call.name == "edit_files" and mutation_admitted is True else {}),
                 },
             )
         try:
             if preflight_error is not None:
                 raise preflight_error
-            if pending is not None and call.name == "replace_text":
+            if call.name == "edit_files":
+                admitted = pending or self.journal.pending_action(call.action_id, input_hash)
+                output = file_edits.apply(
+                    self, call.arguments, admitted, deadline=action_read_deadline,
+                    recovering=pending is not None)
+                if pending is not None:
+                    output["recovered_after_crash"] = True
+                evidence_cache_hit = False
+            elif pending is not None and call.name == "replace_text":
                 output = self._reconcile_or_apply(
                     call.arguments, pending, deadline=action_read_deadline,
                 )
@@ -3447,7 +3518,7 @@ class DevToolGateway:
                     self.deadline.check()
                 output = self._perform(call.name, call.arguments)
                 evidence_cache_hit = False
-            if call.name == "replace_text":
+            if call.name in MUTATION_TOOLS:
                 # Reconciliation uses the original admitted baseline, even if the
                 # candidate was already on disk when this process resumed.
                 output["baseline_diff_hash"] = baseline
@@ -3469,11 +3540,11 @@ class DevToolGateway:
                 output["repair_test_link"] = copy.deepcopy(repair_test_link)
             if path_link is not None:
                 output["repair_path_link"] = copy.deepcopy(path_link)
-                if call.name == "replace_text":
+                if call.name in MUTATION_TOOLS:
                     output["mutation"]["repair_path_link"] = copy.deepcopy(path_link)
             if first_link is not None:
                 output["first_observation_link"] = copy.deepcopy(first_link)
-                if call.name == "replace_text":
+                if call.name in MUTATION_TOOLS:
                     output["mutation"]["first_observation_link"] = copy.deepcopy(first_link)
             result = DevToolResult(
                 action_id=call.action_id,
@@ -3483,10 +3554,11 @@ class DevToolGateway:
                 output=output,
                 evidence_cache_hit=evidence_cache_hit,
                 workspace_diff_hash=(
-                    output["worktree_diff_hash"] if call.name == "replace_text" else baseline
+                    output["worktree_diff_hash"] if call.name in MUTATION_TOOLS else baseline
                 ),
             )
-        except (ExecutionDeadlineExceeded, GitExecutionUncertain):
+        except (ExecutionDeadlineExceeded, GitExecutionUncertain,
+                file_transaction.FileTransactionUncertain):
             raise
         except (PatchLoopError, ValidationError, ValueError, OSError,
                 RuntimeError, SyntaxError) as exc:
@@ -3507,12 +3579,12 @@ class DevToolGateway:
                 )
             if call.name in READ_TOOLS:
                 failure_output["read_request_hash"] = read_request_hash
-            elif call.name == "replace_text" and "mutation_failure" not in failure_output:
+            elif call.name in MUTATION_TOOLS and "mutation_failure" not in failure_output:
                 failure_output["mutation_failure"] = self._replacement_failure_details(
                     message=str(exc),
                     baseline=baseline_summary,
                 )
-            if call.name == "replace_text":
+            if call.name in MUTATION_TOOLS:
                 mutation_failure = failure_output.get("mutation_failure")
                 if isinstance(mutation_failure, dict):
                     required_anchor = failure_output.get("required_anchor")
@@ -3533,7 +3605,7 @@ class DevToolGateway:
                 workspace_diff_hash=(
                     WorkspaceManager.diff_summary(
                         self.workspace, deadline=action_read_deadline,
-                    ).patch_hash if call.name == "replace_text" else baseline
+                    ).patch_hash if call.name in MUTATION_TOOLS else baseline
                 ),
             )
         finished_payload: dict[str, Any] = {
@@ -3544,7 +3616,7 @@ class DevToolGateway:
         if (result.status == "succeeded" and prepared_probe is not None
                 and prepared_probe["case"] is not None):
             finished_payload["probe_case"] = prepared_probe["case"]
-        if result.status == "succeeded" and result.tool == "replace_text":
+        if result.status == "succeeded" and result.tool in MUTATION_TOOLS:
             finished_payload["working_notes_state"] = self._refreshed_working_notes_state(
                 action_id=call.action_id,
                 deadline=self._recovery_read_deadline(),
@@ -3554,12 +3626,12 @@ class DevToolGateway:
             finished_payload,
         )
         if result.status == "succeeded":
-            if result.tool == "replace_text":
+            if result.tool in MUTATION_TOOLS:
                 self._restore_working_notes_state(finished_payload["working_notes_state"])
                 self._accept_successful_mutation(result.output, refresh_notes=False)
             elif result.tool == "run_check":
                 self._remember_check(result.output)
-        elif result.tool == "replace_text":
+        elif result.tool in MUTATION_TOOLS:
             self.last_failed_mutation = self._failed_mutation_context(
                 arguments=call.arguments,
                 action_id=result.action_id,
@@ -4234,6 +4306,10 @@ class DevToolGateway:
     def _mutation_recovery_key(arguments: dict[str, Any], baseline_diff_hash: str) -> str:
         """Identify one failed replacement lineage without storing another raw copy."""
 
+        if "edits" in arguments or "undo_action_id" in arguments:
+            return sha256_json({"baseline_diff_hash": baseline_diff_hash,
+                                "file_edits": arguments.get("edits"),
+                                "undo_action_id": arguments.get("undo_action_id")})
         return sha256_json(
             {
                 "baseline_diff_hash": baseline_diff_hash,

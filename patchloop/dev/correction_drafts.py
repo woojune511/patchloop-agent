@@ -6,6 +6,7 @@ import copy
 from collections.abc import Iterable
 from typing import Any
 
+from patchloop.dev.mutation_tools import MUTATION_TOOLS
 from patchloop.util import canonical_json, sha256_json
 
 POLICY = "rejected-edit-drafts-v1"
@@ -46,7 +47,7 @@ def build(calls: Iterable[Any], *, turn_id: str, diff_hash: str) -> dict[str, An
     omitted = {"count_limit": 0, "argument_byte_limit": 0}
     for call in calls:
         raw = call.model_dump(mode="json") if hasattr(call, "model_dump") else call
-        if raw["name"] != "replace_text":
+        if raw["name"] not in MUTATION_TOOLS:
             continue
         candidate_count += 1
         if len(drafts) >= MAX_DRAFTS:

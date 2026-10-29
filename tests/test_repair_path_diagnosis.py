@@ -88,8 +88,11 @@ def state(gateway):
     return gateway.completion_verification(diff_hash=gateway.current_diff_hash)["repair_path"]
 
 
-def setup(gateway_factory):
+def setup(gateway_factory, *, multi_file=False):
     gateway, journal, workspace = gateway_factory()
+    if multi_file:
+        gateway.public_task.constraints.max_changed_files = 2
+        gateway.public_task.constraints.public_api_changes_allowed = True
     backend = gateway.probe_sandbox = TracedProbe(status="passed")
     assert gateway.execute(read_calls()[1]).status == "succeeded"
     result = gateway.execute(diagnostic_probe(gateway.public_task, "original", corrected=True))
@@ -98,6 +101,15 @@ def setup(gateway_factory):
     edit.arguments["new_text"] = edit.arguments["old_text"].replace(
         "    rows: list[list[str]] = []", "    if text == '__unreached__':\n"
         "        return []\n    rows: list[list[str]] = []")
+    if multi_file:
+        edit = RequestedTool(name="edit_files", action_id=edit.action_id, arguments={
+            "edits": [{"path": "mini_data_utils/marker.py", "old_text": None,
+                       "new_text": "MARKER = 1\n", "occurrence": 1},
+                      {key: edit.arguments[key]
+                       for key in ("path", "old_text", "new_text", "occurrence")}],
+            "undo_action_id": None, "hypothesis": edit.arguments["hypothesis"],
+            "expected_behavior": edit.arguments["expected_behavior"],
+        })
     assert gateway.execute(edit).status == "succeeded"
     replay = gateway.execute(probe(gateway.public_task, "failed-current", replay="original"))
     assert replay.output["reproduction"]["comparison"] == "mismatched"
@@ -116,6 +128,19 @@ def diagnosis(gateway, action="path-diagnosis"):
                      "lines": lines, "fields": ["text"]}],
     }
     return call
+
+
+def test_multi_file_repair_keeps_actual_changed_path_diagnosis(gateway_factory):
+    gateway, _, _, _ = setup(gateway_factory, multi_file=True)
+    current = state(gateway)
+    assert current["mutation_action_id"] == "wrong-repair"
+    assert {item["path"] for item in current["unobserved_changes"]} == {
+        PATH, "mini_data_utils/marker.py",
+    }
+    blocked = gateway.execute(mutation_call(gateway, action_id="premature"))
+    assert blocked.status == "failed" and gateway.accepted_mutations == 1
+    assert gateway.execute(diagnosis(gateway)).status == "succeeded"
+    assert state(gateway)["status"] == "diagnosed"
 
 
 def test_failed_repair_requires_path_then_links_next_hypothesis(gateway_factory):

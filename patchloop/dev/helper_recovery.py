@@ -9,6 +9,7 @@ from __future__ import annotations
 import copy
 
 from patchloop.dev import probe_invocation
+from patchloop.dev.mutation_tools import MUTATION_TOOLS
 from patchloop.errors import ContractError
 from patchloop.util import sha256_bytes, sha256_json
 
@@ -112,7 +113,7 @@ def review(events, current_diff):
         if event["event_type"] != "action_finished":
             continue
         result = event["payload"]["result"]
-        if result["tool"] == "replace_text" and result["status"] == "succeeded":
+        if result["tool"] in MUTATION_TOOLS and result["status"] == "succeeded":
             break  # This correction addresses reaching the first repair only.
         start = starts.get(result["action_id"], {})
         error = start.get("helper_program_error")

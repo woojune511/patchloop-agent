@@ -16,6 +16,7 @@ from patchloop.dev import (
     repair_path,
     reproduction,
 )
+from patchloop.dev.mutation_tools import MUTATION_TOOLS
 from patchloop.errors import ContractError
 from patchloop.sandbox import call_path_trace
 from patchloop.util import sha256_bytes, sha256_json
@@ -310,7 +311,7 @@ def review(events, current_diff, completion):
                   if e["event_type"] == "probe_execution_started"}
     attempts = [s for s in starts.values() if s.get("tool") == TOOL_NAME
                 and s.get("first_observation_link", {}).get("policy") == POLICY]
-    edited = any(r.get("tool") == "replace_text" and r.get("status") == "succeeded"
+    edited = any(r.get("tool") in MUTATION_TOOLS and r.get("status") == "succeeded"
                  for r in results.values())
     identity = copy.deepcopy(attempts[0]["first_observation_link"]) if attempts else None
     if identity is None:

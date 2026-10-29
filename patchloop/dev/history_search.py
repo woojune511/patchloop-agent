@@ -29,7 +29,7 @@ MAX_RESULT_CHARS = 48_000
 # smaller bound remains the explicit exact-ID page size and overflow fallback.
 MAX_ORIGINAL_CHARS = MAX_REQUEST_BYTES
 PASSAGE_CHARS = 1_200
-PUBLIC_TOOLS = frozenset({"read_file", "search_files", "replace_text", "run_check",
+PUBLIC_TOOLS = frozenset({"read_file", "search_files", "replace_text", "edit_files", "run_check",
                           "run_tests", "run_probe"})
 INSTRUCTIONS = (
     "When search_history is supplied, you may also request exactly one search_history "

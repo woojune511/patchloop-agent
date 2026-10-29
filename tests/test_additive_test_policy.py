@@ -1,5 +1,7 @@
 """Added tests remain executable while original regression assertions are immutable."""
 
+import stat
+
 import pytest
 
 from patchloop.contracts import TaskConstraints
@@ -38,6 +40,33 @@ def test_policy_opt_in_and_restored_original_view(tmp_path):
         raise RuntimeError("simulated evaluator failure")
     assert path.read_bytes() == ADDED
     assert WorkspaceManager.diff_summary(tmp_path).patch_hash == diff.patch_hash
+
+
+def test_new_test_module_is_absent_during_grading_and_restored_after_exception(tmp_path):
+    original = source(tmp_path)
+    original.write_bytes(ADDED)
+    created = tmp_path / "tests/test_new.py"
+    content = (b'"""New public regression.\r\n"""\r\nimport math\r\n'
+               b'def test_new():\r\n    assert math.sqrt(4) == 2\r\n')
+    created.write_bytes(content)
+    run_git(tmp_path, "add", "--intent-to-add", "--", "tests/test_new.py")
+    modes = {path: stat.S_IMODE(path.stat().st_mode) for path in (original, created)}
+    diff = WorkspaceManager.diff_summary(tmp_path)
+    index = run_git(tmp_path, "ls-files", "--stage").stdout
+    result = verify_test_tampering(diff, TaskConstraints(additive_test_roots=["tests"]), tmp_path)
+    assert result.passed, result.violations
+    with (pytest.raises(RuntimeError, match="simulated evaluator failure"),
+          original_test_view(tmp_path, result)):
+        assert original.read_bytes() == BASE
+        assert not created.exists()
+        assert not WorkspaceManager.diff_summary(tmp_path).changed_files
+        raise RuntimeError("simulated evaluator failure")
+    assert original.read_bytes() == ADDED
+    assert created.read_bytes() == content
+    assert {path: stat.S_IMODE(path.stat().st_mode) for path in modes} == modes
+    restored = WorkspaceManager.diff_summary(tmp_path)
+    assert restored.patch == diff.patch and restored.patch_hash == diff.patch_hash
+    assert run_git(tmp_path, "ls-files", "--stage").stdout == index
 
 
 @pytest.mark.parametrize(

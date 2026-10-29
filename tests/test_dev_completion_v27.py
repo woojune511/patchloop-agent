@@ -220,12 +220,13 @@ def test_completion_descriptions_preserve_tool_order_and_current_input_shapes():
         return value
 
     assert sha256_json(without_descriptions(schemas)) == (
-        "sha256:e6050dea4b89fa715cf141792794b8229850f1c7e0c2ffb63a6fa2728d8ff568"
+        "sha256:ff0a1586217fe6b94bd3e12de238d7b6e19ac661f4671604e12fa31905260ae5"
         if FROZEN_ARM is None else
         "sha256:99d8179c31989d8d5caabaed81902ce9d2a8fad60af8caf594f685122e9beeac"
     )
     assert [schema["name"] for schema in schemas] == [
-        "search_files", "read_file", "run_check", "replace_text", "stop_task", "finish_task",
+        "search_files", "read_file", "run_check", "replace_text", "stop_task",
+        *(["edit_files"] if FROZEN_ARM is None else []), "finish_task",
         "run_probe",
     ] + (["observe_original"] if FROZEN_ARM is None else [])
     descriptions = {schema["name"]: schema["description"] for schema in schemas}

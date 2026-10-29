@@ -21,6 +21,7 @@ from patchloop.dev import (
     segments,
 )
 from patchloop.dev.context import RETAINED_SOURCE_CHARS, RetainedSourceChars
+from patchloop.dev.mutation_tools import MUTATION_TOOLS
 from patchloop.errors import ContractError
 from patchloop.util import sha256_json
 
@@ -28,11 +29,11 @@ DEV_RUN_SCHEMA = "dev-run-v1"
 DEV_RUNTIME_ID = "dev-head"
 VerificationPolicy = Literal["reproduction-gated-v1", "public-checks-v1"]
 DEV_READ_TOOLS = frozenset({"search_files", "read_file"})
-DEV_SINGLE_ACTION_TOOLS = frozenset({
-    "replace_text", "run_check", "run_tests", "run_probe", "observe_original",
+DEV_SINGLE_ACTION_TOOLS = MUTATION_TOOLS | frozenset({
+    "run_check", "run_tests", "run_probe", "observe_original",
     "finish_task", "stop_task",
 })
-ANNOTATION_OPTIONAL_TOOLS = frozenset({"replace_text", "stop_task", "observe_original"})
+ANNOTATION_OPTIONAL_TOOLS = MUTATION_TOOLS | frozenset({"stop_task", "observe_original"})
 
 
 def dev_tool_surface_hash(
@@ -123,7 +124,8 @@ def dev_tool_surface_hash(
             "max_parallel_reads": 4,
             "mixed_batches": False,
             "unrestricted_shell": False,
-            "new_files": False,
+            "file_transactions": "exact-batch-create-and-receipt-undo-v1",
+            "new_files": True,
             "turn_decision": [
                 "mode",
                 "basis",
@@ -308,6 +310,29 @@ class TextReplacementIntent(StrictModel):
     def replacement_changes_source(self) -> TextReplacementIntent:
         if self.old_text == self.new_text:
             raise ValueError("old_text and new_text must differ")
+        return self
+
+
+class FileEdit(StrictModel):
+    path: str = Field(min_length=1, max_length=1_000)
+    old_text: str | None = Field(min_length=1, max_length=20_000)
+    new_text: str = Field(max_length=20_000)
+    occurrence: Annotated[int, Field(ge=1, le=100)] | Literal["all"] = 1
+
+
+class FileEditIntent(StrictModel):
+    edits: list[FileEdit] | None = Field(default=None, min_length=1, max_length=16)
+    undo_action_id: str | None = Field(default=None, min_length=1, max_length=500)
+    hypothesis: str = Field(min_length=1, max_length=1_500)
+    expected_behavior: str = Field(min_length=1, max_length=1_500)
+    repair_prediction: dict[str, Any] | None = None
+
+    @model_validator(mode="after")
+    def one_operation(self) -> FileEditIntent:
+        if (self.edits is None) == (self.undo_action_id is None):
+            raise ValueError("provide edits or undo_action_id, with the other set to null")
+        if self.edits and len({edit.path for edit in self.edits}) != len(self.edits):
+            raise ValueError("each file appears once in an atomic edit")
         return self
 
 

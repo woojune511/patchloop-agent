@@ -154,3 +154,12 @@ tests/test_replacement_schema.py
 tests/test_file_freedom.py
 tests/test_action_budget_explanations.py
 tests/test_journal_verified_prefix.py
+tests/test_file_edits.py
+tests/test_file_transaction.py
+tests/test_finish_choice_audit.py
+tests/test_new_test_modules.py
+tests/test_file_edit_boundaries.py
+tests/test_boundary_pair_panel.py
+tests/test_repair_path_diagnosis.py::test_multi_file_repair_keeps_actual_changed_path_diagnosis
+tests/test_selected_test_comparison.py::test_pre_state_reverses_undo_of_created_file_without_losing_index_membership
+tests/test_repair_prediction.py::test_added_test_reuses_diagnosis_then_compares_same_test_before_source_edit

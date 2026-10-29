@@ -10,6 +10,7 @@ import copy
 import json
 
 from patchloop.dev import completion_reproduction, probe_invocation, probe_judgment, reproduction
+from patchloop.dev.mutation_tools import MUTATION_TOOLS
 from patchloop.errors import ContractError
 from patchloop.util import sha256_bytes, sha256_json
 from patchloop.verifier.policy import _is_test_path
@@ -28,13 +29,25 @@ def _mutation_receipt(start, result):
     path = start.get("mutation_target_path")
     patch = start.get("mutation_generated_patch")
     diff = start.get("mutation_expected_worktree_diff_hash")
+    if start.get("tool") == "edit_files":
+        return bool(start.get("mutation_admitted") is True and patch and diff
+            and start.get("file_transaction") and start.get("mutation_target_paths")
+            and start.get("input_hash") == result.get("input_hash")
+            and start.get("action_id") == result.get("action_id")
+            and result.get("tool") == "edit_files" and result.get("status") == "succeeded"
+            and output.get("changed_files") == start["mutation_target_paths"]
+            and result.get("workspace_diff_hash") == diff == output.get("worktree_diff_hash")
+            and mutation.get("diff_hash") == diff and mutation.get("changed_hunk") == patch
+            and output.get("patch_hash") == sha256_bytes(patch.encode("utf-8"))
+            and output.get("file_transaction_hash") == sha256_json(start["file_transaction"])
+            and mutation.get("replacement_hash") == sha256_json(arguments))
     return bool(
         start.get("mutation_admitted") is True and path and patch and diff
         and start.get("baseline_diff_hash") and start.get("mutation_preimage_file_hash")
         and start.get("mutation_expected_postimage_file_hash")
         and start.get("input_hash") and start["input_hash"] == result.get("input_hash")
         and start["action_id"] == result.get("action_id")
-        and result.get("tool") == "replace_text" and result.get("status") == "succeeded"
+        and result.get("tool") in MUTATION_TOOLS and result.get("status") == "succeeded"
         and arguments.get("path") == path and output.get("changed_files") == [path]
         and result.get("workspace_diff_hash") == diff == output.get("worktree_diff_hash")
         and mutation.get("diff_hash") == diff and mutation.get("changed_hunk") == patch
@@ -55,7 +68,7 @@ def _test_only_chain(events, mutation_id, current_diff, results):
     chain, hashes, seen = [], {}, set()
     for event in events:
         start = event["payload"]
-        if event["event_type"] != "action_started" or start.get("tool") != "replace_text":
+        if event["event_type"] != "action_started" or start.get("tool") not in MUTATION_TOOLS:
             continue
         if not chain and start["action_id"] != mutation_id:
             continue
@@ -67,6 +80,10 @@ def _test_only_chain(events, mutation_id, current_diff, results):
         if not _mutation_receipt(start, results.get(start["action_id"], {})):
             return None
         path = start["mutation_target_path"]
+        if not path:
+            # A batch invalidates the single-file additive-test shortcut. It still
+            # participates in the exact-current-candidate diagnosis path.
+            return None
         if chain and (
             start.get("mutation_test_only") is not True
             or not _is_test_path(path) or not path.endswith(".py")
@@ -225,6 +242,18 @@ def _summary(trace):
             "details_field": "output.call_path", "semantic_correctness": "unverified"}
 
 
+def _implementation_targets(start):
+    if start.get("tool") == "edit_files":
+        candidates = [(change["path"], (change.get("after") or {}).get("content_hash"))
+                      for change in start.get("file_transaction", {}).get("changes", [])]
+    else:
+        candidates = [(start.get("mutation_target_path"),
+                       start.get("mutation_expected_postimage_file_hash"))]
+    return {path: digest for path, digest in candidates
+            if isinstance(path, str) and path.endswith(".py") and not _is_test_path(path)
+            and isinstance(digest, str)}
+
+
 def review(events, current_diff, completion):
     """Keep one stable trigger per candidate; replays/restarts cannot refill it."""
     inactive = {"policy": POLICY, "status": "not_needed", "blocked": False}
@@ -234,18 +263,14 @@ def review(events, current_diff, completion):
               if e["event_type"] == "action_started"}
     rows = [e["payload"]["result"] for e in events if e["event_type"] == "action_finished"]
     results = {r["action_id"]: r for r in rows}
-    mutations = [r for r in rows if r.get("tool") == "replace_text"
+    mutations = [r for r in rows if r.get("tool") in MUTATION_TOOLS
                  and r.get("status") == "succeeded"
-                 and (path := starts.get(r["action_id"], {}).get("mutation_target_path"))
-                 and path.endswith(".py") and not _is_test_path(path)]
+                 and _implementation_targets(starts.get(r["action_id"], {}))]
     if not mutations:
         return inactive
     mutation = mutations[-1]
     mutation_start = starts.get(mutation["action_id"], {})
-    target_path = mutation_start.get("mutation_target_path")
-    target_hash = mutation_start.get("mutation_expected_postimage_file_hash")
-    if not target_path or not target_hash:
-        return inactive
+    targets = _implementation_targets(mutation_start)
     trigger = None
     for case in completion.get("cases", []):
         if (case["case_id"] not in completion.get("baseline_failure_case_ids", [])
@@ -264,7 +289,8 @@ def review(events, current_diff, completion):
             changes = [{"path": row["path"], "file_hash": row["file_hash"],
                         "ranges": row["not_observed_changed_ranges"]}
                        for row in feedback.get("files", [])
-                       if row.get("path") == target_path and row.get("file_hash") == target_hash
+                       if row.get("path") in targets
+                       and targets[row["path"]] == row.get("file_hash")
                        and row.get("status") == "collected"
                        and row.get("not_observed_changed_ranges")]
             observation = result["output"]["reproduction"]
@@ -407,7 +433,7 @@ def validate(state, tool, arguments):
     if not state.get("blocked"):
         if request is not None:
             raise ContractError("call_path requires a pending original-failure path diagnosis")
-        if state.get("status") == "diagnosed" and tool == "replace_text":
+        if state.get("status") == "diagnosed" and tool in MUTATION_TOOLS:
             if not arguments.get("hypothesis"):
                 raise ContractError("Revise the prior repair hypothesis using the completed "
                                     "call-path diagnosis; provide hypothesis.")

@@ -37,7 +37,7 @@ def test_probe_before_last_edit_window_is_closed_but_edit_and_finish_stay_availa
     before = policy(calls=5)
     assert {"run_probe", "read_file", "replace_text", "finish_task"} <= before.allowed_tools
     after_probe = policy(calls=4, tools=7)
-    assert after_probe.allowed_tools == {"replace_text", "finish_task", "stop_task"}
+    assert after_probe.allowed_tools == {"replace_text", "edit_files", "finish_task", "stop_task"}
     assert after_probe.mutation_completion_possible
     assert after_probe.workflow_gate == "ready_to_submit"
     assert after_probe.minimum_completion_calls == 1  # No invented mandatory task failure.

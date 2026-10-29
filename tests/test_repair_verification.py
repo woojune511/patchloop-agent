@@ -94,11 +94,22 @@ def make_patch(project, test_source=None, implementation=FIXED_SOURCE, extras=No
         test_source = BASE_TEST.replace('({"b": "c"}, "c")', '({"b": "c"}, "c"), ({"b": ""}, "d")')
     (source / "sample.py").write_text(implementation)
     (source / "tests/test_sample.py").write_text(test_source)
+    new_paths = []
     for name, text in (extras or {}).items():
-        (source / name).write_text(text)
+        target = source / name
+        if not target.exists():
+            new_paths.append(name)
+            target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(text)
+    if new_paths:
+        run_git(source, "add", "--intent-to-add", "--", *new_paths)
     patch = request.parent / "returned.patch"
     patch.write_bytes(run_git(source, "diff", "--binary", text=False).stdout)
+    if new_paths:
+        run_git(source, "reset", "--", *new_paths)
     run_git(source, "restore", ".")
+    for name in new_paths:
+        (source / name).unlink()
     return patch
 
 
@@ -256,6 +267,73 @@ def test_unsafe_separation_does_not_run_checks(project, test_source):
     assert result["checks"] == [] and result["comparison"]["status"] == "NOT_RUN"
 
 
+def test_new_python_source_and_nested_test_file_are_separated_exactly(project):
+    request, source = project
+    added_path = "tests/new_cases/test_empty.py"
+    added = ('"""Public empty-value regression."""\nfrom sample import resolve\n\n'
+             'def test_empty():\n    assert resolve({"b": ""}) == "d"\n')
+    patch = make_patch(project, BASE_TEST, implementation="from helper import resolve\n", extras={
+        "helper.py": FIXED_SOURCE, added_path: added,
+    })
+    result = verification.verify_repair(request, patch)
+    assert result["status"] == "COMPLETE", result
+    assert result["comparison"]["status"] == "OBSERVED_FAIL_THEN_PASS"
+    assert result["implementation_paths"] == ["helper.py", "sample.py"]
+    assert result["test_paths"] == [added_path]
+    base, before, after = [Path(result["workspaces"][phase])
+                           for phase in ("base", "base_with_tests", "patched")]
+    assert not (base / added_path).exists()
+    assert not (before / "helper.py").exists()
+    assert (before / "sample.py").read_text() == BASE_SOURCE
+    assert (after / "helper.py").read_text() == FIXED_SOURCE
+    assert (before / added_path).read_bytes() == (after / added_path).read_bytes()
+    assert (before / added_path).read_text() == added
+    assert all((workspace / "tests/test_sample.py").read_text() == BASE_TEST
+               for workspace in (base, before, after, source))
+    assert "new file mode 100644" in run_git(before, "diff").stdout
+    assert not run_git(source, "status", "--porcelain").stdout
+    assert result["acceptance"] == "NOT_RUN" and result["model_calls"] == 0
+
+
+def test_new_test_import_of_new_implementation_is_not_positive_comparison(project):
+    request, _ = project
+    patch = make_patch(project, BASE_TEST, implementation=BASE_SOURCE, extras={
+        "helper.py": FIXED_SOURCE,
+        "tests/test_helper.py": ('from helper import resolve\n\n'
+                                 'def test_empty():\n    assert resolve({"b": ""}) == "d"\n'),
+    })
+    result = verification.verify_repair(request, patch)
+    assert result["status"] == "COMPLETE", result
+    assert result["checks"][1]["observation"]["status"] == "COLLECTION_ERROR"
+    assert result["comparison"]["status"] == "INCONCLUSIVE"
+
+
+@pytest.mark.parametrize("path,content", [
+    ("tests/new_cases/conftest.py", "def pytest_configure(config): pass\n"),
+    ("tests/test_new.py", "import pytest\n@pytest.fixture\ndef test_data(): return 1\n"),
+    ("tests/test_new.py", "import pytest\npytestmark = pytest.mark.skip\n"
+                          "def test_added(): assert True\n"),
+])
+def test_new_test_file_does_not_introduce_unseparable_setup(project, path, content):
+    request, _ = project
+    result = verification.verify_repair(request, make_patch(project, extras={path: content}))
+    assert result["status"] == "UNSUPPORTED", result
+    assert result["checks"] == []
+
+
+def test_new_source_path_still_obeys_original_request_scope(project):
+    request, _ = project
+    public = request.parent / "public.yaml"
+    task = yaml.safe_load(public.read_text())
+    task["constraints"]["allowed_paths"] = ["sample.py", "tests/**"]
+    public.write_text(yaml.safe_dump(task))
+    result = verification.verify_repair(request, make_patch(project, extras={
+        "outside.py": "value = 1\n",
+    }))
+    assert result["status"] == "UNSUPPORTED" and not result["scope"]["passed"]
+    assert result["checks"] == []
+
+
 def test_no_tests_or_no_pytest_is_unsupported(project):
     request, _ = project
     result = verification.verify_repair(request, make_patch(project, BASE_TEST))
@@ -282,7 +360,7 @@ def test_invalid_patch_records_error_without_model(project):
     [
         "diff --git a/tests/test_old.py b/tests/test_new.py\n"
         "similarity index 100%\nrename from tests/test_old.py\nrename to tests/test_new.py\n",
-        "diff --git a/tests/test_new.py b/tests/test_new.py\nnew file mode 100644\n",
+        "diff --git a/tests/test_new.py b/tests/test_new.py\nnew file mode 120000\n",
         "diff --git a/sample.py b/sample.py\nold mode 100644\nnew mode 100755\n",
     ],
 )

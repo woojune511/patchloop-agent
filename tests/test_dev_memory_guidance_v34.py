@@ -136,11 +136,11 @@ def test_descriptions_outside_memory_and_schema_order_are_unchanged(names, expec
 def test_surrounding_action_guidance_identity():
     from repair_mechanism_expectations import JUDGMENT
     prefix, _, suffix = _memory_block()
-    # Diagnosis permits exploration before tracing; memory stays unchanged and
-    # surrounding prose keeps the 8,000-character bound.
+    # Registered file batches join annotation-free actions; memory stays unchanged
+    # and surrounding prose keeps the 8,000-character bound.
     # Historical J0/J1 arms retain their exact earlier surrounding-guidance identities.
     assert hashlib.sha256(canonical_json([prefix, suffix]).encode()).hexdigest() == (
-        "5cb44c5b7b30a0d08b0cc76d2f6d9418302a9e2230ce31f533131f65221474a9"
+        "dcc32805637450349c682ae5d2001c78ebacc937f81e00a337b202d4f98f212f"
         if FROZEN_ARM is None else
         "2d0a9063da8d508a3c1218903cae12e33aa5db97f4d5655ca645fd5d52dc1331"
         if JUDGMENT else "c6439ce32e7724ed5d4c08dc1f207186b45e34234947c2867d7a65f096ce10a3"
@@ -202,10 +202,10 @@ def test_compact_guidance_keeps_optional_evidence_lifecycle_and_concern_boundari
 
 
 def test_guidance_identity_changes_without_changing_run_schema_or_limits():
-    # Common action/probe guidance changes the overall surface identity;
+    # Registered atomic edits, creation and receipt undo change the surface identity;
     # argument and description identities remain independently pinned above.
     assert dev_tool_surface_hash() == (
-        "sha256:f86105ec7ace101454cb816816a7b0fb634d831fe0b492a63736ea143622431e"
+        "sha256:f102fdd7331ff1f1fb7149420bac6c5d65df7e045071272253fc28684a1bca3b"
         if FROZEN_ARM is None else
         "sha256:57193859890419b79cb7f4927c37796d044bc4bf7159c51ddf17723849529e26"
     )

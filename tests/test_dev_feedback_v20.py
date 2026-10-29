@@ -205,10 +205,10 @@ def test_probe_description_exposes_existing_capability_without_changing_wire_sha
             return [structure(item) for item in value]
         return value
 
-    # Pin current small-core inputs, purpose selection, question references and tool order.
+    # Pin small-core inputs, registered file batches, question references and tool order.
     encoded = json.dumps(structure(schemas), separators=(",", ":"), ensure_ascii=False).encode()
     assert hashlib.sha256(encoded).hexdigest() == (
-        "095518e25060a00bbb56fe9042a719c2cafe23b837888f5d0abc3a3d3761dafa"
+        "e96198c7dd7d8f66a138c374746754104de8f5967cff0329c50937ec0d4ad652"
         if FROZEN_ARM is None else
         "acdcc28623f92006faaa95a0c58015095e28b851093d0eb983e8d59bcd303222"
     )

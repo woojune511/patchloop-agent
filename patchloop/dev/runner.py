@@ -107,12 +107,14 @@ from patchloop.dev.evaluation_completion import (
     load_evaluation_completion,
     prepare_evaluation_completion,
 )
+from patchloop.dev.file_transaction import FileTransactionUncertain
 from patchloop.dev.inspection_projection import (
     project_inspection_context,
     project_inspection_result,
 )
 from patchloop.dev.model import DEV_SYSTEM_PROMPT, MockDevAdapter
 from patchloop.dev.model_state import compact_model_state
+from patchloop.dev.mutation_tools import MUTATION_TOOLS
 from patchloop.dev.native_sources import (
     PUBLIC_EVIDENCE_KIND,
     project_mutation_result,
@@ -1305,7 +1307,7 @@ def _tool_policy(
                     and remaining_tool_actions - 1 >= budget.protected_tool_actions):
                 allowed.add(history_search.TOOL)
         if mutation_allowed:
-            allowed.add("replace_text")
+            allowed.update(MUTATION_TOOLS)
         if (first_available and remaining_model_calls - 1 >= budget.minimum
                 and remaining_tool_actions - 1 >= budget.minimum_tool_actions):
             allowed.add("observe_original")
@@ -1477,10 +1479,11 @@ def _tool_policy(
         if path_available or shared_failure_exploration:
             for tool in {"read_file", "search_files"} & allowed:
                 minimum_cost_successors[tool] = inspection_floor
-        if repair_test_edit_enabled and "replace_text" in allowed:
-            minimum_cost_successors["replace_text"] = max(
-                minimum_cost_successors["replace_text"], test_edit_budget.minimum - 1,
-            )
+        if repair_test_edit_enabled:
+            for tool in MUTATION_TOOLS & allowed:
+                minimum_cost_successors[tool] = max(
+                    minimum_cost_successors[tool], test_edit_budget.minimum - 1,
+                )
         if first_available and not diagnostic_only:
             for tool in _FIRST_OBSERVATION_EXPLORATION & allowed:
                 # The shared inspection floor already retained the first
@@ -1508,13 +1511,13 @@ def _tool_policy(
                     and completion_state.check_count > 0
                     and not completion_state.reproduction_case_count and not acquisition_pending)
                 spare_edits = remaining_mutations - int(requires_mutation
-                    or tool == "replace_text") - int(repair_test_edit_enabled)
+                    or tool in MUTATION_TOOLS) - int(repair_test_edit_enabled)
                 ordinary = (diagnostic_only or not first_available) and ordinary_route_supported(
                     completion_state, tool, acquisition_pending=acquisition_pending,
-                    test_edit=repair_test_edit_enabled and tool == "replace_text",
+                    test_edit=repair_test_edit_enabled and tool in MUTATION_TOOLS,
                     test_comparison=test_comparison_pending)
                 legacy_tool_minimum = (mutation_budget.minimum_tool_actions
-                                       if tool == "replace_text"
+                                       if tool in MUTATION_TOOLS
                                        else budget.minimum_tool_actions)
                 recover = bool(not reserve_revision and tool not in {"finish_task", "stop_task"}
                     and spare_edits > 0
@@ -1533,7 +1536,7 @@ def _tool_policy(
                                      >= selected_test_tool_floor),
                     optional_check_seconds=max((float(getattr(s, "timeout_seconds", 0)) + 5
                                                 for s in suites), default=0),
-                    test_edit=repair_test_edit_enabled and tool == "replace_text",
+                    test_edit=repair_test_edit_enabled and tool in MUTATION_TOOLS,
                     preserve_pending_diagnosis=(
                         path_available and tool in {"read_file", "search_files"}),
                     ordinary_routes=ordinary,
@@ -1615,7 +1618,7 @@ def _tool_policy(
                 # A useful immediate repair/check may spend speculative recovery.
                 # Known original-failure exploration may also choose the required
                 # route explicitly; it does not retain a later failure's revision.
-                if recover and not fits(route) and (tool in {"replace_text", "run_check"}
+                if recover and not fits(route) and (tool in MUTATION_TOOLS | {"run_check"}
                         or required_inspection and not path_available
                         and tool in {"read_file", "search_files"}
                         or shared_failure_exploration and tool in {"read_file", "search_files"}
@@ -2443,7 +2446,7 @@ def _protocol_correction(
             code, issue, result["tool_contract_failure"])
         result["message"] = result["diagnosis_correction"]["message"]
     elif policy.workflow_gate == "needs_mutation" and (
-            {"replace_text", "observe_original"} & allowed):
+            {"replace_text", "edit_files", "observe_original"} & allowed):
         result["repair_correction"] = repair_context.correction(
             code, issue, result["tool_contract_failure"])
         result["message"] = result["repair_correction"]["message"]
@@ -2739,7 +2742,7 @@ def _requested_tool_from_openai(call: Any, *, agent_policy: str = "current",
                                 path_diagnosis_pending: bool = False,
                                 repair_test_comparison_pending: bool = False) -> RequestedTool:
     arguments = dict(call.arguments)
-    small = call.name in {"replace_text", "stop_task", "observe_original"}
+    small = call.name in {"replace_text", "edit_files", "stop_task", "observe_original"}
     if small:
         annotations = {key: arguments.pop(key) for key in ("turn_decision", "memory_update")
                        if key in arguments}
@@ -2994,7 +2997,7 @@ def _model_error_issue(
 
 def _provider_tool_arguments(call: RequestedTool) -> dict[str, Any]:
     arguments = dict(call.arguments)
-    if call.name in {"replace_text", "stop_task", "observe_original"}:
+    if call.name in {"replace_text", "edit_files", "stop_task", "observe_original"}:
         return _provider_rejected_call_arguments(call)
     if call.preserve_annotation_presence and not (
         {"turn_decision", "memory_update", "rejected_turn_decision"} & call.model_fields_set
@@ -3685,9 +3688,9 @@ def _deduplicate_native_state(
             "action_id": result.action_id,
             "delivery": "preceding_function_call_output",
         }
-        if result.tool == "replace_text" and result.status == "succeeded":
+        if result.tool in MUTATION_TOOLS and result.status == "succeeded":
             payload["last_successful_mutation"] = reference
-        elif result.tool == "replace_text" and result.status == "failed":
+        elif result.tool in MUTATION_TOOLS and result.status == "failed":
             failed = payload.get("last_failed_mutation")
             if isinstance(failed, dict) and failed.get("action_id") == result.action_id:
                 payload["last_failed_mutation"] = {
@@ -3728,7 +3731,7 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
                 "Correct the proposal using already delivered exact evidence. Inspect only "
                 "to acquire missing exact evidence while allowed, or abandon the proposal."
             )
-        elif result.tool == "replace_text":
+        elif result.tool in MUTATION_TOOLS:
             next_question = (
                 "Use the typed failure and preserved replacement to make a viable "
                 "replace_text call, or stop."
@@ -3788,7 +3791,7 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
             },
             "next_question": next_question,
         }
-    if result.tool == "replace_text":
+    if result.tool in MUTATION_TOOLS:
         return {
             "action_id": result.action_id,
             "attempt": "mutation",
@@ -3926,7 +3929,7 @@ def _batch_attempt_card(
     for call in calls:
         if (call.turn_decision is None and "memory_update" not in call.model_fields_set
                 and started.get("workflow_gate") != "needs_path_diagnosis"
-                and call.name not in {"replace_text", "stop_task", "observe_original"}):
+                and call.name not in MUTATION_TOOLS | {"stop_task", "observe_original"}):
             raise RecoveryError("completed tool batch is missing a public action decision")
         decisions.append(call.turn_decision.model_dump(mode="json")
                          if call.turn_decision is not None else None)
@@ -4023,7 +4026,7 @@ def _milestones(journal: DevJournal) -> dict[str, Any]:
         if result["status"] != "succeeded":
             continue
         output = result["output"]
-        if result["tool"] == "replace_text":
+        if result["tool"] in MUTATION_TOOLS:
             mutation = output["mutation"]
             plans.append(
                 {
@@ -4371,7 +4374,7 @@ def _batch_fits_tool_budget(calls, counters, limits, policy=None):
 
 def _requests_test_edit(call):
     prediction = call.arguments.get("repair_prediction")
-    return (call.name == "replace_text" and isinstance(prediction, dict)
+    return (call.name in MUTATION_TOOLS and isinstance(prediction, dict)
             and prediction.get("kind") == "test")
 
 
@@ -4538,7 +4541,7 @@ def _update_inspection_counters(
         counters.commitment_diff_hash = None
         counters.commitment_trigger_no_gain_turns = 0
         return
-    if result.tool != "replace_text":
+    if result.tool not in MUTATION_TOOLS:
         counters.consecutive_no_evidence_gain_turns = 0
         return
     if result.status == "succeeded":
@@ -4578,8 +4581,6 @@ def _validate_resumed_workspace(
     workspace: Path, journal: DevJournal, *, deadline: ExecutionDeadline | None = None,
 ) -> None:
     summary = WorkspaceManager.diff_summary(workspace, deadline=deadline)
-    if summary.untracked_files:
-        raise ResumeContractMismatch("workspace contains non-ignored untracked files")
     expected_diff_hash = sha256_bytes(b"")
     pending: dict[str, Any] | None = None
     for event in journal.events():
@@ -4590,9 +4591,19 @@ def _validate_resumed_workspace(
             if pending is not None and payload.get("action_id") == pending.get("action_id"):
                 pending = None
             result = DevToolResult.model_validate(payload["result"])
-            if result.status == "succeeded" and result.tool == "replace_text":
+            if result.status == "succeeded" and result.tool in MUTATION_TOOLS:
                 expected_diff_hash = str(result.output["worktree_diff_hash"])
-    if pending is not None and pending.get("tool") == "replace_text":
+    if (pending is not None and pending.get("tool") == "edit_files"
+            and pending.get("mutation_admitted") is True):
+        if pending.get("baseline_diff_hash") != expected_diff_hash:
+            raise ResumeContractMismatch("pending file transaction has a different baseline")
+        from patchloop.dev.file_edits import validate_pending
+
+        validate_pending(workspace, journal, pending, deadline=deadline)
+        return
+    if summary.untracked_files:
+        raise ResumeContractMismatch("workspace contains non-ignored untracked files")
+    if pending is not None and pending.get("tool") in MUTATION_TOOLS:
         if pending.get("baseline_diff_hash") != expected_diff_hash:
             raise ResumeContractMismatch("pending mutation baseline does not match the journal")
         if summary.patch_hash == expected_diff_hash:
@@ -5033,7 +5044,7 @@ def _run_original_recheck(
     if len(latest_results) != 1:
         return None, None
     mutation = latest_results[0]
-    if mutation.tool != "replace_text" or mutation.status != "succeeded":
+    if mutation.tool not in MUTATION_TOOLS or mutation.status != "succeeded":
         return None, None
     if gateway.current_diff_hash != mutation.workspace_diff_hash:
         raise ResumeContractMismatch("original recheck candidate differs from accepted mutation")
@@ -5472,7 +5483,7 @@ def _run_one_locked(
             started=started, harness_git_commit=identity["harness_git_commit"],
             evaluation_deadline=deadline,
         )
-    except (ExecutionDeadlineExceeded, GitExecutionUncertain) as exc:
+    except (ExecutionDeadlineExceeded, GitExecutionUncertain, FileTransactionUncertain) as exc:
         exhausted = isinstance(exc, ExecutionDeadlineExceeded) or exc.details.get(
             "deadline_exhausted", False,
         )
@@ -5487,7 +5498,8 @@ def _run_one_locked(
             active_elapsed_ms=active_base_ms + int((monotonic() - started) * 1_000),
         )
         return _OneRunResult(
-            _public_result(run_id, terminal), isinstance(exc, GitExecutionUncertain),
+            _public_result(run_id, terminal),
+            isinstance(exc, (GitExecutionUncertain, FileTransactionUncertain)),
         )
 
 
@@ -5582,7 +5594,7 @@ def _run_one_active(
                 "repository_url": package.public.repository.url,
                 "base_commit": package.public.repository.base_commit,
             })
-    except (ExecutionDeadlineExceeded, GitExecutionUncertain):
+    except (ExecutionDeadlineExceeded, GitExecutionUncertain, FileTransactionUncertain):
         raise
     except PatchLoopError as exc:
         if resuming:
@@ -5659,7 +5671,7 @@ def _run_one_active(
                         "repository_url": package.public.repository.url,
                         "base_commit": package.public.repository.base_commit,
                     })
-    except (ExecutionDeadlineExceeded, GitExecutionUncertain):
+    except (ExecutionDeadlineExceeded, GitExecutionUncertain, FileTransactionUncertain):
         raise
     except PatchLoopError as exc:
         terminal = _terminal(
@@ -5956,7 +5968,7 @@ def _run_one_active(
                         except ExecutionDeadlineExceeded:
                             terminal_code = DevTerminal.LIMIT_REACHED
                             terminal_message = "active deadline exhausted before recovered action"
-                        except GitExecutionUncertain:
+                        except (GitExecutionUncertain, FileTransactionUncertain):
                             raise
                         except Exception as exc:
                             terminal_code = DevTerminal.TASK_FAILED
@@ -6010,7 +6022,7 @@ def _run_one_active(
             except ExecutionDeadlineExceeded:
                 terminal_code = DevTerminal.LIMIT_REACHED
                 terminal_message = "active deadline exhausted during original recheck"
-            except GitExecutionUncertain:
+            except (GitExecutionUncertain, FileTransactionUncertain):
                 raise
             except Exception as exc:
                 terminal_code = DevTerminal.TASK_FAILED
@@ -6027,7 +6039,7 @@ def _run_one_active(
             except ExecutionDeadlineExceeded:
                 terminal_code = DevTerminal.LIMIT_REACHED
                 terminal_message = "active deadline exhausted before repair recheck"
-            except GitExecutionUncertain:
+            except (GitExecutionUncertain, FileTransactionUncertain):
                 raise
             except Exception as exc:
                 terminal_code = DevTerminal.TASK_FAILED
@@ -6045,7 +6057,7 @@ def _run_one_active(
             except ExecutionDeadlineExceeded:
                 terminal_code = DevTerminal.LIMIT_REACHED
                 terminal_message = "active deadline exhausted during probe recheck"
-            except GitExecutionUncertain:
+            except (GitExecutionUncertain, FileTransactionUncertain):
                 raise
             except Exception as exc:
                 terminal_code = DevTerminal.TASK_FAILED
@@ -6234,7 +6246,7 @@ def _run_one_active(
             terminal_code = DevTerminal.PROVIDER_CONTINUATION_ERROR
             terminal_message = str(exc)
             break
-        except GitExecutionUncertain:
+        except (GitExecutionUncertain, FileTransactionUncertain):
             raise
         except RecoveryError as exc:
             terminal_code = DevTerminal.TASK_FAILED
@@ -6941,7 +6953,7 @@ def _run_one_active(
             terminal_code = DevTerminal.LIMIT_REACHED
             terminal_message = "active deadline exhausted before tool execution"
             break
-        except GitExecutionUncertain:
+        except (GitExecutionUncertain, FileTransactionUncertain):
             raise
         except Exception as exc:
             terminal_code = DevTerminal.TASK_FAILED
@@ -7134,7 +7146,7 @@ def _run_one_active(
         }
         terminal_code = DevTerminal.LIMIT_REACHED
         terminal_message = "active deadline exhausted during isolated evaluation"
-    except GitExecutionUncertain as exc:
+    except (GitExecutionUncertain, FileTransactionUncertain) as exc:
         evaluator_summary = {
             "task_acceptance": "ERROR", "safety_state": "ERROR",
             "failure_class": (

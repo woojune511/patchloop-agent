@@ -118,6 +118,28 @@ def comparison(gateway, baseline="original_base", mutation=None, action="compare
                    "comparison": {"baseline": baseline, "mutation_action_id": mutation}})
 
 
+def test_pre_state_reverses_undo_of_created_file_without_losing_index_membership(project):
+    created = invoke(project, "edit_files", "create-helper", {
+        "edits": [{"path": "helper.txt", "old_text": None,
+                   "new_text": "helper\n", "occurrence": 1}],
+        "undo_action_id": None, "hypothesis": "Retain an unrelated helper.",
+        "expected_behavior": "Selected test behavior stays unchanged.",
+    }, "mutate")
+    assert created.status == "succeeded", created.message
+    mutate(project, "repair", "value = 0", "value = 2")
+    undone = invoke(project, "edit_files", "undo-helper", {
+        "edits": None, "undo_action_id": "create-helper",
+        "hypothesis": "Remove only the unused helper.",
+        "expected_behavior": "Preserve the later implementation repair.",
+    }, "mutate")
+    assert undone.status == "succeeded", undone.message
+    result = comparison(project, "before_mutation", "repair")
+    assert result.status == "succeeded", result.message
+    assert [call[1] for call in project.sandbox.calls] == [0, 2]
+    assert result.output["comparison"]["baseline_diff_hash"] == created.workspace_diff_hash
+    assert not (project.workspace / "helper.txt").exists()
+
+
 @pytest.mark.parametrize("mode,status", [
     ("real", "OBSERVED_FAIL_THEN_PASS"), ("helper", "PASSED_BOTH"),
 ])

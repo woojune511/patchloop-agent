@@ -187,7 +187,7 @@ def test_finish_dispatch_cannot_spend_its_advertised_replay_failure_recovery_fun
         cost_ledger=ledger, completion_cost_policy=COMPLETION_RESERVE_POLICY,
     )
     assert selected.protected_completion_possible
-    assert selected.allowed_tools == {"finish_task", "replace_text", "stop_task"}
+    assert selected.allowed_tools == {"finish_task", "replace_text", "edit_files", "stop_task"}
     reserve = selected.completion_cost["future_cost_reserve_nanos"]
     assert reserve >= 6 * ledger.future_call_reservation_nanos()
     admission = ledger.admit(60_000, future_cost_reserve_nanos=reserve)

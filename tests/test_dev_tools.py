@@ -151,9 +151,16 @@ def test_mutation_tool_contract_is_one_exact_gateway_generated_replacement() -> 
         assert set(mutation["parameters"]["properties"]) == {
             "path", "old_text", "new_text", "occurrence", "hypothesis", "expected_behavior",
         }
+        file_mutation = next(schema for schema in schemas if schema["name"] == "edit_files")
+        assert set(file_mutation["parameters"]["properties"]) == {
+            "edits", "undo_action_id", "hypothesis", "expected_behavior",
+        }
+        assert set(file_mutation["parameters"]["required"]) == set(
+            file_mutation["parameters"]["properties"])
+        assert file_mutation["parameters"]["additionalProperties"] is False
         assert set(stop["parameters"]["properties"]) == {"reason_code", "summary"}
     for schema in schemas:
-        if FROZEN_ARM is None and schema["name"] in {"replace_text", "stop_task"}:
+        if FROZEN_ARM is None and schema["name"] in {"replace_text", "edit_files", "stop_task"}:
             assert not {"turn_decision", "memory_update", "causal_revision"} & set(
                 schema["parameters"]["properties"])
             continue

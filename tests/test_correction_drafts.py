@@ -21,6 +21,61 @@ def edit(action_id="edit-1", **changes):
     return RequestedTool(name="replace_text", action_id=action_id, arguments=arguments)
 
 
+def file_edit(action_id="files-1", *, undo=None, new_text="VALUE = '수정'\n"):
+    return RequestedTool(name="edit_files", action_id=action_id, arguments={
+        "edits": None if undo else [{"path": "package/helper.py", "old_text": None,
+                                     "new_text": new_text, "occurrence": 1}],
+        "undo_action_id": undo, "hypothesis": "Keep the related file change recoverable.",
+        "expected_behavior": "Preserve unrelated source and original tests.",
+    })
+
+
+def test_create_and_undo_drafts_preserve_exact_shapes_and_withhold_stale_bodies():
+    calls = [file_edit(), file_edit("undo-draft", undo="accepted-files")]
+    before = [call.model_dump(mode="json") for call in calls]
+    packet = correction_drafts.build(calls, turn_id="files-turn", diff_hash=DIFF)
+    assert packet["candidate_count"] == 2 and packet["omitted"] == {}
+    assert packet["execution_status"] == "not_executed"
+    for call, draft in zip(calls, packet["drafts"], strict=True):
+        assert draft["tool"] == "edit_files" and draft["arguments"] == call.arguments
+        assert draft["arguments_hash"] == sha256_json(call.arguments)
+        assert draft["input_hash"] == sha256_json({"tool": call.name, "arguments": call.arguments})
+    assert packet["drafts"][0]["arguments"]["undo_action_id"] is None
+    assert packet["drafts"][0]["arguments"]["edits"][0]["old_text"] is None
+    assert packet["drafts"][1]["arguments"]["edits"] is None
+    current = correction_drafts.project(packet, diff_hash=DIFF)
+    current["drafts"][0]["arguments"]["edits"][0]["new_text"] = "local"
+    assert packet["drafts"][0]["arguments"] == calls[0].arguments
+    stale = correction_drafts.project(packet, diff_hash="sha256:" + "b" * 64)
+    assert stale["status"] == "stale" and stale["retained_argument_utf8_bytes"] == 0
+    assert stale["omitted"] == {"stale_diff": 2}
+    assert all("arguments" not in draft and draft["body_status"] == "omitted_stale_diff"
+               for draft in stale["drafts"])
+    assert [call.model_dump(mode="json") for call in calls] == before
+
+
+def test_mixed_mutation_drafts_share_the_same_two_draft_limit():
+    calls = [edit(), file_edit(), file_edit("undo-draft", undo="accepted-files")]
+    packet = correction_drafts.build(calls, turn_id="mixed-turn", diff_hash=DIFF)
+    assert packet["candidate_count"] == 3 and len(packet["drafts"]) == 2
+    assert [draft["tool"] for draft in packet["drafts"]] == ["replace_text", "edit_files"]
+    assert packet["omitted"] == {"count_limit": 1}
+
+
+def test_file_drafts_obey_whole_body_utf8_and_total_byte_limits():
+    large, undo = file_edit(new_text="수" * 11_000), file_edit("undo", undo="accepted-files")
+    packet = correction_drafts.build([large, undo], turn_id="large-turn", diff_hash=DIFF)
+    assert len(canonical_json(large.arguments).encode("utf-8")) > 32_000
+    assert packet["omitted"] == {"argument_byte_limit": 1}
+    assert [draft["original_action_id"] for draft in packet["drafts"]] == ["undo"]
+    assert packet["drafts"][0]["arguments"] == undo.arguments
+    calls = [file_edit(f"files-{index}", new_text="x" * 17_000) for index in range(2)]
+    packet = correction_drafts.build(calls, turn_id="total-turn", diff_hash=DIFF)
+    assert len(packet["drafts"]) == 1 and packet["omitted"] == {"argument_byte_limit": 1}
+    assert packet["retained_argument_utf8_bytes"] <= 32_000
+    assert packet["drafts"][0]["arguments"] == calls[0].arguments
+
+
 def test_two_drafts_keep_exact_arguments_and_gateway_input_identity_without_execution():
     first = edit(repair_prediction={"event": "returned", "expected": {"value": "수정"}})
     second = edit("edit-2", path="tests/test_source.py", occurrence=1, new_text="assert fixed\n")

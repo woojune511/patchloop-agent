@@ -6,6 +6,7 @@ import copy
 from typing import Any
 
 from patchloop.dev import probe_replay
+from patchloop.dev.mutation_tools import MUTATION_TOOLS
 from patchloop.errors import ContractError, RecoveryError
 from patchloop.util import sha256_bytes
 
@@ -57,7 +58,7 @@ def review(events: list[dict], current_diff: str) -> dict[str, Any] | None:
     """Derive one card from durable public actions; never execute or interpret a test."""
     mutations = [(i, event["payload"]["result"]) for i, event in enumerate(events)
                  if event["event_type"] == "action_finished"
-                 and event["payload"]["result"].get("tool") == "replace_text"
+                 and event["payload"]["result"].get("tool") in MUTATION_TOOLS
                  and event["payload"]["result"].get("status") == "succeeded"]
     if not mutations:
         return None

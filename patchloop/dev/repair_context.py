@@ -13,6 +13,8 @@ read may still be useful for a missing anchor or a specific unresolved decision.
 For a supported edit, replace_text starts with path, old_text, new_text, occurrence,
 hypothesis and expected_behavior. Copy an exact current source anchor. Explain the revised
 mechanism in hypothesis using the actual original-call observations and counterevidence.
+Use edit_files for one atomic batch, new files (old_text null), or undo_action_id.
+An undo requires unchanged affected files and spends one edit slot; checks become stale.
 After a refuted repair's diagnosis, repair_prediction selects one changed observable
 or a bounded test addition. The host binds the counterevidence. A test addition leaves
 the source repair unresolved; use the frozen run_tests comparison when pending.
@@ -52,7 +54,7 @@ def system_prompt(state):
 
 def pending(state):
     return (state.get("workflow_gate") in {"needs_mutation", "needs_test_comparison"}
-            and bool({"replace_text", "observe_original", "run_tests"}
+            and bool({"replace_text", "edit_files", "observe_original", "run_tests"}
                      & set(state.get("available_tool_names", []))))
 
 

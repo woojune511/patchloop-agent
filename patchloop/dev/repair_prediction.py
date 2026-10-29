@@ -5,6 +5,7 @@ from __future__ import annotations
 import copy
 
 from patchloop.dev import probe_judgment
+from patchloop.dev.mutation_tools import MUTATION_TOOLS
 from patchloop.errors import ContractError
 from patchloop.util import sha256_json
 
@@ -170,11 +171,11 @@ def validate_test(state, path, arguments):
     return _key(path)
 
 
-def validate_addition(path, before, after, selection):
+def validate_addition(path, before, after, selection, *, new_file=False):
     """The reserved comparison must collect a test introduced by this edit."""
     from patchloop.test_additions import added_tests
 
-    additions = added_tests(before, after, path, suite_additions=True)
+    additions = added_tests(before, after, path, suite_additions=True, new_file=new_file)
     target = selection["targets"][0]
     filename, _, node = target.partition("::")
     # Select the complete added function/method, including any newly added parameters.
@@ -217,7 +218,7 @@ def prepare_replay(events, call, current_diff, run_id, workspace, preflight, *, 
         if event["event_type"] != "action_finished":
             continue
         result = event["payload"]["result"]
-        if (result["tool"] != "replace_text" or result["status"] != "succeeded"
+        if (result["tool"] not in MUTATION_TOOLS or result["status"] != "succeeded"
                 or result["workspace_diff_hash"] != current_diff):
             continue
         start = starts[result["action_id"]]
