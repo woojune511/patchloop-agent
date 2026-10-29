@@ -24,30 +24,26 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
+Prioritize integrated development, as requested on 2026-10-30. Apply coherent known
+fixes together, run relevant local checks, then exercise the current configuration
+on a small set of public development tasks from start to finish. Review task
+acceptance, regressions, cost and elapsed time; use observed failures to choose the
+next fix. This is the default development loop, not a sequence of one-factor studies.
+
+No forecast OFF/ON repeat, cap4 diagnostic or 4-vs-12 comparison is a prerequisite
+for continuing with the selected 12-edit configuration. Isolate a condition only
+when an important design decision remains unresolved after inspecting a real
+failure. A combined result measures the configuration; it does not identify the
+contribution of each change. Use the existing result records and concise failure
+notes rather than adding a planning/reporting layer for every fix.
+
 The [forecast-only comparison](history/2026-10-30-forecast-only-comparison-results.md)
-is CLOSED: Astroid checkpoint OFF/ON, GPT-5.4/xhigh, one branch each. New cost was
-USD0.5311435 of the approved USD6.636999 cap, all settled. Both chose run_probe
-and made zero new edits/checks. OFF submitted the unchanged patch: independent
-acceptance FAIL, safety PASS. ON observed the original F0010 and stopped without
-submission; independent acceptance/safety NOT_RUN. Unused funds are closed.
-
-Actual first-request count/prepared/dispatch bindings passed. After declared time
-normalization, only the forecast field differed; both inputs contained the same
-current helper source. The forecast did not preserve the edit/check/finish route
-or produce a repair in this pair. ON's different diagnosis/closure cannot be
-attributed to the forecast from one stochastic pair. No general effect is established.
-
-A controlled public follow-up identifies the OFF false-success mechanism. Its
-probe adds the fixture's absolute root to sys.path. Removing only that line
-restores the directory F0010 on the same candidate; the direct-file control passes
-in both conditions. Snapshot/profile/cwd/arguments stay fixed. This is public
-operator evidence, separate from independent acceptance. No extra model call or
-source repair was made. No new prompt, gate or quota change is adopted.
-
-The next correctness question is how to preserve the public caller's reproduction
-conditions when constructing diagnostics. ON shows existing tools can reproduce
-the failure; a new execution capability has not been shown necessary. Do not
-continue this allocation or repeat the pair merely because money remains.
+is CLOSED: zero new edits in both arms; OFF acceptance FAIL, ON unsubmitted/NOT_RUN;
+USD0.5311435 settled. Public controls showed that OFF's added sys.path entry masked
+the original failure. Preserve the public caller's reproduction conditions in
+future diagnostics and investigate repair-route closure if it recurs in full runs.
+Neither finding requires another isolated study before integrated development.
+Unused allowance is closed; this direction change launches no new paid work.
 
 The [source-delivery fix](history/2026-10-29-public-alternative-and-budget-readiness.md)
 remains selected: completion retains already bounded current source while mutation
@@ -62,10 +58,8 @@ The frozen runtime's quick suite passed 1,101 tests in 276.40 seconds, including
 isolated mock evaluation; Ruff passed. No runtime code changed in this experiment.
 Full-suite completion, broader repair benefit and end-to-end speed gain remain
 unverified. The historical dev20 measurement stays [closed](history/2026-10-29-repair-dev20-results.md):
-10 PASS, 9 FAIL, 1 unsubmitted/NOT_RUN; USD11.7967235. It is not a causal baseline
-for the new defaults. Only one of its 20 traces exhausted three edits (one source,
-two test revisions); a current cap4 diagnostic must precede any proposed 4-vs-12
-comparison. No such new paid scope is authorized.
+10 PASS, 9 FAIL, 1 unsubmitted/NOT_RUN; USD11.7967235. It is development context,
+not a causal baseline for the combined current configuration.
 
 Keep current-diff required public checks, source/mutation scope, action identity,
 independent evaluation and stop-on-uncertainty. public-checks-v1 remains the measured

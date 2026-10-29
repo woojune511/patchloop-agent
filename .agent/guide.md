@@ -5,8 +5,8 @@ Source/tests own behavior. Read relevant sections only.
 
 ## Choosing the next improvement
 
-Diagnose public failures with bounded changes. Keep investigations in history,
-active decisions in current status.
+Apply fixes together and run full tasks; isolate only unresolved design decisions.
+Keep evidence in history and active decisions in current status.
 
 ## Source map
 
