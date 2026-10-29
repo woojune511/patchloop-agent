@@ -27,3 +27,4 @@
 - [Current dev20 results: ten accepted, nine failed, one unsubmitted; all twenty attempts settled](../2026-10-29-repair-dev20-results.md)
 - [Dev20 failure analysis: repair hypotheses, contract mismatches, missing caller preparation and cropped diagnostics](../2026-10-29-repair-dev20-failure-analysis.md)
 - [Local follow-up: inherited caller capabilities, bounded failure blocks and grounded test guidance](../2026-10-29-dev20-followup-implementation.md)
+- [Dev20 caller/test-guidance pilot preparation](../2026-10-29-dev20-followup-pilot-plan.md)

@@ -58,6 +58,11 @@ expectations, literal search and function-local test imports. Mutation accountin
 total caps and submission policy remain unchanged. Local validation cannot establish
 model uptake or solve gains; no new live experiment or candidate reevaluation ran.
 New task/runtime identities require fresh preparation and execution authorization.
+The [two-task pilot](history/2026-10-29-dev20-followup-pilot-plan.md) is prepared for
+13 then 9, one fresh solve each at the same USD4.50/task limits (USD9 total), pending
+new approval. Preparation found and corrected stale adapter hash declarations;
+all twenty packages now load. Both first-request audits and public capability
+checks passed; no paid solve or candidate evaluation has run for this pilot.
 Private details remain operator-only. All 125 responses in the ten analyzed rows
 completed without output exhaustion; a blanket budget/context increase is unsupported.
 
