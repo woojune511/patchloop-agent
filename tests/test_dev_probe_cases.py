@@ -129,7 +129,7 @@ def test_case_policy_extends_current_probe_schema_without_changing_prompt():
     )
     # Probe policy cannot change the exact prompt of the selected frozen arm.
     assert sha256_bytes(DEV_SYSTEM_PROMPT.encode()) == (
-        "sha256:6c27afec4d041439150832186faa8d7ddcb1b6641fecb2ecf5c0409ed638d75f"
+        "sha256:85cd190d8d4e358b8783eebf3d3870f77803f1ce2e5848072d6f0abcefa8a717"
         if FROZEN_ARM is None else {
         "E0J0": "sha256:84a795485c40cbc9024d938335a6b1b349231d6a20c069590527be606122ef72",
         "E1J0": "sha256:64c42360807cdf8c13e75c39fc7395fa077c6d71f8970eb05ae74398c4dcbfe4",

@@ -22,10 +22,16 @@ A nonempty plan up to 3,000 characters replaces the whole plan. It should state
 the public task goal, remaining work/current hypotheses, verification and untested
 assumptions, not raw reasoning. Content guidance now asks for concrete unfinished
 work and the observation/check that could settle an assumption, not a generic
-inspect/edit/check outline. Current brief guidance connects a return/condition in the
-current diff to a public contract, refuting input/setup, expected observation and actual
-evidence or untested status. At the existing mutation review, consider sibling failures
-and bypassed guards; required state preservation and success eligibility are distinct.
+inspect/edit/check outline. Current guidance separates required public/caller/test
+contracts from behavior chosen by the repair; preserve existing success/failure
+meaning when sufficient. At the existing mutation review, connect important changes
+to refuting inputs and expected observations, including sibling failures and bypassed
+guards; required state preservation and success eligibility are distinct.
+Choose to test a material new assumption, narrow/remove an unnecessary change, or
+explain why its uncertainty cannot affect required behavior. Listing unknowns alone
+does not justify stopping. Prefer observations that could change the patch/submission
+decision over repeating supported examples. Existing edits/receipt undo support narrowing;
+these instructions do not create a new tool, review round or automatic semantic gate.
 The probe program must observe the property named by its question. After results, keep
 other material untested contracts open; setup/check completion alone does not settle them.
 Group related cases with a normal control and reuse adequate current-diff evidence.

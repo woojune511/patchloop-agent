@@ -144,10 +144,11 @@ def test_post_edit_contract_survives_pass_and_setup_only_probe_until_completion(
     assert post_edit[0]["content"].count(working_plan.instructions()) == 1
 
     plan_text = (
-        "Changed early return: success requires the documented minimum. "
-        "Public contract: a failed match retains the input. "
+        "Required public contract: a failed match retains the input. "
+        "Repair-introduced assumption: the new early success obeys the documented minimum. "
         "Refuting setup: one item below that minimum, with a valid control. "
         "Observe success=false and unchanged returned input separately. "
+        "Next choice: test this important assumption before relying on the early return. "
         "UNTESTED: setup existence does not establish either behavior."
     )
     working_plan.record(
@@ -199,3 +200,91 @@ def test_post_edit_contract_survives_pass_and_setup_only_probe_until_completion(
     submission = working_plan.submission_review(journal.events(), diff)
     assert submission["plan"]["text"] == plan_text
     assert submission["verification_status"] == "not_inferred_from_submission"
+
+
+@pytest.mark.parametrize("context_policy", ["append-v1", "segmented-v1"])
+def test_narrowed_plan_keeps_required_contract_and_revision_reason_unverified(
+    tmp_path, context_policy,
+):
+    """Transport an authored narrowing decision without certifying its judgment."""
+    journal = DevJournal(tmp_path, "run_dev_narrowingreview")
+    broad_diff, narrow_diff = "sha256:" + "b" * 64, "sha256:" + "d" * 64
+    original_plan = (
+        "Required contract: reject a malformed item without losing its input. "
+        "Repair-introduced assumption: accepting empty items is also necessary. "
+        "Untested: compare empty-item acceptance and retained input with a normal control."
+    )
+    narrow_plan = (
+        "Required contract remains: reject a malformed item without losing its input. "
+        "Remove the optional empty-item acceptance change and retain its existing path. "
+        "Untested on the narrowed diff: malformed-item rejection and complete input retention. "
+        "Next action: run the required check; observe both outcomes before claiming them."
+    )
+    reason = (
+        "The public contract does not require accepting empty items. Remove that extension "
+        "instead of carrying its new acceptance assumption; the malformed-item obligation "
+        "is unchanged and remains untested on the narrowed diff."
+    )
+
+    def record_plan(text, action, diff, revision_reason=None):
+        return working_plan.record(
+            journal, [RequestedTool(
+                name="run_check", action_id=action,
+                arguments={"check_id": "public-check"},
+                turn_decision=PublicTurnDecision(
+                    mode="verify", basis="Check the remaining public contract.",
+                    plan_update=text, plan_update_reason=revision_reason,
+                ),
+            )], turn_id=action, diff_hash=diff, gate="needs_visible_checks",
+        )
+
+    record_plan(original_plan, "broad-plan", broad_diff)
+    journal.append("action_finished", {"result": {
+        "tool": "run_check", "status": "succeeded", "action_id": "old-check",
+        "workspace_diff_hash": broad_diff, "output": {"passed": True, "exit_code": 0},
+    }})
+    journal.append("action_finished", {"result": {
+        "tool": "edit_files", "status": "succeeded", "action_id": "narrow-edit",
+        "workspace_diff_hash": narrow_diff, "output": {},
+    }})
+    assert record_plan(narrow_plan, "narrow-plan", narrow_diff, reason)["status"] == "updated"
+    authority = {
+        "available_tool_names": ["edit_files", "read_file", "run_check", "stop_task"],
+        "remaining_budget": {"model_calls": 3, "tool_actions": 5, "accepted_mutations": 1},
+        "workflow_gate": "needs_visible_checks",
+        "visible_check_status": [{
+            "check_id": "public-check", "diff_hash": narrow_diff, "status": "NOT_RUN",
+        }],
+    }
+    state = {
+        **authority,
+        "public_task": {"task_id": "public-fixture", "issue": "Reject without input loss."},
+        "completion_guidance": {"verification_policy": "public-checks-v1"},
+        "current_diff": {"patch_hash": narrow_diff, "patch": "-drop(item)\n+reject(item)\n",
+                         "changed_files": ["public_source.py"]},
+        "working_notes": {"findings": [], "verification": {"items": []}},
+        "latest_tool_results": [],
+        "working_plan": working_plan.project(
+            journal.events(), diff_hash=narrow_diff, gate="needs_visible_checks",
+        ),
+    }
+    with journal.execution_lock():
+        request = runner._build_model_input(
+            journal=journal, artifact_store=ArtifactStore(tmp_path / "artifacts"),
+            context=canonical_json(state), latest_tool_results=[], context_policy=context_policy,
+            planning_policy=working_plan.POLICY,
+        )
+    actual = reconstruct_state(request, context_policy=context_policy)
+    plan = actual["working_plan"]["plan"]
+    assert plan["text"] == narrow_plan and plan["diff_hash"] == narrow_diff
+    assert plan["last_change"]["previous_plan"]["text"] == original_plan
+    assert plan["last_change"]["previous_plan"]["diff_hash"] == broad_diff
+    assert plan["last_change"]["reason"] == reason
+    assert plan["last_change"]["interpretation_status"] == "model_authored_unverified"
+    assert request[0]["content"].count(INSTRUCTIONS) == 1
+    assert request[0]["content"].count(working_plan.instructions()) == 1
+    for key, value in authority.items():
+        assert actual[key] == value
+    assert working_plan.submission_review(journal.events(), narrow_diff)[
+        "verification_status"
+    ] == "not_inferred_from_submission"

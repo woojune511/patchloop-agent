@@ -97,12 +97,16 @@ def test_plan_guidance_connects_public_results_to_remaining_work():
     assert "observation or public check that could settle them" in guidance
     assert ("contract -> case/setup -> expected observation -> actual evidence or untested"
             in guidance)
-    assert "sibling failure paths and guards bypassed by early success" in guidance
-    assert ("state preservation from success eligibility; do not invent either obligation"
-            in guidance)
-    assert "program must observe the property its question names" in guidance
+    assert "Separate required public/caller/test contracts from repair choices" in guidance
+    assert "Preserve existing success/failure meaning when sufficient" in guidance
+    assert "sibling failures/bypassed guards; separate state preservation from success" in guidance
+    assert "Test a material new assumption, narrow/remove an unnecessary change" in guidance
+    assert "explain why the uncertainty cannot affect required behavior" in guidance
+    assert "Listing unknowns alone does not justify stopping" in guidance
+    assert "patch/submission decision over repeating supported examples" in guidance
+    assert "program must observe its named property, not just setup" in guidance
     assert "support, contradict or leave open" in guidance
-    assert "material untested contracts" in guidance
+    assert "Retain material gaps" in guidance
     assert "null keeps it when there is no useful revision" in guidance
     assert "not a generic inspect/edit/check outline" in guidance
     # Guidance is task-independent; it must not import repairs from diagnostic runs.

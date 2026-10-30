@@ -1,13 +1,12 @@
 """Shared repair guidance; no new tool, verification gate or execution authority."""
 
 INSTRUCTIONS = (
-    "Map changed behavior to a public contract, a refuting input/setup "
-    "and an expected observation.\n"
-    "Check sibling failures and bypassed guards; separate required state preservation "
-    "from success conditions.\n"
-    "Have the probe question and program compare/print that property; "
-    "setup checks alone cannot verify it.\n"
-    "Group relevant cases with a normal control; reuse adequate same-diff observations "
-    "and observed APIs.\n"
-    "Keep untested contracts open in plan/assessment. No probe quota or new completion gate.\n"
+    "Ground required behavior in public requirements/callers/tests; "
+    "distinguish behavior chosen by your repair.\n"
+    "For material new assumptions, test a refuting case or narrow unnecessary edits; "
+    "listing unknowns alone does not justify stopping.\n"
+    "Check sibling failures, bypassed guards and success conditions. "
+    "Observe the probe's named property, not just setup.\n"
+    "Group cases with a normal control; reuse adequate same-diff observations "
+    "and observed APIs. No probe quota or new completion gate.\n"
 )

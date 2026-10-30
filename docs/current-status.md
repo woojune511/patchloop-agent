@@ -37,18 +37,18 @@ with no retry, pending action or accounting uncertainty. Two-worker elapsed time
 14 min 47 s. All three submissions remain unverified_delivery, separate from
 independent acceptance. No automatic paid repeat is pending.
 
-The [preceding evidence-reuse run](history/2026-10-30-evidence-reuse-3916-results.md)
-had the same verdicts, USD2.221501, 33 calls and 15 min 9 s. The latest attempt cost
-4.9% more and took 2.5% less batch time. SQLFluff itself took longer. One exposed
-attempt per condition cannot establish causal benefit, stable efficiency or general
-accuracy. Provider dispatch occupied about 78-82% of individual task time.
+The [preceding run](history/2026-10-30-evidence-reuse-3916-results.md) had the same
+verdicts, USD2.221501, 33 calls and 15 min 9 s. SQLFluff itself took longer in the
+latest run. These exposed attempts establish no causal benefit or general accuracy.
+Provider dispatch occupied about 78-82% of individual task time.
 
-The [guidance change](history/2026-10-30-contract-observation-guidance.md) reuses
-existing plans/questions/observations without a new tool, schema, quota, model round
-or finish gate. Live public behavior partly reflects it, but acceptance did not
-improve and case selection did not broaden consistently. Keep the implementation
-pending concrete diagnosis; this result alone does not justify another prompt
-layer, required probe count or finish restriction.
+The [contract guidance](history/2026-10-30-contract-observation-guidance.md) partly
+appeared in live behavior, but acceptance did not improve or cases broaden consistently.
+The [scope-choice revision](history/2026-10-30-verification-scope-choice.md) replaces
+existing instructions: distinguish required behavior from repair choices, then test
+material new assumptions or narrow unnecessary edits. No tool, schema, quota, model
+round or finish gate is added. Focused 111 PASS; quick 1258 PASS / 1 skip, including
+isolated mock evaluation. One fresh task16 is prepared next; live effect is unverified.
 
 SQLFluff's new patch covers several prefix-preserving failure returns, a trimmed
 empty section and trailing/minimum guards. Its sole probe now directly asserts
@@ -63,8 +63,8 @@ The [selection audit](history/2026-10-30-verification-selection-diagnosis.md)
 found source/tools and 28 calls, 11 edits, 969 solver seconds available at finish.
 Review signals arrived, but the agent treated the reported example as sufficient
 while naming untested branches. Stopping priority versus difficulty constructing
-cases remains unresolved. Ground the required contract, then test important new
-assumptions or narrow the edit; this proposal is not a validated improvement.
+cases remains unresolved. The scope-choice revision addresses this decision;
+instruction delivery alone cannot establish better judgment or correctness.
 The private failure is unknown. [Prior operator cases](history/2026-10-30-latest-sqlfluff-public-counterexamples.md)
 were not rerun on this patch and must not become solver hints.
 

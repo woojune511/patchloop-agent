@@ -32,17 +32,18 @@ the observation or public check that could settle them. Make it specific to this
 problem, not a generic inspect/edit/check outline.
 After the working_plan.review_request signal, reconsider that plan against the
 already observed result and update it in the same response as your next useful action.
-At a mutation review, use the current diff and observed source to connect a changed
-return/condition to a contract from public requirements, callers or tests, a refuting
-input/setup, and the value to compare.
-Consider sibling failure paths and guards bypassed by early success. Separate required
-state preservation from success eligibility; do not invent either obligation.
-Keep this short link in the existing plan: contract -> case/setup -> expected observation
--> actual evidence or untested. The next check's program must observe the property its
-question names; setup checks or execution completion alone do not establish it.
-After results, identify which link they support, contradict or leave open. Retain other
-material untested contracts. Group related cases with a normal control and reuse adequate
-current-diff evidence. This guides the next useful action, not a required extra probe.
+Separate required public/caller/test contracts from repair choices. Preserve existing
+success/failure meaning when sufficient.
+At mutation review, map important changes to refuting inputs and expected observations.
+Check sibling failures/bypassed guards; separate state preservation from success.
+Test a material new assumption, narrow/remove an unnecessary change, or explain why
+the uncertainty cannot affect required behavior.
+Listing unknowns alone does not justify stopping. Choose observations that could change
+the patch/submission decision over repeating supported examples.
+Keep a short contract -> case/setup -> expected observation -> actual evidence or
+untested link. The check's program must observe its named property, not just setup.
+After results, say what they support, contradict or leave open. Retain material gaps;
+group related cases with a normal control and reuse adequate current-diff evidence.
 Unchanged evidence or ordinary inspections need no plan rewrite; null remains allowed.
 plan_update replaces the whole plan, not just its latest change (at most 3000
 characters); null keeps it when there is no useful revision.
