@@ -30,57 +30,57 @@ on a small set of public development tasks from start to finish. Review task
 acceptance, regressions, cost and elapsed time; use observed failures to choose the
 next fix. This is the default development loop, not a sequence of one-factor studies.
 
-The [latest evidence-reuse run of tasks 3, 9 and 16](history/2026-10-30-evidence-reuse-3916-results.md)
+The [latest contract-to-observation run](history/2026-10-30-contract-observation-3916-results.md)
 is CLOSED: pvlib1154 and pydicom1694 acceptance PASS, SQLFluff1517 FAIL; safety all
-PASS. USD2.221501 settled against USD12, with all 33 calls/counts and 53 actions
-linked, no retry or pending action. Two-worker elapsed time: 15 min 9 s. The
-[preceding same-roster run](history/2026-10-30-contract-guidance-3916-results.md)
-had the same verdicts, USD2.66038, 40 calls and 14 min 43 s. This attempt cost
-16.5% less but took 3.0% longer. One exposed attempt per condition cannot establish
-causal benefit, stable efficiency or general accuracy. All three submissions were
-unverified_delivery; no comparable unchanged-base reproduction was supplied.
+PASS. USD2.3299265 settled against USD12; 36 calls/counts and 57 actions are paired,
+with no retry, pending action or accounting uncertainty. Two-worker elapsed time:
+14 min 47 s. All three submissions remain unverified_delivery, separate from
+independent acceptance. No automatic paid repeat is pending.
 
-The [bounded observation-retention fix](history/2026-10-30-verification-evidence-reuse.md)
-now has live delivery evidence: pvlib and SQLFluff completion handoffs retained
-concrete earlier probe output after intervening actions, and final assessments
-used it. Pydicom's failed probe output also survived. Keep this repair of a
-reproduced context-loss defect; do not equate it with broader verification or
-correct repair. Existing size bounds, historical exclusion and native deduplication
-remain; no tool, persistent store or finish gate was added.
+The [preceding evidence-reuse run](history/2026-10-30-evidence-reuse-3916-results.md)
+had the same verdicts, USD2.221501, 33 calls and 15 min 9 s. The latest attempt cost
+4.9% more and took 2.5% less batch time. SQLFluff itself took longer. One exposed
+attempt per condition cannot establish causal benefit, stable efficiency or general
+accuracy. Provider dispatch occupied about 78-82% of individual task time.
 
-Pvlib ran the same full test file twice on the same diff (99 PASS each), then
-checked distinct array/scalar conditions. Duplicate test execution remains a
-specific latency opportunity. Pydicom again began with a misconfigured WARN-mode
-probe, then used RAISE plus a valid control and replaced its mock regression with
-actual RawDataElement input. Its final public file ran 27 PASS. These file-level
-receipts do not establish line-entry coverage; tracking remained unknown.
+The [guidance change](history/2026-10-30-contract-observation-guidance.md) reuses
+existing plans/questions/observations without a new tool, schema, quota, model round
+or finish gate. Live public behavior partly reflects it, but acceptance did not
+improve and case selection did not broaden consistently. Keep the implementation
+pending concrete diagnosis; this result alone does not justify another prompt
+layer, required probe count or finish restriction.
 
-SQLFluff public checks ran 167 PASS, but its sole live probe still used only adjacent
-`;;` and a normal `;`. The [latest-patch public replay](history/2026-10-30-latest-sqlfluff-public-counterexamples.md)
-now confirms the residual defects on this exact submission: whitespace/newline/comment
-between semicolons still causes token-loss RuntimeError. The added allow_trailing=False
-guard correctly rejects adjacent delimiters while preserving input, but the new early
-success return accepts bar.. with min_delimiters=3, a success-condition regression.
-Other failed-match/minimum paths still lose the consumed prefix. Normal lists,
-sufficient minimum counts and allowed trailing delimiters remain valid controls.
+SQLFluff's new patch covers several prefix-preserving failure returns, a trimmed
+empty section and trailing/minimum guards. Its sole probe now directly asserts
+full tree input and statement preservation using parse and lint, addressing the
+previous question/program mismatch for those inputs. It still tests only normal
+`;` and adjacent `;;`. Public checks report 167 PASS / 1 deselected under the `not
+dbt` marker. The final assessment explicitly leaves other empty-element, terminator
+and min_delimiters conditions untested. Its plan stays at revision1 with stale
+"check untested" text even after PASS. Broader edits are not broader verification.
 
-This paired public-only diagnosis took 48.496 s, with no model calls or private
-re-evaluation. All 1,699 copied files match except delimited.py. Both conditions
-collected the identical added test: original 1 FAIL / 166 PASS, candidate 167 PASS.
-The test covers adjacent delimiters, not the separated cases or generic options.
-Thus test omission and stale imports do not explain the reproduced gap. The exact
-independent evaluation failure remains unknown; no operator repair was applied.
+The exact independent failing condition remains unknown; no private artifact was
+opened or additional evaluation run. The [previous public counterexamples](history/2026-10-30-latest-sqlfluff-public-counterexamples.md)
+apply to the preceding patch, not this new submission. The next unresolved question
+is which public boundary cases refute the new patch and why those cases were not
+selected. Do not feed operator cases into a fresh solver as hidden hints.
 
-Full implementation and probe output were delivered; the public plan instead narrowed
-to suite PASS and the original example, and its probe did not directly observe the
-preservation property named in its question. The [contract-to-observation change](history/2026-10-30-contract-observation-guidance.md)
-now connects current diff/public source -> contract -> refuting setup -> expected
-observable -> actual evidence or untested status in existing post-mutation planning.
-Shared guidance carries the same distinction through general, repair and completion
-contexts: required state preservation and success eligibility are separate. No new
-tool, schema, quota, model round or finish gate is added. Local delivery/authority
-validation is recorded in the linked follow-up; actual selection and repair benefit
-remain untested with a live model. No automatic paid repeat is pending.
+Pydicom observed actual invalid RawDataElement behavior with RAISE and a normal
+control after repeating the initial WARN-configuration mistake. It then attempted
+a shared test-import edit, received a correct protected-import rejection with a
+permitted local-import alternative, and submitted without that correction. The
+durable regression remains mocked, weaker than the preceding real-data test.
+This is an agent follow-through gap, not evidence to remove the protection.
+
+Pvlib added a concrete zero/normal fixture and passed 99 tests, then reran two tests
+from that same file on the same diff. The full-file duplication shrank to a subset
+recheck, but no new condition was added and scalar probing was absent. Public test
+receipts do not establish assertion-level execution; tracking remained unknown.
+
+Keep the [bounded observation-retention fix](history/2026-10-30-verification-evidence-reuse.md),
+which has earlier live evidence of preserving concrete current-diff outputs across
+handoffs. That repairs a delivery defect, not semantic completeness. Size bounds,
+historical exclusion and deduplication remain; no new persistent store was added.
 
 Keep [advisory test-selection feedback and batched source tracking](history/2026-10-30-test-execution-visibility-and-latency.md).
 The [earlier 3/13/18 run](history/2026-10-30-integrated-selection-results.md) observed
