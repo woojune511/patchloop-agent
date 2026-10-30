@@ -1,14 +1,12 @@
 """Shared repair guidance; no new tool, verification gate or execution authority."""
 
 INSTRUCTIONS = (
-    "Ground required behavior in public requirements/callers/tests; "
-    "distinguish behavior chosen by your repair.\n"
-    "For material new assumptions, test a refuting case or narrow unnecessary edits; "
-    "listing unknowns alone does not justify stopping.\n"
-    "Check sibling failures, bypassed guards and success conditions. "
-    "Observe the probe's named property, not just setup.\n"
-    "Group cases with a normal control; reuse adequate same-diff observations "
-    "and observed APIs. No probe quota or new completion gate.\n"
+    "Ground behavior in public contracts, not repair assumptions. Test material "
+    "assumptions or narrow edits; check sibling failures and success guards. Use observed "
+    "APIs; probes must observe their named outcome with a normal control. Before verifying, "
+    "compare inputs/setup/assertions with current-diff results. Reuse equivalent success; "
+    "renaming adds no case. Explain new cases, incomplete observations or post-edit rechecks "
+    "in basis if offered. not_assessed is no host judgment, not an unfinished case.\n"
 )
 
 BEHAVIOR_CHANGE_INSTRUCTIONS = (

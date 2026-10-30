@@ -34,7 +34,12 @@ decision over repeating supported examples. Existing edits/receipt undo support 
 these instructions do not create a new tool, review round or automatic semantic gate.
 The probe program must observe the property named by its question. After results, keep
 other material untested contracts open; setup/check completion alone does not settle them.
-Group related cases with a normal control and reuse adequate current-diff evidence.
+Group related cases with a normal control. Before another check/probe, compare its
+input, setup and assertion with current-diff observations. Use the existing public
+`basis`, when offered, to name useful new information; reuse an adequately observed equivalent case.
+Changed inputs/conditions/assertions, incomplete evidence and post-edit rechecks may
+still justify execution. Renaming a program is not a new case. Host `not_assessed`
+means no automatic semantic judgment; it does not make an observed case unfinished.
 Do not keep a completed-action log or invent changes to raise revision
 counts. This is task-independent guidance, not a required section schema or semantic
 validator. Null keeps the existing plan when there is no useful revision. Identical text is

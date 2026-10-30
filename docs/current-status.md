@@ -46,14 +46,15 @@ No expanded failing probe led to a new implementation fix in this batch.
 All deliveries remain unverified_delivery under the original-obligation framework;
 independent acceptance and public observation evidence remain separate.
 
-Next engineering question: reduce repeated verification without obscuring coverage.
-Three subset-test selections followed a full tests-directory PASS on the same diff;
-their tools took 11.806 seconds and associated model decisions 125.497 seconds.
-These are observed costs, not demonstrated avoidable savings. Delivered inputs
-retained full-check PASS, while some changed-file entries still said discovery_unknown
-and offered run_tests. A further equivalent Astroid probe repeated despite its
-previous output being visible. Inspect these two mechanisms before adding state,
-verification gates or another paid comparison. No follow-up run is pending.
+The [verification-reuse correction](history/2026-10-31-verification-reuse-decision.md)
+separates declared directory selection from unreported collection and makes extra
+file selection advisory. The shared guidance compares intended input/setup/assertion
+with current-diff observations and names new information in the existing action basis.
+Successful outputs were already delivered in the audited repeats; missing context
+does not explain them. No semantic duplicate blocker, evidence store or gate was added.
+Quick: 1,308 PASS / 1 host-symlink SKIP, including isolated mock evaluation; final
+wording/contract checks: 156 PASS; Ruff passed. Actual repeat reduction and time savings
+remain unmeasured. New cases and post-edit checks stay available. No paid run is pending.
 
 SQLFluff16 remains independent FAIL / safety PASS. Its [public comparison](history/2026-10-30-post-mutation-public-counterexamples.md)
 found no residual violation within its tested inputs. The [operator replay](history/2026-10-31-sqlfluff-assertion-log-replay.md)

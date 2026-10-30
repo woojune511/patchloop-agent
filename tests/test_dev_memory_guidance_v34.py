@@ -136,11 +136,11 @@ def test_descriptions_outside_memory_and_schema_order_are_unchanged(names, expec
 def test_surrounding_action_guidance_identity():
     from repair_mechanism_expectations import JUDGMENT
     prefix, _, suffix = _memory_block()
-    # Shared repair guidance replaces action prose; memory stays unchanged
+    # Shared repair/reuse guidance replaces action prose; memory stays unchanged
     # and the complete prompt keeps the 8,000-character bound.
     # Historical J0/J1 arms retain their exact earlier surrounding-guidance identities.
     assert hashlib.sha256(canonical_json([prefix, suffix]).encode()).hexdigest() == (
-        "c9efbc3e84bff0dbf2349be4c264a4328ba11e3f29abc6c88058918ca4e9bd96"
+        "4850f8c88a3ef1fd664f468dbf3af0e1810cc60ddee4bdd072d83edf3ebcdfb6"
         if FROZEN_ARM is None else
         "2d0a9063da8d508a3c1218903cae12e33aa5db97f4d5655ca645fd5d52dc1331"
         if JUDGMENT else "c6439ce32e7724ed5d4c08dc1f207186b45e34234947c2867d7a65f096ce10a3"

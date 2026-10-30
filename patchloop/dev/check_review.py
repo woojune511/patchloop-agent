@@ -26,6 +26,10 @@ _SWITCHES = {"-q", "-v", "-s", "-x", "--quiet", "--verbose", "--exitfirst",
              "--disable-warnings", "--disable-pytest-warnings", "--strict-markers",
              "--strict-config"}
 _PYTHON_SWITCHES = {"-B", "-E", "-I", "-O", "-OO", "-s", "-S", "-u"}
+_SELECTION_FILTERS = {
+    "-k", "-m", "--deselect", "--ignore", "--ignore-glob", "--lf", "--last-failed",
+    "--stepwise", "--sw", "--stepwise-skip", "--sw-skip", "--collect-only", "--co",
+}
 
 
 def _selection(command: list[str]) -> tuple[str, list[int]]:
@@ -116,6 +120,22 @@ def _target(argument: str, directory: str) -> tuple[str, str | None, str] | None
     return str(path), node if separator else None, kind
 
 
+def _selection_filters(command: list[str]) -> list[str]:
+    """Report literal pytest filters, without interpreting Python or configuration."""
+    prefix = _inline_prefix(command)
+    index = len(prefix) if prefix else (3 if command[1:3] == ["-m", "pytest"] else 1)
+    filters = set()
+    while index < len(command):
+        argument = command[index]
+        if argument == "--":
+            break
+        option = argument.partition("=")[0]
+        if option in _SELECTION_FILTERS:
+            filters.add(option)
+        index += 2 if argument in _VALUE_OPTIONS else 1
+    return sorted(filters)
+
+
 def _changed_test_review(
     view: dict[str, Any], definitions: dict[str, tuple[str, dict[str, Any]]],
     suites: list[dict[str, Any]],
@@ -130,7 +150,9 @@ def _changed_test_review(
         "basis": (
             "Visible current-diff receipts only; missing does not mean never executed. "
             "File/node selection and command PASS do not prove collected test cases. "
-            "Directory discovery is unknown; run_tests can explicitly select these files."
+            "Reuse matching input/assertion/scope evidence. Missing collection telemetry alone "
+            "does not require rerunning. Optional selectors address a concrete scope gap, "
+            "filter, or suspected discovery omission; they are not next-action recommendations."
         ),
     }
     for path in dict.fromkeys(diff.get("changed_files", [])):
@@ -160,11 +182,17 @@ def _changed_test_review(
                     if definition is None:
                         continue
                     check = definition[1]
-                    _, positions = _registered_selection(check, suites)
+                    command_kind, positions = _registered_selection(check, suites)
+                    command = check.get("command", [])
                     targets = [_target(check["command"][i], check.get("working_directory", "."))
                                for i in positions]
                 else:
+                    suite = next((item for item in suites
+                                  if item.get("id") == row.get("suite_id")), {})
+                    command = suite.get("command", [])
+                    command_kind, _ = _registered_selection(suite, suites)
                     targets = [_target(item, ".") for item in row.get("targets", [])]
+                filters = _selection_filters(command)
                 for selected in targets:
                     if selected is None:
                         continue
@@ -172,19 +200,28 @@ def _changed_test_review(
                     if selected_path == path and kind == "file":
                         selection = "partial_nodes" if node is not None else "explicit_file"
                     elif kind == "discovery" and PurePosixPath(path).is_relative_to(selected_path):
-                        selection = "discovery_unknown"
+                        selection = "directory_selected"
                     else:
                         continue
                     receipts.append({
                         "action_id": row.get("action_id"), "tool": tool, "selection": selection,
                         "node_selector": node, "command_passed": row.get("passed"),
+                        **({"command_filters": filters} if filters else {}),
+                        **({"command_scope": "unresolved"} if command_kind == "unresolved" else {}),
                         **({"test_status": row["test_status"]} if "test_status" in row else {}),
                     })
-        status = next((kind for kind in ("explicit_file", "partial_nodes", "discovery_unknown")
+        status = next((kind for kind in ("explicit_file", "partial_nodes", "directory_selected")
                        if any(r["selection"] == kind for r in receipts)), "not_confirmed")
+        passing_file = any(
+            row["selection"] == "explicit_file" and row["command_passed"] is True
+            and row.get("test_status", "PASS") == "PASS"
+            and not row.get("command_filters") and row.get("command_scope") != "unresolved"
+            for row in receipts
+        ) and all(row["command_passed"] is True for row in receipts)
         review["files"].append({
-            "path": path, "selection_status": status,
-            "run_tests_selection": {"suite_id": matching[0]["id"], "targets": [path]},
+            "path": path, "selection_status": status, "collection_status": "not_reported",
+            **({"optional_run_tests_selection": {"suite_id": matching[0]["id"], "targets": [path]}}
+               if not passing_file else {}),
             "visible_receipts": receipts[-MAX_RANGES:],
             "omitted_receipt_count": max(0, len(receipts) - MAX_RANGES),
         })

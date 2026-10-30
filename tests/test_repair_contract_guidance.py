@@ -6,6 +6,7 @@ from patchloop.artifacts import ArtifactStore
 from patchloop.dev import completion_context, repair_context, runner, thin_policy, working_plan
 from patchloop.dev.contracts import PublicTurnDecision, RequestedTool
 from patchloop.dev.conversation import reconstruct_state
+from patchloop.dev.probe_observation import project_probe_result
 from patchloop.dev.repair_guidance import INSTRUCTIONS
 from patchloop.dev.state import DevJournal
 from patchloop.dev.tools import dev_tool_schemas, validate_tool_batch
@@ -55,11 +56,96 @@ def test_actual_request_keeps_shared_guidance_and_existing_authority(
     assert request[0]["role"] == "system"
     assert request[0]["content"].startswith(expected)
     assert request[0]["content"].count(INSTRUCTIONS) == 1
+    for guidance in (
+        "compare inputs/setup/assertions with current-diff results",
+        "new cases, incomplete observations or post-edit rechecks in basis if offered",
+        "no host judgment, not an unfinished case",
+    ):
+        assert guidance in request[0]["content"]
     actual = reconstruct_state(request, context_policy=context_policy)
     for key in ("workflow_gate", "available_tool_names", "remaining_budget"):
         assert actual[key] == state[key]
     assert actual["completion_guidance"]["verification_policy"] == verification_policy
     assert actual["public_task"] == state["public_task"]
+
+
+@pytest.mark.parametrize("context_policy", ["append-v1", "segmented-v1"])
+@pytest.mark.parametrize("changed_diff", [False, True])
+@pytest.mark.parametrize("outcome", ["passed", "timeout"])
+def test_verification_reuse_guidance_and_observations_reach_fresh_completion_request(
+    tmp_path, context_policy, changed_diff, outcome,
+):
+    """Deliver correction evidence without certifying semantics or ordering a rerun."""
+    checked_diff = "sha256:" + "a" * 64
+    current_diff = "sha256:" + "b" * 64 if changed_diff else checked_diff
+    previous_stdout = "valid.value='ok'; invalid raised MissingItem\n"
+    previous_stderr = "ValueError: exception formatting failed\n"
+    current_stdout = (
+        "valid.value='ok'; invalid.exception='MissingItem'; assertions_passed\n"
+        if outcome == "passed" else "valid.value='ok'; invalid call has not returned\n"
+    )
+    latest = project_probe_result({
+        "tool": "run_probe", "action_id": "corrected-probe", "status": "succeeded",
+        "workspace_diff_hash": checked_diff,
+        "output": {
+            "status": outcome, "diff_hash": checked_diff,
+            "question": "Does valid lookup succeed and invalid lookup raise MissingItem?",
+            "stdout": current_stdout, "stderr": "",
+            "exit_code": 0 if outcome == "passed" else None,
+            "timed_out": outcome == "timeout", "truncated": False,
+        },
+    })
+    authority = {
+        "workflow_gate": "ready_to_submit",
+        "available_tool_names": ["run_probe", "run_tests", "finish_task", "stop_task"],
+        "remaining_budget": {"model_calls": 3, "tool_actions": 5, "accepted_mutations": 1},
+    }
+    state = {
+        **authority,
+        "public_task": {"task_id": "public-fixture", "issue": "Repair public lookup."},
+        "completion_guidance": {"verification_policy": "public-checks-v1"},
+        "current_diff": {"patch_hash": current_diff, "patch": "+return lookup(key)\n",
+                         "changed_files": ["public_source.py"]},
+        "working_notes": {"findings": [], "verification": {"items": []}},
+        "current_public_failure": None,
+        "recent_probes": [{
+            "action_id": "logging-error-probe", "diff_hash": checked_diff,
+            "historical": False, "exit_code": 1,
+            "stdout": previous_stdout, "stderr": previous_stderr,
+            "observation": {"execution_status": "failed", "behavior_verdict": "not_assessed"},
+        }],
+        "latest_tool_results": [latest],
+    }
+    journal = DevJournal(tmp_path, "run_dev_verificationreuse")
+    with journal.execution_lock():
+        request = runner._build_model_input(
+            journal=journal, artifact_store=ArtifactStore(tmp_path / "artifacts"),
+            context=canonical_json(state), latest_tool_results=[],
+            context_policy=context_policy, planning_policy="none",
+        )
+    assert request[0]["content"].count(INSTRUCTIONS) == 1
+    actual = reconstruct_state(request, context_policy=context_policy)
+    for key, value in authority.items():
+        assert actual[key] == value
+    assert actual["current_public_failure"] is None
+    if changed_diff:
+        # An old success or partial result cannot be reused on the edited candidate.
+        assert current_stdout not in canonical_json(actual)
+        assert previous_stdout not in canonical_json(actual)
+        assert "observation" not in actual["latest_tool_results"][0]
+    else:
+        # The model receives both the probe error and its correction; the host does
+        # not silently clear a failure or claim that exit zero answers the question.
+        previous = actual["recent_probes"][0]
+        assert previous["stdout"] == previous_stdout
+        assert previous["stderr"] == previous_stderr
+        assert previous["observation"]["execution_status"] == "failed"
+        retained = actual["latest_tool_results"][0]
+        assert retained["output"]["stdout"] == current_stdout
+        assert retained["output"]["exit_code"] == (0 if outcome == "passed" else None)
+        assert retained["observation"]["behavior_verdict"] == "not_assessed"
+        assert retained["observation"]["execution_status"] == (
+            "completed" if outcome == "passed" else "timeout")
 
 
 @pytest.mark.parametrize("agent_policy", ["current", "thin"])

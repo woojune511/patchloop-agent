@@ -97,13 +97,21 @@ public pytest suite expose their literal arguments; arbitrary Python wrappers ar
 not interpreted. A directory selection does not confirm which files pytest collected.
 
 `current_diff.test_execution_review` lists bounded changed Python files under
-registered test roots, visible current-diff selection receipts, and an existing
-`run_tests` selector for each file. An explicit file selection, partial node selection
-and unknown directory discovery remain distinct. Missing visible receipts do not
-mean the file was never executed: recent check/test history is bounded. These hints
-do not assert testcase coverage, add required-check credit or change finish eligibility.
-Explicitly selecting a newly created file can check it even when the required check's
-fixed targets or automatic filename discovery omit it.
+registered test roots and visible current-diff selection receipts. `explicit_file`,
+`partial_nodes`, `directory_selected` and `not_confirmed` describe declared selection;
+`collection_status: not_reported` separately preserves unknown testcase collection.
+Literal command filters are reported without interpreting pytest configuration.
+Missing visible receipts do not mean the file was never executed: history is bounded.
+
+`optional_run_tests_selection` is an available selector, not a next-action recommendation.
+It is omitted after a current passing explicit-file receipt with no literal selection
+filter, unresolved command scope or conflicting/unknown current receipt. Directory,
+partial-node, filtered, failed, stale-only and missing selections retain the option.
+This never certifies collection or coverage. Compare the intended input/assertion/scope
+with actual current-diff evidence; missing collection telemetry alone is not a reason
+to rerun. Concrete discovery/filter concerns or new assertions can still justify a
+selection, including a new file omitted by fixed targets or filename discovery.
+These hints add no required-check credit, execution cache, tool restriction or finish gate.
 
 Results preserve suite, targets, action/input identity, current diff, exit code,
 output and execution flags. `test_status` is PASS for exit zero, FAIL for exit one,
