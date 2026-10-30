@@ -30,55 +30,44 @@ on a small set of public development tasks from start to finish. Review task
 acceptance, regressions, cost and elapsed time; use observed failures to choose the
 next fix. This is the default development loop, not a sequence of one-factor studies.
 
-The [latest contract-to-observation run](history/2026-10-30-contract-observation-3916-results.md)
-is CLOSED: pvlib1154 and pydicom1694 acceptance PASS, SQLFluff1517 FAIL; safety all
-PASS. USD2.3299265 settled against USD12; 36 calls/counts and 57 actions are paired,
-with no retry, pending action or accounting uncertainty. Two-worker elapsed time:
-14 min 47 s. All three submissions remain unverified_delivery, separate from
-independent acceptance. No automatic paid repeat is pending.
+The [latest scope-choice run](history/2026-10-30-verification-scope-choice-results.md)
+is CLOSED: one fresh SQLFluff1517 attempt, acceptance FAIL and safety PASS.
+USD0.8053575 settled against USD4; 10 calls/counts and 21 actions are paired, with
+no retry, pending action or accounting uncertainty. Task elapsed: 500.831 seconds.
+Delivery remains unverified_delivery, separate from independent acceptance.
+No automatic repeat is pending.
 
-The [preceding run](history/2026-10-30-evidence-reuse-3916-results.md) had the same
-verdicts, USD2.221501, 33 calls and 15 min 9 s. SQLFluff itself took longer in the
-latest run. These exposed attempts establish no causal benefit or general accuracy.
-Provider dispatch occupied about 78-82% of individual task time.
-
-The [contract guidance](history/2026-10-30-contract-observation-guidance.md) partly
-appeared in live behavior, but acceptance did not improve or cases broaden consistently.
 The [scope-choice revision](history/2026-10-30-verification-scope-choice.md) replaces
 existing instructions: distinguish required behavior from repair choices, then test
 material new assumptions or narrow unnecessary edits. No tool, schema, quota, model
 round or finish gate is added. Focused 111 PASS; quick 1258 PASS / 1 skip, including
-isolated mock evaluation. One fresh task16 is prepared next; live effect is unverified.
+isolated mock evaluation. Live case selection broadened to normal `;`, `;;` and
+`; ;`, observed on the unchanged base and again after the edit. Public checks:
+167 PASS / 1 deselected. The two failing inputs stopped raising RuntimeError and
+returned SQLParseError. This is public case support, not successful repair.
 
-SQLFluff's new patch covers several prefix-preserving failure returns, a trimmed
-empty section and trailing/minimum guards. Its sole probe now directly asserts
-full tree input and statement preservation using parse and lint, addressing the
-previous question/program mismatch for those inputs. It still tests only normal
-`;` and adjacent `;;`. Public checks report 167 PASS / 1 deselected under the `not
-dbt` marker. The final assessment explicitly leaves other empty-element, terminator
-and min_delimiters conditions untested. Its plan stays at revision1 with stale
-"check untested" text even after PASS. Broader edits are not broader verification.
+The submitted patch is smaller than its predecessor, but still changes two
+failure returns to partial success. No narrowing/undo occurred. Default Linter
+checks did not validate the introduced success meaning under trailing/minimum
+options; direct input/tree preservation assertions from the predecessor are also
+absent. The unresolved problem is contract selection, not merely case count.
+The private failure is unknown; operator cases were not rerun or injected.
+Four early plan replacements lacked revision reasons; a later post-edit update
+succeeded. These annotation failures are not established as the cause of acceptance FAIL.
 
-The [selection audit](history/2026-10-30-verification-selection-diagnosis.md)
-found source/tools and 28 calls, 11 edits, 969 solver seconds available at finish.
-Review signals arrived, but the agent treated the reported example as sufficient
-while naming untested branches. Stopping priority versus difficulty constructing
-cases remains unresolved. The scope-choice revision addresses this decision;
-instruction delivery alone cannot establish better judgment or correctness.
-The private failure is unknown. [Prior operator cases](history/2026-10-30-latest-sqlfluff-public-counterexamples.md)
-were not rerun on this patch and must not become solver hints.
+Keep the generic instruction change without claiming quality gain. Do not respond
+to this negative attempt with another warning, quota or automatic paid repeat.
+Next diagnosis should distinguish whether the agent can identify and exercise the
+changed success contract, or whether its repair choice makes that contract
+unnecessarily broad. A smaller diff alone does not settle either question.
 
-Pydicom observed actual invalid RawDataElement behavior with RAISE and a normal
-control after repeating the initial WARN-configuration mistake. It then attempted
-a shared test-import edit, received a correct protected-import rejection with a
-permitted local-import alternative, and submitted without that correction. The
-durable regression remains mocked, weaker than the preceding real-data test.
-This is an agent follow-through gap, not evidence to remove the protection.
-
-Pvlib added a concrete zero/normal fixture and passed 99 tests, then reran two tests
-from that same file on the same diff. The full-file duplication shrank to a subset
-recheck, but no new condition was added and scalar probing was absent. Public test
-receipts do not establish assertion-level execution; tracking remained unknown.
+The [preceding 3/9/16 run](history/2026-10-30-contract-observation-3916-results.md)
+had PASS/PASS/FAIL and all safety PASS. SQLFluff then used 13 calls, USD1.0609665
+and 566.561 seconds. Current cost/time are lower descriptively, but one exposed
+attempt and different batch concurrency establish no stable or causal improvement.
+That record retains pydicom's real-data test follow-through gap and pvlib's duplicate
+verification; neither was retested here. The [selection audit](history/2026-10-30-verification-selection-diagnosis.md)
+remains the public basis for the intervention.
 
 Keep the [bounded observation-retention fix](history/2026-10-30-verification-evidence-reuse.md),
 which has earlier live evidence of preserving concrete current-diff outputs across

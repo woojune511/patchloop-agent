@@ -1,5 +1,6 @@
 # 2026-10-30 investigations
 
+- [Scope-choice SQLFluff run](../2026-10-30-verification-scope-choice-results.md)
 - [Verification or narrower repair](../2026-10-30-verification-scope-choice.md)
 - [Why verification stayed narrow](../2026-10-30-verification-selection-diagnosis.md)
 - [Contract-to-observation guidance: tasks 3, 9 and 16](../2026-10-30-contract-observation-3916-results.md)
