@@ -10,169 +10,122 @@ and submits within bounded resources. Start improvements from observed failures.
 Recovery, sandboxing and isolated evaluation support that product.
 
 - dev-head is the sole mutable runtime; official=false and claim-ineligible.
-- General baseline: gpt-5.4-2026-03-05, xhigh, 25,000 output tokens.
-- Selected policies: segmented-v1, result-or-size-v1, brief-v1, probes enabled with
-  policy none, repair-recheck, protected-v1 inspection, per-call-v1 cost admission.
+- Selected model: gpt-5.4-2026-03-05, xhigh, 25,000 output tokens.
+- Policies: segmented-v1, result-or-size-v1, brief-v1, probes enabled/none,
+  repair-recheck, protected-v1 inspection, per-call-v1, public-checks-v1.
 - Limits: 40 model calls, 100 actions, 12 accepted edits, 1,800 seconds.
-  Paid work also requires the exact task/model/credential/repeat scope and cap.
+  Evaluation reserve is inside the total; solver time can expire earlier.
+  Paid work requires exact task/model/credential/repeat scope and a positive cap.
 - Cross-run memory, held-out tuning and claim execution are disabled. Bounded
   run-local notes remain available. Historical Rapid executables are absent.
-- These are selected settings, not CLI defaults or evidence of general accuracy.
+- These settings are a development baseline, not CLI defaults or general accuracy.
 
 See [guide](../.agent/guide.md), [operations](operations.md), [product](product.md)
 and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-Prioritize integrated development, as requested on 2026-10-30. Apply coherent known
-fixes together, run relevant local checks, then exercise the current configuration
-on a small set of public development tasks from start to finish. Review task
-acceptance, regressions, cost and elapsed time; use observed failures to choose the
-next fix. This is the default development loop, not a sequence of one-factor studies.
+Keep the integrated development loop: choose fixes from observed correctness,
+reliability and completion failures, validate locally, then exercise a frozen
+configuration on public development tasks. A separate one-factor study is not a
+prerequisite for every routine change.
 
-The [verification-reuse 1/4/11 run](history/2026-10-31-verification-reuse-1411-results.md)
-is CLOSED. Code 1569ec49, one fresh attempt each: marshmallow1343, pvlib1606 and
-Astroid1196 all have independent acceptance PASS / safety PASS. Total USD2.596122,
-38 model calls, 53 actions, 5 edits and 905.879 seconds with two workers.
-All calls/counts/billing settled; no retry, uncertainty stop or extra evaluation.
-Against the [previous same-task batch](history/2026-10-31-integrated-1411-results.md),
-observed cost fell 28.04% and batch time 34.69%; this is not a matched causal estimate.
+The [full fixed dev20 run](history/2026-10-31-verification-reuse-dev20-results.md)
+is CLOSED: **11 independent PASS, 8 FAIL, 1 unsubmitted/NOT_RUN**. All 19 submitted
+candidates have safety PASS; task 18 has safety NOT_RUN. Code at execution was
+1ec9198a (solver 1569ec49), runtime
+`sha256:06b0bbc8bd933616c7e40495a87bdaf76207db10f477263d98bbb6ab0cb8e866`.
+All 20 were attempted once with two workers, USD4 each / USD80 invocation cap.
+Cost **USD20.2818755**, 300 model calls, 472 actions, 30 accepted edits, 39 probes;
+batch wall **5,513.593 seconds (91m54s)**. All 302 input counts and billing settled,
+with no retry, uncertainty stop or extra independent evaluation. Unused allowance is closed.
 
-Scope-overlapping selected tests fell 3 to 2. Task1 reused successful outputs and
-submitted without subset tests; its failed helper needed a logging correction.
-Task4 repaired 7 public regressions and passed 258 tests, then reselected 4 nodes.
-Task11 passed 1293 tests and reselected 2 new nodes. Both remaining selections cited
-unreported collection despite visible PASS and new reuse guidance. Task4's optional
-selector was already absent. Missing delivery does not explain these repeats.
-No strict same-diff successful probe repeat occurred; task11 replayed one identical
-helper after a test-only edit changed the diff, under existing currency rules.
+Task 14 demonstrated the intended autonomous sequence: 1,380 tests PASS, a new
+string-type counterexample exposed ValueError, production code plus an asserting
+regression changed, then replay and independent acceptance passed. This is live
+behavior evidence, not a causal estimate of guidance effectiveness.
 
-Keep the [correction](history/2026-10-31-verification-reuse-decision.md): scope display
-is accurate and this panel shows no acceptance regression. Repetition is only partly
-addressed; another generic reuse sentence is not supported as the next intervention.
-Concrete collection/execution receipts are a possible follow-up, not an implemented
-decision. No new gate, state store, mandatory probe or paid run is pending.
+Task 8 instead repaired a bytearray/array conversion while missing the upstream
+setter for the original bytes path. After batch closure, an operator-only public
+base/candidate comparison confirmed that OL bytes containing 0x5c still become
+MultiValue and fail Dataset.save_as; normal OL and same-byte OB controls passed.
+That is a confirmed residual public defect, with zero additional model/private
+calls. It was not discovered by the solver and does not identify the private
+failure's exact assertion. The submitted patch remains unchanged.
 
-Verification paths differed: no unchanged-base reproduction; task4 prepared but did
-not execute an optional caller probe and disclosed the gap; task11 omitted the earlier
-non-Dict helper boundary. Do not claim all prior coverage was preserved or fewer probes
-caused the cost/time difference. All deliveries remain unverified_delivery; public
-observations, registered original-case proof and independent acceptance stay distinct.
-Local baseline: quick 1,308 PASS /1 host-symlink SKIP with isolated mock; final wording/
-contract 156 PASS and Ruff. Runtime mechanisms, live behavior and general quality differ.
+Task 18 reproduced the bug but spent 868.456 seconds from baseline observation to
+first edit. Several helper API/configuration mistakes delayed useful evidence.
+The first patch changed 9-space indentation to 5 instead of 8. A second production
+edit was accepted, but its recheck had only 11.493514 seconds and timed out after
+the last model decision consumed 96.600140 seconds of 117 remaining solver seconds.
+Cleanup was confirmed; all usage settled. The last candidate is unverified and
+unsubmitted, not an independent FAIL. Increasing the edit cap would not address
+this deadline mechanism.
 
-SQLFluff16 remains independent FAIL / safety PASS. Its [public comparison](history/2026-10-30-post-mutation-public-counterexamples.md)
-found no residual violation within its tested inputs. The [operator replay](history/2026-10-31-sqlfluff-assertion-log-replay.md)
-confirmed all three failed assertions and retained 4,467 bytes without truncation,
-with unchanged grading. Exact private values remain outside solver context.
-This establishes attribution, not a new public requirement or reasoning deficit.
-Keep the [applied-change review](history/2026-10-30-post-mutation-review.md) and
-[operator capture correction](history/2026-10-30-operator-failure-capture.md).
-Do not tune to the private criterion or reopen any closed allocation.
+Six tasks (4,8,11,13,15,20) selected tests within an already-passing declared scope,
+despite delivered PASS/reuse guidance. Actual previous collection is unreported;
+this is declared overlap, not an execution-equivalence attestation. Task 6's new
+file was outside its required file and needed the extra selection. No strict
+unchanged-diff successful check/probe replay was identified. Task 10 replayed an
+identical helper after a test-only diff change under whole-diff freshness rules.
+Useful new controls and changed-source replays must not be counted as waste.
 
-The [preceding normal run](history/2026-10-30-retained-source-sqlfluff-results.md)
-remains separate: 12 calls, 24 actions, 1 edit, USD0.7579325, 457.526 seconds,
-acceptance FAIL / safety PASS. Its [public comparison](history/2026-10-30-retained-source-public-counterexamples.md)
-confirmed two rejection-to-success regressions in that different patch. Do not
-carry those defect findings onto the latest failure-preserving patch without evidence.
+Next implementation should start with the concrete task 17 diagnostic defect:
+YAML under a declared test root is rejected by the Python-only policy, but the
+message incorrectly says the root is undeclared. Supporting YAML is a separate
+choice. Prioritize original input/caller fidelity and preserving behavioral
+expectations through recovery, using task 8's confirmed path. Task 10's intended
+output-count test narrowed to logger-state assertions; task 12's empty output was
+self-selected without an established output contract. These are public mechanism
+findings, not proven private failure attributions. Investigate task 18's diagnostic
+and decision delays before adding limits, gates or another generic reuse prompt.
+Bounded factual execution receipts are a candidate for residual selection overlap,
+not an implemented decision. No further paid run or runtime change is scheduled.
 
-Keep the [source-retention and finish-description fixes](history/2026-10-30-plan-action-delivery-audit.md),
-current-diff source limits and existing submission rules.
+## Selected mechanisms and evidence limits
 
-The [focused SQLFluff reviews](history/2026-10-30-sqlfluff-deadline-review.md) are
-CLOSED. Keep the diagnostic wait setting; no automatic repeat is pending.
+Keep the [reuse correction](history/2026-10-31-verification-reuse-decision.md),
+[post-mutation review](history/2026-10-30-post-mutation-review.md),
+[observation retention](history/2026-10-30-verification-evidence-reuse.md),
+[source retention](history/2026-10-30-plan-action-delivery-audit.md), and
+[test execution visibility](history/2026-10-30-test-execution-visibility-and-latency.md).
+The [test-validation conflicts](history/2026-10-30-test-validation-fixes.md) and
+[file lifecycle](history/2026-10-29-file-lifecycle-followup.md) fixes remain selected:
+multiple/new files, receipt undo, original-byte restoration and bounded recovery.
+The YAML diagnostic defect above is a new unresolved issue, not a claim those
+previous fixes failed.
 
-The [preceding 3/9/16 run](history/2026-10-30-contract-observation-3916-results.md)
-retains pydicom's real-data test follow-through gap and pvlib's duplicate verification;
-neither was retested here. The [selection audit](history/2026-10-30-verification-selection-diagnosis.md)
-remains the public basis for the guidance; historical metrics are in those records.
+Runtime local baseline: quick 1,308 PASS / 1 host-symlink SKIP with isolated mock;
+final wording/contract 156 PASS and Ruff. This full 20 work changed reporting only.
+The [prior three-task run](history/2026-10-31-verification-reuse-1411-results.md)
+and [older full 20 run](history/2026-10-29-repair-dev20-results.md) remain closed
+historical context. Different task paths/settings and single attempts do not
+establish a causal quality or speed gain.
 
-Keep the [bounded observation-retention fix](history/2026-10-30-verification-evidence-reuse.md),
-which has earlier live evidence of preserving concrete current-diff outputs across
-handoffs. That repairs a delivery defect, not semantic completeness. Size bounds,
-historical exclusion and deduplication remain; no new persistent store was added.
-
-Keep [advisory test-selection feedback and batched source tracking](history/2026-10-30-test-execution-visibility-and-latency.md).
-The [earlier 3/13/18 run](history/2026-10-30-integrated-selection-results.md) observed
-explicit selection of previously omitted file types but also exposed the two
-validation conflicts below. Provider dispatch still occupied 68-74% of task time
-in the preceding 3/9/16 run and 66-79% in the shared-guidance run; lower Git latency alone
-is not an end-to-end speed claim.
-
-The [two test-validation conflicts](history/2026-10-30-test-validation-fixes.md)
-are fixed locally. Exact original-byte restoration now uses one shared rule for
-both mutation tools. pvlib's wrapper pins the projection target and local anchor,
-allowing admitted test additions while the shared policy preserves original tests.
-Replaying the previously rejected first candidate reached pytest: 99 PASS; original
-source with the identical added test gave 1 FAIL / 98 PASS. This used no model or
-private evaluation. The latest pvlib run exercised additions in the existing
-projection-target file without conflict; exact original-byte restoration was not
-requested. Causal quality benefit remains unproven; another paid ablation is not
-a prerequisite for development.
-
-The [forecast-only comparison](history/2026-10-30-forecast-only-comparison-results.md)
-is CLOSED: zero new edits in both arms; OFF acceptance FAIL, ON unsubmitted/NOT_RUN;
-USD0.5311435 settled. Public controls showed that OFF's added sys.path entry masked
-the original failure. Preserve the public caller's reproduction conditions in
-future diagnostics and investigate repair-route closure if it recurs in full runs.
-Neither finding requires another isolated study before integrated development.
-Unused allowance is closed; this direction change launches no new paid work.
-
-The [source-delivery fix](history/2026-10-29-public-alternative-and-budget-readiness.md)
-remains selected: completion retains already bounded current source while mutation
-tools are offered. It repairs a delivery defect; live repair benefit is unproven.
-The operator's one-line Astroid alternative remains a separate local result, not
-an agent-generated repair. The [file lifecycle](history/2026-10-29-file-lifecycle-followup.md)
-and [usability](history/2026-10-29-runtime-usability-followup.md) changes also remain:
-new/multiple files and receipt undo, exact recovery, accurate action forecasts,
-character-paged reads and the configurable 12-edit default.
-
-Full-suite completion, Linux validation and causal quality/speed benefit remain
-unverified; changing task rosters cannot establish a batch speed gain.
-The historical dev20 measurement stays [closed](history/2026-10-29-repair-dev20-results.md):
-10 PASS, 9 FAIL, 1 unsubmitted/NOT_RUN; USD11.7967235. It is development context,
-not a causal baseline for the combined current configuration.
-
-Keep current-diff required public checks, source/mutation scope, action identity,
-independent evaluation and stop-on-uncertainty. public-checks-v1 remains the measured
-panel policy; reproduction-gated-v1 remains the compatible request default. Future
-paid work needs a new exact task/model/credential/repeat/cap scope.
-
-## Supporting evidence
-
-- [Astroid clean-start result](history/2026-10-29-helper-contract-fresh-results.md):
-  original F0010 repaired, 1231 public tests PASS, isolated acceptance/safety PASS;
-  USD2.0153455. Call tracing was incomplete; one exposed development task only.
-- [Security maintenance](history/2026-10-23-security.md): refreshed host dependencies
-  and public Python 3.12 images after the emSign incident. Old task/legacy images
-  remain offline-only. New runs need newly prepared identities; prior manifests
-  do not authorize execution against the updated runtime.
-- [Helper-path results](history/2026-10-22-helper-path-results.md): useful information,
-  no repair in A1/B1/B2; partial comparison stopped on drift. Allocation closed.
-- [Invocation linkage](history/2026-10-22-probe-invocation-results.md): submitted
-  repairs 0/3; ON mechanism use 0/2. Partial run; no adoption or quality claim.
-- [Caller evidence](history/2026-10-19-caller-evidence-results.md): A/B 0/6;
-  original-caller verification remained missing.
-- [Portfolio remeasurement](history/2026-10-06-portfolio-dev20-results.md): 9/20,
-  below the 11/20 threshold; test300 remains unprepared and unauthorized.
-- [History](history/README.md) indexes the closed investigations and allocations.
-  Their past next steps, settings and approvals do not carry forward.
+The current SQLFluff 16 candidate restored its first success-guard regression and
+passed 167 public tests, then failed independent evaluation. Its public helper
+returns a whole-file parsing error without crashing; the public report alone does
+not prohibit that behavior. Do not import private expectations into new public
+requirements. The [earlier operator assertion replay](history/2026-10-31-sqlfluff-assertion-log-replay.md)
+concerns a different saved patch and unchanged grading, not the current candidate.
 
 ## Execution and claim boundaries
 
-All prior paid allocations are closed. The [older interrupted call](history/2026-09-28-expectation-review-results.md)
-retains unknown billing; later settled allocations do not resolve it. An older
-source-ready diagnostic and the current focused review each retain an unsettled response.
+All paid allocations are closed. Older unresolved billing, including the
+[interrupted expectation review](history/2026-09-28-expectation-review-results.md)
+and [focused diagnostic history](history/2026-10-30-sqlfluff-deadline-review.md),
+is not reconciled by this batch's settled usage.
 
-Fresh solves, seeded repairs, funded continuations, saved-patch evaluations,
-operator replays and scripted tests are different evidence. Do not pool them as
-solve rates or expose private evaluator details to the agent. Public case support,
-submission, independent task acceptance and safety are separate. Mock safety is NOT_RUN.
+Fresh solves, seeded repairs, saved-patch evaluations, operator public comparisons
+and scripted local tests are distinct evidence. All 19 submissions above remain
+unverified_delivery for registered original-case proof, independently of acceptance.
+Never expose private evaluator bodies, hidden tests or reference patches to the
+solver. Public PASS, successful delivery and safety PASS do not establish correctness.
+No private evaluator bodies or raw provider reasoning were used in this public audit.
 
 Do not start Docker Desktop or pull/build evaluator images automatically. Preserve
 exact recovery identities, zero SDK retries and stop-all on count/transport/billing
-uncertainty. Saved-candidate and operator successes remain distinct from clean-start
-development outcomes above. Repeated fresh-solve performance and held-out
-improvement remain unverified.
-Public-check PASS, safety PASS and successful submission do not establish repair
-correctness. Linux CI and general improvement remain unverified.
+or cleanup uncertainty. The current 20 tasks are development-exposed, not held out.
+Repeated performance, general improvement and Linux CI remain unverified.
+[History](history/README.md) indexes closed records; their approvals and next steps
+do not carry forward.
