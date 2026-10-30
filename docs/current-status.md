@@ -51,25 +51,22 @@ failure returns to partial success. No narrowing/undo occurred. Default Linter
 checks did not validate the introduced success meaning under trailing/minimum
 options; direct input/tree preservation assertions from the predecessor are also
 absent. The unresolved problem is contract selection, not merely case count.
-The private failure is unknown. A [paired public diagnostic](history/2026-10-30-sqlfluff-contract-diagnostic.md)
-now reproduces three false-success regressions and a remaining input-loss path
-on this exact patch. Normal controls hold; model calls0. The approved fresh focused
-review received no operator cases/results. It identified the missing min_delimiters
-guard and searched public tests, then stopped at the third call's 300-second response
-wait: three reads, one search, no probe or report. Elapsed459.093 seconds;
-USD0.1377155 known, third-call billing unknown. The USD2 allocation is CLOSED with
-unresolved usage; no retry/resume. This is an incomplete diagnostic, not evidence
-of inability to identify a counterexample.
-Four early plan replacements lacked revision reasons; a later post-edit update
-succeeded. These annotation failures are not established as the cause of acceptance FAIL.
-
+The private failure is unknown. A [public diagnostic](history/2026-10-30-sqlfluff-contract-diagnostic.md)
+reproduced three false-success regressions and a remaining input-loss path on this
+exact patch, with normal controls intact. A fresh model review independently
+identified the missing min_delimiters guard, but its third response hit the300-second
+wait before any probe/report. USD0.1377155 known, third-call billing unknown;
+allocation CLOSED. This incomplete observation does not establish inability.
 Keep the generic instruction change without claiming quality gain. Do not respond
 to this negative attempt with another warning, quota or automatic paid repeat.
 Contract-risk identification was observed under focused review; concrete case
 construction/execution remains unknown. Do not add a semantic prompt or gate based
-on this timeout. Before another separately approved
-review, decide its response-wait budget within the total deadline; longer waiting
-does not guarantee a result. The contract-selection question remains unresolved.
+on this timeout. The user requested one [fresh small review](history/2026-10-30-sqlfluff-deadline-review.md)
+with response waiting bounded by the remaining600-second total, keeping the same
+fixed patch/model/limits and a new USD2 cap. Only the external diagnostic wait
+configuration changes; the initial public request remains identical. Preparation
+is in progress. Longer waiting does not guarantee a result or isolate why the
+original repair stopped. The prior unsettled call is not resumed.
 
 The [preceding 3/9/16 run](history/2026-10-30-contract-observation-3916-results.md)
 had PASS/PASS/FAIL and all safety PASS. SQLFluff then used 13 calls, USD1.0609665
