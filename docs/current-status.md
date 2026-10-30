@@ -30,43 +30,39 @@ on a small set of public development tasks from start to finish. Review task
 acceptance, regressions, cost and elapsed time; use observed failures to choose the
 next fix. This is the default development loop, not a sequence of one-factor studies.
 
-The [latest SQLFluff run](history/2026-10-30-post-mutation-review-results.md)
-is CLOSED: code fbfdd213, independent acceptance FAIL / safety PASS, required
-public check 167 PASS / 1 deselected twice, 30 calls, 51 actions, 2 edits,
-5 probes, USD2.1578225 and 1,046.929 seconds; unverified_delivery. All calls and
-billing settled; the paid allocation remains CLOSED.
+The [1/4/11 integrated run](history/2026-10-31-integrated-1411-results.md) is CLOSED.
+Code 90adcb15, one fresh attempt each: marshmallow1343, pvlib1606 and Astroid1196
+all have independent acceptance PASS / safety PASS. Total USD3.607668,
+49 model calls, 5 edits and 1,387.099 seconds with two workers. All calls and
+billing settled; no retry or extra evaluation. These are three exposed development
+results, not a measured improvement over a matched baseline.
 
-The [public comparison](history/2026-10-30-post-mutation-public-counterexamples.md)
-on exact patch ab250268 reproduced no residual violation:
-20/20 grammar inputs preserve raw content, all 19 specified matching/count conditions
-hold, and 7 wrapped-lint inputs return results with exact input. The original CLI
-now reports PRS/exit65 without an internal traceback. Original code loses input in
-11 grammar cases and crashes on 6 abnormal SQL inputs. Both conditions used the same
-public program/native image; 56.776 seconds, zero model calls.
+Public evidence shows useful scope choices: marshmallow extended single to multiple
+invalid nested inputs; pvlib checked a caller after helper regression PASS and
+narrowed an overly broad fix; Astroid checked non-dictionary unpacking and corrected
+a probe's exception-printing error. The marshmallow failed new test led to a
+public-source-grounded expectation correction, not another implementation repair.
+No expanded failing probe led to a new implementation fix in this batch.
+All deliveries remain unverified_delivery under the original-obligation framework;
+independent acceptance and public observation evidence remain separate.
 
-Tracing reached all five changed failure returns. The two unchanged multiline
-returns were not reached; that is a coverage limit, not proof of unreachability.
-Abnormal input becomes entirely unparsable, including valid prefixes, but the open
-public issue does not require a particular recovery strategy. This behavior is not
-yet a demonstrated public defect. The [operator replay](history/2026-10-31-sqlfluff-assertion-log-replay.md)
-preserves all three failed assertions without truncation. Acceptance remains FAIL /
-safety PASS; public 167 PASS / 1 deselected. Private criteria stay outside solver
-context. This establishes diagnostic attribution, not a public requirement or
-reasoning failure.
+Next engineering question: reduce repeated verification without obscuring coverage.
+Three subset-test selections followed a full tests-directory PASS on the same diff;
+their tools took 11.806 seconds and associated model decisions 125.497 seconds.
+These are observed costs, not demonstrated avoidable savings. Delivered inputs
+retained full-check PASS, while some changed-file entries still said discovery_unknown
+and offered run_tests. A further equivalent Astroid probe repeated despite its
+previous output being visible. Inspect these two mechanisms before adding state,
+verification gates or another paid comparison. No follow-up run is pending.
 
-Keep the [applied-change review](history/2026-10-30-post-mutation-review.md).
-Full current Delimited source reached the first review; later inputs retain hunks.
-The first implementation repair predates that review. The agent later corrected a
-check_tuples() accessor/caller misinterpretation and strengthened only its test.
-Its probes stayed at single/adjacent semicolons; broader cases and the exact CLI
-above are operator evidence. Resources did not force finish. Neither the context
-omission nor missing broader probes establishes the cause of independent FAIL.
-
-Do not add another warning, gate or paid run solely because acceptance failed.
-Keep [operator failure capture](history/2026-10-30-operator-failure-capture.md).
-One unchanged-patch replay took 51.529 seconds and retained 4,467 failure bytes;
-no model calls or grading changes. Exact values remain in the external operator
-report. Old records remain unchanged; no further replay is pending.
+SQLFluff16 remains independent FAIL / safety PASS. Its [public comparison](history/2026-10-30-post-mutation-public-counterexamples.md)
+found no residual violation within its tested inputs. The [operator replay](history/2026-10-31-sqlfluff-assertion-log-replay.md)
+confirmed all three failed assertions and retained 4,467 bytes without truncation,
+with unchanged grading. Exact private values remain outside solver context.
+This establishes attribution, not a new public requirement or reasoning deficit.
+Keep the [applied-change review](history/2026-10-30-post-mutation-review.md) and
+[operator capture correction](history/2026-10-30-operator-failure-capture.md).
+Do not tune to the private criterion or reopen any closed allocation.
 
 The [preceding normal run](history/2026-10-30-retained-source-sqlfluff-results.md)
 remains separate: 12 calls, 24 actions, 1 edit, USD0.7579325, 457.526 seconds,
