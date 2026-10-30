@@ -1,5 +1,6 @@
 # 2026-10-30 investigations
 
+- [Preserve assertions and value diffs behind long pytest headings](../2026-10-30-operator-failure-capture.md)
 - [SQLFluff independent evaluation: operator-only failure audit](../2026-10-30-sqlfluff-operator-evaluation-audit.md)
 - [Latest failure-preserving SQLFluff patch: public comparison](../2026-10-30-post-mutation-public-counterexamples.md)
 - [SQLFluff with applied-change review: live result](../2026-10-30-post-mutation-review-results.md)

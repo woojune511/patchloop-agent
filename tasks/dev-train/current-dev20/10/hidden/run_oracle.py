@@ -19,15 +19,16 @@ DIAGNOSTIC_FAILURE_LIMIT_BYTES = 12_000
 DIAGNOSTIC_FAILURE_BLOCK_LIMIT = 8
 
 _UNITTEST_SUMMARY = re.compile(rb"Ran [0-9]+ tests? in [^\r\n]+")
+_ANSI_SGR = re.compile(rb"\x1b\[[0-9;:]*m")
 
 
-def _header_title(line, delimiters):
+def _header_title(line, delimiters, minimum=3):
     """Split delimiter runs without backtracking through whitespace-heavy lines."""
     body = line.lstrip(delimiters)
-    if len(line) - len(body) < 3:
+    if len(line) - len(body) < minimum:
         return None
     title = body.rstrip(delimiters)
-    if len(body) - len(title) < 3:
+    if len(body) - len(title) < minimum:
         return None
     if (len(title) < 3 or title[:1] not in (b" ", b"\t")
             or title[-1:] not in (b" ", b"\t") or b"\r" in title):
@@ -36,7 +37,7 @@ def _header_title(line, delimiters):
 
 
 def _failure_markers(raw):
-    # Recognize ordinary, uncolored pytest sections and unittest text reports only.
+    # Normalize color for recognition only; all offsets and saved slices use raw bytes.
     # Scan each byte a fixed number of times, independent of delimiter-like output.
     # This is diagnostic selection, independent of the unchanged benchmark parser.
     offset = 0
@@ -44,7 +45,7 @@ def _failure_markers(raw):
     while offset < len(raw):
         newline = raw.find(b"\n", offset)
         end = len(raw) if newline < 0 else newline
-        line = raw[offset:end].removesuffix(b"\r")
+        line = _ANSI_SGR.sub(b"", raw[offset:end].removesuffix(b"\r"))
         start = offset
         offset = len(raw) if newline < 0 else newline + 1
         if separator is not None:
@@ -56,11 +57,17 @@ def _failure_markers(raw):
             separator = None
         if len(line) >= 3 and not line.strip(b"="):
             separator = start
-        elif _header_title(line, b"=") in (b"FAILURES", b"ERRORS"):
+        elif _header_title(line, b"=", minimum=1) in (b"FAILURES", b"ERRORS"):
             yield "pytest_section", start
-        elif _header_title(line, b"_") is not None:
+        elif _header_title(line, b"_", minimum=1) is not None:
+            # Pytest uses a single delimiter on each side when the title is wide.
             yield "pytest_case", start
-        elif _header_title(line, b"=-") is not None:
+        elif (_header_title(line, b"-", minimum=1) or b"").startswith(b"Captured "):
+            yield "pytest_boundary", start
+        elif _header_title(line, b"=", minimum=1) is not None:
+            # Carry the normalized boundary kind so a colored summary closes the section.
+            yield "pytest_end", start
+        elif _header_title(line, b"-") is not None:
             yield "pytest_boundary", start
         elif _UNITTEST_SUMMARY.fullmatch(line):
             yield "unittest_boundary", start
@@ -83,7 +90,7 @@ def _failure_ranges(raw):
         elif kind == "unittest_case":
             pytest_section = False
             active = ("unittest", start)
-        elif kind != "pytest_boundary" or raw[start:start + 1] == b"=":
+        elif kind != "pytest_boundary":
             pytest_section = False
     if active is not None:
         yield (*active, len(raw), False)
@@ -127,7 +134,7 @@ def _failure_capture(raw):
         })
     retained_bytes = DIAGNOSTIC_FAILURE_LIMIT_BYTES - remaining
     return {
-        "recognition": "pytest-sections-unittest-uncolored-text-v1",
+        "recognition": "pytest-sections-unittest-sgr-text-v2",
         "coverage": "recognized-blocks-only" if recognized_count else "no-recognized-blocks",
         "recognized_block_count": recognized_count,
         "retained_block_count": len(blocks),

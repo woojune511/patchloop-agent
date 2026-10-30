@@ -71,6 +71,13 @@ The package test loads all twenty current packages, checking declared artifact
 hashes as well as byte equality with the adapter template. Failure capture adds
 up to eight assertion blocks and 12KB per stream to the existing tail, with
 omission/coverage metadata; it never feeds the solver or changes grading.
+Recognition v2 accepts short pytest separators used by long parameterized names
+and ignores ANSI SGR color only when identifying headings. Saved sections retain
+original bytes, offsets and hashes, including pytest's rendered assertion and
+actual/expected diff. A normalized summary marker closes the failure section even
+when colored. Values not printed by the test runner cannot be reconstructed;
+the existing byte/block limits and explicit omissions still apply. Task identities
+change with refreshed adapters; prepare new inputs rather than reusing old manifests.
 
 ## Parallel stop and accounting
 

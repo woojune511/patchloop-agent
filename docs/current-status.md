@@ -1,6 +1,6 @@
 # Current status
 
-Updated: 2026-10-30. Runtime source owns behavior. Historical reports are evidence,
+Updated: 2026-10-31. Runtime source owns behavior. Historical reports are evidence,
 not an active queue.
 
 ## Product and working baseline
@@ -63,8 +63,10 @@ above are operator evidence. Resources did not force finish. Neither the context
 omission nor missing broader probes establishes the cause of independent FAIL.
 
 Do not add another warning, gate or paid run solely because acceptance failed.
-Improve operator failure-log retention with synthetic fixtures before attributing
-another failure. Diagnosis is complete; no repair or further execution is pending.
+Keep [operator failure capture](history/2026-10-30-operator-failure-capture.md):
+short/colored pytest headings preserve assertion/value diffs within limits.
+Focused tests pass; grading is unchanged. 20 adapters were refreshed, without
+model calls or task reruns.
 
 The [preceding normal run](history/2026-10-30-retained-source-sqlfluff-results.md)
 remains separate: 12 calls, 24 actions, 1 edit, USD0.7579325, 457.526 seconds,
