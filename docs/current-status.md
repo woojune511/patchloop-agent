@@ -30,33 +30,37 @@ on a small set of public development tasks from start to finish. Review task
 acceptance, regressions, cost and elapsed time; use observed failures to choose the
 next fix. This is the default development loop, not a sequence of one-factor studies.
 
-The [normal-run audit](history/2026-10-30-plan-action-delivery-audit.md) found that
-the changed success conditions never became explicit verification purposes.
-Plans, review signals and latest probe observations arrived; tools and substantial
-budget remained. This differs from a previously authored contract being lost.
+The [latest fresh SQLFluff run](history/2026-10-30-retained-source-sqlfluff-results.md)
+is CLOSED: independent acceptance FAIL / safety PASS, required public check PASS,
+12 calls, 24 actions, 1 edit, USD 0.7579325 and 457.526 seconds; unverified_delivery.
+All current billing/counting is settled. No retry or extra evaluation is pending.
 
-Two concrete delivery/contract defects are fixed locally. `edit_files` now reuses
-exact admitted images to retain already observed unchanged source and a bounded
-post-image targeting the changed interval within existing size limits. In a
-no-model replay of the saved 16 inspections and exact SQLFluff edit, retained
-Delimited source increased from 7 lines/305 characters to 1-255/12,401,
-including option guards, within the unchanged
-24k total source budget. The patch is byte-identical. The public-checks-v1 finish
-description now correctly says original replay is not automatic; strict-policy
-wording and actual submission rules remain unchanged. No new gate or prompt is added.
-Source/recovery focused 16 PASS; policy focused 7 PASS. Full quick validation
-passes (1,265 PASS, 1 SKIP; 301.938 seconds), including isolated mock evaluation;
-Ruff and documentation checks pass. No new provider calls. Live repair benefit
-and the cause of the private failure remain unverified.
+The [source-retention and finish-description fixes](history/2026-10-30-plan-action-delivery-audit.md)
+worked in actual requests: current Delimited lines 1-255 / 12,439 characters remain
+after public PASS and before finish, and public-checks-v1 correctly says original
+replay is not automatic. Keep both fixes. Existing source limits and submission
+rules remain; no new gate or state store was added. Their focused 16/7 tests and
+quick 1,265 PASS / 1 SKIP, Ruff and isolated mock evaluation remain the local baseline.
 
-Keep the [scope-choice instructions](history/2026-10-30-verification-scope-choice.md):
-distinguish requirements from repair choices and test or narrow material assumptions.
-The [last normal live run](history/2026-10-30-verification-scope-choice-results.md)
-predates these fixes: acceptance FAIL/safety PASS,167 public tests PASS/1 deselected,
-10 calls,USD0.8053575,500.831 seconds,unverified_delivery. Its two false-to-partial-success
-returns were tested only near the reported symptom. The [operator diagnostic](history/2026-10-30-sqlfluff-contract-diagnostic.md)
-confirmed three success regressions and remaining input loss; their hidden-evaluation
-relationship is unknown. No task patch was changed by this host repair.
+The new patch changes one failure return to a partial success instead of the
+previous two. Its added grammar test directly asserts matched prefix and full token
+reconstruction for `bar..`. It was authored before post-mutation retention, so this
+difference cannot be attributed to that retention. However, it tests only
+allow_trailing=True with no minimum. The agent read the existing trailing/minimum
+option table but did not connect the changed success meaning to a refuting case
+for those options. The single Linter probe checks normal and doubled semicolons.
+No observed violation triggered another edit or narrowing. Source delivery is now
+demonstrated; semantic verification selection remains unresolved. Do not attribute
+independent FAIL to a particular unexecuted case or infer a model capability ceiling.
+
+Keep the [scope-choice instructions](history/2026-10-30-verification-scope-choice.md).
+No generic warning, check quota or repeat is justified solely by this result. Any
+next intervention should address the observed gap between preserving data and
+changing success eligibility; retaining source alone did not close it in this attempt.
+The [preceding normal run](history/2026-10-30-verification-scope-choice-results.md)
+and [operator counterexamples](history/2026-10-30-sqlfluff-contract-diagnostic.md)
+remain separate evidence about earlier patches. This one exposed attempt with two
+combined host fixes establishes neither causal repair gain nor stable speed gain.
 
 Two focused reviews are CLOSED and separate from the normal loop's 40-call cap. The first
 identified minimum-delimiter risk but hit a300-second wait: USD0.1377155 known, last

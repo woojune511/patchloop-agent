@@ -1,5 +1,6 @@
 # 2026-10-30 investigations
 
+- [SQLFluff after source retention and finish-description fixes](../2026-10-30-retained-source-sqlfluff-results.md)
 - [Normal repair plan/action delivery audit](../2026-10-30-plan-action-delivery-audit.md)
 - [SQLFluff review with the remaining deadline](../2026-10-30-sqlfluff-deadline-review.md)
 - [SQLFluff contract diagnosis](../2026-10-30-sqlfluff-contract-diagnostic.md)
