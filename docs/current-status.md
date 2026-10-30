@@ -59,11 +59,14 @@ dbt` marker. The final assessment explicitly leaves other empty-element, termina
 and min_delimiters conditions untested. Its plan stays at revision1 with stale
 "check untested" text even after PASS. Broader edits are not broader verification.
 
-The exact independent failing condition remains unknown; no private artifact was
-opened or additional evaluation run. The [previous public counterexamples](history/2026-10-30-latest-sqlfluff-public-counterexamples.md)
-apply to the preceding patch, not this new submission. The next unresolved question
-is which public boundary cases refute the new patch and why those cases were not
-selected. Do not feed operator cases into a fresh solver as hidden hints.
+The [selection audit](history/2026-10-30-verification-selection-diagnosis.md)
+found source/tools and 28 calls, 11 edits, 969 solver seconds available at finish.
+Review signals arrived, but the agent treated the reported example as sufficient
+while naming untested branches. Stopping priority versus difficulty constructing
+cases remains unresolved. Ground the required contract, then test important new
+assumptions or narrow the edit; this proposal is not a validated improvement.
+The private failure is unknown. [Prior operator cases](history/2026-10-30-latest-sqlfluff-public-counterexamples.md)
+were not rerun on this patch and must not become solver hints.
 
 Pydicom observed actual invalid RawDataElement behavior with RAISE and a normal
 control after repeating the initial WARN-configuration mistake. It then attempted

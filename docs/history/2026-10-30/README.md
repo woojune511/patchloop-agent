@@ -1,5 +1,6 @@
 # 2026-10-30 investigations
 
+- [Why verification stayed narrow](../2026-10-30-verification-selection-diagnosis.md)
 - [Contract-to-observation guidance: tasks 3, 9 and 16](../2026-10-30-contract-observation-3916-results.md)
 - [Contracts, counterexamples and actual observations](../2026-10-30-contract-observation-guidance.md)
 - [Latest SQLFluff patch: public counterexamples](../2026-10-30-latest-sqlfluff-public-counterexamples.md)
