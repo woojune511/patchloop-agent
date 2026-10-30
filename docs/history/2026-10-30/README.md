@@ -1,5 +1,6 @@
 # 2026-10-30 investigations
 
+- [Latest failure-preserving SQLFluff patch: public comparison](../2026-10-30-post-mutation-public-counterexamples.md)
 - [SQLFluff with applied-change review: live result](../2026-10-30-post-mutation-review-results.md)
 - [Applied-change review on the next useful decision](../2026-10-30-post-mutation-review.md)
 - [Latest SQLFluff public rejection/preservation comparison](../2026-10-30-retained-source-public-counterexamples.md)

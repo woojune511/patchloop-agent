@@ -36,33 +36,33 @@ public check 167 PASS / 1 deselected twice, 30 calls, 51 actions, 2 edits,
 5 probes, USD2.1578225 and 1,046.929 seconds; unverified_delivery. All calls and
 billing settled. No retry or extra evaluation is pending.
 
-The [applied-change review](history/2026-10-30-post-mutation-review.md) was delivered
-at both post-mutation requests with correct before/current diff identities. First
-review also carried all current Delimited lines1-251 via the public mutation archive.
-Later second-review/final inputs retain its patch hunks but not the full file body.
-That distinction does not establish a cause of failure. At finish, reads, edits,
-probes and tests remained available with 11 calls and 520 solver seconds left.
+The subsequent [public counterexample comparison](history/2026-10-30-post-mutation-public-counterexamples.md)
+is complete on exact submitted patch ab250268. No residual violation was reproduced:
+20/20 grammar inputs preserve raw content, all 19 specified matching/count conditions
+hold, and 7 wrapped-lint inputs return results with exact input. The original CLI
+now reports PRS/exit65 without an internal traceback. Original code loses input in
+11 grammar cases and crashes on 6 abnormal SQL inputs. Both conditions used the same
+public program/native image; 56.776 seconds, zero model calls, no evaluator replay.
 
-The first repair replaces five truncated-buffer failure returns with the original
-input while retaining failure semantics. It differs from the previous partial-success
-repair and was authored before the first review. That difference cannot be credited
-to the post-mutation instruction. No grammar-option counterexample was executed.
+Tracing reached all five changed failure returns. The two unchanged multiline
+returns were not reached; that is a coverage limit, not proof of unreachability.
+Abnormal input becomes entirely unparsable, including valid prefixes, but the open
+public issue does not require a particular recovery strategy. This behavior is not
+yet a demonstrated public defect. Exact independent failure remains unknown; do not
+carry the previous patch's defects forward or infer reasoning failure from this result.
 
-Instead, two probes mislabelled a check_tuples() result-access exception as a lint
-caller failure. Same-diff probes without that accessor and its public source
-resolved the confusion. The agent retracted the proposed further implementation
-fix and strengthened only the regression test to exercise wrapped lint, exact raw
-preservation and a returned parse violation. Recheck and helper replay passed;
-exact original CLI replay remains explicitly unverified. All probes used normal
-single and adjacent doubled semicolons. No candidate semantic violation was found
-and repaired; the exact independent failing assertion remains unknown.
+Keep the [applied-change review](history/2026-10-30-post-mutation-review.md) without
+claiming autonomous repair gain. Delivery worked, including full current Delimited
+source on the first review; later inputs retain hunks rather than the whole body.
+The first implementation repair predates that review. The agent later corrected a
+check_tuples() accessor/caller misinterpretation and strengthened only its test.
+Its probes stayed at single/adjacent semicolons; broader cases and the exact CLI
+above are operator evidence. Resources did not force finish. Neither the context
+omission nor missing broader probes establishes the cause of independent FAIL.
 
-Keep the implemented review mechanism without claiming autonomous repair gain.
-This attempt increased cost/time and retained acceptance FAIL. One exposed run
-does not isolate a causal effect. Before another runtime intervention, distinguish
-remaining public candidate defects from probe-program mistakes. Do not add another
-generic warning or mandatory probe solely because this attempt failed. No further
-paid run or saved-patch execution is authorized by this result.
+Do not add another warning, gate or paid run solely because acceptance failed.
+First establish a concrete remaining behavioral defect and its public requirement.
+The current diagnostic is complete; no further execution is pending or authorized.
 
 The [preceding normal run](history/2026-10-30-retained-source-sqlfluff-results.md)
 remains separate: 12 calls, 24 actions, 1 edit, USD0.7579325, 457.526 seconds,
