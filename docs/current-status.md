@@ -53,17 +53,23 @@ options; direct input/tree preservation assertions from the predecessor are also
 absent. The unresolved problem is contract selection, not merely case count.
 The private failure is unknown. A [paired public diagnostic](history/2026-10-30-sqlfluff-contract-diagnostic.md)
 now reproduces three false-success regressions and a remaining input-loss path
-on this exact patch. Normal controls hold; model calls0. Operator cases/results
-stay outside the prepared fresh focused-review packet (4 calls,2 probes,USD2 cap).
-That paid diagnostic is not yet authorized or executed.
+on this exact patch. Normal controls hold; model calls0. The approved fresh focused
+review received no operator cases/results. It identified the missing min_delimiters
+guard and searched public tests, then stopped at the third call's 300-second response
+wait: three reads, one search, no probe or report. Elapsed459.093 seconds;
+USD0.1377155 known, third-call billing unknown. The USD2 allocation is CLOSED with
+unresolved usage; no retry/resume. This is an incomplete diagnostic, not evidence
+of inability to identify a counterexample.
 Four early plan replacements lacked revision reasons; a later post-edit update
 succeeded. These annotation failures are not established as the cause of acceptance FAIL.
 
 Keep the generic instruction change without claiming quality gain. Do not respond
 to this negative attempt with another warning, quota or automatic paid repeat.
-The focused diagnosis will distinguish whether the agent can identify and exercise the
-changed success contract, or whether its repair choice makes that contract
-unnecessarily broad. A smaller diff alone does not settle either question.
+Contract-risk identification was observed under focused review; concrete case
+construction/execution remains unknown. Do not add a semantic prompt or gate based
+on this timeout. Before another separately approved
+review, decide its response-wait budget within the total deadline; longer waiting
+does not guarantee a result. The contract-selection question remains unresolved.
 
 The [preceding 3/9/16 run](history/2026-10-30-contract-observation-3916-results.md)
 had PASS/PASS/FAIL and all safety PASS. SQLFluff then used 13 calls, USD1.0609665
@@ -159,7 +165,7 @@ paid work needs a new exact task/model/credential/repeat/cap scope.
 
 All prior paid allocations are closed. The [older interrupted call](history/2026-09-28-expectation-review-results.md)
 retains unknown billing; later settled allocations do not resolve it. An older
-source-ready diagnostic also retains one unsettled response.
+source-ready diagnostic and the current focused review each retain an unsettled response.
 
 Fresh solves, seeded repairs, funded continuations, saved-patch evaluations,
 operator replays and scripted tests are different evidence. Do not pool them as

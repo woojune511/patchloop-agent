@@ -1,7 +1,8 @@
 # SQLFluff contract identification: public reproduction and focused review
 
-Date: 2026-10-30 KST. Status OPEN: operator reproduction complete; paid model
-diagnostic prepared but not authorized or executed. Runtime unchanged.
+Date: 2026-10-30 KST. Status CLOSED: operator reproduction complete; approved model
+diagnostic interrupted by its response-wait limit. Third-call billing remains
+unknown. No retry, resume or replacement; runtime unchanged.
 
 ## Why this diagnosis
 
@@ -75,7 +76,7 @@ No specific branch, option, input or expected answer from the operator reproduct
 enters the request. A defect is not asserted as guaranteed. No probe quota is required.
 The model may report no counterexample; reaching a limit is a censored observation.
 
-Proposed exact scope: dev-train current-dev20 task16, fixed candidate above,
+Approved exact scope: dev-train current-dev20 task16, fixed candidate above,
 gpt-5.4-2026-03-05/xhigh, credential `C:/Users/geonj/Documents/PatchLoop/.env`,
 one session, **USD2 total cap,4 model calls,12 actions including report,2 probes,
 600 seconds**, plus bounded cleanup. Input ceiling40,000 tokens per request and
@@ -123,6 +124,78 @@ early or justify adding an automatic reviewer. If it fails, name the observed st
 and resource limits; do not claim a general capability ceiling. No automatic second
 sample, production intervention or paid follow-up follows from this one session.
 
-The operator used the task's Python3.9 image; the model uses the same prepared
-Python3.12 probe environment as the preceding solver. Review runtime/module paths
-and distinguish a setup mismatch from a behavioral contradiction.
+The operator used the task's Python3.9 image; the model was offered the same prepared
+Python3.12 probe environment as the preceding solver. No model probe ran, so this
+environment difference did not produce an observed behavioral or setup result.
+
+## Paid execution and observed limit
+
+The user approved the exact prepared scope with "이 범위로 실행". Preparation code:
+`a37973c9336547f158a60584da3000bf02cdfa66`; runtime hash above unchanged.
+Sealed plan:
+`sha256:56c6b5e1e566dab98db43720437bfd86258cc43884b1f2df6c44b9dba95cebf4`.
+Approval receipt: `C:/pt/scope16-review-diagnostic-20261030-v1/approval.json`.
+Run: `run_dev_b306fd8919744575`, immutable result at
+`C:/pt/scope16-review-run-20261030-v1/result.json`.
+
+Terminal: **PROVIDER_TIMEOUT_OR_UNKNOWN**, elapsed **459.093 seconds**. Three input
+counts completed and three provider calls started; two returned and settled. Four
+gateway actions completed: three reads and one search. No probe, report, edit,
+normal submission or independent evaluation ran. Candidate identity was rechecked.
+The recorded known spend is **USD0.1377155**; usage/billing for the third call is
+unknown, not zero. The USD2 allocation is closed to further dispatch. Invoice and
+input-count endpoint billing remain unverified.
+
+The third call reached the collector's **300-second per-response wait**, with
+`RequestWaitExpired`, phase `provider_response_wait`, elapsed300017ms and
+`response_received=false`. This is the local whole-response timer, not evidence of
+an SDK I/O timeout or a provider-side failure reason. The overall600-second limit,
+four-call limit, twelve-action limit and two-probe limit were not exhausted.
+Closing the client does not prove remote cancellation or settled billing. No
+automatic request followed the timeout.
+
+There was a positive intermediate observation. The first response requested the
+completeness helper, MatchResult semantics and full patched Delimited implementation.
+After those reads, the second response's public search action (journal sequence32)
+explicitly stated that the changed failure paths omit min_delimiters checks and
+that partial-prefix returns could violate an existing contract. It searched
+`min_delimiters=` to find public grammar/test use. This risk was not supplied by the
+operator. It is a public action explanation, not an inference from private reasoning.
+
+Thus **contract-risk identification occurred under focused review**. The review
+did not produce a concrete input, expected observation, executed probe or terminal
+report. It cannot establish whether the agent can complete that next step, or why
+the original repair loop did not choose it. This interruption neither validates
+the patch nor establishes an inability to find counterexamples. The operator's
+three success regressions and remaining input-loss path remain valid separate
+public evidence.
+
+Decision: preserve the current production instructions and gates. Adding another
+semantic warning, reviewer or required probe is not supported by this interrupted
+review. A future diagnostic would first need an explicit response-wait budget
+consistent with its total deadline and fresh paid scope. More waiting might allow
+an observation, but does not guarantee one. No new experiment is authorized here.
+
+## Closing evidence and validation
+
+- Result bytes: `sha256:eb2c9fee4752da13da75aef8676adbbbbda102d99e2597b3cfa2d2bc72281918`.
+- Execution journal bytes: `sha256:20b75bd02072861cd24da4a94c99e040018a59df896b8eee386ab40359d7abd8`.
+- Independent scope/accounting audit: `C:/pt/scope16-review-audit-20261030-v1/audit.json`,
+  `sha256:c433e9cd03cdcc9dbcad6308b1fd62586418dfd6d713982348f5a347cee96c53`.
+  All44 event hashes and28 audit checks pass: exact approval/input/implementation
+  identities, paired counts/actions, fixed final patch, and no dispatch after failure.
+  Third-call reserve USD0.4141275 plus known spend gives a conditional response-cost
+  exposure bound of USD0.551843 under the bound model/rates/ceilings. This is neither
+  settled spend nor an invoice estimate; unknown billing stays unresolved.
+- Public-action review: `C:/pt/scope16-review-public-audit-20261030-v1/public-review.json`,
+  CAS `sha256:88c33d189e17a512c3ff9de54dbf481ec9a9b3be16b16ebd75ad2ca4b46e4ff9`.
+  Reads/search succeeded without truncation. The helper, MatchResult and complete
+  Delimited body were returned, followed by grammar_test.py605-609 option references.
+  It records the identified minimum-delimiter risk separately from an executed case.
+- Documentation validation:6 PASS, local HTML links/unique IDs valid, embedded
+  scripts and production runtime unchanged; no new production tests were needed.
+  Artifact `sha256:d6da1334674e3d5bae00beae85344c64cdea994d4dd882de9f814f3f03424652`
+  under `C:/pt/scope16-review-docs-20261030-v1`. Closed earlier histories are untouched.
+
+These audits are read-only reviews of the completed execution. They make no new
+provider/probe calls and do not settle the interrupted provider request.
