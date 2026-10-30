@@ -30,31 +30,36 @@ on a small set of public development tasks from start to finish. Review task
 acceptance, regressions, cost and elapsed time; use observed failures to choose the
 next fix. This is the default development loop, not a sequence of one-factor studies.
 
-The [1/4/11 integrated run](history/2026-10-31-integrated-1411-results.md) is CLOSED.
-Code 90adcb15, one fresh attempt each: marshmallow1343, pvlib1606 and Astroid1196
-all have independent acceptance PASS / safety PASS. Total USD3.607668,
-49 model calls, 5 edits and 1,387.099 seconds with two workers. All calls and
-billing settled; no retry or extra evaluation. These are three exposed development
-results, not a measured improvement over a matched baseline.
+The [verification-reuse 1/4/11 run](history/2026-10-31-verification-reuse-1411-results.md)
+is CLOSED. Code 1569ec49, one fresh attempt each: marshmallow1343, pvlib1606 and
+Astroid1196 all have independent acceptance PASS / safety PASS. Total USD2.596122,
+38 model calls, 53 actions, 5 edits and 905.879 seconds with two workers.
+All calls/counts/billing settled; no retry, uncertainty stop or extra evaluation.
+Against the [previous same-task batch](history/2026-10-31-integrated-1411-results.md),
+observed cost fell 28.04% and batch time 34.69%; this is not a matched causal estimate.
 
-Public evidence shows useful scope choices: marshmallow extended single to multiple
-invalid nested inputs; pvlib checked a caller after helper regression PASS and
-narrowed an overly broad fix; Astroid checked non-dictionary unpacking and corrected
-a probe's exception-printing error. The marshmallow failed new test led to a
-public-source-grounded expectation correction, not another implementation repair.
-No expanded failing probe led to a new implementation fix in this batch.
-All deliveries remain unverified_delivery under the original-obligation framework;
-independent acceptance and public observation evidence remain separate.
+Scope-overlapping selected tests fell 3 to 2. Task1 reused successful outputs and
+submitted without subset tests; its failed helper needed a logging correction.
+Task4 repaired 7 public regressions and passed 258 tests, then reselected 4 nodes.
+Task11 passed 1293 tests and reselected 2 new nodes. Both remaining selections cited
+unreported collection despite visible PASS and new reuse guidance. Task4's optional
+selector was already absent. Missing delivery does not explain these repeats.
+No strict same-diff successful probe repeat occurred; task11 replayed one identical
+helper after a test-only edit changed the diff, under existing currency rules.
 
-The [verification-reuse correction](history/2026-10-31-verification-reuse-decision.md)
-separates declared directory selection from unreported collection and makes extra
-file selection advisory. The shared guidance compares intended input/setup/assertion
-with current-diff observations and names new information in the existing action basis.
-Successful outputs were already delivered in the audited repeats; missing context
-does not explain them. No semantic duplicate blocker, evidence store or gate was added.
-Quick: 1,308 PASS / 1 host-symlink SKIP, including isolated mock evaluation; final
-wording/contract checks: 156 PASS; Ruff passed. Actual repeat reduction and time savings
-remain unmeasured. New cases and post-edit checks stay available. No paid run is pending.
+Keep the [correction](history/2026-10-31-verification-reuse-decision.md): scope display
+is accurate and this panel shows no acceptance regression. Repetition is only partly
+addressed; another generic reuse sentence is not supported as the next intervention.
+Concrete collection/execution receipts are a possible follow-up, not an implemented
+decision. No new gate, state store, mandatory probe or paid run is pending.
+
+Verification paths differed: no unchanged-base reproduction; task4 prepared but did
+not execute an optional caller probe and disclosed the gap; task11 omitted the earlier
+non-Dict helper boundary. Do not claim all prior coverage was preserved or fewer probes
+caused the cost/time difference. All deliveries remain unverified_delivery; public
+observations, registered original-case proof and independent acceptance stay distinct.
+Local baseline: quick 1,308 PASS /1 host-symlink SKIP with isolated mock; final wording/
+contract 156 PASS and Ruff. Runtime mechanisms, live behavior and general quality differ.
 
 SQLFluff16 remains independent FAIL / safety PASS. Its [public comparison](history/2026-10-30-post-mutation-public-counterexamples.md)
 found no residual violation within its tested inputs. The [operator replay](history/2026-10-31-sqlfluff-assertion-log-replay.md)
@@ -71,17 +76,11 @@ acceptance FAIL / safety PASS. Its [public comparison](history/2026-10-30-retain
 confirmed two rejection-to-success regressions in that different patch. Do not
 carry those defect findings onto the latest failure-preserving patch without evidence.
 
-Keep the [source-retention and finish-description fixes](history/2026-10-30-plan-action-delivery-audit.md).
-Keep current-diff source limits and existing submission rules. The applied-change
-review's local baseline is 23 new cases plus3 identity cases, quick1,285 PASS /
-1 host-symlink SKIP, Ruff and isolated mock evaluation. Runtime mechanisms, this
-live execution and general repair improvement remain distinct claims.
+Keep the [source-retention and finish-description fixes](history/2026-10-30-plan-action-delivery-audit.md),
+current-diff source limits and existing submission rules.
 
-Both focused reviews are CLOSED. The first identified minimum-delimiter risk but
-hit its wait limit; USD0.1377155 is known, last-call billing unknown. The
-[remaining-deadline review](history/2026-10-30-sqlfluff-deadline-review.md) settled
-USD0.189707 without testing changed success conditions or finding a counterexample.
-Keep the diagnostic wait setting; no automatic repeat is pending.
+The [focused SQLFluff reviews](history/2026-10-30-sqlfluff-deadline-review.md) are
+CLOSED. Keep the diagnostic wait setting; no automatic repeat is pending.
 
 The [preceding 3/9/16 run](history/2026-10-30-contract-observation-3916-results.md)
 retains pydicom's real-data test follow-through gap and pvlib's duplicate verification;
