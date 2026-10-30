@@ -159,6 +159,7 @@ tests/test_file_freedom.py
 tests/test_action_budget_explanations.py
 tests/test_journal_verified_prefix.py
 tests/test_file_edits.py
+tests/test_file_edit_source_rebinding.py
 tests/test_file_transaction.py
 tests/test_finish_choice_audit.py
 tests/test_new_test_modules.py

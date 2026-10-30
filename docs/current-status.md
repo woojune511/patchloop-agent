@@ -30,45 +30,41 @@ on a small set of public development tasks from start to finish. Review task
 acceptance, regressions, cost and elapsed time; use observed failures to choose the
 next fix. This is the default development loop, not a sequence of one-factor studies.
 
-The [latest scope-choice run](history/2026-10-30-verification-scope-choice-results.md)
-is CLOSED: one fresh SQLFluff1517 attempt, acceptance FAIL and safety PASS.
-USD0.8053575 settled against USD4; 10 calls/counts and 21 actions are paired, with
-no retry, pending action or accounting uncertainty. Task elapsed: 500.831 seconds.
-Delivery remains unverified_delivery, separate from independent acceptance.
-No automatic repeat is pending.
+The [normal-run audit](history/2026-10-30-plan-action-delivery-audit.md) found that
+the changed success conditions never became explicit verification purposes.
+Plans, review signals and latest probe observations arrived; tools and substantial
+budget remained. This differs from a previously authored contract being lost.
 
-The [scope-choice revision](history/2026-10-30-verification-scope-choice.md) replaces
-existing instructions: distinguish required behavior from repair choices, then test
-material new assumptions or narrow unnecessary edits. No tool, schema, quota, model
-round or finish gate is added. Focused 111 PASS; quick 1258 PASS / 1 skip, including
-isolated mock evaluation. Live case selection broadened to normal `;`, `;;` and
-`; ;`, observed on the unchanged base and again after the edit. Public checks:
-167 PASS / 1 deselected. The two failing inputs stopped raising RuntimeError and
-returned SQLParseError. This is public case support, not successful repair.
+Two concrete delivery/contract defects are fixed locally. `edit_files` now reuses
+exact admitted images to retain already observed unchanged source and a bounded
+post-image targeting the changed interval within existing size limits. In a
+no-model replay of the saved 16 inspections and exact SQLFluff edit, retained
+Delimited source increased from 7 lines/305 characters to 1-255/12,401,
+including option guards, within the unchanged
+24k total source budget. The patch is byte-identical. The public-checks-v1 finish
+description now correctly says original replay is not automatic; strict-policy
+wording and actual submission rules remain unchanged. No new gate or prompt is added.
+Source/recovery focused 16 PASS; policy focused 7 PASS. Full quick validation
+passes (1,265 PASS, 1 SKIP; 301.938 seconds), including isolated mock evaluation;
+Ruff and documentation checks pass. No new provider calls. Live repair benefit
+and the cause of the private failure remain unverified.
 
-The submitted patch is smaller than its predecessor, but still changes two
-failure returns to partial success. No narrowing/undo occurred. Default Linter
-checks did not validate the introduced success meaning under trailing/minimum
-options; direct input/tree preservation assertions from the predecessor are also
-absent. The unresolved problem is contract selection, not merely case count.
-The private failure is unknown. A [public diagnostic](history/2026-10-30-sqlfluff-contract-diagnostic.md)
-reproduced three false-success regressions and a remaining input-loss path on this
-exact patch, with normal controls intact. A fresh model review independently
-identified the missing min_delimiters guard, but its third response hit the300-second
-wait before any probe/report. USD0.1377155 known, third-call billing unknown;
-allocation CLOSED. This incomplete observation does not establish inability.
-Keep the generic instruction change without claiming quality gain. Do not respond
-to this negative attempt with another warning, quota or automatic paid repeat.
-Contract-risk identification was observed under focused review; concrete case
-construction/execution remains unknown. Do not add a semantic prompt or gate based
-on this timeout. The [fresh review](history/2026-10-30-sqlfluff-deadline-review.md) is CLOSED:
-remaining-total response waiting applied,4 calls/7 actions/1 probe,217.406 seconds,
-USD0.189707 settled. It constructed/executed four semicolon cases, all matching
-expectations; no counterexample. Three calls explored source; the fourth ran the
-probe, exhausting calls before interpretation/report. Changed success conditions
-were not tested. No response exceeded300 seconds, so wait adjustment is not a
-proven cause of progress. Keep the scoped wait setting; production is unchanged.
-Verification-target selection and the small call budget remain unresolved.
+Keep the [scope-choice instructions](history/2026-10-30-verification-scope-choice.md):
+distinguish requirements from repair choices and test or narrow material assumptions.
+The [last normal live run](history/2026-10-30-verification-scope-choice-results.md)
+predates these fixes: acceptance FAIL/safety PASS,167 public tests PASS/1 deselected,
+10 calls,USD0.8053575,500.831 seconds,unverified_delivery. Its two false-to-partial-success
+returns were tested only near the reported symptom. The [operator diagnostic](history/2026-10-30-sqlfluff-contract-diagnostic.md)
+confirmed three success regressions and remaining input loss; their hidden-evaluation
+relationship is unknown. No task patch was changed by this host repair.
+
+Two focused reviews are CLOSED and separate from the normal loop's 40-call cap. The first
+identified minimum-delimiter risk but hit a300-second wait: USD0.1377155 known, last
+call billing unknown. The [remaining-deadline review](history/2026-10-30-sqlfluff-deadline-review.md)
+used4 calls/1 probe,217.406 seconds,USD0.189707 settled; four semicolon cases met its
+expectations, with no counterexample or final report. It did not test the changed
+success conditions. No response exceeded300 seconds, so wait adjustment is not a
+proven cause of progress. Keep that diagnostic setting; no automatic repeat is pending.
 
 The [preceding 3/9/16 run](history/2026-10-30-contract-observation-3916-results.md)
 had PASS/PASS/FAIL and all safety PASS. SQLFluff then used 13 calls, USD1.0609665

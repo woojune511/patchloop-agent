@@ -8,6 +8,7 @@ from patchloop.artifacts import ArtifactStore
 from patchloop.deadline import ExecutionDeadline
 from patchloop.dev import file_transaction as transaction
 from patchloop.dev.contracts import FileEditIntent
+from patchloop.dev.source_rebinding import SourceReplacement
 from patchloop.errors import ContractError, RecoveryError
 from patchloop.git_execution import GitExecutionUncertain
 from patchloop.repository import DiffSummary, WorkspaceManager
@@ -209,24 +210,31 @@ def result(gateway, intent, arguments, start, changes, *, deadline=None):
     summary = WorkspaceManager.diff_summary(gateway.workspace, deadline=deadline)
     if summary.patch_hash != start["mutation_expected_worktree_diff_hash"]:
         raise RecoveryError("file transaction differs from admitted candidate")
-    evidence = []
+    evidence, rebound = [], []
     for change in changes:
         if change.after is not None:
-            before = (change.before or b"").decode("utf-8").splitlines()
-            after = change.after.decode("utf-8").splitlines()
-            focus = next((i + 1 for i, (old, new) in enumerate(zip(before, after, strict=False))
-                          if old != new), min(len(before), len(after)) + 1)
+            replacement = SourceReplacement.from_file_images(change.before or b"", change.after)
+            before = replacement.before_bytes.decode("utf-8").replace("\r\n", "\n")
+            focus = before[:replacement.offset].count("\n") + 1
             span = gateway._mutation_postimage_evidence(
-                path=change.path, focus_start_line=focus, focus_line_count=1,
+                path=change.path, focus_start_line=focus,
+                focus_line_count=max(1, replacement.new_text.count("\n") + 1),
                 diff_hash=summary.patch_hash, deadline=deadline)
             if span is not None:
                 evidence.append(span)
+            # Reuse the existing eight-fragment bound for the whole transaction,
+            # while preserving one bounded explicit postimage for every edited file.
+            if change.before is not None and len(rebound) < 8:
+                rebound.extend(gateway._revalidated_spans(
+                    paths=[change.path], diff_hash=summary.patch_hash, replacement=replacement,
+                    deadline=deadline,
+                )[:8 - len(rebound)])
     patch = start["mutation_generated_patch"]
     return {"patch_hash": sha256_bytes(patch.encode("utf-8")),
             "worktree_diff_hash": summary.patch_hash,
             "changed_files": [change.path for change in changes],
             "mutation_evidence": evidence[0] if evidence else None,
-            "revalidated_spans": evidence[1:],
+            "revalidated_spans": [*evidence[1:], *rebound],
             "file_transaction_hash": sha256_json(start["file_transaction"]),
             "mutation": {"hypothesis": intent.hypothesis,
                 "expected_behavior": intent.expected_behavior,

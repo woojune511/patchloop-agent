@@ -68,6 +68,32 @@ def test_policy_has_distinct_identity_and_legacy_default_wire(tmp_path):
         repair_context.system_prompt(state))
 
 
+@pytest.mark.parametrize("agent_policy", ["current", "thin"])
+def test_finish_description_matches_policy_without_changing_action_contract(agent_policy):
+    def schema(**kwargs):
+        return tool_module.dev_tool_schemas(
+            finish_enabled=True, allowed_tools=["finish_task"],
+            agent_policy=agent_policy, **kwargs,
+        )[0]
+
+    strict = schema(verification_policy="reproduction-gated-v1")
+    public = schema(verification_policy=POLICY)
+    assert schema() == strict
+    assert strict["name"] == public["name"] == "finish_task"
+    assert {key: value for key, value in strict.items() if key != "description"} == {
+        key: value for key, value in public.items() if key != "description"
+    }
+    assert "The host replays stale original-case invocations before submission" in (
+        strict["description"])
+    assert "current mismatch/conflict returns to repair" in strict["description"]
+    assert "No original replay is automatically started at submission" in public["description"]
+    assert "optional diagnostics, not submission prerequisites" in public["description"]
+    assert "The host replays stale original-case" not in public["description"]
+    for description in (strict["description"], public["description"]):
+        assert "required visible checks pass on the current diff" in description
+        assert "Missing/incomplete evidence is labelled unverified" in description
+
+
 def test_malformed_observation_does_not_poison_later_valid_case_or_finish(gateway_factory):
     gateway, journal, backend = gateway_for(gateway_factory)
     first = gateway.execute(malformed(gateway.public_task))
@@ -265,6 +291,7 @@ def test_advisory_observation_reaches_independent_mock_evaluation(
 ):
     backend = ExecutingProbe()
     contexts = []
+    finish_descriptions = []
 
     class OriginalThenRepair(MockDevAdapter):
         def __init__(self, task_id):
@@ -277,6 +304,16 @@ def test_advisory_observation_reaches_independent_mock_evaluation(
 
         def next_turn(self, context, tools):
             contexts.append(context)
+            for tool in tools:
+                if tool["name"] == "finish_task":
+                    finish_descriptions.append(tool["description"])
+                    assert "No original replay is automatically started at submission" in (
+                        tool["description"])
+                    assert "The host replays stale original-case" not in tool["description"]
+                    guidance = json.loads(context)["completion_guidance"]
+                    assert guidance["verification_policy"] == POLICY
+                    assert "No original replay is automatically started at submission" in (
+                        guidance["message"])
             if not self.observed:
                 self.observed = True
                 return DevModelTurn(tool_calls=[malformed(smoke_package.public)])
@@ -294,6 +331,7 @@ def test_advisory_observation_reaches_independent_mock_evaluation(
     assert run["evaluator"]["safety_state"] == "NOT_RUN"
     assert run["delivery_state"] == "unverified_delivery"
     assert backend.calls == 1
+    assert finish_descriptions
     assert all("hidden-multiline-csv" not in value for value in contexts)
     assert all("reference_patch" not in value for value in contexts)
     events = DevJournal(tmp_path, run["run_id"]).events()

@@ -1,7 +1,8 @@
 # File transactions
 
 Source: `patchloop/dev/file_edits.py`, `file_transaction.py`; tests: `test_file_edits.py`,
-`test_file_transaction.py`, `test_file_edit_boundaries.py`, `test_test_restoration.py`.
+`test_file_transaction.py`, `test_file_edit_boundaries.py`, `test_test_restoration.py`,
+`test_file_edit_source_rebinding.py`.
 
 `edit_files` is a singleton alternative to `replace_text`, sharing its admission,
 completion forecast and accepted-edit quota. Supply either 1–16 distinct `edits`
@@ -18,6 +19,15 @@ later unrelated edits survive, but changed target files cause rejection. Origina
 tests cannot be deleted or weakened. New additive test modules require declared
 test roots; original-test isolated grading removes those modules temporarily.
 No arbitrary delete/rename or unrestricted shell is exposed.
+
+After a transaction, exact admitted before/after images define a conservative
+changed interval per file. Previously observed unchanged prefix/suffix lines are
+rebound to the current file hash; a bounded post-image targets the changed interval.
+Retain at most eight rebound fragments for the whole batch, alongside each file's
+existing bounded post-image. Normal source-output and retained-context limits still
+apply, so durable observations may exceed what one model request can carry. Unread
+unchanged ranges outside the post-image gain no source authority. Undo and pending
+recovery use the same images and mapping; completed replay reuses its saved receipt.
 
 Both mutation tools use the shared test validator. Restoring an existing test file
 to its exact original HEAD bytes is permitted, including removing a run-added test

@@ -460,9 +460,15 @@ def dev_tool_schemas(
                     "with a concise public assessment connecting requirements to observed "
                     "evidence and listing unfinished verification. Missing original evidence "
                     "returns unverified_delivery. Regression PASS alone does not "
-                    "prove the reported problem is fixed. The host replays stale original-case "
-                    "invocations before submission; current mismatch/conflict returns to repair. "
-                    "Missing/incomplete evidence is labelled unverified. Public case support "
+                    "prove the reported problem is fixed. "
+                    + (
+                        "Original observations are optional diagnostics, not submission "
+                        "prerequisites. No original replay is automatically started at submission. "
+                        if verification_policy == "public-checks-v1" else
+                        "The host replays stale original-case invocations before submission; "
+                        "current mismatch/conflict returns to repair. "
+                    )
+                    + "Missing/incomplete evidence is labelled unverified. Public case support "
                     "does not certify requirements. This submits for independent evaluation."
                 ),
                 "strict": True,

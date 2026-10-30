@@ -18,6 +18,27 @@ class SourceReplacement:
     old_text: str
     new_text: str
 
+    @classmethod
+    def from_file_images(cls, before_bytes: bytes, after_bytes: bytes) -> SourceReplacement:
+        """Enclose all changes using exact common ends, including undo/recovery images.
+
+        Interior lines are deliberately treated as touched, even if some are equal.
+        Only the unchanged prefix/suffix can inherit existing observation authority.
+        """
+        before = before_bytes.decode("utf-8").replace("\r\n", "\n")
+        after = after_bytes.decode("utf-8").replace("\r\n", "\n")
+        prefix = 0
+        for old, new in zip(before, after, strict=False):
+            if old != new:
+                break
+            prefix += 1
+        suffix = 0
+        limit = min(len(before), len(after)) - prefix
+        while suffix < limit and before[-suffix - 1] == after[-suffix - 1]:
+            suffix += 1
+        return cls(before_bytes, after_bytes, prefix,
+                   before[prefix:len(before) - suffix], after[prefix:len(after) - suffix])
+
     def observed_fragments(self, spans: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Map only previously observed unchanged lines; never search for similar text.
 
