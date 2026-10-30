@@ -34,28 +34,28 @@ The [latest SQLFluff run](history/2026-10-30-post-mutation-review-results.md)
 is CLOSED: code fbfdd213, independent acceptance FAIL / safety PASS, required
 public check 167 PASS / 1 deselected twice, 30 calls, 51 actions, 2 edits,
 5 probes, USD2.1578225 and 1,046.929 seconds; unverified_delivery. All calls and
-billing settled. No retry or extra evaluation is pending.
+billing settled; the paid allocation remains CLOSED.
 
-The subsequent [public counterexample comparison](history/2026-10-30-post-mutation-public-counterexamples.md)
-is complete on exact submitted patch ab250268. No residual violation was reproduced:
+The [public comparison](history/2026-10-30-post-mutation-public-counterexamples.md)
+on exact patch ab250268 reproduced no residual violation:
 20/20 grammar inputs preserve raw content, all 19 specified matching/count conditions
 hold, and 7 wrapped-lint inputs return results with exact input. The original CLI
 now reports PRS/exit65 without an internal traceback. Original code loses input in
 11 grammar cases and crashes on 6 abnormal SQL inputs. Both conditions used the same
-public program/native image; 56.776 seconds, zero model calls, no evaluator replay.
+public program/native image; 56.776 seconds, zero model calls.
 
 Tracing reached all five changed failure returns. The two unchanged multiline
 returns were not reached; that is a coverage limit, not proof of unreachability.
 Abnormal input becomes entirely unparsable, including valid prefixes, but the open
 public issue does not require a particular recovery strategy. This behavior is not
-yet a demonstrated public defect. The [operator audit](history/2026-10-30-sqlfluff-operator-evaluation-audit.md)
-locates rejection in completed behavioral tests, not infrastructure or safety.
-Private criteria remain outside solver context; missing saved tracebacks limit exact
-assertion-level attribution. Do not infer reasoning failure from this result.
+yet a demonstrated public defect. The [operator replay](history/2026-10-31-sqlfluff-assertion-log-replay.md)
+preserves all three failed assertions without truncation. Acceptance remains FAIL /
+safety PASS; public 167 PASS / 1 deselected. Private criteria stay outside solver
+context. This establishes diagnostic attribution, not a public requirement or
+reasoning failure.
 
-Keep the [applied-change review](history/2026-10-30-post-mutation-review.md) without
-claiming autonomous repair gain. Delivery worked, including full current Delimited
-source on the first review; later inputs retain hunks rather than the whole body.
+Keep the [applied-change review](history/2026-10-30-post-mutation-review.md).
+Full current Delimited source reached the first review; later inputs retain hunks.
 The first implementation repair predates that review. The agent later corrected a
 check_tuples() accessor/caller misinterpretation and strengthened only its test.
 Its probes stayed at single/adjacent semicolons; broader cases and the exact CLI
@@ -63,10 +63,10 @@ above are operator evidence. Resources did not force finish. Neither the context
 omission nor missing broader probes establishes the cause of independent FAIL.
 
 Do not add another warning, gate or paid run solely because acceptance failed.
-Keep [operator failure capture](history/2026-10-30-operator-failure-capture.md):
-short/colored pytest headings preserve assertion/value diffs within limits.
-Focused tests pass; grading is unchanged. 20 adapters were refreshed, without
-model calls or task reruns.
+Keep [operator failure capture](history/2026-10-30-operator-failure-capture.md).
+One unchanged-patch replay took 51.529 seconds and retained 4,467 failure bytes;
+no model calls or grading changes. Exact values remain in the external operator
+report. Old records remain unchanged; no further replay is pending.
 
 The [preceding normal run](history/2026-10-30-retained-source-sqlfluff-results.md)
 remains separate: 12 calls, 24 actions, 1 edit, USD0.7579325, 457.526 seconds,
