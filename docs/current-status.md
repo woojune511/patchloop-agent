@@ -61,12 +61,14 @@ Keep the generic instruction change without claiming quality gain. Do not respon
 to this negative attempt with another warning, quota or automatic paid repeat.
 Contract-risk identification was observed under focused review; concrete case
 construction/execution remains unknown. Do not add a semantic prompt or gate based
-on this timeout. The user requested one [fresh small review](history/2026-10-30-sqlfluff-deadline-review.md)
-with response waiting bounded by the remaining600-second total, keeping the same
-fixed patch/model/limits and a new USD2 cap. Only the external diagnostic wait
-configuration changes; the initial public request remains identical. Preparation
-is in progress. Longer waiting does not guarantee a result or isolate why the
-original repair stopped. The prior unsettled call is not resumed.
+on this timeout. The [fresh review](history/2026-10-30-sqlfluff-deadline-review.md) is CLOSED:
+remaining-total response waiting applied,4 calls/7 actions/1 probe,217.406 seconds,
+USD0.189707 settled. It constructed/executed four semicolon cases, all matching
+expectations; no counterexample. Three calls explored source; the fourth ran the
+probe, exhausting calls before interpretation/report. Changed success conditions
+were not tested. No response exceeded300 seconds, so wait adjustment is not a
+proven cause of progress. Keep the scoped wait setting; production is unchanged.
+Verification-target selection and the small call budget remain unresolved.
 
 The [preceding 3/9/16 run](history/2026-10-30-contract-observation-3916-results.md)
 had PASS/PASS/FAIL and all safety PASS. SQLFluff then used 13 calls, USD1.0609665
@@ -123,12 +125,8 @@ and [usability](history/2026-10-29-runtime-usability-followup.md) changes also r
 new/multiple files and receipt undo, exact recovery, accurate action forecasts,
 character-paged reads and the configurable 12-edit default.
 
-The current runtime's quick regression passed 1,252 tests, including isolated mock
-evaluation, and skipped one check: 326.05 seconds with four file-grouped workers
-and no failures. Validation fixes, shared repair guidance and recent-probe evidence
-reuse are included. Focused validation: 124 PASS / 84.91 s; Ruff passed. Full-suite completion, Linux
-validation and causal quality/speed benefit
-remain unverified; changing task rosters cannot establish a batch speed gain.
+Full-suite completion, Linux validation and causal quality/speed benefit remain
+unverified; changing task rosters cannot establish a batch speed gain.
 The historical dev20 measurement stays [closed](history/2026-10-29-repair-dev20-results.md):
 10 PASS, 9 FAIL, 1 unsubmitted/NOT_RUN; USD11.7967235. It is development context,
 not a causal baseline for the combined current configuration.

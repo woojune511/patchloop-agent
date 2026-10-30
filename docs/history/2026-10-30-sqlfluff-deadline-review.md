@@ -1,6 +1,7 @@
 # SQLFluff fixed-patch review with the remaining execution deadline
 
-Date: 2026-10-30 KST. Status OPEN: local preparation; one fresh review requested.
+Date: 2026-10-30 KST. Status CLOSED: one fresh review executed; one public probe,
+no counterexample observed, no final model report. Recorded response usage settled.
 
 ## Question and change
 
@@ -61,5 +62,99 @@ acquisition or historical edits occurred.
 [Official model/pricing](https://developers.openai.com/api/docs/models/gpt-5.4)
 was rechecked: standard input/cached/output USD2.50/0.25/15 per million tokens.
 
-Local validation and executed results will close this record. No private evaluation
-or claim-producing measurement is planned.
+Local validation:12 PASS in47.68 seconds, including the original8 integration cases
+and4 fake-clock cases through the actual Session/dispatch path. A350-second response
+is accepted; count time reduces the first response wait to590 seconds and a later
+request to230. Responses at600/601 seconds preserve usage but execute no tools or
+successor; transport uncertainty stops without retry. Network, credentials and
+Docker are blocked in these mocks. Ruff and documentation6 tests pass.
+Validation artifact: `sha256:b5d6d13b12e2cc38328b66ea1b3c21521d78d04dc425f2dbf560ce9fe9cf002d`,
+root `C:/pt/scope16-deadline-review-validation-20261030-v1`.
+
+## Live result
+
+Preparation commit: `14be8704`. Sealed plan:
+`sha256:29861ebd589c2c69a87551e12fa731ec794f8e183f86b36ca8c5cde8f1abc147`.
+The exact request quoted above and inherited scope are recorded in the new
+`approval.json`. Initial request bytes match the previous initial packet. No previous
+model observations, operator counterexamples or hidden material were imported.
+Run `run_dev_e364db49d24a4e39`; result at the fresh result root's `result.json`.
+
+**217.406 seconds, USD0.189707**,4 paired counts/dispatches/settlements,7 actions
+(1 read,5 searches,1 probe). No provider/accounting/cleanup uncertainty in this run.
+No mutation, normal submission or independent evaluation. Final patch identity
+unchanged. Terminal **MODEL_CALL_LIMIT**: the fourth response requested the probe;
+the4-call ceiling then prevented model interpretation and report_discovery.
+Unused time, cost and probe allowance do not authorize a fifth call. The allocation
+is closed; the preceding invocation's unsettled call remains unresolved separately.
+Input-count endpoint billing and invoice reconciliation remain unverified.
+
+The first three responses read the complete patched Delimited body and searched
+semicolon tests/aliases/grammar uses. One broad search was truncated; the subsequent
+targeted search returned the ANSI statement grammar using allow_trailing=True.
+Public action explanations consistently targeted a remaining crash near the original
+semicolon example. They did not identify min_delimiters/trailing/input-preservation
+contract violations in this session.
+
+The fourth response supplied the input and expected no-exception/parse-error behavior
+before execution. Its question overstated SQLParseError as a public issue requirement:
+the issue leaves ignoring extra semicolons versus raising a rule open; SQLParseError
+is a choice in the candidate's added test. The no-crash check fits the reported issue,
+but the candidate's own expectation is not an independent correctness oracle.
+The program used the actual `/workspace/src/sqlfluff` Linter and
+Delimited modules; public line observations entered both modified grammar paths.
+It returned complete2077-byte output in18.918 seconds, exit0, no timeout/truncation,
+and confirmed sandbox cleanup. It was an isolated Linter helper probe, not the exact
+original CLI invocation or independent task acceptance.
+
+| Constructed input (all end with newline) | Expected | Observed |
+| --- | --- | --- |
+| `select id from tbl;` | Return without exception; normal control | 0 violations |
+| `select id from tbl;;` | Return with parse error | 1 SQLParseError |
+| `select id from tbl; ;` | Return with parse error | 1 SQLParseError |
+| `select id from tbl;;;` | Return with parse error | 1 SQLParseError |
+
+The program prints observations rather than asserting a pass/fail verdict. All four
+observations meet its stated expectations, so it produced **no counterexample**.
+It did not check minimum-delimiter thresholds, forbidden trailing delimiters, or
+complete input/tree conservation. Execution of changed lines does not establish
+those contracts. The operator's independently reproduced defects remain unfixed.
+
+## Decision and limits
+
+The review reached **concrete case construction and actual execution**. It did not
+reach successful contract falsification or model interpretation. This supports the
+ability to construct/run an issue-near probe under focused review, not the ability
+to derive a discriminating case from the changed success conditions. The previous
+review's minimum-delimiter risk identification was not reproduced in this sample.
+
+The new remaining-deadline setting was applied in live requests. No response took
+300 seconds here, so completion cannot be attributed to a longer wait. The two fresh
+stochastic sessions are not a controlled estimate of quality or latency gain.
+Local clock tests establish the intended timeout behavior, not provider reliability.
+
+Keep the scoped diagnostic wait configuration and existing production instructions.
+The next unresolved engineering question is verification-target selection and use of
+the small call budget: three responses went to source discovery, the last to a probe
+of the original symptom, leaving no interpretation turn. A four-call review constrains
+what can be inferred about reasoning. This result does not justify another generic
+warning, mandatory probe gate, automatic reviewer, or automatic paid repeat.
+
+Public review: `C:/pt/scope16-deadline-public-audit-20261030-v1/public-review.json`,
+CAS `sha256:e5e241e70ab317070c8cc603a8a8c8cb7b2d3b382f7b4d552e5811abcb965a1b`.
+Execution journal bytes:
+`sha256:bbed3ee902aca09d4762cd3189baf374b9b5c8fa4e87e356bb6b0afa434cfaa5`.
+
+Independent accounting/identity review:72 journal events and32 audit checks pass.
+Audit `C:/pt/scope16-deadline-audit-20261030-v1/audit.json`,
+`sha256:5615acd0f0b81264ab52e4b61f32d90224d802c94c65ec2827678ba9de454d8c`.
+Result bytes:
+`sha256:8dc415fbb4e3198fa5ed3ba28004a001ccb1315b5dc0226a8f320b4d77c86d22`.
+Provider response wait/processing durations were17.677,15.658,18.232 and125.216
+seconds. No new count, request or action followed the call-limit stop.
+
+Closing docs checks:6 PASS, local HTML links and IDs valid, embedded scripts and
+production runtime unchanged. Documentation check artifact:
+`sha256:82e103bbe7bbd55e5e831978ae8158f2c0f3f13b95374d06611d37909346ff09`,
+root `C:/pt/scope16-deadline-docs-20261030-v1`. No full production suite was rerun
+for this external diagnostic configuration and documentation change.
