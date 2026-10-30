@@ -51,13 +51,17 @@ failure returns to partial success. No narrowing/undo occurred. Default Linter
 checks did not validate the introduced success meaning under trailing/minimum
 options; direct input/tree preservation assertions from the predecessor are also
 absent. The unresolved problem is contract selection, not merely case count.
-The private failure is unknown; operator cases were not rerun or injected.
+The private failure is unknown. A [paired public diagnostic](history/2026-10-30-sqlfluff-contract-diagnostic.md)
+now reproduces three false-success regressions and a remaining input-loss path
+on this exact patch. Normal controls hold; model calls0. Operator cases/results
+stay outside the prepared fresh focused-review packet (4 calls,2 probes,USD2 cap).
+That paid diagnostic is not yet authorized or executed.
 Four early plan replacements lacked revision reasons; a later post-edit update
 succeeded. These annotation failures are not established as the cause of acceptance FAIL.
 
 Keep the generic instruction change without claiming quality gain. Do not respond
 to this negative attempt with another warning, quota or automatic paid repeat.
-Next diagnosis should distinguish whether the agent can identify and exercise the
+The focused diagnosis will distinguish whether the agent can identify and exercise the
 changed success contract, or whether its repair choice makes that contract
 unnecessarily broad. A smaller diff alone does not settle either question.
 

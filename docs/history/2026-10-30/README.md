@@ -1,5 +1,6 @@
 # 2026-10-30 investigations
 
+- [SQLFluff contract diagnosis](../2026-10-30-sqlfluff-contract-diagnostic.md)
 - [Scope-choice SQLFluff run](../2026-10-30-verification-scope-choice-results.md)
 - [Verification or narrower repair](../2026-10-30-verification-scope-choice.md)
 - [Why verification stayed narrow](../2026-10-30-verification-selection-diagnosis.md)
