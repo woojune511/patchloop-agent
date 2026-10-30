@@ -97,11 +97,8 @@ def test_plan_guidance_connects_public_results_to_remaining_work():
     assert "observation or public check that could settle them" in guidance
     assert ("contract -> case/setup -> expected observation -> actual evidence or untested"
             in guidance)
-    assert "Separate required public/caller/test contracts from repair choices" in guidance
-    assert "Preserve existing success/failure meaning when sufficient" in guidance
-    assert "sibling failures/bypassed guards; separate state preservation from success" in guidance
-    assert "Test a material new assumption, narrow/remove an unnecessary change" in guidance
-    assert "explain why the uncertainty cannot affect required behavior" in guidance
+    assert "review_request.behavior_change" in guidance
+    assert "before carrying forward a check-then-submit plan" in guidance
     assert "Listing unknowns alone does not justify stopping" in guidance
     assert "patch/submission decision over repeating supported examples" in guidance
     assert "program must observe its named property, not just setup" in guidance
@@ -308,7 +305,8 @@ def test_bad_annotation_does_not_add_model_correction(tmp_path, monkeypatch):
 
     def bad(self, context, tools):
         turn = original(self, context, tools)
-        turn.tool_calls[0].turn_decision.plan_update = {"wrong": True}
+        if turn.tool_calls[0].turn_decision is not None:
+            turn.tool_calls[0].turn_decision.plan_update = {"wrong": True}
         return turn
 
     monkeypatch.setattr(MockDevAdapter, "next_turn", bad)
@@ -317,8 +315,10 @@ def test_bad_annotation_does_not_add_model_correction(tmp_path, monkeypatch):
     assert result["call_counts"]["model"] == 4
     events = DevJournal(tmp_path, result["run_id"]).events()
     assert not any(e["event_type"] == "protocol_correction" for e in events)
-    assert all(e["payload"]["receipt"]["status"] == "rejected"
-               for e in events if e["event_type"] == plans.EVENT)
+    statuses = [e["payload"]["receipt"]["status"] for e in events
+                if e["event_type"] == plans.EVENT]
+    assert statuses == (["rejected", "not_requested", "rejected", "rejected"]
+                        if FROZEN_ARM is None else ["rejected"] * 4)
 
 
 def test_evaluator_rejects_planning_identity_mismatch_before_workspace(tmp_path, monkeypatch):

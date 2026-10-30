@@ -54,6 +54,28 @@ Only a valid decision consumes an event-based request, never `turn_started` alon
 `working_plan_updated` records one idempotent receipt per valid turn before tools,
 including null/unchanged/rejected outcomes. Recovery uses those durable records.
 
+### Review the applied change on the next useful decision
+
+For an admitted successful mutation still matching the current diff,
+`review_request.behavior_change` identifies `action_id`, `input_hash`,
+`baseline_diff_hash` and `candidate_diff_hash`, plus bounded host-authored `guidance`.
+Its guidance hash binds the planning contract. It is derived from the existing
+start/result receipts after the latest `working_plan_updated`; failed, no-op,
+stale or replay-only mutations do not create it. An applied undo is another
+mutation. Turn start, request correction or segment rollover alone cannot consume
+it; the next valid tool decision does, even with a null or rejected plan annotation.
+There is no new durable state, tool, review call or semantic completion gate.
+
+The attached guidance uses that existing decision to compare changed success/failure
+meaning with public requirements, callers and pre-existing tests. Mutation intent,
+plan conclusions and new test expectations remain claims to review; old code is a
+comparison, not an automatic oracle. Connect a material change to a required
+outcome, refuting input and observable assertion, then choose an existing useful
+action. A discovered violation should lead to an executed regression, repair or
+undo, and checks of the resulting diff. Existing plan, concerns and observations
+remain intact; this projection does not extract or certify semantic requirements.
+The compact completion view preserves it. Planning OFF/thin have no such projection.
+
 ### Revision and submission evidence
 
 The [C exit audit](../docs/history/2026-10-16-assessment-gap-exit-analysis.md) found

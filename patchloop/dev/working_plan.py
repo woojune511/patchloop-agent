@@ -6,6 +6,7 @@ import copy
 from typing import TYPE_CHECKING, Any
 
 from patchloop.dev.mutation_tools import MUTATION_TOOLS
+from patchloop.dev.repair_guidance import BEHAVIOR_CHANGE_INSTRUCTIONS
 from patchloop.util import sha256_json
 
 if TYPE_CHECKING:
@@ -32,12 +33,8 @@ the observation or public check that could settle them. Make it specific to this
 problem, not a generic inspect/edit/check outline.
 After the working_plan.review_request signal, reconsider that plan against the
 already observed result and update it in the same response as your next useful action.
-Separate required public/caller/test contracts from repair choices. Preserve existing
-success/failure meaning when sufficient.
-At mutation review, map important changes to refuting inputs and expected observations.
-Check sibling failures/bypassed guards; separate state preservation from success.
-Test a material new assumption, narrow/remove an unnecessary change, or explain why
-the uncertainty cannot affect required behavior.
+When review_request.behavior_change is present, apply its attached guidance
+review to that mutation before carrying forward a check-then-submit plan.
 Listing unknowns alone does not justify stopping. Choose observations that could change
 the patch/submission decision over repeating supported examples.
 Keep a short contract -> case/setup -> expected observation -> actual evidence or
@@ -110,6 +107,10 @@ def contract(policy: str = POLICY) -> dict[str, Any]:
         "max_reason_chars": MAX_REASON_CHARS,
         "update": "first-non-null-whole-text-with-revision-reason-v2",
         "revision_review": "latest-predecessor-and-reason-durable-unverified-v1",
+        "behavior_change": {
+            "policy": "admitted-current-mutation-next-valid-decision-v1",
+            "instructions_hash": sha256_json(BEHAVIOR_CHANGE_INSTRUCTIONS),
+        },
         "review": (
             "after-source-initial-mutation-check-probe-first-ready-next-valid-decision-v1"
             if policy == AFTER_SOURCE_POLICY else
@@ -203,16 +204,51 @@ def project(
         reasons.append("first_ready_to_submit")
     if plan is not None:
         plan["diff_currency"] = "current" if plan["diff_hash"] == diff_hash else "historical"
+    review_request = {
+        "requested": bool(reasons), "reasons": reasons,
+        "action_ids": relevant[-8:], "omitted_action_count": max(0, len(relevant) - 8),
+    }
+    if review_enabled and (change := _behavior_change(events, boundary, diff_hash)):
+        review_request["behavior_change"] = change
     return {
         "policy": policy,
         "interpretation_status": "model_authored_unverified",
         "plan": plan,
-        "review_request": {
-            "requested": bool(reasons), "reasons": reasons,
-            "action_ids": relevant[-8:], "omitted_action_count": max(0, len(relevant) - 8),
-        },
+        "review_request": review_request,
         "last_update_result": (copy.deepcopy(latest["payload"]["receipt"]) if latest else None),
     }
+
+
+def _behavior_change(
+    events: list[dict[str, Any]], boundary: int, diff_hash: str,
+) -> dict[str, str] | None:
+    """Identify an applied change, without inferring its semantics or another gate."""
+    started = {}
+    change = None
+    for event in events:
+        payload = event["payload"]
+        if event["event_type"] == "action_started" and payload.get("tool") in MUTATION_TOOLS:
+            started[(payload["action_id"], payload["input_hash"])] = payload
+        elif event["event_type"] == "action_finished" and event["sequence"] > boundary:
+            result = payload["result"]
+            if (result["tool"] not in MUTATION_TOOLS or result["status"] != "succeeded"
+                    or result.get("replayed")
+                    or result.get("workspace_diff_hash") != diff_hash
+                    or result.get("output", {}).get("worktree_diff_hash") != diff_hash):
+                continue
+            admission = started.get((result["action_id"], result["input_hash"]), {})
+            baseline = admission.get("baseline_diff_hash")
+            if (admission.get("tool") != result["tool"]
+                    or admission.get("mutation_admitted") is not True
+                    or not baseline or baseline == diff_hash
+                    or admission.get("mutation_expected_worktree_diff_hash") != diff_hash):
+                continue
+            change = {
+                "action_id": result["action_id"], "input_hash": result["input_hash"],
+                "baseline_diff_hash": baseline, "candidate_diff_hash": diff_hash,
+                "guidance": BEHAVIOR_CHANGE_INSTRUCTIONS,
+            }
+    return change
 
 
 def record(

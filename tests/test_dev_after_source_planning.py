@@ -71,11 +71,11 @@ def test_timing_only_identity_and_schema_contrast(tmp_path, monkeypatch):
         old_hashes = {
             "none": "sha256:b79cec16c8f4244550ba465788425e2977abcab15373316be8efad1e1270d885",
             plans.POLICY:
-                "sha256:922dc213f06193d7ee6d6963a23ab8a13f64fd2bfe4fa81fbce5f8a3ede6522d",
+                "sha256:7e0df4ef4bbe2bd2e93948ce3b2bf7c0f7b0daddda371f0f206029b1ffb4abce",
             plans.EVIDENCE_POLICY:
-                "sha256:c71be2379286fe11af628d185a32c9d2ce0fee2a386bf45ddf79291b1632ffbc",
+                "sha256:4a01ec036f4a329595fde75829de47a4f5fb95a30e16ac1c1f9a840611be7624",
             plans.ASSUMPTION_POLICY:
-                "sha256:32ca1fbbbe32b267139c21e774494d69389e16e44851f74c3cffa78e23516c9c",
+                "sha256:e144a08d0fb84197d2e90553dbb70c1ef3a34307c2b12d1f4bcb95986a6e957c",
         }
     assert {p: dev_tool_surface_hash(planning_policy=p) for p in old_hashes} == old_hashes
     old, new = plans.instructions(), plans.instructions(POLICY)

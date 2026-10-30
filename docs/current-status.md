@@ -37,10 +37,8 @@ All current billing/counting is settled. No retry or extra evaluation is pending
 
 The [source-retention and finish-description fixes](history/2026-10-30-plan-action-delivery-audit.md)
 worked in actual requests: current Delimited lines 1-255 / 12,439 characters remain
-after public PASS and before finish, and public-checks-v1 correctly says original
-replay is not automatic. Keep both fixes. Existing source limits and submission
-rules remain; no new gate or state store was added. Their focused 16/7 tests and
-quick 1,265 PASS / 1 SKIP, Ruff and isolated mock evaluation remain the local baseline.
+before finish, and public-checks-v1 correctly says original replay is not automatic.
+Keep both fixes; source limits and submission rules remain.
 
 The new patch changes one failure return to a partial success instead of the
 previous two. Its added grammar test directly asserts matched prefix and full token
@@ -60,22 +58,24 @@ unchanged. Original and exact candidate each ran once, 42.551 seconds total, no 
 or private evaluation. These are operator-discovered public defects, not agent
 discovery or identification of the private failing assertion.
 
-Keep the [scope-choice instructions](history/2026-10-30-verification-scope-choice.md).
-No generic warning, check quota or repeat is justified solely by this result. Any
-next intervention should address the observed gap between preserving data and
-changing success eligibility; retaining source alone did not close it in this attempt.
-The [preceding normal run](history/2026-10-30-verification-scope-choice-results.md)
-and [operator counterexamples](history/2026-10-30-sqlfluff-contract-diagnostic.md)
-remain separate evidence about earlier patches. This one exposed attempt with two
-combined host fixes establishes neither causal repair gain nor stable speed gain.
+The [post-mutation review change](history/2026-10-30-post-mutation-review.md) now
+identifies the applied before/current diff in the existing next-decision review.
+Public requirements, callers and pre-existing tests ground expected behavior;
+mutation intent and new test expectations remain claims to inspect. Guidance links
+changed success/failure meaning to a refuting input/assertion and a useful existing
+action; a found violation should lead to an executed regression, repair and recheck.
+The original code is a comparison, not an automatic oracle. Plans, concerns and
+observations remain intact. There is no new call, required probe or finish gate.
+Local validation: 23 new cases and 3 planning-identity cases pass, plus quick
+1,285 PASS / 1 host-symlink SKIP (377.916 seconds), Ruff and isolated mock evaluation.
+Mock paths keep 4 model responses / 5 tools. No new live run or autonomous repair
+improvement is claimed; full-suite/Linux validation remains unverified.
 
-Two focused reviews are CLOSED and separate from the normal loop's 40-call cap. The first
-identified minimum-delimiter risk but hit a300-second wait: USD0.1377155 known, last
-call billing unknown. The [remaining-deadline review](history/2026-10-30-sqlfluff-deadline-review.md)
-used4 calls/1 probe,217.406 seconds,USD0.189707 settled; four semicolon cases met its
-expectations, with no counterexample or final report. It did not test the changed
-success conditions. No response exceeded300 seconds, so wait adjustment is not a
-proven cause of progress. Keep that diagnostic setting; no automatic repeat is pending.
+Both focused reviews are CLOSED. The first identified minimum-delimiter risk but
+hit its wait limit; USD0.1377155 is known, last-call billing unknown. The
+[remaining-deadline review](history/2026-10-30-sqlfluff-deadline-review.md) settled
+USD0.189707 without testing changed success conditions or finding a counterexample.
+Keep the diagnostic wait setting; no automatic repeat is pending.
 
 The [preceding 3/9/16 run](history/2026-10-30-contract-observation-3916-results.md)
 retains pydicom's real-data test follow-through gap and pvlib's duplicate verification;
