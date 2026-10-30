@@ -30,46 +30,51 @@ on a small set of public development tasks from start to finish. Review task
 acceptance, regressions, cost and elapsed time; use observed failures to choose the
 next fix. This is the default development loop, not a sequence of one-factor studies.
 
-The [latest fresh SQLFluff run](history/2026-10-30-retained-source-sqlfluff-results.md)
-is CLOSED: independent acceptance FAIL / safety PASS, required public check PASS,
-12 calls, 24 actions, 1 edit, USD 0.7579325 and 457.526 seconds; unverified_delivery.
-All current billing/counting is settled. No retry or extra evaluation is pending.
+The [latest SQLFluff run](history/2026-10-30-post-mutation-review-results.md)
+is CLOSED: code fbfdd213, independent acceptance FAIL / safety PASS, required
+public check 167 PASS / 1 deselected twice, 30 calls, 51 actions, 2 edits,
+5 probes, USD2.1578225 and 1,046.929 seconds; unverified_delivery. All calls and
+billing settled. No retry or extra evaluation is pending.
 
-The [source-retention and finish-description fixes](history/2026-10-30-plan-action-delivery-audit.md)
-worked in actual requests: current Delimited lines 1-255 / 12,439 characters remain
-before finish, and public-checks-v1 correctly says original replay is not automatic.
-Keep both fixes; source limits and submission rules remain.
+The [applied-change review](history/2026-10-30-post-mutation-review.md) was delivered
+at both post-mutation requests with correct before/current diff identities. First
+review also carried all current Delimited lines1-251 via the public mutation archive.
+Later second-review/final inputs retain its patch hunks but not the full file body.
+That distinction does not establish a cause of failure. At finish, reads, edits,
+probes and tests remained available with 11 calls and 520 solver seconds left.
 
-The new patch changes one failure return to a partial success instead of the
-previous two. Its added grammar test directly asserts matched prefix and full token
-reconstruction for `bar..`. It was authored before post-mutation retention, so this
-difference cannot be attributed to that retention. However, it tests only
-allow_trailing=True with no minimum. The agent read the existing trailing/minimum
-option table but did not connect the changed success meaning to a refuting case
-for those options. The single Linter probe checks normal and doubled semicolons.
-No observed violation triggered another edit or narrowing during that agent run.
-Source delivery is demonstrated; semantic verification selection remains unresolved.
+The first repair replaces five truncated-buffer failure returns with the original
+input while retaining failure semantics. It differs from the previous partial-success
+repair and was authored before the first review. That difference cannot be credited
+to the post-mutation instruction. No grammar-option counterexample was executed.
 
-The [latest-patch public comparison](history/2026-10-30-retained-source-public-counterexamples.md)
-now confirms two false-to-true regressions: `bar..` with trailing forbidden or
-minimum 3 is incorrectly accepted, although input preservation is repaired there.
-Two unchanged failure branches still lose input; four normal/option controls remain
-unchanged. Original and exact candidate each ran once, 42.551 seconds total, no model
-or private evaluation. These are operator-discovered public defects, not agent
-discovery or identification of the private failing assertion.
+Instead, two probes mislabelled a check_tuples() result-access exception as a lint
+caller failure. Same-diff probes without that accessor and its public source
+resolved the confusion. The agent retracted the proposed further implementation
+fix and strengthened only the regression test to exercise wrapped lint, exact raw
+preservation and a returned parse violation. Recheck and helper replay passed;
+exact original CLI replay remains explicitly unverified. All probes used normal
+single and adjacent doubled semicolons. No candidate semantic violation was found
+and repaired; the exact independent failing assertion remains unknown.
 
-The [post-mutation review change](history/2026-10-30-post-mutation-review.md) now
-identifies the applied before/current diff in the existing next-decision review.
-Public requirements, callers and pre-existing tests ground expected behavior;
-mutation intent and new test expectations remain claims to inspect. Guidance links
-changed success/failure meaning to a refuting input/assertion and a useful existing
-action; a found violation should lead to an executed regression, repair and recheck.
-The original code is a comparison, not an automatic oracle. Plans, concerns and
-observations remain intact. There is no new call, required probe or finish gate.
-Local validation: 23 new cases and 3 planning-identity cases pass, plus quick
-1,285 PASS / 1 host-symlink SKIP (377.916 seconds), Ruff and isolated mock evaluation.
-Mock paths keep 4 model responses / 5 tools. No new live run or autonomous repair
-improvement is claimed; full-suite/Linux validation remains unverified.
+Keep the implemented review mechanism without claiming autonomous repair gain.
+This attempt increased cost/time and retained acceptance FAIL. One exposed run
+does not isolate a causal effect. Before another runtime intervention, distinguish
+remaining public candidate defects from probe-program mistakes. Do not add another
+generic warning or mandatory probe solely because this attempt failed. No further
+paid run or saved-patch execution is authorized by this result.
+
+The [preceding normal run](history/2026-10-30-retained-source-sqlfluff-results.md)
+remains separate: 12 calls, 24 actions, 1 edit, USD0.7579325, 457.526 seconds,
+acceptance FAIL / safety PASS. Its [public comparison](history/2026-10-30-retained-source-public-counterexamples.md)
+confirmed two rejection-to-success regressions in that different patch. Do not
+carry those defect findings onto the latest failure-preserving patch without evidence.
+
+Keep the [source-retention and finish-description fixes](history/2026-10-30-plan-action-delivery-audit.md).
+Keep current-diff source limits and existing submission rules. The applied-change
+review's local baseline is 23 new cases plus3 identity cases, quick1,285 PASS /
+1 host-symlink SKIP, Ruff and isolated mock evaluation. Runtime mechanisms, this
+live execution and general repair improvement remain distinct claims.
 
 Both focused reviews are CLOSED. The first identified minimum-delimiter risk but
 hit its wait limit; USD0.1377155 is known, last-call billing unknown. The
@@ -104,13 +109,6 @@ private evaluation. The latest pvlib run exercised additions in the existing
 projection-target file without conflict; exact original-byte restoration was not
 requested. Causal quality benefit remains unproven; another paid ablation is not
 a prerequisite for development.
-
-No forecast OFF/ON repeat, cap4 diagnostic or 4-vs-12 comparison is a prerequisite
-for continuing with the selected 12-edit configuration. Isolate a condition only
-when an important design decision remains unresolved after inspecting a real
-failure. A combined result measures the configuration; it does not identify the
-contribution of each change. Use the existing result records and concise failure
-notes rather than adding a planning/reporting layer for every fix.
 
 The [forecast-only comparison](history/2026-10-30-forecast-only-comparison-results.md)
 is CLOSED: zero new edits in both arms; OFF acceptance FAIL, ON unsubmitted/NOT_RUN;
