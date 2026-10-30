@@ -48,8 +48,10 @@ Tracing reached all five changed failure returns. The two unchanged multiline
 returns were not reached; that is a coverage limit, not proof of unreachability.
 Abnormal input becomes entirely unparsable, including valid prefixes, but the open
 public issue does not require a particular recovery strategy. This behavior is not
-yet a demonstrated public defect. Exact independent failure remains unknown; do not
-carry the previous patch's defects forward or infer reasoning failure from this result.
+yet a demonstrated public defect. The [operator audit](history/2026-10-30-sqlfluff-operator-evaluation-audit.md)
+locates rejection in completed behavioral tests, not infrastructure or safety.
+Private criteria remain outside solver context; missing saved tracebacks limit exact
+assertion-level attribution. Do not infer reasoning failure from this result.
 
 Keep the [applied-change review](history/2026-10-30-post-mutation-review.md) without
 claiming autonomous repair gain. Delivery worked, including full current Delimited
@@ -61,8 +63,8 @@ above are operator evidence. Resources did not force finish. Neither the context
 omission nor missing broader probes establishes the cause of independent FAIL.
 
 Do not add another warning, gate or paid run solely because acceptance failed.
-First establish a concrete remaining behavioral defect and its public requirement.
-The current diagnostic is complete; no further execution is pending or authorized.
+Improve operator failure-log retention with synthetic fixtures before attributing
+another failure. Diagnosis is complete; no repair or further execution is pending.
 
 The [preceding normal run](history/2026-10-30-retained-source-sqlfluff-results.md)
 remains separate: 12 calls, 24 actions, 1 edit, USD0.7579325, 457.526 seconds,
