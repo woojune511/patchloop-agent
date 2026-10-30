@@ -49,9 +49,16 @@ difference cannot be attributed to that retention. However, it tests only
 allow_trailing=True with no minimum. The agent read the existing trailing/minimum
 option table but did not connect the changed success meaning to a refuting case
 for those options. The single Linter probe checks normal and doubled semicolons.
-No observed violation triggered another edit or narrowing. Source delivery is now
-demonstrated; semantic verification selection remains unresolved. Do not attribute
-independent FAIL to a particular unexecuted case or infer a model capability ceiling.
+No observed violation triggered another edit or narrowing during that agent run.
+Source delivery is demonstrated; semantic verification selection remains unresolved.
+
+The [latest-patch public comparison](history/2026-10-30-retained-source-public-counterexamples.md)
+now confirms two false-to-true regressions: `bar..` with trailing forbidden or
+minimum 3 is incorrectly accepted, although input preservation is repaired there.
+Two unchanged failure branches still lose input; four normal/option controls remain
+unchanged. Original and exact candidate each ran once, 42.551 seconds total, no model
+or private evaluation. These are operator-discovered public defects, not agent
+discovery or identification of the private failing assertion.
 
 Keep the [scope-choice instructions](history/2026-10-30-verification-scope-choice.md).
 No generic warning, check quota or repeat is justified solely by this result. Any
@@ -71,12 +78,9 @@ success conditions. No response exceeded300 seconds, so wait adjustment is not a
 proven cause of progress. Keep that diagnostic setting; no automatic repeat is pending.
 
 The [preceding 3/9/16 run](history/2026-10-30-contract-observation-3916-results.md)
-had PASS/PASS/FAIL and all safety PASS. SQLFluff then used 13 calls, USD1.0609665
-and 566.561 seconds. Current cost/time are lower descriptively, but one exposed
-attempt and different batch concurrency establish no stable or causal improvement.
-That record retains pydicom's real-data test follow-through gap and pvlib's duplicate
-verification; neither was retested here. The [selection audit](history/2026-10-30-verification-selection-diagnosis.md)
-remains the public basis for the intervention.
+retains pydicom's real-data test follow-through gap and pvlib's duplicate verification;
+neither was retested here. The [selection audit](history/2026-10-30-verification-selection-diagnosis.md)
+remains the public basis for the guidance; historical metrics are in those records.
 
 Keep the [bounded observation-retention fix](history/2026-10-30-verification-evidence-reuse.md),
 which has earlier live evidence of preserving concrete current-diff outputs across
