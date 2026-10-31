@@ -65,7 +65,7 @@ null public conditions are allowed for unknown originals or separate controls.
 This is bounded model-authored comparison, not verified correspondence. No new
 tool, review call, mandatory probe, plan reset, semantic gate or paid run is added.
 
-The [latest live diagnostic](history/2026-11-01-public-input-comparison-results.md)
+The [latest fixed-candidate diagnostic](history/2026-11-01-public-input-comparison-results.md)
 is CLOSED on 0dfe7c6d: same task8 public seq38/be082f27, two model/count calls,
 one source read, zero new probes, one report, 232.128s, USD0.4385265 recorded
 generation usage (USD0.4923825 cache-neutral). The model used the new object for
@@ -74,35 +74,30 @@ It now disclosed direct-array versus .tostring() bytes substitution and that the
 saved base bytes control passed while direct-array failed. However, public_conditions
 still summarized the error instead of preserving the known H-array/bytes setup.
 
-The source read supports the local shared-writer inference for explicit/implicit
-headers. Its relevant 160 lines were already delivered; the other 185 mostly concern
-different writers. It added no save_as/dcmwrite definition or original-style execution.
-Full caller equivalence and whether the known input differences are immaterial
-remain unresolved. The plan was revised to source-read then report; its influence
-on narrowing the objective remains a hypothesis, not a lost-state defect.
+Its source read supports a local shared-writer inference, not full save_as/dcmwrite
+equivalence. Relevant source was already delivered; no original-style execution
+was added. Format uptake and clearer limitations are demonstrated, but verification
+selection and evidence-sufficient stopping are not. Plan influence remains a
+hypothesis. Do not infer invalid stopping from probe count alone or increase limits
+when resources remained. Missing original setup and diagnostic capabilities also
+limit what can be verified; see the linked audit. Original reproduction, registered
+regressions and independent evaluation remain NOT_RUN. The separate two-probe
+diagnostic was not supplied as evidence. Unused USD1.104663 is closed.
 
-Live format uptake and clearer limitation reporting are demonstrated in this sample;
-better verification selection or evidence-sufficient stopping is not established.
-Keep the bounded comparison without calling it a proven quality intervention.
-Do not infer invalid stopping from probe count alone, add a blanket probe gate, or
-increase limits: resources remained available. No isolated plan-reset effect is claimed.
-
-Skipped verification is not uniformly an agent failure. The original example lacks
-indexData/lineSeq/ds setup, so exact reproduction is unavailable; known H-array to
-bytes conditions can still be preserved in an assumption-labeled helper. Unchanged
-base execution was outside fixed-review authority. The registered public regression
-wrapper requires a different interpreter/subprocess, and this probe's dependencies
-lack pytest. An alternative direct Python assertion is narrower evidence, not a
-claim that the registered regression suite ran. Do not require impossible work or
-infer absence of need merely from reporting a limited no-counterexample result.
-
-Local validation and public audits are linked in the follow-ups. The latest single
-run establishes delivery, format use and a bounded report, not autonomous verification gain.
-The prior two-probe diagnostic's six save_as cases belong to its separate closed
-execution and were not supplied to this run. Original reproduction, registered
-regressions and independent evaluation remain NOT_RUN in this diagnostic.
-All allocations, including the latest unused USD1.104663, are closed. No further paid
-invocation is authorized.
+The [fresh normal task8 run](history/2026-11-01-condition-normal-task8-results.md)
+on c855b0de is also CLOSED: four model/count calls, seven source actions, zero
+edits or executed probes/checks/submissions, 55.951 seconds. The third response
+proposed three searches and one probe together; INVALID_TOOL_BATCH rejected the
+entire batch. The next request sought a valid batch but raised InternalServerError
+after about 5.45 seconds, with roughly 1,420 seconds allowed. This was not time-
+budget exhaustion or a voluntary stop after helper success. The fourth response
+and its usage are unrecorded; USD0.1686595 covers only the first three responses.
+Total billing is UNKNOWN, not zero or the settled subtotal. No retry, resume or
+independent evaluation occurred. The USD4 allocation is closed with no reusable
+remainder. Runtime is unchanged; this interruption cannot assess review or repair
+gain. Preserve the pending normal-run question; it does not justify adding a probe
+gate, increasing limits or labeling reasoning ability as the cause. No further
+paid invocation is authorized.
 
 Relevant closed evidence:
 
@@ -156,7 +151,8 @@ concerns a different saved patch and unchanged grading, not the current candidat
 
 ## Execution and claim boundaries
 
-All paid allocations are closed. Older unresolved billing, including the
+All paid allocations are closed. The fresh normal task8 fourth response has
+unresolved usage. Older unresolved billing, including the
 [interrupted expectation review](history/2026-09-28-expectation-review-results.md)
 and [focused diagnostic history](history/2026-10-30-sqlfluff-deadline-review.md),
 is not reconciled by this batch's settled usage.

@@ -1,5 +1,6 @@
 # 2026-11-01 investigations
 
+- [Fresh normal task 8: provider interruption](../2026-11-01-condition-normal-task8-results.md)
 - [Public-condition comparison diagnostic results](../2026-11-01-public-input-comparison-results.md)
 - [Public-condition and reviewed-case comparison](../2026-11-01-public-input-comparison.md)
 - [Capability-aligned verification diagnostic results](../2026-11-01-capability-aligned-verification-results.md)
