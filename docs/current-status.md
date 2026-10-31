@@ -48,15 +48,26 @@ reporter's bytes/caller construction, which it explicitly left unverified. Resou
 remained available. This shows a verification-selection gap, not a proven model
 capability ceiling or the latest private failure's exact cause.
 
-A small diagnostic is being prepared at that run's public input 171, immediately
-before submission, with candidate be082f27 fixed. Existing source/check/probe facts
-remain available; no later verdict or operator counterexample enters its context.
-The new review must lead to an actually executed, publicly grounded unverified case
-to support uptake. A populated format, probe count or generic report alone is not
-success. It cannot establish repair or independent acceptance because mutation and
-private evaluation are excluded. Proposed scope is one GPT-5.4/xhigh attempt,
-USD2 total, four calls/12 actions/two probes/600 seconds; new exact-scope approval
-is pending. Prior paid allocations remain closed.
+The [saved-input diagnostic](history/2026-10-31-execution-linked-task8-diagnostic-results.md)
+is CLOSED on code a1af6c89: fixed candidate be082f27, public input 171, one GPT-5.4/
+xhigh attempt under USD2/four calls/12 actions/two probes/600 seconds. It used one
+call and an immediate report, **zero new reads/probes**, 35.937 seconds and
+USD0.1119475 in recorded generation usage. Count-endpoint billing and invoice
+reconciliation remain unverified. No patch mutation or independent evaluation ran.
+
+The new review was accepted and linked the old helper/check receipts, but the
+predeclared new-case construction/execution criterion was not met. The model named
+unverified caller/sibling coverage while treating the existing OL helper plus source
+inference as sufficient. Its three rows contain no explicit untested case. Recognition
+and reference binding therefore did not produce exploration in this sample.
+The actual input's current review request contains only `probe_result`, with no
+`behavior_change`: the conditional post-mutation family recipe was delivered but
+not active at this finish checkpoint. Advisory reporting and the old check-then-submit
+plan also favor summarization. Their causal effect is unproven, but this was not a
+test of an active post-mutation review. Align the diagnostic checkpoint with that
+trigger before changing runtime rules or attributing failure to reasoning ability.
+Counterexample construction was not exercised; no further paid run is authorized
+by the unused allocation.
 
 Final local checks: **92 focused PASS in 46.16 seconds**, **1,418 quick PASS /
 1 host-symlink SKIP in 402.42 seconds**, isolated mock evaluation and Ruff. Quick
@@ -70,9 +81,9 @@ The new execution-reference contract also needs discoverable source IDs. A bound
 index now links only retained repository source_spans to their prior public reads
 by exact scope/path/file hash/range, including inline delivery after segment reset.
 It adds no source text or edit permission and uses the same helper in the diagnostic.
-Candidate/source/dependency/image and credential-shape preparation passed without
-provider, target or evaluator calls. The exact sealed plan and approval gate live
-under `C:/pt/evidence8-review-20261031-v1/`; no paid diagnostic has run.
+The sealed plan and exact approval live under `C:/pt/evidence8-review-20261031-v1/`;
+the closed run and public audit are linked in the diagnostic result above. The
+runtime remains unchanged by that execution and documentation follow-up.
 
 Relevant closed evidence:
 
