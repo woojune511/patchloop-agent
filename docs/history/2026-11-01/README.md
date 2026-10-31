@@ -1,5 +1,6 @@
 # 2026-11-01 investigations
 
+- [Post-probe stopping diagnostic results](../2026-11-01-goal-grounded-stopping-results.md)
 - [Goal-grounded diagnostic stopping](../2026-11-01-goal-grounded-diagnostic-stopping.md)
 - [Task 8 expanded-budget diagnostic result](../2026-11-01-task8-expanded-budget-results.md)
 - [Search overlap removal and diagnostic budget](../2026-11-01-search-span-coalescing-and-diagnostic-budget.md)
