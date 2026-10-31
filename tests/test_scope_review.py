@@ -153,6 +153,87 @@ def test_nonexecution_cases_are_retained_without_execution_credit(journal, dispo
     assert scope["coverage_status"] == "not_certified"
 
 
+@pytest.mark.parametrize("substituted", [False, True],
+                         ids=["same-conditions", "helper-substitution"])
+def test_input_comparison_binds_execution_without_certifying_equivalence(journal, substituted):
+    public = "parse_record receives one quoted CSV field containing an embedded newline."
+    supplied = "parse_record receives a flat CSV row without a newline." if substituted else public
+    inputs = {"public_conditions": public, "case_conditions": supplied}
+    interpretation = (
+        "The flat-row helper does not exercise the reported embedded newline; that remains open."
+        if substituted else
+        "The authored construction preserves the reported newline; receipt identity alone "
+        "does not establish that the assertion checked it."
+    )
+    facts = {"status": "passed", "exit_code": 0}
+    identity = observed(journal, "csv-helper", tool="run_probe", output=facts)
+    raw = review(evidence="csv-helper", scope="Quoted-field newline preservation")
+    raw["cases"][0].update(input=inputs, expected_observation="The field retains its newline.",
+                            interpretation=interpretation)
+    before = copy.deepcopy(raw)
+    assert record(journal, raw)["scope_review"]["status"] == "applied"
+    delivered = compact_model_state({"working_plan": view(journal)}, [])
+    saved = delivered["working_plan"]["plan"]["scope_review"]
+    case = saved["cases"][0]
+    assert {key: case[key] for key in raw["cases"][0]} == raw["cases"][0]
+    assert case["execution"] == {**identity, "diff_hash": CURRENT, "currency": "current",
+                                 "observation": facts}
+    assert saved["coverage_status"] == "not_certified"
+    assert saved["interpretation_status"] == "model_authored_unverified"
+    assert raw == before
+    observed(journal, "stale-helper", tool="run_probe", diff=OTHER, output=facts)
+    stale = copy.deepcopy(raw)
+    stale["cases"][0]["evidence_action_id"] = "stale-helper"
+    receipt = record(journal, stale, turn="stale-reference")
+    assert receipt["scope_review"]["diagnostics"] == ["scope_review_execution_not_current"]
+    assert retained(journal) == saved
+
+
+def test_unknown_public_conditions_and_extra_control_remain_explicitly_unmapped(journal):
+    observed(journal, "control", tool="run_probe", output={"status": "passed", "exit_code": 0})
+    raw = review(disposition="untested", evidence=None)
+    raw["cases"] = [{
+        "input": {"public_conditions": None,
+                  "case_conditions": "Proposed parse_record call with a constructed quoted row."},
+        "expected_observation": "One complete field is returned.",
+        "disposition": "untested", "evidence_action_id": None,
+        "interpretation": "The public input construction is unspecified; this is an assumption.",
+    }, {
+        "input": {"public_conditions": None,
+                  "case_conditions": "Additional normal control: parse_record('left,right')."},
+        "expected_observation": "Two ordinary fields are returned.",
+        "disposition": "executed", "evidence_action_id": "control",
+        "interpretation": "This extra control is not a reconstruction of the public example.",
+    }]
+    assert record(journal, raw)["scope_review"]["status"] == "applied"
+    saved = retained(journal)
+    for requested, case in zip(raw["cases"], saved["cases"], strict=True):
+        assert case["input"] == requested["input"]
+        assert case["interpretation"] == requested["interpretation"]
+    assert saved["cases"][0]["execution"] is None
+    assert saved["cases"][1]["execution"]["action_id"] == "control"
+    assert saved["coverage_status"] == "not_certified"
+
+
+@pytest.mark.parametrize("field,value", [
+    ("public_conditions", " \n"), ("case_conditions", " \n"), ("case_conditions", "x" * 501),
+], ids=["blank-public", "blank-case", "oversized-case"])
+def test_invalid_input_comparison_preserves_review_without_rejecting_action(journal, field, value):
+    record(journal, review(disposition="untested", evidence=None), turn="saved-legacy")
+    before = retained(journal)
+    raw = review(disposition="untested", evidence=None)
+    raw["cases"][0]["input"] = {
+        "public_conditions": "One quoted CSV field contains a newline.",
+        "case_conditions": "The helper constructs a quoted CSV field containing a newline.",
+        field: value,
+    }
+    call = selected(raw)
+    assert record(journal, calls=[call])["scope_review"]["status"] == "rejected"
+    assert retained(journal) == before
+    assert isinstance(retained(journal)["cases"][0]["input"], str)
+    assert validate_tool_batch([call]) == "parallel_read"
+
+
 @pytest.mark.parametrize("defect", ["scope_too_long", "too_many_cases", "too_many_sources",
                                   "blank_interpretation", "no_source_for_inference",
                                   "execution_id_on_untested", "unknown_disposition"])
@@ -178,10 +259,18 @@ def test_invalid_annotation_shape_does_not_erase_plan(journal, defect):
     assert view(journal)["plan"] == before
 
 
-def test_plan_rewrite_null_new_diff_and_restart_preserve_review(journal, tmp_path):
+@pytest.mark.parametrize("paired_input", [False, True], ids=["legacy-string", "compared-input"])
+def test_plan_rewrite_null_new_diff_and_restart_preserve_review(journal, tmp_path, paired_input):
     observed(journal, "check", tool="run_probe", output={"status": "failed", "exit_code": 1})
-    record(journal, review(), turn="saved")
+    raw = review()
+    if paired_input:
+        raw["cases"][0]["input"] = {
+            "public_conditions": "public_call(mode='strict', item='valid')",
+            "case_conditions": "public_call(mode='fast', item='valid') as a sibling control",
+        }
+    record(journal, raw, turn="saved")
     original = retained(journal)
+    assert original["cases"][0]["input"] == raw["cases"][0]["input"]
     receipt = record(journal, None, turn="rewrite", plan="Inspect the next untested public mode.")
     assert receipt["status"] == "updated" and "scope_review" not in receipt
     assert retained(journal) == original
@@ -199,6 +288,7 @@ def test_plan_rewrite_null_new_diff_and_restart_preserve_review(journal, tmp_pat
     assert historical["diff_currency"] == "historical"
     assert historical["source_evidence"][0]["currency"] == "historical"
     assert historical["cases"][0]["execution"]["currency"] == "historical"
+    assert historical["cases"][0]["input"] == raw["cases"][0]["input"]
     assert historical["cases"][0]["interpretation"] == original["cases"][0]["interpretation"]
     assert historical["coverage_status"] == "not_certified"
 

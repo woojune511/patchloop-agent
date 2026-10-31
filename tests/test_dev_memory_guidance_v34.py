@@ -218,15 +218,37 @@ def test_guidance_identity_changes_without_changing_run_schema_or_limits():
 
 
 @pytest.mark.skipif(FROZEN_ARM is not None, reason="Current dev-head scope-review contract.")
-def test_current_review_descriptions_preserve_all_ordered_parameter_shapes():
+def test_current_review_separates_inputs_and_preserves_other_ordered_shapes():
     tools = dev_tool_schemas(
         finish_enabled=True, check_ids=("public-a", "public-b"),
         test_suite_ids=("public-tests",), allowed_tools=ALL_DEV_TOOLS,
         planning_policy="brief-v1",
     )
-    # Captured from HEAD before the capability-review description changes.
-    # Including brief planning covers nested scope cases as well as decision basis;
-    # remove prose only, preserving field/tool/enum order, bounds and required/null rules.
+    # Only the scope case input changes shape. Prove that shape explicitly, then
+    # restore its former string shape before comparing the preceding ordered wire.
+    # Descriptions are independently part of the current surface identity.
+    inputs = []
+    for tool in tools:
+        decision = tool["parameters"]["properties"].get("turn_decision")
+        if decision is None:
+            continue
+        review = decision["properties"]["scope_review"]["anyOf"][0]
+        case = review["properties"]["cases"]["items"]["properties"]
+        original = case["input"]
+        assert list(original["properties"]) == ["public_conditions", "case_conditions"]
+        assert _without_descriptions(original) == {
+            "type": "object", "additionalProperties": False,
+            "properties": {
+                "public_conditions": {
+                    "type": ["string", "null"], "minLength": 1, "maxLength": 500,
+                },
+                "case_conditions": {"type": "string", "minLength": 1, "maxLength": 500},
+            },
+            "required": ["public_conditions", "case_conditions"],
+        }
+        inputs.append(original)
+        case["input"] = {"type": "string", "minLength": 1, "maxLength": 500}
+    assert inputs
     encoded = json.dumps(_without_descriptions(tools), ensure_ascii=False, separators=(",", ":"))
     assert hashlib.sha256(encoded.encode()).hexdigest() == (
         "63590000b66ff6f88de0c0beb0521d33f9c6c197ee0f7e1eade0b2a964ced4c0"

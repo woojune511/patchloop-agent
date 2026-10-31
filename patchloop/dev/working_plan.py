@@ -38,14 +38,14 @@ When review_request.behavior_change is present, apply its attached guidance
 review to that mutation before carrying forward a check-then-submit plan.
 Listing unknowns alone does not justify stopping. Choose observations that could change
 the patch/submission decision over repeating supported examples.
-Use scope_review for a bounded affected-scope -> case/setup -> required observation
-comparison. Cite public source receipt IDs and current-diff execution IDs, or mark
-source inference/untested. Failure/partial output records execution, not coverage.
-Null preserves the review; a changed diff makes it historical. Use source_receipts
-for selected source IDs. The check must observe its named property.
-After results, say what they support, contradict or leave open. Retain material gaps;
-group related cases with a normal control and reuse adequate current-diff evidence.
-Unchanged evidence or ordinary inspections need no plan rewrite; null remains allowed.
+Use scope_review to compare known public conditions with actual/planned case conditions
+and the required observation; do not narrow the public objective to an inherited plan's
+finish criterion. Explain substitutions/gaps in interpretation. Cite source_receipts
+IDs and current-diff execution IDs, or mark source inference/untested. Failure/partial
+output records execution, not coverage. Null preserves the review; a new diff makes
+it historical. Observe the named property, retain material gaps, group related cases
+with a normal control and reuse adequate current-diff evidence. Unchanged evidence
+or inspections need no plan rewrite; null remains allowed.
 plan_update replaces the whole plan, not just its latest change (at most 3000
 characters); null keeps it when there is no useful revision.
 When replacing an existing plan, supply plan_update_reason (at most 800 characters).

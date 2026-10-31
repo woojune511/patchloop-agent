@@ -101,8 +101,20 @@ The compact completion view preserves it. Planning OFF/thin have no such project
 
 At the existing review, `scope_review` records a bounded scope statement, up to four
 public read/search action IDs and one to four grouped case rows. Each row states
-`input` (including caller/setup), `expected_observation`, `disposition`,
-`evidence_action_id` and `interpretation`. Text fields are at most 500 characters.
+`input`, `expected_observation`, `disposition`, `evidence_action_id` and
+`interpretation`. Fresh `input` is an object with `public_conditions` and
+`case_conditions`: known conditions from the public task versus the caller/input/
+setup actually exercised or planned. Each string is at most 500 characters.
+`public_conditions` may be null when no original condition is available or the
+case is a separate control; explain this
+in `interpretation` rather than inventing original conditions from the helper.
+Use `interpretation` to compare substitutions/missing setup and the evidence that
+makes them material or irrelevant. Assess a plan's finish condition against the
+public requirement; completing its helper does not establish the entire task.
+The host validates structure and execution/source references, not the accuracy of
+either condition statement or their equivalence. Legacy string inputs remain
+accepted and unchanged in stored/projected reviews and exact replay; no automatic
+conversion fills in their missing public-condition comparison.
 The dispositions are `executed`, `source_inferred` and `untested`. This replaces
 the informal contract/case/evidence mapping in the brief-plan instructions; it is
 not another completed-action log or an automatic enumeration of the affected family.

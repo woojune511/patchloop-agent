@@ -102,15 +102,22 @@ def test_plan_guidance_connects_public_results_to_remaining_work():
     guidance = " ".join(plans.INSTRUCTIONS.split())
     assert "current hypotheses or untested assumptions" in guidance
     assert "observation or public check that could settle them" in guidance
-    assert "Use scope_review for a bounded affected-scope -> case/setup" in guidance
+    if FROZEN_ARM is None:
+        assert "compare known public conditions with actual/planned case conditions" in guidance
+        assert ("do not narrow the public objective to an inherited plan's finish criterion"
+                in guidance)
+        assert "Explain substitutions/gaps in interpretation" in guidance
+        assert "Observe the named property, retain material gaps" in guidance
+    else:
+        assert "Use scope_review for a bounded affected-scope -> case/setup" in guidance
+        assert "check must observe its named property" in guidance
+        assert "support, contradict or leave open" in guidance
+        assert "Retain material gaps" in guidance
     assert "current-diff execution IDs" in guidance
     assert "review_request.behavior_change" in guidance
     assert "before carrying forward a check-then-submit plan" in guidance
     assert "Listing unknowns alone does not justify stopping" in guidance
     assert "patch/submission decision over repeating supported examples" in guidance
-    assert "check must observe its named property" in guidance
-    assert "support, contradict or leave open" in guidance
-    assert "Retain material gaps" in guidance
     assert "null keeps it when there is no useful revision" in guidance
     assert "not a generic inspect/edit/check outline" in guidance
     # Guidance is task-independent; it must not import repairs from diagnostic runs.

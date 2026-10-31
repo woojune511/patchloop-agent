@@ -55,6 +55,16 @@ This reuses existing fields, limits and calls. No new semantic gate, required pr
 check backend, dependency installation, normal finish admission or budget change.
 The normal runner's required public-check gate was not diagnosed as broken.
 
+[Public-condition comparison](history/2026-11-01-public-input-comparison.md) now
+separates fresh scope_review case input into public_conditions and case_conditions.
+The former records known task caller/input/setup; the latter records what is
+actually exercised or planned. Existing interpretation explains substitutions,
+missing setup and evidence making a gap material or irrelevant. A plan's finish
+condition is judged against the public task. Legacy strings remain unchanged;
+null public conditions are allowed for unknown originals or separate controls.
+This is bounded model-authored comparison, not verified correspondence. No new
+tool, review call, mandatory probe, plan reset, semantic gate or paid run is added.
+
 The [latest live diagnostic](history/2026-11-01-capability-aligned-verification-results.md)
 is CLOSED on56666f44: same task8 public seq38/be082f27, one model/count call,
 zero new probes, one report,104.427s, USD0.218635 recorded generation usage.
@@ -70,9 +80,9 @@ earlier base helper's bytes control passed; its direct-array failure alone does
 not identify the exact public issue mechanism. Delivered conversion/writer source
 supports local inference but does not establish the full save_as caller equivalence.
 Keep the interface correction; do not add a blanket probe gate or increase budgets.
-The next question is whether the saved plan's one-helper-then-report finish
-condition replaces the original public objective, and what concrete evidence makes
-a recognized remaining gap immaterial. This is a hypothesis, not a causal finding.
+The structured comparison addresses the ambiguous input role; the saved plan's
+influence remains a hypothesis. Live uptake and evidence-supported stopping under
+the new format are NOT_RUN. No isolated plan-reset effect is claimed.
 
 Skipped verification is not uniformly an agent failure. The original example lacks
 indexData/lineSeq/ds setup, so exact reproduction is unavailable; known H-array to

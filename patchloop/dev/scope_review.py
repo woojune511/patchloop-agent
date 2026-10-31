@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import copy
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
@@ -21,16 +21,37 @@ _OBSERVATION_FIELDS = (
 )
 
 
+class _Input(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    public_conditions: str | None = Field(min_length=1, max_length=MAX_TEXT_CHARS)
+    case_conditions: str = Field(min_length=1, max_length=MAX_TEXT_CHARS)
+
+    @field_validator("public_conditions", "case_conditions")
+    @classmethod
+    def nonblank(cls, value: str | None) -> str | None:
+        if value is not None and not value.strip():
+            raise ValueError("scope review conditions must be nonblank")
+        return value
+
+
 class _Case(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
 
-    input: str = Field(min_length=1, max_length=MAX_TEXT_CHARS)
+    input: Annotated[str, Field(min_length=1, max_length=MAX_TEXT_CHARS)] | _Input
     expected_observation: str = Field(min_length=1, max_length=MAX_TEXT_CHARS)
     disposition: Literal["executed", "source_inferred", "untested"]
     evidence_action_id: str | None = Field(min_length=1, max_length=MAX_ACTION_ID_CHARS)
     interpretation: str = Field(min_length=1, max_length=MAX_TEXT_CHARS)
 
-    @field_validator("input", "expected_observation", "interpretation", "evidence_action_id")
+    @field_validator("input")
+    @classmethod
+    def nonblank_legacy_input(cls, value: str | _Input) -> str | _Input:
+        if isinstance(value, str) and not value.strip():
+            raise ValueError("scope review text must be nonblank")
+        return value
+
+    @field_validator("expected_observation", "interpretation", "evidence_action_id")
     @classmethod
     def nonblank(cls, value: str | None) -> str | None:
         if value is not None and not value.strip():
@@ -65,10 +86,21 @@ def schema() -> dict[str, Any]:
     case = {
         "type": "object", "additionalProperties": False,
         "properties": {
-            "input": {**text, "description": (
-                "Public caller and input construction or group. Preserve known original "
-                "conditions; identify missing setup and any substituted conditions explicitly."
-            )},
+            "input": {
+                "type": "object", "additionalProperties": False,
+                "properties": {
+                    "public_conditions": {
+                        **text, "type": ["string", "null"], "description": (
+                            "Known public caller/input/setup; never infer it from the helper. "
+                            "Null if unavailable or an additional control."
+                        ),
+                    },
+                    "case_conditions": {**text, "description": (
+                        "Actual or planned case caller/input/setup."
+                    )},
+                },
+                "required": ["public_conditions", "case_conditions"],
+            },
             "expected_observation": {**text, "description": "Required observable outcome."},
             "disposition": {"type": "string", "enum": [
                 "executed", "source_inferred", "untested",
@@ -79,10 +111,9 @@ def schema() -> dict[str, Any]:
                 "description": "Executed: completed current-diff check/probe ID; otherwise null.",
             },
             "interpretation": {**text, "description": (
-                "What evidence supports or leaves open for the public requirement. For a "
-                "material untested condition, identify a feasible observation using offered "
-                "tools that could change the decision, or its concrete blocker or lack of "
-                "relevance. A setup failure is not evidence about the target behavior."
+                "Explain substituted/missing conditions and evidence that a difference is "
+                "immaterial. For a remaining material gap, name the next offered action or "
+                "concrete blocker/stop reason. Setup failure does not test target behavior."
             )},
         },
         "required": ["input", "expected_observation", "disposition", "evidence_action_id",
@@ -116,9 +147,10 @@ def schema() -> dict[str, Any]:
 
 def contract() -> dict[str, Any]:
     return {
-        "policy": "plan-scope-public-result-binding-v1",
+        "policy": "plan-scope-public-result-binding-v2",
         "max_text_chars": MAX_TEXT_CHARS, "max_source_actions": MAX_SOURCE_ACTIONS,
         "max_cases": MAX_CASES, "max_action_id_chars": MAX_ACTION_ID_CHARS,
+        "input": "public-and-case-conditions-legacy-string-preserved",
         "execution": "completed-current-diff-public-result-not-semantic-coverage",
         "source": "completed-public-read-search-prior-diff-retained",
         "storage": "existing-working-plan-event-nonblocking-null-preserves",

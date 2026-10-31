@@ -239,7 +239,10 @@ def test_no_probe_or_positive_claim_required_for_reporting(frozen, outcome):
 def test_selected_followup_probe_preserves_authored_conditions_and_returned_evidence(frozen):
     """Scripted action selection checks host transport, not model judgment or repair."""
     program = "import toy\nactual = toy.value()\nprint({'actual': actual})\nassert actual == 0\n"
-    conditions = "Original caller: toy.value() with no arguments; assume default module settings."
+    conditions = {
+        "public_conditions": "Original caller: toy.value() with no arguments.",
+        "case_conditions": "toy.value() with no arguments; assume default module settings.",
+    }
     basis = (
         "The public request requires zero from the original no-argument caller. "
         "A direct assertion could refute the source-based conclusion; default settings "
@@ -258,7 +261,10 @@ def test_selected_followup_probe_preserves_authored_conditions_and_returned_evid
             "cases": [{
                 "input": conditions, "expected_observation": "Returned value is zero.",
                 "disposition": "untested", "evidence_action_id": None,
-                "interpretation": "The selected program will test the stated condition.",
+                "interpretation": (
+                    "The caller is preserved, while default module settings are assumed; "
+                    "the selected program has not yet observed the result."
+                ),
             }],
         },
     )
