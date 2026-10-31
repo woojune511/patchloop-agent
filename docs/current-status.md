@@ -72,14 +72,23 @@ executions. Their acquisition states ended at preparation_action_limit; whole-ru
 resources were not exhausted and ordinary probes/checks remained available. Neither
 this limit nor incomplete caller evidence is a demonstrated cause of private FAIL.
 
-Keep the delivery correction, but make no repair-gain or causal efficiency claim.
-The next unresolved question is the saved submitted-patch failure versus missing
-original caller/output observations. Inspect saved failed assertions as operator-only
-evidence before choosing a public reproduction or another intervention; never feed
-private details to the solver. That inspection and further executions were not done
-or scheduled here. Task 12's oracle ambiguity, task 18's diagnostic delay and the
-selected-test overlap remain open; do not add another generic reminder from these
-results alone.
+The [saved-failure operator audit](history/2026-10-31-continuity-0810-failure-attribution.md)
+has now attributed both independent failures without executing anything again.
+Task 8 retains a sibling input-class defect; the public controls omitted that class.
+Task 10 fails additional concrete initialization/API expectations not explicit in
+the public issue. Its output assertions were not reached, so missing output-count
+verification is not the captured failure cause. Both grading runs completed with
+all required cases accounted for; no infrastructure or patch-identity error explains
+them. Exact private assertions and actual/expected values remain external operator
+evidence and must not enter solver hints, public tests or runtime guidance.
+
+Keep the delivery correction without a repair-gain or causal efficiency claim.
+The next design questions differ: deriving affected input families from public
+source, and distinguishing public task requirements from stronger benchmark
+expectations. Do not treat the latter as generic reasoning failure or change grading
+from this audit alone. No runtime change or further execution was performed or
+scheduled. Task 12's oracle ambiguity, task 18's diagnostic delay and selected-test
+overlap remain open.
 
 ## Selected mechanisms and evidence limits
 
@@ -123,7 +132,9 @@ and scripted local tests are distinct evidence. The full20 submissions and both 
 unverified_delivery for registered original-case proof, independently of acceptance.
 Never expose private evaluator bodies, hidden tests or reference patches to the
 solver. Public PASS, successful delivery and safety PASS do not establish correctness.
-No private evaluator bodies or raw provider reasoning were used in this public audit.
+The public run audit read no private bodies. The subsequent user-requested operator
+attribution read saved private failures/criteria, kept separate from solver context;
+raw provider reasoning and reference-patch contents were not used.
 
 Do not start Docker Desktop or pull/build evaluator images automatically. Preserve
 exact recovery identities, zero SDK retries and stop-all on count/transport/billing
