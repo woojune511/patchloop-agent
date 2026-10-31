@@ -29,59 +29,62 @@ Keep the integrated development loop: fix observed correctness, reliability and
 completion failures, validate locally, then exercise a frozen configuration.
 A separate one-factor study is not required for every routine change.
 
-The [search overlap and diagnostic budget change](history/2026-11-01-search-span-coalescing-and-diagnostic-budget.md)
-is implemented. Both repository and registered dependency searches now merge
-same-source overlapping windows after the existing 20-hit/24,000-character
-selection. Exact selected lines, source authority, gaps and truncation are
-preserved; freed space does not select more matches. Existing replay output stays
-unchanged. No new reasoning prompt, tool, mandatory probe or finish gate is added.
+The [expanded-budget task8 diagnostic](history/2026-11-01-task8-expanded-budget-results.md)
+is CLOSED on f06e50dc: **REPORT_RECORDED**, three model calls, one read, one probe,
+one report, **USD0.6170485 recorded generation usage / 432.903 seconds**. Maximum
+input was 39,650 tokens. All generation usages and cleanup are known; count-endpoint
+billing and invoice reconciliation remain unverified. No retry, mutation,
+submission or independent evaluation occurred. Candidate be082f27 is unchanged.
 
-Offline replay of the prior selected search spans preserves all 45 unique lines
-and 20 query matches while reducing displayed lines 100 -> 45, spans 20 -> 5,
-and source characters 11,209 -> 4,694. This is not a new full-request token count
-or evidence of live counterexample construction, repair gain or generalization.
+The model constructed and executed a new nine-case helper: array inputs across
+OB/OD/OF/OL/OW/OV/UN, an OL bytes control and a UL list boundary control. It asserted
+exact encoded bytes as well as conversion behavior; all assertions passed. Final
+scope_review linked three executed groups to the actual current-diff probe and
+left one group untested. An earlier historical-as-current reference was rejected;
+the final review corrected it. Identity validation does not certify coverage.
 
-The new external diagnostic preparation is `C:/pt/active8-review-20261101-v2/`:
-saved task8 input138 and candidate be082f27, gpt-5.4-2026-03-05/xhigh, maximum six
-model calls and 60,000 input tokens. USD2, 600 seconds, 12 actions, two probes and
-25,000 output tokens remain unchanged. Developer state and the latest budget
-message now share one current snapshot. The driver reserves the full output cap
-or stops; six maximal calls would cost USD3.15, so USD2 does not guarantee six.
-This changes diagnostic limits only; the normal solve baseline above is unchanged.
-No new paid invocation is approved or executed, and the v2 live root is absent.
+This observes case construction, execution and interpretation in the active
+post-mutation flow. **No counterexample was found.** The helper used implicit
+little-endian write_dataset, not the original H-array -> bytes -> lineSeq.add_new
+-> ds.save_as construction. Explicit-VR/save_as, visible checks and the added pytest
+function were unexecuted and explicitly disclosed. It does not establish original
+reproduction, repair, independent acceptance or general improvement.
 
-Local validation: 22 focused PASS (9.244 seconds), 28 external-driver mocks PASS
-(109.12 seconds), 1,435 quick PASS / one host-symlink SKIP (445.102 seconds),
-isolated mock evaluation and Ruff. Five stale planning tests were corrected and
-passed separately; no additional production rule was needed. Details and failed
-baseline evidence are in the linked follow-up. Live model uptake remains unverified.
-Runtime is `sha256:4fdcc4fb9eb3d71ad81a5d929a0af689cecd876fbd39c212204d0c6343b608c7`.
+Do not raise caps again on this evidence. Three calls and 39,650 input tokens fit
+the old numerical limits; no search exercised the overlap-removal implementation.
+This single combined run cannot attribute its different behavior to higher caps,
+deduplication or any one prompt/budget change. At termination there were three call
+slots, nine action slots, one probe, about 167 seconds and USD1.3829515 left.
+The unresolved question is selection and stopping when an original-caller gap is
+recognized but left untested. Reporting was allowed without exhaustive verification,
+so that choice is not itself a proven host defect. No new mandatory probe or gate.
 
-Why this change: the [active input138 diagnostic](history/2026-11-01-task8-active-review-results.md)
-is CLOSED on f3d2f8d7. Active behavior_change was delivered; the model named two
-untested groups and a grouped probe, then made two reads and one search. The fourth
-count was 43,789 > 40,000 tokens, blocking generation. Three calls cost USD0.4259615
-over 250.368 seconds; USD1.5740385, two probes and about 350 seconds remained.
-No executable probe, report, mutation or evaluation occurred. Count-endpoint billing
-and invoice reconciliation remain unverified. That is an input-admission stop,
-not a proven capability ceiling or observed choice to abandon execution.
+The [search overlap and budget implementation](history/2026-11-01-search-span-coalescing-and-diagnostic-budget.md)
+remains selected. Repository/dependency searches merge same-source overlap after
+20-hit/24k-character selection, preserving exact selected lines, authority, gaps
+and truncation. Existing replay output is unchanged. Offline selected-span audit
+preserved 45 unique lines/20 matches while reducing source characters 11,209 -> 4,694;
+that is not a live token-saving measurement. Cross-read/inline overlap remains;
+fresh-session novelty counters do not subtract imported checkpoint spans.
+
+The closed v2 preparation/result roots are `C:/pt/active8-review-20261101-v2/` and
+`C:/pt/active8-review-run-20261101-v2/`. Scope was task8/input138/be082f27,
+gpt-5.4-2026-03-05/xhigh, one attempt, USD2, 600 seconds, six calls/60k input,
+12 actions/two probes/full 25k-output reservation or stop. State and latest budget
+messages agreed. This was diagnostic-only; normal solve limits above are unchanged.
+No next paid allocation is approved; neither consumed result root may be resumed.
+
+Unchanged runtime:
+`sha256:4fdcc4fb9eb3d71ad81a5d929a0af689cecd876fbd39c212204d0c6343b608c7`.
+Prior local validation remains 22 focused PASS, 28 driver mocks PASS, 1,435 quick PASS /
+one host-symlink SKIP, isolated mock evaluation and Ruff. Five stale planning tests
+were also corrected and passed. This closure changes documentation only.
 
 The [execution-linked scope review](history/2026-10-31-execution-linked-scope-review.md)
-remains selected. It links public case groups to current-diff executions, source
-inference or explicitly untested cases. The host checks reference validity/currency,
-not semantic coverage. Retained source IDs remain discoverable across handoffs.
-The [input171 diagnostic](history/2026-10-31-execution-linked-task8-diagnostic-results.md)
-used an inactive behavior_change point and returned an immediate report; it did
-not test the active review. Both prior allocations and result roots remain closed.
-
-Next unresolved question: with room to proceed, does the active review construct
-and execute a discriminating public case, then interpret its result? The diagnostic
-cannot show repair because mutation is disabled. The original bytes/caller path
-still differs from the model's raw-array helper; do not import a task-specific
-answer or private evaluation criterion. Cross-read overlap also remains, and
-fresh-session source-gain counters do not subtract imported inline spans. They
-cannot establish novelty relative to the saved packet. Do not add state or gates
-without evidence that these remaining limitations obstruct the next decision.
+and retained source-ID discovery remain selected. The [prior input138 attempt](history/2026-11-01-task8-active-review-results.md)
+stopped at 43,789 > 40,000 tokens before a probe; the [input171 diagnostic](history/2026-10-31-execution-linked-task8-diagnostic-results.md)
+used an inactive behavior_change point. Both are closed evidence, not approvals
+or proof of a model capability ceiling.
 
 Relevant closed evidence:
 
