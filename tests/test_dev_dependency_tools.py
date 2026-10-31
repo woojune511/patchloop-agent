@@ -134,7 +134,11 @@ def test_dependency_paging_search_limits_and_retained_context(gateway_factory, d
     assert retained[0]["start_line"] == next_page.output["start_line"]
     search = gateway.execute(source_call("many", tool="search_files", query="needle_"))
     assert search.status == "succeeded"
-    assert len(search.output["dependency_spans"]) == 20 and search.output["truncated"]
+    assert search.output["truncated"]
+    selected = search.output["dependency_spans"]
+    assert len(selected) == 1
+    assert (selected[0]["start_line"], selected[0]["end_line"]) == (1, 22)
+    assert selected[0]["content"] == "\n".join(f"needle_{i} = {i}" for i in range(22))
     assert sum(len(item["content"]) for item in search.output["dependency_spans"]) <= 24_000
     wide = gateway.execute(source_call("wide", start_line=1, end_line=401))
     assert wide.status == "succeeded"

@@ -205,7 +205,7 @@ def test_guidance_identity_changes_without_changing_run_schema_or_limits():
     # Registered selection review and verification-content delivery change the surface;
     # argument and description identities remain independently pinned above.
     assert dev_tool_surface_hash() == (
-        "sha256:312ac6385ef2fb65495fbb76da1f682f1135292252a6bd4ab64f3548862c0313"
+        "sha256:0ef66556483325c857181c7890c086a2d96822939f1cdc9db14a04222dbded7e"
         if FROZEN_ARM is None else
         "sha256:57193859890419b79cb7f4927c37796d044bc4bf7159c51ddf17723849529e26"
     )

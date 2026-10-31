@@ -1,22 +1,22 @@
 # Implementation guide
 
 See [AGENTS.md](../AGENTS.md) and [status](../docs/current-status.md).
-Source/tests own behavior. Read relevant sections only.
+Source/tests own behavior; read relevant sections.
 
 ## Choosing the next improvement
 
-Apply fixes together and run full tasks; isolate only unresolved design decisions.
-Keep evidence in history and active decisions in current status.
+Integrate fixes; isolate unresolved design decisions. Keep evidence in history,
+active decisions in current status.
 
 ## Source map
 
 | Concern | Current source |
 | --- | --- |
-| CLI and request/default contracts | `patchloop/cli.py`, `patchloop/dev/contracts.py` |
-| Loop, preflight, action horizon, terminal handling | `patchloop/dev/runner.py` |
-| Pure completion/mutation resource forecasts | `patchloop/dev/completion_budget.py` |
-| Public prompt and provider adapter | `patchloop/dev/model.py`, `patchloop/agent/model.py` |
-| Tool grammar, observed anchors, edits, checks, finish | `patchloop/dev/tools.py` |
+| CLI/defaults | `patchloop/cli.py`, `patchloop/dev/contracts.py` |
+| Loop/admission/termination | `patchloop/dev/runner.py` |
+| Pure resource forecasts | `patchloop/dev/completion_budget.py` |
+| Prompt/adapter | `patchloop/dev/model.py`, `patchloop/agent/model.py` |
+| Tools/observed anchors | `patchloop/dev/tools.py` |
 | Audit context and compact public view | `patchloop/dev/context.py`, `patchloop/dev/model_state.py` |
 | Native delivery and context policies | `patchloop/dev/conversation.py`, `patchloop/dev/native_sources.py`, `patchloop/dev/segments.py` |
 | Notes, concerns, and source currency | `patchloop/dev/working_notes.py`, `patchloop/dev/verification_concerns.py`, `patchloop/dev/source_rebinding.py` |
@@ -58,6 +58,8 @@ One consecutive protocol/incomplete correction; reset on valid batches.
 Reads: null bounds and explicit ranges use 24k-character complete-line pages;
 follow next_start_line for omitted content. Fresh ranges have no separate line cap.
 Search: literal queries, rooted component-aware globs; one tracked-path scan/uncached call.
+After 20-hit/24k-character selection, merge same-source overlap, preserving lines,
+gaps, read-only provenance and truncation. Freed space admits no additional hits.
 Edits require delivered current public source. `replace_text` accepts an exact occurrence
 in a tracked, allowed file, a hypothesis and expected behavior (each 1-1,500 characters
 in both schemas). Bind each contiguous observed anchor, enforce canonical full-diff scope,
@@ -223,7 +225,7 @@ Live repair requires exact public-request/cost approval; live dev requires dev-t
 Use quick plus changed-owner tests; broad integrations require full regression.
 Quick includes isolated mock smoke; do not repeat it. Slow A/B matrices stay in
 owner/full suites. Docs-only: `test_documentation_layout.py`.
-Keep focused validation under two minutes and freeze runtime during provenance checks.
+Keep focused validation under two minutes; freeze runtime for provenance checks.
 Use short unique external basetemps; never sweep durable evidence or a parent directory.
 
 ```powershell

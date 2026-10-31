@@ -148,6 +148,7 @@ def dev_tool_surface_hash(
             "observation_to_action_guidance": "answer-implication-next-action-advisory-v1",
             "source_search": "rooted-component-glob-double-star-zero-depth-v1",
             "search_feedback": "eligible-decoded-file-count-v1",
+            "search_spans": "same-source-overlap-after-bounded-selection-v1",
             "mutation_failure": "typed-scope-preview-explicit-path-allowance-v3",
             "completion_horizon": "pre-dispatch-best-path-v2",
             "optional_mutation_admission": "minimum-attempt-initial-rejection-protection-v2",

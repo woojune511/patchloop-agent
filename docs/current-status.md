@@ -25,86 +25,63 @@ and [evidence boundaries](evidence.md).
 
 ## Active decision
 
-Keep the integrated development loop: choose fixes from observed correctness,
-reliability and completion failures, validate locally, then exercise a frozen
-configuration on public development tasks. A separate one-factor study is not a
-prerequisite for every routine change.
+Keep the integrated development loop: fix observed correctness, reliability and
+completion failures, validate locally, then exercise a frozen configuration.
+A separate one-factor study is not required for every routine change.
+
+The [search overlap and diagnostic budget change](history/2026-11-01-search-span-coalescing-and-diagnostic-budget.md)
+is implemented. Both repository and registered dependency searches now merge
+same-source overlapping windows after the existing 20-hit/24,000-character
+selection. Exact selected lines, source authority, gaps and truncation are
+preserved; freed space does not select more matches. Existing replay output stays
+unchanged. No new reasoning prompt, tool, mandatory probe or finish gate is added.
+
+Offline replay of the prior selected search spans preserves all 45 unique lines
+and 20 query matches while reducing displayed lines 100 -> 45, spans 20 -> 5,
+and source characters 11,209 -> 4,694. This is not a new full-request token count
+or evidence of live counterexample construction, repair gain or generalization.
+
+The new external diagnostic preparation is `C:/pt/active8-review-20261101-v2/`:
+saved task8 input138 and candidate be082f27, gpt-5.4-2026-03-05/xhigh, maximum six
+model calls and 60,000 input tokens. USD2, 600 seconds, 12 actions, two probes and
+25,000 output tokens remain unchanged. Developer state and the latest budget
+message now share one current snapshot. The driver reserves the full output cap
+or stops; six maximal calls would cost USD3.15, so USD2 does not guarantee six.
+This changes diagnostic limits only; the normal solve baseline above is unchanged.
+No new paid invocation is approved or executed, and the v2 live root is absent.
+
+Local validation: 22 focused PASS (9.244 seconds), 28 external-driver mocks PASS
+(109.12 seconds), 1,435 quick PASS / one host-symlink SKIP (445.102 seconds),
+isolated mock evaluation and Ruff. Five stale planning tests were corrected and
+passed separately; no additional production rule was needed. Details and failed
+baseline evidence are in the linked follow-up. Live model uptake remains unverified.
+Runtime is `sha256:4fdcc4fb9eb3d71ad81a5d929a0af689cecd876fbd39c212204d0c6343b608c7`.
+
+Why this change: the [active input138 diagnostic](history/2026-11-01-task8-active-review-results.md)
+is CLOSED on f3d2f8d7. Active behavior_change was delivered; the model named two
+untested groups and a grouped probe, then made two reads and one search. The fourth
+count was 43,789 > 40,000 tokens, blocking generation. Three calls cost USD0.4259615
+over 250.368 seconds; USD1.5740385, two probes and about 350 seconds remained.
+No executable probe, report, mutation or evaluation occurred. Count-endpoint billing
+and invoice reconciliation remain unverified. That is an input-admission stop,
+not a proven capability ceiling or observed choice to abandon execution.
 
 The [execution-linked scope review](history/2026-10-31-execution-linked-scope-review.md)
-is implemented and locally validated. At the existing brief-plan review, the model
-can group public input/caller/outcome cases and link them to already returned
-current-diff checks/probes, source inference or an explicit untested disposition.
-The host validates references/currency, not semantic coverage or family completeness.
-Failure and partial execution remain observations. The review stays in the existing
-plan/event across prose replacement and completion; new edits mark old evidence
-historical. No new tool, mandatory probe, reviewer agent or finish gate is added.
-
-The triggering [fresh task 8 run](history/2026-10-31-affected-family-task8-results.md)
-is CLOSED: independent FAIL / safety PASS, 213 public tests PASS, USD0.921602,
-475.843 seconds, 12 calls/18 actions/one edit/two probes on code 60029805. Public
-family source and exact helper programs were delivered, yet the model chose checks
-and replay without a new family/input case. Its raw-array helper differs from the
-reporter's bytes/caller construction, which it explicitly left unverified. Resources
-remained available. This shows a verification-selection gap, not a proven model
-capability ceiling or the latest private failure's exact cause.
-
-The [active input138 diagnostic](history/2026-11-01-task8-active-review-results.md)
-is CLOSED on code f3d2f8d7. The first actual request delivered `context_handoff`,
-`mutation_result` and active `behavior_change` for fixed candidate be082f27; later
-requests correctly consumed the trigger. The model recorded two untested case
-groups and planned a grouped probe, then used **two reads and one search**.
-It emitted no executable probe/assertion program, ran no probe and produced no report.
-
-The fourth count reached **43,789 > 40,000 input tokens**, so generation was blocked.
-Three model calls cost **USD0.4259615** recorded generation usage over **250.368
-seconds**. USD1.5740385, one model call, nine actions, two probes and about 350 seconds
-remained. This is an input-admission stop, not time/cost exhaustion or an observed
-decision to give up. No mutation, evaluation, retry or extra attempt occurred.
-Count-endpoint billing and invoice reconciliation remain unverified.
-
-The first two reads added source outside the initially retained inline spans, so
-they were not entirely redundant. The broad third search returned 20 overlapping
-windows: 100 displayed line occurrences but 45 unique lines. Its 17,190-character
-output and accumulated conversation/state expanded the diagnostic packet; the last
-5,909-token increase is not attributed solely to search. Fresh-session source-gain
-counters also count imported inline lines as new, so they cannot establish novelty
-relative to the saved packet.
-
-The next engineering target is diagnostic context growth: preserve exact public
-requirements, mutation and probe facts while avoiding repeated overlapping source
-payloads before another paid attempt. This is not yet implemented or validated.
-Do not add another reasoning reminder or infer a capability ceiling. Active-review
-uptake and inspection are observed; executable case construction, execution,
-contradiction and repair remain unverified. The planned raw-array helper still
-differs from the original public bytes/caller construction.
-
-[Preparation](history/2026-11-01-task8-active-review-preparation.md) passed 24 mocked
-driver tests in 55.17 seconds, Ruff and the actual-input offline packet audit.
-Checkpoint and reporting-frame changes were combined, not a causal comparison.
-Runtime/task packages/grading remain unchanged, and this USD2 allocation is closed.
-
+remains selected. It links public case groups to current-diff executions, source
+inference or explicitly untested cases. The host checks reference validity/currency,
+not semantic coverage. Retained source IDs remain discoverable across handoffs.
 The [input171 diagnostic](history/2026-10-31-execution-linked-task8-diagnostic-results.md)
-is CLOSED: accepted reference review, one immediate report, zero new reads/probes,
-35.937 seconds and USD0.1119475 recorded generation usage. Its conditional
-`behavior_change` recipe was not active, and the packet requested advisory reporting.
-It did not test the active post-mutation flow or demonstrate a reasoning ceiling.
-Count-endpoint billing and invoice reconciliation remain unverified.
+used an inactive behavior_change point and returned an immediate report; it did
+not test the active review. Both prior allocations and result roots remain closed.
 
-Final local checks: **92 focused PASS in 46.16 seconds**, **1,418 quick PASS /
-1 host-symlink SKIP in 402.42 seconds**, isolated mock evaluation and Ruff. Quick
-used four workers with no restart. The external diagnostic driver passed **19
-mocked tests in 60.23 seconds**. These are mechanism/transport checks, not model
-uptake. Runtime is
-`sha256:0963cb074795d1809310160f02dd3c2bc42efe892af302846c3a6454bf598e75`.
-The unchanged system-prompt ceiling is respected (10,778 characters).
-
-The new execution-reference contract also needs discoverable source IDs. A bounded
-index now links only retained repository source_spans to their prior public reads
-by exact scope/path/file hash/range, including inline delivery after segment reset.
-It adds no source text or edit permission and uses the same helper in the diagnostic.
-The closed input171 plan/approval remain under `C:/pt/evidence8-review-20261031-v1/`.
-The input138 plan/approval use `C:/pt/active8-review-20261101-v1/`; result and audits
-are linked in the closed record above. Neither consumed result root may be resumed.
+Next unresolved question: with room to proceed, does the active review construct
+and execute a discriminating public case, then interpret its result? The diagnostic
+cannot show repair because mutation is disabled. The original bytes/caller path
+still differs from the model's raw-array helper; do not import a task-specific
+answer or private evaluation criterion. Cross-read overlap also remains, and
+fresh-session source-gain counters do not subtract imported inline spans. They
+cannot establish novelty relative to the saved packet. Do not add state or gates
+without evidence that these remaining limitations obstruct the next decision.
 
 Relevant closed evidence:
 

@@ -13,7 +13,7 @@ from test_dev_segments import assert_submitted, configured, records
 from typer.testing import CliRunner
 
 from patchloop.cli import app
-from patchloop.dev import runner
+from patchloop.dev import completion_context, repair_context, runner
 from patchloop.dev import working_plan as plans
 from patchloop.dev.contracts import DevRunRequest, dev_tool_surface_hash
 from patchloop.dev.model import MockDevAdapter
@@ -53,7 +53,7 @@ def record(journal, text, *, turn="t1", calls=None, diff="d1", gate="needs_mutat
 def test_old_contract_and_schema_unchanged_new_guidance_is_task_independent(tmp_path, monkeypatch):
     assert plans.instructions() == plans.INSTRUCTIONS
     assert dev_tool_surface_hash(planning_policy=plans.POLICY) == (
-        "sha256:fb118efd9c53f599800877d2ff25adb836ca56354b76c5ea03c8bf8605a8bf94"
+        "sha256:51ebb55b74d4f7a3610135840184b475231ec1a91feaeae589cfa4f3d8d4ee88"
         if FROZEN_ARM is None else
         "sha256:b1a9019f91a6bfe219714658b96300c9fce579ac3bc2e85a88ce9c5eaa115d5d"
         if JUDGMENT else
@@ -191,17 +191,28 @@ def test_segmented_crash_exact_resume_and_actual_plan_delivery(tmp_path, monkeyp
                for e in events) == 1
     turns = [e for e in events if e["event_type"] == "turn_started"]
     for items, view, turn in zip(inputs, views, turns, strict=True):
-        assert plans.instructions(POLICY) in items[0]["content"]
-        assert view["working_plan"]["policy"] == POLICY
-        preceding = [e for e in receipts if e["sequence"] < turn["sequence"]]
-        if preceding:
-            plan = view["working_plan"]["plan"]
-            assert plan["text"] == preceding[-1]["payload"]["plan"]["text"]
-            assert plan["text_hash"] == sha256_json(plan["text"])
-            assert all(h in plan["text"] for h in HEADINGS)
+        repairing = view.get("repair_stage", {}).get("policy") == "small-repair-context-v1"
+        finalizing = view.get("completion_stage", {}).get("active", False)
+        if repairing:
+            assert repair_context.system_prompt(view) in items[0]["content"]
+            assert plans.instructions(POLICY) not in items[0]["content"]
+            assert "working_plan" not in view
+        else:
+            assert (plans.instructions(POLICY) in items[0]["content"]) == (not finalizing)
+            if finalizing:
+                assert completion_context.SYSTEM_PROMPT in items[0]["content"]
+            assert view["working_plan"]["policy"] == POLICY
+            preceding = [e for e in receipts if e["sequence"] < turn["sequence"]]
+            if preceding:
+                plan = view["working_plan"]["plan"]
+                assert plan["text"] == preceding[-1]["payload"]["plan"]["text"]
+                assert plan["text_hash"] == sha256_json(plan["text"])
+                assert all(h in plan["text"] for h in HEADINGS)
         for private in ("hidden-multiline-csv", "reference_patch", "reasoning_transcript"):
             assert private not in canonical_json(view)
-    assert "context_handoff" in views[-1]["working_plan"]["review_request"]["reasons"]
+    final_review = ("first_ready_to_submit" if views[-1].get("completion_stage", {}).get("active")
+                    else "context_handoff")
+    assert final_review in views[-1]["working_plan"]["review_request"]["reasons"]
     before = journal.path.read_bytes()
     assert runner.run_dev(resumed)["runs"][0] == result
     assert journal.path.read_bytes() == before
@@ -214,7 +225,8 @@ def test_plan_errors_and_format_do_not_block_real_mock_actions(tmp_path, monkeyp
 
     def annotated(self, context, tools):
         turn = original(self, context, tools)
-        turn.tool_calls[0].turn_decision.plan_update = annotation
+        if turn.tool_calls[0].turn_decision is not None:
+            turn.tool_calls[0].turn_decision.plan_update = annotation
         return turn
 
     monkeypatch.setattr(MockDevAdapter, "next_turn", annotated)
@@ -227,7 +239,10 @@ def test_plan_errors_and_format_do_not_block_real_mock_actions(tmp_path, monkeyp
     if isinstance(annotation, str):
         assert all(e["plan"]["text"] == annotation for e in updates)
     else:
-        assert all(e["receipt"]["status"] == "rejected" for e in updates)
+        assert [e["receipt"]["status"] for e in updates] == (
+            ["rejected", "not_requested", "rejected", "rejected"]
+            if FROZEN_ARM is None else ["rejected"] * 4
+        )
 
 
 def test_manifest_rejects_old_policy_hash_before_evaluator_workspace(tmp_path, monkeypatch):

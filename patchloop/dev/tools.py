@@ -11,6 +11,7 @@ from bisect import bisect_left
 from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
+from itertools import groupby
 from pathlib import Path
 from typing import Any
 
@@ -3755,6 +3756,38 @@ class DevToolGateway:
         return {"span_id": f"dependency_{sha256_json(identity).split(':', 1)[1][:16]}",
                 **identity}
 
+    @classmethod
+    def _coalesce_search_spans(cls, spans: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Remove overlap after selection, preserving source identity and all selected lines."""
+        def source_identity(span: dict[str, Any]) -> tuple[Any, ...]:
+            return tuple(span.get(key) for key in (
+                "source_scope", "path", "file_hash", "provenance", "read_only",
+            ))
+
+        merged: list[dict[str, Any]] = []
+        for _, group in groupby(spans, key=source_identity):
+            selected: list[dict[str, Any]] = []
+            # Clipped windows can start later than a subsequent full window.
+            for span in sorted(group, key=lambda item: item["start_line"]):
+                if not selected or span["start_line"] > selected[-1]["end_line"]:
+                    selected.append(span)
+                    continue
+                previous = selected[-1]
+                if span["end_line"] <= previous["end_line"]:
+                    continue
+                tail = span["content"].split("\n")[
+                    previous["end_line"] - span["start_line"] + 1:
+                ]
+                content = "\n".join([previous["content"], *tail])
+                start, end = previous["start_line"], span["end_line"]
+                selected[-1] = (
+                    cls._dependency_span(span["provenance"], start, end, content)
+                    if "provenance" in span else
+                    cls._span(span["path"], start, end, content, span["file_hash"])
+                )
+            merged.extend(selected)
+        return merged
+
     def _read_file(
         self, path: str, start_line: int | None = None, end_line: int | None = None,
         source_scope: str = "repository",
@@ -3877,7 +3910,7 @@ class DevToolGateway:
             "query": query,
             "path_glob": pattern,
             "searched_file_count": searched_file_count,
-            "spans": spans,
+            "spans": self._coalesce_search_spans(spans),
             "truncated": truncated,
             **({"source_scope": "repository"} if self.dependency_sources is not None else {}),
             **({"available_sources": self._dependency_catalog(),
@@ -3926,7 +3959,8 @@ class DevToolGateway:
                     truncated = True
                     break
         return {"query": query, "path_glob": pattern, "source_scope": source_scope,
-                "searched_file_count": searched_file_count, "dependency_spans": spans,
+                "searched_file_count": searched_file_count,
+                "dependency_spans": self._coalesce_search_spans(spans),
                 "truncated": truncated, "read_only": True,
                 "dependency_source_identity": self._dependency_source_identity}
 
