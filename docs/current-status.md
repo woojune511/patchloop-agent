@@ -62,25 +62,11 @@ is CLOSED on 0dfe7c6d. It used the new condition objects but executed no new pro
 original-condition equivalence and better verification selection remain unproven.
 Its evidence and capability limits do not justify forced probes or larger limits.
 
-The [fresh normal task8 attempt](history/2026-11-01-condition-normal-task8-results.md)
-on c855b0de was interrupted before mutation by InternalServerError; USD0.1686595
-covers three settled responses and the fourth usage remains UNKNOWN. The user then
-requested one retry. The [fresh retry](history/2026-11-01-condition-normal-task8-retry-results.md)
-on 523e5da6 (same runtime) is CLOSED with independent acceptance PASS and safety
-PASS: 10 model/count calls, 18 tools, one two-file edit, one public check (213 PASS),
-one helper probe, 316.883 seconds and USD0.6997885 recorded generation usage.
-
-The solver identified backslash splitting of binary bytes, added missing OD/OL/OV
-VR exemptions and an OL save_as regression test. Its current-diff probe asserted
-stored bytes and exact encoded OL output, with OF as a control. The post-edit
-comparison schema and plan guidance were delivered and used. It still marked
-OD/OV source-inferred, did not replay the original H-array/lineSeq setup on base
-and candidate, and finished with those gaps disclosed. Original verification is
-unverified_delivery despite acceptance PASS. No failing probe or second repair
-occurred, so autonomous counterexample-driven revision is not demonstrated here.
-One successful development-exposed solve does not isolate the review change's
-effect or establish generalization. Retain the runtime without adding gates or
-increasing limits on this evidence.
+The [interrupted task8 attempt](history/2026-11-01-condition-normal-task8-results.md)
+is closed with its fourth response usage UNKNOWN. The [prior normal PASS](history/2026-11-01-condition-normal-task8-retry-results.md)
+at 523e5da6 provides the latest baseline: 10 calls/18 tools, 316.883 seconds and
+USD0.6997885. It repaired the bytes-splitting setter; original H-array/lineSeq replay
+and OD/OV execution remained absent. Acceptance and original-case delivery differ.
 
 The [failure/success comparison](history/2026-11-01-task8-diagnosis-comparison.md)
 locates the main difference before editing: the failed run fixed a direct-array
@@ -99,14 +85,26 @@ transformation. Existing mutation fields receive short matching descriptions.
 Source evidence may support a repair without exact reproduction. No new fields,
 state, gate, mandatory probe or call are added. Local validation: focused 133 PASS;
 quick 1,457 PASS/one host skip after six fingerprint rechecks; isolated mock PASS.
-Live behavior comparison is NOT_RUN; repair gain remains unverified.
 
-The closed retry cap was USD3.3744305: original USD4 less prior settled USD0.1686595 and
-the unknown call's conservative USD0.45691 reservation. The previous UNKNOWN
-entry is unchanged; reservation is not actual billing. Both allocations are now
-closed, including the retry's unused USD2.674642. Combined recorded generation is
-USD0.868448 plus the earlier unknown call; invoice/count billing stays unverified.
-No further paid invocation is authorized.
+The [fresh pre-edit task8 experiment](history/2026-11-01-pre-edit-normal-task8-results.md)
+on e6374d6f is CLOSED: independent acceptance PASS/safety PASS, one edit, 14 model
+calls, 21 tools, 213 required tests plus three selected tests, three probes,
+494.296 seconds and USD1.1495245 recorded generation usage under a new USD4 cap.
+The solver observed base OL bytes becoming MultiValue, fixed OD/OL/OV exemptions,
+then recognized that its writer helper did not cover add_new/save_as and executed
+that closer caller. Both constructed OL cases saved with payload/tail preservation.
+The first two probes still had a writer setup error; only their value comparison
+was valid. Probes have no asserts; the new pytest asserts full encoded output.
+Selected nodes overlap the required file check, but exact node telemetry was not
+delivered, so this is not demonstrated disregard of identical execution evidence.
+Original H-array/lineSeq and OD/OV runtime coverage remain missing and disclosed;
+delivery is unverified_delivery. One successful initial repair does not demonstrate
+post-patch counterexample-driven revision. Retain the guidance; causal improvement,
+efficiency and generalization remain unproven against the already successful baseline.
+
+The latest USD4 allocation is closed, including unused USD2.8504755. Prior settled
+subtotal USD0.868448 and the earlier UNKNOWN call remain separate, unchanged records;
+invoice/count billing is unverified. No further paid invocation is authorized.
 
 Relevant closed evidence:
 

@@ -1,5 +1,6 @@
 # 2026-11-01 investigations
 
+- [Pre-edit normal task 8: independent PASS](../2026-11-01-pre-edit-normal-task8-results.md)
 - [Pre-edit task correspondence guidance](../2026-11-01-pre-edit-task-correspondence.md)
 - [Task 8 diagnosis and verification comparison](../2026-11-01-task8-diagnosis-comparison.md)
 - [Fresh normal task 8 retry: independent PASS](../2026-11-01-condition-normal-task8-retry-results.md)
