@@ -66,20 +66,9 @@ This is bounded model-authored comparison, not verified correspondence. No new
 tool, review call, mandatory probe, plan reset, semantic gate or paid run is added.
 
 The [latest fixed-candidate diagnostic](history/2026-11-01-public-input-comparison-results.md)
-is CLOSED on 0dfe7c6d: same task8 public seq38/be082f27, two model/count calls,
-one source read, zero new probes, 232.128s and USD0.4385265 recorded generation.
-It used four condition objects and disclosed direct-array versus bytes substitution,
-but did not preserve the known H-array/bytes setup in public_conditions.
-
-Its source read supports a local shared-writer inference, not full save_as/dcmwrite
-equivalence. Relevant source was already delivered; no original-style execution
-was added. Format uptake and clearer limitations are demonstrated, but verification
-selection and evidence-sufficient stopping are not. Plan influence remains a
-hypothesis. Do not infer invalid stopping from probe count alone or increase limits
-when resources remained. Missing original setup and diagnostic capabilities also
-limit what can be verified; see the linked audit. Original reproduction, registered
-regressions and independent evaluation remain NOT_RUN. The separate two-probe
-diagnostic was not supplied as evidence. Unused USD1.104663 is closed.
+is CLOSED on 0dfe7c6d. It used the new condition objects but executed no new probe;
+original-condition equivalence and better verification selection remain unproven.
+Its evidence and capability limits do not justify forced probes or larger limits.
 
 The [fresh normal task8 attempt](history/2026-11-01-condition-normal-task8-results.md)
 on c855b0de was interrupted before mutation by InternalServerError; USD0.1686595
@@ -100,6 +89,17 @@ occurred, so autonomous counterexample-driven revision is not demonstrated here.
 One successful development-exposed solve does not isolate the review change's
 effect or establish generalization. Retain the runtime without adding gates or
 increasing limits on this evidence.
+
+The [failure/success comparison](history/2026-11-01-task8-diagnosis-comparison.md)
+locates the main difference before editing: the failed run fixed a direct-array
+helper while the successful run traced reported bytes to the earlier value setter.
+The failed run never acquired that setter; original task and helper results were
+not lost. Both passed 213 tests, but their added tests exercise different inputs.
+The successful diagnosis precedes post-edit review activation, so that review
+cannot directly explain the first repair. Early tool-schema/search presentation
+effects and trajectory variation remain unisolated. A future intervention should
+target accepting a helper as task-relevant evidence, using existing fields before
+adding another gate. This comparison made no runtime change or new target call.
 
 The new cap was USD3.3744305: original USD4 less prior settled USD0.1686595 and
 the unknown call's conservative USD0.45691 reservation. The previous UNKNOWN
