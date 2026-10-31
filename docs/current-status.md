@@ -65,24 +65,27 @@ null public conditions are allowed for unknown originals or separate controls.
 This is bounded model-authored comparison, not verified correspondence. No new
 tool, review call, mandatory probe, plan reset, semantic gate or paid run is added.
 
-The [latest live diagnostic](history/2026-11-01-capability-aligned-verification-results.md)
-is CLOSED on56666f44: same task8 public seq38/be082f27, one model/count call,
-zero new probes, one report,104.427s, USD0.218635 recorded generation usage.
-The corrected context and finish/null annotation reached the model. It identified
-a feasible save_as/explicit-VR helper but reported no_counterexample_found using
-saved write_dataset evidence. Its basis still argued that no extra observation
-was necessary for a bounded report. The intended verification-selection improvement
-was not demonstrated; unused calls/probes/time/cost do not explain this stop.
+The [latest live diagnostic](history/2026-11-01-public-input-comparison-results.md)
+is CLOSED on 0dfe7c6d: same task8 public seq38/be082f27, two model/count calls,
+one source read, zero new probes, one report, 232.128s, USD0.4385265 recorded
+generation usage (USD0.4923825 cache-neutral). The model used the new object for
+four review rows and reported no_counterexample_found using saved probe evidence.
+It now disclosed direct-array versus .tostring() bytes substitution and that the
+saved base bytes control passed while direct-array failed. However, public_conditions
+still summarized the error instead of preserving the known H-array/bytes setup.
 
-The public report distinguished untested caller/regression coverage, but did not
-map original H-array -> bytes to helper I-array/direct-array substitutions. The
-earlier base helper's bytes control passed; its direct-array failure alone does
-not identify the exact public issue mechanism. Delivered conversion/writer source
-supports local inference but does not establish the full save_as caller equivalence.
-Keep the interface correction; do not add a blanket probe gate or increase budgets.
-The structured comparison addresses the ambiguous input role; the saved plan's
-influence remains a hypothesis. Live uptake and evidence-supported stopping under
-the new format are NOT_RUN. No isolated plan-reset effect is claimed.
+The source read supports the local shared-writer inference for explicit/implicit
+headers. Its relevant 160 lines were already delivered; the other 185 mostly concern
+different writers. It added no save_as/dcmwrite definition or original-style execution.
+Full caller equivalence and whether the known input differences are immaterial
+remain unresolved. The plan was revised to source-read then report; its influence
+on narrowing the objective remains a hypothesis, not a lost-state defect.
+
+Live format uptake and clearer limitation reporting are demonstrated in this sample;
+better verification selection or evidence-sufficient stopping is not established.
+Keep the bounded comparison without calling it a proven quality intervention.
+Do not infer invalid stopping from probe count alone, add a blanket probe gate, or
+increase limits: resources remained available. No isolated plan-reset effect is claimed.
 
 Skipped verification is not uniformly an agent failure. The original example lacks
 indexData/lineSeq/ds setup, so exact reproduction is unavailable; known H-array to
@@ -94,11 +97,11 @@ claim that the registered regression suite ran. Do not require impossible work o
 infer absence of need merely from reporting a limited no-counterexample result.
 
 Local validation and public audits are linked in the follow-ups. The latest single
-run establishes delivery and a bounded report, not autonomous verification gain.
+run establishes delivery, format use and a bounded report, not autonomous verification gain.
 The prior two-probe diagnostic's six save_as cases belong to its separate closed
 execution and were not supplied to this run. Original reproduction, registered
 regressions and independent evaluation remain NOT_RUN in this diagnostic.
-All allocations, including the unused USD1.3245545, are closed. No further paid
+All allocations, including the latest unused USD1.104663, are closed. No further paid
 invocation is authorized.
 
 Relevant closed evidence:

@@ -1,5 +1,6 @@
 # 2026-11-01 investigations
 
+- [Public-condition comparison diagnostic results](../2026-11-01-public-input-comparison-results.md)
 - [Public-condition and reviewed-case comparison](../2026-11-01-public-input-comparison.md)
 - [Capability-aligned verification diagnostic results](../2026-11-01-capability-aligned-verification-results.md)
 - [Capability-aligned verification decisions](../2026-11-01-capability-aligned-verification-review.md)
