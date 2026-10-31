@@ -30,57 +30,49 @@ reliability and completion failures, validate locally, then exercise a frozen
 configuration on public development tasks. A separate one-factor study is not a
 prerequisite for every routine change.
 
-The [affected-family review](history/2026-10-31-affected-family-review.md) asks the
-agent to derive affected members from public definitions/registries/callers/tests,
-compare edited and verified members, and inspect relevant unverified cases while
-preserving the public caller/input construction/outcome assertion. Existing adequate
-results are reused. This is guidance in the existing post-edit decision, not
-automatic family extraction, a new tool/state/required check or a finish gate.
+The [execution-linked scope review](history/2026-10-31-execution-linked-scope-review.md)
+is implemented and locally validated. At the existing brief-plan review, the model
+can group public input/caller/outcome cases and link them to already returned
+current-diff checks/probes, source inference or an explicit untested disposition.
+The host validates references/currency, not semantic coverage or family completeness.
+Failure and partial execution remain observations. The review stays in the existing
+plan/event across prose replacement and completion; new edits mark old evidence
+historical. No new tool, mandatory probe, reviewer agent or finish gate is added.
 
-The [fresh task 8 run](history/2026-10-31-affected-family-task8-results.md) is CLOSED:
-**independent FAIL / safety PASS**, required public check **213 PASS**. Solver code
-was **60029805**, runtime
-`sha256:dcc04d586ddb7554c3fc2c735577f6ca91676b0dcb0b5ca172d53a0b0c6acaa7`.
-One pristine attempt used GPT-5.4/xhigh, one worker and the baseline limits under a
-new USD4 cap. Cost **USD0.921602**, batch wall **475.843 seconds (7m56s)**,
-12 model calls, 18 actions, one accepted edit and two probes. All counts/calls
-settled; no retry, uncertainty stop or extra independent evaluation.
+The triggering [fresh task 8 run](history/2026-10-31-affected-family-task8-results.md)
+is CLOSED: independent FAIL / safety PASS, 213 public tests PASS, USD0.921602,
+475.843 seconds, 12 calls/18 actions/one edit/two probes on code 60029805. Public
+family source and exact helper programs were delivered, yet the model chose checks
+and replay without a new family/input case. Its raw-array helper differs from the
+reporter's bytes/caller construction, which it explicitly left unverified. Resources
+remained available. This shows a verification-selection gap, not a proven model
+capability ceiling or the latest private failure's exact cause.
 
-**Public family information was acquired and retained, but did not become missing
-cases after review.** Before editing, the agent read writer registrations and an
-existing parameter list; their union includes all seven types added to its patch.
-The source spans, exact helper program and new review were still delivered after
-the edit and at completion. There is no observed source/program delivery loss.
-Initial patch breadth precedes the new review, so it cannot be attributed to that
-review's delivery. No explicit complete-family/coverage comparison is established.
+A small diagnostic is being prepared at that run's public input 171, immediately
+before submission, with candidate be082f27 fixed. Existing source/check/probe facts
+remain available; no later verdict or operator counterexample enters its context.
+The new review must lead to an actually executed, publicly grounded unverified case
+to support uptake. A populated format, probe count or generic report alone is not
+success. It cannot establish repair or independent acceptance because mutation and
+private evaluation are excluded. Proposed scope is one GPT-5.4/xhigh attempt,
+USD2 total, four calls/12 actions/two probes/600 seconds; new exact-scope approval
+is pending. Prior paid allocations remain closed.
 
-The first helper found that bytes controls for OB/OF/OL already worked, while raw
-OL array input became MultiValue and failed. The agent preserved buffer values for
-seven types and added an exact-encoding assertion for raw OL array input. After
-review it ran the public check, replayed the same helper on the changed diff and
-finished; no new family cases, source reads or second repair followed. This replay
-was useful repair verification, not redundant unchanged-diff repetition.
+Final local checks: **92 focused PASS in 46.16 seconds**, **1,418 quick PASS /
+1 host-symlink SKIP in 402.42 seconds**, isolated mock evaluation and Ruff. Quick
+used four workers with no restart. The external diagnostic driver passed **19
+mocked tests in 60.23 seconds**. These are mechanism/transport checks, not model
+uptake. Runtime is
+`sha256:0963cb074795d1809310160f02dd3c2bc42efe892af302846c3a6454bf598e75`.
+The unchanged system-prompt ceiling is respected (10,778 characters).
 
-The reporter's array('H') -> bytes -> sequence/add_new -> save_as path differs from
-the helper's raw array('I') and lower-level writer. The final assessment explicitly
-left the mapping unverified. Registered original-case executions remain zero and
-delivery is unverified_delivery. Acquisition reached preparation_action_limit, but
-ordinary tools and substantial whole-run resources remained. At completion input,
-29 calls, 83 actions, 11 edits, USD3.238008 and about 1,108 solver seconds were left.
-
-The requested discovery -> missing-case execution -> further repair behavior was
-not demonstrated. The active question is why available public scope did not become
-unverified member/input cases before finish. Existing coverage may have been
-misjudged or the helper fix treated as sufficient; the public trace does not settle
-that explanation. More reminders or budget are not supported by this result alone.
-No further runtime edit or paid run is scheduled. The new private evaluator body
-was not read; an earlier patch's private failure is not evidence of this one's exact
-failure. One development-exposed attempt establishes no causal repair or speed gain.
-
-The implementation's local checks remain **66 focused PASS in 21.10 seconds**,
-**1,363 quick PASS / 1 host-symlink SKIP**, isolated mock and Ruff; quick wall was
-310.94 seconds with four workers. The live record separately validates **82/82**
-metadata/settlement/patch-identity checks. These are different evidence layers.
+The new execution-reference contract also needs discoverable source IDs. A bounded
+index now links only retained repository source_spans to their prior public reads
+by exact scope/path/file hash/range, including inline delivery after segment reset.
+It adds no source text or edit permission and uses the same helper in the diagnostic.
+Candidate/source/dependency/image and credential-shape preparation passed without
+provider, target or evaluator calls. The exact sealed plan and approval gate live
+under `C:/pt/evidence8-review-20261031-v1/`; no paid diagnostic has run.
 
 Relevant closed evidence:
 

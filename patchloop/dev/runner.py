@@ -42,6 +42,7 @@ from patchloop.dev import (
     probe_followup,
     probe_recheck,
     repair_context,
+    scope_review,
     segments,
     test_comparison,
     thin_policy,
@@ -2468,6 +2469,18 @@ def _protocol_correction(
     return result
 
 
+def _scope_source_receipts(state, events, planning_policy):
+    """Attach identities only for source retained by the current stage projection."""
+    plan = state.get("working_plan")
+    if planning_policy == "none" or not isinstance(plan, dict):
+        return
+    catalog = scope_review.source_catalog(events, state.get("source_spans", []))
+    if catalog["items"]:
+        plan["source_receipts"] = catalog
+    else:
+        plan.pop("source_receipts", None)
+
+
 def _build_context(
     *,
     package: Any,
@@ -2756,10 +2769,9 @@ def _build_context(
         payload["protocol_correction"] = correction
     # Construction is allowlist-based from ``package.public`` and public tool outputs;
     # private task fields are never accepted as context inputs.
-    return json.dumps(
-        project_inspection_context(payload, agent_policy=gateway.agent_policy),
-        separators=(",", ":"), ensure_ascii=False,
-    )
+    payload = project_inspection_context(payload, agent_policy=gateway.agent_policy)
+    _scope_source_receipts(payload, journal.events(), planning_policy)
+    return json.dumps(payload, separators=(",", ":"), ensure_ascii=False)
 
 
 def _requested_tool_from_openai(call: Any, *, agent_policy: str = "current",
@@ -3237,6 +3249,7 @@ def _build_model_input(
         native_action_ids=[item["call_id"] for item in public_history
                            if item.get("type") == "function_call"],
     )
+    _scope_source_receipts(state, events, planning_policy)
     state = reference_native_sources(state, history, archive_kind=archive_kind)
     state = compact_model_state(state, history, archive_kind=archive_kind)
     return assemble_model_input(
@@ -3381,6 +3394,7 @@ def _build_segmented_model_input(
                                 diagnosis=True)
         else:
             base = _segment_public_base(prompt, state, seed_results, calls, agent_policy)
+        _scope_source_receipts(state, events, planning_policy)
         optional = [] if omit_optional or compact_stage else evidence_focus.optional_exchanges(
             state.get("working_notes", {}).get("open_question"), events, ids,
             diff_hash=state["current_diff"]["patch_hash"],
@@ -3460,6 +3474,7 @@ def _build_segmented_model_input(
         state["segment_handoff"].update(
             review_requested=False,
             interpretation="public candidate, checks and unresolved outcomes")
+    _scope_source_receipts(state, journal.events(), planning_policy)
     view = _segment_current_view(state, history, latest_results, agent_policy)
     return assemble_model_input(
         system_prompt=prompt, state=thin_policy.project_state(view, agent_policy),

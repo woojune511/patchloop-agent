@@ -709,6 +709,7 @@ def dev_tool_schemas(
             decision_modes[name]
         )
         if planning_policy != "none":
+            from patchloop.dev.scope_review import schema as scope_review_schema
             from patchloop.dev.working_plan import POLICIES, reason_schema, update_schema
 
             if planning_policy not in POLICIES:
@@ -716,7 +717,8 @@ def dev_tool_schemas(
             decision = parameters["properties"]["turn_decision"]
             decision["properties"]["plan_update"] = update_schema()
             decision["properties"]["plan_update_reason"] = reason_schema()
-            decision["required"].extend(["plan_update", "plan_update_reason"])
+            decision["properties"]["scope_review"] = scope_review_schema()
+            decision["required"].extend(["plan_update", "plan_update_reason", "scope_review"])
         parameters["required"].append("turn_decision")
         projected.append(schema)
     return projected

@@ -5,6 +5,7 @@ from __future__ import annotations
 import copy
 from typing import TYPE_CHECKING, Any
 
+from patchloop.dev import scope_review
 from patchloop.dev.mutation_tools import MUTATION_TOOLS
 from patchloop.dev.repair_guidance import BEHAVIOR_CHANGE_INSTRUCTIONS
 from patchloop.util import sha256_json
@@ -37,8 +38,11 @@ When review_request.behavior_change is present, apply its attached guidance
 review to that mutation before carrying forward a check-then-submit plan.
 Listing unknowns alone does not justify stopping. Choose observations that could change
 the patch/submission decision over repeating supported examples.
-Keep a short contract -> case/setup -> expected observation -> actual evidence or
-untested link. The check's program must observe its named property, not just setup.
+Use scope_review for a bounded affected-scope -> case/setup -> required observation
+comparison. Cite public source receipt IDs and current-diff execution IDs, or mark
+source inference/untested. Failure/partial output records execution, not coverage.
+Null preserves the review; a changed diff makes it historical. Use source_receipts
+for selected source IDs. The check must observe its named property.
 After results, say what they support, contradict or leave open. Retain material gaps;
 group related cases with a normal control and reuse adequate current-diff evidence.
 Unchanged evidence or ordinary inspections need no plan rewrite; null remains allowed.
@@ -111,6 +115,7 @@ def contract(policy: str = POLICY) -> dict[str, Any]:
             "policy": "admitted-current-mutation-next-valid-decision-v1",
             "instructions_hash": sha256_json(BEHAVIOR_CHANGE_INSTRUCTIONS),
         },
+        "scope_review": scope_review.contract(),
         "review": (
             "after-source-initial-mutation-check-probe-first-ready-next-valid-decision-v1"
             if policy == AFTER_SOURCE_POLICY else
@@ -149,6 +154,8 @@ def submission_review(events: list[dict[str, Any]], diff_hash: str) -> dict[str,
         return None
     plan = copy.deepcopy(latest["payload"]["plan"])
     plan["diff_currency"] = "current" if plan["diff_hash"] == diff_hash else "historical"
+    if isinstance(plan.get("scope_review"), dict):
+        plan["scope_review"] = scope_review.project(plan["scope_review"], diff_hash)
     return {"plan": plan, "assessment_ref": "assessment",
             "interpretation_status": "model_authored_unverified",
             "verification_status": "not_inferred_from_submission"}
@@ -204,6 +211,8 @@ def project(
         reasons.append("first_ready_to_submit")
     if plan is not None:
         plan["diff_currency"] = "current" if plan["diff_hash"] == diff_hash else "historical"
+        if isinstance(plan.get("scope_review"), dict):
+            plan["scope_review"] = scope_review.project(plan["scope_review"], diff_hash)
     review_request = {
         "requested": bool(reasons), "reasons": reasons,
         "action_ids": relevant[-8:], "omitted_action_count": max(0, len(relevant) - 8),
@@ -254,6 +263,7 @@ def _behavior_change(
 def record(
     journal: DevJournal, calls: Sequence[RequestedTool], *, turn_id: str,
     diff_hash: str, gate: str, policy: str = POLICY,
+    evidence_events: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """A valid batch consumes the review request once, independently of plan validity."""
     events = journal.events()
@@ -265,6 +275,14 @@ def record(
     plan = current["plan"]
     if plan is not None:
         plan.pop("diff_currency", None)
+        # Projection currency is derived, never stored as a new observation.
+        if isinstance(plan.get("scope_review"), dict):
+            plan["scope_review"].pop("diff_currency", None)
+            for source in plan["scope_review"].get("source_evidence", []):
+                source.pop("currency", None)
+            for case in plan["scope_review"].get("cases", []):
+                if isinstance(case.get("execution"), dict):
+                    case["execution"].pop("currency", None)
     updates = [(call.action_id, call.turn_decision.plan_update,
                 call.turn_decision.plan_update_reason) for call in calls
                if call.turn_decision is not None and call.turn_decision.plan_update is not None]
@@ -286,6 +304,7 @@ def record(
             diagnostics.append("plan_revision_requires_reason_previous_plan_preserved")
         else:
             status = "created" if plan is None else "updated"
+            prior_scope_review = plan.get("scope_review") if plan is not None else None
             previous = ({key: plan[key] for key in
                          ("text", "revision", "diff_hash", "text_hash", "turn_id")}
                         if plan else None)
@@ -294,6 +313,8 @@ def record(
                 "turn_id": turn_id, "diff_hash": diff_hash, "text_hash": sha256_json(text),
                 "review_reasons": current["review_request"]["reasons"],
             }
+            if prior_scope_review is not None:
+                plan["scope_review"] = prior_scope_review
             if previous is not None:
                 plan["last_change"] = {
                     "previous_plan": previous, "reason": updates[0][2],
@@ -304,6 +325,30 @@ def record(
         "diagnostics": diagnostics, "revision": plan["revision"] if plan else 0,
         "scope": "before_tool_batch", "review_request": current["review_request"],
     }
+    reviews = [(call.action_id, getattr(call.turn_decision, "scope_review", None))
+               for call in calls if call.turn_decision is not None
+               and getattr(call.turn_decision, "scope_review", None) is not None]
+    if reviews:
+        review_owner, raw = reviews[0]
+        # Trusted diagnostics may bind an externally validated public prefix.
+        # It supplies reference evidence only, never planning lifecycle authority.
+        observations = events if evidence_events is None else evidence_events
+        review, issue = (scope_review.parse(
+            raw, events=observations, diff_hash=diff_hash, turn_id=turn_id,
+        ) if plan is not None else (None, "scope_review_requires_plan"))
+        review_diagnostics = ([issue] if issue else [])
+        if len(reviews) > 1:
+            review_diagnostics.append("ignored_additional_scope_reviews")
+        receipt["scope_review"] = {
+            "action_id": review_owner, "status": "rejected" if issue else "applied",
+            "diagnostics": review_diagnostics,
+        }
+        if review is not None:
+            change = _behavior_change(observations, 0, diff_hash)
+            if change is not None:
+                review["mutation"] = {key: value for key, value in change.items()
+                                      if key != "guidance"}
+            plan["scope_review"] = review
     journal.append(EVENT, {
         "turn_id": turn_id, "workflow_gate": gate, "plan": plan, "receipt": receipt,
     })

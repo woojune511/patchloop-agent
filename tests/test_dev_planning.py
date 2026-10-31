@@ -67,14 +67,19 @@ def test_off_wire_and_prompt_are_unchanged():
     decision = PublicTurnDecision(mode="verify", basis="baseline")
     assert "plan_update" not in decision.model_dump(mode="json")
     assert "plan_update_reason" not in decision.model_dump(mode="json")
+    assert "scope_review" not in decision.model_dump(mode="json")
     restored = PublicTurnDecision.model_validate(decision.model_dump(mode="json"))
     assert restored.model_dump() == decision.model_dump()
     assert "Brief planning is enabled" not in DEV_SYSTEM_PROMPT
     explicit = decision.model_copy(update={"plan_update": None})
     assert "plan_update" in explicit.model_dump(mode="json")
+    explicit_review = decision.model_copy(update={"scope_review": None})
+    assert explicit_review.model_dump(mode="json")["scope_review"] is None
 
 
 def test_enabled_schema_only_adds_annotation():
+    from patchloop.dev.scope_review import schema as scope_review_schema
+
     before = dev_tool_schemas(finish_enabled=True, check_ids=["c"])
     after = dev_tool_schemas(finish_enabled=True, check_ids=["c"], planning_policy=plans.POLICY)
     for tool in after:
@@ -85,6 +90,8 @@ def test_enabled_schema_only_adds_annotation():
         decision = properties["turn_decision"]
         assert decision["properties"].pop("plan_update") == plans.update_schema()
         assert decision["properties"].pop("plan_update_reason") == plans.reason_schema()
+        assert decision["properties"].pop("scope_review") == scope_review_schema()
+        assert decision["required"].pop() == "scope_review"
         assert decision["required"].pop() == "plan_update_reason"
         assert decision["required"].pop() == "plan_update"
     assert after == before
@@ -95,13 +102,13 @@ def test_plan_guidance_connects_public_results_to_remaining_work():
     guidance = " ".join(plans.INSTRUCTIONS.split())
     assert "current hypotheses or untested assumptions" in guidance
     assert "observation or public check that could settle them" in guidance
-    assert ("contract -> case/setup -> expected observation -> actual evidence or untested"
-            in guidance)
+    assert "Use scope_review for a bounded affected-scope -> case/setup" in guidance
+    assert "current-diff execution IDs" in guidance
     assert "review_request.behavior_change" in guidance
     assert "before carrying forward a check-then-submit plan" in guidance
     assert "Listing unknowns alone does not justify stopping" in guidance
     assert "patch/submission decision over repeating supported examples" in guidance
-    assert "program must observe its named property, not just setup" in guidance
+    assert "check must observe its named property" in guidance
     assert "support, contradict or leave open" in guidance
     assert "Retain material gaps" in guidance
     assert "null keeps it when there is no useful revision" in guidance

@@ -12,7 +12,8 @@ missing internal planning caused the behavior; this is a new intervention.
 `--planning-policy` accepts `none`, `brief-v1`, `brief-evidence-v1`,
 `brief-assumption-v1`, and `brief-after-source-v1`; it defaults OFF. All brief
 variants support append-v1 and segmented-v1, not native-window-v1.
-Only ON adds nullable `plan_update` and `plan_update_reason` to `turn_decision` and adds
+Only ON adds nullable `plan_update`, `plan_update_reason` and `scope_review` to
+`turn_decision` and adds
 brief instructions. There is no planning tool, separate response, API call or
 planner model. OFF keeps the old system prompt, tool schema/order and absent
 decision-field serialization. The planning contract binds its instruction hash
@@ -92,8 +93,52 @@ Choose an existing useful action. A discovered violation should lead to an
 executed regression, repair or undo, and checks of the resulting diff. Existing
 plan, concerns and observations remain intact; this projection does not extract or
 certify semantic requirements or enumerate families automatically. There is no
-new plan field, tool, review round, probe quota or submission gate.
+new tool, review round, probe quota or submission gate. The execution-linked
+annotation below replaces the prior free-text-only scope comparison.
 The compact completion view preserves it. Planning OFF/thin have no such projection.
+
+### Link scope claims to executed public evidence
+
+At the existing review, `scope_review` records a bounded scope statement, up to four
+public read/search action IDs and one to four grouped case rows. Each row states
+`input` (including caller/setup), `expected_observation`, `disposition`,
+`evidence_action_id` and `interpretation`. Text fields are at most 500 characters.
+The dispositions are `executed`, `source_inferred` and `untested`. This replaces
+the informal contract/case/evidence mapping in the brief-plan instructions; it is
+not another completed-action log or an automatic enumeration of the affected family.
+
+`executed` must refer to an already returned public `run_check`, `run_tests` or
+`run_probe` result on the current diff. The host binds its action/input/diff identity
+and reported execution outcome. Failed checks and partial/timeout observations remain
+valid execution facts, with their limits retained; executed never means verified.
+Source references resolve only to completed public reads/searches and retain their
+original diff identity. `source_inferred` needs a source reference; inference and
+untested rows have no execution ID. A real receipt cannot certify the named caller,
+assertion, complete family or the model's interpretation: those remain unverified
+claims, even when a suite passed.
+
+The annotation lives inside the existing working plan and `working_plan_updated`
+event. Null preserves it; replacing the prose plan also preserves it. A new candidate
+marks its prior evidence historical, without rebinding it. Completion and submission
+retain it beside the assessment. An invalid reference/shape rejects only the review;
+the plan/tool action can still proceed. Missing review adds no correction call or
+finish gate. At most the first non-null review in a parallel batch is applied.
+Old absent-field serialization is preserved; explicit null remains distinct.
+Enabled identities bind the schema and guidance; planning OFF identities stay unchanged.
+
+`working_plan.source_receipts` supplies discoverable read/search IDs for repository
+`source_spans` already selected in the current view, including inline source after a
+segment reset. Matching uses source scope, path, exact file hash and range overlap;
+the index shows only intersecting ranges, never new source text or edit authority.
+It retains up to eight receipts with eight ranges each and explicit omission counts.
+Stage projection recomputes it from the remaining source selection. Old source diff
+identity stays visible; this catalogue grants no execution or coverage credit.
+The separately selected `dependency_sources` pool is not indexed by this projection.
+
+An internal `evidence_events` argument supports a diagnostic's already hash-validated
+public checkpoint prefix. It resolves references and mutation identity only; it
+does not import old execution events as new actions or control plan lifecycle,
+counters, review triggers or idempotency. Normal runs use their own journal.
 
 ### Revision and submission evidence
 

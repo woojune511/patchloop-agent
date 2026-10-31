@@ -13,6 +13,7 @@ from patchloop.dev import repair_guidance, runner
 from patchloop.dev import working_plan as plans
 from patchloop.dev.contracts import dev_tool_surface_hash
 from patchloop.dev.conversation import reconstruct_state
+from patchloop.dev.model import MockDevAdapter
 from patchloop.dev.state import DevJournal
 from patchloop.dev.tools import dev_tool_schemas
 from patchloop.util import canonical_json, sha256_json
@@ -20,6 +21,65 @@ from patchloop.util import canonical_json, sha256_json
 BASE = "sha256:" + "a" * 64
 CURRENT = "sha256:" + "b" * 64
 NEXT = "sha256:" + "c" * 64
+
+
+@pytest.mark.parametrize("context_policy", ["append-v1", "segmented-v1"])
+def test_scope_review_reaches_real_completion_and_finish_without_extra_calls(
+    tmp_path, monkeypatch, context_policy,
+):
+    original = MockDevAdapter.next_turn
+
+    def annotated(self, context, tools):
+        turn = original(self, context, tools)
+        state = json.loads(context)
+        selected = turn.tool_calls[0]
+        if selected.name in {"run_check", "finish_task"}:
+            checks = state.get("recent_checks", [])
+            evidence = checks[-1]["action_id"] if selected.name == "finish_task" else None
+            selected.turn_decision.scope_review = {
+                "scope": "Public CSV record boundaries; other dialects are unassessed.",
+                "source_action_ids": [],
+                "cases": [{
+                    "input": "Quoted multiline CSV input through parse_rows.",
+                    "expected_observation": "The quoted newline remains within one record.",
+                    "disposition": "executed" if evidence else "untested",
+                    "evidence_action_id": evidence,
+                    "interpretation": "Public check receipt, not general parser coverage.",
+                }],
+            }
+        return turn
+
+    monkeypatch.setattr(MockDevAdapter, "next_turn", annotated)
+    req = smoke_request(tmp_path).model_copy(update={"context_policy": context_policy})
+    result = runner.run_dev(req)["runs"][0]
+    assert result["terminal"] == "EVALUATOR_PASS"
+    assert result["call_counts"] == {"model": 4, "tool": 5, "input_count": 0}
+    events = DevJournal(tmp_path, result["run_id"]).events()
+    store = ArtifactStore(tmp_path / "artifacts")
+    completion = next(
+        event for event in events if event["event_type"] == "turn_started"
+        and event["payload"]["workflow_gate"] == "ready_to_submit"
+    )
+    actual = reconstruct_state(
+        runner._load_active_model_input(
+            completion["payload"], store, context_policy=context_policy,
+        ),
+        context_policy=context_policy,
+    )
+    pending = actual["working_plan"]["plan"]["scope_review"]
+    assert pending["diff_currency"] == "current"
+    assert pending["cases"][0]["disposition"] == "untested"
+    finished = next(event["payload"]["result"] for event in events
+                    if event["event_type"] == "action_finished"
+                    and event["payload"]["result"]["tool"] == "finish_task")
+    review = finished["output"]["plan_review"]["plan"]["scope_review"]
+    execution = review["cases"][0]["execution"]
+    assert review["coverage_status"] == "not_certified"
+    assert execution["diff_hash"] == finished["output"]["patch_hash"]
+    assert execution["observation"]["passed"] is True
+    assert execution["currency"] == "current"
+    assert review["mutation"]["candidate_diff_hash"] == execution["diff_hash"]
+    assert not any(event["event_type"] == "protocol_correction" for event in events)
 
 
 def mutation(journal, *, action="edit", tool="edit_files", baseline=BASE, current=CURRENT,
@@ -97,6 +157,16 @@ def test_actual_request_delivers_current_focus_without_replacing_plan_or_evidenc
     journal = DevJournal(tmp_path, "run_dev_semanticfocus")
     plan = "Required rejection behavior remains untested; retain input on failure."
     put(journal, plan, turn="before", diff=BASE)
+    selected_source = {
+        "path": "source.py", "start_line": 1, "end_line": 2,
+        "content": "def accepts(value):\n    return True",
+        "file_hash": "sha256:" + "d" * 64, "span_id": "public-span",
+    }
+    journal.append("action_finished", {"result": {
+        "action_id": "read-public-scope", "input_hash": sha256_json({"path": "source.py"}),
+        "tool": "read_file", "status": "succeeded", "workspace_diff_hash": BASE,
+        "output": {"spans": [selected_source]},
+    }})
     expected = mutation(journal, tool=tool)
     assert focus(journal) == expected
     state = {
@@ -112,9 +182,7 @@ def test_actual_request_delivers_current_focus_without_replacing_plan_or_evidenc
         "working_notes": {"findings": [], "verification": {"unresolved_ids": ["v1"], "items": [{
             "concern_id": "v1", "status": "open", "question": "Does invalid input reject?",
         }]}},
-        "source_spans": [{"path": "source.py", "start_line": 1, "end_line": 2,
-                          "content": "def accepts(value):\n    return True",
-                          "file_hash": "sha256:" + "d" * 64, "span_id": "public-span"}],
+        "source_spans": [selected_source],
         "latest_tool_results": [{"tool": tool, "status": "succeeded",
                                  "action_id": "edit", "workspace_diff_hash": CURRENT,
                                  "output": {"worktree_diff_hash": CURRENT}}],
@@ -132,6 +200,16 @@ def test_actual_request_delivers_current_focus_without_replacing_plan_or_evidenc
     )
     assert actual["working_plan"]["plan"]["text"] == plan
     assert actual["working_plan"]["interpretation_status"] == "model_authored_unverified"
+    receipts = actual["working_plan"]["source_receipts"]
+    assert receipts["omitted_action_count"] == 0
+    assert [item["action_id"] for item in receipts["items"]] == ["read-public-scope"]
+    source_receipt = receipts["items"][0]
+    assert source_receipt["diff_hash"] == BASE
+    assert source_receipt["ranges"] == [{
+        "source_scope": "repository", "path": "source.py",
+        "file_hash": selected_source["file_hash"], "start_line": 1, "end_line": 2,
+    }]
+    assert "content" not in canonical_json(receipts)
     for key in ("public_task", "workflow_gate", "available_tool_names", "remaining_budget",
                 "current_diff"):
         assert actual[key] == state[key]

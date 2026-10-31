@@ -368,11 +368,12 @@ class PublicTurnDecision(StrictModel):
     # Independent annotation parsing must not turn a bad plan into a tool failure.
     plan_update: Any = None
     plan_update_reason: Any = None
+    scope_review: Any = None
 
     @model_serializer(mode="wrap")
     def preserve_optional_plan_wire(self, handler: Any) -> dict[str, Any]:
         result = handler(self)
-        for field in ("plan_update", "plan_update_reason"):
+        for field in ("plan_update", "plan_update_reason", "scope_review"):
             if field not in self.model_fields_set:
                 result.pop(field, None)
         return result

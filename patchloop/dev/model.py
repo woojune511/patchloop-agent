@@ -191,6 +191,7 @@ class MockDevAdapter:
             for call in annotated:
                 call.turn_decision.plan_update = None
                 call.turn_decision.plan_update_reason = None
+                call.turn_decision.scope_review = None
             if planning["review_request"]["requested"]:
                 if planning["plan"] is not None:
                     annotated[0].turn_decision.plan_update_reason = (
