@@ -14,8 +14,14 @@ Reuse the completed observation and delivered current source before another read
 inspection_focus reports no new covered lines, reassess the remaining question; a repeated
 read may still be useful for a missing anchor or a specific unresolved decision.
 For a supported edit, replace_text starts with path, old_text, new_text, occurrence,
-hypothesis and expected_behavior. Copy an exact current source anchor. Explain the revised
-mechanism in hypothesis using the actual original-call observations and counterevidence.
+hypothesis and expected_behavior. Copy an exact current source anchor. In hypothesis,
+explain the reported behavior using observed source and the known caller/input/setup.
+Preserve the input representation; label inferred conditions and missing setup.
+A helper with changed conditions is separate evidence until source or comparable
+execution connects it to the report. A passing sample covers only its exercised conditions.
+If the proposed cause leaves the reported transformation unexplained, inspect its
+producing step or choose a discriminating observation before adopting the helper as
+the repair target. Source evidence can support the connection without exact reproduction.
 Use edit_files for one atomic batch, new files (old_text null), or undo_action_id.
 An undo requires unchanged affected files and spends one edit slot; checks become stale.
 After a refuted repair's diagnosis, repair_prediction selects one changed observable

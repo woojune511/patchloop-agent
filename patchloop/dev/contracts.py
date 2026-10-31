@@ -22,6 +22,7 @@ from patchloop.dev import (
 )
 from patchloop.dev.context import RETAINED_SOURCE_CHARS, RetainedSourceChars
 from patchloop.dev.mutation_tools import MUTATION_TOOLS
+from patchloop.dev.repair_guidance import EXPECTED_BEHAVIOR_DESCRIPTION, HYPOTHESIS_DESCRIPTION
 from patchloop.errors import ContractError
 from patchloop.util import sha256_json
 
@@ -290,8 +291,12 @@ class TextReplacementIntent(StrictModel):
     old_text: str = Field(min_length=1, max_length=20_000)
     new_text: str = Field(max_length=20_000)
     occurrence: Annotated[int, Field(ge=1, le=100)] | Literal["all"] = 1
-    hypothesis: str = Field(min_length=1, max_length=1_500)
-    expected_behavior: str = Field(min_length=1, max_length=1_500)
+    hypothesis: str = Field(
+        min_length=1, max_length=1_500, description=HYPOTHESIS_DESCRIPTION,
+    )
+    expected_behavior: str = Field(
+        min_length=1, max_length=1_500, description=EXPECTED_BEHAVIOR_DESCRIPTION,
+    )
     repair_prediction: dict[str, Any] | None = None
     # Retained for old action/intent hashes and journal recovery. These annotations
     # are not advertised by the current provider schema; legacy parsing is nonblocking.
@@ -324,8 +329,12 @@ class FileEdit(StrictModel):
 class FileEditIntent(StrictModel):
     edits: list[FileEdit] | None = Field(default=None, min_length=1, max_length=16)
     undo_action_id: str | None = Field(default=None, min_length=1, max_length=500)
-    hypothesis: str = Field(min_length=1, max_length=1_500)
-    expected_behavior: str = Field(min_length=1, max_length=1_500)
+    hypothesis: str = Field(
+        min_length=1, max_length=1_500, description=HYPOTHESIS_DESCRIPTION,
+    )
+    expected_behavior: str = Field(
+        min_length=1, max_length=1_500, description=EXPECTED_BEHAVIOR_DESCRIPTION,
+    )
     repair_prediction: dict[str, Any] | None = None
 
     @model_validator(mode="after")

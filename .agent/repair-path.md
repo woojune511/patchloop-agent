@@ -35,6 +35,19 @@ after editing the observation is historical and the original must be replayed.
 Ordinary repair has a compact public view containing current source anchors,
 original observations, explicit unverified intent, last mutation/counterevidence,
 checks and real remaining budgets. General plan/note rewriting is not required.
+Before choosing a repair target, its existing prompt connects the proposed cause
+to the known public caller, input representation and setup. A changed-condition
+helper remains separate evidence until source or comparable execution connects it
+to the report; a passing sample covers only its exercised conditions. If a proposed
+cause leaves a reported transformation unexplained, inspect the producing step or
+choose a discriminating observation. Source evidence can support the connection
+without exact reproduction; label inferred conditions and missing setup.
+Both edit tools describe this in their existing hypothesis/expected_behavior
+fields. Their 1-1,500 character bounds and validators are unchanged. No new field,
+state, semantic admission check, mandatory probe or extra review call is added.
+This guidance is available before the first edit and does not wait for post-edit
+behavior_change. Legacy argument serialization and action/input recovery stay exact.
+
 No-tool/incomplete correction starts a fresh compact segment with the same public
 evidence; request-field errors identify only the invalid fields. Anchor errors use
 the existing typed mutation failure and bounded source read. Audit state remains.

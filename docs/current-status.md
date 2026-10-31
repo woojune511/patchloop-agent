@@ -30,22 +30,14 @@ completion failures, validate locally, then exercise a frozen configuration.
 A separate one-factor study is not required for every routine change.
 
 [Capability-aligned verification decisions](history/2026-11-01-capability-aligned-verification-review.md)
-addresses concrete mismatches found in the fixed-candidate diagnostic. The saved
-current-state projection still carried normal edits/checks/submission instructions,
-needs_visible_checks and run_check/automatic-recheck directions even though only
-read/search/probe/report were offered. Saved replay/acquisition controls also looked
-like current capability. An optional report annotation copied from read_file forced
-inspect rather than terminal finish mode. These defects could distort the next
-observation choice; a causal model effect is not yet demonstrated.
-
-A shared diagnostics/discovery_review_context.py projector now aligns initial and
-subsequent requests with the fixed-review capabilities. It preserves the public
-task, current evidence and NOT_RUN facts while removing conflicting current control
-instructions and distinguishing saved counters from new budget. Existing annotated
-reports use finish/null evidence_goal; ordinary seven-field reports stay unchanged.
-Projection is pure/idempotent and frozen seeds must already be projected. New saved
-adapters must apply it after their last overlay and before freezing; old closed
-requests/approvals are not silently upgraded or executable with changed code.
+aligns fixed-candidate requests with offered read/search/probe/report capabilities,
+preserving public evidence and NOT_RUN facts while separating saved counters from
+new budgets. The pure/idempotent discovery_review_context projector must run after
+the last overlay and before freezing a seed. Annotated reports use finish/null
+evidence_goal; ordinary seven-field reports remain unchanged. Closed requests and
+approvals cannot be upgraded or executed under changed code. The earlier conflicting
+edit/check/submission instructions were a contract defect; their model effect is
+not isolated.
 
 General tool basis and scope-review input/interpretation descriptions now connect
 a remaining public condition to an actually offered observation and how its result
@@ -97,11 +89,19 @@ The failed run never acquired that setter; original task and helper results were
 not lost. Both passed 213 tests, but their added tests exercise different inputs.
 The successful diagnosis precedes post-edit review activation, so that review
 cannot directly explain the first repair. Early tool-schema/search presentation
-effects and trajectory variation remain unisolated. A future intervention should
-target accepting a helper as task-relevant evidence, using existing fields before
-adding another gate. This comparison made no runtime change or new target call.
+effects and trajectory variation remain unisolated.
 
-The new cap was USD3.3744305: original USD4 less prior settled USD0.1686595 and
+[Pre-edit task correspondence](history/2026-11-01-pre-edit-task-correspondence.md)
+now replaces the compact repair prompt's generic mechanism sentence. It asks the
+existing hypothesis to explain public input/caller/setup, connect helper substitutions
+through source or comparable execution, and investigate a still-unexplained
+transformation. Existing mutation fields receive short matching descriptions.
+Source evidence may support a repair without exact reproduction. No new fields,
+state, gate, mandatory probe or call are added. Local validation: focused 133 PASS;
+quick 1,457 PASS/one host skip after six fingerprint rechecks; isolated mock PASS.
+Live behavior comparison is NOT_RUN; repair gain remains unverified.
+
+The closed retry cap was USD3.3744305: original USD4 less prior settled USD0.1686595 and
 the unknown call's conservative USD0.45691 reservation. The previous UNKNOWN
 entry is unchanged; reservation is not actual billing. Both allocations are now
 closed, including the retry's unused USD2.674642. Combined recorded generation is

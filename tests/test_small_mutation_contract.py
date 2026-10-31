@@ -171,9 +171,12 @@ def test_mock_actual_mutation_uses_six_fields_and_legacy_schema_keeps_its_old_fi
 
 
 def test_core_actions_are_single_actions_and_prompts_explain_annotation_exceptions():
-    assert set(CORE_TOOLS) == ANNOTATION_OPTIONAL_TOOLS
-    assert set(CORE_TOOLS) <= DEV_SINGLE_ACTION_TOOLS
+    expected_tools = set(CORE_TOOLS) | {"edit_files"}
+    assert expected_tools == ANNOTATION_OPTIONAL_TOOLS
+    assert expected_tools <= DEV_SINGLE_ACTION_TOOLS
     for prompt in (DEV_SYSTEM_PROMPT, thin_policy.SYSTEM_PROMPT):
-        assert "replace_text, stop_task and observe_original omit decision/plan/memory" in prompt
+        assert (
+            "replace_text, edit_files, stop_task and observe_original omit decision/plan/memory"
+        ) in prompt
     assert "causal_revision" not in DEV_SYSTEM_PROMPT
     assert len(DEV_SYSTEM_PROMPT) <= 8000

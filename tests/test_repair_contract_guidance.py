@@ -1,16 +1,29 @@
 """Public repair guidance survives actual policy and compact-stage delivery."""
 
+import copy
+
 import pytest
+from test_dev_probes import FakeProbe, context, probe_call
+from test_dev_tools import read_calls
 
 from patchloop.artifacts import ArtifactStore
 from patchloop.dev import completion_context, repair_context, runner, thin_policy, working_plan
-from patchloop.dev.contracts import PublicTurnDecision, RequestedTool
+from patchloop.dev.contracts import (
+    FileEditIntent,
+    PublicTurnDecision,
+    RequestedTool,
+    TextReplacementIntent,
+)
 from patchloop.dev.conversation import reconstruct_state
 from patchloop.dev.probe_observation import project_probe_result
-from patchloop.dev.repair_guidance import INSTRUCTIONS
+from patchloop.dev.repair_guidance import (
+    EXPECTED_BEHAVIOR_DESCRIPTION,
+    HYPOTHESIS_DESCRIPTION,
+    INSTRUCTIONS,
+)
 from patchloop.dev.state import DevJournal
 from patchloop.dev.tools import dev_tool_schemas, validate_tool_batch
-from patchloop.util import canonical_json
+from patchloop.util import canonical_json, sha256_bytes
 
 
 @pytest.mark.parametrize("context_policy", ["append-v1", "segmented-v1"])
@@ -67,6 +80,99 @@ def test_actual_request_keeps_shared_guidance_and_existing_authority(
         assert actual[key] == state[key]
     assert actual["completion_guidance"]["verification_policy"] == verification_policy
     assert actual["public_task"] == state["public_task"]
+
+
+@pytest.mark.parametrize("context_policy", ["append-v1", "segmented-v1"])
+@pytest.mark.parametrize("agent_policy", ["current", "thin"])
+def test_initial_repair_delivers_correspondence_with_distinct_helper_and_control_evidence(
+    gateway_factory, smoke_package, context_policy, agent_policy,
+):
+    """Test real request transport with canned observations, not CSV/model correctness."""
+    helper_source = (
+        "from mini_data_utils.csvlite import parse_rows\n"
+        "parse_rows(['\"left', 'right\",tail'])\n"
+    )
+    control_source = (
+        "from mini_data_utils.csvlite import parse_rows\n"
+        "assert parse_rows('plain,tail') == [['plain', 'tail']]\n"
+    )
+    observations = {
+        helper_source: ("failed", "", "TypeError: expected text, got list\n"),
+        control_source: ("passed", "ordinary text control passed\n", ""),
+    }
+
+    class RecordedProbe(FakeProbe):
+        def run_probe(self, workspace, question, python_source, **kwargs):
+            self.status, stdout, stderr = observations[python_source]
+            result = super().run_probe(workspace, question, python_source, **kwargs)
+            return {**result, "stdout": stdout, "stderr": stderr}
+
+    gateway, journal, _ = gateway_factory()
+    backend = gateway.probe_sandbox = RecordedProbe()
+    gateway.execute_batch(read_calls())
+    results = {}
+    for action_id, source, question in (
+        ("substituted-helper", helper_source, "Does a list of physical lines parse?"),
+        ("ordinary-control", control_source, "Does ordinary text retain one CSV record?"),
+    ):
+        call = probe_call(action_id)
+        call.arguments.update(question=question, python_source=source)
+        results[action_id] = gateway.execute(call)
+        assert results[action_id].status == "succeeded"
+    state = context(gateway, smoke_package)
+    assert state["workflow_gate"] == "needs_mutation"
+    assert repair_context.pending(state)
+    assert not state.get("working_plan")
+    assert gateway.accepted_mutations == 0 and not gateway.current_diff.patch
+    before = copy.deepcopy(state)
+    with journal.execution_lock():
+        request = runner._build_model_input(
+            journal=journal, artifact_store=ArtifactStore(journal.root / "artifacts"),
+            context=canonical_json(state), latest_tool_results=[],
+            context_policy=context_policy, agent_policy=agent_policy, planning_policy="none",
+        )
+
+    prompt = request[0]["content"]
+    assert prompt.startswith(repair_context.system_prompt(state))
+    assert prompt.count("Preserve the input representation;") == 1
+    assert prompt.count(INSTRUCTIONS) == 1
+    actual = reconstruct_state(request, context_policy=context_policy)
+    assert actual["public_task"] == state["public_task"]
+    assert "parse_rows(text)" in actual["public_task"]["issue"]["description"]
+    assert actual["current_diff"] == state["current_diff"]
+    expected_sources = sorted(
+        (span["path"], span["file_hash"], span["start_line"], span["end_line"], span["content"])
+        for span in state["source_spans"]
+    )
+    delivered_sources = sorted(
+        (group["path"], group["file_hash"], span["start_line"], span["end_line"], span["content"])
+        for group in actual["current_sources"] for span in group.get("inline_spans", [])
+    )
+    assert delivered_sources == expected_sources and delivered_sources
+    for key in ("available_tool_names", "workflow_gate", "visible_check_status"):
+        assert actual[key] == state[key]
+    assert not actual.get("working_plan")
+    assert "behavior_change" not in canonical_json(actual)
+    retained = {row["action_id"]: row for row in actual["recent_probes"]}
+    assert set(retained) == set(results)
+    for action_id, result in results.items():
+        row = retained[action_id]
+        source = helper_source if action_id == "substituted-helper" else control_source
+        assert row["program"] == {
+            "python_source": source, "source_hash": sha256_bytes(source.encode()),
+        }
+        assert row["diff_hash"] == result.workspace_diff_hash == gateway.current_diff_hash
+        assert row["stdout"] == result.output["stdout"]
+        assert row["stderr"] == result.output["stderr"]
+        assert row["exit_code"] == result.output["exit_code"]
+        assert row["observation"]["behavior_verdict"] == "not_assessed"
+        assert row["observation"]["execution_status"] == (
+            "failed" if action_id == "substituted-helper" else "completed")
+    # The passing ordinary control neither supplies the multiline original case
+    # nor grants visible-check credit. No probe body is executed by this fixture.
+    assert gateway.checks_by_diff == {} and backend.calls == 2
+    assert gateway.accepted_mutations == 0 and not gateway.current_diff.patch
+    assert state == before
 
 
 @pytest.mark.parametrize("context_policy", ["append-v1", "segmented-v1"])
@@ -164,6 +270,11 @@ def test_guidance_uses_existing_intents_for_both_mutation_tools(
                          "hypothesis", "expected_behavior"},
         "edit_files": {"edits", "undo_action_id", "hypothesis", "expected_behavior"},
     }
+    intents = {"replace_text": TextReplacementIntent, "edit_files": FileEditIntent}
+    descriptions = {
+        "hypothesis": HYPOTHESIS_DESCRIPTION,
+        "expected_behavior": EXPECTED_BEHAVIOR_DESCRIPTION,
+    }
     for name, fields in expected_fields.items():
         parameters = by_name[name]["parameters"]
         assert set(parameters["properties"]) == fields
@@ -172,6 +283,10 @@ def test_guidance_uses_existing_intents_for_both_mutation_tools(
         for field in ("hypothesis", "expected_behavior"):
             assert parameters["properties"][field]["minLength"] == 1
             assert parameters["properties"][field]["maxLength"] == 1_500
+            assert descriptions[field].strip()
+            assert parameters["properties"][field]["description"] == descriptions[field]
+            assert intents[name].model_json_schema()["properties"][field]["description"] == (
+                descriptions[field])
 
 
 @pytest.mark.parametrize("context_policy", ["append-v1", "segmented-v1"])

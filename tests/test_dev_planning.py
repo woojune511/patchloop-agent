@@ -60,7 +60,7 @@ def test_off_wire_and_prompt_are_unchanged():
         "sha256:57193859890419b79cb7f4927c37796d044bc4bf7159c51ddf17723849529e26"
     )
     assert sha256_json(dev_tool_schemas(finish_enabled=True, check_ids=["check"])) == (
-        "sha256:f7bfcd8e314cecb45e3363da020771cceb90e3cf668bcc319fc99a01207203da"
+        "sha256:8d20edab1779773045db4e3a0459424a07cb734ea8bfaf23f020cb7c0a714090"
         if FROZEN_ARM is None else
         "sha256:e8ac4db103389896d6df2061340f328e1c400ee83cb439a4c4f1ed4529f50036"
     )

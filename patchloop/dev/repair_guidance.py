@@ -1,5 +1,16 @@
 """Shared repair guidance; no new tool, verification gate or execution authority."""
 
+HYPOTHESIS_DESCRIPTION = (
+    "Explain how the proposed cause fits the public caller/input/setup and motivates "
+    "this edit or undo. Distinguish helper-only evidence and label inferred or missing "
+    "conditions."
+)
+
+EXPECTED_BEHAVIOR_DESCRIPTION = (
+    "State the required observable under the relevant public conditions; separate "
+    "assumptions and helper-only outcomes from task success."
+)
+
 INSTRUCTIONS = (
     "Ground behavior in public contracts, not repair assumptions. Test material "
     "assumptions or narrow edits; check sibling failures and success guards. Use observed "
