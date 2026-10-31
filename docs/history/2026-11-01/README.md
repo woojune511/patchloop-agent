@@ -1,5 +1,6 @@
 # 2026-11-01 investigations
 
+- [Two-probe allocation diagnostic results](../2026-11-01-two-probe-recovery-results.md)
 - [Two-probe diagnostic recovery preparation](../2026-11-01-two-probe-recovery-preparation.md)
 - [Post-probe stopping diagnostic results](../2026-11-01-goal-grounded-stopping-results.md)
 - [Goal-grounded diagnostic stopping](../2026-11-01-goal-grounded-diagnostic-stopping.md)
