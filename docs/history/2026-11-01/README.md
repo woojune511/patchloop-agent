@@ -1,5 +1,6 @@
 # 2026-11-01 investigations
 
+- [Fresh normal task 8 retry: independent PASS](../2026-11-01-condition-normal-task8-retry-results.md)
 - [Fresh normal task 8: provider interruption](../2026-11-01-condition-normal-task8-results.md)
 - [Public-condition comparison diagnostic results](../2026-11-01-public-input-comparison-results.md)
 - [Public-condition and reviewed-case comparison](../2026-11-01-public-input-comparison.md)
