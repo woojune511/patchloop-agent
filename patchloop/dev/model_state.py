@@ -25,6 +25,7 @@ _MODEL_INPUT_FIELDS = frozenset({
     "current_public_failure", "mutation_readiness", "mutation_scope_budget",
     "observed_source_index", "evidence_ledger", "working_notes", "context_projection",
     "commitment_signal", "available_tool_names", "last_failed_mutation",
+    "last_rejected_test_proposal",
     "last_successful_mutation", "current_diff", "recent_checks", "public_execution_summary",
     "latest_tool_results", "source_spans", "dependency_sources",
     "recent_attempt_result_next_question", "public_task", "supplemental_required_checks",
@@ -195,7 +196,10 @@ def compact_model_state(
             item.pop("updated_turn_id", None)
 
     results: dict[str, dict[str, Any]] = {}
+    probe_calls = {}
     for item in public_exchanges(history, archive_kind=archive_kind):
+        if item.get("type") == "function_call" and item.get("name") == "run_probe":
+            probe_calls[item["call_id"]] = json.loads(item["arguments"])
         if item.get("type") != "function_call_output":
             continue
         result = json.loads(item["output"])
@@ -204,6 +208,17 @@ def compact_model_state(
             results[item["call_id"]] = result
 
     _check_followup(view, results)
+
+    for record in view.get("recent_probes", []):
+        program = record.get("program")
+        call = probe_calls.get(record.get("action_id"), {})
+        if (isinstance(program, dict) and isinstance(program.get("python_source"), str)
+                and call.get("python_source") == program["python_source"]
+                and call.get("question") == record.get("question")):
+            # A replay call with null source does not deliver the original program.
+            # Deduplicate only against exact visible arguments, including archives.
+            program.pop("python_source")
+            program["delivery"] = "preceding_function_call_arguments"
 
     plan = view.get("working_plan")
     if isinstance(plan, dict):

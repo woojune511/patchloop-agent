@@ -138,8 +138,10 @@ def validate_test_addition(
     if entry and after == before:
         return
     roots = constraints.additive_test_roots
-    if not path.endswith(".py") or not any(path.startswith(root + "/") for root in roots):
+    if not any(path.startswith(root + "/") for root in roots):
         raise UnsupportedTestChange("test edits require a declared additive test root")
+    if not path.endswith(".py"):
+        raise UnsupportedTestChange("additive test edits support only Python (.py) files")
     if PurePosixPath(path).name == "conftest.py":
         raise UnsupportedTestChange("existing test fixtures cannot be changed")
     if not added_tests(before, after, path, suite_additions=True, new_file=not bool(entry)):

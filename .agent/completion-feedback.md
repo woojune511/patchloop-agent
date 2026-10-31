@@ -99,7 +99,7 @@ bounded stdout/stderr, the existing host observation, setup/exception/path diagn
 reproduction observations and completeness flags. Failed or partial probe output is
 still evidence: retain failure, timeout, truncation and unknown comparison without
 granting success or verification credit. Failed reads and stale/unbound results stay
-summaries; unselected source bodies, probe programs and full execution policies
+summaries; unselected source bodies and full execution policies
 remain omitted. No retrieval permission, verdict or budget changes.
 The existing last-three `recent_probes` summaries also survive intervening reads,
 tests and fresh completion segments when their diff matches the current candidate
@@ -107,11 +107,26 @@ and they are not historical. Keep question, bounded output tails and unassessed
 observations for failures as well as completed executions. Each output tail stays
 at 2,000 characters; omitted-character counts and execution-limit flags distinguish
 a summary from complete output. Existing native-result deduplication removes
-duplicate bodies. Programs and bulk call traces remain omitted; action-ID replay
-already retrieves an exact prior program. Diff changes do not restore old evidence
-as current. This adds no check credit, tool, action, state store or finish gate.
+duplicate bodies. The same three records now retain each exact executed helper
+program (at most 8,000 characters), including inputs, caller and assertions.
+Action/input/diff/question/source hashes must match its public admission and result;
+saved/replayed programs use the admission's resolved request. Native arguments replace
+inline code only when the actual source and question match; a null-source replay
+call does not deliver its original program. Historical rows retain only identity,
+question and program in finalization, not old output or verdicts as current evidence.
+Bulk call traces remain omitted. Diff changes do not restore old evidence as current.
+This adds no check credit, tool, action, state store or finish gate.
 The journal is unchanged. Other context policies compact current state
 but do not acquire segmented history-reset behavior.
+
+`last_rejected_test_proposal` retains the latest rolled-back test proposal from
+declared additive roots through source-only recovery, plan changes and stage handoffs.
+At most four edits and 8,000 old/new text characters are quoted with omission counts,
+the original action/input/baseline identities, hypothesis and expected behavior.
+This is historical model-authored text, not applied source, an authoritative oracle,
+an executed test or a new obligation. Later tests/PASS do not resolve it by inference;
+a newer qualifying rejection replaces it. The ordinary last-failed-mutation recovery
+state still clears on a successful edit. No model summary or private input is used.
 
 `completion-recovery-v1` reserves role-specific output within the existing cap:
 required source repair uses the ordinary output ceiling; preparation, checks and

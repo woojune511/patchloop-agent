@@ -16,8 +16,9 @@ Task API constraints remain authoritative, including restrictions on new Python 
 One accepted transaction or undo spends one edit and needs checks on its resulting
 diff. Undo uses this run's successful mutation receipt and exact saved file images;
 later unrelated edits survive, but changed target files cause rejection. Original
-tests cannot be deleted or weakened. New additive test modules require declared
-test roots; original-test isolated grading removes those modules temporarily.
+tests cannot be deleted or weakened. Additive test edits require declared test roots
+and Python `.py` files; rejection distinguishes those two restrictions. New additive
+test modules are removed temporarily for original-test isolated grading.
 No arbitrary delete/rename or unrestricted shell is exposed.
 
 After a transaction, exact admitted before/after images define a conservative

@@ -187,10 +187,13 @@ def test_actual_native_projection_restart_and_historical_probe_keep_evidence(tmp
     assert historical["public_execution_summary"]["files"] == []
     if FROZEN_ARM is None:
         # A later edit makes the old probe historical. Its durable native result
-        # remains above, but compact completion must not present it as current.
+        # remains above. Keep its program for comparison, not its old verdict/output.
         assert view["workflow_gate"] == "ready_to_submit"
-        assert not view.get("recent_probes")
-        assert view["completion_stage"]["omitted_historical_records"]["recent_probes"] == 1
+        retained, = view["recent_probes"]
+        assert retained["historical"] and retained["diff_hash"] == result.workspace_diff_hash
+        assert retained["program"]["source_hash"] == result.output["source_hash"]
+        assert not {"observation", "stdout", "stderr", "passed"}.intersection(retained)
+        assert view["completion_stage"]["omitted_historical_records"]["recent_probes"] == 0
     else:
         assert view["recent_probes"][0]["historical"]
         assert view["recent_probes"][0]["observation"]["behavior_verdict"] == "not_assessed"

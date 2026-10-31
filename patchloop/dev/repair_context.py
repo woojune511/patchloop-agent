@@ -96,6 +96,7 @@ def project(state):
         "protocol_correction", "source_spans", "dependency_sources", "observed_source_index",
         "segment_handoff",
         "last_failed_mutation", "last_successful_mutation", "current_public_failure",
+        "last_rejected_test_proposal",
         "visible_check_status", "mutation_readiness", "context_projection",
         "recent_attempt_result_next_question", "recent_probes", "recent_checks",
         "latest_tool_results", "inspection_focus",

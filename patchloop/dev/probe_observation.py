@@ -5,8 +5,43 @@ from __future__ import annotations
 import copy
 from typing import Any
 
+from patchloop.util import sha256_bytes, sha256_json
+
 MAX_OBSERVATION_FILES = 4
 MAX_OBSERVATION_RANGES = 3
+
+
+def bound_probe_program(result: dict[str, Any], started: dict[str, Any]) -> dict[str, str] | None:
+    """Expose the exact executed public helper, including its input and assertions.
+
+    Replay/case requests bind their resolved program at admission. The program is
+    experimental setup, not public-task coverage or a successful behavior verdict.
+    Missing/inconsistent receipts cannot supply a guessed program.
+    """
+    output = result.get("output", {})
+    if (result.get("tool") != "run_probe" or started.get("tool") != "run_probe"
+            or result.get("status") != "succeeded"
+            or not result.get("input_hash") or not result.get("workspace_diff_hash")
+            or result.get("action_id") != started.get("action_id")
+            or result["input_hash"] != started.get("input_hash")
+            or result["workspace_diff_hash"] != started.get("baseline_diff_hash")
+            or result["workspace_diff_hash"] != output.get("diff_hash")):
+        return None
+    request = (started.get("probe_replay_request") or started.get("probe_case_request")
+               or started.get("arguments", {}))
+    action_input = {"tool": started["tool"], "arguments": started.get("arguments", {})}
+    if started.get("turn_decision") is not None:
+        action_input["turn_decision"] = started["turn_decision"]
+    if "memory_update" in started:
+        action_input["memory_update"] = started["memory_update"]
+    source, question = request.get("python_source"), request.get("question")
+    if (not isinstance(source, str) or not 1 <= len(source) <= 8_000
+            or not isinstance(question, str) or not 1 <= len(question) <= 500
+            or result["input_hash"] != sha256_json(action_input)
+            or output.get("question") != question
+            or output.get("source_hash") != sha256_bytes(source.encode("utf-8"))):
+        return None
+    return {"python_source": source, "source_hash": output["source_hash"]}
 
 
 def probe_observation(result: dict[str, Any]) -> dict[str, Any]:

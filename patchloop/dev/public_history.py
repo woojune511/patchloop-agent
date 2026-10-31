@@ -24,6 +24,7 @@ MUTABLE_FIELDS = frozenset({
     "evidence_ledger", "working_notes", "source_index_omitted_count", "reproduction_review",
     "latest_tool_results_delivery", "recent_attempt_result_next_question",
     "repair_stage", "repair_intent",
+    "last_rejected_test_proposal",
 })
 
 

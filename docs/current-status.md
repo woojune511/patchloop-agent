@@ -70,17 +70,23 @@ unchanged-diff successful check/probe replay was identified. Task 10 replayed an
 identical helper after a test-only diff change under whole-diff freshness rules.
 Useful new controls and changed-source replays must not be counted as waste.
 
-Next implementation should start with the concrete task 17 diagnostic defect:
-YAML under a declared test root is rejected by the Python-only policy, but the
-message incorrectly says the root is undeclared. Supporting YAML is a separate
-choice. Prioritize original input/caller fidelity and preserving behavioral
-expectations through recovery, using task 8's confirmed path. Task 10's intended
-output-count test narrowed to logger-state assertions; task 12's empty output was
-self-selected without an established output contract. These are public mechanism
-findings, not proven private failure attributions. Investigate task 18's diagnostic
-and decision delays before adding limits, gates or another generic reuse prompt.
-Bounded factual execution receipts are a candidate for residual selection overlap,
-not an implemented decision. No further paid run or runtime change is scheduled.
+The [verification continuity correction](history/2026-10-31-verification-continuity.md)
+now addresses two delivered-context gaps. Recent probes retain exact bound programs
+through handoffs so their inputs/callers/assertions can be compared; finalization
+keeps historical program identity without promoting old output to current evidence.
+The latest rejected test proposal remains visible after successful source-only
+recovery, with bounded exact text and explicit unapplied/unverified status. This
+preserves task 10's proposed output-count assertion for review instead of discarding
+it once mutation admission succeeds. Existing instructions already require fidelity;
+the change supplies missing factual content rather than another general reminder.
+Task 17's YAML rejection now names the Python-only restriction correctly. YAML
+support and test-preservation policy are unchanged.
+
+These changes establish delivery, not model uptake or improved repair accuracy.
+Task 8's issue text was always visible; program omission is not a proven cause of
+its missed path. Task 12's self-selected output semantics and task 18's diagnostic
+delays remain unresolved. Bounded execution receipts for residual selection overlap
+are still only a candidate. No further paid run is authorized or scheduled.
 
 ## Selected mechanisms and evidence limits
 
@@ -92,11 +98,14 @@ Keep the [reuse correction](history/2026-10-31-verification-reuse-decision.md),
 The [test-validation conflicts](history/2026-10-30-test-validation-fixes.md) and
 [file lifecycle](history/2026-10-29-file-lifecycle-followup.md) fixes remain selected:
 multiple/new files, receipt undo, original-byte restoration and bounded recovery.
-The YAML diagnostic defect above is a new unresolved issue, not a claim those
-previous fixes failed.
+The YAML diagnostic correction above preserves those earlier mutation policies.
 
-Runtime local baseline: quick 1,308 PASS / 1 host-symlink SKIP with isolated mock;
-final wording/contract 156 PASS and Ruff. This full 20 work changed reporting only.
+The frozen run used a prior local baseline of quick 1,308 PASS / 1 host-symlink SKIP
+with isolated mock, final wording/contract 156 PASS and Ruff. The subsequent
+continuity correction passed **1,362 quick tests / 1 host-symlink SKIP**, including
+isolated mock evaluation, plus Ruff; final quick wall was 281.54 seconds with four
+workers. Focused delivery controls stayed under two minutes. These are local
+mechanism checks, not a new model run or repair-quality measurement.
 The [prior three-task run](history/2026-10-31-verification-reuse-1411-results.md)
 and [older full 20 run](history/2026-10-29-repair-dev20-results.md) remain closed
 historical context. Different task paths/settings and single attempts do not

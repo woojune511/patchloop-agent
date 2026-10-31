@@ -22,7 +22,9 @@ does not become verified through submission, plan edits or prose. stop_task aban
 Use offered source retrieval only to resolve a material remaining question. Source identifiers
 are navigation metadata, not delivered source bodies. When a mutation tool is offered, the
 already selected current source remains available within its existing retention limit.
-Otherwise earlier source bodies are omitted. Old probe programs/bulk remain omitted;
+Otherwise earlier source bodies are omitted. Recent bound probe programs retain their
+actual inputs/callers/assertions; historical programs are not current execution evidence.
+Older bulk results remain omitted;
 do not reconstruct omitted content or infer that an omitted observation passed.
 New successful reads/searches on the current candidate retain their bounded tool output.
 Recent current-diff probe summaries survive intervening reads/tests and fresh segments.
@@ -45,9 +47,10 @@ def contract() -> dict[str, Any]:
                       "current_protocol_correction", "remaining_budgets_and_offered_tools",
                       "latest_successful_current_source_results",
                       "bounded_current_source_when_mutation_offered",
-                      "latest_current_probe_observations", "bounded_recent_current_probes"],
+                      "latest_current_probe_observations", "bounded_recent_current_probes",
+                      "bounded_recent_probe_programs", "last_rejected_test_proposal"],
         "omitted": ["historical_source_bodies", "historical_bulk_tool_results",
-                    "inspection_history", "probe_programs"],
+                    "inspection_history"],
         "source_retrieval_policy": "existing-offered-registered-tools-no-new-permission",
         "unknown_evidence": "remains-unverified-no-success-inference",
         "native_history": "caller-selects-a-fresh-segment-durable-receipts-remain-unchanged",
@@ -66,6 +69,7 @@ _PRESERVED = (
     "remaining_visible_check_ids", "current_public_failure", "pending_recheck",
     "reproduction_review", "working_notes", "working_plan", "protocol_correction",
     "latest_tool_results_delivery", "segment_handoff",
+    "last_rejected_test_proposal",
 )
 _RESULT_FIELDS = (
     "action_id", "input_hash", "tool", "status", "error_code", "message",
@@ -93,6 +97,7 @@ _PROBE_REPRODUCTION_FIELDS = (
 _RECENT_PROBE_FIELDS = (
     *_RESULT_FIELDS, "question", "diagnostic_only", "observation", "stdout", "stderr",
     "stdout_omitted_chars", "stderr_omitted_chars",
+    "program",
 )
 
 
@@ -203,14 +208,26 @@ def project(state: dict[str, Any]) -> dict[str, Any]:
         current = [row for row in rows if current_hash is not None
                    and row.get("diff_hash") == current_hash
                    and (name != "recent_probes" or not row.get("historical"))]
+        retained_count = len(current)
         if name == "recent_probes":
             # The gateway already bounds these three observations. Keep them across
             # a test/read and segment reset; native-result deduplication still applies.
-            if current:
-                view[name] = [_select(row, _RECENT_PROBE_FIELDS) for row in current]
+            retained = []
+            for row in rows:
+                if row in current:
+                    retained.append(_select(row, _RECENT_PROBE_FIELDS))
+                elif isinstance(row.get("program"), dict):
+                    # Preserve the old experiment's conditions for comparison, not
+                    # its verdict/stdout as evidence on this candidate.
+                    retained.append({**_select(row, (
+                        "action_id", "diff_hash", "question", "diagnostic_only", "program",
+                    )), "historical": True})
+            if retained:
+                view[name] = retained
+            retained_count = len(retained)
         else:
             view[name] = [_result_summary(row) for row in current]
-        omitted[name] = len(rows) - len(current) + prior_omissions.get(name, 0)
+        omitted[name] = len(rows) - retained_count + prior_omissions.get(name, 0)
     if "latest_tool_results" in state:
         view["latest_tool_results"] = [_latest_result(row, current_hash)
                                        for row in state["latest_tool_results"]]

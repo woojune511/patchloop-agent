@@ -37,6 +37,7 @@ from patchloop.dev import (
     helper_recovery,
     history_search,
     inspection_focus,
+    mutation_proposals,
     native_compaction,
     probe_followup,
     probe_recheck,
@@ -121,7 +122,11 @@ from patchloop.dev.native_sources import (
     public_exchanges,
     reference_native_sources,
 )
-from patchloop.dev.probe_observation import probe_observation, project_probe_result
+from patchloop.dev.probe_observation import (
+    bound_probe_program,
+    probe_observation,
+    project_probe_result,
+)
 from patchloop.dev.public_history import NATIVE
 from patchloop.dev.recovery_resources import (
     CHECK_OVERHEAD_SECONDS,
@@ -2656,6 +2661,12 @@ def _build_context(
     }
     if getattr(gateway, "supplemental_checks", ()):
         payload["supplemental_required_checks"] = gateway.required_check_context()
+    rejected_test = mutation_proposals.rejected_test_proposal(
+        journal.events(), roots=gateway.public_task.constraints.additive_test_roots,
+        diff_hash=summary.patch_hash,
+    )
+    if rejected_test is not None:
+        payload["last_rejected_test_proposal"] = rejected_test
     if getattr(gateway, "dependency_sources", None) is not None:
         # Preserve the existing registered, independently bounded read-only pool.
         # Never merge it into repository spans or acquire another source scope here.
@@ -2690,6 +2701,11 @@ def _build_context(
         payload["probe_recheck"] = probe_recheck.context(journal, summary.patch_hash)
     if getattr(gateway, "probe_sandbox", None) is not None:
         latest_ids = {result.action_id for result in latest_tool_results}
+        probe_starts = {
+            (event["payload"]["action_id"], event["payload"]["input_hash"]): event["payload"]
+            for event in journal.events() if event["event_type"] == "action_started"
+            and event["payload"].get("tool") == "run_probe"
+        }
         probes = [
             event["payload"]["result"] for event in journal.events()
             if event["event_type"] == "action_finished"
@@ -2701,12 +2717,15 @@ def _build_context(
                 "diff_hash": result["workspace_diff_hash"],
                 "historical": result["workspace_diff_hash"] != summary.patch_hash,
                 "diagnostic_only": True,
+                "question": result["output"].get("question"),
                 "observation": probe_observation(result),
+                **({"program": program} if (program := bound_probe_program(
+                    result, probe_starts.get((result["action_id"], result["input_hash"]), {}),
+                )) is not None else {}),
                 **{key: result["output"][key] for key in (
                     "timed_out", "deadline_exhausted", "cleanup_failed", "truncated",
                 ) if key in result["output"]},
                 **({"delivery": "latest_tool_result"} if result["action_id"] in latest_ids else {
-                    "question": result["output"].get("question"),
                     "exit_code": result["output"].get("exit_code"),
                     "stdout": result["output"].get("stdout", "")[-2_000:],
                     "stderr": result["output"].get("stderr", "")[-2_000:],

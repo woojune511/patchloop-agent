@@ -71,6 +71,7 @@ WINDOW_RULES = SnapshotRules(
 SEGMENT_RULES = replace(WINDOW_RULES, mutable_fields=WINDOW_RULES.mutable_fields | {
     "working_plan", "segment_handoff", "current_public_failure", "pending_recheck",
     "last_successful_mutation", "last_failed_mutation", "recent_checks", "recent_probes",
+    "last_rejected_test_proposal",
     "latest_tool_results", "public_execution_summary", "repair_recheck", "probe_recheck",
     "verification_phase", "diagnosis_stage", "repair_stage", "repair_intent", "completion_stage",
     "inspection_focus",
