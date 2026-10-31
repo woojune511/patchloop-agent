@@ -10,7 +10,7 @@ from repair_mechanism_expectations import FROZEN_ARM
 
 from patchloop.dev.contracts import DEV_RUN_SCHEMA, DevLimits, dev_tool_surface_hash
 from patchloop.dev.model import DEV_SYSTEM_PROMPT
-from patchloop.dev.tools import dev_tool_schemas
+from patchloop.dev.tools import ALL_DEV_TOOLS, dev_tool_schemas
 from patchloop.dev.working_notes import memory_update_schema
 from patchloop.util import canonical_json
 
@@ -87,7 +87,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
 @pytest.mark.parametrize(("names", "expected"), [
     pytest.param(
         ("read_file", "run_check", "run_probe", "search_files", "stop_task"),
-        "fc047c2ebd151936e94ebfa2aaa1c8548acf32260a2ad2a033b93149f2db7e7c"
+        "54f5f2774469104627fdee305b512039c6677a808b12d098137be1170e56af63"
         if FROZEN_ARM is None else
         "544c19f4d8e63f8a8810efe1dd4cd0adf3dee51cdb0145a4509de554027739c2",
         id="names0-99567faf1ea920a9157e5ea6618c5d43e7d56e441820be941403a025d9b2abe9"
@@ -95,7 +95,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     ),
     pytest.param(
         ("finish_task", "read_file", "replace_text", "run_probe", "search_files", "stop_task"),
-        "290f340e7c845ebfb8246fbd611e5a86b78860c99d2a4256aaaaf8c8323d33f3"
+        "20226d309266eb3c810450098d9514ffbc8f502416e5eb2d8bc919554c233f8d"
         if FROZEN_ARM is None else
         "b817201c9d1aa8432575b0c1b55015dc01bc08a2b002e3e2cc09ab13bfa229c6",
         id="names1-de57dc4e83f8b26994c5df5f659cc208bbd3b348233d0ad3640493ffd5b90bd3"
@@ -103,7 +103,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     ),
     pytest.param(
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task"),
-        "ed4ecf72224de5eb209e3a99d964cb84c6a2fcafb8a5fea07b4d23680699b719"
+        "9513bfcae8fa0e3e72c3dbf5fa1308ff5cf80e5777364fba5548df9930bfa295"
         if FROZEN_ARM is None else
         "310f8ec3dd129c93fb10c2a0589decf38eb09ce60e395ef906ac814e399e5139",
         id="names2-923a71312af5fa8d677ce72762b2f045a47ff2ebc4e084caaf1f57a2c11e7032"
@@ -112,7 +112,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     pytest.param(
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task",
          "finish_task"),
-        "ad917cf1f860db1352a5bd577f85649bfaa96762037cfd8983ac913abb2cfd1f"
+        "a614d0c8eb9ef7135f4dafce257518f99f9c44932054aa6a32c93d152c5787b4"
         if FROZEN_ARM is None else
         "6302bc9d248be03d6e1430f0102a0e5c00ecb7883c25d453945f979f21fd3af7",
         id="names3-53d8c9ffaa20544b633c883b1e40010113b680722f23caebeb0ef991f1738caa"
@@ -120,7 +120,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     ),
 ])
 def test_descriptions_outside_memory_and_schema_order_are_unchanged(names, expected):
-    # Pin current grounded check/test guidance; preserve IDs and historical removal arms.
+    # Pin current action-basis/check/test descriptions; preserve historical removal arms.
     # OFF still has the prior four digests; argument shapes remain independently pinned.
     tools = dev_tool_schemas(finish_enabled="finish_task" in names, allowed_tools=names)
     tools = _legacy_compression_surface(tools)
@@ -215,3 +215,19 @@ def test_guidance_identity_changes_without_changing_run_schema_or_limits():
             limits.max_accepted_mutations, limits.wall_time_seconds) == (
                 40, 100, 4 if FROZEN_ARM is not None else 12, 1800,
             )
+
+
+@pytest.mark.skipif(FROZEN_ARM is not None, reason="Current dev-head scope-review contract.")
+def test_current_review_descriptions_preserve_all_ordered_parameter_shapes():
+    tools = dev_tool_schemas(
+        finish_enabled=True, check_ids=("public-a", "public-b"),
+        test_suite_ids=("public-tests",), allowed_tools=ALL_DEV_TOOLS,
+        planning_policy="brief-v1",
+    )
+    # Captured from HEAD before the capability-review description changes.
+    # Including brief planning covers nested scope cases as well as decision basis;
+    # remove prose only, preserving field/tool/enum order, bounds and required/null rules.
+    encoded = json.dumps(_without_descriptions(tools), ensure_ascii=False, separators=(",", ":"))
+    assert hashlib.sha256(encoded.encode()).hexdigest() == (
+        "63590000b66ff6f88de0c0beb0521d33f9c6c197ee0f7e1eade0b2a964ced4c0"
+    )

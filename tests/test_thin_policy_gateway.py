@@ -91,7 +91,7 @@ def test_default_serialization_and_schema_identities_remain_exact():
     )
     # Current literal-search, comparable-input and additive-test descriptions.
     assert sha256_json(schemas) == (
-        "sha256:84bd5672168c1179bd574a444382ce8e6c414f9aca4d421c9bdce1be247de06c"
+        "sha256:96df90df945dd306cadf64f063faf8992850792155bb80b430cb987ac28c3b10"
         if FROZEN_ARM is None else
         "sha256:9757e80d1590c5274966a80011a24ed12e08340d23d2e202f0f099ea1be47955"
     )
@@ -102,7 +102,7 @@ def test_default_serialization_and_schema_identities_remain_exact():
             allowed_tools=list(MODES), read_range_only=True,
         )
         assert sha256_json(legacy) == (
-            "sha256:caa7226cfee3d28fa07294eeaed4df4b2511efa44abef07a8c02fc019cce68d2"
+            "sha256:30cf3accc35bae13b05de8323de4b4ad7900c3249b9f7f6414e496356a1e3428"
         )
         minimal = {schema["name"]: schema["parameters"] for schema in schemas
                    if schema["name"] in {"replace_text", "stop_task"}}

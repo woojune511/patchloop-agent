@@ -236,6 +236,98 @@ def test_no_probe_or_positive_claim_required_for_reporting(frozen, outcome):
     )
 
 
+def test_selected_followup_probe_preserves_authored_conditions_and_returned_evidence(frozen):
+    """Scripted action selection checks host transport, not model judgment or repair."""
+    program = "import toy\nactual = toy.value()\nprint({'actual': actual})\nassert actual == 0\n"
+    conditions = "Original caller: toy.value() with no arguments; assume default module settings."
+    basis = (
+        "The public request requires zero from the original no-argument caller. "
+        "A direct assertion could refute the source-based conclusion; default settings "
+        "are an unverified setup assumption."
+    )
+    selected = probe_call("selected-observation")
+    selected.arguments.update(
+        python_source=program, question="Does the original caller return zero?",
+    )
+    selected.arguments["turn_decision"].update(
+        basis=basis, plan_update="Observe the original caller before interpreting the result.",
+        plan_update_reason=None,
+        scope_review={
+            "scope": "The public no-argument caller and its default configuration.",
+            "source_action_ids": ["read-original"],
+            "cases": [{
+                "input": conditions, "expected_observation": "Returned value is zero.",
+                "disposition": "untested", "evidence_action_id": None,
+                "interpretation": "The selected program will test the stated condition.",
+            }],
+        },
+    )
+    result, adapter, probes = run_mock(
+        frozen, [[read_call("read-original")], [selected],
+                 [report_call(probe_action_id="selected-observation")]],
+    )
+    assert result["terminal"] == "REPORT_RECORDED"
+    assert result["model_calls"] == result["input_count_calls"] == result["tool_actions"] == 3
+    assert probes[0].calls == 1
+    frozen_request = json.loads((frozen.design / "request.json").read_bytes())
+    assert adapter.requests[0] == adapter.counts[0] == frozen_request
+    final = adapter.requests[-1]["input"]
+    called = next(item for item in final if item.get("type") == "function_call"
+                  and item["call_id"] == selected.action_id)
+    arguments = json.loads(called["arguments"])
+    assert arguments["python_source"] == program
+    assert arguments["turn_decision"]["basis"] == basis
+    assert arguments["turn_decision"]["scope_review"]["cases"][0]["input"] == conditions
+    output = json.loads(next(item["output"] for item in final
+                             if item.get("type") == "function_call_output"
+                             and item["call_id"] == selected.action_id))
+    assert output["output"]["source_hash"] == sha256_bytes(program.encode())
+    assert output["output"]["stdout"] == "MOCK_OBSERVATION: value=1\n"
+    evidence = result["report"]["evidence"]
+    assert evidence["program"] == program
+    assert evidence["probe_result"]["action_id"] == selected.action_id
+    assert evidence["probe_identity_bound"] is True and evidence["semantic_verdict"] is None
+    converted = rollout.loop._requested_tool_from_openai(selected)
+    assert evidence["probe_result"]["input_hash"] == sha256_json({
+        "tool": converted.name, "arguments": converted.arguments,
+        "turn_decision": converted.turn_decision.model_dump(mode="json"),
+    })
+    assert rollout.inspect(frozen.result) == result
+
+
+def test_setup_failure_can_end_with_blocked_report_without_verification_credit(frozen):
+    call = probe_call("missing-setup")
+    call.arguments["python_source"] = "from toy import unavailable_caller\n"
+    result, adapter, probes = run_mock(
+        frozen, [[call], [report_call(
+            outcome="blocked", probe_action_id=call.action_id, expected=None,
+            observed="ImportError: unavailable_caller", requirement_excerpt=None,
+            justification="The selected public caller is unavailable in the prepared setup.",
+        )]],
+        probe_change={"status": "failed", "exit_code": 1, "stdout": "",
+                      "stderr": "ImportError: unavailable_caller"},
+    )
+    assert result["terminal"] == "REPORT_RECORDED"
+    assert result["model_calls"] == result["tool_actions"] == 2 and probes[0].calls == 1
+    output = json.loads(next(item["output"] for item in adapter.requests[-1]["input"]
+                             if item.get("type") == "function_call_output"
+                             and item["call_id"] == call.action_id))
+    assert output["observation"]["execution_status"] == "failed"
+    assert output["observation"]["behavior_verdict"] == "not_assessed"
+    assert "status" not in output["output"]
+    assert output["output"]["exit_code"] == 1
+    assert output["output"]["stderr"] == "ImportError: unavailable_caller"
+    assert result["report"]["report"]["outcome"] == "blocked"
+    assert result["report"]["evidence"]["semantic_verdict"] is None
+    assert result["report"]["evidence"]["probe_result"]["output"]["status"] == "failed"
+    assert result["private_evaluation"] == "NOT_RUN"
+    assert result["task_acceptance"] == "NOT_ASSESSED"
+    events = DevJournal(frozen.result, rollout.RUN_ID).events()
+    assert [event["payload"]["tool"] for event in events
+            if event["event_type"] == "action_started"] == ["run_probe"]
+    assert rollout.inspect(frozen.result) == result
+
+
 @pytest.mark.parametrize("frozen", design.REVIEW_GUIDANCE, indirect=True)
 def test_setup_mismatch_reaches_discovery_input_and_keeps_report_advisory(frozen):
     from test_probe_setup import execute
@@ -393,6 +485,8 @@ def test_full_25000_output_reservation_never_shrinks():
 
 @pytest.mark.parametrize("batch", [
     [action("replace_text", "mutation", path="toy.py")],
+    pytest.param([action("run_check", "unavailable-check", check_id="public-example")],
+                 id="unavailable-check"),
     [read_call(), probe_call()], [report_call(), read_call()],
     [read_call(), read_call()], [report_call(outcome="invented")], [],
 ])

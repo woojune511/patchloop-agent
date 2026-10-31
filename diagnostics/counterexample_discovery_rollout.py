@@ -22,6 +22,7 @@ from diagnostics import discovery_case_plan as case_plan
 from diagnostics import discovery_case_selection as case_selection
 from diagnostics import discovery_construction_links as construction_links
 from diagnostics import discovery_probe_expectation as probe_expectation
+from diagnostics import discovery_review_context
 from diagnostics import episode_requests as requests
 from diagnostics import fresh_state_rollout as engine
 from patchloop.agent.model import OpenAIResponsesAdapter
@@ -69,7 +70,7 @@ def read(path: Path) -> dict:
 def implementation_hashes() -> dict:
     names = ("counterexample_discovery_rollout", "counterexample_discovery",
              "discovery_case_selection", "discovery_case_plan", "discovery_probe_expectation",
-             "discovery_construction_links",
+             "discovery_construction_links", "discovery_review_context",
              "episode_requests",
              "fresh_state_rollout", "fresh_state_design", "fresh_state_sampler", "decision_sampler")
     return {f"diagnostics/{name}.py": sha256_bytes(
@@ -193,6 +194,8 @@ def report_evidence(report: DiscoveryReport, gateway: DevToolGateway) -> dict:
 class Session:
     def __init__(self, request, gateway, store, *, probe_identity, clock=monotonic,
                  review_request=None):
+        design.require(discovery_review_context.project_request(request) == request,
+                       "fixed-review request must be projected before freezing")
         self.seed = copy.deepcopy(request)
         self.items = copy.deepcopy(request["input"])
         self.gateway, self.journal, self.store = gateway, gateway.journal, store
@@ -219,7 +222,8 @@ class Session:
             raise engine.AbortExperiment("MODEL_CALL_LIMIT")
         if self.new_tools >= self.gateway.limits.max_tool_actions:
             raise engine.AbortExperiment("TOOL_ACTION_LIMIT")
-        request = {**copy.deepcopy(self.seed), "input": copy.deepcopy(self.items)}
+        request = discovery_review_context.project_request(
+            {**copy.deepcopy(self.seed), "input": copy.deepcopy(self.items)})
         turn_id = "turn_" + uuid.uuid4().hex
         ref = self.store.put_text(canonical_json(request["input"]), "application/json")
         self.journal.append("turn_started", {

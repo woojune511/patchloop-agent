@@ -177,7 +177,7 @@ def test_absent_helper_or_unmatched_current_mutation_adds_no_card():
 
 
 @pytest.mark.parametrize("agent_policy,old_hash", [
-    ("current", "b0c44ac29de9822430e2b3f4463693c77906166b25aadbdf2059d7a8147d5a8b"),
+    ("current", "9be0c73a30eab535369c0ebf34f435ddc0cdaabbbecc639e272e3e250c5d48cc"),
     ("thin", "7353b8ed4569a56728e36a27c687ab62ad7517b951b6240039f6a61457046cdd"),
 ])
 def test_general_probe_guidance_changes_no_argument_schema_or_other_tool(agent_policy, old_hash):

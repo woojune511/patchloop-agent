@@ -29,55 +29,53 @@ Keep the integrated development loop: fix observed correctness, reliability and
 completion failures, validate locally, then exercise a frozen configuration.
 A separate one-factor study is not required for every routine change.
 
-The [two-probe allocation diagnostic](history/2026-11-01-two-probe-recovery-results.md)
-is CLOSED on f927b04c. Same task8/pydicom1413 public post-probe sequence38/ancestor138,
-fixed be082f27, gpt-5.4-2026-03-05/xhigh; only the new probe cap1->2 and time265->600s
-changed. USD1.5431895, four model calls, ten actions,60k input/full25k reservation
-and all agent guidance/tool policies remained. The prior failed program and UID
-correction were excluded. This was public reconstruction, not exact native resume.
+[Capability-aligned verification decisions](history/2026-11-01-capability-aligned-verification-review.md)
+addresses concrete mismatches found in the fixed-candidate diagnostic. The saved
+current-state projection still carried normal edits/checks/submission instructions,
+needs_visible_checks and run_check/automatic-recheck directions even though only
+read/search/probe/report were offered. Saved replay/acquisition controls also looked
+like current capability. An optional report annotation copied from read_file forced
+inspect rather than terminal finish mode. These defects could distort the next
+observation choice; a causal model effect is not yet demonstrated.
 
-Observed: REPORT_RECORDED/no_counterexample_found, two model/count calls, one new
-probe and one report,145.441s, USD0.2787685 recorded generation usage (USD0.3818725
-cache-neutral). The new helper actually ran save_as for six cases: OL array/OL
-bytes/UL list crossed with implicit/explicit little-endian. Encoded-byte assertions
-passed; four OL cases also passed read-back and array/bytes output equality.
-Saved same-patch write_dataset evidence was referenced, not rerun.
+A shared diagnostics/discovery_review_context.py projector now aligns initial and
+subsequent requests with the fixed-review capabilities. It preserves the public
+task, current evidence and NOT_RUN facts while removing conflicting current control
+instructions and distinguishing saved counters from new budget. Existing annotated
+reports use finish/null evidence_goal; ordinary seven-field reports stay unchanged.
+Projection is pure/idempotent and frozen seeds must already be projected. New saved
+adapters must apply it after their last overlay and before freezing; old closed
+requests/approvals are not silently upgraded or executable with changed code.
 
-The helper worked on its first try. Setup correction and a second probe were not
-exercised. Actual one-probe/145.441s usage fits the former1/265 limits, so neither
-a causal budget benefit nor live recovery is established. The earlier v1 run did
-show a meaningful setup correction blocked by probe1; its remaining33.5s also did
-not establish enough room for execution and reporting. Keep two probes/600s for
-this small diagnostic as reasonable capacity for one correction; do not raise it
-again or change normal dev defaults from this result.
+General tool basis and scope-review input/interpretation descriptions now connect
+a remaining public condition to an actually offered observation and how its result
+could change the decision. Preserve known original conditions and mark missing or
+substituted setup; use concrete blockers or lack of relevance to justify stopping.
+This reuses existing fields, limits and calls. No new semantic gate, required probe,
+check backend, dependency installation, normal finish admission or budget change.
+The normal runner's required public-check gate was not diagnosed as broken.
 
-The report's limited observations are supported. Its stopping rationale remains
-weak: it identifies regression coverage as material, then argues that no further
-check is needed to say no counterexample was found. That does not fully justify
-omitting a potentially useful observation. Direct run_check was not offered; it
-also gave no concrete probe alternative. This does not mean more testing was
-mandatory. Original H-array/lineSeq setup was not reproduced exactly (the helper
-used an I-array and flat Dataset), the unchanged base was not tested, and public
-regressions/independent acceptance remain unassessed. No candidate mutation.
+The [last live diagnostic](history/2026-11-01-two-probe-recovery-results.md) remains
+CLOSED on f927b04c: task8 fixed be082f27, two model/count calls, one new probe,
+REPORT_RECORDED/no_counterexample_found,145.441s, USD0.2787685 recorded generation
+usage. Six actual save_as cases passed. Actual use fits the old1probe/265s limits;
+setup correction and a causal benefit from two probes/600s were not demonstrated.
+The narrow report was supported but its reason to omit further investigation was
+weak. No new paid run or independent evaluation has occurred in this change.
 
-All generation usage is known, no provider call is unresolved, cleanup is confirmed,
-and count-endpoint billing/invoice remains UNVERIFIED. Unused USD1.264421 and all
-prior allocations are closed. No retry, resume or extra sample is authorized.
-Roots: C:/pt/stop-review-20261101-v2/ (preparation),
-C:/pt/stop-review-run-20261101-v2/ (live),
-C:/pt/stop-review-closure-20261101-v2/ (public audit and immutable closure).
+Skipped verification is not uniformly an agent failure. The original example lacks
+indexData/lineSeq/ds setup, so exact reproduction is unavailable; known H-array to
+bytes conditions can still be preserved in an assumption-labeled helper. Unchanged
+base execution was outside fixed-review authority. The registered public regression
+wrapper requires a different interpreter/subprocess, and this probe's dependencies
+lack pytest. An alternative direct Python assertion is narrower evidence, not a
+claim that the registered regression suite ran. Do not require impossible work or
+infer absence of need merely from reporting a limited no-counterexample result.
 
-The [resource preparation](history/2026-11-01-two-probe-recovery-preparation.md)
-passed10 focused mock cases in25.40s, Ruff and6 docs checks. Only external allocation,
-tests and docs changed; no redundant full quick rerun. The previous report-guidance
-change retains27 focused PASS and1,437 quick PASS/one platform symlink skip including
-isolated mock evaluation. The [report guidance](history/2026-11-01-goal-grounded-diagnostic-stopping.md)
-asks for goal-grounded stopping without a new field, gate or mandatory probe.
-Normal runtime remains
-`sha256:4fdcc4fb9eb3d71ad81a5d929a0af689cecd876fbd39c212204d0c6343b608c7`.
-
-Further work requires a concrete unresolved public requirement or stopping decision,
-not just an unused probe. No new gate, additional prompt rule or paid run is selected.
+Local validation and a read-only projection audit of the actual saved request are
+recorded in the linked follow-up. Mock action selection tests host delivery and
+execution boundaries; autonomous necessity judgment still needs live observation.
+All previous allocations are closed. No further paid invocation is authorized.
 
 Relevant closed evidence:
 

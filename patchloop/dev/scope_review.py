@@ -65,7 +65,10 @@ def schema() -> dict[str, Any]:
     case = {
         "type": "object", "additionalProperties": False,
         "properties": {
-            "input": {**text, "description": "Public caller and input construction or group."},
+            "input": {**text, "description": (
+                "Public caller and input construction or group. Preserve known original "
+                "conditions; identify missing setup and any substituted conditions explicitly."
+            )},
             "expected_observation": {**text, "description": "Required observable outcome."},
             "disposition": {"type": "string", "enum": [
                 "executed", "source_inferred", "untested",
@@ -75,7 +78,12 @@ def schema() -> dict[str, Any]:
                 "maxLength": MAX_ACTION_ID_CHARS,
                 "description": "Executed: completed current-diff check/probe ID; otherwise null.",
             },
-            "interpretation": {**text, "description": "What evidence supports or leaves open."},
+            "interpretation": {**text, "description": (
+                "What evidence supports or leaves open for the public requirement. For a "
+                "material untested condition, identify a feasible observation using offered "
+                "tools that could change the decision, or its concrete blocker or lack of "
+                "relevance. A setup failure is not evidence about the target behavior."
+            )},
         },
         "required": ["input", "expected_observation", "disposition", "evidence_action_id",
                      "interpretation"],

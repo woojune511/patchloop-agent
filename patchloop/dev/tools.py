@@ -186,7 +186,17 @@ def _public_turn_decision_schema(mode: str) -> dict[str, Any]:
         ),
         "properties": {
             "mode": {"type": "string", "enum": [mode]},
-            "basis": {"type": "string", "minLength": 1, "maxLength": 800},
+            "basis": {
+                "type": "string", "minLength": 1, "maxLength": 800,
+                "description": (
+                    "For verification choices, connect a remaining public requirement and "
+                    "known input/caller conditions to this offered action and the observation "
+                    "that could change the repair or review decision. For a terminal choice, "
+                    "explain why no useful feasible observation remains; narrowing the "
+                    "reported claim alone is not a reason to stop. Use the currently offered "
+                    "tools and environment, not capabilities implied by historical policy."
+                ),
+            },
             "evidence_goal": (
                 {"type": "string", "minLength": 1, "maxLength": 500}
                 if mode == "inspect"

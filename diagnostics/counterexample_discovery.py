@@ -18,6 +18,7 @@ from diagnostics import discovery_case_plan as case_plan
 from diagnostics import discovery_case_selection as case_selection
 from diagnostics import discovery_construction_links as construction_links
 from diagnostics import discovery_probe_expectation as probe_expectation
+from diagnostics import discovery_review_context
 from patchloop.agent.model import OpenAIResponsesAdapter
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import ModelConfig, PublicTask
@@ -203,10 +204,11 @@ def initial_request(public: PublicTask, patch: str, environment: dict, *,
                          reasoning_continuation="encrypted-v1", transport_max_retries=0,
                          max_output_tokens=25_000)
     # Pure request construction; never instantiate an SDK client or read credentials.
-    return OpenAIResponsesAdapter.request_payload(
+    request = OpenAIResponsesAdapter.request_payload(
         SimpleNamespace(config=config), canonical_json(context), tools,
         system_prompt=review_prompt(review_guidance),
     )
+    return discovery_review_context.project_request(request)
 
 
 def protocol(review_guidance: str = "original", *, case_design: str | None = None,
