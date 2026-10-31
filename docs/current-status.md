@@ -55,13 +55,24 @@ This reuses existing fields, limits and calls. No new semantic gate, required pr
 check backend, dependency installation, normal finish admission or budget change.
 The normal runner's required public-check gate was not diagnosed as broken.
 
-The [last live diagnostic](history/2026-11-01-two-probe-recovery-results.md) remains
-CLOSED on f927b04c: task8 fixed be082f27, two model/count calls, one new probe,
-REPORT_RECORDED/no_counterexample_found,145.441s, USD0.2787685 recorded generation
-usage. Six actual save_as cases passed. Actual use fits the old1probe/265s limits;
-setup correction and a causal benefit from two probes/600s were not demonstrated.
-The narrow report was supported but its reason to omit further investigation was
-weak. No new paid run or independent evaluation has occurred in this change.
+The [latest live diagnostic](history/2026-11-01-capability-aligned-verification-results.md)
+is CLOSED on56666f44: same task8 public seq38/be082f27, one model/count call,
+zero new probes, one report,104.427s, USD0.218635 recorded generation usage.
+The corrected context and finish/null annotation reached the model. It identified
+a feasible save_as/explicit-VR helper but reported no_counterexample_found using
+saved write_dataset evidence. Its basis still argued that no extra observation
+was necessary for a bounded report. The intended verification-selection improvement
+was not demonstrated; unused calls/probes/time/cost do not explain this stop.
+
+The public report distinguished untested caller/regression coverage, but did not
+map original H-array -> bytes to helper I-array/direct-array substitutions. The
+earlier base helper's bytes control passed; its direct-array failure alone does
+not identify the exact public issue mechanism. Delivered conversion/writer source
+supports local inference but does not establish the full save_as caller equivalence.
+Keep the interface correction; do not add a blanket probe gate or increase budgets.
+The next question is whether the saved plan's one-helper-then-report finish
+condition replaces the original public objective, and what concrete evidence makes
+a recognized remaining gap immaterial. This is a hypothesis, not a causal finding.
 
 Skipped verification is not uniformly an agent failure. The original example lacks
 indexData/lineSeq/ds setup, so exact reproduction is unavailable; known H-array to
@@ -72,10 +83,13 @@ lack pytest. An alternative direct Python assertion is narrower evidence, not a
 claim that the registered regression suite ran. Do not require impossible work or
 infer absence of need merely from reporting a limited no-counterexample result.
 
-Local validation and a read-only projection audit of the actual saved request are
-recorded in the linked follow-up. Mock action selection tests host delivery and
-execution boundaries; autonomous necessity judgment still needs live observation.
-All previous allocations are closed. No further paid invocation is authorized.
+Local validation and public audits are linked in the follow-ups. The latest single
+run establishes delivery and a bounded report, not autonomous verification gain.
+The prior two-probe diagnostic's six save_as cases belong to its separate closed
+execution and were not supplied to this run. Original reproduction, registered
+regressions and independent evaluation remain NOT_RUN in this diagnostic.
+All allocations, including the unused USD1.3245545, are closed. No further paid
+invocation is authorized.
 
 Relevant closed evidence:
 
