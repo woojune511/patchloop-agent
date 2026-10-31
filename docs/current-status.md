@@ -29,55 +29,52 @@ Keep the integrated development loop: fix observed correctness, reliability and
 completion failures, validate locally, then exercise a frozen configuration.
 A separate one-factor study is not required for every routine change.
 
-[Goal-grounded diagnostic stopping](history/2026-11-01-goal-grounded-diagnostic-stopping.md)
-changes two existing report descriptions. Justification now grounds the observed
-conclusion and decision to stop against the original public task and authorized
-review objective. No field, semantic gate, mandatory probe or normal-solver finish
-change was added. Normal runtime remains
+[Two-probe recovery preparation](history/2026-11-01-two-probe-recovery-preparation.md)
+revises the last interpretation: one new probe was insufficient to allow the
+observed meaningful setup correction. The user requested proceeding with a small
+resource adjustment. Prepare two new probes and 600 seconds at the same task8
+post-probe public checkpoint; keep the USD1.5431895 proposed new cap, four model
+calls, ten actions, 60k input and full 25k-output reservation or stop. Keep the
+model, fixed be082f27 patch, report guidance, tool policy and other conditions.
+No new hint, failed-v1 program or corrected UID setup is added to the model input.
+
+The source checkpoint remains run_dev_62da82f8f7e34345 sequence38/ancestor138 with
+its recorded one-probe/265-second remainder. The new allocation is separately
+bound and consistently reflected in current state/budget. Fresh usage starts at
+zero. Public reconstruction excludes opaque continuation and later reports; it is
+not exact resume. No core runtime or normal-dev probe policy changes are needed.
+Normal runtime remains
 `sha256:4fdcc4fb9eb3d71ad81a5d929a0af689cecd876fbd39c212204d0c6343b608c7`.
-Local validation: focused27 PASS/27.472s; quick1,437 PASS/one platform symlink skip
-in485.301s including isolated mock evaluation; external30 distinct cases finally
-PASS. The linked record preserves initial stale test-expectation failures and
-corrections. Ruff and final documentation checks passed.
 
-The [post-probe live diagnostic](history/2026-11-01-goal-grounded-stopping-results.md)
-is CLOSED on code515338cf. Task8/pydicom1413, fixed be082f27, actual saved public
-request sequence38/ancestor138; gpt-5.4-2026-03-05/xhigh; one attempt under a new
-USD1.5431895, four-call/ten-action/one-probe/265-second cap. Public reconstruction
-omitted opaque continuation and the later report; it was not exact native resume.
+The [previous live diagnostic](history/2026-11-01-goal-grounded-stopping-results.md)
+is CLOSED on code515338cf: two model/count calls, one probe, USD0.4662705 generation
+cost, 231.511 seconds, PROBE_CALL_LIMIT and no final report. It selected a relevant
+extension from write_dataset to save_as, but failed importing an unavailable UID
+symbol before exercising the target. It then correctly classified setup failure
+and proposed a corrected helper. Explicit probe0 blocked that execution; this was
+not an unnecessary repetition of a passed check. About33.5 seconds remained at
+termination, so probe count alone did not establish enough time for recovery/report.
 
-Observed: two model/count calls, one executed probe, USD0.4662705 generation cost,
-231.511seconds; terminal PROBE_CALL_LIMIT with no report. The model selected a
-relevant extension from write_dataset to save_as, crossing OL bytes/direct array
-with implicit/explicit little-endian modes. The helper failed importing unavailable
-SecondaryCaptureImageStorage before candidate input construction or assertions.
-It is setup failure, not a counterexample or executed caller verification.
+The earlier priority against raising resources was too strong; the separate
+follow-up records this correction without rewriting closed evidence. A useful
+next observation is actual target execution and a properly bounded report, with
+setup-repair behavior observed if needed. Two probes are permitted, not required.
+The count/time intervention and one stochastic rerun cannot isolate each change's
+causal effect or establish general repair gains. No independent evaluation or
+candidate mutation is permitted. No retry, resume or extra sample on uncertainty.
 
-The model correctly classified that failure and proposed the same observation
-with corrected UID setup. This was useful correction, not redundant repetition of
-passing evidence. But the second actual input explicitly showed probe0 in state
-and latest budget; it still requested a probe and was rejected before execution.
-No final stopping rationale was produced. Original H-array/lineSeq reproduction,
-patch repair and independent evaluation remain unassessed. Both generation usages
-are known and cleanup is confirmed; count billing/invoice remains UNVERIFIED.
-The unused USD1.076919 is closed; no retry, resume or extra sample is authorized.
+Preparation: C:/pt/stop-review-20261101-v2/. Intended live root:
+C:/pt/stop-review-run-20261101-v2/ (must remain absent until exact-scope approval).
+No new paid run has occurred. The previous unused USD1.076919 and all older
+allocations remain closed; they do not authorize this invocation.
 
-Decision: retain the narrow report-guidance change provisionally. This one state
-shows relevant scope selection, not causal repair gain or justified termination.
-No same-state old-description live control was run. Do not raise the cap or add
-another scope rule from this result. Investigate source-grounded helper setup and
-whether exhausted diagnostic probe capability should be removed from offered
-tools while reporting stays available. These are proposed changes, not implemented
-or authorized for another paid run. Budget visibility alone was already present.
-
-Evidence roots: C:/pt/stop-review-20261101-v1/ (preparation),
-C:/pt/stop-review-run-20261101-v1/ (run),
-C:/pt/stop-review-closure-20261101-v1/ (CAS-bound public audit and closed allocation).
-The [prior expanded-budget run](history/2026-11-01-task8-expanded-budget-results.md)
-remains separate closed evidence: nine helper cases PASS, no original-caller
-reproduction, no counterexample or repair. Its three calls/max39,650 tokens fit the
-older caps and it used no search; higher caps/search coalescing had no demonstrated
-effect. All earlier diagnostic allocations and approvals remain closed.
+The [report-description change](history/2026-11-01-goal-grounded-diagnostic-stopping.md)
+remains implemented: ground the conclusion and stopping rationale in the original
+public task and authorized review objective. No new field or semantic gate.
+Prior validation remains27 focused PASS and1,437 quick PASS/one platform symlink
+skip including isolated mock evaluation. This turn changes external diagnostic
+allocation/tests and documentation only; focused external validation and docs-only
+repository checks are recorded in the linked preparation.
 
 Relevant closed evidence:
 
