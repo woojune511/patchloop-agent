@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 import shutil
 import socket
@@ -170,7 +171,7 @@ def test_fresh_discovery_projects_inline_probe_only_for_every_annotation_mode(
     regular_probe = next(tool for tool in regular if tool["name"] == "run_probe")
     assert parameters["properties"]["purpose"] == (
         regular_probe["parameters"]["properties"]["purpose"])
-    assert "neither proves" in schema["description"]
+    assert "Unknown remains unverified." in schema["description"]
     assert "replay_action_id" in regular_probe["parameters"]["required"]
     assert regular_probe["parameters"]["properties"]["python_source"]["type"] == ["string", "null"]
     assert [tool for tool in request["tools"] if tool["name"] not in {
@@ -266,11 +267,61 @@ def test_report_schema_is_strict_and_does_not_require_a_positive_claim():
     schema = design.report_schema()
     parameters = schema["parameters"]
     assert schema["strict"] and parameters["additionalProperties"] is False
-    assert set(parameters["required"]) == set(parameters["properties"])
-    assert {"no_counterexample_found", "blocked"} <= set(
-        parameters["properties"]["outcome"]["enum"])
-    for name in ("probe_action_id", "requirement_excerpt", "expected", "observed"):
-        assert "null" in parameters["properties"][name]["type"]
+    properties = copy.deepcopy(parameters["properties"])
+    assert properties["justification"].pop("description").strip()
+    assert properties == {
+        "outcome": {"type": "string", "enum": [
+            "counterexample_reported", "no_counterexample_found", "blocked",
+        ]},
+        "requirement_excerpt": {"type": ["string", "null"], "maxLength": 600},
+        "justification": {"type": "string", "minLength": 1, "maxLength": 2_000},
+        "probe_action_id": {"type": ["string", "null"], "maxLength": 500},
+        "expected": {"type": ["string", "null"], "maxLength": 2_000},
+        "observed": {"type": ["string", "null"], "maxLength": 2_000},
+        "limitations": {"type": "string", "maxLength": 2_000},
+    }
+    assert parameters["required"] == list(properties)
+
+
+def test_report_guidance_is_frozen_without_changing_the_execution_contract(
+    offline, tmp_path, monkeypatch,
+):
+    original, changed = tmp_path / "original", tmp_path / "changed"
+    before_packet = design.prepare(offline, original)
+    before = json.loads((original / "request.json").read_bytes())
+    original_schema = design.report_schema()
+    before_report = next(tool for tool in before["tools"] if tool["name"] == "report_discovery")
+    assert before_report == original_schema
+    assert design.validate(original) == before_packet
+
+    changed_schema = copy.deepcopy(original_schema)
+    changed_schema["description"] += " Alternate terminal explanation."
+    changed_schema["parameters"]["properties"]["justification"]["description"] += (
+        " Alternate stopping rationale."
+    )
+    monkeypatch.setattr(design, "report_schema", lambda: copy.deepcopy(changed_schema))
+    after_packet = design.prepare(offline, changed)
+    after = json.loads((changed / "request.json").read_bytes())
+    after_report = next(tool for tool in after["tools"] if tool["name"] == "report_discovery")
+    assert after_report == changed_schema
+    assert design.validate(changed) == after_packet
+    assert after_packet["request_hash"] == sha256_json(after) != before_packet["request_hash"]
+    assert {key for key in after_packet if after_packet[key] != before_packet[key]} == {
+        "request_hash", "file_hashes",
+    }
+    assert {key for key in after_packet["file_hashes"]
+            if after_packet["file_hashes"][key] != before_packet["file_hashes"][key]} == {
+        "request.json",
+    }
+    # Exact equivalence outside these two guidance strings includes the task,
+    # budgets, tool fields, outcomes, prompt, probe capability and transport.
+    after_report["description"] = before_report["description"]
+    after_report["parameters"]["properties"]["justification"]["description"] = (
+        before_report["parameters"]["properties"]["justification"]["description"]
+    )
+    assert after == before
+    with pytest.raises(ContractError, match="packet/source/runtime/implementation changed"):
+        design.validate(original)
 
 
 def test_guidance_changes_only_system_instruction_and_bound_metadata(offline, tmp_path):

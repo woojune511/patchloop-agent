@@ -182,3 +182,5 @@ tests/test_dev_search_v16.py
 tests/test_search_span_coalescing.py
 tests/test_test_restoration.py
 tests/test_public_regression_projection.py
+tests/test_counterexample_discovery.py::test_report_guidance_is_frozen_without_changing_the_execution_contract
+tests/test_counterexample_discovery_rollout.py::test_no_probe_or_positive_claim_required_for_reporting[original-blocked]

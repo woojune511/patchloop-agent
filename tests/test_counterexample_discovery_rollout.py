@@ -187,6 +187,10 @@ def test_real_request_and_public_native_feedback_reach_report_without_a_verdict(
     guidance = rollout.read(frozen.design / "packet.json").get("review_guidance", "original")
     assert frozen.plan.get("review_guidance", "original") == guidance
     assert initial["input"][0]["content"] == design.review_prompt(guidance)
+    assert all(
+        next(tool for tool in request["tools"] if tool["name"] == "report_discovery")
+        == design.report_schema() for request in adapter.requests
+    )
     for before, after in zip(adapter.requests[:-1], adapter.requests[1:], strict=True):
         assert after["input"][:len(before["input"])] == before["input"]
         assert {k: v for k, v in after.items() if k != "input"} == {
@@ -210,12 +214,26 @@ def test_real_request_and_public_native_feedback_reach_report_without_a_verdict(
 @pytest.mark.parametrize("outcome", ["no_counterexample_found", "blocked"])
 @pytest.mark.parametrize("frozen", design.REVIEW_GUIDANCE, indirect=True)
 def test_no_probe_or_positive_claim_required_for_reporting(frozen, outcome):
+    justification = (
+        "The requested caller cannot be constructed from the supplied setup; the missing "
+        "public configuration prevents a discriminating observation. Report that blocker."
+        if outcome == "blocked" else
+        "The supplied source settles the requested narrow question. Untested callers remain "
+        "outside that conclusion; no broader absence of counterexamples is claimed."
+    )
     result, adapter, probes = run_mock(frozen, [[report_call(
-        outcome, probe_action_id=None, requirement_excerpt=None, expected=None, observed=None)]])
+        outcome, justification=justification, probe_action_id=None,
+        requirement_excerpt=None, expected=None, observed=None)]])
     assert result["terminal"] == "REPORT_RECORDED"
+    assert result["report"]["report"]["justification"] == justification
     assert not result["report"]["evidence"]["probe_identity_bound"]
     assert result["report"]["evidence"]["semantic_verdict"] is None
     assert probes[0].calls == 0 and len(adapter.requests) == 1
+    assert result["model_calls"] == result["input_count_calls"] == result["tool_actions"] == 1
+    assert not any(
+        event["event_type"] == "action_started"
+        for event in DevJournal(frozen.result, rollout.RUN_ID).events()
+    )
 
 
 @pytest.mark.parametrize("frozen", design.REVIEW_GUIDANCE, indirect=True)
