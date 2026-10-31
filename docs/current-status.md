@@ -48,30 +48,40 @@ reporter's bytes/caller construction, which it explicitly left unverified. Resou
 remained available. This shows a verification-selection gap, not a proven model
 capability ceiling or the latest private failure's exact cause.
 
-The user requested a follow-up at the actual active post-mutation decision.
-[Preparation](history/2026-11-01-task8-active-review-preparation.md) selects public
-input **138**, the first delivered state after the same candidate be082f27 was
-created. Its review has `context_handoff`, `mutation_result` and an active
-`behavior_change`; the original workflow gate is `needs_visible_checks`.
-Only public evidence before that boundary is admitted. Later check/probe PASS,
-the prior diagnostic report and private outcomes are excluded. Runtime is unchanged.
+The [active input138 diagnostic](history/2026-11-01-task8-active-review-results.md)
+is CLOSED on code f3d2f8d7. The first actual request delivered `context_handoff`,
+`mutation_result` and active `behavior_change` for fixed candidate be082f27; later
+requests correctly consumed the trigger. The model recorded two untested case
+groups and planned a grouped probe, then used **two reads and one search**.
+It emitted no executable probe/assertion program, ran no probe and produced no report.
 
-The question is whether this active review leads to a materially unverified public
-case and actual execution. A needed replay of the old helper on the new patch is
-useful revalidation but does not meet that new-case criterion. Cases, execution,
-observed contradiction and interpretation are assessed separately. A report remains
-allowed immediately; no forced probe or case-specific hint is added. The historical
-trigger facts are preserved with current guidance, and diagnostic reporting/budget
-text is made neutral. This changes checkpoint and framing together, so it is not an
-isolated causal estimate of either change.
+The fourth count reached **43,789 > 40,000 input tokens**, so generation was blocked.
+Three model calls cost **USD0.4259615** recorded generation usage over **250.368
+seconds**. USD1.5740385, one model call, nine actions, two probes and about 350 seconds
+remained. This is an input-admission stop, not time/cost exhaustion or an observed
+decision to give up. No mutation, evaluation, retry or extra attempt occurred.
+Count-endpoint billing and invoice reconciliation remain unverified.
 
-Proposed scope remains one GPT-5.4/xhigh fixed-patch diagnostic, new USD2 cap,
-four model calls/12 actions/two probes/600 seconds, reads/searches/probes/report
-only. Patch mutation and independent evaluation are excluded. Preparation passed
-**24 mocked driver tests in 55.17 seconds**, Ruff and an offline audit of the first
-outgoing packet constructed from the actual saved input: active review and no
-future receipts. A fresh exact-scope cap confirmation remains before launch; no
-new paid execution has run. Prior allocations remain closed.
+The first two reads added source outside the initially retained inline spans, so
+they were not entirely redundant. The broad third search returned 20 overlapping
+windows: 100 displayed line occurrences but 45 unique lines. Its 17,190-character
+output and accumulated conversation/state expanded the diagnostic packet; the last
+5,909-token increase is not attributed solely to search. Fresh-session source-gain
+counters also count imported inline lines as new, so they cannot establish novelty
+relative to the saved packet.
+
+The next engineering target is diagnostic context growth: preserve exact public
+requirements, mutation and probe facts while avoiding repeated overlapping source
+payloads before another paid attempt. This is not yet implemented or validated.
+Do not add another reasoning reminder or infer a capability ceiling. Active-review
+uptake and inspection are observed; executable case construction, execution,
+contradiction and repair remain unverified. The planned raw-array helper still
+differs from the original public bytes/caller construction.
+
+[Preparation](history/2026-11-01-task8-active-review-preparation.md) passed 24 mocked
+driver tests in 55.17 seconds, Ruff and the actual-input offline packet audit.
+Checkpoint and reporting-frame changes were combined, not a causal comparison.
+Runtime/task packages/grading remain unchanged, and this USD2 allocation is closed.
 
 The [input171 diagnostic](history/2026-10-31-execution-linked-task8-diagnostic-results.md)
 is CLOSED: accepted reference review, one immediate report, zero new reads/probes,
@@ -93,8 +103,8 @@ index now links only retained repository source_spans to their prior public read
 by exact scope/path/file hash/range, including inline delivery after segment reset.
 It adds no source text or edit permission and uses the same helper in the diagnostic.
 The closed input171 plan/approval remain under `C:/pt/evidence8-review-20261031-v1/`.
-The new active-input preparation uses `C:/pt/active8-review-20261101-v1/`; it never
-resumes or replaces the closed run. Runtime/task packages/grading remain unchanged.
+The input138 plan/approval use `C:/pt/active8-review-20261101-v1/`; result and audits
+are linked in the closed record above. Neither consumed result root may be resumed.
 
 Relevant closed evidence:
 
