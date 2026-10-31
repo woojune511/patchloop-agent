@@ -31,62 +31,55 @@ configuration on public development tasks. A separate one-factor study is not a
 prerequisite for every routine change.
 
 The [full fixed dev20 run](history/2026-10-31-verification-reuse-dev20-results.md)
-is CLOSED: **11 independent PASS, 8 FAIL, 1 unsubmitted/NOT_RUN**. All 19 submitted
-candidates have safety PASS; task 18 has safety NOT_RUN. Code at execution was
-1ec9198a (solver 1569ec49), runtime
-`sha256:06b0bbc8bd933616c7e40495a87bdaf76207db10f477263d98bbb6ab0cb8e866`.
-All 20 were attempted once with two workers, USD4 each / USD80 invocation cap.
-Cost **USD20.2818755**, 300 model calls, 472 actions, 30 accepted edits, 39 probes;
-batch wall **5,513.593 seconds (91m54s)**. All 302 input counts and billing settled,
-with no retry, uncertainty stop or extra independent evaluation. Unused allowance is closed.
-
-Task 14 demonstrated the intended autonomous sequence: 1,380 tests PASS, a new
-string-type counterexample exposed ValueError, production code plus an asserting
-regression changed, then replay and independent acceptance passed. This is live
-behavior evidence, not a causal estimate of guidance effectiveness.
-
-Task 8 instead repaired a bytearray/array conversion while missing the upstream
-setter for the original bytes path. After batch closure, an operator-only public
-base/candidate comparison confirmed that OL bytes containing 0x5c still become
-MultiValue and fail Dataset.save_as; normal OL and same-byte OB controls passed.
-That is a confirmed residual public defect, with zero additional model/private
-calls. It was not discovered by the solver and does not identify the private
-failure's exact assertion. The submitted patch remains unchanged.
-
-Task 18 reproduced the bug but spent 868.456 seconds from baseline observation to
-first edit. Several helper API/configuration mistakes delayed useful evidence.
-The first patch changed 9-space indentation to 5 instead of 8. A second production
-edit was accepted, but its recheck had only 11.493514 seconds and timed out after
-the last model decision consumed 96.600140 seconds of 117 remaining solver seconds.
-Cleanup was confirmed; all usage settled. The last candidate is unverified and
-unsubmitted, not an independent FAIL. Increasing the edit cap would not address
-this deadline mechanism.
-
-Six tasks (4,8,11,13,15,20) selected tests within an already-passing declared scope,
-despite delivered PASS/reuse guidance. Actual previous collection is unreported;
-this is declared overlap, not an execution-equivalence attestation. Task 6's new
-file was outside its required file and needed the extra selection. No strict
-unchanged-diff successful check/probe replay was identified. Task 10 replayed an
-identical helper after a test-only diff change under whole-diff freshness rules.
-Useful new controls and changed-source replays must not be counted as waste.
+remains CLOSED: 11 independent PASS, 8 FAIL, 1 unsubmitted/NOT_RUN; all 19 submitted
+candidates have safety PASS. Its USD20.2818755 cost and USD80 allocation are closed.
+It exposed original-input/oracle gaps on tasks 8/10/12, diagnostic latency on task 18
+and residual selected-test overlap. Task 14 demonstrated autonomous counterexample
+execution and repair; that observation is not an estimate of a guidance effect.
 
 The [verification continuity correction](history/2026-10-31-verification-continuity.md)
-now addresses two delivered-context gaps. Recent probes retain exact bound programs
-through handoffs so their inputs/callers/assertions can be compared; finalization
-keeps historical program identity without promoting old output to current evidence.
-The latest rejected test proposal remains visible after successful source-only
-recovery, with bounded exact text and explicit unapplied/unverified status. This
-preserves task 10's proposed output-count assertion for review instead of discarding
-it once mutation admission succeeds. Existing instructions already require fidelity;
-the change supplies missing factual content rather than another general reminder.
-Task 17's YAML rejection now names the Python-only restriction correctly. YAML
-support and test-preservation policy are unchanged.
+retains exact bound recent probe programs and the latest rejected test proposal
+across handoffs. Historical proposals remain unapplied/unverified; no new tool,
+model call, obligation or finish gate is added. YAML rejection now distinguishes
+a declared but unsupported file type from an undeclared test root.
 
-These changes establish delivery, not model uptake or improved repair accuracy.
-Task 8's issue text was always visible; program omission is not a proven cause of
-its missed path. Task 12's self-selected output semantics and task 18's diagnostic
-delays remain unresolved. Bounded execution receipts for residual selection overlap
-are still only a candidate. No further paid run is authorized or scheduled.
+The [fresh task 8/10 run](history/2026-10-31-verification-continuity-0810-results.md)
+is now CLOSED: **both independent FAIL / safety PASS**. Code was **4559062d**,
+runtime `sha256:832d5d3f6c58da7a64af4743794f1557fa1b307245110c7e86ce98b89f453ab3`.
+Each was attempted once from pristine source with the same baseline, USD4 each /
+USD8 total and two workers; no old patch or operator counterexample was supplied.
+Total **USD1.1940825**, 19 model calls, 32 actions, two accepted edits, one probe;
+batch wall **278.086 seconds (4m38s)**. All 19 counts and calls settled, with no
+retry, uncertainty stop or extra independent evaluation. This allocation is closed.
+
+Task 8 independently found the missing OL/OD binary setter exclusions before any
+probe, added a bytes-preserving writer regression, and passed 213 public tests.
+Its later probe confirmed OL/OD byte preservation plus LO text splitting. The exact
+program survived into completion input and the final assessment used the results.
+However, no later counterexample or repair followed that delivery, and the original
+array('H') -> Dataset.add_new -> Dataset.save_as caller was not executed on either
+base or candidate. Program retention cannot explain the earlier source discovery.
+
+Task 10 changed import-time logging setup and passed 96 tests with one skip, but its
+new test checks handlers/level/debugging state without emitting or counting records.
+No mutation was rejected and no probe was run: both retention mechanisms were
+unexercised. There was no stronger earlier assertion lost during this fresh attempt.
+Its original duplicate-output behavior remains unobserved. These public records do
+not establish a remaining source defect or the private FAIL's exact cause.
+
+Both submissions remain unverified_delivery, with zero registered original-case
+executions. Their acquisition states ended at preparation_action_limit; whole-run
+resources were not exhausted and ordinary probes/checks remained available. Neither
+this limit nor incomplete caller evidence is a demonstrated cause of private FAIL.
+
+Keep the delivery correction, but make no repair-gain or causal efficiency claim.
+The next unresolved question is the saved submitted-patch failure versus missing
+original caller/output observations. Inspect saved failed assertions as operator-only
+evidence before choosing a public reproduction or another intervention; never feed
+private details to the solver. That inspection and further executions were not done
+or scheduled here. Task 12's oracle ambiguity, task 18's diagnostic delay and the
+selected-test overlap remain open; do not add another generic reminder from these
+results alone.
 
 ## Selected mechanisms and evidence limits
 
@@ -104,8 +97,8 @@ The frozen run used a prior local baseline of quick 1,308 PASS / 1 host-symlink 
 with isolated mock, final wording/contract 156 PASS and Ruff. The subsequent
 continuity correction passed **1,362 quick tests / 1 host-symlink SKIP**, including
 isolated mock evaluation, plus Ruff; final quick wall was 281.54 seconds with four
-workers. Focused delivery controls stayed under two minutes. These are local
-mechanism checks, not a new model run or repair-quality measurement.
+workers. Focused delivery controls stayed under two minutes. These local
+mechanism checks are separate from the fresh 8/10 outcomes above.
 The [prior three-task run](history/2026-10-31-verification-reuse-1411-results.md)
 and [older full 20 run](history/2026-10-29-repair-dev20-results.md) remain closed
 historical context. Different task paths/settings and single attempts do not
@@ -126,7 +119,7 @@ and [focused diagnostic history](history/2026-10-30-sqlfluff-deadline-review.md)
 is not reconciled by this batch's settled usage.
 
 Fresh solves, seeded repairs, saved-patch evaluations, operator public comparisons
-and scripted local tests are distinct evidence. All 19 submissions above remain
+and scripted local tests are distinct evidence. The full20 submissions and both new 8/10 submissions remain
 unverified_delivery for registered original-case proof, independently of acceptance.
 Never expose private evaluator bodies, hidden tests or reference patches to the
 solver. Public PASS, successful delivery and safety PASS do not establish correctness.

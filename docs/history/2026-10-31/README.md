@@ -1,5 +1,6 @@
 # 2026-10-31 investigations
 
+- [Verification continuity: fresh task 8/10 results](../2026-10-31-verification-continuity-0810-results.md)
 - [Verification continuity: exact probes and rejected test proposals](../2026-10-31-verification-continuity.md)
 - [Full fixed dev20: correctness, repetition and completion](../2026-10-31-verification-reuse-dev20-results.md)
 - [Verification reuse: fresh 1/4/11 results](../2026-10-31-verification-reuse-1411-results.md)
