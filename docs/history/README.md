@@ -1,5 +1,6 @@
 # History
 
+- [November](2026-11/README.md)
 - [Runtime usability and local overhead](2026-10-29-runtime-usability-followup.md)
 
 - [October daily investigations](2026-10/README.md)

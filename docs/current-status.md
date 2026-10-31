@@ -1,6 +1,6 @@
 # Current status
 
-Updated: 2026-10-31. Runtime source owns behavior. Historical reports are evidence,
+Updated: 2026-11-01. Runtime source owns behavior. Historical reports are evidence,
 not an active queue.
 
 ## Product and working baseline
@@ -48,26 +48,37 @@ reporter's bytes/caller construction, which it explicitly left unverified. Resou
 remained available. This shows a verification-selection gap, not a proven model
 capability ceiling or the latest private failure's exact cause.
 
-The [saved-input diagnostic](history/2026-10-31-execution-linked-task8-diagnostic-results.md)
-is CLOSED on code a1af6c89: fixed candidate be082f27, public input 171, one GPT-5.4/
-xhigh attempt under USD2/four calls/12 actions/two probes/600 seconds. It used one
-call and an immediate report, **zero new reads/probes**, 35.937 seconds and
-USD0.1119475 in recorded generation usage. Count-endpoint billing and invoice
-reconciliation remain unverified. No patch mutation or independent evaluation ran.
+The user requested a follow-up at the actual active post-mutation decision.
+[Preparation](history/2026-11-01-task8-active-review-preparation.md) selects public
+input **138**, the first delivered state after the same candidate be082f27 was
+created. Its review has `context_handoff`, `mutation_result` and an active
+`behavior_change`; the original workflow gate is `needs_visible_checks`.
+Only public evidence before that boundary is admitted. Later check/probe PASS,
+the prior diagnostic report and private outcomes are excluded. Runtime is unchanged.
 
-The new review was accepted and linked the old helper/check receipts, but the
-predeclared new-case construction/execution criterion was not met. The model named
-unverified caller/sibling coverage while treating the existing OL helper plus source
-inference as sufficient. Its three rows contain no explicit untested case. Recognition
-and reference binding therefore did not produce exploration in this sample.
-The actual input's current review request contains only `probe_result`, with no
-`behavior_change`: the conditional post-mutation family recipe was delivered but
-not active at this finish checkpoint. Advisory reporting and the old check-then-submit
-plan also favor summarization. Their causal effect is unproven, but this was not a
-test of an active post-mutation review. Align the diagnostic checkpoint with that
-trigger before changing runtime rules or attributing failure to reasoning ability.
-Counterexample construction was not exercised; no further paid run is authorized
-by the unused allocation.
+The question is whether this active review leads to a materially unverified public
+case and actual execution. A needed replay of the old helper on the new patch is
+useful revalidation but does not meet that new-case criterion. Cases, execution,
+observed contradiction and interpretation are assessed separately. A report remains
+allowed immediately; no forced probe or case-specific hint is added. The historical
+trigger facts are preserved with current guidance, and diagnostic reporting/budget
+text is made neutral. This changes checkpoint and framing together, so it is not an
+isolated causal estimate of either change.
+
+Proposed scope remains one GPT-5.4/xhigh fixed-patch diagnostic, new USD2 cap,
+four model calls/12 actions/two probes/600 seconds, reads/searches/probes/report
+only. Patch mutation and independent evaluation are excluded. Preparation passed
+**24 mocked driver tests in 55.17 seconds**, Ruff and an offline audit of the first
+outgoing packet constructed from the actual saved input: active review and no
+future receipts. A fresh exact-scope cap confirmation remains before launch; no
+new paid execution has run. Prior allocations remain closed.
+
+The [input171 diagnostic](history/2026-10-31-execution-linked-task8-diagnostic-results.md)
+is CLOSED: accepted reference review, one immediate report, zero new reads/probes,
+35.937 seconds and USD0.1119475 recorded generation usage. Its conditional
+`behavior_change` recipe was not active, and the packet requested advisory reporting.
+It did not test the active post-mutation flow or demonstrate a reasoning ceiling.
+Count-endpoint billing and invoice reconciliation remain unverified.
 
 Final local checks: **92 focused PASS in 46.16 seconds**, **1,418 quick PASS /
 1 host-symlink SKIP in 402.42 seconds**, isolated mock evaluation and Ruff. Quick
@@ -81,9 +92,9 @@ The new execution-reference contract also needs discoverable source IDs. A bound
 index now links only retained repository source_spans to their prior public reads
 by exact scope/path/file hash/range, including inline delivery after segment reset.
 It adds no source text or edit permission and uses the same helper in the diagnostic.
-The sealed plan and exact approval live under `C:/pt/evidence8-review-20261031-v1/`;
-the closed run and public audit are linked in the diagnostic result above. The
-runtime remains unchanged by that execution and documentation follow-up.
+The closed input171 plan/approval remain under `C:/pt/evidence8-review-20261031-v1/`.
+The new active-input preparation uses `C:/pt/active8-review-20261101-v1/`; it never
+resumes or replaces the closed run. Runtime/task packages/grading remain unchanged.
 
 Relevant closed evidence:
 
