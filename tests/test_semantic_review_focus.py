@@ -11,8 +11,10 @@ from test_dev_planning import request as smoke_request
 from patchloop.artifacts import ArtifactStore
 from patchloop.dev import repair_guidance, runner
 from patchloop.dev import working_plan as plans
+from patchloop.dev.contracts import dev_tool_surface_hash
 from patchloop.dev.conversation import reconstruct_state
 from patchloop.dev.state import DevJournal
+from patchloop.dev.tools import dev_tool_schemas
 from patchloop.util import canonical_json, sha256_json
 
 BASE = "sha256:" + "a" * 64
@@ -51,6 +53,39 @@ def projection(journal, diff=CURRENT):
 
 def focus(journal, diff=CURRENT):
     return projection(journal, diff)["review_request"].get("behavior_change")
+
+
+def test_behavior_review_revision_changes_enabled_identity_without_new_schema(
+    tmp_path, monkeypatch,
+):
+    policies = ("none", plans.POLICY, plans.EVIDENCE_POLICY)
+    requests = {policy: smoke_request(tmp_path, policy) for policy in policies}
+    identities = {
+        policy: (runner._model_hash(request, None),
+                 dev_tool_surface_hash(planning_policy=policy))
+        for policy, request in requests.items()
+    }
+    schemas = {
+        policy: dev_tool_schemas(finish_enabled=True, check_ids=["public"], planning_policy=policy)
+        for policy in policies
+    }
+    before = plans.contract()
+    monkeypatch.setattr(plans, "BEHAVIOR_CHANGE_INSTRUCTIONS",
+                        plans.BEHAVIOR_CHANGE_INSTRUCTIONS + "\nPublic review revision.")
+    after = plans.contract()
+    assert before["behavior_change"]["instructions_hash"] != (
+        after["behavior_change"]["instructions_hash"]
+    )
+    after["behavior_change"]["instructions_hash"] = before["behavior_change"]["instructions_hash"]
+    assert after == before
+    for policy, request in requests.items():
+        revised = (runner._model_hash(request, None),
+                   dev_tool_surface_hash(planning_policy=policy))
+        for old, new in zip(identities[policy], revised, strict=True):
+            assert (old == new) == (policy == "none")
+        assert dev_tool_schemas(
+            finish_enabled=True, check_ids=["public"], planning_policy=policy,
+        ) == schemas[policy]
 
 
 @pytest.mark.parametrize("tool", ["edit_files", "replace_text"])

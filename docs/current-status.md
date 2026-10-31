@@ -83,12 +83,26 @@ them. Exact private assertions and actual/expected values remain external operat
 evidence and must not enter solver hints, public tests or runtime guidance.
 
 Keep the delivery correction without a repair-gain or causal efficiency claim.
-The next design questions differ: deriving affected input families from public
-source, and distinguishing public task requirements from stronger benchmark
-expectations. Do not treat the latter as generic reasoning failure or change grading
-from this audit alone. No runtime change or further execution was performed or
-scheduled. Task 12's oracle ambiguity, task 18's diagnostic delay and selected-test
-overlap remain open.
+The [affected-family review change](history/2026-10-31-affected-family-review.md)
+now replaces the existing post-edit guidance with a concrete scope comparison:
+derive the affected family from public definitions/registries/callers/tests,
+compare edited and already verified members, and inspect relevant unverified
+members while preserving the public caller/input construction/outcome assertion.
+Small finite families can share a parameterized check; large families use uncovered
+branch representatives. Existing adequate evidence is reused; missing setup stays
+an explicit assumption. This is guidance in the existing next decision, not automatic
+family extraction, a new tool/state/required check or a finish gate.
+
+The new review passed **66 focused tests in 21.10 seconds**, **1,363 quick tests /
+1 host-symlink SKIP** with isolated mock evaluation, and Ruff. Quick wall was
+310.94 seconds with four workers. Runtime is now
+`sha256:dcc04d586ddb7554c3fc2c735577f6ca91676b0dcb0b5ca172d53a0b0c6acaa7`.
+These delivery/identity checks are separate from model uptake and repair gain;
+no live run is included in this change. Public task requirements versus stronger
+benchmark expectations remain a separate issue: do not infer private APIs, treat
+their absence as generic reasoning failure or change grading from this audit alone.
+Task 12's oracle ambiguity, task 18's diagnostic delay and selected-test overlap
+remain open.
 
 ## Selected mechanisms and evidence limits
 

@@ -1,5 +1,6 @@
 # 2026-10-31 investigations
 
+- [Affected input families in the existing post-edit review](../2026-10-31-affected-family-review.md)
 - [Task 8/10: saved independent-failure attribution](../2026-10-31-continuity-0810-failure-attribution.md)
 - [Verification continuity: fresh task 8/10 results](../2026-10-31-verification-continuity-0810-results.md)
 - [Verification continuity: exact probes and rejected test proposals](../2026-10-31-verification-continuity.md)

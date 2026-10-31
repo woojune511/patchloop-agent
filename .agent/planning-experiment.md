@@ -74,11 +74,25 @@ There is no new durable state, tool, review call or semantic completion gate.
 The attached guidance uses that existing decision to compare changed success/failure
 meaning with public requirements, callers and pre-existing tests. Mutation intent,
 plan conclusions and new test expectations remain claims to review; old code is a
-comparison, not an automatic oracle. Connect a material change to a required
-outcome, refuting input and observable assertion, then choose an existing useful
-action. A discovered violation should lead to an executed regression, repair or
-undo, and checks of the resulting diff. Existing plan, concerns and observations
-remain intact; this projection does not extract or certify semantic requirements.
+comparison, not an automatic oracle. For type/option branches, dispatch tables or
+exception lists, derive the affected family from public definitions, registries,
+callers or existing parameterized tests. Compare that scope with edited members
+and adequate current-diff observations; the edited list alone cannot establish
+completeness. Use existing read/search when missing scope evidence could change
+the repair. For small finite families, group unverified members relevant to the
+changed rule in a parameterized probe/test; for large families, choose uncovered
+branch representatives. Preserve the publicly grounded caller, input construction
+and outcome assertion while varying the member, keep a normal control and disclose
+missing setup assumptions. Reuse adequate current-diff results.
+
+Connect a material success/failure or guard change to a refuting input and an
+assertion of the required outcome; state preservation alone does not establish
+success eligibility.
+Choose an existing useful action. A discovered violation should lead to an
+executed regression, repair or undo, and checks of the resulting diff. Existing
+plan, concerns and observations remain intact; this projection does not extract or
+certify semantic requirements or enumerate families automatically. There is no
+new plan field, tool, review round, probe quota or submission gate.
 The compact completion view preserves it. Planning OFF/thin have no such projection.
 
 ### Revision and submission evidence
