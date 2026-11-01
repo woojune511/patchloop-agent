@@ -1,5 +1,6 @@
 # 2026-11-01 investigations
 
+- [Completion reserve is required capacity, not remaining calls](../2026-11-01-completion-reserve-clarity.md)
 - [Failed-eight rerun: task13 passes, seven failures remain](../2026-11-01-failed8-rerun-results.md)
 - [Failed-eight public audit: test discovery and expectation grounding](../2026-11-01-failed8-and-test-discovery.md)
 - [Task18 continuity run: retained findings, independent PASS, one redundant probe](../2026-11-01-repair-continuity-task18-results.md)

@@ -80,7 +80,8 @@ def force_probe(request: dict) -> tuple[dict, dict]:
         require(type(budget.get(name)) is int and budget[name] > 0,
                 "positive repair budget required")
     horizon = state.get("action_horizon", {})
-    minimum = horizon.get("minimum_completion_calls")
+    minimum = horizon.get("completion_reserve", {}).get("minimum", {}).get(
+        "model_calls", horizon.get("minimum_completion_calls"))
     require(horizon.get("completion_possible") is True and type(minimum) is int
             and minimum > 0 and min(budget["model_calls"], budget["tool_actions"]) > minimum,
             "one probe plus minimum completion must fit")

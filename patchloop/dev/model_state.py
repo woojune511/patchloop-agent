@@ -47,6 +47,28 @@ def _select(value: dict[str, Any], keys: tuple[str, ...]) -> dict[str, Any]:
     return {key: value[key] for key in keys if key in value}
 
 
+def _completion_reserve(horizon: dict[str, Any]) -> dict[str, Any]:
+    """Label forecast requirements separately from the remaining run resources."""
+    reserve = {}
+    for label, calls, actions in (
+        ("minimum", "minimum_completion_calls", "minimum_completion_tool_actions"),
+        ("with_bounded_recovery", "completion_budget_calls", "completion_budget_tool_actions"),
+    ):
+        values = {name: horizon[key] for name, key in (
+            ("model_calls", calls), ("tool_actions", actions),
+        ) if key in horizon}
+        if values:
+            reserve[label] = values
+    if reserve:
+        reserve["interpretation"] = (
+            "Capacity needed for current completion obligations, not remaining-call or "
+            "action caps. A reserve of 1 does not mean only one call remains. "
+            "remaining_budget gives remaining totals; exploration_state and "
+            "available_tool_names describe further offered work."
+        )
+    return reserve
+
+
 def _check_followup(view: dict[str, Any], results: dict[str, dict[str, Any]]) -> None:
     """Keep unchecked repairs separate from observed current failures.
 
@@ -162,9 +184,9 @@ def compact_model_state(
     if "evidence_ledger" in view:
         view["evidence_ledger"] = _select(view["evidence_ledger"], ("search_summary",))
     if "action_horizon" in view:
+        reserve = _completion_reserve(view["action_horizon"])
         view["action_horizon"] = _select(view["action_horizon"], (
-            "minimum_completion_calls", "completion_budget_calls", "completion_possible",
-            "minimum_completion_tool_actions", "completion_budget_tool_actions",
+            "completion_reserve", "completion_possible",
             "protected_completion_possible", "mutation_completion_horizon", "exploration_state",
             "repair_inspection", "original_failure_diagnostic", "observation_correction",
             "repair_path_diagnosis", "helper_correction", "first_observation",
@@ -172,6 +194,8 @@ def compact_model_state(
             "closure_reason", "tools_closing_after_this_turn", "tool_closure_prediction_basis",
             "tool_policy_transition", "max_parallel_reads_this_turn", "action_budget",
         ))
+        if reserve:
+            view["action_horizon"]["completion_reserve"] = reserve
     if "mutation_readiness" in view:
         view["mutation_readiness"] = _select(view["mutation_readiness"], (
             "state", "current_anchor_evidence_paths",

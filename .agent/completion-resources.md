@@ -12,6 +12,25 @@ diagnostics consume ordinary available resources; they receive no extra budget.
 and cost. `completion_reproduction.py` projects public invocation evidence and
 durable diagnostic consumption. Runtime hashes bind these changes on resume.
 
+## Model-facing reserve and remaining allowance
+
+The model view groups the completion forecasts under
+`action_horizon.completion_reserve`: `minimum` is the successful required path;
+`with_bounded_recovery` includes the forecast's bounded recovery paths. Each reports
+`model_calls` and, when supplied, `tool_actions`. These are capacity requirements,
+not remaining-call/action caps. A reserve of one does not mean only one call remains.
+
+`remaining_budget` retains actual remaining totals. `action_budget` retains ordinary
+calls, protocol correction reservation and per-action successor forecasts.
+`exploration_state`, closure reasons and `available_tool_names` still describe what
+the runner offers under the current constraints. A reserve does not require immediate
+submission, grant extra calls or override cost, time or tool admission.
+
+Only the compact model projection replaces the four flat `minimum_completion_*`
+and `completion_budget_*` fields. Canonical context, journal/recovery fields and
+policy calculations retain their original names and values. Missing dimensions stay
+absent; zero stays zero. Saved-request diagnostics read both current and legacy views.
+
 ## Early execution and receipt reuse
 
 The projection marks `early_replay_reusable` only when every case is a healthy

@@ -65,14 +65,18 @@ No identical same-diff AST/selection repeat was found, which does not exclude
 semantic repetition or overlapping test coverage. Private failing assertions were
 not inspected in this rerun analysis.
 
-The next question is **resource communication at an otherwise eligible finish**.
-Task8 cited a one-call completion stage despite 32 calls, 31 exploration calls,
+The [completion-reserve clarification](history/2026-11-01-completion-reserve-clarity.md)
+addresses task8's one-call-stage explanation despite 32 calls, 31 exploration calls,
 1,209 solver seconds and USD3.504356 remaining, with probes and edits offered.
-The delivered `completion_budget_calls=1` represents a completion reservation,
-not a remaining-call cap. Its mistaken explanation is observed; field causality
-and the reason for the private FAIL are not established. Prefer clarifying or
-removing redundant reservation terminology before raising limits or adding gates.
-No subsequent paid diagnostic is scheduled or funded by the closed remainder.
+The model view now groups minimum and bounded-recovery requirements under
+`completion_reserve`, explicitly distinct from `remaining_budget` and offered tools.
+Canonical accounting, admission, limits, recovery and finish eligibility are unchanged.
+Local request controls and the saved public budget projection verify the distinction;
+152 focused and 1,504 fast-suite tests pass, with one host symlink skip; Ruff and
+isolated mock evaluation pass. Live uptake, field causality and the private FAIL's
+cause remain unestablished.
+No new paid experiment is run or funded by the closed remainder. The next question
+is whether the agent chooses useful further work when resources and evidence warrant it.
 
 Keep [repair-plan delivery](history/2026-11-01-repair-planning-continuity.md),
 [input correspondence](history/2026-11-01-pre-edit-task-correspondence.md), and
