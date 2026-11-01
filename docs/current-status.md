@@ -29,50 +29,58 @@ Keep the integrated development loop: fix observed correctness, reliability and
 completion failures, validate locally, then exercise a frozen configuration.
 A separate one-factor study is not required for every routine change.
 
-The active question is whether a repair explains the original public input path,
-not only a helper with different inputs. The [latest task8 run](history/2026-11-01-completion-reserve-task8-results.md)
-at a1833855 is CLOSED: independent FAIL, safety PASS, USD1.797247, 16 model calls,
-23 actions and 786.524 seconds. It used the clarified remaining budget for further
-checks, but repaired array/bytearray inputs without explaining the reported bytes
-failure. Its USD4 allocation and unused USD2.202753 are closed.
+The [causal-link task8 run](history/2026-11-01-causal-link-task8-results.md) is CLOSED.
+Code 9b2e2a73 ran fresh dev-train task8 (pydicom1413) once without old patches,
+helpers, notes or counterexample hints: **independent FAIL, safety PASS**, public
+213 PASS, 11 model calls, 16 actions, one edit, USD0.8620045, 393.872 task seconds.
+All 11 input counts and generation calls are settled and actual public inputs match
+the frozen projection. The new USD4 allocation and unused USD3.1379955 are closed;
+there was no retry, extra evaluation, runtime edit or operator hint during execution.
 
-The [unchanged added test](history/2026-11-01-task8-public-test-comparison.md)
-failed on base and passed on the submission, establishing that buffer repair only.
-The [bytes/caller follow-up](history/2026-11-01-task8-bytes-call-path.md) preserved
-serialized bytes and sequence-item add_new -> parent save_as. One payload byte
-changed to 0x5c made OL fail on both base and submission with MultiValue/TypeError;
-ordinary OL and OB/OF controls passed. The setter splits bytes before the patched
-conversion, which receives a list too late. This public reconstruction used no
-provider call or independent evaluation; the reporter's complete setup is missing.
-The exact private failing assertion remains uninspected for this submission.
+The [guidance change](history/2026-11-01-causal-link-repair-guidance.md) is implemented:
+existing hypothesis links public caller/input/setup -> cause precondition -> wrong
+result; unexplained intermediate states direct existing reads/searches to their
+producing step. expected_behavior preserves representation/caller while comparing
+a source-supported discriminating case and normal control. No new fields, gates,
+tools, required probe, model step or resource increase. Source evidence still permits
+direct repair. Local validation: 54 focused PASS in 19.089s; 1,508 quick PASS/one
+host skip across the full run and corrected description-pin rerun; seven schemas
+match prior bytes after restoring only the two intended descriptions. Ruff and
+isolated mock EVALUATOR_PASS (safety NOT_RUN) passed. These establish compatibility.
 
-The [causal-link guidance change](history/2026-11-01-causal-link-repair-guidance.md)
-replaces the general correspondence reminder with a brief contrast in the existing
-hypothesis: public caller/input/setup -> cause precondition -> wrong result, backed
-by source/results and explicit gaps. If an intermediate state is unexplained,
-existing reads/searches should locate its producing caller, assignment or conversion
-before adopting a helper as the repair target. expected_behavior distinguishes a
-source-supported discriminating case from a relevant normal control, retaining the
-public representation and caller. There are no new fields, gates, tools, required
-probe, model step or resource increase. Source evidence still permits direct repair.
+Live delivery was verified in pre-edit calls 1-8 and mutation schemas in calls 2-11,
+but autonomous original-path discovery did not occur. The agent read conversion and
+writer code, not the earlier value setter. Its plan generalized the report's
+serialized bytes to bytes-like input, then adopted direct array/bytearray helper
+failures for both OL and OB as the repair target. That leaves the report's OL-only
+failure / OB-and-OF success unexplained. Ordinary bytes already passed on base.
+The patch repaired the helper; replay on the changed diff succeeded. Finish called
+that helper sufficient while acknowledging missing bound original verification.
+The final input still offered further reads/searches/probes/edits and showed 30
+remaining calls, 1,104 solver seconds and USD3.211710: exhaustion did not force it.
 
-Focused request-delivery controls pass: 54 tests in 19.089 seconds, including both
-verification policies, context policies and agent policies. The quick suite reaches
-1,508 PASS/one host skip across the original run and corrected description-pin
-rerun. All seven pinned schemas match the prior bytes when only the two intended
-descriptions are restored. Ruff passes; mock smoke reaches isolated EVALUATOR_PASS
-(safety NOT_RUN). These establish compatibility, not autonomous discovery.
+Decision: wording delivery alone did not change target selection in this attempt.
+Do not claim quality or efficiency gain from fewer calls or lower cost. Next question
+is where a public requirement becomes a broader repair target and why contradictory
+conditions are treated as a formal verification gap instead of a reason to inspect
+another producing step. Do not prescribe another reminder, gate, memory layer or
+cap increase without evidence. No additional paid run is scheduled. One selected
+stochastic failure does not establish an inherent reasoning ceiling or a universal
+rejection of the change. The new private failing assertions were not inspected.
 
-Next: freeze the validated code and prepare one fresh task8 solve with the same
-model, policies and limits. No prior patch, helper, diagnostic output, notes or
-counterexample hint enters solver context. Inspect actual source selection,
-causal correspondence, executed discriminating checks, repair and independent result;
-wording compliance or more probes alone is insufficient. A new positive cost cap
-must be authorized after preflight; no new provider call has been made.
+The [previous task8 run](history/2026-11-01-completion-reserve-task8-results.md)
+remains closed: independent FAIL/safety PASS, USD1.797247, 16 calls, 786.524s.
+Its [added-test comparison](history/2026-11-01-task8-public-test-comparison.md)
+proved a buffer repair only. The [bytes/caller comparison](history/2026-11-01-task8-bytes-call-path.md)
+preserved serialized bytes and sequence-item add_new -> parent save_as, finding
+OL failure on base and that earlier submission when one payload byte was 0x5c.
+The latest submission still leaves that setter before its patched conversion;
+source inspection predicts the same early transformation remains. The operator did
+not execute a new counterexample on this latest patch. This is not exact private
+assertion attribution, and the reporter's complete data/setup remain unavailable.
 
 Keep [completion-reserve clarity](history/2026-11-01-completion-reserve-clarity.md),
 [repair-plan delivery](history/2026-11-01-repair-planning-continuity.md),
-[input correspondence](history/2026-11-01-pre-edit-task-correspondence.md),
 [capability-aligned review](history/2026-11-01-capability-aligned-verification-review.md),
 and [test filename/expectation corrections](history/2026-11-01-failed8-and-test-discovery.md).
 The [failed-eight rerun](history/2026-11-01-failed8-rerun-results.md) remains CLOSED:

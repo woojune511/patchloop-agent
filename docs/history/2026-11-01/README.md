@@ -1,5 +1,6 @@
 # 2026-11-01 investigations
 
+- [Causal-link task8: helper repair still replaces original-path diagnosis, independent FAIL](../2026-11-01-causal-link-task8-results.md)
 - [Repair selection: connect public inputs, cause preconditions and observed results](../2026-11-01-causal-link-repair-guidance.md)
 - [Task8 bytes and original callers: 0x5c reproduces failure on base and submitted patch](../2026-11-01-task8-bytes-call-path.md)
 - [Task8 unchanged public test: base assertion FAIL, candidate PASS, original link unverified](../2026-11-01-task8-public-test-comparison.md)
