@@ -73,10 +73,26 @@ The model view now groups minimum and bounded-recovery requirements under
 Canonical accounting, admission, limits, recovery and finish eligibility are unchanged.
 Local request controls and the saved public budget projection verify the distinction;
 152 focused and 1,504 fast-suite tests pass, with one host symlink skip; Ruff and
-isolated mock evaluation pass. Live uptake, field causality and the private FAIL's
-cause remain unestablished.
-No new paid experiment is run or funded by the closed remainder. The next question
-is whether the agent chooses useful further work when resources and evidence warrant it.
+isolated mock evaluation pass.
+
+The [fresh task8 follow-up](history/2026-11-01-completion-reserve-task8-results.md)
+at a1833855 is CLOSED: **independent FAIL, safety PASS**, USD1.797247, 16 model calls,
+23 actions and 786.524 seconds. All 16 dispatched inputs carry the new reserve and
+match the frozen projection; counts and usage are settled. At reserve one / 30 calls
+left it chose a probe, then further reads, a new writer test, recheck and helper
+replay. The final submission at 25 calls left cited low expected information value
+and the missing original reproduction, not a one-call cap. The baseline already
+used one probe before its mistaken final explanation; more work alone is not gain.
+
+The base OL-bytes approximation already wrote successfully. Later checks addressed
+array/bytearray inputs; the original failure-to-repair transition remains unverified.
+Public checks rose from 212 to 213 PASS, with the writer file explicitly selected;
+truncated stdout and absent node telemetry limit exact collection claims. The next
+question is repair selection after the base example succeeds and the judgment that
+further original-case discrimination is unhelpful. Keep the clarification; no cap
+increase or added finish gate follows from this single attempt. Field causality and
+the private FAIL's exact cause remain unestablished. The new USD4 allocation and
+unused USD2.202753 are closed; no further paid work is scheduled.
 
 Keep [repair-plan delivery](history/2026-11-01-repair-planning-continuity.md),
 [input correspondence](history/2026-11-01-pre-edit-task-correspondence.md), and
