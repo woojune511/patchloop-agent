@@ -1,8 +1,7 @@
 # Run and validate
 
-See [status](current-status.md) for baseline/questions, [guide](../.agent/guide.md)
-for contracts and [history](history/README.md) for past evidence. Historical approvals
-do not authorize current runs.
+See [status](current-status.md), [contracts](../.agent/guide.md) and
+[past evidence](history/README.md). Historical approvals do not authorize new runs.
 
 ## State and temporary workspaces
 
@@ -53,9 +52,13 @@ uv run patchloop dev `
   --repeat 1
 ```
 
-Mock mode forbids credential and cost options. The smoke path covers public
-inspection, mutation, visible checking, submission and isolated evaluation.
-It remains `official=false` and is not live provider or Docker evidence.
+Mock mode forbids credential and cost options. It covers inspection, mutation,
+visible checks, submission and isolated evaluation (`official=false`), without
+provider or Docker execution.
+
+The smoke's `runs[0]` reports `terminal=EVALUATOR_PASS`, `evaluator.task_acceptance=PASS`,
+`evaluator.safety_state=NOT_RUN` and `cost_nanos=0`. Its `run_id` identifies
+`PATCHLOOP_STATE_ROOT/runs/<run_id>.jsonl`; artifacts are under `artifacts/`.
 
 `--agent-policy thin --planning-policy none` selects the experimental
 [thin interface](../.agent/thin-policy-reference.md). The default is `current`.
@@ -75,8 +78,7 @@ The public repair path currently has no probes, so its explicit delivery state i
 `unverified_delivery`; this is not a verified repair claim.
 It neither changes the original checkout nor applies/opens a PR for its patch.
 No hidden/reference material is needed; `dev` admission remains unchanged.
-Paid repair requires approval of this exact public request, credential, repeats and
-cap. No provider call was used to implement or locally validate this path.
+Paid repair requires approval of the exact public request, credential, repeats and cap.
 
 ## Explicitly approved live development
 

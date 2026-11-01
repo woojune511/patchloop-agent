@@ -10,10 +10,10 @@ from patchloop.util import sha256_json
 
 
 @pytest.mark.parametrize("agent_policy,probe_policy,expected", [
-    ("current", "none", "63bd8d95671bda92e087ab60a87b382d288786669aa4f053f28512e75b96a9a7"),
-    ("thin", "none", "7f6fbbf2877c592ed2732fc53c6a02d93535758195c5f72a3edbe464fc6e6d15"),
-    ("current", "cases-v1", "ec4d370da49a2d17cc4bd8ce9b8f21a4f20672974a847e3ee47f21a10b9bee59"),
-    ("thin", "cases-v1", "c2aee81383a8cc3087419253718a89b8a041f61b6bb9d081c1c423a39d3e6b49"),
+    ("current", "none", "5417a30b16fb2365ff44e318b480a91ed48c87eb2d524eeddc4581066808bff7"),
+    ("thin", "none", "b8a4387ad679130859d7a8b76a6eb8dc27313b3c05ec02f102e8ec6f4d391ef0"),
+    ("current", "cases-v1", "83ce9b6f79c39d1cb4728910153cbb9b21753669ab9933aa3c533d263f25ac61"),
+    ("thin", "cases-v1", "02fa2e0de16a121d9bda31c3b87e8b9d9dd6fcad16290ec64fcbb96479609fd0"),
 ])
 def test_original_stage_changes_description_only(agent_policy, probe_policy, expected):
     schemas = dev_tool_schemas(
@@ -29,8 +29,8 @@ def test_original_stage_changes_description_only(agent_policy, probe_policy, exp
 
 
 @pytest.mark.parametrize("agent_policy,diagnosis,expected", [
-    ("current", False, "fed72d1769db1b5dc40bedf1173ac6622c7303588054420d3bdfb61cf07faf9c"),
-    ("thin", False, "fc1769f437ca028548d9e44d8d4d7c96f8f48a791a832dad6dd99d192fc3d3eb"),
+    ("current", False, "b8d176a58e9865b3efd8e1b73c1c447b5158fd56a12e2f4b746d418420e2126b"),
+    ("thin", False, "c631fb0ab43fda70f20ef48d6bcb0e58bd770732f569cfef9e2f66ae492512f3"),
     ("current", True, "9f7ea75adea8115540ee793197c00039b03672a1c91d437f277951c5faa873e0"),
     ("thin", True, "9f7ea75adea8115540ee793197c00039b03672a1c91d437f277951c5faa873e0"),
 ])

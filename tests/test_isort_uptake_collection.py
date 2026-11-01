@@ -122,7 +122,8 @@ def setup(source, tmp_path, monkeypatch):
     def fork(*args, **kwargs):
         assert kwargs["provider_free"] is False
         assert kwargs["credential_file"] == tmp_path / "absent.env"
-        assert kwargs["deadline"].remaining_seconds() <= 720
+        deadline = kwargs["deadline"]
+        assert deadline.expires_at <= deadline.clock() + 720
         return SimpleNamespace()
 
     def row(branch, group, oracle, *, reviewer):

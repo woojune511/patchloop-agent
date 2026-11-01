@@ -112,8 +112,19 @@ def offline_environment(
 ):
     require(isinstance(client, ScriptedClient) and branch.provider_free, "offline branch required")
     outcomes = iter(check_outcomes or [True] * 20)
-    calls = {"checks": [], "public": [], "evaluations": [], "probes": []}
+    calls = {
+        "checks": [], "public": [], "evaluations": [], "probes": [],
+        "deadline_windows": {"public": [], "evaluations": []},
+    }
     original_probe = runner.DockerProbeSandbox
+
+    def record_deadline(phase, deadline):
+        now = deadline.clock()
+        calls[phase].append(max(0.0, deadline.expires_at - now))
+        # Keep the endpoints too: subtracting coarse float ticks can round above the cap.
+        calls["deadline_windows"][phase].append(
+            {"observed_at": now, "expires_at": deadline.expires_at}
+        )
 
     class Sandbox:
         official, backend, supports_execution_deadline = False, "docker", True
@@ -148,7 +159,7 @@ def offline_environment(
 
     def public(branch, assessment, deadline):
         require(hasattr(branch, "grade"), "public execution before EUR seal")
-        calls["public"].append(deadline.remaining_seconds())
+        record_deadline("public", deadline)
         rows = [
             {"case": k, "outcome": v if public_pass else "ACCEPT"}
             for k, v in assessment["primary_expected"].items()
@@ -167,7 +178,7 @@ def offline_environment(
     def evaluate(engine, *args, **kwargs):
         require(hasattr(branch, "grade"), "evaluation before EUR seal")
         require(len(calls["public"]) == 1, "evaluation before public terminal result")
-        calls["evaluations"].append(kwargs["deadline"].remaining_seconds())
+        record_deadline("evaluations", kwargs["deadline"])
         return SimpleNamespace(
             scope_compliant_success=True,
             verdicts=Verdicts(

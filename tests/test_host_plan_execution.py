@@ -288,7 +288,10 @@ def test_pair_full_flow_native_preservation_null_plan_handoff_and_review_order(
         assert result["provider_calls"] == result["billed_cost_nanos"] == 0
         assert calls["checks"] == ["existing-unit-tests"]
         assert len(calls["public"]) == len(calls["evaluations"]) == 1
-        assert 0 < calls["public"][0] <= 60 and 0 < calls["evaluations"][0] <= 330
+        for phase, cap in (("public", 60), ("evaluations", 330)):
+            window, = calls["deadline_windows"][phase]
+            now = window["observed_at"]
+            assert now < window["expires_at"] <= now + cap
         events = branch.journal.events()[branch.inherited_events :]
         kinds = [e["event_type"] for e in events]
         assert kinds.index("host_plan_EUR_sealed") < kinds.index("host_plan_terminal_public")

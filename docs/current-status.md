@@ -131,6 +131,8 @@ attribution remains separate from solver feedback.
 
 Do not start Docker Desktop or pull/build evaluator images automatically. Preserve
 exact action/recovery identities, zero SDK retries and shared stop on uncertainty.
-The current20 are development-exposed, not held out. Repeated performance, general
-improvement and Linux CI remain unverified. [History](history/README.md) indexes
+The current20 are development-exposed, not held out. Repeated performance and general
+improvement remain unverified. Ubuntu/Windows integration validation is tracked in
+[PR #23](https://github.com/woojune511/patchloop-agent/pull/23).
+[History](history/README.md) indexes
 closed records; their approvals and next steps do not carry forward.

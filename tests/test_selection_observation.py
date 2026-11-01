@@ -199,4 +199,3 @@ def test_collection_stops_remaining_arm_after_uncertainty(tmp_path, monkeypatch)
         "stop_remaining": True, "terminal": "COUNT_UNCERTAIN"})
     result = d.collect(tmp_path / "plan/manifest.json", "hash", d.PROFILE.invocation_cap)
     assert calls == ["A"] and len(result["rows"]) == 1
-

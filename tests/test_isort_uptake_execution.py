@@ -450,7 +450,9 @@ def test_inherited_limits_and_time_not_reset(source, tmp_path):
     assert branch.request.limits.max_protocol_recoveries == 0
     assert branch.request.limits.wall_time_seconds == old.limits.wall_time_seconds
     assert branch.request.evaluation_reserve_seconds == 0
-    assert 0 < branch.solver_deadline.remaining_seconds() <= 281
+    deadline = branch.solver_deadline
+    now = deadline.clock()
+    assert now < deadline.expires_at <= now + 281
     assert group.deadline.expires_at == group.started + 720
     assert branch.request.repair_recheck == old.repair_recheck is True
 
@@ -662,7 +664,10 @@ def test_terminal_phase_deadlines_are_separate_inside_overall_time(source, tmp_p
 
     def evaluate(engine, *a, **k):
         deadline = k["deadline"]
-        assert 0 < deadline.remaining_seconds() <= 330
+        # Coarse clocks may repeat a tick: (1900.001 + 330) - 1900.001
+        # is 330.0000000000002. Compare absolute bounds without subtraction.
+        now = deadline.clock()
+        assert now < deadline.expires_at <= now + 330
         assert deadline.expires_at <= group.deadline.expires_at
         seen.append("evaluate")
         return evaluation(engine, *a, **k)
@@ -672,7 +677,8 @@ def test_terminal_phase_deadlines_are_separate_inside_overall_time(source, tmp_p
 
         def probe(instance, *a, **k):
             deadline = k["deadline"]
-            assert 0 < deadline.remaining_seconds() <= 30
+            now = deadline.clock()
+            assert now < deadline.expires_at <= now + 30
             assert deadline.expires_at <= group.deadline.expires_at
             seen.append("oracle")
             return probe_run(instance, *a, **k)
@@ -684,5 +690,5 @@ def test_terminal_phase_deadlines_are_separate_inside_overall_time(source, tmp_p
             result = execution.run_row(
                 branch, group, "SYNTHETIC_ORACLE", reviewer=execution.inert_reviewer, client=client
             )
-    assert seen == ["oracle", "evaluate"]
+    assert seen == ["oracle", "evaluate"], result
     assert result["result"]["terminal"] == "EVALUATOR_PASS", result
