@@ -60,8 +60,12 @@ check/report/submission gate or task-specific expected answer is added.
 
 ## Delivery, identity and isolation
 
-The host copies the stdlib-only helper beside the read-only trusted runner and
-binds its bytes and report cap in `probe_profile()`. It changes the runtime/profile
+The host copies the stdlib-only helper and shared `probe_api.py` contract beside
+the read-only trusted runner, and binds their bytes and report cap in `probe_profile()`.
+`helper_api_hash` binds the same signature/limit definitions used by model descriptions
+and fresh observer validation. The setup wrapper reports precise binding errors in
+bounded `api_error` metadata; this is diagnostic evidence, not target nonexecution.
+It changes the runtime/profile
 hash, without changing the container's network, filesystem, process/thread or time
 limits. The installed base image needs no build. New preparations bind the new
 runtime; consumed packets remain closed and cannot be resumed across this change.

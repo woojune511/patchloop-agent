@@ -23,7 +23,7 @@ from diagnostics import model_state_sampler as design
 from patchloop.artifacts import ArtifactStore
 from patchloop.deadline import ExecutionDeadline
 from patchloop.dev import runner as loop
-from patchloop.dev.contracts import PublicTurnDecision, RequestedTool
+from patchloop.dev.contracts import DevLimits, PublicTurnDecision, RequestedTool
 from patchloop.dev.conversation import reconstruct_state
 from patchloop.errors import ContractError
 from patchloop.runtime import repository_root
@@ -97,7 +97,7 @@ def initializer(plan, cell, root, workspace, package, sandbox, **kwargs):
     payload["remaining_budget"].update(
         model_calls=40 - counters.model_calls,
         tool_actions=100 - counters.tool_actions,
-        accepted_mutations=4,
+        accepted_mutations=DevLimits().max_accepted_mutations,
         active_wall_time_seconds=1800,
     )
     request["input"][1]["content"] = canonical_json(payload)

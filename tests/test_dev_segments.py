@@ -20,7 +20,7 @@ from patchloop.agent.model import ModelTurnError
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import Artifact
 from patchloop.dev import runner, segments
-from patchloop.dev.contracts import DevRunRequest
+from patchloop.dev.contracts import DevModelTurn, DevRunRequest, RequestedTool
 from patchloop.dev.conversation import (
     assemble_model_input,
     history_metadata,
@@ -74,12 +74,20 @@ def configured(monkeypatch, tmp_path, *, planning="none", incomplete_at=(), over
                                  for g in groups for s in g["inline_spans"]]
         turn = script.next_turn(canonical_json(state), payload["tools"])
         if with_notes and number == 1:
+            # Record source-backed notes on an offered inspection before the
+            # annotation-free edit, so the edit really exercises their expiry.
+            turn = DevModelTurn(tool_calls=[RequestedTool(
+                name="read_file", action_id="notes-before-edit",
+                arguments={"path": script.mutation.path, "start_line": 1, "end_line": 40},
+                turn_decision={"mode": "inspect", "basis": "Retain the observed parser premise.",
+                               "evidence_goal": "Compare its source before the planned edit."},
+            )])
             turn.tool_calls[0].turn_decision.memory_update = {
                 "findings": [{"note_id": None, "statement": statement, "evidence": [{
                     "kind": "source", "path": script.mutation.path,
                     "start_line": line, "end_line": line,
-                }]} for line, statement in [(1, "The module imports csv."),
-                                            (8, "The loop splits physical lines.")]],
+                }]} for line, statement in [(3, "The module imports csv."),
+                                            (10, "The loop splits physical lines.")]],
                 "open_question": "Does the new parser preserve quoted newlines?",
             }
         calls = [ProviderCall(c.name, c.action_id, runner._provider_tool_arguments(c))
@@ -117,7 +125,9 @@ def test_real_mock_smoke_reaches_isolated_acceptance(tmp_path, planning):
     result = runner.run_dev(request)["runs"][0]
     assert result["terminal"] == "EVALUATOR_PASS", result
     assert result["evaluator"]["safety_state"] == "NOT_RUN"
-    assert result["context_management"]["segment_count"] == 2
+    assert result["context_management"]["transition_reasons"] == [
+        "initial", "repair_stage_entered", "repair_stage_returned", "completion_stage_entered",
+    ]
 
 
 def test_request_bytes_are_final_utf8_not_character_or_token_estimates():
@@ -183,23 +193,25 @@ def test_real_gateway_mock_provider_reaches_handoff_and_submission(
     assert len(inputs) == len(counted) == 4
     assert inputs == counted
     assert result["context_management"]["transition_reasons"] == [
-        "initial", "major_result_followup_completed"]
+        "initial", "repair_stage_entered", "repair_stage_returned", "completion_stage_entered"]
     # Last input starts a fresh segment: current check result is quoted, not a pending call.
     assert not any(i.get("type") in {"reasoning", "function_call", "function_call_output"}
                    for i in inputs[-1])
     quoted = list(public_exchanges(inputs[-1], archive_kind=PUBLIC_EVIDENCE_KIND))
-    assert len([i for i in quoted if i["type"] == "function_call_output"]) == 1
+    assert not quoted  # Completion carries the bounded current check in its state.
+    assert views[-1]["latest_tool_results"][0]["tool"] == "run_check"
     for view in views:
         assert view["public_task"]["task_id"] == "csv-quoted-newline"
         assert "current_diff" in view and "remaining_budget" in view
         assert view["working_notes"]["findings"] == []
-        assert "recent_inspection_outcomes" in view["evidence_ledger"]
+        if "evidence_ledger" in view:
+            assert "recent_inspection_outcomes" in view["evidence_ledger"]
     assert views[-1]["visible_check_status"][0]["status"] == "PASS"
     assert bool(views[-1].get("working_plan")) == (planning != "none")
     if planning != "none":
         assert all(v["working_plan"]["policy"] == planning for v in views)
         assert views[-1]["working_plan"]["plan"]["revision"] >= 2
-        assert "context_handoff" in views[-1]["working_plan"]["review_request"]["reasons"]
+        assert "first_ready_to_submit" in views[-1]["working_plan"]["review_request"]["reasons"]
     journal, store = records(request)
     for event in journal.events():
         if event["event_type"] == "turn_started":
@@ -241,7 +253,7 @@ def test_crash_recovery_never_repeats_provider_mutation_or_handoff(tmp_path, mon
     plans = [e["payload"]["turn_id"] for e in journal.events()
              if e["event_type"] == "working_plan_updated"]
     assert len(plans) == len(set(plans)) == 4
-    assert len([e for e in journal.events() if e["event_type"] == segments.EVENT]) == 2
+    assert len([e for e in journal.events() if e["event_type"] == segments.EVENT]) == 4
 
 
 def test_giant_incomplete_is_not_counted_and_original_correction_survives(tmp_path, monkeypatch):
@@ -253,7 +265,8 @@ def test_giant_incomplete_is_not_counted_and_original_correction_survives(tmp_pa
     assert len(inputs) == len(counted) == 5
     assert all(segments.request_sizes({"input": i})["largest_encrypted_item_bytes"]
                <= segments.MAX_ENCRYPTED_ITEM_BYTES for i in counted)
-    assert "max_output_tokens" in canonical_json(views[2]["recent_attempt_result_next_question"])
+    assert "max_output_tokens" in views[2]["protocol_correction"]["issue"]
+    assert views[2]["recent_attempt_result_next_question"][-1]["result"] == "incomplete_response"
     assert not any(c["attempt"] == "protocol"
                    for c in views[3]["recent_attempt_result_next_question"])
     assert views[2]["remaining_budget"]["consecutive_protocol_corrections"] == 0
@@ -272,18 +285,20 @@ def test_repeated_incomplete_cannot_reset_protocol_budget(tmp_path, monkeypatch)
 
 
 def test_token_trigger_recounts_new_input_but_not_a_new_model_turn(tmp_path, monkeypatch):
-    request, inputs, counted, _ = configured(monkeypatch, tmp_path)
+    # Add a read inside repair so overflow occurs on an existing native segment,
+    # not on the already fresh repair-stage seed (which correctly stops).
+    request, inputs, counted, _ = configured(monkeypatch, tmp_path, with_notes=True)
     count = runner.OpenAIResponsesAdapter.count_input_tokens_v2
 
     def tokens(self, payload, **kw):
         normal = count(self, payload, **kw)
-        return 60_001 if len(counted) == 2 else normal
+        return 60_001 if len(counted) == 3 else normal
     monkeypatch.setattr(runner.OpenAIResponsesAdapter, "count_input_tokens_v2", tokens)
     result = runner.run_dev(request)["runs"][0]
     assert_submitted(result)
-    assert len(inputs) == 4 and len(counted) == 5
+    assert len(inputs) == 5 and len(counted) == 6
     assert "input_tokens" in result["context_management"]["transition_reasons"]
-    assert result["call_counts"]["model"] == 4
+    assert result["call_counts"]["model"] == 5
 
 
 @pytest.mark.parametrize("resource", ["bytes", "tokens"])
@@ -380,8 +395,12 @@ def test_major_result_waits_for_next_normal_decision_and_completed_batch(tool, s
 
 def test_notes_are_rebound_or_expired_not_resurrected_in_new_segment(tmp_path, monkeypatch):
     from repair_mechanism_expectations import JUDGMENT
-    request, _, _, views = configured(monkeypatch, tmp_path, with_notes=True)
-    assert_submitted(runner.run_dev(request)["runs"][0])
+    request, inputs, counted, views = configured(monkeypatch, tmp_path, with_notes=True)
+    result = runner.run_dev(request)["runs"][0]
+    assert_submitted(result)
+    assert inputs == counted and len(inputs) == 5
+    assert result["call_counts"] == {"model": 5, "input_count": 5, "tool": 6}
+    assert len(views[2]["working_notes"]["findings"]) == 2
     notes = views[-1]["working_notes"]
     prose_key = "model_interpretation" if JUDGMENT else "statement"
     assert [n[prose_key] for n in notes["findings"]] == ["The module imports csv."]
@@ -398,11 +417,12 @@ def test_size_handoff_preserves_parallel_results_and_exact_observed_sources(tmp_
     assert not any(i.get("type") in {"reasoning", "function_call", "function_call_output"}
                    for i in inputs[1])
     quoted = list(public_exchanges(inputs[1], archive_kind=PUBLIC_EVIDENCE_KIND))
-    assert [i["call_id"] for i in quoted if i["type"] == "function_call_output"] == [
+    assert not quoted
+    assert [row["action_id"] for row in views[1]["latest_tool_results"]] == [
         "mock-search-source", "mock-read-source"]
-    index = _SourceIndex(inputs[1], archive_kind=PUBLIC_EVIDENCE_KIND)
-    assert any("import csv" in value[0] for rows in index.observed.values()
-               for value in rows.values())
+    assert any("import csv" in span["content"]
+               for row in views[1]["latest_tool_results"]
+               for span in row["output"].get("spans", []))
     assert views[1]["remaining_budget"]["cost"]["settled_usage"] > 0
     assert views[1]["remaining_budget"]["cost"]["remaining"] < 1_200_000_000
     assert views[1]["remaining_budget"]["tool_actions"] == 98

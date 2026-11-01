@@ -117,7 +117,7 @@ class _SourceIndex:
             return
         if (
             not isinstance(result, dict) or result.get("status") != "succeeded"
-            or result.get("tool") not in {"read_file", "search_files", "replace_text"}
+            or result.get("tool") not in {"read_file", "search_files", "replace_text", "edit_files"}
             or result.get("action_id") != item.get("call_id")
             or not isinstance(result.get("output"), dict)
         ):
@@ -193,6 +193,10 @@ def project_mutation_result(
             != output.get("worktree_diff_hash")):
         return projected
     args = admission.get("arguments", {})
+    if args.get("occurrence") == "all":
+        # A multi-match edit has several coordinate shifts. Keep the exact returned
+        # bodies rather than project them through the single-anchor alias formula.
+        return projected
     old, new = args.get("old_text"), args.get("new_text")
     anchor = admission.get("mutation_anchor_start_line")
     before_hash = admission.get("mutation_preimage_file_hash")

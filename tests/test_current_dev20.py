@@ -1,6 +1,7 @@
 """Current capability panel preserves original inputs and bounded execution settings."""
 
 import json
+import subprocess
 from decimal import Decimal
 from pathlib import Path
 
@@ -12,7 +13,7 @@ from patchloop.runtime import repository_root
 from patchloop.task_loader import load_task_package
 
 
-def test_twenty_packages_preserve_issues_and_private_bytes_and_register_tests():
+def test_twenty_packages_preserve_issues_and_pinned_evaluation_bytes_and_register_tests():
     paths = list((repository_root() / panel.PACKAGES).glob("*/public.yaml"))
     assert len(paths) == 20
     for path in paths:
@@ -22,12 +23,19 @@ def test_twenty_packages_preserve_issues_and_private_bytes_and_register_tests():
         assert current.public.issue == previous.public.issue
         assert current.public.repository == previous.public.repository
         assert current.environment == previous.environment
-        assert current.private_spec_hash == previous.private_spec_hash
         for source in original.rglob("*"):
             if source.is_file() and source.name != "public.yaml":
-                assert (
-                    source.read_bytes() == (path.parent / source.relative_to(original)).read_bytes()
-                )
+                relative = source.relative_to(original)
+                target = path.parent / relative
+                # The current panel intentionally gained assertion-log artifacts.
+                # Pin those two updated files; retain byte parity for every other
+                # evaluator input, rather than comparing with the obsolete logger.
+                expected = (subprocess.check_output([
+                    "git", "show", "b247345d:" + target.relative_to(repository_root()).as_posix(),
+                ], cwd=repository_root()) if relative.as_posix() in {
+                    "private.yaml", "hidden/run_oracle.py",
+                } else source.read_bytes())
+                assert target.read_bytes() == expected
         assert current.public.visible_checks == previous.public.visible_checks
         assert len(current.public.test_suites) == 1
         suite = current.public.test_suites[0]

@@ -17,16 +17,120 @@ TOKENS_PER_MILLION = Decimal("1000000")
 # The invocation-wide cost ledger still lowers this value before every dispatch.
 DEFAULT_OUTPUT_CEILING = 25_000
 MINIMUM_OUTPUT_CEILING = 128
+# A completion decision gets a bounded allowance after source/probe history is
+# compacted. This engineering floor is not evidence of model-quality sufficiency.
+FINALIZATION_OUTPUT_FLOOR = 8_192
 # Both registered GPT-5.4 snapshots support this maximum (reviewed 2026-09-24).
 MAX_OUTPUT_CEILING = 128_000
-CompletionCostPolicy = Literal["per-call-v1", "completion-reserve-v1"]
+CompletionCostPolicy = Literal[
+    "per-call-v1", "completion-reserve-v1", "completion-minimum-v1", "completion-recovery-v1",
+]
 DEFAULT_COMPLETION_COST_POLICY = "per-call-v1"
 COMPLETION_RESERVE_POLICY = "completion-reserve-v1"
+COMPLETION_MINIMUM_POLICY = "completion-minimum-v1"
+COMPLETION_RECOVERY_POLICY = "completion-recovery-v1"
 PRICING_SOURCE = "https://developers.openai.com/api/docs/pricing"
 PRICING_VERIFIED_ON = "2026-09-15"
 
 
-def completion_cost_contract() -> dict[str, object]:
+def correction_output_ceiling(
+    max_output_tokens: int, max_correction_output_tokens: int | None = None,
+) -> int:
+    """Use an explicit correction allowance, or preserve the coupled legacy cap."""
+    return (
+        max_output_tokens if max_correction_output_tokens is None else max_correction_output_tokens
+    )
+
+
+def recovery_successor_output_ceilings(
+    *, calls: int, max_output_tokens: int, repair_calls: int = 0,
+    preparation_calls: int = 0,
+) -> tuple[int, ...]:
+    """Price roles within a caller-selected completion/recovery path.
+
+    The runner owns path eligibility and real model/tool slots. This function
+    adds no calls: one existing successor is finalization, requested repair and
+    preparation roles consume other slots, and other continuations keep the same
+    bounded floor as finalization. The tuple is a price allocation, not execution order.
+    Protocol correction remains a separate, nonrenewable reservation.
+    """
+    if any(type(value) is not int or value < 0
+           for value in (calls, repair_calls, preparation_calls)):
+        raise ValueError("successor role counts must be nonnegative integers")
+    if (type(max_output_tokens) is not int
+            or not MINIMUM_OUTPUT_CEILING <= max_output_tokens <= MAX_OUTPUT_CEILING):
+        raise ValueError("normal output allowance must be an integer from 128 to 128000")
+    if repair_calls + preparation_calls > max(0, calls - 1):
+        raise ValueError("successor roles exceed the path's nonfinal call slots")
+    if calls == 0:
+        return ()
+    bounded_output = min(FINALIZATION_OUTPUT_FLOOR, max_output_tokens)
+    continuation_calls = calls - repair_calls - preparation_calls - 1
+    return ((bounded_output,) * preparation_calls
+            + (max_output_tokens,) * repair_calls
+            + (bounded_output,) * continuation_calls
+            + (bounded_output,))
+
+
+def completion_cost_contract(
+    policy: CompletionCostPolicy = COMPLETION_RESERVE_POLICY,
+    *,
+    max_correction_output_tokens: int | None = None,
+) -> dict[str, object]:
+    if max_correction_output_tokens is not None:
+        if policy != COMPLETION_RECOVERY_POLICY:
+            raise ValueError("correction output allowance requires completion-recovery-v1")
+        if (
+            type(max_correction_output_tokens) is not int
+            or not MINIMUM_OUTPUT_CEILING <= max_correction_output_tokens <= MAX_OUTPUT_CEILING
+        ):
+            raise ValueError("correction output allowance must be an integer from 128 to 128000")
+    if policy == COMPLETION_RECOVERY_POLICY:
+        return {
+            "policy": COMPLETION_RECOVERY_POLICY,
+            "future_input_tokens": segments.MAX_INPUT_TOKENS,
+            "future_output_tokens": FINALIZATION_OUTPUT_FLOOR,
+            "future_output_ceiling": "min-floor-and-invocation-normal-output-ceiling",
+            "pricing": "uncached-input-and-role-output-allowances",
+            "horizon": "shared-completion-paths-v1",
+            "reservation": "required-or-one-failure-plus-correction-v1",
+            "preparation_output_tokens": FINALIZATION_OUTPUT_FLOOR,
+            "preparation_ceiling": "min-floor-and-invocation-normal-output-ceiling",
+            "repair_output_tokens": "invocation-max-output-tokens",
+            "role_calls": "ordinary-path-steps-special-obligations-conservative-adapter",
+            "future_time": "registered-timeouts-plus-cleanup-and-30s-per-successor",
+            "time_admission": "count-and-generation-share-a-deadline-before-reserved-work",
+            "finalization_output_tokens": FINALIZATION_OUTPUT_FLOOR,
+            "finalization_ceiling": "min-floor-and-invocation-normal-output-ceiling",
+            "finalization_release": "exact-counted-ready-request-no-successor",
+            "correction_credits_per_run": 1,
+            "correction_output_tokens": (
+                "invocation-max-output-tokens"
+                if max_correction_output_tokens is None else max_correction_output_tokens
+            ),
+            "correction_consumption": "first-durable-protocol-correction-never-renewed",
+            "correction_model_calls": 1,
+            "correction_tool_actions": 0,
+            "release": "first-protocol-correction-or-terminal",
+            "limit": "Available preparation, repair, check and finalization successors retain "
+            "bounded output allowances within existing path slots. One protocol correction "
+            "receives its requested output ceiling. Useful output, repair and task success are not "
+            "guaranteed. Tool execution uncertainty and unknown billing are not retry funding.",
+        }
+    if policy == COMPLETION_MINIMUM_POLICY:
+        return {
+            "policy": COMPLETION_MINIMUM_POLICY,
+            "future_input_tokens": segments.MAX_INPUT_TOKENS,
+            "future_output_tokens": MINIMUM_OUTPUT_CEILING,
+            "pricing": "uncached-input-and-minimum-output",
+            "horizon": "minimum-success-path-and-independent-model-tool-slots-v1",
+            "reservation": "largest-offered-action-minimum-successor-v1",
+            "release": "exact-count-for-ready-finish-with-no-successor",
+            "limit": "Successful actions only. Minimum admission; useful output, failure "
+            "recovery and task success are not guaranteed.",
+        }
+    if policy != COMPLETION_RESERVE_POLICY:
+        raise ValueError("completion cost policy has no reservation contract")
     return {
         "policy": COMPLETION_RESERVE_POLICY,
         "future_input_tokens": segments.MAX_INPUT_TOKENS,
@@ -99,12 +203,14 @@ class DevCostLedger:
     def remaining_nanos(self) -> int:
         return max(0, self.cap_nanos - self.spent_nanos)
 
-    def future_call_reservation_nanos(self) -> int:
-        """A segmented request's input bound plus the existing output admission floor."""
+    def future_call_reservation_nanos(
+        self, *, output_ceiling: int = MINIMUM_OUTPUT_CEILING,
+    ) -> int:
+        """Price the segmented input bound and a specified output allowance."""
         return _token_cost_nanos(
             segments.MAX_INPUT_TOKENS, self.pricing.input_per_million_usd, round_up=True,
         ) + _token_cost_nanos(
-            MINIMUM_OUTPUT_CEILING, self.pricing.output_per_million_usd, round_up=True,
+            output_ceiling, self.pricing.output_per_million_usd, round_up=True,
         )
 
     def admit(

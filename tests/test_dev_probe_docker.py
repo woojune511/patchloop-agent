@@ -264,7 +264,7 @@ def test_real_probe_isolation_current_source_and_completed_replay(
     assert replay.model_dump(exclude={"replayed"}) == result.model_dump(exclude={"replayed"})
     assert gateway.journal.path.read_bytes() == journal_before
     assert [event["event_type"] for event in gateway.journal.events()] == [
-        "action_started", "action_finished",
+        "action_started", "probe_execution_started", "probe_execution_finished", "action_finished",
     ]
     (session.evidence_root / "replay.json").write_text(json.dumps({
         "official": False, "provider_calls": 0, "run_id": gateway.journal.run_id,

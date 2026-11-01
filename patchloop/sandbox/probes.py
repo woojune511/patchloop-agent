@@ -17,12 +17,13 @@ import time
 from pathlib import Path, PurePosixPath
 from typing import BinaryIO
 
+from patchloop import probe_limits
 from patchloop.contracts import ProbeDependencyIdentity
 from patchloop.deadline import ExecutionDeadline
 from patchloop.errors import ContractError
-from patchloop.prepared_probe_dependencies import MOUNT, PreparedDependencies
+from patchloop.prepared_probe_dependencies import MOUNT, PreparedDependencies, read_descriptor
 from patchloop.probe_runtime import runtime
-from patchloop.sandbox import probe_setup
+from patchloop.sandbox import call_path_trace, exception_frames, probe_api, probe_setup
 from patchloop.sandbox.execution_feedback import (
     TRACE_WRAPPER,
     ReportChannel,
@@ -32,22 +33,54 @@ from patchloop.sandbox.execution_feedback import (
 from patchloop.sandbox.runner import DockerSandbox
 from patchloop.util import sha256_bytes, sha256_json
 
-PROBE_IMAGE_DIGEST = "sha256:57cd7c3a7a273101a6485ba99423ee568157882804b1124b4dd04266317710de"
-# This digest pins the reviewed Python 3.12-slim image. Use Docker's canonical
-# repository@digest name for lookup and execution, not a tag+digest alias.
-PROBE_IMAGE = "python@" + PROBE_IMAGE_DIGEST
+# The default and prepared-dependency paths share one reviewed public runtime.
+PROBE_IMAGE = runtime()[1]
+PROBE_IMAGE_DIGEST = PROBE_IMAGE.split("@", 1)[1]
 PROBE_TIMEOUT_SECONDS = 30
 # One trusted supervisor, one probe main thread, at most six worker threads.
 PROBE_PIDS_LIMIT = 8
 # Keep OpenBLAS imports within the single-CPU probe's existing thread budget.
 PROBE_THREAD_ENV = {"OPENBLAS_NUM_THREADS": "1"}
 PROBE_OUTPUT_LIMIT_BYTES = 12_000
-PROBE_SOURCE_LIMIT_CHARS = 8_000
-PROBE_SOURCE_LIMIT_BYTES = 32_000
 _SNAPSHOT_LIMIT_BYTES = 128 * 1024 * 1024
 _CLEANUP_SECONDS = 5.0
 _WRAPPER = Path(__file__).resolve().parents[2] / "docker" / "probe_runner.py"
 _SETUP_WRAPPER = Path(probe_setup.__file__)
+_API_WRAPPER = Path(probe_api.__file__)
+_EXCEPTION_WRAPPER = Path(exception_frames.__file__)
+EXCEPTION_REPORT_LIMIT_BYTES = 32 * 1024
+
+
+def exception_marker(request: dict) -> bytes:
+    return b"\x1ePATCHLOOP-EXCEPTION:" + request["request_hash"].encode("ascii") + b":"
+
+
+def exception_feedback(request: dict | None, report: object) -> dict:
+    """Reject an unbound diagnostic without changing the core execution result."""
+    result = {"policy": exception_frames.POLICY, "status": "unavailable", "calls": [],
+              "verification_credit": False}
+    if request is None:
+        return result
+    result.update({key: request[key] for key in (
+        "request_hash", "source_hash", "snapshot_hash", "execution_identity_hash", "action_id")})
+    if (not isinstance(report, dict) or set(report) != {"request_hash", "calls", "error"}
+            or report["request_hash"] != request["request_hash"] or report["error"] is not None
+            or not isinstance(report["calls"], list) or len(report["calls"]) > 4):
+        return result
+    calls, seen = [], set()
+    for row in report["calls"]:
+        if (not isinstance(row, dict) or set(row) != {"call_id", "exception", "details"}
+                or type(row["call_id"]) is not str
+                or row["call_id"] not in {f"call-{i}" for i in range(1, 5)}
+                or row["call_id"] in seen or not isinstance(row["exception"], dict)
+                or set(row["exception"]) != {"type", "message"}
+                or any(not isinstance(value, str) or len(value) > 256
+                       for value in row["exception"].values())):
+            return result
+        seen.add(row["call_id"])
+        calls.append({"call_id": row["call_id"], "exception": dict(row["exception"]),
+                      "details": exception_frames.public(row["details"])})
+    return {**result, "status": "collected", "calls": calls}
 
 
 def probe_profile(dependencies: ProbeDependencyIdentity | None = None) -> dict[str, object]:
@@ -55,13 +88,17 @@ def probe_profile(dependencies: ProbeDependencyIdentity | None = None) -> dict[s
     if dependencies is not None and dependencies.python != python:
         raise ContractError("probe interpreter and prepared dependencies differ")
     return {
-        "version": "docker-python-probe-v2",
+        "version": "docker-python-probe-v3",
         "image": image,
         "image_digest": image.rsplit("@", 1)[1],
         "wrapper_hash": sha256_bytes(_WRAPPER.read_bytes()),
         "line_trace_hash": sha256_bytes(TRACE_WRAPPER.read_bytes()),
+        "call_path_trace_hash": sha256_bytes(call_path_trace.WRAPPER.read_bytes()),
         "setup_helper_hash": sha256_bytes(_SETUP_WRAPPER.read_bytes()),
+        "helper_api_hash": sha256_bytes(_API_WRAPPER.read_bytes()),
         "setup_report_limit_bytes": probe_setup.MAX_REPORT_BYTES,
+        "exception_frames_hash": sha256_bytes(_EXCEPTION_WRAPPER.read_bytes()),
+        "exception_report_limit_bytes": EXCEPTION_REPORT_LIMIT_BYTES,
         "network": "none",
         "read_only": True,
         "user": "10001:10001",
@@ -77,8 +114,12 @@ def probe_profile(dependencies: ProbeDependencyIdentity | None = None) -> dict[s
         "entrypoint": "/usr/local/bin/python",
         "working_directory": "/tmp",
         "source_mount": "/workspace:readonly",
-        "source_limit_chars": PROBE_SOURCE_LIMIT_CHARS,
-        "source_limit_bytes": PROBE_SOURCE_LIMIT_BYTES,
+        "source_limit_chars": probe_limits.SOURCE_LIMIT_CHARS,
+        "source_limit_bytes": probe_limits.SOURCE_LIMIT_BYTES,
+        "observer_limit_chars": probe_limits.OBSERVER_LIMIT_CHARS,
+        "observer_limit_bytes": probe_limits.OBSERVER_LIMIT_BYTES,
+        "execution_limit_chars": probe_limits.EXECUTION_LIMIT_CHARS,
+        "execution_limit_bytes": probe_limits.EXECUTION_LIMIT_BYTES,
         "timeout_seconds": PROBE_TIMEOUT_SECONDS,
         "output_limit_bytes": PROBE_OUTPUT_LIMIT_BYTES,
         "snapshot": ("tracked-public-source-roots-generated-v3" if dependencies is not None
@@ -221,6 +262,24 @@ class _OutputCollector:
                 prefix=probe_setup.marker(setup_request), limit_bytes=probe_setup.MAX_REPORT_BYTES,
             ) if setup_request is not None else None
         )
+        self.call_path_channel = None
+        self.call_path_report = None
+        self.exception_channel = None
+        self.exception_report = None
+
+    def enable_call_path(self, request: dict) -> None:
+        downstream = self.setup_channel or self.channel
+        self.call_path_channel = ReportChannel(
+            request, downstream.feed if downstream else lambda block: self._retain(block, "stderr"),
+            prefix=call_path_trace.marker(request), limit_bytes=call_path_trace.MAX_REPORT_BYTES,
+        )
+
+    def enable_exception_frames(self, request: dict) -> None:
+        downstream = self.call_path_channel or self.setup_channel or self.channel
+        self.exception_channel = ReportChannel(
+            request, downstream.feed if downstream else lambda block: self._retain(block, "stderr"),
+            prefix=exception_marker(request), limit_bytes=EXCEPTION_REPORT_LIMIT_BYTES,
+        )
 
     def _retain(self, block: bytes, name: str) -> None:
         with self.lock:
@@ -233,10 +292,13 @@ class _OutputCollector:
     def drain(self, stream: BinaryIO, name: str) -> None:
         try:
             while block := stream.read(4096):
-                channel = self.setup_channel or self.channel
+                channel = (self.exception_channel or self.call_path_channel
+                           or self.setup_channel or self.channel)
                 if name == "stderr" and channel is not None:
                     channel.feed(block)
-                    for report_channel in (self.setup_channel, self.channel):
+                    for report_channel in (
+                        self.call_path_channel, self.setup_channel, self.channel,
+                    ):
                         if report_channel is not None:
                             pending = (len(report_channel.pending)
                                        if report_channel.collecting else 0)
@@ -249,6 +311,10 @@ class _OutputCollector:
         except (OSError, ValueError):
             return
         finally:
+            if name == "stderr" and self.exception_channel is not None:
+                self.exception_report = self.exception_channel.finish()
+            if name == "stderr" and self.call_path_channel is not None:
+                self.call_path_report = self.call_path_channel.finish()
             if name == "stderr" and self.setup_channel is not None:
                 self.setup_report = self.setup_channel.finish()
             if name == "stderr" and self.channel is not None:
@@ -305,6 +371,64 @@ class DockerProbeSandbox:
         self._verified = True
         return self.identity
 
+    def validate_call_path(
+        self, workspace: Path, request: dict, *, deadline: ExecutionDeadline | None = None,
+        line_changes: list[dict] | None = None,
+    ) -> dict:
+        """Read-only request validation before the durable dispatch boundary.
+
+        Admit only requested tracked files that the later snapshot can export.
+        Dependency members are checked against their pinned prepared manifest and
+        current bytes. The actual launch independently rebinds the exported copy.
+        No temporary export, Docker access, or target Python execution occurs here.
+        """
+        try:
+            request = call_path_trace.validate_request(request)
+            targets = [request["focus"], *request["watches"]]
+            paths = {target["path"] for target in targets if target["origin"] == "workspace"}
+            roots = self.dependencies.identity.source_roots if self.dependencies else None
+            if any(not _is_public_path(path) or roots and "/" in path and not any(
+                path.startswith(f"{root}/") for root in roots
+            ) for path in paths):
+                raise ValueError("workspace target is outside the exported public source roots")
+            if paths:
+                timeout = deadline.bounded_timeout(10, reserve_seconds=5) if deadline else 10
+                listing = subprocess.run(
+                    ["git", "--literal-pathspecs", "ls-files", "--stage", "-z", "--",
+                     *sorted(paths)], cwd=workspace, capture_output=True,
+                    timeout=timeout, check=False,
+                )
+                if listing.returncode or len(listing.stdout) > 20_000:
+                    raise ValueError("cannot enumerate requested public tracked sources")
+                tracked = set()
+                for entry in listing.stdout.split(b"\0"):
+                    if not entry:
+                        continue
+                    metadata, path_bytes = entry.split(b"\t", 1)
+                    mode, _object_id, stage = metadata.decode("ascii").split()
+                    path = path_bytes.decode("utf-8")
+                    if (path not in paths or path in tracked or mode not in {"100644", "100755"}
+                            or stage != "0"):
+                        raise ValueError("call-path source must be a tracked regular public file")
+                    tracked.add(path)
+                if tracked != paths:
+                    raise ValueError("call-path workspace source is not tracked for export")
+            dependency_root, dependency_files = None, None
+            if self.dependencies is not None:
+                descriptor, identity = read_descriptor(self.dependencies.path)
+                if identity != self.dependencies.identity:
+                    raise ValueError("prepared dependency identity changed")
+                dependency_root = self.dependencies.path.parent / "site-packages"
+                dependency_files = descriptor["files"]
+            if deadline:
+                deadline.check(reserve_seconds=5)
+            return call_path_trace.bind_request(
+                request, workspace, dependency_root=dependency_root,
+                dependency_files=dependency_files, line_changes=line_changes,
+            )
+        except (ValueError, OSError, SyntaxError, subprocess.TimeoutExpired) as exc:
+            raise ContractError(f"invalid public call-path source request: {exc}") from exc
+
     @staticmethod
     def container_name(execution_identity: dict[str, str]) -> str:
         if not execution_identity:
@@ -352,12 +476,15 @@ class DockerProbeSandbox:
         deadline: ExecutionDeadline | None,
         execution_identity: dict[str, str],
         execution_targets: dict | None = None,
+        call_path_request: dict | None = None,
     ) -> dict[str, object]:
         source = python_source.encode("utf-8")
         if not question or len(question) > 500:
             raise ContractError("probe question must contain 1 to 500 characters")
-        if not source or len(python_source) > 8000 or len(source) > 32000:
-            raise ContractError("probe Python source exceeds its bounded input contract")
+        # The registered gateway bounds authored input before adding its observer.
+        if (not source or len(python_source) > probe_limits.EXECUTION_LIMIT_CHARS
+                or len(source) > probe_limits.EXECUTION_LIMIT_BYTES):
+            raise ContractError("probe execution program exceeds its bounded transport contract")
         if deadline:
             deadline.check(reserve_seconds=_CLEANUP_SECONDS)
         if not self._verified:
@@ -377,6 +504,8 @@ class DockerProbeSandbox:
                          "execution_identity_hash": sha256_json(execution_identity)}
         setup_request["request_hash"] = sha256_json(setup_request)
         collector = _OutputCollector(execution_targets, setup_request)
+        bound_call_path = None
+        exception_request = None
         timed_out = False
         exit_code = None
         snapshot_hash = None
@@ -391,6 +520,7 @@ class DockerProbeSandbox:
                 snapshot.mkdir()
                 trusted.mkdir()
                 dependency_arguments = []
+                dependencies = None
                 if self.dependencies is not None:
                     dependencies = temporary_path / "dependencies"
                     dependencies.mkdir()
@@ -409,6 +539,44 @@ class DockerProbeSandbox:
                                           source_roots=(self.dependencies.identity.source_roots
                                                         if self.dependencies else None),
                                           dependencies=self.dependencies)
+                if call_path_request is not None:
+                    try:
+                        dependency_files = (read_descriptor(self.dependencies.path)[0]["files"]
+                                            if self.dependencies is not None else None)
+                        bound_call_path = call_path_trace.bind_request(
+                            call_path_request, snapshot, dependency_root=dependencies,
+                            dependency_files=dependency_files, snapshot_hash=snapshot_hash,
+                            execution_identity_hash=sha256_json(execution_identity),
+                        )
+                    except (ValueError, OSError, SyntaxError) as exc:
+                        raise ContractError("invalid public call-path source binding") from exc
+                    trace_source = call_path_trace.WRAPPER.read_bytes()
+                    if sha256_bytes(trace_source) != self._profile["call_path_trace_hash"]:
+                        raise ContractError("probe call-path collector changed before execution")
+                    (trusted / "call_path_trace.py").write_bytes(trace_source)
+                    (trusted / "call_path_request.json").write_text(
+                        json.dumps(bound_call_path), encoding="utf-8",
+                    )
+                    collector.enable_call_path(bound_call_path)
+                exception_request = {
+                    "action_id": (execution_identity or {}).get("action_id"),
+                    "source_hash": setup_request["source_hash"],
+                    "execution_identity_hash": setup_request["execution_identity_hash"],
+                    "snapshot_hash": snapshot_hash,
+                    "roots": {"workspace": "/workspace", **(
+                        {"dependency": MOUNT} if self.dependencies is not None else {})},
+                    "dependency_files": (read_descriptor(self.dependencies.path)[0]["files"]
+                                         if self.dependencies is not None else None),
+                    "report_limit_bytes": EXCEPTION_REPORT_LIMIT_BYTES,
+                }
+                exception_request["request_hash"] = sha256_json(exception_request)
+                exception_source = _EXCEPTION_WRAPPER.read_bytes()
+                if sha256_bytes(exception_source) != self._profile["exception_frames_hash"]:
+                    raise ContractError("probe exception collector changed before execution")
+                (trusted / "exception_frames.py").write_bytes(exception_source)
+                (trusted / "exception_frames_request.json").write_text(
+                    json.dumps(exception_request), encoding="utf-8")
+                collector.enable_exception_frames(exception_request)
                 wrapper = _WRAPPER.read_bytes()
                 (trusted / "probe_runner.py").write_bytes(wrapper)
                 if sha256_bytes(wrapper) != self._profile["wrapper_hash"]:
@@ -417,6 +585,10 @@ class DockerProbeSandbox:
                 if sha256_bytes(setup_wrapper) != self._profile["setup_helper_hash"]:
                     raise ContractError("probe setup helper changed before execution")
                 (trusted / "probe_setup.py").write_bytes(setup_wrapper)
+                api_wrapper = _API_WRAPPER.read_bytes()
+                if sha256_bytes(api_wrapper) != self._profile["helper_api_hash"]:
+                    raise ContractError("probe API contract changed before execution")
+                (trusted / "probe_api.py").write_bytes(api_wrapper)
                 (trusted / "setup_request.json").write_text(
                     json.dumps(setup_request), encoding="utf-8",
                 )
@@ -540,6 +712,16 @@ class DockerProbeSandbox:
         )
         stdout_text, stderr_text = collector.public_text()
         return {
+            "exception_diagnostics": exception_feedback(
+                exception_request, collector.exception_report if status in {"passed", "failed"}
+                else None),
+            **({"call_path": call_path_trace.public_feedback(
+                bound_call_path,
+                collector.call_path_report if status in {"passed", "failed"} else None,
+            ) if bound_call_path is not None else {
+                "schema_version": "public-call-path-feedback-v1", "diagnostic_only": True,
+                "status": "unknown", "reason": "report_unavailable",
+            }} if call_path_request is not None else {}),
             "setup_checks": probe_setup.public_feedback(
                 setup_request, collector.setup_report if status in {"passed", "failed"} else None,
             ),

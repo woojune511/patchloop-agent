@@ -2,14 +2,168 @@
 
 from __future__ import annotations
 
+import base64
+import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
 import tempfile
 import types
 from pathlib import Path
+
+DIAGNOSTIC_STREAM_LIMIT_BYTES = 24_000
+DIAGNOSTIC_FAILURE_LIMIT_BYTES = 12_000
+DIAGNOSTIC_FAILURE_BLOCK_LIMIT = 8
+
+_UNITTEST_SUMMARY = re.compile(rb"Ran [0-9]+ tests? in [^\r\n]+")
+_ANSI_SGR = re.compile(rb"\x1b\[[0-9;:]*m")
+
+
+def _header_title(line, delimiters, minimum=3):
+    """Split delimiter runs without backtracking through whitespace-heavy lines."""
+    body = line.lstrip(delimiters)
+    if len(line) - len(body) < minimum:
+        return None
+    title = body.rstrip(delimiters)
+    if len(body) - len(title) < minimum:
+        return None
+    if (len(title) < 3 or title[:1] not in (b" ", b"\t")
+            or title[-1:] not in (b" ", b"\t") or b"\r" in title):
+        return None
+    return title.strip(b" \t")
+
+
+def _failure_markers(raw):
+    # Normalize color for recognition only; all offsets and saved slices use raw bytes.
+    # Scan each byte a fixed number of times, independent of delimiter-like output.
+    # This is diagnostic selection, independent of the unchanged benchmark parser.
+    offset = 0
+    separator = None
+    while offset < len(raw):
+        newline = raw.find(b"\n", offset)
+        end = len(raw) if newline < 0 else newline
+        line = _ANSI_SGR.sub(b"", raw[offset:end].removesuffix(b"\r"))
+        start = offset
+        offset = len(raw) if newline < 0 else newline + 1
+        if separator is not None:
+            if line.startswith((b"FAIL:", b"ERROR:")) and b"\r" not in line:
+                yield "unittest_case", separator
+                separator = None
+                continue
+            yield "unittest_boundary", separator
+            separator = None
+        if len(line) >= 3 and not line.strip(b"="):
+            separator = start
+        elif _header_title(line, b"=", minimum=1) in (b"FAILURES", b"ERRORS"):
+            yield "pytest_section", start
+        elif _header_title(line, b"_", minimum=1) is not None:
+            # Pytest uses a single delimiter on each side when the title is wide.
+            yield "pytest_case", start
+        elif (_header_title(line, b"-", minimum=1) or b"").startswith(b"Captured "):
+            yield "pytest_boundary", start
+        elif _header_title(line, b"=", minimum=1) is not None:
+            # Carry the normalized boundary kind so a colored summary closes the section.
+            yield "pytest_end", start
+        elif _header_title(line, b"-") is not None:
+            yield "pytest_boundary", start
+        elif _UNITTEST_SUMMARY.fullmatch(line):
+            yield "unittest_boundary", start
+    if separator is not None:
+        yield "unittest_boundary", separator
+
+
+def _failure_ranges(raw):
+    """Yield byte ranges; captured-output sections are not failure tracebacks."""
+    pytest_section = False
+    active = None
+    for kind, start in _failure_markers(raw):
+        if active is not None:
+            yield (*active, start, True)
+            active = None
+        if kind == "pytest_section":
+            pytest_section = True
+        elif kind == "pytest_case" and pytest_section:
+            active = ("pytest", start)
+        elif kind == "unittest_case":
+            pytest_section = False
+            active = ("unittest", start)
+        elif kind != "pytest_boundary":
+            pytest_section = False
+    if active is not None:
+        yield (*active, len(raw), False)
+
+
+def _failure_capture(raw):
+    selected = []
+    recognized_count = original_bytes = unclosed_count = 0
+    for format_name, start, end, closed in _failure_ranges(raw):
+        recognized_count += 1
+        original_bytes += end - start
+        unclosed_count += not closed
+        if len(selected) < DIAGNOSTIC_FAILURE_BLOCK_LIMIT:
+            selected.append((format_name, start, end, closed))
+    remaining = DIAGNOSTIC_FAILURE_LIMIT_BYTES
+    blocks = []
+    for index, (format_name, start, end, closed) in enumerate(selected):
+        allowance = remaining // (len(selected) - index)
+        retained = min(end - start, allowance)
+        remaining -= retained
+        if retained == end - start:
+            ranges = [(start, end)]
+        else:
+            # Keep both the test/source context and the exception/assertion end.
+            head = (retained + 1) // 2
+            ranges = [(start, start + head), (end - (retained - head), end)]
+        blocks.append({
+            "format": format_name,
+            "start_byte": start,
+            "end_byte": end,
+            "closed_by_marker": closed,
+            "original_bytes": end - start,
+            "retained_bytes": retained,
+            "omitted_bytes": end - start - retained,
+            "segments": [{
+                "start_byte": left,
+                "end_byte": right,
+                "encoding": "base64",
+                "content": base64.b64encode(raw[left:right]).decode("ascii"),
+            } for left, right in ranges],
+        })
+    retained_bytes = DIAGNOSTIC_FAILURE_LIMIT_BYTES - remaining
+    return {
+        "recognition": "pytest-sections-unittest-sgr-text-v2",
+        "coverage": "recognized-blocks-only" if recognized_count else "no-recognized-blocks",
+        "recognized_block_count": recognized_count,
+        "retained_block_count": len(blocks),
+        "omitted_block_count": recognized_count - len(blocks),
+        "truncated_block_count": sum(block["omitted_bytes"] > 0 for block in blocks),
+        "unclosed_block_count": unclosed_count,
+        "original_bytes": original_bytes,
+        "retained_bytes": retained_bytes,
+        "omitted_bytes": original_bytes - retained_bytes,
+        "blocks": blocks,
+    }
+
+
+def execution_log(stage, stdout, stderr):
+    """Keep private diagnostics in the evaluator receipt, never in solver feedback."""
+    streams = {}
+    for name, value in (("stdout", stdout), ("stderr", stderr)):
+        raw = value if isinstance(value, bytes) else (value or "").encode("utf-8")
+        kept = raw[-DIAGNOSTIC_STREAM_LIMIT_BYTES:]
+        streams[name] = {
+            "encoding": "base64",
+            "content": base64.b64encode(kept).decode("ascii"),
+            "sha256": hashlib.sha256(raw).hexdigest(),
+            "original_bytes": len(raw),
+            "retained_bytes": len(kept),
+            "omitted_prefix_bytes": len(raw) - len(kept),
+            "failure_capture": _failure_capture(raw),
+        }
+    return {"schema": "private-evaluation-log-v1", "stage": stage, **streams}
 
 
 def main():
@@ -48,7 +202,10 @@ def main():
             capture_output=True,
         )
         if applied.returncode:
-            print(json.dumps({"status": "ERROR", "reason": "original_test_patch_apply"}))
+            print(json.dumps({
+                "execution_log": execution_log("test_patch", applied.stdout, applied.stderr),
+                "status": "ERROR", "reason": "original_test_patch_apply",
+            }))
             return 2
         environment = dict(os.environ)
         environment["PYTHONPATH"] = os.pathsep.join([str(checkout / "src"), str(checkout)])
@@ -62,8 +219,11 @@ def main():
                 capture_output=True,
                 timeout=240,
             )
-        except subprocess.TimeoutExpired:
-            print(json.dumps({"status": "ERROR", "reason": "original_tests_timeout"}))
+        except subprocess.TimeoutExpired as error:
+            print(json.dumps({
+                "execution_log": execution_log("timeout", error.stdout, error.stderr),
+                "status": "ERROR", "reason": "original_tests_timeout",
+            }))
             return 2
         log = Path(temporary) / "test-output.txt"
         log.write_text(
@@ -79,18 +239,27 @@ def main():
             + str(result.returncode)
             + "\n"
         )
-        statuses, found = get_logs_eval(spec, str(log))
-        missing = [case for case in spec.FAIL_TO_PASS + spec.PASS_TO_PASS if case not in statuses]
-        report = get_eval_report(
-            spec,
-            {"instance_id": spec.instance_id, "model_patch": "submitted-workspace"},
-            str(log),
-            include_tests_status=True,
-        )[spec.instance_id]
+        try:
+            statuses, found = get_logs_eval(spec, str(log))
+            required = spec.FAIL_TO_PASS + spec.PASS_TO_PASS
+            missing = [case for case in required if case not in statuses]
+            report = get_eval_report(
+                spec,
+                {"instance_id": spec.instance_id, "model_patch": "submitted-workspace"},
+                str(log),
+                include_tests_status=True,
+            )[spec.instance_id]
+        except Exception as error:
+            print(json.dumps({
+                "execution_log": execution_log("grading", result.stdout, result.stderr),
+                "status": "ERROR", "reason": type(error).__name__, "detail": str(error),
+            }))
+            return 2
         complete = found and not missing and result.returncode in (0, 1)
         print(
             json.dumps(
                 {
+                    "execution_log": execution_log("tests", result.stdout, result.stderr),
                     "resolved": report["resolved"],
                     "complete": complete,
                     "test_exit": result.returncode,

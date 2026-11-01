@@ -91,7 +91,8 @@ def pack_result(turn, result, estimator, *, level="central"):
     state["remaining_budget"]["tool_actions"] -= 1
     state["latest_tool_results"] = [tool_result.model_dump(mode="json")]
     state["recent_attempt_result_next_question"] = [runner._batch_attempt_card(
-        turn_id=call.action_id, calls=[call], results=[tool_result], gateway=None)]
+        turn_id=call.action_id, calls=[call], results=[tool_result],
+        gateway=SimpleNamespace(journal=SimpleNamespace(events=lambda: events)))]
     prompt = system_prompt("current", "brief-v1", search.POLICY)
     quoted_base = runner._segment_public_base(
         prompt, state, [tool_result], [call.model_dump(mode="json")])
@@ -140,7 +141,8 @@ def pack_result(turn, result, estimator, *, level="central"):
             "event_type": segments.PREPARED_EVENT, "sequence": len(events) + 1, "payload": {}}]
         state["working_plan"] = working_plan.project(
             plan_events, diff_hash=state["current_diff"]["patch_hash"],
-            gate=state["workflow_gate"], policy="brief-v1")
+            gate=state["workflow_gate"], policy="brief-v1",
+            public_issue=state.get("public_task", {}).get("issue"))
         view = runner._segment_current_view(copy.deepcopy(state),
                                            [*previous[3:], *added], [tool_result])
         items = assemble_model_input(system_prompt=prompt, state=view, history=added,

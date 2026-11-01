@@ -6,7 +6,7 @@ import copy
 import httpx
 import pytest
 from pydantic import ValidationError
-from repair_mechanism_expectations import JUDGMENT
+from repair_mechanism_expectations import FROZEN_ARM, JUDGMENT
 from test_dev_planning import call, request
 from test_dev_runner import _crash_journal_once, _enveloped_run_id, _SimulatedCrash
 from test_dev_segments import assert_submitted, configured, records
@@ -67,6 +67,16 @@ def test_timing_only_identity_and_schema_contrast(tmp_path, monkeypatch):
              if JUDGMENT else
              "sha256:f4fe1472f3e1df939225db449b565b60ec2a8e38621d678bcde8de33eb17a625"),
     }
+    if FROZEN_ARM is None:
+        old_hashes = {
+            "none": "sha256:1f27a4da3107fcd8e82d3bd2e11a5e30c5025cd2ba0021b52c1d88c73c00a99d",
+            plans.POLICY:
+                "sha256:cbef9a476b7c4395ea3bc533aa176c3cd9d3305f3288272298a24d9ef7d46363",
+            plans.EVIDENCE_POLICY:
+                "sha256:23e686ed338674047cfeaf4d41b2a7a7c6974a692c0a3fa1aaf72dfc11999cff",
+            plans.ASSUMPTION_POLICY:
+                "sha256:0064fd68bda8e71af3d7b2da3ba8401d81eb19d451ba6f28a566aa16b6c9b7fe",
+        }
     assert {p: dev_tool_surface_hash(planning_policy=p) for p in old_hashes} == old_hashes
     old, new = plans.instructions(), plans.instructions(POLICY)
     assert old.partition("State the required behavior")[2] == new.partition(
@@ -194,8 +204,13 @@ def test_actual_input_timing_and_isolated_smoke_preserve_public_authority(tmp_pa
             if event["event_type"] != "turn_started":
                 continue
             items = runner._load_active_model_input(event["payload"], store, context_policy=context)
-            assert plans.instructions(policy) in items[0]["content"]
-            views.append(reconstruct_state(items, context_policy=context))
+            current = reconstruct_state(items, context_policy=context)
+            if context == "segmented-v1" and current["workflow_gate"] == "ready_to_submit":
+                from patchloop.dev import completion_context
+                assert items[0]["content"].startswith(completion_context.system_prompt(current))
+            else:
+                assert plans.instructions(policy) in items[0]["content"]
+            views.append(current)
             if context == "segmented-v1":
                 assert verify_turn(event, events, store, actual_input=items)["verified"]
             for private in ("hidden-multiline-csv", "reference_patch", "reasoning_transcript"):
@@ -203,10 +218,14 @@ def test_actual_input_timing_and_isolated_smoke_preserve_public_authority(tmp_pa
         assert views[0]["working_plan"]["review_request"]["requested"] == (policy == plans.POLICY)
         assert (views[1]["working_plan"]["plan"] is None) == (policy == POLICY)
         if policy == POLICY:
-            assert views[1]["working_plan"]["review_request"]["reasons"] == ["initial_plan"]
-            assert views[2]["working_plan"]["plan"]["revision"] == 1
+            assert views[1]["working_plan"]["review_request"]["reasons"] == (
+                ["initial_plan", "context_handoff"] if context == "segmented-v1"
+                else ["initial_plan"])
+            # The intervening edit has no plan annotation; the next check owns
+            # the first optional plan update.
+            assert views[2]["working_plan"]["plan"] is None
         assert "mutation_result" in views[2]["working_plan"]["review_request"]["reasons"]
-        assert views[-1]["working_plan"]["plan"]["revision"] == 2
+        assert views[-1]["working_plan"]["plan"]["revision"] == (1 if policy == POLICY else 2)
         assert "check_result" in views[-1]["working_plan"]["review_request"]["reasons"]
         assert views[-1]["visible_check_status"][0]["status"] == "PASS"
         arms[policy] = views
@@ -242,8 +261,10 @@ def test_first_source_and_plan_receipt_recover_without_extra_calls(tmp_path, mon
     assert_submitted(run)
     assert run["accepted_mutations"] == 1 and len(inputs) == 4 and inputs == counted
     assert not views[0]["working_plan"]["review_request"]["requested"]
-    assert views[1]["working_plan"]["review_request"]["reasons"] == ["initial_plan"]
-    assert views[2]["working_plan"]["plan"]["revision"] == 1
+    assert views[1]["working_plan"]["review_request"]["reasons"] == [
+        "initial_plan", "context_handoff"]
+    assert views[2]["working_plan"]["plan"] is None
+    assert views[3]["working_plan"]["plan"]["revision"] == 1
     events = journal.events()
     receipts = [e["payload"] for e in events if e["event_type"] == plans.EVENT]
     assert len(receipts) == len({r["turn_id"] for r in receipts}) == 4

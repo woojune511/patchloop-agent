@@ -55,18 +55,20 @@ def test_current_citation_does_not_claim_semantic_revalidation_after_edit(tmp_pa
 
 
 def test_guidance_preserves_exact_edit_and_optional_note_wire_contracts():
-    from repair_mechanism_expectations import JUDGMENT
+    from repair_mechanism_expectations import FROZEN_ARM, JUDGMENT
     schemas = dev_tool_schemas(finish_enabled=True)
     edit = next(schema for schema in schemas if schema["name"] == "replace_text")
     old_text = edit["parameters"]["properties"]["old_text"]
     assert "smallest sufficient unique anchor" in old_text["description"]
     assert "line breaks" in old_text["description"]
     assert old_text["maxLength"] == 20_000
-    assert set(edit["parameters"]["required"]) == {
+    expected = {
         "path", "old_text", "new_text", "occurrence", "hypothesis",
-        "expected_behavior", "causal_revision",
-        "turn_decision",
+        "expected_behavior",
     }
+    if FROZEN_ARM is not None:
+        expected.update({"causal_revision", "turn_decision"})
+    assert set(edit["parameters"]["required"]) == expected
     notes = memory_update_schema()
     assert notes["type"] == ["object", "null"]
     assert set(notes["required"]) == {
@@ -79,11 +81,16 @@ def test_guidance_preserves_exact_edit_and_optional_note_wire_contracts():
     for instruction in (
         "smallest sufficient unique exact anchor",
         "evidence_currency=current" if JUDGMENT else "status=current",
-        "never certify", "Source changes can expire notes", "public input",
+        "never certify", "Source changes can expire notes",
+        "public input" if FROZEN_ARM else "original public call and failure",
         "Updates are optional",
         "Use concern_id=null for a distinct concern",
     ):
         assert instruction in DEV_SYSTEM_PROMPT
+    if FROZEN_ARM is None:
+        assert "helpers/suite PASS cannot replace the reported behavior" in DEV_SYSTEM_PROMPT
+        assert "Skipped checks remain unperformed" in DEV_SYSTEM_PROMPT
+        assert "Missing original evidence returns unverified_delivery" in DEV_SYSTEM_PROMPT
     assert dev_tool_surface_hash() != (
         "sha256:6671634f44eb187dd5631bfbcd4788df848b9933906436c0388ee68e80d59ab7"
     )

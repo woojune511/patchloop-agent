@@ -247,4 +247,4 @@ def test_feedback_changes_surface_identity_not_global_limits_or_run_schema():
     )
     limits = DevLimits()
     assert (limits.max_model_calls, limits.max_tool_actions,
-            limits.max_accepted_mutations, limits.wall_time_seconds) == (40, 100, 4, 1_800)
+            limits.max_accepted_mutations, limits.wall_time_seconds) == (40, 100, 12, 1_800)

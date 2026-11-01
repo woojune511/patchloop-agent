@@ -21,8 +21,10 @@ MUTABLE_FIELDS = frozenset({
     "action_horizon", "completion_guidance", "visible_check_status",
     "remaining_visible_check_ids", "mutation_scope_budget", "mutation_readiness",
     "available_tool_names", "commitment_signal", "context_projection",
-    "evidence_ledger", "working_notes", "source_index_omitted_count",
+    "evidence_ledger", "working_notes", "source_index_omitted_count", "reproduction_review",
     "latest_tool_results_delivery", "recent_attempt_result_next_question",
+    "repair_stage", "repair_intent",
+    "last_rejected_test_proposal",
 })
 
 

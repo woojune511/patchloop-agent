@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -71,7 +72,8 @@ def search_gateway(tmp_path):
             allowed_paths=["pkg/direct.py"], forbidden_paths=[],
             max_changed_files=1, max_diff_lines=50,
         ),
-        visible_checks=[],
+        visible_checks=[], test_suites=[],
+        model_dump=lambda **kwargs: {"task_id": "public-search-test"},
     )
     return DevToolGateway(
         workspace=workspace, public_task=public, sandbox=None,
@@ -246,3 +248,94 @@ def test_search_preserves_git_cleanup_uncertainty(search_gateway, monkeypatch):
     with pytest.raises(GitExecutionUncertain) as captured:
         search_gateway._search_files("marker")
     assert captured.value is uncertain
+
+
+def test_source_validation_batches_tracking_but_refreshes_index_and_bytes(
+    search_gateway, monkeypatch,
+):
+    gateway = search_gateway
+    observed = gateway._search_files("PUBLIC_SEARCH_MARKER")["spans"]
+    gateway.spans = {span["span_id"]: span for span in observed}
+    calls = []
+    original = tools.run_git
+
+    def counted(workspace, *args, **kwargs):
+        calls.append(args)
+        return original(workspace, *args, **kwargs)
+
+    monkeypatch.setattr(tools, "run_git", counted)
+    assert gateway._validated_source_spans() == observed
+    assert calls == [("ls-files", "-z")]
+
+    (gateway.workspace / "root.py").write_text("changed source\n", encoding="utf-8")
+    subprocess.run(["git", "rm", "--cached", "--", "notes.txt"], cwd=gateway.workspace,
+                   check=True, capture_output=True)
+    (gateway.workspace / "added.py").write_text("PUBLIC_SEARCH_MARKER\n", encoding="utf-8")
+    subprocess.run(["git", "add", "-N", "--", "added.py"], cwd=gateway.workspace, check=True)
+    new_span = gateway._read_file("added.py", 1, 1)["spans"][0]
+    gateway.spans[new_span["span_id"]] = new_span
+    calls.clear()
+    assert {s["path"] for s in gateway._validated_source_spans()} == {
+        "pkg/direct.py", "pkg/deep/nested.py", "pkg/deep/deeper/leaf.py", "added.py",
+    }
+    assert calls == [("ls-files", "-z")]
+
+
+def test_source_validation_deadline_after_inventory_stops_before_read(search_gateway, monkeypatch):
+    gateway = search_gateway
+    observed = gateway._search_files("PUBLIC_SEARCH_MARKER")["spans"]
+    gateway.spans = {span["span_id"]: span for span in observed}
+    now = [0.0]
+    gateway.deadline = ExecutionDeadline.from_remaining(1, clock=lambda: now[0])
+
+    def enumerated():
+        now[0] = 2.0
+        return {span["path"] for span in observed}
+
+    def unexpected_read(*args, **kwargs):
+        raise AssertionError("expired source validation cannot read file bytes")
+
+    monkeypatch.setattr(gateway, "_tracked_paths", enumerated)
+    monkeypatch.setattr(Path, "read_bytes", unexpected_read)
+    with pytest.raises(ExecutionDeadlineExceeded):
+        gateway._validated_source_spans()
+
+
+def test_inventory_tracking_honors_explicit_deadline_override(search_gateway):
+    gateway = search_gateway
+    gateway.deadline = ExecutionDeadline.from_remaining(0)
+    valid = ExecutionDeadline.from_remaining(10)
+    assert gateway._tracked_path(
+        "root.py", tracked_paths={"root.py"}, deadline=valid,
+    )[0] == "root.py"
+    gateway.deadline = valid
+    with pytest.raises(ExecutionDeadlineExceeded):
+        gateway._tracked_path(
+            "root.py", tracked_paths={"root.py"}, deadline=ExecutionDeadline.from_remaining(0),
+        )
+
+
+def test_search_uses_index_without_tree_walk_and_preserves_path_order(search_gateway, monkeypatch):
+    gateway = search_gateway
+    names = [f"case{letter}{number:02}.py" for letter in ("Z", "a") for number in range(13)]
+    for name in names:
+        (gateway.workspace / name).write_text("ORDER_MARKER\n", encoding="utf-8")
+    subprocess.run(["git", "add", "--", *names], cwd=gateway.workspace, check=True)
+
+    def unexpected_walk(*args, **kwargs):
+        raise AssertionError("search must not enumerate untracked/Git directories")
+
+    monkeypatch.setattr(Path, "rglob", unexpected_walk)
+    result = gateway._search_files("ORDER_MARKER", "case*.py")
+    assert [s["path"] for s in result["spans"]] == sorted(names, key=Path)[:20]
+    assert result["truncated"] is True
+
+
+@pytest.mark.parametrize("link_kind", ["is_symlink", "is_junction"])
+def test_index_search_does_not_follow_linked_directory(search_gateway, monkeypatch, link_kind):
+    gateway = search_gateway
+    linked = gateway.workspace / "pkg" / "deep"
+    original = getattr(Path, link_kind)
+    monkeypatch.setattr(Path, link_kind, lambda path: path == linked or original(path))
+    result = gateway._search_files("PUBLIC_SEARCH_MARKER", "pkg/**/*.py")
+    assert [s["path"] for s in result["spans"]] == ["pkg/direct.py"]

@@ -1,24 +1,20 @@
 # Run and validate
 
-Current operating instructions for `dev-head`. Read [current status](current-status.md)
-for the selected baseline and open question. Read only the relevant
-[internal guide](../.agent/guide.md) section for implementation contracts.
-Past commands, approvals, results and diagnostic narratives are searchable through
-[the history index](history/README.md); they are not current run authorization.
+See [status](current-status.md), [contracts](../.agent/guide.md) and
+[past evidence](history/README.md). Historical approvals do not authorize new runs.
 
 ## State and temporary workspaces
 
 All generated state belongs outside the repository. Use short Windows paths:
 
-- `C:\pt\tmp\<unique-name>`: disposable test workspaces, one per process.
+- `C:\pt\tmp\<short-id>`: disposable test workspaces, one per process.
 - `C:\pt\validation\<unique-name>.xml`: retained reports outside test scratch.
 - `C:\patchloop-state`: durable runs, artifacts and managed workspaces.
 
-After a test process and its children exit, retain its report and recycle only its
-exact temporary directory. Keep failed-test scratch while diagnosis needs it.
-Do not sweep a parent directory, empty the Recycle Bin automatically, or infer
-disposability from names such as `test` or `tmp`. Preserve existing run, preparation,
-analysis and experiment paths and bytes.
+After tests and children exit, retain reports and recycle only that exact temporary
+directory. Preserve failed-test scratch until diagnosis ends. Never sweep parents,
+empty the Recycle Bin automatically or infer disposability from names. Preserve all
+existing run, preparation, analysis and experiment bytes.
 
 ## Local verification
 
@@ -26,7 +22,7 @@ Run focused tests, Ruff, the fast suite and mock smoke as relevant. Keep focused
 validation below two minutes. This test path needs no provider or Docker call.
 
 ```powershell
-$testId = 'pytest-' + [guid]::NewGuid().ToString('N').Substring(0, 8)
+$testId = 't' + [guid]::NewGuid().ToString('N').Substring(0, 8)
 $testRoot = Join-Path 'C:\pt\tmp' $testId
 $testReport = Join-Path 'C:\pt\validation' ($testId + '.xml')
 New-Item -ItemType Directory -Force -Path 'C:\pt\tmp', 'C:\pt\validation' | Out-Null
@@ -36,22 +32,14 @@ uv run --locked pytest tests -n 4 --dist loadfile --max-worker-restart 0 --durat
 # After pytest and its children exit, recycle only $testRoot.
 ```
 
-Replace `tests` with relevant files and omit `-n 4` for small focused checks. Keep
-runtime bytes unchanged while tests run. The full suite uses four pytest-xdist
-workers, groups each file on one worker, and disables automatic worker restarts.
-Workers receive separate basetemps beneath the invocation's fresh root. Independent
-invocations still need separate roots and disjoint selections. Record commands,
-results, reports and unexecuted checks;
-old suite totals do not verify a current change.
+For focused checks select relevant files and omit `-n 4`. Freeze runtime while testing.
+Full-suite workers keep files together, use separate basetemps and cannot restart.
+Independent invocations need separate roots. Record commands, results and unexecuted
+checks; old suite totals do not verify current changes.
 
-CI runs on pull requests and pushes to `main`, avoiding a second branch-push run
-for an open PR. Both Windows and Linux use Python 3.12 and the same complete suite
-with four file-grouped workers, followed by task validation and mock smoke. Ruff
-remains a separate step. The slowest 20 test phases appear in the log; JUnit reports
-are uploaded even after a failed test step and retained for 14 days. Dependency sync
-and command execution use `--locked`, so inconsistent project metadata and lockfile
-fail instead of being updated during validation. Parallel scheduling changes neither
-test selection nor the real-Docker opt-in boundary.
+CI: PRs/`main`, Windows/Linux Python 3.12, four file-grouped workers, task validation,
+mock smoke and Ruff. Logs retain 20 slowest phases; JUnit persists 14 days even on failure.
+`--locked` rejects lock drift. Parallelism preserves selection and Docker opt-in.
 
 ## Mock end-to-end
 
@@ -64,19 +52,13 @@ uv run patchloop dev `
   --repeat 1
 ```
 
-Mock mode forbids credential and cost options. The smoke path covers public
-inspection, mutation, visible checking, submission and isolated evaluation.
-It remains `official=false` and is not live provider or Docker evidence.
+Mock mode forbids credential and cost options. It covers inspection, mutation,
+visible checks, submission and isolated evaluation (`official=false`), without
+provider or Docker execution.
 
-For the README smoke fixture, inspect these fields in stdout:
-
-```json
-{"terminal": "EVALUATOR_PASS", "evaluator": {"task_acceptance": "PASS", "safety_state": "NOT_RUN"}, "cost_nanos": 0}
-```
-
-These are selected fields from `runs[0]`, not the complete response. Use its
-`run_id` to find the journal at `PATCHLOOP_STATE_ROOT/runs/<run_id>.jsonl`;
-content-addressed artifacts live under the same state root's `artifacts/` directory.
+The smoke's `runs[0]` reports `terminal=EVALUATOR_PASS`, `evaluator.task_acceptance=PASS`,
+`evaluator.safety_state=NOT_RUN` and `cost_nanos=0`. Its `run_id` identifies
+`PATCHLOOP_STATE_ROOT/runs/<run_id>.jsonl`; artifacts are under `artifacts/`.
 
 `--agent-policy thin --planning-policy none` selects the experimental
 [thin interface](../.agent/thin-policy-reference.md). The default is `current`.
@@ -92,10 +74,11 @@ model and invocation-wide cost cap. See the [small example](../examples/repair/R
 OpenAI needs an existing digest-pinned image; mock uses trusted local checks.
 The shared loop preserves costs, edit limits, tool restrictions and recovery.
 `PATCH_READY` returns a patch plus public receipts, with acceptance `NOT_RUN`.
+The public repair path currently has no probes, so its explicit delivery state is
+`unverified_delivery`; this is not a verified repair claim.
 It neither changes the original checkout nor applies/opens a PR for its patch.
 No hidden/reference material is needed; `dev` admission remains unchanged.
-Paid repair requires approval of this exact public request, credential, repeats and
-cap. No provider call was used to implement or locally validate this path.
+Paid repair requires approval of the exact public request, credential, repeats and cap.
 
 ## Explicitly approved live development
 
@@ -154,10 +137,23 @@ The selected baseline is a working configuration, not a change to CLI defaults:
 | Repeat | 1, maximum 6 |
 | Automatic compaction | Disabled |
 
-Per-run defaults: 40 model calls, 100 tool actions, four accepted mutations and
+Per-run defaults: 40 model calls, 100 tool actions, 12 accepted mutations and
 1,800 active seconds. Output includes reasoning (128..128,000 desired tokens);
 cost admission can lower it. Full GPT-5.4 requires `segmented-v1`.
 See [CLI options](../patchloop/cli.py) and [request contracts](../patchloop/dev/contracts.py).
+
+Explicit approved limits remain authoritative; historical three/four-edit runs are
+unchanged. `--max-accepted-mutations` configures dev's new limit. `occurrence="all"`
+changes all exact observed matches in one existing file as one edit, preserving scope
+and test checks. Fresh reads paginate at 24,000 characters via `next_start_line`,
+without a separate 400-line cap. `edit_files` can create allowed files, change up
+to 16 paths or undo an accepted action. Each batch/undo spends one edit, without
+refund. Task constraints and exact recovery remain; see the
+[file lifecycle contract](../.agent/file-transactions.md).
+
+`action_horizon.action_budget` separates ordinary/correction response slots and
+shows exploration's effect on the edit/check/finish route. Forecasts assume unchanged
+obligations/current anchors; evidence, cost and time are reassessed after execution.
 
 `--history-search public-v1` requires `segmented-v1` and the current agent policy.
 It offers a singleton search of already delivered public evidence from this run,
@@ -217,18 +213,17 @@ uv run patchloop task prepare-probe-dependencies <task-dir> `
 With no source lock, `--resolve` can resolve supported static public dependencies
 for Python 3.12/Linux. Preparation can download public wheels; execution uses only
 verified local copies without network/install. Add `--enable-probes
---prepared-probe-dependencies <descriptor>` to the approved request. Read the
-[dependency contract](../.agent/prepared-probe-dependencies.md) before preparation.
+--prepared-probe-dependencies <descriptor>` to the approved request. See the
+[dependency contract](../.agent/prepared-probe-dependencies.md).
+Task callers are inherited; CLI adds source scopes.
 
-For other context, planning, cost or repair policies, read the relevant internal
-contract and CLI compatibility checks first. Reusable probe cases have a separate
-[case contract](../.agent/probe-cases.md). Optional `--probe-recheck saved-program-v1`
-requires enabled probes and `cases-v1`; it reruns the last saved program after edits
-within existing budgets and never gates submission. Defaults remain off; see the
-[recheck contract](../.agent/probe-recheck.md). Compaction needs a compatible mini
-configuration and conditional model-limit reservation acknowledgement; it is not
-part of the selected baseline. Repeat every selected option on resume. Interface
-availability and local tests alone do not demonstrate an acceptance improvement.
+Optional completion policies require compatible context settings. See
+[completion resources](../.agent/completion-resources.md) for ordinary/correction
+reservations and independent output ceilings; restart never renews correction credit.
+See [cases](../.agent/probe-cases.md) and [saved-program recheck](../.agent/probe-recheck.md)
+for opt-in replay. Compaction requires a compatible mini configuration and explicit
+reservation acknowledgement. Repeat all selected options on resume; local tests do
+not establish acceptance improvement.
 
 ## Submission, evidence and interpretation
 
@@ -239,21 +234,27 @@ sandbox limits; the model cannot supply command flags. See the
 and remain optional: they supply no required-check credit. Missing nodes,
 collection errors and incomplete execution do not establish behavior correctness.
 
-The coding agent receives registered public tools, never unrestricted shell access.
-`finish_task` requires a non-empty current diff, every registered visible check
-passing on that exact diff, no non-ignored untracked files, and a nonblank agent
-`assessment` of up to 1,500 characters. After PASS, the agent reviews the public
-requirements, patch, evidence and remaining uncertainties before deciding to submit.
-The assessment connects public requirements to observed evidence and accounts for
-unfinished verification plans, including skipped/rejected checks. It explains what
-evidence addresses their purpose or why a remaining gap does not affect completion;
-listing a limitation alone is insufficient. A material gap that an available action
-could resolve calls for continued work. Regression PASS alone does not prove the
-reported problem is fixed. This is agent judgment, not a new semantic gate or hidden
-success guarantee. Further edits require fresh checks and reassessment.
-No separate review call or mandatory probe is added. Historical PASS,
-probe execution and notes do not provide current check credit. A diagnostic probe
-does not replace a registered check. `stop_task` ends without submission/evaluation.
+Registered tools never expose unrestricted shell. `finish_task` needs a non-empty
+tracked diff, no untracked files, all required checks passing on that diff, and an
+assessment (1–1,500 characters) connecting evidence to requirements and remaining
+gaps. Resolve material gaps when feasible; edits require fresh checks. Regression
+PASS, notes and probes do not establish task coverage or replace required checks.
+Under reproduction-gated-v1, finish replays stale original cases with bound action IDs,
+within the solver budget and without another model call. Current mismatch/conflict
+rejects finish. Under public-checks-v1 these diagnostics are advisory.
+`stop_task` abandons without submission/evaluation.
+
+Optional `--enable-probes --reproduction-acquisition bounded-v1` allows two original
+dispatches, two rejected requests and six preparations within shared budgets.
+Acquisition needs comparable unchanged-base failure/desired observations; requests,
+helper PASS and releases are not proof. Uncertainty remains unverified. See the
+[identity and acquisition contract](../.agent/evidence-recovery.md).
+
+Finish, repair receipts and dev results expose `delivery_state`, `original_verification`
+and `submission_verification`. An unchanged-base failure plus current case support
+permits `cases_verified_delivery`; missing/incomplete evidence returns
+`unverified_delivery`. These judge selected cases, not semantic requirement coverage.
+Independent acceptance remains separate, even if PASS follows an unverified delivery.
 
 The content-addressed patch and manifest bind separate evaluation. Never return
 private specs, hidden checks, reference patches or evaluator details to the agent.
@@ -293,7 +294,6 @@ validation permits metadata-only completion, without loading credentials,
 recreating workspaces, preflighting Docker or rerunning evaluation. Exact-envelope
 and provider-uncertainty checks still apply.
 
-A completed probe uses ordinary replay. An interrupted probe without a durable
-result may rerun only after confirming cleanup of its exact owned container on
-the same bound snapshot; that is isolated recovery, not an exactly-once guarantee.
-Cleanup uncertainty stops execution.
+A completed probe uses ordinary replay. A fresh durable backend return resumes
+postprocessing without another execution. A dispatch without that receipt stops
+with execution uncertainty; it is never automatically repeated.

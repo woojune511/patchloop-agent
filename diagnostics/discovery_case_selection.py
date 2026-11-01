@@ -155,9 +155,12 @@ class CaseSelectionGateway(DevToolGateway):
 
     with_contrast = False
 
-    def _run_probe(self, question, python_source, *, execution_identity, case_selection=None):
+    def _run_probe(self, question, python_source, *, execution_identity, input_hash,
+                   case_selection=None, reproduction_binding=None, legacy_pending=False):
         selection = bind(case_selection, self.public_task, with_contrast=self.with_contrast)
-        output = super()._run_probe(question, python_source, execution_identity=execution_identity)
+        output = super()._run_probe(question, python_source, execution_identity=execution_identity,
+                                    reproduction_binding=reproduction_binding,
+                                    input_hash=input_hash, legacy_pending=legacy_pending)
         output["case_selection"] = {
             **selection, "diff_hash": output["diff_hash"], "source_hash": output["source_hash"],
             "coverage_status": "not_assessed",

@@ -15,24 +15,10 @@ from patchloop.contracts import RegisteredCheck
 from patchloop.dev.state import DevJournal
 from patchloop.repository import WorkspaceManager
 from patchloop.runtime import repository_root
+from patchloop.sandbox.public_pytest import PUBLIC_RUNNER
 from patchloop.sandbox.runner import DockerSandbox
 from patchloop.task_loader import load_task_package
 from patchloop.util import sha256_bytes
-
-PUBLIC_RUNNER = """import os, shutil, subprocess, sys, tempfile
-from pathlib import Path
-with tempfile.TemporaryDirectory(prefix="lite-public-") as temporary:
-    checkout = Path(temporary) / "repo"
-    shutil.copytree(Path.cwd(), checkout,
-                   ignore=shutil.ignore_patterns(".git", ".patchloop-hidden", "__pycache__"))
-    env = dict(os.environ)
-    env["PYTHONPATH"] = os.pathsep.join([str(checkout / "src"), str(checkout)])
-    env["PATH"] = str(Path(sys.executable).parent) + os.pathsep + env["PATH"]
-    env["HOME"] = temporary
-    result = subprocess.run([sys.executable, "-m", "pytest", "-q", *sys.argv[1:]],
-                            cwd=checkout, env=env)
-    raise SystemExit(result.returncode)
-"""
 
 LAYOUTS = {
     "pylint-dev/astroid": ("astroid", ("tests",)),

@@ -37,6 +37,15 @@ def test_visible_docs_are_small_and_human_facing() -> None:
         assert f"docs/{name}" in readme
 
 
+def test_quick_manifest_cannot_select_the_repository_root() -> None:
+    root = repository_root()
+    # pytest treats an empty @argfile entry as a path to the working directory.
+    # Keep fixture/private task packages outside host-test discovery.
+    selectors = (root / "tests" / "quick.txt").read_text(encoding="utf-8").splitlines()
+    assert selectors and all(item.startswith("tests/") for item in selectors)
+    assert all((root / item.split("::", 1)[0]).is_file() for item in selectors)
+
+
 def test_agent_detail_is_hidden_but_discoverable() -> None:
     root = repository_root()
     guide = root / ".agent" / "guide.md"

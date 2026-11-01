@@ -6,6 +6,7 @@ from pathlib import Path
 
 import httpx
 import pytest
+from frozen_stage_support import pin_pre_stage_prompt
 
 from diagnostics import positive_verification_panel as panel
 from patchloop.artifacts import ArtifactStore
@@ -15,8 +16,21 @@ from patchloop.errors import ContractError
 from patchloop.util import sha256_json
 
 
+def pin_panel_baseline(monkeypatch):
+    """Exercise the closed panel with its frozen paragraph in a synthetic prompt."""
+    current = working_plan.instructions
+    pin_pre_stage_prompt(monkeypatch)
+
+    def historical(policy="brief-v1"):
+        text = current(policy)
+        return text + "\n\n" + panel.REPLACED if policy == "brief-v1" else text
+
+    monkeypatch.setattr(working_plan, "instructions", historical)
+
+
 @pytest.fixture(autouse=True)
 def no_provider(monkeypatch):
+    pin_panel_baseline(monkeypatch)
     def forbidden(*args, **kwargs):
         pytest.fail("local panel verification must not contact a provider")
     monkeypatch.setattr(httpx.HTTPTransport, "handle_request", forbidden)

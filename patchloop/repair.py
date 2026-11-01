@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 import re
 from pathlib import Path
@@ -153,6 +154,42 @@ def run_repair(request: RepairRunRequest | dict) -> dict[str, Any]:
     return result
 
 
+def delivery_metadata(finish_output: dict) -> dict:
+    """Preserve explicit public verification separately from evaluator acceptance.
+
+    Older finish receipts have neither new field and keep their original shape.
+    Do not upgrade them from an evaluator result or a fresh workspace observation.
+    """
+    if not {"delivery_state", "original_verification"}.intersection(finish_output):
+        return {}
+    state = finish_output.get("delivery_state")
+    original = finish_output.get("original_verification")
+    cases = finish_output.get("submission_verification")
+    if (not isinstance(original, dict) or not isinstance(cases, dict)
+            or state not in {"cases_verified_delivery", "unverified_delivery"}):
+        raise RecoveryError("invalid explicit delivery verification")
+    expected = ("cases_verified_delivery" if original.get("status") == "verified"
+                and cases.get("status") == "cases_verified" else "unverified_delivery")
+    if state != expected:
+        raise RecoveryError("delivery state differs from recorded public verification")
+    return copy.deepcopy({"delivery_state": state, "original_verification": original,
+                          "submission_verification": cases})
+
+
+def recorded_delivery_metadata(events: list[dict], *, patch_hash: str) -> dict:
+    """Recover delivery classification only from the submitted successful finish."""
+    finished = [e["payload"]["result"] for e in events
+                if e["event_type"] == "action_finished"
+                and e["payload"]["result"]["tool"] == "finish_task"
+                and e["payload"]["result"]["status"] == "succeeded"]
+    if len(finished) != 1 or finished[0]["output"].get("patch_hash") != patch_hash:
+        raise RecoveryError("delivery verification has no matching successful finish")
+    metadata = delivery_metadata(finished[0]["output"])
+    if metadata and finished[0].get("workspace_diff_hash") != patch_hash:
+        raise RecoveryError("delivery verification candidate differs from successful finish")
+    return metadata
+
+
 def record_delivery(journal, store: ArtifactStore, envelope: RepairEnvelope, submitted: Artifact,
                     finish_output: dict, active_elapsed_ms: int) -> dict:
     """Commit public evidence before the terminal event; never call an evaluator."""
@@ -162,6 +199,7 @@ def record_delivery(journal, store: ArtifactStore, envelope: RepairEnvelope, sub
         "envelope_hash": sha256_json(envelope.model_dump(mode="json")),
         "patch": submitted.model_dump(mode="json"),
         "finish": finish_output, "public_checks": checks,
+        **delivery_metadata(finish_output),
         "acceptance": "NOT_RUN", "active_elapsed_ms": active_elapsed_ms,
     })
     journal.append("repair_delivered", {"receipt": receipt.model_dump(mode="json")})
@@ -199,6 +237,9 @@ def load_delivery(journal, store: ArtifactStore, envelope: RepairEnvelope) -> di
                     and e["payload"]["result"]["status"] == "succeeded"]
         if len(finished) != 1 or finished[0]["output"] != data["finish"]:
             raise ValueError("public delivery has no matching successful finish")
+        metadata = recorded_delivery_metadata(preceding, patch_hash=patch.content_hash)
+        if delivery_metadata(data) != metadata:
+            raise ValueError("public delivery verification differs from successful finish")
         submissions = [e for e in events if e["event_type"] == "submission_recorded"]
         if len(submissions) != 1 or submissions[0]["payload"] != {
             "patch_hash": patch.content_hash, "visible_check_diff_hash": patch.content_hash,
@@ -208,4 +249,5 @@ def load_delivery(journal, store: ArtifactStore, envelope: RepairEnvelope) -> di
     except (ValueError, KeyError, TypeError) as exc:
         raise RecoveryError("invalid public repair delivery") from exc
     return {"patch": patch.model_dump(mode="json"), "public_verification": receipt.model_dump(
-        mode="json"), "acceptance": "NOT_RUN", "active_elapsed_ms": data["active_elapsed_ms"]}
+        mode="json"), "acceptance": "NOT_RUN", "active_elapsed_ms": data["active_elapsed_ms"],
+        **metadata}

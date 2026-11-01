@@ -3,7 +3,6 @@ from __future__ import annotations
 import copy
 import json
 from pathlib import Path
-from types import SimpleNamespace
 
 import pytest
 from native_history_support import input_context
@@ -13,6 +12,7 @@ from test_dev_probes import FakeProbe, probe_call
 
 import patchloop.dev.runner as runner
 from patchloop.artifacts import ArtifactStore
+from patchloop.contracts import RegisteredCheck
 from patchloop.dev.contracts import (
     DevLimits,
     DevRunRequest,
@@ -79,7 +79,7 @@ def _evidence(gateway, action_id, kind):
 
 def test_concern_survives_focus_failure_source_note_expiry_and_two_mutations(tmp_path):
     gateway = _gateway(tmp_path)
-    gateway.public_task.visible_checks = [SimpleNamespace(id="behavior")]
+    gateway.public_task.visible_checks = [RegisteredCheck(id="behavior", command=["python"])]
     _read(gateway)
     note = source_note("The observed declaration controls a public value.", 3, 3)
     payload = _apply_update(gateway, "remember", _update(
@@ -201,12 +201,11 @@ def test_parallel_owner_receipt_delivery_and_restart_replay_are_exactly_once(tmp
         item["call_id"]: json.loads(item["output"])
         for item in model_input if item.get("type") == "function_call_output"
     }
-    assert outputs["owner"]["memory_update_result"] == payload["receipt"]
-    assert all("memory_update_result" not in outputs[owner] for owner in ["no-update", "ignored"])
+    assert all("memory_update_result" not in output for output in outputs.values())
     projected = input_context(model_input)["working_notes"]
-    assert projected["verification"]["unresolved_ids"] == ["v1"]
-    assert projected["last_update_result"]["delivery"] == "preceding_function_call_output"
-    assert "verification" not in projected["last_update_result"]
+    assert projected["verification"]["model_open_concern_ids"] == ["v1"]
+    assert projected["last_update_result"] == payload["receipt"]
+    assert projected["last_update_result"]["verification"]["available_concern_ids"] == ["v1"]
     echoed = {
         item["call_id"]: json.loads(item["arguments"])
         for item in model_input if item.get("type") == "function_call"
@@ -239,7 +238,7 @@ def test_invalid_verification_reference_is_nonblocking_and_does_not_echo_raw_con
 
 def test_all_checks_pass_advises_review_but_still_allows_finish_with_concern(tmp_path):
     gateway = _gateway(tmp_path)
-    gateway.public_task.visible_checks = [SimpleNamespace(id="behavior")]
+    gateway.public_task.visible_checks = [RegisteredCheck(id="behavior", command=["python"])]
     _read(gateway)
     _add_concern(gateway)
     assert gateway.execute(_mutation("edit")).status == "succeeded"
@@ -269,6 +268,8 @@ def test_mock_verification_annotations_keep_call_counts_and_native_delivery(tmp_
             payload = json.loads(context)
             turn = super().next_turn(context, tools)
             for call in turn.tool_calls:
+                if call.turn_decision is None:
+                    continue  # Fresh edits carry no optional note annotations.
                 call.turn_decision = copy.deepcopy(call.turn_decision)
                 call.turn_decision.memory_update = None
             owner = turn.tool_calls[0]
@@ -276,7 +277,7 @@ def test_mock_verification_annotations_keep_call_counts_and_native_delivery(tmp_
                 update = _update([_operation(statement="The public parser behavior needs review.")])
             elif owner.name == "replace_text":
                 assert payload["working_notes"]["verification"]["unresolved_ids"] == ["v1"]
-                update = _update(question="Does the public comparison accept the candidate?")
+                return turn
             elif owner.name == "run_check":
                 update = _update([_operation(
                     "resolve", concern_id="v1", evidence=owner.action_id,
@@ -307,20 +308,16 @@ def test_mock_verification_annotations_keep_call_counts_and_native_delivery(tmp_
     events = DevJournal(tmp_path, run["run_id"]).events()
     updates = [event["payload"] for event in events
                if event["event_type"] == "working_notes_updated"]
-    assert len(updates) == 4
+    assert len(updates) == 3
     assert updates[0]["receipt"]["verification"]["status"] == "applied"
-    assert "verification" not in updates[1]["receipt"]
-    assert updates[2]["receipt"]["verification"]["status"] == "rejected"
-    assert updates[3]["verification_state"]["items"][0]["decision"]["outcome"] == "resolved"
+    assert updates[1]["receipt"]["verification"]["status"] == "rejected"
+    assert updates[2]["verification_state"]["items"][0]["decision"]["outcome"] == "resolved"
     turns = [event["payload"] for event in events if event["event_type"] == "turn_started"]
-    for index, (turn, _receipt) in enumerate(zip(turns[1:], updates[:3], strict=True), start=1):
+    for turn, update in zip(turns[1:], [updates[0], updates[0], updates[1]], strict=True):
         items = json.loads(Path(turn["model_input_artifact"]["path"]).read_text(encoding="utf-8"))
         outputs = [json.loads(item["output"]) for item in items
                    if item.get("type") == "function_call_output"]
-        receipts = [output["memory_update_result"] for output in outputs
-                    if "memory_update_result" in output]
-        assert receipts == [prior["receipt"] for prior in updates[:index]]
+        assert not any("memory_update_result" in output for output in outputs)
         notes = input_context(items)["working_notes"]
-        assert notes["verification"]["unresolved_ids"] == ["v1"]
-        assert notes["last_update_result"]["delivery"] == "preceding_function_call_output"
-        assert "verification" not in notes["last_update_result"]
+        assert notes["verification"]["model_open_concern_ids"] == ["v1"]
+        assert notes["last_update_result"] == update["receipt"]

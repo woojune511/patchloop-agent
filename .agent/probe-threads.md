@@ -1,6 +1,6 @@
 # Bounded threads in public Python probes
 
-`docker-python-probe-v2` supports ordinary same-process threads. The former v1
+`docker-python-probe-v3` retains the v2 same-process thread policy. The former v1
 profile denied every `clone`/`clone3` call and counted only a supervisor and child
 with `pids_limit=2`. This prevented `asyncio.to_thread`, including OpenAI SDK
 2.29.0's local platform initialization with a completely offline HTTP transport.

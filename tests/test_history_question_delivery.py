@@ -350,9 +350,10 @@ def test_runner_delivers_large_original_or_reduces_only_after_measured_fresh_ove
         if pressure is None
         else all(len(canonical_json(r)) <= 48_000 for r in delivered)
     )
-    # Counts do not spend model/tool actions; the real source refresh does.
-    assert len(inputs) == (5 if pressure is None else 6)
-    assert len(counted) == (8 if pressure in {"tokens", "recovery"} else len(inputs))
+    # The current source survives the stage handoff, so reducing the history
+    # result needs another count but no source refresh or extra model action.
+    assert len(inputs) == 5
+    assert len(counted) == (6 if pressure in {"tokens", "recovery"} else len(inputs))
     if pressure == "bytes":
         assert all(segments.request_sizes({"input": i})["request_bytes"] <= 128_000 for i in inputs)
     for event in journal.events():

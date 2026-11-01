@@ -272,10 +272,7 @@ def _numeric_usage(response):
 def _journal(root: Path, run_id: str) -> DevJournal:
     """Construct a read-only view without mkdir or lock-file writes."""
     require(run_id.startswith("run_dev_") and run_id.replace("_", "").isalnum(), "invalid run ID")
-    journal = object.__new__(DevJournal)
-    journal.root, journal.run_id = root.resolve(), run_id
-    journal.path = journal.root / "runs" / (run_id + ".jsonl")
-    return journal
+    return DevJournal(root, run_id, create_dirs=False)
 
 
 def _validate_artifacts(root, value):

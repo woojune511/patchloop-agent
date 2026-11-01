@@ -6,7 +6,8 @@ import copy
 import json
 import os
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
+from contextlib import ExitStack
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 from time import monotonic
@@ -14,6 +15,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from patchloop.agent import rate_limit_retry
 from patchloop.agent.count_diagnostics import (
     input_count_error_metadata,
     input_count_request_metadata,
@@ -29,11 +31,22 @@ from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import Artifact, ModelConfig, RunManifest, VerdictState
 from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
 from patchloop.dev import (
+    completion_context,
+    completion_reproduction,
+    correction_drafts,
+    diagnosis_context,
     evidence_focus,
+    helper_recovery,
     history_search,
+    inspection_focus,
+    mutation_proposals,
     native_compaction,
+    probe_followup,
     probe_recheck,
+    repair_context,
+    scope_review,
     segments,
+    test_comparison,
     thin_policy,
     working_plan,
 )
@@ -41,8 +54,11 @@ from patchloop.dev.check_feedback import output_tail
 from patchloop.dev.compaction import CompactionAdapter
 from patchloop.dev.completion_budget import (
     CompletionState,
+    action_budget_explanations,
     completion_budget,
+    minimum_successor_calls,
     mutation_attempt_budget,
+    test_addition_budget,
 )
 from patchloop.dev.context import SourceProjection, build_observed_source_index
 from patchloop.dev.contracts import (
@@ -74,40 +90,62 @@ from patchloop.dev.conversation import (
     validate_model_input,
 )
 from patchloop.dev.cost import (
+    COMPLETION_MINIMUM_POLICY,
+    COMPLETION_RECOVERY_POLICY,
     COMPLETION_RESERVE_POLICY,
     DEFAULT_COMPLETION_COST_POLICY,
     DEFAULT_OUTPUT_CEILING,
+    FINALIZATION_OUTPUT_FLOOR,
+    MINIMUM_OUTPUT_CEILING,
     PRICING_SOURCE,
     PRICING_VERIFIED_ON,
     DevCostLedger,
     ModelPricing,
     completion_cost_contract,
+    correction_output_ceiling,
     pricing_for_model,
 )
+from patchloop.dev.dependency_sources import for_run as caller_sources_for_run
 from patchloop.dev.evaluation_completion import (
     EvaluationCompletion,
     load_evaluation_completion,
     prepare_evaluation_completion,
 )
+from patchloop.dev.file_transaction import FileTransactionUncertain
 from patchloop.dev.inspection_projection import (
     project_inspection_context,
     project_inspection_result,
 )
 from patchloop.dev.model import DEV_SYSTEM_PROMPT, MockDevAdapter
 from patchloop.dev.model_state import compact_model_state
+from patchloop.dev.mutation_tools import MUTATION_TOOLS
 from patchloop.dev.native_sources import (
     PUBLIC_EVIDENCE_KIND,
     project_mutation_result,
     public_exchanges,
     reference_native_sources,
 )
-from patchloop.dev.probe_observation import probe_observation, project_probe_result
+from patchloop.dev.probe_observation import (
+    bound_probe_program,
+    probe_observation,
+    project_probe_result,
+)
 from patchloop.dev.public_history import NATIVE
+from patchloop.dev.recovery_resources import (
+    CHECK_OVERHEAD_SECONDS,
+    FOLLOWUP_SECONDS,
+    merge_resources,
+    ordinary_route_supported,
+    requested_revision_resources,
+    successor_resources,
+)
 from patchloop.dev.repair_recheck import (
+    check_observations,
     latest_repair_check,
     repair_recheck_context,
     select_repair_recheck,
 )
+from patchloop.dev.required_checks import registered_checks
 from patchloop.dev.state import DevJournal
 from patchloop.dev.test_selection import recent_tests
 from patchloop.dev.tools import (
@@ -143,13 +181,21 @@ from patchloop.runtime import (
     runtime_content_paths,
 )
 from patchloop.sandbox import DockerSandbox, LocalSandbox
-from patchloop.sandbox.probes import DockerProbeSandbox, probe_profile, probe_profile_hash
+from patchloop.sandbox.probes import (
+    PROBE_TIMEOUT_SECONDS,
+    DockerProbeSandbox,
+    probe_profile,
+    probe_profile_hash,
+)
 from patchloop.sandbox.runner import SandboxCleanupError
 from patchloop.task_loader import load_task_package, task_package_content_paths
 from patchloop.util import canonical_json, sha256_bytes, sha256_json, utc_now
 from patchloop.verifier.core import EvaluationEngine
 
 _EVIDENCE_PLATEAU_WARNING_TURNS = 2
+_FIRST_OBSERVATION_EXPLORATION = frozenset({
+    "read_file", "search_files", "search_history", "run_probe", "run_tests", "run_check",
+})
 
 
 @dataclass
@@ -159,6 +205,7 @@ class _RunCounters:
     tool_actions: int = 0
     input_count_calls: int = 0
     protocol_recoveries: int = 0
+    protocol_corrections_total: int = 0
     inspection_turns_at_diff: int = 0
     failed_mutation_repair_turns: int = 0
     failed_mutation_pending: bool = False
@@ -223,6 +270,20 @@ class _ToolPolicy:
     optional_mutation_completion_tool_actions: int = 0
     optional_mutation_protected_tool_actions: int = 0
     inspection_reserve_tool_actions: int = 0
+    original_failure_diagnostic: dict[str, Any] | None = None
+    observation_correction: dict[str, Any] | None = None
+    repair_path_diagnosis: dict[str, Any] | None = None
+    helper_correction: dict[str, Any] | None = None
+    first_observation: dict[str, Any] | None = None
+    repair_prediction: dict[str, Any] | None = None
+    repair_test_edit_enabled: bool = False
+    repair_test_edit_minimum_calls: int = 0
+    repair_test_edit_minimum_tool_actions: int = 0
+    selected_test_reserve_tool_actions: int | None = None
+    selected_test_comparison_required: bool = False
+    verification_policy: str = "reproduction-gated-v1"
+    edit_availability: dict[str, Any] | None = None
+    action_budget: dict[str, Any] | None = None
 
     @property
     def feedback_recovery_reserve_calls(self) -> int:
@@ -262,6 +323,8 @@ def _model_hash(request: RunRequest, pricing: ModelPricing | None) -> str:
     return sha256_json(
         {
             "provider": request.provider,
+            **({"rate_limit_contract": rate_limit_retry.contract()}
+               if request.rate_limit_policy != "none" else {}),
             "model": request.model,
             "reasoning_effort": request.reasoning_effort,
             "context_policy": request.context_policy,
@@ -271,11 +334,16 @@ def _model_hash(request: RunRequest, pricing: ModelPricing | None) -> str:
                if request.agent_policy == "thin" else {}),
             **({"retained_source_chars": request.retained_source_chars}
                if request.retained_source_chars != 24_000 else {}),
+            **({"caller_source_roots": request.caller_source_roots}
+               if request.caller_source_roots else {}),
             **({"evaluation_reserve_seconds": request.evaluation_reserve_seconds}
                if isinstance(request, DevRunRequest)
                and request.evaluation_reserve_seconds else {}),
-            **({"completion_cost_contract": completion_cost_contract()}
-               if request.completion_cost_policy == COMPLETION_RESERVE_POLICY else {}),
+            **({"completion_cost_contract": completion_cost_contract(
+                request.completion_cost_policy,
+                max_correction_output_tokens=request.max_correction_output_tokens,
+            )}
+               if request.completion_cost_policy != DEFAULT_COMPLETION_COST_POLICY else {}),
             **({"repair_inspection_policy": request.repair_inspection_policy}
                if request.repair_inspection_policy != "protected-v1" else {}),
             **({"segment_contract": segments.contract(
@@ -288,6 +356,10 @@ def _model_hash(request: RunRequest, pricing: ModelPricing | None) -> str:
                if request.probe_policy != "none" else {}),
             **({"probe_recheck_contract": probe_recheck.contract()}
                if request.probe_recheck != "none" else {}),
+            **({"reproduction_acquisition": request.reproduction_acquisition}
+               if request.reproduction_acquisition != "none" else {}),
+            **({"verification_policy": request.verification_policy}
+               if request.verification_policy != "reproduction-gated-v1" else {}),
             "transport_max_retries": 0 if request.provider == "openai" else None,
             "service_tier": "default",
             "api_base_url": "https://api.openai.com/v1",
@@ -523,28 +595,26 @@ def _recent_checks(
     # output ages out. Preserve the existing diff/check selection and order;
     # repeated actions for one check only update that row's latest identity.
     current_hash = diff_hash if diff_hash is not None else gateway.current_diff_hash
-    action_ids: dict[tuple[str, str], str] = {}
-    for event in gateway.journal.events():
-        if event["event_type"] != "action_finished":
-            continue
-        result = event["payload"]["result"]
-        if result["tool"] != "run_check" or result["status"] != "succeeded":
-            continue
-        value = result["output"]
-        action_ids[(value["diff_hash"], value["check_id"])] = result["action_id"]
+    observations = {}
+    for _, observation in check_observations(gateway.journal.events()):
+        value = observation.output
+        observations[(value["diff_hash"], value["check_id"])] = observation
     rows: list[dict[str, Any]] = []
     for diff_hash, checks in gateway.checks_by_diff.items():
         currency = (
             "current" if diff_hash == current_hash else "historical"
         ) if diff_hash and current_hash else "unknown"
         for value in checks.values():
+            observation = observations[(diff_hash, value["check_id"])]
             failure = value.get("public_check_failure")
             location = failure.get("public_location") if isinstance(failure, dict) else None
             stdout, stdout_clipped = output_tail(value.get("stdout", ""), 4_000)
             stderr, stderr_clipped = output_tail(value.get("stderr", ""), 4_000)
             rows.append(
                 {
-                    "action_id": action_ids[(diff_hash, value["check_id"])],
+                    "action_id": observation.action_id,
+                    **({"origin": observation.origin, "observation_id": observation.action_id}
+                       if observation.origin is not None else {}),
                     "check_id": value["check_id"],
                     "diff_hash": diff_hash,
                     "passed": value["passed"],
@@ -582,33 +652,191 @@ def _workflow_gate(summary: Any, *, ready_to_submit: bool) -> str:
     return "needs_visible_checks"
 
 
+def _required_public_check_gaps(gateway, snapshot=None) -> list[dict[str, Any]]:
+    """Expose unresolved registered additions without changing ordinary terminal bytes."""
+    if not getattr(gateway, "supplemental_checks", ()):
+        return []
+    rows = snapshot.visible_check_status if snapshot is not None else gateway.visible_check_status()
+    return [dict(row) for row in rows if row["status"] != "PASS"]
+
+
+def _edit_availability(
+    *, allowed: set[str], remaining_mutations: int, untracked_files: bool,
+    has_current_source: bool, completion_possible: bool, workflow_gate: str,
+    resource_reason: str | None = None,
+) -> dict[str, Any]:
+    """Describe edit capability from final admission without granting a new action."""
+    prerequisite = None
+    if "replace_text" in allowed:
+        reason = None
+    elif remaining_mutations <= 0:
+        reason = "mutation_limit_reached"
+    elif untracked_files:
+        reason = "workspace_scope_invalid"
+    elif workflow_gate not in {"needs_mutation", "needs_visible_checks", "ready_to_submit"}:
+        reason = "workflow_prerequisite"
+    elif resource_reason is not None:
+        reason = resource_reason
+    elif not completion_possible:
+        reason = "completion_budget_unavailable"
+    elif not has_current_source:
+        reason = "needs_current_source"
+        inspections = sorted(allowed & {"read_file", "search_files"})
+        if inspections:
+            prerequisite = {
+                "tools": inspections,
+                "scope": "current_allowed_editable_source",
+                "effect": "reevaluate_edit_availability_with_remaining_budgets",
+            }
+    else:
+        reason = "current_state_or_budget"
+    return {
+        "tool": "replace_text",
+        "status": "offered" if "replace_text" in allowed else "not_offered",
+        "reason": reason,
+        "prerequisite": prerequisite,
+    }
+
+
 def _completion_guidance(
     snapshot: DevGatewayStateSnapshot, policy: _ToolPolicy,
 ) -> dict[str, Any]:
     """Describe an offered next action, without executing it or changing admission."""
     allowed = policy.allowed_tools
     stage = "blocked"
-    next_action: dict[str, str] | None = None
+    next_action: dict[str, Any] | None = None
     message = (
         "No completion action is currently offered under the current state and budgets. "
         "stop_task abandons without submission or evaluation."
     )
+    diagnostic_only = policy.verification_policy == "public-checks-v1"
     needs_mutation = policy.workflow_gate == "needs_mutation" or any(
         row["status"] == "FAIL" for row in snapshot.visible_check_status
-    )
-    if snapshot.ready_to_submit and "finish_task" in allowed:
+    ) or (not diagnostic_only
+          and (snapshot.completion_verification or {}).get("status") == "refuted")
+    if policy.helper_correction and policy.helper_correction.get("blocked"):
+        correction = policy.helper_correction
+        stage = policy.workflow_gate
+        next_action = ({"tool": "run_probe", "question": correction["question"],
+                        "purpose": correction.get("purpose", {"kind": "helper"}),
+                        "replay_action_id": None}
+                       if "run_probe" in allowed else None)
+        message = (
+            "The helper source was rejected before execution. Fix its named source error, "
+            "keep the exact question, and submit changed python_source with a new action_id, "
+            "or stop. Use only helper APIs and an ordinary scratch directory. This one "
+            "correction uses existing completion resources; unrelated searches, reads and "
+            "project edits cannot consume it. A returned execution is diagnostic evidence, "
+            "not original-call verification. Rejection or an unavailable execution does not "
+            "renew the allowance; an unresolved or unaffordable correction returns "
+            "verification incomplete."
+        )
+        if correction.get("policy") == helper_recovery.ARGUMENT_POLICY:
+            message = (
+                "The original call failed argument binding before target entry. Read its actual "
+                "signature and supplied arguments in helper_correction.error. Inspect "
+                "target.signature() before calling; sys.argv is separate from Python arguments. "
+                "Correct python_source with a new action_id, keeping the exact question, purpose "
+                "and call_path, or stop. One correction request uses existing acquisition and "
+                "completion budgets; unrelated exploration cannot spend it. Rejection, another "
+                "pre-target error or insufficient resources leaves verification incomplete. "
+                "A corrected invocation alone does not verify the original failure."
+            )
+    elif (policy.repair_path_diagnosis and policy.repair_path_diagnosis.get("blocked")
+          and (policy.repair_prediction or {}).get("status") != "needs_test_comparison"):
+        diagnosis = policy.repair_path_diagnosis
+        stage = policy.workflow_gate
+        next_action = ({"tool": "run_probe", "selection": (
+            "focus_and_call_id" if diagnosis.get("call_selection_required") else "focus_only")}
+                       if "run_probe" in allowed else None)
+        message = (
+            "The same original failure persists and the modified branch was not observed. "
+            "Supply only focus selecting a public function on the suspected failure path. "
+            "The host observes the selected call even outside focus and selects "
+            "changed-function watches, parameter fields and executable lines, and binds "
+            "the original replay. Omit general plan/memory annotations. "
+            "Explore public callers or tests with the offered reads/searches, or run the "
+            "trace when ready. Exploration uses the remaining shared budget and preserves "
+            "completion plus one unused rejected-request correction. Diagnostic execution "
+            "and request correction remain separately bounded. Capacity is a reservation forecast; "
+            "each action rechecks cost and time. "
+            "Function entry, branch execution and behavior are "
+            "different observations. A complete diagnosis must inform the next hypothesis before "
+            "another repair; incomplete observation returns verification incomplete."
+        )
+        if diagnosis.get("call_selection_required"):
+            message = message.replace("Supply only focus", "Supply focus and call_id")
+            message += (
+                " Select call_id from the captured call_choices. Its relation to the failure "
+                "is model-selected and unverified; selecting another call does not renew "
+                "the shared budget, execution or correction allowance.")
+        if diagnosis.get("preparation_available"):
+            message += (
+                " A current-source repair anchor is still required and remains reserved; "
+                "reading a caller or test does not establish it."
+                if diagnosis.get("preparation_required_for_completion") else
+                " Reads may continue while each next action fits the remaining budget."
+            )
+        else:
+            message += (
+                " No preparation read is offered this turn; the remaining resources "
+                "are reserved for diagnosis, repair and verification."
+            )
+    elif (policy.repair_prediction or {}).get("status") == "needs_test_comparison":
+        stage = policy.workflow_gate
+        next_action = ({"tool": "run_tests", **policy.repair_prediction["pending_test"]}
+                       if "run_tests" in allowed else None)
+        message = (
+            "Run the frozen selected tests before and after the named implementation edit. "
+            "This comparison uses one model call and two isolated executions; omit plan and "
+            "memory annotations. The test addition did not repair the original failure. "
+            "A source repair, original replay and required checks still need their own evidence. "
+            "If this remaining path cannot fit, stop without claiming verification."
+        )
+    elif policy.workflow_gate in {"needs_observation_correction", "verification_incomplete"}:
+        stage = policy.workflow_gate
+        next_action = {"tool": "run_probe"} if "run_probe" in allowed else None
+        message = (
+            "The observation has a declared JSON-key mismatch or conflicts with captured target "
+            "diagnostics. Correct only the extractor in a fresh original probe and supply "
+            "purpose.corrects_action_id from observation_correction. Preserve rules, expected/"
+            "failure values, caller, fixtures and environment. Re-execute before any source edit "
+            "on the unchanged base; source repair waits for a consistent same-condition original "
+            "failure. The two error types share one correction attempt in this run; "
+            "a rejected or unsuccessful correction does not renew it. Unresolved or unaffordable "
+            "correction returns verification incomplete."
+        )
+    elif policy.workflow_gate == "needs_original_reproduction":
+        stage = "needs_original_reproduction"
+        next_action = {"tool": "run_probe"} if "run_probe" in allowed else None
+        message = (
+            "Investigate the original public caller before editing. Use an original_requirement "
+            "probe on the unchanged base, preserving its actual arguments, cwd, fixtures and "
+            "environment; a helper or normal-only PASS does not reproduce the reported failure. "
+            "Request rejection is not an execution: correct the primary probe request error. "
+            "This stage permits two actual original dispatches, at most two rejected requests "
+            "and six preparation actions, within the shared completion budget. When reads "
+            "close, request the original probe or stop; reading does not use execution slots. "
+            "Release without a failure keeps verification unmet."
+        )
+    elif snapshot.ready_to_submit and "finish_task" in allowed:
         stage = "ready_to_submit"
         message = (
             "Current required checks pass; this establishes eligibility, not correctness. "
             "Before deciding whether the task is complete, revisit unfinished verification "
             "plans and unsupported public requirements. Continue if an available action "
-            "could resolve a material gap. Only if you judge complete, call finish_task with "
-            "your assessment explaining why evidence suffices and remaining gaps do not "
-            "affect completion. Edits require fresh checks and reassessment. "
+            "could resolve a material gap. Call finish_task to return the candidate with an "
+            "assessment of evidence and remaining gaps. Missing original evidence returns "
+            "unverified_delivery, not verified completion. Edits require fresh checks. "
         )
         if "run_probe" in allowed:
             message += (
                 "Use run_probe when it could change this judgment."
+            )
+        if not diagnostic_only and (snapshot.completion_verification or {}).get("pending_count", 0):
+            message += (
+                " Submitting automatically replays stale original-requirement cases. "
+                "A current comparable mismatch returns to repair; unknown remains unverified."
             )
     elif needs_mutation:
         if "replace_text" in allowed:
@@ -619,6 +847,14 @@ def _completion_guidance(
                 "available anchor evidence does not establish a correct solution. "
                 "Submission waits for a scoped patch and its required visible checks."
             )
+            if "observe_original" in allowed:
+                next_action = {"tool": "observe_original"}
+                message += (
+                    " If the first repair premise is unresolved, select candidate functions "
+                    "and event predictions with observe_original. The host replays the frozen "
+                    "original; no helper program or invocation reconstruction is needed. "
+                    "A supported direct edit remains available."
+                )
         else:
             inspection = next(
                 (tool for tool in ("read_file", "search_files") if tool in allowed), None,
@@ -641,12 +877,33 @@ def _completion_guidance(
             "Use run_check; PASS on a different diff does not count toward completion. "
             "Submission becomes available when all required checks pass on this scoped patch."
         )
+    if diagnostic_only:
+        message += (
+            " Original reproduction and call-path observations are optional diagnostic evidence, "
+            "not submission prerequisites. Review valid observed failures when choosing further "
+            "repair or testing; malformed or missing observations do not establish a code failure. "
+            "finish_task submits the scoped candidate after required public checks and does not "
+            "certify task correctness; independent evaluation decides acceptance. No original "
+            "replay is automatically started at submission. Report unresolved evidence honestly."
+        )
     return {
         "diff_hash": snapshot.diff.patch_hash,
         "stage": stage,
-        "submission_ready": snapshot.ready_to_submit,
+        "submission_ready": (snapshot.ready_to_submit and "finish_task" in allowed
+                             and (diagnostic_only or (
+                                 (snapshot.completion_verification or {}).get("status") != "refuted"
+                                 and not (snapshot.completion_verification or {}).get(
+                                     "target_failure_count")))),
+        **({"verification_policy": policy.verification_policy, "submission_rule": (
+            "A nonempty scoped candidate and current required-public-check PASS permit submission. "
+            "Original reproduction and diagnostic corrections are optional evidence; their raw "
+            "blocked/pending/refuted status is not a submission gate. No new original replay is "
+            "automatic. Report unresolved evidence honestly; independent acceptance is separate."
+        )} if diagnostic_only else {}),
         "next_action": next_action,
         "message": message,
+        **({"edit_availability": policy.edit_availability}
+           if getattr(policy, "edit_availability", None) is not None else {}),
     }
 
 
@@ -673,7 +930,7 @@ def _minimum_completion_calls(
     )
     return completion_budget(
         CompletionState(
-            check_count=len(gateway.public_task.visible_checks),
+            check_count=len(registered_checks(gateway)),
             remaining_check_count=len(remaining_visible_check_ids),
             unused_check_count=0,
             unrun_recoverable_check=False,
@@ -695,8 +952,13 @@ def _tool_policy(
     repair_recheck: bool = False,
     cost_ledger: DevCostLedger | None = None,
     completion_cost_policy: str = DEFAULT_COMPLETION_COST_POLICY,
+    desired_output_ceiling: int = DEFAULT_OUTPUT_CEILING,
+    max_correction_output_tokens: int | None = None,
+    remaining_seconds: float | None = None,
+    requested_revision_diff_hash: str | None = None,
     _preview_inspection: bool = True,
     _cost_call_limit: int | None = None,
+    _diagnostic_spent: bool = False,
 ) -> _ToolPolicy:
     if snapshot is None and isinstance(gateway, DevToolGateway):
         snapshot = gateway.state_snapshot()
@@ -715,6 +977,53 @@ def _tool_policy(
         ready_to_submit = snapshot.ready_to_submit
         has_current_mutation_evidence = bool(snapshot.mutation_evidence_paths)
     workflow_gate = _workflow_gate(summary, ready_to_submit=ready_to_submit)
+    raw_verification = (snapshot.completion_verification or {}) if snapshot is not None else {}
+    verification_policy = getattr(gateway, "verification_policy", "reproduction-gated-v1")
+    diagnostic_only = verification_policy == "public-checks-v1"
+    # Public evidence remains in the snapshot and completion metadata. Only the
+    # admission forecast drops optional diagnostics from the required return path.
+    verification = {} if diagnostic_only else raw_verification
+    observation_advice = raw_verification.get("observation_correction", {})
+    observation_fix = verification.get("observation_correction", {})
+    observation_blocked = bool(observation_fix.get("blocked"))
+    observation_available = bool(
+        observation_blocked and observation_fix.get("status") == "pending"
+        and not observation_fix.get("pending_started")
+    )
+    path_diagnosis = verification.get("repair_path", {})
+    path_blocked = bool(path_diagnosis.get("blocked") and not observation_blocked)
+    path_available = bool(path_blocked and path_diagnosis.get("status") == "needs_path_diagnosis")
+    path_preparation = bool(path_available and path_diagnosis.get("preparation_available"))
+    repair_prediction = verification.get("repair_prediction", {})
+    test_comparison_pending = repair_prediction.get("status") == "needs_test_comparison"
+    diagnosed_test_available = bool(
+        path_diagnosis.get("status") == "diagnosed" and repair_prediction.get("test_available")
+        and not test_comparison_pending
+    )
+    diagnosed_test_bound = bool(path_diagnosis.get("status") == "diagnosed" and repair_prediction)
+    first_observation = raw_verification.get("first_observation", {})
+    first_available = bool(first_observation.get("available")
+                           and getattr(gateway, "probe_sandbox", None) is not None)
+    helper_fix = verification.get("helper_correction", {})
+    helper_blocked = bool(
+        helper_fix.get("blocked") and not observation_blocked and not path_blocked
+    )
+    helper_available = bool(helper_blocked and helper_recovery.correction_available(
+        helper_fix, verification.get("original_obligation", {})))
+    argument_correction = bool(
+        helper_available and helper_fix.get("policy") == helper_recovery.ARGUMENT_POLICY
+    )
+    first_available &= not (observation_blocked or path_blocked or helper_blocked)
+    original_case_failed = (verification.get("status") == "refuted"
+                            or bool(verification.get("target_failure_count")))
+    diagnostic = verification.get("original_failure_diagnostic")
+    diagnostic_available = bool(
+        original_case_failed and diagnostic and diagnostic["status"] == "available"
+        and diagnostic["candidate_diff_hash"] == summary.patch_hash
+    )
+    if original_case_failed:
+        workflow_gate = "needs_mutation"
+        ready_to_submit = False
     current_check_failed = any(row["status"] == "FAIL" for row in visible_status)
     declared_check_ids = tuple(
         row["check_id"]
@@ -737,21 +1046,59 @@ def _tool_policy(
     remaining_model_calls = max(0, limits.max_model_calls - counters.model_calls)
     cost_unit = 0
     funded_calls = None
-    if completion_cost_policy == COMPLETION_RESERVE_POLICY and cost_ledger is not None:
+    correction_cost = correction_reserve = correction_current_premium = 0
+    finalization_premium = finalization_current_premium = 0
+    finalization_floor = min(desired_output_ceiling, FINALIZATION_OUTPUT_FLOOR)
+    correction_available = correction_pending = False
+    correction_model_reserve = 0
+    correction_ceiling = correction_output_ceiling(
+        desired_output_ceiling, max_correction_output_tokens,
+    )
+    if (completion_cost_policy in {
+            COMPLETION_RESERVE_POLICY, COMPLETION_MINIMUM_POLICY, COMPLETION_RECOVERY_POLICY,
+        }
+            and cost_ledger is not None):
         cost_unit = cost_ledger.future_call_reservation_nanos()
+        if completion_cost_policy == COMPLETION_RECOVERY_POLICY:
+            finalization_premium = cost_ledger.future_call_reservation_nanos(
+                output_ceiling=finalization_floor,
+            ) - cost_unit
+            finalization_current_premium = finalization_premium if ready_to_submit else 0
+            correction_cost = cost_ledger.future_call_reservation_nanos(
+                output_ceiling=correction_ceiling,
+            )
+            correction_available = (
+                limits.max_protocol_recoveries > 0 and counters.protocol_corrections_total == 0
+            )
+            correction_pending = (
+                counters.protocol_corrections_total == 1 and counters.protocol_recoveries > 0
+            )
+            correction_reserve = correction_cost if correction_available else 0
+            correction_current_premium = correction_cost - cost_unit if correction_pending else 0
+            correction_model_reserve = int(correction_available)
+            remaining_model_calls = max(0, remaining_model_calls - correction_model_reserve)
         funded_calls = (
-            cost_ledger.remaining_nanos // cost_unit
+            max(0, cost_ledger.remaining_nanos - correction_reserve - finalization_premium
+                - (correction_current_premium if correction_pending
+                   else finalization_current_premium))
+            // cost_unit
             if _cost_call_limit is None else _cost_call_limit
         )
         # No future input must be funded once only the final decision remains.
         # Let exact counting admit a cheaper ready request below the input bound.
-        remaining_model_calls = min(remaining_model_calls, max(int(ready_to_submit), funded_calls))
+        if completion_cost_policy == COMPLETION_RESERVE_POLICY:
+            remaining_model_calls = min(
+                remaining_model_calls, max(int(ready_to_submit), funded_calls),
+            )
     remaining_tool_actions = max(0, limits.max_tool_actions - counters.tool_actions)
     remaining_mutations = max(
         0, limits.max_accepted_mutations - gateway.accepted_mutations
     )
     mutation_capacity = remaining_mutations > 0 and not summary.untracked_files
-    requires_mutation = workflow_gate == "needs_mutation" or current_check_failed
+    requires_mutation = (
+        workflow_gate == "needs_mutation" or current_check_failed or original_case_failed
+        or (test_comparison_pending and verification.get("status") != "cases_verified")
+    )
     repair_read_credit = (
         current_check_failed
         and counters.failed_check_pending
@@ -761,11 +1108,11 @@ def _tool_policy(
         repair_recheck and current_check_failed and getattr(gateway, "journal", None) is not None
         and latest_repair_check(
             gateway.journal.events(), baseline=summary.patch_hash,
-            registered_checks={check.id for check in gateway.public_task.visible_checks},
+            registered_checks={check.id for check in registered_checks(gateway)},
         ) is not None
     )
     completion_state = CompletionState(
-        check_count=len(gateway.public_task.visible_checks),
+        check_count=len(registered_checks(gateway)),
         remaining_check_count=len(remaining_check_ids),
         unused_check_count=len(unused_check_ids),
         unrun_recoverable_check=bool(set(unrun_checks) & set(unused_check_ids)),
@@ -776,6 +1123,25 @@ def _tool_policy(
         repair_read_credit=repair_read_credit,
         automatic_recheck=repair_recheck,
         current_recheck_eligible=current_recheck_eligible,
+        reproduction_case_count=(verification.get("replayable_case_count", 0)
+                                 + int(observation_available) + int(argument_correction)),
+        pending_reproduction_count=verification.get("pending_count", 0),
+        early_reproduction_count=len(verification.get("baseline_failure_case_ids", [])),
+        early_replay_reusable=bool(
+            verification.get("early_replay_reusable")
+            and getattr(gateway, "probe_sandbox", None) is not None
+        ),
+        observation_correction_pending=observation_available,
+        path_diagnosis_pending=path_available,
+        path_preparation_available=path_preparation,
+        path_request_correction_available=(path_available
+                                           and not path_diagnosis.get("rejected_requests")),
+        helper_correction_pending=helper_available,
+        test_comparison_pending=test_comparison_pending,
+        test_comparison_replay_count=sum(
+            case["case_id"] in verification.get("baseline_failure_case_ids", [])
+            for case in verification.get("pending_cases", [])
+        ) if test_comparison_pending else 0,
     )
     budget = completion_budget(completion_state)
     completion_possible = (
@@ -799,6 +1165,10 @@ def _tool_policy(
         repair_read_credit=False if repair_read_credit else completion_state.repair_read_credit,
     )
     inspection_budget = completion_budget(inspection_state)
+    acquisition_pending = verification.get("original_obligation", {}).get("stage") == "pending"
+    acquisition_inspection_budget = completion_budget(replace(
+        inspection_state, reproduction_case_count=inspection_state.reproduction_case_count + 1,
+    )) if acquisition_pending and not argument_correction else None
     inspection_floor = (
         inspection_budget.minimum
         if required_inspection and not protected_completion_possible
@@ -822,6 +1192,42 @@ def _tool_policy(
         released_check_recovery = inspection_budget.check_recovery_reserve
         inspection_floor -= released_check_recovery
         inspection_tool_floor -= inspection_budget.check_recovery_tool_actions
+    # A comparable original failure on this candidate earns one diagnostic turn.
+    # Spend speculative recovery only, retaining the real minimum repair/check/
+    # replay/finish path. The journal-derived credit is independent of restarts.
+    diagnostic_relaxes_inspection = (diagnostic_available and not path_blocked
+                                    and not _diagnostic_spent
+                                    and diagnostic.get("preparation_available", True)) and (
+        remaining_model_calls - 1 < inspection_floor
+        or remaining_tool_actions - 1 < inspection_tool_floor
+    )
+    if diagnostic_relaxes_inspection:
+        inspection_floor = inspection_budget.minimum
+        inspection_tool_floor = inspection_budget.minimum_tool_actions
+    shared_failure_exploration = bool(
+        completion_cost_policy == COMPLETION_RECOVERY_POLICY and cost_ledger is not None
+        and original_case_failed and not (observation_blocked or helper_blocked
+                                     or test_comparison_pending or acquisition_pending)
+    )
+    if shared_failure_exploration:
+        # Admit this evidence-gathering choice against an actual completion route
+        # below. The old protected envelope also covered multiple hypothetical
+        # failures; it must not veto a selected one-cycle/required-only route first.
+        request_fix = int(completion_state.path_request_correction_available)
+        inspection_floor = budget.minimum + request_fix
+        inspection_tool_floor = budget.minimum_tool_actions + request_fix
+    # Preserve one optional original observation before exploration closes. This
+    # shares the existing protected slack, rather than adding a second reserve.
+    if first_available and not diagnostic_only:
+        inspection_floor = max(inspection_floor, inspection_budget.minimum + 1)
+        inspection_tool_floor = max(
+            inspection_tool_floor, inspection_budget.minimum_tool_actions + 1)
+    if acquisition_inspection_budget is not None:
+        # A preparatory read must leave one original dispatch and its acquired-case
+        # completion route. Reading cannot consume the last funded probe opportunity.
+        inspection_floor = max(inspection_floor, 1 + acquisition_inspection_budget.protected)
+        inspection_tool_floor = max(
+            inspection_tool_floor, 1 + acquisition_inspection_budget.protected_tool_actions)
     inspection_tool_slack = remaining_tool_actions - inspection_tool_floor
     inspection_model_slack = remaining_model_calls - inspection_floor
     inspection_allowed = (
@@ -836,7 +1242,7 @@ def _tool_policy(
     )
     # If only the best path is affordable, the one required anchor read is still
     # completion work. Extra parallel requests cannot spend unreserved headroom.
-    if required_inspection and not protected_completion_possible:
+    if (required_inspection and not protected_completion_possible) or diagnostic_relaxes_inspection:
         max_parallel_reads = min(max_parallel_reads, 1)
 
     # A discretionary edit can invalidate every current PASS. Its successful
@@ -863,13 +1269,44 @@ def _tool_policy(
         and remaining_model_calls >= optional_mutation_protected_calls
         and remaining_tool_actions >= mutation_budget.protected_tool_actions
     )
+    test_edit_budget = test_addition_budget(completion_state)
+    repair_test_edit_enabled = bool(
+        diagnosed_test_available and mutation_allowed and remaining_mutations >= 2
+        and getattr(gateway.public_task, "test_suites", [])
+        and getattr(getattr(gateway.public_task, "constraints", None), "additive_test_roots", [])
+        and remaining_model_calls >= test_edit_budget.minimum
+        and remaining_tool_actions >= test_edit_budget.minimum_tool_actions
+        and (funded_calls is None or funded_calls >= test_edit_budget.minimum)
+    )
+    selected_test_floor = budget.minimum if diagnosed_test_available else budget.protected
+    selected_test_tool_floor = (
+        budget.minimum_tool_actions if diagnosed_test_available else budget.protected_tool_actions
+    )
     allowed = {"stop_task"}
+    obligation = verification.get("original_obligation", {})
+    minimum_observation_available = bool(
+        completion_cost_policy == COMPLETION_RECOVERY_POLICY and cost_ledger is not None
+        and original_case_failed and not (acquisition_pending or observation_blocked
+            or path_blocked or helper_blocked or test_comparison_pending)
+    )
+    probe_budget = (completion_budget(replace(
+        completion_state, reproduction_case_count=completion_state.reproduction_case_count + 1,
+    )) if (obligation.get("stage") == "pending" and not argument_correction)
+        or diagnostic_available or minimum_observation_available else budget)
+    probe_floor = (probe_budget.minimum if diagnostic_available or minimum_observation_available
+                   else probe_budget.protected)
+    probe_tool_floor = (probe_budget.minimum_tool_actions
+                        if diagnostic_available or minimum_observation_available
+                        else probe_budget.protected_tool_actions)
+    if minimum_observation_available and first_available:
+        probe_floor += 1
+        probe_tool_floor += 1
     available_check_ids = unrun_checks
     check_successor_reserve = max(0, (
         budget.protected if protected_completion_possible else budget.minimum
     ) - 1)
     if completion_possible:
-        if ready_to_submit:
+        if ready_to_submit and not original_case_failed:
             allowed.add("finish_task")
         if inspection_allowed:
             allowed.update({"read_file", "search_files"})
@@ -880,7 +1317,10 @@ def _tool_policy(
                     and remaining_tool_actions - 1 >= budget.protected_tool_actions):
                 allowed.add(history_search.TOOL)
         if mutation_allowed:
-            allowed.add("replace_text")
+            allowed.update(MUTATION_TOOLS)
+        if (first_available and remaining_model_calls - 1 >= budget.minimum
+                and remaining_tool_actions - 1 >= budget.minimum_tool_actions):
+            allowed.add("observe_original")
         # On a baseline that already requires repair, a diagnostic check is
         # optional work and must leave the whole protected repair path intact.
         if requires_mutation:
@@ -912,22 +1352,378 @@ def _tool_policy(
             allowed.add("run_check")
         if (
             getattr(gateway, "probe_sandbox", None) is not None
-            and remaining_model_calls - 1 >= budget.protected
-            and remaining_tool_actions - 1 >= budget.protected_tool_actions
+            and remaining_model_calls - 1 >= probe_floor
+            and remaining_tool_actions - 1 >= probe_tool_floor
         ):
             allowed.add("run_probe")
         if (
             getattr(gateway.public_task, "test_suites", [])
-            and remaining_model_calls - 1 >= budget.protected
-            and remaining_tool_actions - 1 >= budget.protected_tool_actions
+            and (not diagnosed_test_bound or diagnosed_test_available)
+            and remaining_model_calls - 1 >= selected_test_floor
+            and remaining_tool_actions - (2 if diagnosed_test_bound else 1)
+            >= selected_test_tool_floor
         ):
             allowed.add("run_tests")
+
+    if first_available and not diagnostic_only:
+        # A rejected first edit can consume mutation retry protection until the
+        # protected path equals the minimum. Every optional diagnostic must still
+        # leave the observation slot; reads already account for acquired anchors.
+        for tool in (_FIRST_OBSERVATION_EXPLORATION - {"read_file", "search_files"}) & allowed:
+            if (remaining_model_calls - 1 < budget.minimum + 1
+                    or remaining_tool_actions - 1 < budget.minimum_tool_actions + 1):
+                allowed.remove(tool)
+        if "run_check" not in allowed:
+            available_check_ids = ()
 
     exploration_capacity = (
         max(0, min(inspection_model_slack, inspection_tool_slack))
         if inspection_allowed
         else 0
     )
+    if diagnostic_relaxes_inspection:
+        exploration_capacity = min(exploration_capacity, 1)
+    if obligation.get("stage") == "pending":
+        workflow_gate = "needs_original_reproduction"
+        allowed.intersection_update({"stop_task", "read_file", "search_files", "run_probe",
+                                     history_search.TOOL})
+        mutation_allowed = mutation_protected_completion_possible = False
+        preparation_remaining = obligation.get("preparation_actions_remaining", max(
+            0, obligation["max_investigation_actions"] - obligation["investigation_actions"]))
+        max_parallel_reads = min(max_parallel_reads, preparation_remaining)
+        exploration_capacity = min(exploration_capacity, preparation_remaining)
+        if not preparation_remaining:
+            allowed.difference_update({"read_file", "search_files", history_search.TOOL})
+            inspection_allowed = False
+        elif (remaining_model_calls - 1 < 1 + probe_floor
+              or remaining_tool_actions - 1 < 1 + probe_tool_floor):
+            allowed.discard(history_search.TOOL)
+        available_check_ids = ()
+    if observation_blocked:
+        workflow_gate = "needs_observation_correction"
+        allowed = {"stop_task"}
+        completion_possible &= (
+            observation_available and getattr(gateway, "probe_sandbox", None) is not None
+        )
+        if completion_possible:
+            allowed.add("run_probe")
+        mutation_allowed = mutation_protected_completion_possible = inspection_allowed = False
+        max_parallel_reads = exploration_capacity = 0
+        available_check_ids = ()
+    elif path_blocked:
+        workflow_gate = "needs_path_diagnosis"
+        allowed = {"stop_task"}
+        completion_possible &= (
+            path_available and getattr(gateway, "probe_sandbox", None) is not None
+        )
+        mutation_allowed = mutation_protected_completion_possible = inspection_allowed = False
+        max_parallel_reads = exploration_capacity = 0
+        available_check_ids = ()
+        if completion_possible:
+            # The diagnostic is already in the minimum. Do not reserve it twice.
+            allowed.add("run_probe")
+            probe_floor = budget.minimum - 1
+            probe_tool_floor = budget.minimum_tool_actions - 1
+            # Caller/test exploration need not acquire a repair anchor. Preserve
+            # that missing read and the existing request-correction opportunity.
+            correction = int(completion_state.path_request_correction_available)
+            inspection_floor = budget.minimum + correction
+            inspection_tool_floor = budget.minimum_tool_actions + correction
+            inspection_model_slack = max(0, remaining_model_calls - inspection_floor)
+            inspection_tool_slack = max(0, remaining_tool_actions - inspection_tool_floor)
+            if path_preparation and inspection_model_slack and inspection_tool_slack:
+                allowed.update({"read_file", "search_files"})
+                inspection_allowed = True
+                max_parallel_reads = 1
+                exploration_capacity = min(inspection_model_slack, inspection_tool_slack)
+    if helper_blocked:
+        workflow_gate = ("needs_original_argument_correction"
+                         if helper_fix.get("policy") == helper_recovery.ARGUMENT_POLICY
+                         else "needs_helper_correction")
+        allowed = {"stop_task"}
+        completion_possible &= (
+            helper_available and getattr(gateway, "probe_sandbox", None) is not None
+        )
+        mutation_allowed = mutation_protected_completion_possible = inspection_allowed = False
+        max_parallel_reads = exploration_capacity = 0
+        available_check_ids = ()
+        if completion_possible:
+            allowed.add("run_probe")
+            probe_floor = budget.minimum - 1
+            probe_tool_floor = budget.minimum_tool_actions - 1
+    if test_comparison_pending and not (observation_blocked or helper_blocked):
+        workflow_gate = "needs_test_comparison"
+        allowed = {"stop_task"}
+        completion_possible &= bool(getattr(gateway.public_task, "test_suites", []))
+        mutation_allowed = mutation_protected_completion_possible = inspection_allowed = False
+        repair_test_edit_enabled = False
+        max_parallel_reads = exploration_capacity = 0
+        available_check_ids = ()
+        selected_test_floor = budget.minimum - 1
+        selected_test_tool_floor = budget.minimum_tool_actions - 2
+        if completion_possible:
+            allowed.add("run_tests")
+    minimum_cost_successors = None
+    recovery_routes = {}
+    minimum_observation_routes = {}
+    resource_rejections = {}
+    released_failure_recovery = {}
+    # This host-bound request reserves an opportunity, not verification credit.
+    # Its measured diff must still be current; finish and original gates stay ordinary.
+    requested_revision = bool(
+        completion_cost_policy == COMPLETION_RECOVERY_POLICY and cost_ledger is not None
+        and workflow_gate == "ready_to_submit" and mutation_capacity
+        and requested_revision_diff_hash is not None
+        and requested_revision_diff_hash == summary.patch_hash
+    )
+    revision_exploration = {"read_file", "search_files", history_search.TOOL,
+                            "run_probe", "run_tests"}
+    if (completion_cost_policy in {COMPLETION_MINIMUM_POLICY, COMPLETION_RECOVERY_POLICY}
+            and funded_calls is not None):
+        # Keep physical model/action recovery slots independent of money. Offer
+        # only actions whose successful minimum successor can be funded, then
+        # reserve the largest successor before the unknown action is generated.
+        minimum_cost_successors = {
+            tool: minimum_successor_calls(completion_state, tool) for tool in allowed
+        }
+        if path_available or shared_failure_exploration:
+            for tool in {"read_file", "search_files"} & allowed:
+                minimum_cost_successors[tool] = inspection_floor
+        if repair_test_edit_enabled:
+            for tool in MUTATION_TOOLS & allowed:
+                minimum_cost_successors[tool] = max(
+                    minimum_cost_successors[tool], test_edit_budget.minimum - 1,
+                )
+        if first_available and not diagnostic_only:
+            for tool in _FIRST_OBSERVATION_EXPLORATION & allowed:
+                # The shared inspection floor already retained the first
+                # observation. Other tools still need that separate successor.
+                if not (shared_failure_exploration and tool in {"read_file", "search_files"}):
+                    minimum_cost_successors[tool] += 1
+        if acquisition_inspection_budget is not None:
+            for tool in {"read_file", "search_files"} & allowed:
+                minimum_cost_successors[tool] = max(
+                    minimum_cost_successors[tool], 1 + acquisition_inspection_budget.minimum)
+            if history_search.TOOL in allowed:
+                minimum_cost_successors[history_search.TOOL] = 1 + probe_budget.minimum
+            if "run_probe" in allowed:
+                minimum_cost_successors["run_probe"] = probe_budget.minimum
+        if completion_cost_policy == COMPLETION_RECOVERY_POLICY:
+            checks = registered_checks(gateway)
+            durations = {check.id: float(getattr(check, "timeout_seconds", 0))
+                         + CHECK_OVERHEAD_SECONDS
+                         for check in checks}
+            suites = getattr(gateway.public_task, "test_suites", ())
+            for tool in allowed:
+                reserve_revision = requested_revision and tool in revision_exploration
+                calls = minimum_cost_successors[tool]
+                extra = 2 + completion_state.check_count - int(repair_recheck
+                    and completion_state.check_count > 0
+                    and not completion_state.reproduction_case_count and not acquisition_pending)
+                spare_edits = remaining_mutations - int(requires_mutation
+                    or tool in MUTATION_TOOLS) - int(repair_test_edit_enabled)
+                ordinary = (diagnostic_only or not first_available) and ordinary_route_supported(
+                    completion_state, tool, acquisition_pending=acquisition_pending,
+                    test_edit=repair_test_edit_enabled and tool in MUTATION_TOOLS,
+                    test_comparison=test_comparison_pending)
+                legacy_tool_minimum = (mutation_budget.minimum_tool_actions
+                                       if tool in MUTATION_TOOLS
+                                       else budget.minimum_tool_actions)
+                recover = bool(not reserve_revision and tool not in {"finish_task", "stop_task"}
+                    and spare_edits > 0
+                    and (completion_state.unused_check_count
+                         or completion_state.reproduction_case_count)
+                    and (ordinary or (
+                        remaining_model_calls >= 1 + calls + extra
+                        and remaining_tool_actions >= legacy_tool_minimum + 3
+                        + completion_state.check_count + completion_state.reproduction_case_count)))
+                options = dict(calls=calls, max_output_tokens=desired_output_ceiling,
+                    check_seconds=tuple(durations.values()),
+                    remaining_check_seconds=tuple(durations[c] for c in remaining_check_ids),
+                    probe_seconds=PROBE_TIMEOUT_SECONDS + CHECK_OVERHEAD_SECONDS,
+                    acquisition_pending=acquisition_pending and not argument_correction,
+                    test_comparison=(test_comparison_pending or remaining_tool_actions - 2
+                                     >= selected_test_tool_floor),
+                    optional_check_seconds=max((float(getattr(s, "timeout_seconds", 0)) + 5
+                                                for s in suites), default=0),
+                    test_edit=repair_test_edit_enabled and tool in MUTATION_TOOLS,
+                    preserve_pending_diagnosis=(
+                        path_available and tool in {"read_file", "search_files"}),
+                    ordinary_routes=ordinary,
+                    preserve_read_anchor=shared_failure_exploration)
+                route = successor_resources(completion_state, tool,
+                                            protect_failure=recover, **options)
+                if minimum_observation_available and (
+                    tool == "run_probe" or first_available
+                    and tool in {"read_file", "search_files", "observe_original"}
+                ):
+                    # General probes may add a case. Reobserving an acquired
+                    # original does not. Reading keeps that first observation
+                    # ahead, including its response, action and target execution.
+                    prospective = replace(
+                        completion_state,
+                        reproduction_case_count=completion_state.reproduction_case_count
+                        + int(tool == "run_probe"),
+                    )
+                    mandatory = completion_budget(prospective)
+                    pending_observation = int(first_available and tool != "observe_original")
+                    followup_calls = mandatory.minimum + pending_observation
+                    followup_actions = mandatory.minimum_tool_actions + pending_observation
+                    observation_candidates = {}
+                    for protect_failure in ((False, True) if recover else (False,)):
+                        resource = successor_resources(prospective, tool,
+                            protect_failure=protect_failure, **{
+                                **options, "calls": followup_calls, "ordinary_routes": False,
+                            })
+                        # The protected alternative adds one read, one repair,
+                        # every invalidated check and every original replay.
+                        extra_calls = int(protect_failure) * (2 + prospective.check_count)
+                        extra_tools = extra_calls + int(protect_failure) * (
+                            prospective.reproduction_case_count)
+                        observation_candidates[protect_failure] = replace(resource,
+                            physical_model_floor=1 + followup_calls + extra_calls,
+                            physical_tool_floor=1 + followup_actions + extra_tools,
+                            seconds=resource.seconds + pending_observation
+                            * (PROBE_TIMEOUT_SECONDS + CHECK_OVERHEAD_SECONDS))
+                    minimum_observation_routes[tool] = observation_candidates[False]
+                    route = merge_resources(route, observation_candidates[recover])
+                if reserve_revision:
+                    revision = requested_revision_resources(
+                        completion_state, tool, max_output_tokens=desired_output_ceiling,
+                        check_seconds=tuple(durations.values()),
+                        probe_seconds=PROBE_TIMEOUT_SECONDS + CHECK_OVERHEAD_SECONDS,
+                        optional_check_seconds=options["optional_check_seconds"],
+                        test_comparison=options["test_comparison"])
+                    floors = {
+                        "read_file": (inspection_floor, inspection_tool_floor),
+                        "search_files": (inspection_floor, inspection_tool_floor),
+                        history_search.TOOL: (budget.protected, budget.protected_tool_actions),
+                        "run_probe": (probe_floor, probe_tool_floor),
+                        "run_tests": (selected_test_floor, selected_test_tool_floor),
+                    }
+                    model_floor, tool_floor = floors[tool]
+                    current_actions = 2 if tool == "run_tests" and options["test_comparison"] else 1
+                    route = merge_resources(route, revision, model_floor=1+model_floor,
+                                            tool_floor=current_actions+tool_floor)
+
+                def fits(candidate):
+                    outputs = candidate.output_options
+                    money = max(sum(cost_ledger.future_call_reservation_nanos(output_ceiling=n)
+                                    for n in ceilings) for ceilings in outputs) + correction_reserve
+                    output = (correction_ceiling if correction_pending else desired_output_ceiling
+                              if requires_mutation and "replace_text" in allowed
+                              else finalization_floor)
+                    current = cost_ledger.future_call_reservation_nanos(output_ceiling=output)
+                    physical = (
+                        (candidate.model_calls is None
+                         or candidate.model_calls <= remaining_model_calls)
+                        and (candidate.tool_actions is None
+                             or candidate.tool_actions <= remaining_tool_actions))
+                    seconds = candidate.seconds + (FOLLOWUP_SECONDS * correction_model_reserve
+                                                   if candidate.model_calls is not None else 0)
+                    return (physical and money + current <= cost_ledger.remaining_nanos
+                            and (remaining_seconds is None
+                                 or remaining_seconds - seconds >= FOLLOWUP_SECONDS))
+
+                # A useful immediate repair/check may spend speculative recovery.
+                # Known original-failure exploration may also choose the required
+                # route explicitly; it does not retain a later failure's revision.
+                if recover and not fits(route) and (tool in MUTATION_TOOLS | {"run_check"}
+                        or required_inspection and not path_available
+                        and tool in {"read_file", "search_files"}
+                        or shared_failure_exploration and tool in {"read_file", "search_files"}
+                        or path_available and tool == "run_probe"
+                        or tool in minimum_observation_routes):
+                    route = successor_resources(completion_state, tool,
+                                                protect_failure=False, **options)
+                    if tool in minimum_observation_routes:
+                        route = merge_resources(route, minimum_observation_routes[tool])
+                    released_failure_recovery[tool] = "speculative_future_failure_does_not_fit"
+                if tool in {"finish_task", "stop_task"} or fits(route):
+                    recovery_routes[tool] = route
+                else:
+                    resource_rejections[tool] = (
+                        "model_calls" if route.model_calls is not None
+                        and route.model_calls > remaining_model_calls
+                        else "tool_actions" if route.tool_actions is not None
+                        and route.tool_actions > remaining_tool_actions
+                        else "time" if remaining_seconds is not None
+                        and remaining_seconds - route.seconds
+                            - (FOLLOWUP_SECONDS * correction_model_reserve
+                               if route.model_calls is not None else 0)
+                            < FOLLOWUP_SECONDS else "cost")
+        allowed = {
+            tool for tool in allowed
+            if tool in {"finish_task", "stop_task"}
+            or (tool in recovery_routes if completion_cost_policy == COMPLETION_RECOVERY_POLICY
+                else funded_calls >= 1 + minimum_cost_successors[tool])
+        }
+        completion_possible = completion_possible and (
+            funded_calls >= budget.minimum or "finish_task" in allowed
+        )
+        if completion_cost_policy == COMPLETION_RECOVERY_POLICY:
+            completion_possible &= bool(allowed - {"stop_task"})
+        protected_completion_possible &= completion_possible
+        if not completion_possible:
+            allowed = {"stop_task"}
+        inspection_allowed = "read_file" in allowed
+        mutation_allowed = "replace_text" in allowed
+        repair_test_edit_enabled &= mutation_allowed
+        mutation_protected_completion_possible &= mutation_allowed
+        if "run_check" not in allowed:
+            available_check_ids = ()
+        if not inspection_allowed:
+            max_parallel_reads = exploration_capacity = 0
+        else:
+            route = recovery_routes.get("read_file")
+            if route is not None and route.routes:
+                # Current read is one response/action; all other steps, including
+                # host replays and retained request correction, remain ahead.
+                inspection_floor = route.model_calls - 1
+                inspection_tool_floor = route.tool_actions - 1
+                inspection_model_slack = max(0, remaining_model_calls - inspection_floor)
+                inspection_tool_slack = max(0, remaining_tool_actions - inspection_tool_floor)
+                max_parallel_reads = min(max_parallel_reads, inspection_tool_slack)
+            inspection_model_slack = min(
+                inspection_model_slack,
+                funded_calls - minimum_cost_successors["read_file"],
+            )
+            exploration_capacity = min(exploration_capacity, inspection_model_slack)
+            if ((path_available or shared_failure_exploration or requested_revision)
+                    and completion_cost_policy == COMPLETION_RECOVERY_POLICY):
+                route = recovery_routes["read_file"]
+                outputs = route.output_options
+                reserved = max(sum(cost_ledger.future_call_reservation_nanos(output_ceiling=n)
+                                   for n in ceilings) for ceilings in outputs) + correction_reserve
+                read_cost = cost_ledger.future_call_reservation_nanos(
+                    output_ceiling=correction_ceiling if correction_pending else finalization_floor)
+                # Count-only capacity is an upper bound; qualify it by the same
+                # conservative role reservation used to admit this actual read.
+                cost_reads = max(0, (cost_ledger.remaining_nanos - reserved) // read_cost)
+                inspection_model_slack = min(inspection_model_slack, cost_reads)
+                if remaining_seconds is not None:
+                    seconds = route.seconds + (FOLLOWUP_SECONDS * correction_model_reserve
+                                               if route.routes else 0)
+                    time_reads = max(0, int((remaining_seconds - seconds)
+                                           // FOLLOWUP_SECONDS))
+                    inspection_model_slack = min(inspection_model_slack, time_reads)
+                exploration_capacity = min(exploration_capacity, inspection_model_slack)
+    if diagnostic_relaxes_inspection and inspection_allowed:
+        inspection_model_slack = min(inspection_model_slack, 1)
+        inspection_tool_slack = min(inspection_tool_slack, 1)
+    if (path_available or shared_failure_exploration) and inspection_allowed:
+        # This stage offers one read/search per response, so its visible model
+        # and action capacities share the tightest currently admitted resource.
+        exploration_capacity = min(inspection_model_slack, inspection_tool_slack)
+        inspection_model_slack = inspection_tool_slack = exploration_capacity
+    if ((observation_blocked or path_blocked or helper_blocked) and not test_comparison_pending
+            and "run_probe" not in allowed):
+        workflow_gate = "verification_incomplete"
+        completion_possible = protected_completion_possible = False
+    if test_comparison_pending and "run_tests" not in allowed:
+        workflow_gate = "verification_incomplete"
+        completion_possible = protected_completion_possible = False
+    repair_test_edit_enabled &= mutation_allowed
     exploration_state = (
         "last_opportunity"
         if inspection_allowed and exploration_capacity == 1
@@ -950,7 +1746,27 @@ def _tool_policy(
         and counters.commitment_diff_hash == current_diff_hash
         and has_current_mutation_evidence
     )
+    ordinary_call_slots = max(
+        0, limits.max_model_calls - counters.model_calls - correction_model_reserve)
+    edit_resource_reason = (
+        "model_calls_insufficient_for_edit_completion"
+        if ordinary_call_slots < mutation_budget.minimum else
+        "tool_actions_insufficient_for_edit_completion"
+        if remaining_tool_actions < mutation_budget.minimum_tool_actions else
+        "cost_insufficient_for_edit_completion"
+        if remaining_model_calls < mutation_budget.minimum else
+        (f"{resource_rejections['replace_text']}_insufficient_for_edit_completion"
+         if "replace_text" in resource_rejections else None)
+    )
     policy = _ToolPolicy(
+        edit_availability=_edit_availability(
+            allowed=allowed, remaining_mutations=remaining_mutations,
+            untracked_files=bool(summary.untracked_files),
+            has_current_source=has_current_mutation_evidence,
+            completion_possible=completion_possible, workflow_gate=workflow_gate,
+            resource_reason=edit_resource_reason,
+        ),
+        verification_policy=verification_policy,
         workflow_gate=workflow_gate,
         allowed_tools=frozenset(allowed),
         check_ids=available_check_ids,
@@ -997,9 +1813,182 @@ def _tool_policy(
         optional_mutation_completion_tool_actions=mutation_budget.minimum_tool_actions,
         optional_mutation_protected_tool_actions=mutation_budget.protected_tool_actions,
         inspection_reserve_tool_actions=inspection_tool_floor,
+        repair_prediction=repair_prediction or None,
+        repair_test_edit_enabled=repair_test_edit_enabled,
+        repair_test_edit_minimum_calls=test_edit_budget.minimum,
+        repair_test_edit_minimum_tool_actions=test_edit_budget.minimum_tool_actions,
+        selected_test_reserve_tool_actions=selected_test_tool_floor,
+        selected_test_comparison_required=diagnosed_test_bound or test_comparison_pending,
+        original_failure_diagnostic=({
+            **diagnostic,
+            "offered_tools": sorted(allowed & {"read_file", "search_files", "run_probe"})
+            if diagnostic_available else [],
+            "uses_minimum_completion_reserve": bool(diagnostic_available and (
+                (diagnostic_relaxes_inspection and inspection_allowed)
+                or ("run_probe" in allowed and (
+                    remaining_model_calls - 1 < probe_budget.protected
+                    or remaining_tool_actions - 1 < probe_budget.protected_tool_actions
+                ))
+            )),
+            "limit": ("Pending path diagnosis permits repeated reads within its projected "
+                      "shared completion budget; its diagnostic execution and request "
+                      "correction remain bounded separately." if path_blocked else
+                     "One preparation read and one model diagnostic per refuted candidate "
+                     "may spend speculative recovery. The minimum repair, checks, replay and "
+                     "finish must still fit; request correction for path diagnosis is separate."),
+        } if diagnostic is not None else None),
+        observation_correction=({
+            **(observation_advice if diagnostic_only else observation_fix),
+            "offered_tools": sorted(allowed),
+            "uses_minimum_completion_reserve": not diagnostic_only and "run_probe" in allowed,
+            **({"required": False, "offered": (
+                observation_advice.get("status") == "pending"
+                and not observation_advice.get("pending_started") and "run_probe" in allowed),
+                "instruction": (
+                    "Optional: before a source edit, correct the observation extractor once "
+                    "using target_action_id as purpose.corrects_action_id. Keep the complete "
+                    "purpose, expected/failure values, caller and inputs unchanged. A successful "
+                    "same-condition baseline reproduction replaces the invalid observation; "
+                    "unresolved evidence does not gate submission under public-checks-v1."
+                )} if diagnostic_only else {}),
+        } if observation_blocked or (diagnostic_only and observation_advice.get("target_action_id"))
+        else None),
+        repair_path_diagnosis=(
+            _repair_path_resources(
+                path_diagnosis, allowed, required_inspection=required_inspection,
+                closure_reason=closure_reason,
+                model_turns_available=(inspection_model_slack if inspection_allowed else 0),
+                tool_actions_available=(inspection_tool_slack if inspection_allowed else 0),
+                minimum_calls=budget.minimum, minimum_tool_actions=budget.minimum_tool_actions,
+                request_correction_reserved=completion_state.path_request_correction_available,
+            ) if path_diagnosis.get("status") not in {None, "not_needed"}
+            and not observation_blocked else None
+        ),
+        helper_correction=({**helper_fix, "offered_tools": sorted(allowed),
+                            "uses_minimum_completion_reserve": "run_probe" in allowed}
+                           if helper_blocked else None),
+        first_observation=({**first_observation,
+                            "offered": "observe_original" in allowed,
+                            "minimum_route_calls": budget.minimum + 1,
+                            "minimum_route_tool_actions": budget.minimum_tool_actions + 1,
+                            "reservation": ("optional_action_only" if diagnostic_only
+                                            else "shared_protected_slack_one_observation")}
+                           if first_observation.get("status") not in {None, "not_needed"}
+                           else None),
     )
-    if funded_calls is not None:
-        successors = [0]  # finish/stop have no subsequent provider call.
+    if funded_calls is not None and minimum_cost_successors is not None:
+        future_calls = max(minimum_cost_successors[tool] for tool in allowed)
+        policy = replace(policy, completion_cost={
+            "policy": completion_cost_policy,
+            "future_input_tokens": segments.MAX_INPUT_TOKENS,
+            "future_output_tokens": completion_cost_contract(
+                COMPLETION_MINIMUM_POLICY,
+            )["future_output_tokens"],
+            "per_call_reservation_nanos": cost_unit,
+            "funded_calls": funded_calls,
+            "admitted_call_slots": max(int("finish_task" in allowed), funded_calls),
+            "future_calls_reserved": future_calls,
+            "future_cost_reserve_nanos": (future_calls * cost_unit + correction_reserve
+                                          + (finalization_premium if future_calls else 0)),
+            "basis": "largest_offered_action_minimum_successor",
+            "recovery_scope": "Protected forecasts retain model/tool slots; money reserves only "
+                              "successful minimum successors, not failure recovery.",
+            "limit": "Successful actions only. Minimum output admission; useful output and task "
+                     "success are not guaranteed.",
+        })
+        if completion_cost_policy == COMPLETION_RECOVERY_POLICY:
+            policy.completion_cost.update({
+                "basis": "minimum_successor_plus_correction_and_finalization",
+                "finalization_output_floor": finalization_floor,
+                "finalization_cost_reserved_nanos": finalization_premium if future_calls else 0,
+                "correction_credits_remaining": int(correction_available),
+                "correction_pending": correction_pending,
+                "correction_output_ceiling": correction_ceiling,
+                "correction_call_cost_nanos": correction_cost,
+                "correction_cost_reserved_nanos": correction_reserve,
+                "correction_model_calls_reserved": correction_model_reserve,
+                "current_minimum_output_ceiling": (
+                    correction_ceiling if correction_pending else finalization_floor
+                    if ready_to_submit else MINIMUM_OUTPUT_CEILING
+                ),
+                "recovery_scope": "One protocol correction per run at the correction output "
+                                  "ceiling, never renewed by valid actions. No tool-failure or "
+                                  "unknown-billing retry funding.",
+                "limit": "Correction and finalization have bounded output allowances, not "
+                         "guarantees of useful output or repair. Other successors retain "
+                         "minimum output admission only. The invocation cap is unchanged.",
+            })
+            routes = {tool: recovery_routes[tool] for tool in allowed}
+            role_costs = {tool: max(
+                sum(cost_ledger.future_call_reservation_nanos(output_ceiling=n) for n in ceilings)
+                for ceilings in route.output_options)
+                          for tool, route in routes.items()}
+            policy.completion_cost.update({
+                "basis": "largest_offered_action_role_successor",
+                "future_output_tokens": finalization_floor,
+                "funded_calls_basis": "minimum-unit-upper-bound-before-role-admission",
+                "future_calls_reserved": max(len(o) for r in routes.values()
+                                              for o in r.output_options),
+                "future_cost_reserve_nanos": max(role_costs.values()) + correction_reserve,
+                "successor_output_ceilings": {t: list(r.output_ceilings)
+                                             for t, r in routes.items()},
+                "failure_recovery_reserved": {t: r.failure_recovery for t, r in routes.items()},
+                "future_time_reserve_seconds": max(
+                    r.seconds + (FOLLOWUP_SECONDS * correction_model_reserve
+                                 if r.model_calls is not None else 0)
+                    for r in routes.values()),
+                "remaining_seconds": remaining_seconds,
+                "resource_rejections": resource_rejections,
+                "completion_routes": {tool: {
+                    "kind": ("requested_revision" if requested_revision
+                             and tool in revision_exploration else
+                             "one_failure_revision" if route.failure_recovery
+                             else "required_completion"),
+                    "model_calls": route.model_calls,
+                    "tool_actions": route.tool_actions,
+                    "required_model_calls": (minimum_observation_routes[tool].model_calls
+                        if tool in minimum_observation_routes
+                        else route.model_calls if requested_revision
+                        and tool in revision_exploration else
+                        route.routes[0].model_calls if route.routes else None),
+                    "required_tool_actions": (minimum_observation_routes[tool].tool_actions
+                        if tool in minimum_observation_routes
+                        else route.tool_actions if requested_revision
+                        and tool in revision_exploration else
+                        route.routes[0].tool_actions if route.routes else None),
+                    "released_reason": released_failure_recovery.get(tool),
+                    "adapter": route.adapter_reason,
+                } for tool, route in routes.items()},
+                "route_policy": "shared-completion-paths-v1",
+                "current_minimum_output_ceiling": (correction_ceiling if correction_pending
+                    else desired_output_ceiling if requires_mutation and "replace_text" in allowed
+                    else finalization_floor if allowed - {"stop_task"}
+                    else MINIMUM_OUTPUT_CEILING),
+                "recovery_scope": "Selected routes share response, tool, output and execution "
+                                  "reservations. One future failure can retain revision, including "
+                                  "a possible original-path diagnosis. Known-original exploration "
+                                  "may release future revision while keeping current completion "
+                                  "and correction; older multiple-failure protection is separate.",
+                "limit": "Nominal check timeouts, follow-up floors and output allowances are "
+                         "reserved within existing caps; useful output and repair are unproven.",
+            })
+            if requested_revision:
+                policy.completion_cost["requested_revision"] = {
+                    "diff_hash": requested_revision_diff_hash,
+                    "scope": "preserve_one_successful_revision_after_exploration",
+                    "verification_credit": False,
+                    "finish_gate_changed": False,
+                    "successor_output_options": {
+                        tool: [list(o) for o in route.output_options]
+                        for tool, route in routes.items() if tool in revision_exploration},
+                }
+    elif funded_calls is not None:
+        successors = [0]  # Stop and a successful finish need no subsequent call.
+        if ("finish_task" in allowed and verification.get("pending_count", 0)
+                and protected_completion_possible):
+            # The final public replay may reject this finish. Preserve the same
+            # funded recovery reported by the model/action forecast.
+            successors.append(budget.protected - 1)
         if inspection_allowed:
             successors.append(inspection_floor)
         if mutation_allowed:
@@ -1007,8 +1996,16 @@ def _tool_policy(
                 optional_mutation_protected_calls
                 if mutation_protected_completion_possible else optional_mutation_completion_calls
             ) - 1)
-        if {"run_probe", "run_tests", history_search.TOOL} & allowed:
+            if repair_test_edit_enabled:
+                successors.append(test_edit_budget.minimum - 1)
+        if history_search.TOOL in allowed:
             successors.append(budget.protected)
+        if "run_tests" in allowed:
+            successors.append(selected_test_floor)
+        if "run_probe" in allowed:
+            successors.append(probe_floor)
+        if "observe_original" in allowed:
+            successors.append(budget.minimum)
         if "run_check" in allowed:
             successors.append(check_successor_reserve)
         future_calls = max(successors)
@@ -1024,7 +2021,21 @@ def _tool_policy(
             "basis": "largest_offered_action_successor",
             "limit": "Minimum output admission, not a guarantee of useful output or task success.",
         })
+    policy = replace(policy, action_budget=action_budget_explanations(
+        completion_state, offered_tools=policy.allowed_tools,
+        total_model_calls=max(0, limits.max_model_calls - counters.model_calls),
+        correction_model_calls=correction_model_reserve,
+        remaining_tool_actions=remaining_tool_actions, max_parallel_reads=max_parallel_reads,
+        test_comparison_enabled=_test_comparison_enabled(policy, counters, limits),
+        test_comparison_required=policy.selected_test_comparison_required,
+    ))
     if inspection_allowed and _preview_inspection:
+        if path_available or shared_failure_exploration:
+            # One action per response; the forecast already incorporates the
+            # unchanged anchor, correction, monetary and nominal-time reserves.
+            # Do not assume a useful read or mutate the live cost ledger to preview it.
+            return replace(policy, tools_closing_after_this_turn=(
+                ("read_file", "search_files") if exploration_capacity == 1 else ()))
         # Advisory single-inspection forecast, not another admission rule. Reuse
         # the actual policy so optional probes/checks cannot disappear unannounced.
         # Evidence/gate stay unchanged; a useful read or a different action may
@@ -1035,6 +2046,10 @@ def _tool_policy(
                 counters,
                 model_calls=counters.model_calls + 1,
                 tool_actions=counters.tool_actions + 1,
+                protocol_recoveries=(
+                    0 if completion_cost_policy == COMPLETION_RECOVERY_POLICY
+                    else counters.protocol_recoveries
+                ),
                 failed_check_repair_read_used=(
                     counters.failed_check_repair_read_used or counters.failed_check_pending
                 ),
@@ -1045,8 +2060,13 @@ def _tool_policy(
             repair_recheck=repair_recheck,
             cost_ledger=cost_ledger,
             completion_cost_policy=completion_cost_policy,
+            desired_output_ceiling=desired_output_ceiling,
+            max_correction_output_tokens=max_correction_output_tokens,
+            remaining_seconds=remaining_seconds,
             _preview_inspection=False,
+            requested_revision_diff_hash=requested_revision_diff_hash,
             _cost_call_limit=(max(0, funded_calls - 1) if funded_calls is not None else None),
+            _diagnostic_spent=True,
         )
         policy = replace(
             policy,
@@ -1057,10 +2077,91 @@ def _tool_policy(
     return policy
 
 
+def _repair_path_resources(
+    state: dict[str, Any], allowed_tools: set[str] | frozenset[str], *,
+    required_inspection: bool, closure_reason: str | None,
+    model_turns_available: int = 0, tool_actions_available: int = 0,
+    minimum_calls: int = 0, minimum_tool_actions: int = 0,
+    request_correction_reserved: bool = False,
+) -> dict[str, Any]:
+    """Qualify pending exploration against this turn's actual resource admission."""
+    allowance = bool(state.get("preparation_available"))
+    pending = state.get("status") == "needs_path_diagnosis" and bool(state.get("blocked"))
+    offered = bool(allowance and pending and {"read_file", "search_files"} & allowed_tools)
+    return {
+        **state,
+        "preparation_allowance_available": allowance,
+        "preparation_available": offered,
+        "preparation_model_turns_available": model_turns_available if offered else 0,
+        "preparation_tool_actions_available": tool_actions_available if offered else 0,
+        "preparation_limit": "shared_completion_budget",
+        "preparation_completion_calls_reserved": minimum_calls if pending else 0,
+        "preparation_completion_tool_actions_reserved": minimum_tool_actions if pending else 0,
+        "preparation_request_correction_reserved": bool(pending and request_correction_reserved),
+        "preparation_required_for_completion": bool(pending and required_inspection),
+        "preparation_blocked_reason": (
+            None if offered else "diagnosis_unavailable" if not pending
+            else "allowance_spent" if not allowance else closure_reason or "workflow_gate"
+        ),
+        "offered_tools": sorted(allowed_tools),
+    }
+
+
+def _reproduction_review_resources(
+    review: dict[str, Any], policy: _ToolPolicy,
+    *, probe_policy: str = "none",
+) -> dict[str, Any]:
+    """Keep the duplicate model-facing path state consistent without changing its ledger."""
+    if review.get("probe_followup") is not None:
+        restricted = policy.workflow_gate not in {
+            "needs_mutation", "needs_visible_checks", "ready_to_submit", "verification_incomplete",
+        } or (policy.verification_policy != "public-checks-v1" and any(
+            (value or {}).get("blocked") for value in (
+                policy.helper_correction, policy.observation_correction,
+            )
+        ))
+        review = {**review, "probe_followup": probe_followup.with_guidance(
+            review["probe_followup"], offered="run_probe" in policy.allowed_tools,
+            restricted=restricted, probe_policy=probe_policy,
+        )}
+    if policy.verification_policy == "public-checks-v1":
+        return {**review, "verification_policy": policy.verification_policy,
+                "submission_gate": False, "interpretation": (
+                    "Diagnostic evidence only. Raw statuses describe observations and their "
+                    "strict-policy obligations, not required work under public-checks-v1."
+                )}
+    completion = review.get("completion", {})
+    path_state = completion.get("repair_path")
+    if not isinstance(path_state, dict) or "preparation_available" not in path_state:
+        return review
+    projected = policy.repair_path_diagnosis or _repair_path_resources(
+        path_state, policy.allowed_tools, required_inspection=False,
+        closure_reason=policy.workflow_gate,
+    )
+    return {**review, "completion": {**completion, "repair_path": projected}}
+
+
 def _repair_inspection_payload(policy: _ToolPolicy) -> dict[str, Any]:
+    diagnostic = ({"original_failure_diagnostic": policy.original_failure_diagnostic}
+                  if policy.original_failure_diagnostic is not None else {})
+    if policy.observation_correction is not None:
+        diagnostic["observation_correction"] = policy.observation_correction
+    if policy.repair_path_diagnosis is not None:
+        diagnostic["repair_path_diagnosis"] = policy.repair_path_diagnosis
+    if policy.helper_correction is not None:
+        diagnostic["helper_correction"] = policy.helper_correction
+    if policy.first_observation is not None:
+        diagnostic["first_observation"] = policy.first_observation
+    if policy.repair_prediction is not None:
+        diagnostic["repair_prediction"] = {
+            **policy.repair_prediction,
+            "test_edit_enabled": policy.repair_test_edit_enabled,
+            "test_edit_minimum_calls": policy.repair_test_edit_minimum_calls,
+            "test_edit_minimum_tool_actions": policy.repair_test_edit_minimum_tool_actions,
+        }
     if policy.repair_inspection_policy == "protected-v1":
-        return {}
-    return {"repair_inspection": {
+        return diagnostic
+    return {**diagnostic, "repair_inspection": {
         "policy": policy.repair_inspection_policy,
         "reserve_calls_after_inspection": policy.inspection_reserve_calls,
         "released_future_check_recovery_calls": policy.inspection_released_check_recovery_calls,
@@ -1156,10 +2257,17 @@ def _completion_horizon_payload(
     remaining_model_calls = max(0, limits.max_model_calls - counters.model_calls)
     remaining_tool_actions = max(0, limits.max_tool_actions - counters.tool_actions)
     blocking_resources: list[str] = []
+    if not policy.completion_possible and policy.completion_cost:
+        blocking_resources.extend(sorted(set(
+            policy.completion_cost.get("resource_rejections", {}).values())))
     if (policy.completion_cost is not None
             and policy.completion_cost["admitted_call_slots"] < policy.minimum_completion_calls):
-        blocking_resources.append("cost")
-    if remaining_model_calls < policy.minimum_completion_calls:
+            blocking_resources.append("cost")
+    correction_model_reserve = (
+        policy.completion_cost.get("correction_model_calls_reserved", 0)
+        if policy.completion_cost is not None else 0
+    )
+    if remaining_model_calls < policy.minimum_completion_calls + correction_model_reserve:
         blocking_resources.append("model_calls")
     if remaining_tool_actions < policy.minimum_completion_tool_actions:
         blocking_resources.append("tool_actions")
@@ -1171,7 +2279,7 @@ def _completion_horizon_payload(
     )
     current_check_failed = any(row["status"] == "FAIL" for row in visible_status)
     if (
-        (policy.workflow_gate == "needs_mutation" or current_check_failed)
+        (policy.workflow_gate in {"needs_mutation", "needs_path_diagnosis"} or current_check_failed)
         and gateway.accepted_mutations >= limits.max_accepted_mutations
     ):
         blocking_resources.append("accepted_mutations")
@@ -1184,6 +2292,8 @@ def _completion_horizon_payload(
         "minimum_completion_calls": policy.minimum_completion_calls,
         **_completion_resources_payload(policy),
         "blocking_resources": blocking_resources,
+        **({"required_public_checks": gaps}
+           if (gaps := _required_public_check_gaps(gateway, snapshot)) else {}),
         **_completion_cost_payload(policy),
     }
 
@@ -1247,14 +2357,25 @@ def _tool_policy_transition(
         )
         from_state = "execution_only"
         to_state = "execution_only"
+    removed = previous - current
+    edit_reason = (policy.edit_availability or {}).get("reason")
+    if ("replace_text" in removed and edit_reason
+            and "insufficient_for_edit_completion" in edit_reason):
+        reason = edit_reason
     return {
         "from": from_state,
         "to": to_state,
         "reason": reason,
-        "removed_tools": sorted(previous - current),
+        "removed_tools": sorted(removed),
         "added_tools": sorted(current - previous),
         "remaining_tools": sorted(current),
     }
+
+
+def _parallel_tool_calls(policy: _ToolPolicy) -> bool:
+    """Parallel generation is useful only when the gate can accept a read batch."""
+    return policy.max_parallel_reads > 1 and bool(
+        {"read_file", "search_files"} & policy.allowed_tools)
 
 
 def _protocol_correction(
@@ -1265,8 +2386,8 @@ def _protocol_correction(
     gateway: DevToolGateway,
     policy: _ToolPolicy,
     tool_contract_failure: DevToolContractFailure | None = None,
+    rejected_calls: Sequence[RequestedTool] = (),
 ) -> dict[str, Any]:
-    del gateway
     allowed = policy.allowed_tools
     actions: list[str] = []
     inspection_names = sorted({"read_file", "search_files"} & allowed)
@@ -1296,7 +2417,7 @@ def _protocol_correction(
         actions.append(
             "Before finish_task, judge the current evidence against public requirements "
             "and unfinished verification plans; justify remaining gaps in the assessment. "
-            "Submit only if you judge the task complete."
+            "Missing original evidence returns unverified_delivery."
         )
     if "run_probe" in allowed:
         actions.append(
@@ -1306,14 +2427,16 @@ def _protocol_correction(
     if "run_tests" in allowed:
         actions.append(
             "Use run_tests to select public test files or node IDs from a registered suite; "
-            "selected tests do not replace required visible checks."
+            "comparison runs the same tests before and after the implementation change and "
+            "costs two tool executions. PASS/PASS does not distinguish the repair; selected "
+            "tests do not replace the original invocation or required visible checks."
         )
     if "stop_task" in allowed:
         actions.append(
             "Use stop_task to abandon without submission or evaluation when no available "
             "action supports progress; it is not successful completion."
         )
-    return {
+    result = {
         "turn_id": turn_id,
         "code": code,
         "issue": issue,
@@ -1328,6 +2451,38 @@ def _protocol_correction(
             else None
         ),
     }
+    if policy.workflow_gate == "needs_path_diagnosis":
+        result["diagnosis_correction"] = diagnosis_context.correction(
+            code, issue, result["tool_contract_failure"])
+        result["message"] = result["diagnosis_correction"]["message"]
+    elif policy.workflow_gate == "needs_mutation" and (
+            {"replace_text", "edit_files", "observe_original"} & allowed):
+        result["repair_correction"] = repair_context.correction(
+            code, issue, result["tool_contract_failure"])
+        result["message"] = result["repair_correction"]["message"]
+    elif policy.workflow_gate == "ready_to_submit":
+        result["completion_correction"] = completion_context.correction(
+            code, issue, result["tool_contract_failure"])
+        result["message"] = result["completion_correction"]["message"]
+    drafts = correction_drafts.build(
+        rejected_calls, turn_id=turn_id, diff_hash=gateway.current_diff.patch_hash
+    ) if rejected_calls else None
+    if drafts is not None:
+        result["rejected_drafts"] = drafts
+        result["message"] += " Reuse current rejected_drafts as appropriate; return one action."
+    return result
+
+
+def _scope_source_receipts(state, events, planning_policy):
+    """Attach identities only for source retained by the current stage projection."""
+    plan = state.get("working_plan")
+    if planning_policy == "none" or not isinstance(plan, dict):
+        return
+    catalog = scope_review.source_catalog(events, state.get("source_spans", []))
+    if catalog["items"]:
+        plan["source_receipts"] = catalog
+    else:
+        plan.pop("source_receipts", None)
 
 
 def _build_context(
@@ -1355,6 +2510,9 @@ def _build_context(
     )
     active_snapshot = snapshot or gateway.state_snapshot(projection=projection)
     summary = active_snapshot.diff
+    if correction and "rejected_drafts" in correction:
+        correction = {**correction, "rejected_drafts": correction_drafts.project(
+            correction["rejected_drafts"], diff_hash=summary.patch_hash)}
     recheck_context = (
         repair_recheck_context(journal, summary.patch_hash) if repair_recheck else None
     )
@@ -1413,6 +2571,7 @@ def _build_context(
             ),
         },
         "action_horizon": {
+            "action_budget": active_policy.action_budget,
             **_repair_inspection_payload(active_policy),
             **_completion_resources_payload(active_policy),
             "minimum_completion_calls": active_policy.minimum_completion_calls,
@@ -1517,12 +2676,24 @@ def _build_context(
         "recent_attempt_result_next_question": _cards(journal, correction),
         "public_task": package.public.model_dump(mode="json"),
     }
+    if getattr(gateway, "supplemental_checks", ()):
+        payload["supplemental_required_checks"] = gateway.required_check_context()
+    rejected_test = mutation_proposals.rejected_test_proposal(
+        journal.events(), roots=gateway.public_task.constraints.additive_test_roots,
+        diff_hash=summary.patch_hash,
+    )
+    if rejected_test is not None:
+        payload["last_rejected_test_proposal"] = rejected_test
+    if getattr(gateway, "dependency_sources", None) is not None:
+        # Preserve the existing registered, independently bounded read-only pool.
+        # Never merge it into repository spans or acquire another source scope here.
+        payload["dependency_sources"] = gateway.dependency_context_spans()
     if gateway.public_task.test_suites:
         payload["recent_tests"] = recent_tests(journal.events(), summary.patch_hash)
     if planning_policy != "none":
         payload["working_plan"] = working_plan.project(
             journal.events(), diff_hash=summary.patch_hash, gate=active_policy.workflow_gate,
-            policy=planning_policy,
+            policy=planning_policy, public_issue=payload["public_task"]["issue"],
         )
     if gateway.probe_policy != "none":
         from patchloop.dev import probe_cases
@@ -1547,39 +2718,85 @@ def _build_context(
         payload["probe_recheck"] = probe_recheck.context(journal, summary.patch_hash)
     if getattr(gateway, "probe_sandbox", None) is not None:
         latest_ids = {result.action_id for result in latest_tool_results}
+        probe_starts = {
+            (event["payload"]["action_id"], event["payload"]["input_hash"]): event["payload"]
+            for event in journal.events() if event["event_type"] == "action_started"
+            and event["payload"].get("tool") == "run_probe"
+        }
         probes = [
             event["payload"]["result"] for event in journal.events()
             if event["event_type"] == "action_finished"
-            and event["payload"]["result"]["tool"] == "run_probe"
+            and event["payload"]["result"]["tool"] in {"run_probe", "observe_original"}
         ]
+        comparison_ids = set(payload.get("working_plan", {}).get("review_request", {})
+                             .get("requirement_comparison", {}).get("observation_action_ids", []))
+        # Use the existing three-record bound. Protect the compared helper and its
+        # prior replay result instead of duplicating their programs in the plan.
+        selected_ids = set(comparison_ids)
+        for result in reversed(probes):
+            if len(selected_ids) >= 3:
+                break
+            selected_ids.add(result["action_id"])
+        selected_probes = [row for row in probes if row["action_id"] in selected_ids][-3:]
         payload["recent_probes"] = [
             {
                 "action_id": result["action_id"],
                 "diff_hash": result["workspace_diff_hash"],
                 "historical": result["workspace_diff_hash"] != summary.patch_hash,
                 "diagnostic_only": True,
+                "question": result["output"].get("question"),
                 "observation": probe_observation(result),
+                **({"program": program} if (program := bound_probe_program(
+                    result, probe_starts.get((result["action_id"], result["input_hash"]), {}),
+                )) is not None else {}),
+                **{key: result["output"][key] for key in (
+                    "timed_out", "deadline_exhausted", "cleanup_failed", "truncated",
+                ) if key in result["output"]},
                 **({"delivery": "latest_tool_result"} if result["action_id"] in latest_ids else {
-                    "question": result["output"].get("question"),
                     "exit_code": result["output"].get("exit_code"),
                     "stdout": result["output"].get("stdout", "")[-2_000:],
                     "stderr": result["output"].get("stderr", "")[-2_000:],
+                    "stdout_omitted_chars": max(0, len(result["output"].get("stdout", "")) - 2_000),
+                    "stderr_omitted_chars": max(0, len(result["output"].get("stderr", "")) - 2_000),
                     "message": result.get("message"),
+                    **({"call_path": result["output"]["call_path"]}
+                       if "call_path" in result["output"] else {}),
                 }),
             }
-            for result in probes[-3:]
+            for result in selected_probes
         ]
+    payload["reproduction_review"] = _reproduction_review_resources(
+        gateway.reproduction_review(diff_hash=summary.patch_hash), active_policy,
+        probe_policy=gateway.probe_policy,
+    )
+    if diagnosis_context.pending(payload):
+        payload["diagnosis_stage"] = diagnosis_context.packet(
+            active_policy.repair_path_diagnosis, journal.events(),
+            lambda path: gateway._tracked_path(path)[1].read_bytes())
+    if repair_context.pending(payload):
+        payload["repair_stage"] = repair_context.packet(
+            journal.events(), active_policy.first_observation or {})
+    focus = inspection_focus.packet(journal.events(), payload)
+    if focus is not None:
+        payload["inspection_focus"] = focus
+    if correction:
+        payload["protocol_correction"] = correction
     # Construction is allowlist-based from ``package.public`` and public tool outputs;
     # private task fields are never accepted as context inputs.
-    return json.dumps(
-        project_inspection_context(payload, agent_policy=gateway.agent_policy),
-        separators=(",", ":"), ensure_ascii=False,
-    )
+    payload = project_inspection_context(payload, agent_policy=gateway.agent_policy)
+    _scope_source_receipts(payload, journal.events(), planning_policy)
+    return json.dumps(payload, separators=(",", ":"), ensure_ascii=False)
 
 
-def _requested_tool_from_openai(call: Any, *, agent_policy: str = "current") -> RequestedTool:
+def _requested_tool_from_openai(call: Any, *, agent_policy: str = "current",
+                                path_diagnosis_pending: bool = False,
+                                repair_test_comparison_pending: bool = False) -> RequestedTool:
     arguments = dict(call.arguments)
-    if agent_policy == "thin":
+    small = call.name in {"replace_text", "edit_files", "stop_task", "observe_original"}
+    if small:
+        annotations = {key: arguments.pop(key) for key in ("turn_decision", "memory_update")
+                       if key in arguments}
+    elif agent_policy == "thin" or path_diagnosis_pending or repair_test_comparison_pending:
         annotations = {key: arguments.pop(key) for key in ("turn_decision", "memory_update")
                        if key in arguments}
         if "turn_decision" in annotations:
@@ -1590,7 +2807,9 @@ def _requested_tool_from_openai(call: Any, *, agent_policy: str = "current") -> 
         name=call.name,
         action_id=call.action_id,
         arguments=arguments,
-        **({"preserve_annotation_presence": True} if agent_policy == "thin" else {}),
+        **({"preserve_annotation_presence": True}
+           if small or agent_policy == "thin" or path_diagnosis_pending
+           or repair_test_comparison_pending else {}),
         **annotations,
     )
 
@@ -1641,13 +2860,17 @@ def _tool_contract_failure(
     )
 
 
-def _turn_from_openai(turn: Any, *, agent_policy: str = "current") -> DevModelTurn:
+def _turn_from_openai(turn: Any, *, agent_policy: str = "current",
+                      path_diagnosis_pending: bool = False,
+                      repair_test_comparison_pending: bool = False) -> DevModelTurn:
     calls: list[RequestedTool] = []
     conversion_error: str | None = None
     contract_failure: DevToolContractFailure | None = None
     for call in turn.tool_calls:
         try:
-            calls.append(_requested_tool_from_openai(call, agent_policy=agent_policy))
+            calls.append(_requested_tool_from_openai(
+                call, agent_policy=agent_policy, path_diagnosis_pending=path_diagnosis_pending,
+                repair_test_comparison_pending=repair_test_comparison_pending))
         except (TypeError, ValueError, ValidationError) as exc:
             calls = []
             conversion_error = "invalid_dev_tool_contract"
@@ -1824,6 +3047,12 @@ def _model_error_issue(
 
 def _provider_tool_arguments(call: RequestedTool) -> dict[str, Any]:
     arguments = dict(call.arguments)
+    if call.name in {"replace_text", "edit_files", "stop_task", "observe_original"}:
+        return _provider_rejected_call_arguments(call)
+    if call.preserve_annotation_presence and not (
+        {"turn_decision", "memory_update", "rejected_turn_decision"} & call.model_fields_set
+    ):
+        return arguments
     if "memory_update" in call.model_fields_set and "turn_decision" not in call.model_fields_set:
         arguments["memory_update"] = call.memory_update
         return arguments
@@ -1951,6 +3180,7 @@ def _build_model_input(
     force_segment_reason: str | None = None,
     segment_boundary_policy: segments.BoundaryPolicy = segments.DEFAULT_BOUNDARY_POLICY,
     history_search_policy: history_search.Policy = "none",
+    additional_public_exchanges: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     """Append the latest exchange to the exact saved active-episode history."""
     events = journal.events()
@@ -1964,6 +3194,7 @@ def _build_model_input(
                 force_reason=force_segment_reason,
                 boundary_policy=segment_boundary_policy,
                 history_search_policy=history_search_policy,
+                additional_public_exchanges=additional_public_exchanges,
             )
         except (OSError, KeyError, TypeError, ValueError, ContractError, RecoveryError) as exc:
             raise _ProviderContinuationError("segmented public handoff is invalid") from exc
@@ -2012,6 +3243,13 @@ def _build_model_input(
     # Re-project only derived references. Earlier native results/receipts remain
     # byte-identical, with their original action, file and diff identities.
     state = json.loads(exchange[-1]["content"])
+    raw_context = json.loads(context)
+    if diagnosis_context.pending(raw_context):
+        state = diagnosis_context.project(state)
+    elif repair_context.pending(raw_context):
+        state = repair_context.project(state)
+    elif completion_context.active(raw_context):
+        state = completion_context.project(state)
     public_history = list(public_exchanges(history, archive_kind=archive_kind))
     output_ids = {item["call_id"] for item in public_history
                   if item.get("type") == "function_call_output"}
@@ -2025,10 +3263,18 @@ def _build_model_input(
         native_action_ids=[item["call_id"] for item in public_history
                            if item.get("type") == "function_call"],
     )
+    _scope_source_receipts(state, events, planning_policy)
     state = reference_native_sources(state, history, archive_kind=archive_kind)
     state = compact_model_state(state, history, archive_kind=archive_kind)
     return assemble_model_input(
-        system_prompt=thin_policy.system_prompt(agent_policy, planning_policy),
+        system_prompt=(completion_context.system_prompt(raw_context)
+                       if completion_context.active(raw_context) else
+                       repair_context.system_prompt(raw_context)
+                       if repair_context.pending(raw_context)
+                       else thin_policy.system_prompt(agent_policy, planning_policy,
+                           verification_policy=raw_context.get(
+                               "completion_guidance", {}).get(
+                                   "verification_policy", "reproduction-gated-v1"))),
         state=thin_policy.project_state(state, agent_policy), history=new_history,
         previous_input=previous_input, context_policy=context_policy,
         window=compact_window,
@@ -2078,6 +3324,7 @@ def _build_segmented_model_input(
     boundary_policy: segments.BoundaryPolicy = segments.DEFAULT_BOUNDARY_POLICY,
     agent_policy="current",
     history_search_policy: history_search.Policy = "none",
+    additional_public_exchanges=None,
 ):
     """A public, explicitly lossy handoff; never splice or fabricate native history."""
     events = journal.events()
@@ -2099,7 +3346,35 @@ def _build_segmented_model_input(
         journal=journal, artifact_store=store, context=context, latest_tool_results=latest_results,
     )
     reason = force_reason or segments.boundary_reason(journal, binding)
-    prompt = thin_policy.system_prompt(agent_policy, planning_policy, history_search_policy)
+    current = json.loads(context)
+    diagnosing = diagnosis_context.pending(current)
+    repairing = repair_context.pending(current)
+    finalizing = completion_context.active(current)
+    was_diagnosing = bool(handoff and diagnosis_context.pending(handoff["state"]))
+    was_repairing = bool(handoff and repair_context.pending(handoff["state"]))
+    was_finalizing = bool(handoff and completion_context.active(handoff["state"]))
+    if finalizing != was_finalizing:
+        reason = "completion_stage_entered" if finalizing else "completion_stage_returned"
+    elif finalizing and current.get("protocol_correction", {}).get(
+        "completion_correction", {}).get("fresh_segment"):
+        reason = "completion_no_action"
+    elif diagnosing != was_diagnosing:
+        reason = "path_diagnosis_entered" if diagnosing else "path_diagnosis_returned"
+    elif diagnosing and current.get("protocol_correction", {}).get(
+        "diagnosis_correction", {}).get("fresh_segment"):
+        reason = "path_diagnosis_no_action"
+    elif repairing != was_repairing:
+        reason = "repair_stage_entered" if repairing else "repair_stage_returned"
+    elif repairing and current.get("protocol_correction", {}).get(
+        "repair_correction", {}).get("fresh_segment"):
+        reason = "repair_no_action"
+    compact_stage = diagnosing or repairing or finalizing
+    prompt = (diagnosis_context.SYSTEM_PROMPT if diagnosing else
+              repair_context.system_prompt(current)
+              if repairing else completion_context.system_prompt(current) if finalizing else
+              thin_policy.system_prompt(agent_policy, planning_policy, history_search_policy,
+                  current.get("completion_guidance", {}).get(
+                      "verification_policy", "reproduction-gated-v1")))
     replace_pending = force_reason in {"omit_optional_evidence", "shrink_history_result"}
     old_manifest = handoff.get("evidence_manifest", {}) if handoff else {}
     omit_optional = force_reason == "omit_optional_evidence" or (
@@ -2125,11 +3400,23 @@ def _build_segmented_model_input(
             from patchloop.dev.history_evidence import overflow_result
 
             seed_results = [overflow_result(r) for r in latest_results]
-        base = _segment_public_base(prompt, state, seed_results, calls, agent_policy)
-        optional = [] if omit_optional else evidence_focus.optional_exchanges(
+        if compact_stage:
+            state = (diagnosis_context.project(state) if diagnosing
+                     else repair_context.project(state) if repairing
+                     else completion_context.project(state))
+            base = segment_seed(prompt, state["public_task"], agent_policy=agent_policy,
+                                diagnosis=True)
+        else:
+            base = _segment_public_base(prompt, state, seed_results, calls, agent_policy)
+        _scope_source_receipts(state, events, planning_policy)
+        optional = [] if omit_optional or compact_stage else evidence_focus.optional_exchanges(
             state.get("working_notes", {}).get("open_question"), events, ids,
             diff_hash=state["current_diff"]["patch_hash"],
         )
+        if not omit_optional and not compact_stage:
+            present = ids | {i["call_id"] for i in optional}
+            optional += [i for i in additional_public_exchanges or []
+                         if i["call_id"] not in present]
         if optional:
             base.append(SEGMENT_RULES.archive(exchanges=optional))
         manifest_view = _segment_current_view(copy.deepcopy(state), base[3:], latest_results,
@@ -2167,18 +3454,43 @@ def _build_segmented_model_input(
                     json.loads(item["output"]), history=[*previous[3:], *added[:position]],
                     admission=admissions.get(item["call_id"]), archive_kind=PUBLIC_EVIDENCE_KIND,
                 ))}
+        # Selected public evidence from another native stream is quoted data.
+        # It neither joins that stream's continuation nor forces a new segment.
+        if additional_public_exchanges and not compact_stage:
+            present = {i["call_id"] for i in public_exchanges(
+                [*previous[3:], *added], archive_kind=PUBLIC_EVIDENCE_KIND,
+            ) if i.get("type") == "function_call_output"}
+            extra = [i for i in additional_public_exchanges if i["call_id"] not in present]
+            if extra:
+                added.append(SEGMENT_RULES.archive(exchanges=extra))
     history = [*previous[3:], *added]
     state = json.loads(context)  # Always use current facts, not an old handoff's controls.
-    if planning_policy != "none":
+    if planning_policy != "none" and not diagnosing and not finalizing:
         state["working_plan"] = working_plan.project(
             journal.events(), diff_hash=state["current_diff"]["patch_hash"],
             gate=state["workflow_gate"], policy=planning_policy,
+            public_issue=state.get("public_task", {}).get("issue"),
         )
     state["segment_handoff"] = {
         "segment_id": binding["segment_id"], "reason": binding["reason"],
         "review_requested": fresh, "previous_reasoning_available": False,
         "interpretation": "public execution facts and unverified model-authored notes/plan",
     }
+    if diagnosing:
+        state = diagnosis_context.project(state)
+        state["segment_handoff"].update(
+            review_requested=False, interpretation="public original-call diagnosis only")
+    elif repairing:
+        state = repair_context.project(state)
+        state["segment_handoff"].update(
+            review_requested=fresh and planning_policy != "none",
+            interpretation="public repair evidence and unverified notes/plan")
+    elif finalizing:
+        state = completion_context.project(state)
+        state["segment_handoff"].update(
+            review_requested=False,
+            interpretation="public candidate, checks and unresolved outcomes")
+    _scope_source_receipts(state, journal.events(), planning_policy)
     view = _segment_current_view(state, history, latest_results, agent_policy)
     return assemble_model_input(
         system_prompt=prompt, state=thin_policy.project_state(view, agent_policy),
@@ -2389,18 +3701,6 @@ def _build_latest_exchange(
             }
             for call in calls
         ]
-    note_update = next(
-        (event["payload"] for event in reversed(events)
-         if event["event_type"] == "working_notes_updated"
-         and event["payload"].get("turn_id") == turn_id),
-        None,
-    )
-    note_receipt = note_update.get("receipt") if note_update is not None else None
-    plan_receipt = next((event["payload"]["receipt"] for event in reversed(events)
-                         if event["event_type"] == working_plan.EVENT
-                         and event["payload"].get("turn_id") == turn_id), None)
-    notes = current_payload.get("working_notes", {})
-    lifecycle = (notes.get("last_source_lifecycle") or {}) if isinstance(notes, dict) else {}
     output_items = []
     for action_id in action_ids:
         public_result = project_inspection_result(
@@ -2408,39 +3708,8 @@ def _build_latest_exchange(
             native_action_ids=action_ids,
         )
         public_result = project_probe_result(public_result)
-        note_owner = isinstance(note_receipt, dict) and note_receipt.get("action_id") == action_id
-        expiry_owner = (
-            public_result.get("tool") == "replace_text"
-            and public_result.get("status") == "succeeded"
-            and lifecycle.get("trigger_action_id") == action_id
-            and bool(lifecycle.get("expired_notes"))
-        )
-        if note_owner:
-            # An annotation can fail while the actual action succeeds. Preserve
-            # both outcomes; never rewrite the action status or prior call arguments.
-            public_result["memory_update_result"] = note_receipt
-            if isinstance(notes, dict):
-                notes["last_update_result"] = {
-                    "turn_id": turn_id,
-                    "action_id": action_id,
-                    "delivery": "preceding_function_call_output",
-                }
-                notes.pop("last_update_diagnostics", None)
-        if isinstance(plan_receipt, dict) and plan_receipt.get("action_id") == action_id:
-            public_result["plan_update_result"] = plan_receipt
-        if isinstance(notes, dict) and (note_owner or expiry_owner):
-            # Source expiry belongs to the mutation even without a new annotation.
-            # Never attach a historical expiry to an unrelated later read/check.
-            public_result["working_notes_after_batch"] = {
-                "scope": "after_completed_tool_batch",
-                "turn_id": turn_id,
-                "diff_hash": current_payload.get("current_diff", {}).get("patch_hash"),
-                "available_note_ids": notes.get("available_note_ids", []),
-                "expired_notes": (
-                    lifecycle.get("expired_notes", [])
-                    if lifecycle.get("trigger_action_id") == action_id else []
-                ),
-            }
+        # Optional annotation outcomes remain in current notes/plan state. They
+        # cannot obscure the actual action result or change earlier native items.
         output_items.append({
             "type": "function_call_output",
             "call_id": action_id,
@@ -2474,9 +3743,9 @@ def _deduplicate_native_state(
             "action_id": result.action_id,
             "delivery": "preceding_function_call_output",
         }
-        if result.tool == "replace_text" and result.status == "succeeded":
+        if result.tool in MUTATION_TOOLS and result.status == "succeeded":
             payload["last_successful_mutation"] = reference
-        elif result.tool == "replace_text" and result.status == "failed":
+        elif result.tool in MUTATION_TOOLS and result.status == "failed":
             failed = payload.get("last_failed_mutation")
             if isinstance(failed, dict) and failed.get("action_id") == result.action_id:
                 payload["last_failed_mutation"] = {
@@ -2494,7 +3763,7 @@ def _deduplicate_native_state(
                     for key in ("stdout", "stderr", "public_check_failure", "execution_policy"):
                         check.pop(key, None)
                     check.update(reference)
-        if result.tool == "run_probe":
+        if result.tool in {"run_probe", "observe_original"}:
             for probe in payload.get("recent_probes", []):
                 if probe.get("action_id") == result.action_id:
                     probe.update(reference)
@@ -2517,7 +3786,7 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
                 "Correct the proposal using already delivered exact evidence. Inspect only "
                 "to acquire missing exact evidence while allowed, or abandon the proposal."
             )
-        elif result.tool == "replace_text":
+        elif result.tool in MUTATION_TOOLS:
             next_question = (
                 "Use the typed failure and preserved replacement to make a viable "
                 "replace_text call, or stop."
@@ -2577,7 +3846,7 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
             },
             "next_question": next_question,
         }
-    if result.tool == "replace_text":
+    if result.tool in MUTATION_TOOLS:
         return {
             "action_id": result.action_id,
             "attempt": "mutation",
@@ -2660,13 +3929,14 @@ def _attempt_card(result: DevToolResult, gateway: DevToolGateway) -> dict[str, A
             "action_id": result.action_id, "attempt": "selected_tests",
             "result": {key: result.output.get(key) for key in (
                 "suite_id", "targets", "diff_hash", "test_status", "exit_code",
-            )},
+            )} | ({"comparison": result.output["comparison"]}
+                  if "comparison" in result.output else {}),
             "next_question": (
                 "What do these selected public tests establish about this diff, and what "
                 "behavior remains untested? Setup or collection errors do not verify behavior."
             ),
         }
-    if result.tool == "run_probe":
+    if result.tool in {"run_probe", "observe_original"}:
         return {
             "action_id": result.action_id,
             "attempt": "probe",
@@ -2708,8 +3978,13 @@ def _batch_attempt_card(
     if not calls or len(calls) != len(results):
         raise RecoveryError("completed tool batch cannot form one public attempt card")
     decisions: list[dict[str, Any] | None] = []
+    started = next((e["payload"] for e in gateway.journal.events()
+                    if e["event_type"] == "turn_started"
+                    and e["payload"]["turn_id"] == turn_id), {})
     for call in calls:
-        if call.turn_decision is None and "memory_update" not in call.model_fields_set:
+        if (call.turn_decision is None and "memory_update" not in call.model_fields_set
+                and started.get("workflow_gate") != "needs_path_diagnosis"
+                and call.name not in MUTATION_TOOLS | {"stop_task", "observe_original"}):
             raise RecoveryError("completed tool batch is missing a public action decision")
         decisions.append(call.turn_decision.model_dump(mode="json")
                          if call.turn_decision is not None else None)
@@ -2806,7 +4081,7 @@ def _milestones(journal: DevJournal) -> dict[str, Any]:
         if result["status"] != "succeeded":
             continue
         output = result["output"]
-        if result["tool"] == "replace_text":
+        if result["tool"] in MUTATION_TOOLS:
             mutation = output["mutation"]
             plans.append(
                 {
@@ -2891,6 +4166,7 @@ def _terminal(
     run_age_seconds: int | None = None,
     completion_horizon: dict[str, Any] | None = None,
     delivery: dict[str, Any] | None = None,
+    verification_metadata: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     existing = journal.terminal()
     if existing is None:
@@ -2925,6 +4201,10 @@ def _terminal(
         }
         if delivery is not None:
             payload["delivery"] = delivery
+        if verification_metadata is not None:
+            from patchloop.repair import delivery_metadata
+
+            payload.update(delivery_metadata(verification_metadata))
         if completion_horizon is not None:
             payload["completion_horizon"] = completion_horizon
         segment_events = [e for e in journal.events() if e["event_type"] == segments.EVENT]
@@ -2961,6 +4241,8 @@ def _terminal(
 
 
 def _public_result(run_id: str, terminal_payload: dict[str, Any]) -> dict[str, Any]:
+    from patchloop.repair import delivery_metadata
+
     result = {
         "schema_version": "dev-run-v1",
         "official": False,
@@ -2975,6 +4257,7 @@ def _public_result(run_id: str, terminal_payload: dict[str, Any]) -> dict[str, A
     }
     if "delivery" in terminal_payload:
         result["delivery"] = terminal_payload["delivery"]
+    result.update(delivery_metadata(terminal_payload))
     if "completion_horizon" in terminal_payload:
         result["completion_horizon"] = terminal_payload["completion_horizon"]
     if "input_count_failure" in terminal_payload:
@@ -3039,6 +4322,7 @@ def _run_envelope(
         **boundary,
         run_id=run_id,
         provider=request.provider,
+        rate_limit_policy=request.rate_limit_policy,
         task_path=str(request.task.resolve() if public_only
                       else (task_dir / "public.yaml").resolve()),
         task_id=package.public.task_id,
@@ -3051,6 +4335,7 @@ def _run_envelope(
         prepared_probe_dependencies_path=(str(request.prepared_probe_dependencies.resolve())
                                           if request.prepared_probe_dependencies else None),
         probe_dependencies=probe_dependencies,
+        caller_source_roots=request.caller_source_roots,
         public_spec_hash=package.public_spec_hash,
         task_content_hash=package.task_content_hash,
         runtime_hash=runtime_hash,
@@ -3064,11 +4349,17 @@ def _run_envelope(
         agent_policy=request.agent_policy,
         probe_policy=request.probe_policy,
         context_policy=request.context_policy,
+        reproduction_acquisition=request.reproduction_acquisition,
+        verification_policy=request.verification_policy,
         retained_source_chars=request.retained_source_chars,
         completion_cost_policy=request.completion_cost_policy,
-        completion_cost_contract=(completion_cost_contract()
-                                  if request.completion_cost_policy == COMPLETION_RESERVE_POLICY
-                                  else None),
+        completion_cost_contract=(
+            completion_cost_contract(
+                request.completion_cost_policy,
+                max_correction_output_tokens=request.max_correction_output_tokens,
+            )
+            if request.completion_cost_policy != DEFAULT_COMPLETION_COST_POLICY else None
+        ),
         segment_boundary_policy=request.segment_boundary_policy,
         segment_contract=(segments.contract(
             request.segment_boundary_policy, agent_policy=request.agent_policy)
@@ -3081,6 +4372,7 @@ def _run_envelope(
         model=request.model,
         reasoning_effort=request.reasoning_effort,
         max_output_tokens=request.max_output_tokens,
+        max_correction_output_tokens=request.max_correction_output_tokens,
         credential_file_path_hash=_credential_file_path_hash(request),
         max_cost_nanos=cost_ledger.cap_nanos if cost_ledger else 0,
         cost_start_nanos=cost_start_nanos,
@@ -3093,6 +4385,70 @@ def _run_envelope(
 def _validate_resume_envelope(actual: RunEnvelope, expected: RunEnvelope) -> None:
     if actual.model_dump(mode="json") != expected.model_dump(mode="json"):
         raise ResumeContractMismatch("run configuration or runtime changed")
+
+
+def _comparison_extra_actions(events: list[dict[str, Any]]) -> int:
+    children: dict[str, set[str]] = {}
+    for event in events:
+        if event["event_type"] == "test_comparison_child_started":
+            payload = event["payload"]
+            children.setdefault(payload["identity"]["action_id"], set()).add(payload["action_id"])
+    # The native parent action already accounts for the first physical attempt.
+    return sum(max(0, len(ids) - 1) for ids in children.values())
+
+
+def _tool_action_count(events: list[dict[str, Any]]) -> int:
+    return (sum(len(event["payload"].get("tool_calls", [])) for event in events
+                if event["event_type"] == "tool_batch_started")
+            + sum(event["event_type"] in {
+                "repair_recheck_started", "probe_recheck_started",
+                "completion_reproduction_started",
+            } for event in events) + _comparison_extra_actions(events))
+
+
+def _batch_fits_tool_budget(calls, counters, limits, policy=None):
+    if getattr(policy, "selected_test_comparison_required", False) and any(
+        call.name == "run_tests" and test_comparison.execution_cost(call.arguments) != 2
+        for call in calls
+    ):
+        return False
+    if any(_requests_test_edit(call) for call in calls):
+        if not getattr(policy, "repair_test_edit_enabled", False):
+            return False
+        if (counters.tool_actions + policy.repair_test_edit_minimum_tool_actions
+                > limits.max_tool_actions):
+            return False
+    cost = sum(test_comparison.execution_cost(call.arguments) if call.name == "run_tests"
+               else 1 for call in calls)
+    # Comparison is optional work. Admit both children before dispatch while
+    # preserving the same completion reserve required to offer ordinary tests.
+    reserve = (_selected_test_reserve(policy)
+               if any(call.name == "run_tests" and test_comparison.has_comparison(call.arguments)
+                      for call in calls) else 0)
+    return counters.tool_actions + cost + reserve <= limits.max_tool_actions
+
+
+def _requests_test_edit(call):
+    prediction = call.arguments.get("repair_prediction")
+    return (call.name in MUTATION_TOOLS and isinstance(prediction, dict)
+            and prediction.get("kind") == "test")
+
+
+def _test_comparison_enabled(policy, counters, limits):
+    return ("run_tests" in policy.allowed_tools
+            and limits.max_tool_actions - counters.tool_actions
+            >= _selected_test_reserve(policy) + 2)
+
+
+def _selected_test_reserve(policy):
+    explicit = getattr(policy, "selected_test_reserve_tool_actions", None)
+    reserve = policy.completion_budget_tool_actions if explicit is None else explicit
+    first = getattr(policy, "first_observation", None)
+    if (first and first.get("available")
+            and getattr(policy, "verification_policy", "reproduction-gated-v1")
+            != "public-checks-v1"):
+        reserve = max(reserve, policy.minimum_completion_tool_actions + 1)
+    return reserve
 
 
 def _restore_counters(journal: DevJournal) -> _RunCounters:
@@ -3110,15 +4466,13 @@ def _restore_counters(journal: DevJournal) -> _RunCounters:
             }
             for event in events
         ),
-        tool_actions=sum(
-            len(event["payload"].get("tool_calls", []))
-            for event in events
-            if event["event_type"] == "tool_batch_started"
-        ) + sum(event["event_type"] in {"repair_recheck_started", "probe_recheck_started"}
-                for event in events),
+        tool_actions=_tool_action_count(events),
         input_count_calls=sum(event["event_type"] == "input_count_started" for event in events),
         compaction_calls=sum(event["event_type"] == "compaction_started" for event in events),
         protocol_recoveries=consecutive_protocol_recoveries,
+        protocol_corrections_total=sum(
+            event["event_type"] == "protocol_correction" for event in events
+        ),
     )
     action_results: dict[str, DevToolResult] = {}
     for event in events:
@@ -3127,10 +4481,14 @@ def _restore_counters(journal: DevJournal) -> _RunCounters:
             action_results[result.action_id] = result
         elif event["event_type"] in {
             "tool_batch_finished", "repair_recheck_finished", "probe_recheck_finished",
+            "completion_reproduction_finished",
         }:
             action_ids = (
                 [event["payload"]["action_id"]]
-                if event["event_type"] in {"repair_recheck_finished", "probe_recheck_finished"}
+                if event["event_type"] in {
+                    "repair_recheck_finished", "probe_recheck_finished",
+                    "completion_reproduction_finished",
+                }
                 else event["payload"].get("action_ids", [])
             )
             if not isinstance(action_ids, list) or not action_ids:
@@ -3239,7 +4597,7 @@ def _update_inspection_counters(
         counters.commitment_diff_hash = None
         counters.commitment_trigger_no_gain_turns = 0
         return
-    if result.tool != "replace_text":
+    if result.tool not in MUTATION_TOOLS:
         counters.consecutive_no_evidence_gain_turns = 0
         return
     if result.status == "succeeded":
@@ -3279,8 +4637,6 @@ def _validate_resumed_workspace(
     workspace: Path, journal: DevJournal, *, deadline: ExecutionDeadline | None = None,
 ) -> None:
     summary = WorkspaceManager.diff_summary(workspace, deadline=deadline)
-    if summary.untracked_files:
-        raise ResumeContractMismatch("workspace contains non-ignored untracked files")
     expected_diff_hash = sha256_bytes(b"")
     pending: dict[str, Any] | None = None
     for event in journal.events():
@@ -3291,9 +4647,19 @@ def _validate_resumed_workspace(
             if pending is not None and payload.get("action_id") == pending.get("action_id"):
                 pending = None
             result = DevToolResult.model_validate(payload["result"])
-            if result.status == "succeeded" and result.tool == "replace_text":
+            if result.status == "succeeded" and result.tool in MUTATION_TOOLS:
                 expected_diff_hash = str(result.output["worktree_diff_hash"])
-    if pending is not None and pending.get("tool") == "replace_text":
+    if (pending is not None and pending.get("tool") == "edit_files"
+            and pending.get("mutation_admitted") is True):
+        if pending.get("baseline_diff_hash") != expected_diff_hash:
+            raise ResumeContractMismatch("pending file transaction has a different baseline")
+        from patchloop.dev.file_edits import validate_pending
+
+        validate_pending(workspace, journal, pending, deadline=deadline)
+        return
+    if summary.untracked_files:
+        raise ResumeContractMismatch("workspace contains non-ignored untracked files")
+    if pending is not None and pending.get("tool") in MUTATION_TOOLS:
         if pending.get("baseline_diff_hash") != expected_diff_hash:
             raise ResumeContractMismatch("pending mutation baseline does not match the journal")
         if summary.patch_hash == expected_diff_hash:
@@ -3477,7 +4843,7 @@ def _run_repair_recheck(
     """
     selected = select_repair_recheck(
         journal, latest_results,
-        registered_checks={check.id for check in gateway.public_task.visible_checks},
+        registered_checks={check.id for check in registered_checks(gateway)},
     )
     if selected is None:
         return None, None
@@ -3558,6 +4924,10 @@ def _run_probe_recheck(
             repair_inspection_policy=request.repair_inspection_policy,
             repair_recheck=request.repair_recheck,
             cost_ledger=cost_ledger, completion_cost_policy=request.completion_cost_policy,
+            desired_output_ceiling=request.max_output_tokens,
+            max_correction_output_tokens=request.max_correction_output_tokens,
+            remaining_seconds=(gateway.deadline.remaining_seconds()
+                               if gateway.deadline is not None else None),
         )
         if "run_probe" not in policy.allowed_tools:
             journal.append("probe_recheck_skipped", {
@@ -3588,6 +4958,174 @@ def _run_probe_recheck(
     return terminal, message
 
 
+class _CompletionVerificationAbort(Exception):
+    def __init__(self, terminal: DevTerminal, message: str):
+        super().__init__(message)
+        self.terminal = terminal
+
+
+def _execute_completion_batch(
+    *, calls: list[RequestedTool], journal: DevJournal, gateway: DevToolGateway,
+    counters: _RunCounters, active_elapsed_ms: Callable[[], int],
+    path_diagnosis_pending: bool = False,
+    repair_test_comparison_pending: bool = False,
+) -> list[DevToolResult]:
+    """Replay public cases before finish, as independently recoverable tool actions.
+
+    The caller has already counted the native batch. Children are not invented
+    model function calls; their observations are projected from the journal.
+    """
+    before = _comparison_extra_actions(journal.events())
+    try:
+        if len(calls) != 1 or calls[0].name != "finish_task":
+            return gateway.execute_batch(calls, **(
+                {"path_diagnosis_pending": True} if path_diagnosis_pending else {}), **(
+                {"repair_test_comparison_pending": True} if repair_test_comparison_pending else {}))
+        events = journal.events()
+        # Let the gateway verify input identity and replay before touching deadlines.
+        if any(e["event_type"] == "action_finished"
+               and e["payload"]["result"]["action_id"] == calls[0].action_id for e in events):
+            return gateway.execute_batch(calls)
+        if not gateway.ready_to_submit():
+            return gateway.execute_batch(calls)
+        _replay_original_cases(
+            journal=journal, gateway=gateway, counters=counters,
+            active_elapsed_ms=active_elapsed_ms,
+            admit_new=getattr(gateway, "verification_policy", "reproduction-gated-v1")
+            != "public-checks-v1",
+        )
+        return gateway.execute_batch(calls)
+    finally:
+        # Started children count even if no result returned. Finished-child reuse
+        # adds no new starts, including after a crash between result and parent.
+        counters.tool_actions += _comparison_extra_actions(journal.events()) - before
+
+
+def _replay_original_cases(
+    *, journal: DevJournal, gateway: DevToolGateway, counters: _RunCounters,
+    active_elapsed_ms: Callable[[], int], acquired_only: bool = False,
+    admit_new: bool = True,
+) -> None:
+    """Share one case/candidate replay between early feedback and finish recovery."""
+    events = journal.events()
+    diff_hash = gateway.current_diff_hash
+    state = completion_reproduction.review(
+        events, diff_hash, public_task=gateway.public_task, run_id=journal.run_id,
+    )
+    # Reconcile started children even when a durable action result already changed
+    # the projection to SUPPORTED/UNKNOWN before its completion marker was written.
+    starts = {e["payload"]["action_id"]: e["payload"] for e in events
+              if e["event_type"] == "completion_reproduction_started"}
+    finished = {e["payload"]["action_id"] for e in events
+                if e["event_type"] == "completion_reproduction_finished"}
+    # A crash after the child marker but before abort handling must preserve a
+    # terminal cleanup/deadline result, even though the replay is already settled.
+    selected = [value for key, value in starts.items()
+                if key not in finished or value["candidate_diff_hash"] == diff_hash]
+    acquired = set(state["baseline_failure_case_ids"])
+    selected.extend(case for case in state["pending_cases"]
+                    if not acquired_only or case["case_id"] in acquired)
+    handled = set()
+    for case in selected:
+        call = completion_reproduction.replay_call(
+            journal.run_id, case["case_id"], case["root_action_id"], diff_hash,
+        )
+        if call.action_id in handled:
+            continue
+        handled.add(call.action_id)
+        identity = {
+            "action_id": call.action_id, "case_id": case["case_id"],
+            "root_action_id": case["root_action_id"], "candidate_diff_hash": diff_hash,
+        }
+        receipts = {e["event_type"]: e["payload"] for e in journal.events()
+                    if e["event_type"] in {
+                        "completion_reproduction_started", "completion_reproduction_finished",
+                        "completion_reproduction_skipped",
+                    } and e["payload"].get("action_id") == call.action_id}
+        if case.get("candidate_diff_hash", diff_hash) != diff_hash or any(
+            receipt.get(key) != value for receipt in receipts.values()
+            for key, value in identity.items()
+        ):
+            raise RecoveryError("completion reproduction identity changed")
+        if "completion_reproduction_skipped" in receipts:
+            if len(receipts) != 1:
+                raise RecoveryError("skipped completion reproduction has execution receipts")
+            continue
+        replay = journal.action_result(
+            call.action_id, sha256_json({"tool": call.name, "arguments": call.arguments}),
+        )
+        if "completion_reproduction_finished" in receipts and replay is None:
+            raise RecoveryError("completed reproduction is missing its action result")
+        if "completion_reproduction_started" not in receipts:
+            if not admit_new:
+                continue
+            reason = (
+                "tool_action_limit" if counters.tool_actions >= gateway.limits.max_tool_actions
+                else "probe_unavailable" if gateway.probe_sandbox is None else None
+            )
+            if reason:
+                journal.append("completion_reproduction_skipped", {
+                    **identity, "reason": reason, "status": "NOT_RUN",
+                    "active_elapsed_ms": active_elapsed_ms(),
+                })
+                continue
+            if gateway.deadline is not None:
+                gateway.deadline.check()
+            journal.append("completion_reproduction_started", {
+                **identity, "origin": "harness", "active_elapsed_ms": active_elapsed_ms(),
+            })
+            counters.tool_actions += 1
+        result = replay if replay is not None else gateway.execute(call)
+        if "completion_reproduction_finished" not in receipts:
+            journal.append("completion_reproduction_finished", {
+                **identity, "status": result.status,
+                "active_elapsed_ms": active_elapsed_ms(),
+            })
+            _update_inspection_counters(counters, [result], gateway)
+        terminal, message = _batch_execution_abort([result])
+        if terminal is not None:
+            raise _CompletionVerificationAbort(terminal, message or "public replay aborted")
+
+
+def _run_original_recheck(
+    *, journal: DevJournal, gateway: DevToolGateway, latest_results: list[DevToolResult],
+    counters: _RunCounters, active_elapsed_ms: Callable[[], int],
+    request: RunRequest, cost_ledger: DevCostLedger | None = None,
+) -> tuple[DevTerminal | None, str | None]:
+    """Deliver the acquired original's result after an edit, before model inference.
+
+    Helpers and the optional last-saved-program policy cannot replace this case.
+    A deferred early check stays pending for the existing finish fallback.
+    """
+    if len(latest_results) != 1:
+        return None, None
+    mutation = latest_results[0]
+    if mutation.tool not in MUTATION_TOOLS or mutation.status != "succeeded":
+        return None, None
+    if gateway.current_diff_hash != mutation.workspace_diff_hash:
+        raise ResumeContractMismatch("original recheck candidate differs from accepted mutation")
+    policy = _tool_policy(
+        gateway, counters, request.limits,
+        repair_inspection_policy=request.repair_inspection_policy,
+        repair_recheck=request.repair_recheck, cost_ledger=cost_ledger,
+        completion_cost_policy=request.completion_cost_policy,
+        desired_output_ceiling=request.max_output_tokens,
+        max_correction_output_tokens=request.max_correction_output_tokens,
+    )
+    try:
+        _replay_original_cases(
+            journal=journal, gateway=gateway, counters=counters,
+            active_elapsed_ms=active_elapsed_ms, acquired_only=True,
+            # This is already reserved completion work, not an extra optional
+            # model probe. Reconcile durable children even when admission closes.
+            admit_new=(policy.completion_possible
+                       and policy.verification_policy != "public-checks-v1"),
+        )
+    except _CompletionVerificationAbort as exc:
+        return exc.terminal, str(exc)
+    return None, None
+
+
 def _record_planning_decision(
     policy: str, *, journal: DevJournal, gateway: DevToolGateway,
     calls: list[RequestedTool], turn_id: str,
@@ -3596,9 +5134,12 @@ def _record_planning_decision(
         return
     started = next(e["payload"] for e in reversed(journal.events())
                    if e["event_type"] == "turn_started" and e["payload"]["turn_id"] == turn_id)
+    if started["workflow_gate"] in {"needs_path_diagnosis", "needs_test_comparison"}:
+        return
     working_plan.record(
         journal, calls, turn_id=turn_id, diff_hash=gateway.current_diff_hash,
         gate=started["workflow_gate"], policy=policy,
+        public_issue=gateway.public_task.issue.model_dump(mode="json"),
     )
 
 
@@ -3646,6 +5187,12 @@ def _finish_evaluation_metadata(
 ) -> _OneRunResult:
     """The same metadata-only tail serves normal completion and crash recovery."""
 
+    from patchloop.repair import recorded_delivery_metadata
+
+    verification = recorded_delivery_metadata(
+        journal.events(), patch_hash=completion.artifacts["submitted_patch"].content_hash,
+    )
+
     provenance = completion.artifacts["terminal_provenance"]
     store.write_text_immutable(
         store.root / "runs" / journal.run_id / "terminal-provenance.json",
@@ -3656,16 +5203,25 @@ def _finish_evaluation_metadata(
         cost_ledger=cost_ledger, cost_start_nanos=cost_start_nanos, hashes=hashes,
         evaluator=completion.summary.model_dump(), artifacts=completion.artifact_hashes,
         message=completion.message, active_elapsed_ms=completion.active_elapsed_ms,
+        verification_metadata=verification,
     )
     return _OneRunResult(_public_result(journal.run_id, terminal), completion.stop_remaining)
 
 
 def _finish_repair_metadata(*, journal, delivery, counters, cost_ledger,
                             cost_start_nanos, hashes):
+    from patchloop.repair import delivery_metadata, recorded_delivery_metadata
+
+    verification = recorded_delivery_metadata(
+        journal.events(), patch_hash=delivery["patch"]["content_hash"],
+    )
+    if delivery_metadata(delivery) != verification:
+        raise RecoveryError("repair delivery verification differs from its successful finish")
     terminal = _terminal(
         journal=journal, terminal=DevTerminal.PATCH_READY, counters=counters,
         cost_ledger=cost_ledger, cost_start_nanos=cost_start_nanos, hashes=hashes,
         delivery=delivery, active_elapsed_ms=delivery["active_elapsed_ms"],
+        verification_metadata=verification,
         artifacts={"submitted_patch": delivery["patch"]["content_hash"],
                    "public_verification": delivery["public_verification"]["content_hash"]},
     )
@@ -3704,6 +5260,9 @@ def _run_one(
                                     if request.prepared_probe_dependencies is not None else None),
             )
             _validate_resume_envelope(envelope, expected)
+            if any(e["event_type"] == "provider_transport_cleanup_failed"
+                   for e in journal.events()):
+                raise RecoveryError("provider transport cleanup remains uncertain")
             if cost_ledger is not None:
                 cost_ledger.restore_settled_usage(
                     journal.provider_usage(),
@@ -3765,6 +5324,8 @@ def _run_one(
                        else {}),
                     **({"max_output_tokens": request.max_output_tokens}
                        if request.max_output_tokens != DEFAULT_OUTPUT_CEILING else {}),
+                    **({"max_correction_output_tokens": request.max_correction_output_tokens}
+                       if request.max_correction_output_tokens is not None else {}),
                 },
             )
 
@@ -3974,15 +5535,16 @@ def _run_one_locked(
                 **identity,
                 "active_elapsed_ms": active_base_ms + int((monotonic() - started) * 1_000),
             })
-        return _run_one_active(
-            request=request, task_dir=task_dir, package=package, state_root=state_root,
-            pricing=pricing, cost_ledger=cost_ledger, runtime_hash=runtime_hash,
-            model_hash=model_hash, run_id=run_id, journal=journal, envelope=envelope,
-            resuming=resuming, deadline=execution_deadline, active_base_ms=active_base_ms,
-            started=started, harness_git_commit=identity["harness_git_commit"],
-            evaluation_deadline=deadline,
-        )
-    except (ExecutionDeadlineExceeded, GitExecutionUncertain) as exc:
+        with ExitStack() as provider_resources:
+            return _run_one_active(
+                request=request, task_dir=task_dir, package=package, state_root=state_root,
+                pricing=pricing, cost_ledger=cost_ledger, runtime_hash=runtime_hash,
+                model_hash=model_hash, run_id=run_id, journal=journal, envelope=envelope,
+                resuming=resuming, deadline=execution_deadline, active_base_ms=active_base_ms,
+                started=started, harness_git_commit=identity["harness_git_commit"],
+                evaluation_deadline=deadline, provider_resources=provider_resources,
+            )
+    except (ExecutionDeadlineExceeded, GitExecutionUncertain, FileTransactionUncertain) as exc:
         exhausted = isinstance(exc, ExecutionDeadlineExceeded) or exc.details.get(
             "deadline_exhausted", False,
         )
@@ -3997,7 +5559,8 @@ def _run_one_locked(
             active_elapsed_ms=active_base_ms + int((monotonic() - started) * 1_000),
         )
         return _OneRunResult(
-            _public_result(run_id, terminal), isinstance(exc, GitExecutionUncertain),
+            _public_result(run_id, terminal),
+            isinstance(exc, (GitExecutionUncertain, FileTransactionUncertain)),
         )
 
 
@@ -4014,7 +5577,7 @@ def _probe_evidence(journal, artifact_store, run_id):
         })
         for event in journal.events()
         if event["event_type"] == "action_finished"
-        and event["payload"]["result"]["tool"] == "run_probe"
+        and event["payload"]["result"]["tool"] in {"run_probe", "observe_original"}
         and event["payload"]["result"]["output"].get("execution_policy") is not None
     ]
 
@@ -4026,6 +5589,7 @@ def _run_one_active(
     envelope: RunEnvelope, resuming: bool, deadline: ExecutionDeadline,
     active_base_ms: int, started: float, harness_git_commit: str,
     evaluation_deadline: ExecutionDeadline | None = None,
+    provider_resources: ExitStack | None = None,
 ) -> _OneRunResult:
     artifact_store = ArtifactStore(state_root / "artifacts")
     counters = _restore_counters(journal) if resuming else _RunCounters()
@@ -4092,7 +5656,7 @@ def _run_one_active(
                 "repository_url": package.public.repository.url,
                 "base_commit": package.public.repository.base_commit,
             })
-    except (ExecutionDeadlineExceeded, GitExecutionUncertain):
+    except (ExecutionDeadlineExceeded, GitExecutionUncertain, FileTransactionUncertain):
         raise
     except PatchLoopError as exc:
         if resuming:
@@ -4126,7 +5690,16 @@ def _run_one_active(
 
     api_key: str | None = None
     probe_sandbox = None
+    caller_sources = None
     try:
+        dependencies = (
+            load_dependencies(request.prepared_probe_dependencies, package.public,
+                              envelope.probe_dependencies)
+            if request.enable_probes and request.prepared_probe_dependencies is not None else None
+        )
+        caller_sources = caller_sources_for_run(
+            dependencies, request.caller_source_roots, package.public,
+        )
         if isinstance(request, RepairRunRequest):
             sandbox = prepared_sandbox(request, deadline=deadline)
             if request.provider == "openai" and remaining_active_seconds() > 0:
@@ -4141,11 +5714,6 @@ def _run_one_active(
         else:
             sandbox = LocalSandbox()
         if request.enable_probes:
-            dependencies = (
-                load_dependencies(request.prepared_probe_dependencies, package.public,
-                                  envelope.probe_dependencies)
-                if request.prepared_probe_dependencies is not None else None
-            )
             probe_sandbox = (DockerProbeSandbox(dependencies=dependencies)
                              if dependencies is not None else DockerProbeSandbox())
             if remaining_active_seconds() > 0:
@@ -4165,7 +5733,7 @@ def _run_one_active(
                         "repository_url": package.public.repository.url,
                         "base_commit": package.public.repository.base_commit,
                     })
-    except (ExecutionDeadlineExceeded, GitExecutionUncertain):
+    except (ExecutionDeadlineExceeded, GitExecutionUncertain, FileTransactionUncertain):
         raise
     except PatchLoopError as exc:
         terminal = _terminal(
@@ -4180,7 +5748,11 @@ def _run_one_active(
         )
         return _OneRunResult(_public_result(run_id, terminal), False)
 
-    journal.append("execution_prepared", {"active_elapsed_ms": active_elapsed_ms()})
+    journal.append("execution_prepared", {
+        "active_elapsed_ms": active_elapsed_ms(),
+        **({"registered_dependency_sources": caller_sources.catalog()}
+           if caller_sources is not None else {}),
+    })
     gateway = DevToolGateway(
         workspace=workspace,
         public_task=package.public,
@@ -4191,9 +5763,19 @@ def _run_one_active(
         probe_sandbox=probe_sandbox,
         probe_policy=request.probe_policy,
         retained_source_chars=request.retained_source_chars,
+        reproduction_acquisition=request.reproduction_acquisition,
+        verification_policy=request.verification_policy,
         agent_policy=request.agent_policy,
         history_search_policy=request.history_search_policy,
+        dependency_sources=caller_sources,
     )
+    # Diagnostic gateways may schedule bounded phases while sharing this loop's
+    # ledger, counters, workspace, deadline and real action receipts. Default runs
+    # have no extension and retain their existing context and tool behavior.
+    extension = getattr(gateway, "run_extension", None)
+    if extension is not None:
+        extension.bind(request=request, counters=counters, ledger=cost_ledger,
+                       store=artifact_store, resuming=resuming)
     correction: dict[str, Any] | None = _pending_protocol_correction(journal)
     latest_tool_results = journal.latest_tool_batch_results() if resuming else []
 
@@ -4214,7 +5796,29 @@ def _run_one_active(
         )
         assert api_key is not None
         try:
-            openai_adapter = OpenAIResponsesAdapter(config, api_key=api_key)
+            adapter_options = {}
+            if request.rate_limit_policy != "none":
+                if provider_resources is None:
+                    raise ContractError("retry transport requires managed client cleanup")
+                client = BoundedResponsesClient(
+                    api_key=api_key, retry_policy=request.rate_limit_policy,
+                    record=lambda kind, payload: journal.append(kind, {
+                        **payload, "active_elapsed_ms": active_elapsed_ms(),
+                    }),
+                )
+
+                def close_provider():
+                    try:
+                        client.close()
+                    except BaseException:
+                        journal.append("provider_transport_cleanup_failed", {
+                            "active_elapsed_ms": active_elapsed_ms(),
+                        })
+                        raise
+
+                provider_resources.callback(close_provider)
+                adapter_options["client"] = client
+            openai_adapter = OpenAIResponsesAdapter(config, api_key=api_key, **adapter_options)
         except Exception as exc:
             terminal = _terminal(
                 journal=journal,
@@ -4315,12 +5919,15 @@ def _run_one_active(
                     )
                 else:
                     counters.protocol_recoveries += 1
+                    counters.protocol_corrections_total += 1
                     next_policy = _tool_policy(
                         gateway, counters, request.limits,
                         repair_inspection_policy=request.repair_inspection_policy,
                         repair_recheck=request.repair_recheck,
                         cost_ledger=cost_ledger,
                         completion_cost_policy=request.completion_cost_policy,
+                        desired_output_ceiling=request.max_output_tokens,
+                        max_correction_output_tokens=request.max_correction_output_tokens,
                     )
                     correction = _protocol_correction(
                         turn_id=pending_turn_id,
@@ -4343,6 +5950,12 @@ def _run_one_active(
                         max_parallel_reads=pending_max_parallel_reads,
                         allowed_tools=pending_allowed_tools,
                         allowed_read_paths=pending_targeted_read_paths,
+                        path_diagnosis_pending=(
+                            pending_started["workflow_gate"] == "needs_path_diagnosis"),
+                        original_acquisition_pending=(
+                            pending_started.get("original_acquisition_pending", False)),
+                        repair_test_comparison_pending=(
+                            pending_started["workflow_gate"] == "needs_test_comparison"),
                     )
                 except ContractError as exc:
                     if counters.protocol_recoveries >= request.limits.max_protocol_recoveries:
@@ -4350,12 +5963,15 @@ def _run_one_active(
                         terminal_message = str(exc)
                     else:
                         counters.protocol_recoveries += 1
+                        counters.protocol_corrections_total += 1
                         next_policy = _tool_policy(
                             gateway, counters, request.limits,
                             repair_inspection_policy=request.repair_inspection_policy,
                             repair_recheck=request.repair_recheck,
                             cost_ledger=cost_ledger,
                             completion_cost_policy=request.completion_cost_policy,
+                            desired_output_ceiling=request.max_output_tokens,
+                            max_correction_output_tokens=request.max_correction_output_tokens,
                         )
                         correction = _protocol_correction(
                             turn_id=pending_turn_id,
@@ -4367,16 +5983,40 @@ def _run_one_active(
                             issue=str(exc),
                             gateway=gateway,
                             policy=next_policy,
+                            rejected_calls=pending_calls,
                         )
                         journal.append("protocol_correction", correction)
                 else:
                     if not batch_started:
-                        if (
-                            counters.tool_actions + len(pending_calls)
-                            > request.limits.max_tool_actions
+                        recovery_policy = (_tool_policy(
+                            gateway, counters, request.limits,
+                            repair_inspection_policy=request.repair_inspection_policy,
+                            repair_recheck=request.repair_recheck, cost_ledger=cost_ledger,
+                            completion_cost_policy=request.completion_cost_policy,
+                            desired_output_ceiling=request.max_output_tokens,
+                            max_correction_output_tokens=request.max_correction_output_tokens,
+                            _preview_inspection=False,
+                        ) if any((call.name == "run_tests"
+                                  and test_comparison.has_comparison(call.arguments))
+                                 or _requests_test_edit(call)
+                                 for call in pending_calls) else None)
+                        if recovery_policy is not None and any(
+                            _requests_test_edit(call) for call in pending_calls
+                        ):
+                            offered = pending_started.get("repair_prediction", {})
+                            recovery_policy = replace(
+                                recovery_policy,
+                                repair_test_edit_enabled=offered.get("test_edit_enabled", False),
+                                repair_test_edit_minimum_tool_actions=offered.get(
+                                    "test_edit_minimum_tool_actions", 0),
+                            )
+                        if not _batch_fits_tool_budget(
+                            pending_calls, counters, request.limits, recovery_policy,
                         ):
                             terminal_code = DevTerminal.LIMIT_REACHED
-                            terminal_message = "tool-action limit reached before recovered batch"
+                            terminal_message = (
+                                "recovered batch cannot fit tool actions and completion reserve"
+                            )
                         else:
                             journal.append(
                                 "tool_batch_started",
@@ -4398,11 +6038,21 @@ def _run_one_active(
                                 request.planning_policy, journal=journal, gateway=gateway,
                                 calls=pending_calls, turn_id=pending_turn_id,
                             )
-                            recovered_results = gateway.execute_batch(pending_calls)
+                            recovered_results = _execute_completion_batch(
+                                calls=pending_calls, journal=journal, gateway=gateway,
+                                path_diagnosis_pending=(
+                                    pending_started["workflow_gate"] == "needs_path_diagnosis"),
+                                repair_test_comparison_pending=(
+                                    pending_started["workflow_gate"] == "needs_test_comparison"),
+                                counters=counters, active_elapsed_ms=active_elapsed_ms,
+                            )
+                        except _CompletionVerificationAbort as exc:
+                            terminal_code, terminal_message = exc.terminal, str(exc)
+                            stop_remaining = exc.terminal == DevTerminal.TASK_FAILED
                         except ExecutionDeadlineExceeded:
                             terminal_code = DevTerminal.LIMIT_REACHED
                             terminal_message = "active deadline exhausted before recovered action"
-                        except GitExecutionUncertain:
+                        except (GitExecutionUncertain, FileTransactionUncertain):
                             raise
                         except Exception as exc:
                             terminal_code = DevTerminal.TASK_FAILED
@@ -4439,6 +6089,31 @@ def _run_one_active(
         if recovered_receipt and recovered_receipt.get("ready_for_activation"):
             native_compaction.activate(journal, artifact_store, recovered_receipt)
     while terminal_code is None and finish_result is None and stop_result is None:
+        if extension is not None:
+            try:
+                extension.before_turn()
+            except RecoveryError as exc:
+                terminal_code, terminal_message = DevTerminal.TASK_FAILED, str(exc)
+                stop_remaining = True
+                break
+        if request.enable_probes:
+            try:
+                terminal_code, terminal_message = _run_original_recheck(
+                    journal=journal, gateway=gateway, latest_results=latest_tool_results,
+                    counters=counters, active_elapsed_ms=active_elapsed_ms,
+                    request=request, cost_ledger=cost_ledger,
+                )
+            except ExecutionDeadlineExceeded:
+                terminal_code = DevTerminal.LIMIT_REACHED
+                terminal_message = "active deadline exhausted during original recheck"
+            except (GitExecutionUncertain, FileTransactionUncertain):
+                raise
+            except Exception as exc:
+                terminal_code = DevTerminal.TASK_FAILED
+                terminal_message = f"original recheck failed: {type(exc).__name__}"
+            if terminal_code is not None:
+                stop_remaining = terminal_code == DevTerminal.TASK_FAILED
+                break
         if request.repair_recheck:
             try:
                 terminal_code, terminal_message = _run_repair_recheck(
@@ -4448,7 +6123,7 @@ def _run_one_active(
             except ExecutionDeadlineExceeded:
                 terminal_code = DevTerminal.LIMIT_REACHED
                 terminal_message = "active deadline exhausted before repair recheck"
-            except GitExecutionUncertain:
+            except (GitExecutionUncertain, FileTransactionUncertain):
                 raise
             except Exception as exc:
                 terminal_code = DevTerminal.TASK_FAILED
@@ -4466,7 +6141,7 @@ def _run_one_active(
             except ExecutionDeadlineExceeded:
                 terminal_code = DevTerminal.LIMIT_REACHED
                 terminal_message = "active deadline exhausted during probe recheck"
-            except GitExecutionUncertain:
+            except (GitExecutionUncertain, FileTransactionUncertain):
                 raise
             except Exception as exc:
                 terminal_code = DevTerminal.TASK_FAILED
@@ -4479,6 +6154,16 @@ def _run_one_active(
             terminal_message = "row wall-time limit reached"
             break
         elapsed_seconds = active_elapsed_ms() / 1_000
+        if extension is not None:
+            try:
+                extension.before_turn()
+            except RecoveryError as exc:
+                terminal_code, terminal_message = DevTerminal.TASK_FAILED, str(exc)
+                stop_remaining = True
+                break
+        input_journal = extension.input_journal if extension is not None else journal
+        input_results = (input_journal.latest_tool_batch_results()
+                         if extension is not None else latest_tool_results)
         projection = gateway.prepare_context_projection(latest_results=latest_tool_results)
         snapshot = gateway.state_snapshot(projection=projection)
         policy = _tool_policy(
@@ -4490,7 +6175,27 @@ def _run_one_active(
             repair_recheck=request.repair_recheck,
             cost_ledger=cost_ledger,
             completion_cost_policy=request.completion_cost_policy,
+            desired_output_ceiling=request.max_output_tokens,
+            max_correction_output_tokens=request.max_correction_output_tokens,
+            remaining_seconds=remaining_active_seconds(),
         )
+        if (request.verification_policy != "public-checks-v1"
+                and (snapshot.completion_verification or {}).get(
+                    "original_obligation", {}).get("stage")
+                == "pending" and "run_probe" not in policy.allowed_tools):
+            # The phase cannot consume the protected repair/check/return path.
+            # Persist this release only on the real loop, never a forecast preview.
+            gateway.release_original_acquisition("completion_budget")
+            snapshot = gateway.state_snapshot(projection=projection)
+            policy = _tool_policy(
+                gateway, counters, request.limits, snapshot=snapshot,
+                repair_inspection_policy=request.repair_inspection_policy,
+                repair_recheck=request.repair_recheck, cost_ledger=cost_ledger,
+                completion_cost_policy=request.completion_cost_policy,
+                desired_output_ceiling=request.max_output_tokens,
+                max_correction_output_tokens=request.max_correction_output_tokens,
+                remaining_seconds=remaining_active_seconds(),
+            )
         if not policy.completion_possible:
             terminal_completion_horizon = _completion_horizon_payload(
                 gateway,
@@ -4499,13 +6204,47 @@ def _run_one_active(
                 policy,
                 snapshot=snapshot,
             )
-            if "cost" in terminal_completion_horizon["blocking_resources"]:
+            if policy.workflow_gate == "verification_incomplete":
+                terminal_code = DevTerminal.VERIFICATION_INCOMPLETE
+                if (policy.repair_prediction or {}).get("status") == "needs_test_comparison":
+                    terminal_message = (
+                        "selected-test comparison and remaining source repair cannot fit resources"
+                    )
+                    terminal_completion_horizon["repair_prediction"] = policy.repair_prediction
+                elif policy.helper_correction and policy.helper_correction.get("blocked"):
+                    terminal_message = (
+                        "helper program correction is incomplete or cannot fit completion resources"
+                    )
+                    terminal_completion_horizon["helper_correction"] = policy.helper_correction
+                elif policy.repair_path_diagnosis and policy.repair_path_diagnosis.get("blocked"):
+                    terminal_message = (
+                        "call-path diagnosis is incomplete or cannot fit completion resources"
+                    )
+                    terminal_completion_horizon["repair_path_diagnosis"] = (
+                        policy.repair_path_diagnosis
+                    )
+                else:
+                    terminal_message = (
+                        "observation correction is unresolved or cannot fit completion resources"
+                    )
+                    terminal_completion_horizon["observation_correction"] = (
+                        policy.observation_correction
+                    )
+            elif "cost" in terminal_completion_horizon["blocking_resources"]:
                 terminal_code = DevTerminal.COST_CAP_REACHED
                 terminal_message = "completion cost reservation cannot fit the remaining cap"
                 stop_remaining = True
             else:
                 terminal_code = DevTerminal.LIMIT_REACHED
                 terminal_message = "completion horizon exhausted before provider dispatch"
+            break
+        time_reserve = (policy.completion_cost or {}).get("future_time_reserve_seconds", 0)
+        provider_deadline = ExecutionDeadline(deadline.expires_at - time_reserve, deadline.clock)
+        if (provider_deadline.remaining_seconds() <= 0
+                or (policy.completion_cost or {}).get("correction_pending")
+                and provider_deadline.remaining_seconds() < 30):
+            terminal_code = DevTerminal.LIMIT_REACHED
+            terminal_message = "verification and follow-up time reserve leaves no provider time"
             break
         turn_id = f"turn_{uuid.uuid4().hex}"
         try:
@@ -4518,7 +6257,14 @@ def _run_one_active(
                     issue=str(pending_correction.get("issue", pending_correction["message"])),
                     gateway=gateway,
                     policy=policy,
+                    tool_contract_failure=(DevToolContractFailure.model_validate(
+                        pending_correction["tool_contract_failure"])
+                        if pending_correction.get("tool_contract_failure") else None),
                 )
+                if "rejected_drafts" in pending_correction:
+                    # Refresh gate guidance without dropping the original rejected
+                    # proposal. Context projection checks its diff before delivery.
+                    correction["rejected_drafts"] = pending_correction["rejected_drafts"]
             context = _build_context(
                 package=package,
                 gateway=gateway,
@@ -4538,6 +6284,8 @@ def _run_one_active(
                 planning_policy=request.planning_policy,
                 evaluation_reserve_seconds=evaluation_reserve_seconds,
             )
+            if extension is not None:
+                context = extension.context(context)
             context_payload = json.loads(context)
             if request.context_policy == segments.POLICY:
                 context_payload["remaining_budget"]["cost"] = {
@@ -4557,16 +6305,19 @@ def _run_one_active(
                 if isinstance(mutation_evidence, dict):
                     projected_spans.append(mutation_evidence)
             context_artifact = artifact_store.put_text(context, "application/json")
+            additional_public_exchanges = (extension.public_evidence(context_payload)
+                                           if extension is not None else None)
             model_input = _build_model_input(
-                journal=journal,
+                journal=input_journal,
                 artifact_store=artifact_store,
                 context=context,
-                latest_tool_results=latest_tool_results,
+                latest_tool_results=input_results,
                 context_policy=request.context_policy,
                 planning_policy=request.planning_policy,
                 agent_policy=request.agent_policy,
                 segment_boundary_policy=request.segment_boundary_policy,
                 history_search_policy=request.history_search_policy,
+                additional_public_exchanges=additional_public_exchanges,
             )
             model_input_text = canonical_json(model_input)
             model_input_artifact = artifact_store.put_text(
@@ -4579,7 +6330,7 @@ def _run_one_active(
             terminal_code = DevTerminal.PROVIDER_CONTINUATION_ERROR
             terminal_message = str(exc)
             break
-        except GitExecutionUncertain:
+        except (GitExecutionUncertain, FileTransactionUncertain):
             raise
         except RecoveryError as exc:
             terminal_code = DevTerminal.TASK_FAILED
@@ -4589,15 +6340,41 @@ def _run_one_active(
             finish_enabled="finish_task" in policy.allowed_tools,
             check_ids=policy.check_ids,
             test_suite_ids=[suite.id for suite in gateway.public_task.test_suites],
+            test_comparison_enabled=_test_comparison_enabled(policy, counters, request.limits),
             allowed_tools=policy.allowed_tools,
             read_paths=policy.targeted_read_paths,
             planning_policy=request.planning_policy,
             agent_policy=request.agent_policy,
+            verification_policy=request.verification_policy,
             probe_policy=request.probe_policy,
             probe_recheck_policy=request.probe_recheck,
             probe_environment=getattr(gateway.probe_sandbox, "environment", None),
+            dependency_sources=(gateway._dependency_catalog()
+                                if getattr(gateway, "dependency_sources", None) is not None
+                                else None),
+            path_diagnosis_pending=policy.workflow_gate == "needs_path_diagnosis",
+            original_acquisition_pending=policy.workflow_gate in {
+                "needs_original_reproduction", "needs_original_argument_correction"},
+            repair_test_comparison_pending=policy.workflow_gate == "needs_test_comparison",
+            repair_revision=policy.repair_path_diagnosis,
+            first_original_observation=policy.first_observation,
+            repair_test_edit_enabled=policy.repair_test_edit_enabled,
             history_search_policy=request.history_search_policy,
         )
+        if policy.selected_test_comparison_required:
+            pending_test = (policy.repair_prediction or {}).get("pending_test")
+            mutation_id = (pending_test["comparison"]["mutation_action_id"] if pending_test
+                           else policy.repair_path_diagnosis["mutation_action_id"])
+            for schema in schemas:
+                if schema["name"] == "run_tests":
+                    comparison = test_comparison.schema()["anyOf"][1]
+                    comparison["properties"]["baseline"]["enum"] = ["before_mutation"]
+                    comparison["properties"]["mutation_action_id"] = {
+                        "type": "string", "enum": [mutation_id],
+                    }
+                    schema["parameters"]["properties"]["comparison"] = comparison
+        if extension is not None:
+            schemas = extension.schemas(schemas)
         if isinstance(request, RepairRunRequest):
             for schema in schemas:
                 if schema["name"] == "finish_task":
@@ -4605,8 +6382,8 @@ def _run_one_active(
                         "Return the current patch and public verification records after all "
                         "required visible checks pass on this diff and you review the public "
                         "requirements against observed evidence, including unfinished "
-                        "verification plans. Call only if you judge the task complete; justify "
-                        "remaining gaps in your assessment. Independent acceptance is NOT_RUN; "
+                        "verification plans. Describe remaining gaps; missing original evidence "
+                        "returns unverified_delivery. Independent acceptance is NOT_RUN; "
                         "regression PASS alone does not prove the reported problem is fixed."
                     )
         turn_payload = {
@@ -4621,7 +6398,7 @@ def _run_one_active(
                 window=native_compaction.active_window(journal, artifact_store)[1],
             ),
             **({"context_window": window_binding} if window_binding is not None else {}),
-            **({"context_segment": _segment_input_binding(journal, artifact_store)}
+            **({"context_segment": _segment_input_binding(input_journal, artifact_store)}
                if request.context_policy == segments.POLICY else {}),
             "transcript_action_ids": [
                 item["call_id"]
@@ -4631,6 +6408,8 @@ def _run_one_active(
             "available_tool_names": sorted(policy.allowed_tools),
             "workflow_gate": policy.workflow_gate,
             "max_parallel_reads": policy.max_parallel_reads,
+            "original_acquisition_pending": policy.workflow_gate in {
+                "needs_original_reproduction", "needs_original_argument_correction"},
             "targeted_read_paths": list(policy.targeted_read_paths),
             "minimum_completion_calls": policy.minimum_completion_calls,
             **_completion_cost_payload(policy),
@@ -4668,50 +6447,62 @@ def _run_one_active(
             ],
             "active_elapsed_ms": int(elapsed_seconds * 1_000),
         }
+        current_output_ceiling = (
+            correction_output_ceiling(
+                request.max_output_tokens, request.max_correction_output_tokens,
+            )
+            if policy.completion_cost and policy.completion_cost.get("correction_pending")
+            else request.max_output_tokens
+        )
         prepared_count = None
         if request.context_policy == segments.POLICY:
             try:
                 request_payload = (openai_adapter.request_payload(
                     model_input, schemas, system_prompt=thin_policy.system_prompt(
                         request.agent_policy, request.planning_policy,
-                        request.history_search_policy),
+                        request.history_search_policy, request.verification_policy),
                 ) if openai_adapter is not None else {
                     "model": request.model, "input": model_input, "tools": schemas,
                     "max_output_tokens": request.max_output_tokens,
                 })
-                request_payload.update(parallel_tool_calls=True, tool_choice="required")
+                request_payload.update(parallel_tool_calls=_parallel_tool_calls(policy),
+                                       tool_choice="required",
+                                       max_output_tokens=current_output_ceiling)
                 sizes = segments.request_sizes(request_payload)
                 reasons = segments.size_reasons(sizes)
                 turn_payload["context_request_sizes"] = sizes
                 if reasons:
-                    binding, _ = segments.active(journal, artifact_store)
-                    if segments.is_fresh(journal, binding):
+                    binding, _ = segments.active(input_journal, artifact_store)
+                    if segments.is_fresh(input_journal, binding):
                         handoff = segments.load_binding(binding, artifact_store)
-                        fallback = _segment_size_fallback(handoff, latest_tool_results)
+                        fallback = _segment_size_fallback(handoff, input_results)
                         if fallback:
                             _build_model_input(
-                                journal=journal, artifact_store=artifact_store, context=context,
-                                latest_tool_results=latest_tool_results,
+                                journal=input_journal, artifact_store=artifact_store,
+                                context=context,
+                                latest_tool_results=input_results,
                                 context_policy=segments.POLICY,
                                 planning_policy=request.planning_policy,
                                 agent_policy=request.agent_policy,
                                 segment_boundary_policy=request.segment_boundary_policy,
                                 history_search_policy=request.history_search_policy,
                                 force_segment_reason=fallback,
+                                additional_public_exchanges=additional_public_exchanges,
                             )
                             continue
-                        segments.record_limit(journal, sizes=sizes)
+                        segments.record_limit(input_journal, sizes=sizes)
                         terminal_code = DevTerminal.LIMIT_REACHED
                         terminal_message = "fresh public state exceeds segment request size limit"
                         break
                     _build_model_input(
-                        journal=journal, artifact_store=artifact_store, context=context,
-                        latest_tool_results=latest_tool_results, context_policy=segments.POLICY,
+                        journal=input_journal, artifact_store=artifact_store, context=context,
+                        latest_tool_results=input_results, context_policy=segments.POLICY,
                         planning_policy=request.planning_policy,
                         agent_policy=request.agent_policy,
                         segment_boundary_policy=request.segment_boundary_policy,
                         history_search_policy=request.history_search_policy,
                         force_segment_reason="+".join(reasons),
+                        additional_public_exchanges=additional_public_exchanges,
                     )
                     continue
             except (OSError, KeyError, TypeError, ValueError, ContractError, RecoveryError) as exc:
@@ -4727,12 +6518,13 @@ def _run_one_active(
                 request_payload = openai_adapter.request_payload(
                     model_input, schemas, system_prompt=thin_policy.system_prompt(
                         request.agent_policy, request.planning_policy,
-                        request.history_search_policy),
+                        request.history_search_policy, request.verification_policy),
                 )
-                request_payload["parallel_tool_calls"] = True
+                request_payload["parallel_tool_calls"] = _parallel_tool_calls(policy)
                 request_payload["tool_choice"] = "required"
+                request_payload["max_output_tokens"] = current_output_ceiling
                 boundary, bundle = native_compaction.prepared_input(
-                    journal, artifact_store, turn_payload, request_payload, policy_transition,
+                    input_journal, artifact_store, turn_payload, request_payload, policy_transition,
                 )
                 turn_payload = bundle["turn"]
                 model_input = _load_active_model_input(
@@ -4744,39 +6536,43 @@ def _run_one_active(
                 schemas = bundle["request"]["tools"]
                 policy_transition = bundle["transition"]
                 prepared_count = native_compaction.count_prepared(
-                    journal, boundary, bundle, openai_adapter, deadline, active_elapsed_ms,
+                    input_journal, boundary, bundle, openai_adapter,
+                    provider_deadline, active_elapsed_ms,
                 )
                 counters.input_count_calls = _restore_counters(journal).input_count_calls
                 if (request.context_policy == segments.POLICY
                         and prepared_count[1] > segments.MAX_INPUT_TOKENS):
-                    binding, _ = segments.active(journal, artifact_store)
-                    if segments.is_fresh(journal, binding):
+                    binding, _ = segments.active(input_journal, artifact_store)
+                    if segments.is_fresh(input_journal, binding):
                         handoff = segments.load_binding(binding, artifact_store)
-                        fallback = _segment_size_fallback(handoff, latest_tool_results)
+                        fallback = _segment_size_fallback(handoff, input_results)
                         if fallback:
                             _build_model_input(
-                                journal=journal, artifact_store=artifact_store, context=context,
-                                latest_tool_results=latest_tool_results,
+                                journal=input_journal, artifact_store=artifact_store,
+                                context=context,
+                                latest_tool_results=input_results,
                                 context_policy=segments.POLICY,
                                 planning_policy=request.planning_policy,
                                 agent_policy=request.agent_policy,
                                 segment_boundary_policy=request.segment_boundary_policy,
                                 history_search_policy=request.history_search_policy,
                                 force_segment_reason=fallback,
+                                additional_public_exchanges=additional_public_exchanges,
                             )
                             continue
-                        segments.record_limit(journal, input_tokens=prepared_count[1])
+                        segments.record_limit(input_journal, input_tokens=prepared_count[1])
                         terminal_code = DevTerminal.LIMIT_REACHED
                         terminal_message = "fresh public state exceeds segment input token limit"
                         break
                     _build_model_input(
-                        journal=journal, artifact_store=artifact_store, context=context,
-                        latest_tool_results=latest_tool_results, context_policy=segments.POLICY,
+                        journal=input_journal, artifact_store=artifact_store, context=context,
+                        latest_tool_results=input_results, context_policy=segments.POLICY,
                         planning_policy=request.planning_policy,
                         agent_policy=request.agent_policy,
                         segment_boundary_policy=request.segment_boundary_policy,
                         history_search_policy=request.history_search_policy,
                         force_segment_reason="input_tokens",
+                        additional_public_exchanges=additional_public_exchanges,
                     )
                     continue
                 prior_preparation = next((e["payload"] for e in journal.events()
@@ -4790,7 +6586,7 @@ def _run_one_active(
                                 request.limits.max_model_calls - counters.model_calls
                             ),
                             minimum_completion_calls=policy.minimum_completion_calls,
-                            ledger=cost_ledger, deadline=deadline, correction=correction,
+                            ledger=cost_ledger, deadline=provider_deadline, correction=correction,
                         )):
                     if prior_preparation is None:
                         compact_adapter.prepare_locked(
@@ -4802,7 +6598,7 @@ def _run_one_active(
                         )
                     receipt = compact_adapter.execute_locked(
                         client_factory=lambda: BoundedResponsesClient(api_key=api_key),
-                        ledger=cost_ledger, deadline=deadline,
+                        ledger=cost_ledger, deadline=provider_deadline,
                         active_elapsed_seconds=active_elapsed_ms() / 1_000,
                     )
                     cost_ledger.restore_settled_usage(
@@ -4821,6 +6617,10 @@ def _run_one_active(
                 turn_payload = {**turn_payload, "prepared_input": boundary,
                                 "selected_count_id": prepared_count[0],
                                 "counted_request_hash": boundary["request_hash"]}
+            except ExecutionDeadlineExceeded:
+                terminal_code = DevTerminal.LIMIT_REACHED
+                terminal_message = "verification reserve leaves no time for input counting"
+                break
             except native_compaction.CountFailure as exc:
                 counters = _restore_counters(journal)
                 terminal_code = DevTerminal.COUNT_TIMEOUT_OR_UNKNOWN
@@ -4833,7 +6633,7 @@ def _run_one_active(
                 stop_remaining = True
                 break
         if request.context_policy == segments.POLICY:
-            segments.commit(journal, artifact_store)
+            segments.commit(input_journal, artifact_store)
         journal.append("turn_started", turn_payload)
         if policy_transition is not None:
             journal.append(
@@ -4844,6 +6644,8 @@ def _run_one_active(
         if request.provider == "mock":
             assert mock_adapter is not None
             counters.model_calls += 1
+            if extension is not None:
+                extension.dispatched(turn_payload)
             try:
                 mock_context = (canonical_json(thin_policy.project_state(
                     json.loads(context), "thin")) if request.agent_policy == "thin" else context)
@@ -4881,19 +6683,20 @@ def _run_one_active(
                                        model_input, schemas,
                                        system_prompt=thin_policy.system_prompt(
                                            request.agent_policy, request.planning_policy,
-                                           request.history_search_policy),
+                                           request.history_search_policy,
+                                           request.verification_policy),
                                    ))
             except Exception as exc:
                 terminal_code = DevTerminal.TASK_FAILED
                 terminal_message = f"provider request construction failed: {type(exc).__name__}"
                 break
-            request_payload["parallel_tool_calls"] = True
+            request_payload["parallel_tool_calls"] = _parallel_tool_calls(policy)
             request_payload["tool_choice"] = "required"
             if prepared_count:
                 count_id, input_tokens = prepared_count
                 count_request_hash = boundary["request_hash"]
             else:
-                count_timeout = remaining_active_seconds()
+                count_timeout = provider_deadline.remaining_seconds()
                 if count_timeout <= 0:
                     terminal_code = DevTerminal.LIMIT_REACHED
                     terminal_message = "row wall-time limit reached before input counting"
@@ -4938,13 +6741,21 @@ def _run_one_active(
                 )
             admission = cost_ledger.admit(
                 input_tokens,
-                desired_output_ceiling=request.max_output_tokens,
-                future_cost_reserve_nanos=(
+                desired_output_ceiling=current_output_ceiling,
+                minimum_output_ceiling=(
+                    policy.completion_cost.get("current_minimum_output_ceiling",
+                                               MINIMUM_OUTPUT_CEILING)
+                    if policy.completion_cost is not None else MINIMUM_OUTPUT_CEILING
+                ),
+                future_cost_reserve_nanos=max(
                     policy.completion_cost["future_cost_reserve_nanos"]
-                    if policy.completion_cost is not None else 0
+                    if policy.completion_cost is not None else 0,
+                    extension.cost_reserve() if extension is not None else 0,
                 ),
             )
             if admission is None:
+                if extension is not None and extension.cost_limited(input_tokens):
+                    continue
                 terminal_code = DevTerminal.COST_CAP_REACHED
                 terminal_message = (
                     "provider request plus future completion reserve cannot fit the remaining cap"
@@ -4961,7 +6772,7 @@ def _run_one_active(
                     terminal_code = DevTerminal.LIMIT_REACHED
                     terminal_message = "admitted request exceeds segment byte limit"
                     break
-            dispatch_timeout = remaining_active_seconds()
+            dispatch_timeout = provider_deadline.remaining_seconds()
             if dispatch_timeout <= 0:
                 terminal_code = DevTerminal.LIMIT_REACHED
                 terminal_message = "row wall-time limit reached before provider dispatch"
@@ -4979,11 +6790,15 @@ def _run_one_active(
                     "input_tokens": input_tokens,
                     "output_ceiling": admission.output_ceiling,
                     "reserved_cost_nanos": admission.reserved_cost_nanos,
+                    "timeout_seconds": dispatch_timeout,
+                    "future_time_reserve_seconds": time_reserve,
                     **_completion_cost_payload(policy),
                     "active_elapsed_ms": active_elapsed_ms(),
                 },
             )
             counters.model_calls += 1
+            if extension is not None:
+                extension.dispatched(turn_payload)
             try:
                 raw_turn = openai_adapter.execute_request(
                     request_payload,
@@ -4995,7 +6810,10 @@ def _run_one_active(
                 terminal_message = f"provider dispatch failed: {type(exc).__name__}"
                 stop_remaining = True
                 break
-            turn = _turn_from_openai(raw_turn, agent_policy=request.agent_policy)
+            turn = _turn_from_openai(
+                raw_turn, agent_policy=request.agent_policy,
+                path_diagnosis_pending=policy.workflow_gate == "needs_path_diagnosis",
+                repair_test_comparison_pending=policy.workflow_gate == "needs_test_comparison")
             try:
                 cost_nanos = cost_ledger.settle(
                     input_tokens=turn.input_tokens,
@@ -5120,12 +6938,15 @@ def _run_one_active(
                 )
                 break
             counters.protocol_recoveries += 1
+            counters.protocol_corrections_total += 1
             next_policy = _tool_policy(
                 gateway, counters, request.limits,
                 repair_inspection_policy=request.repair_inspection_policy,
                 repair_recheck=request.repair_recheck,
                 cost_ledger=cost_ledger,
                 completion_cost_policy=request.completion_cost_policy,
+                desired_output_ceiling=request.max_output_tokens,
+                max_correction_output_tokens=request.max_correction_output_tokens,
             )
             correction = _protocol_correction(
                 turn_id=turn_id,
@@ -5148,6 +6969,11 @@ def _run_one_active(
                 max_parallel_reads=policy.max_parallel_reads,
                 allowed_tools=policy.allowed_tools,
                 allowed_read_paths=policy.targeted_read_paths,
+                path_diagnosis_pending=policy.workflow_gate == "needs_path_diagnosis",
+                original_acquisition_pending=(
+                    policy.workflow_gate in {
+                        "needs_original_reproduction", "needs_original_argument_correction"}),
+                repair_test_comparison_pending=policy.workflow_gate == "needs_test_comparison",
             )
         except ContractError as exc:
             if counters.protocol_recoveries >= request.limits.max_protocol_recoveries:
@@ -5155,12 +6981,15 @@ def _run_one_active(
                 terminal_message = str(exc)
                 break
             counters.protocol_recoveries += 1
+            counters.protocol_corrections_total += 1
             next_policy = _tool_policy(
                 gateway, counters, request.limits,
                 repair_inspection_policy=request.repair_inspection_policy,
                 repair_recheck=request.repair_recheck,
                 cost_ledger=cost_ledger,
                 completion_cost_policy=request.completion_cost_policy,
+                desired_output_ceiling=request.max_output_tokens,
+                max_correction_output_tokens=request.max_correction_output_tokens,
             )
             correction = _protocol_correction(
                 turn_id=turn_id,
@@ -5168,12 +6997,13 @@ def _run_one_active(
                 issue=str(exc),
                 gateway=gateway,
                 policy=next_policy,
+                rejected_calls=turn.tool_calls,
             )
             journal.append("protocol_correction", correction)
             continue
-        if counters.tool_actions + len(turn.tool_calls) > request.limits.max_tool_actions:
+        if not _batch_fits_tool_budget(turn.tool_calls, counters, request.limits, policy):
             terminal_code = DevTerminal.LIMIT_REACHED
-            terminal_message = "tool-action limit reached"
+            terminal_message = "requested batch cannot fit tool actions and completion reserve"
             break
         journal.append(
             "tool_batch_started",
@@ -5188,15 +7018,26 @@ def _run_one_active(
             deadline.check()
             gateway.record_working_notes_update(turn.tool_calls, turn_id=turn_id)
             _record_planning_decision(
-                request.planning_policy, journal=journal, gateway=gateway,
+                request.planning_policy,
+                journal=extension.plan_journal if extension is not None else journal,
+                gateway=gateway,
                 calls=turn.tool_calls, turn_id=turn_id,
             )
-            results = gateway.execute_batch(turn.tool_calls)
+            results = _execute_completion_batch(
+                calls=turn.tool_calls, journal=journal, gateway=gateway, counters=counters,
+                active_elapsed_ms=active_elapsed_ms,
+                path_diagnosis_pending=policy.workflow_gate == "needs_path_diagnosis",
+                repair_test_comparison_pending=policy.workflow_gate == "needs_test_comparison",
+            )
+        except _CompletionVerificationAbort as exc:
+            terminal_code, terminal_message = exc.terminal, str(exc)
+            stop_remaining = exc.terminal == DevTerminal.TASK_FAILED
+            break
         except ExecutionDeadlineExceeded:
             terminal_code = DevTerminal.LIMIT_REACHED
             terminal_message = "active deadline exhausted before tool execution"
             break
-        except GitExecutionUncertain:
+        except (GitExecutionUncertain, FileTransactionUncertain):
             raise
         except Exception as exc:
             terminal_code = DevTerminal.TASK_FAILED
@@ -5222,12 +7063,17 @@ def _run_one_active(
         if terminal_code == DevTerminal.TASK_FAILED:
             stop_remaining = True
 
+    # Finalize the owned HTTP client before recording success or starting isolated
+    # evaluation. ExitStack still closes it when an exception leaves the loop.
+    if provider_resources is not None:
+        provider_resources.close()
     probe_evidence = _probe_evidence(journal, artifact_store, run_id)
     probe_artifact_hashes = {
         f"probe_receipt_{index + 1}": artifact.content_hash
         for index, artifact in enumerate(probe_evidence)
     }
     if stop_result is not None:
+        gaps = _required_public_check_gaps(gateway)
         terminal = _terminal(
             journal=journal,
             terminal=DevTerminal.AGENT_STOPPED,
@@ -5238,10 +7084,58 @@ def _run_one_active(
             message=(f"{stop_result.output['reason_code']}: {stop_result.output['summary']}"),
             artifacts=probe_artifact_hashes,
             active_elapsed_ms=active_elapsed_ms(),
+            completion_horizon=({"required_public_checks": gaps} if gaps else None),
         )
         return _OneRunResult(_public_result(run_id, terminal), False)
 
     if finish_result is None:
+        # A physical/output limit can stop the loop before the next policy
+        # projection. Retain that stop cause while reporting the unresolved
+        # observation; transport/count/billing uncertainty keeps its own terminal.
+        if request.verification_policy != "public-checks-v1" and terminal_code in {
+            DevTerminal.LIMIT_REACHED, DevTerminal.COST_CAP_REACHED,
+            DevTerminal.INCOMPLETE_RESPONSE, DevTerminal.PROTOCOL_VIOLATION,
+        }:
+            from patchloop.dev import observation_correction
+
+            events = journal.events()
+            last_diff = next((e["payload"]["result"]["workspace_diff_hash"]
+                              for e in reversed(events) if e["event_type"] == "action_finished"),
+                             sha256_bytes(b""))
+            unresolved = observation_correction.review(events, last_diff)
+            if unresolved["blocked"]:
+                terminal_completion_horizon = {
+                    **(terminal_completion_horizon or {}), "stop_cause": terminal_code.value,
+                    "observation_correction": unresolved,
+                }
+                terminal_code = DevTerminal.VERIFICATION_INCOMPLETE
+            else:
+                verification = gateway.completion_verification(diff_hash=last_diff)
+                diagnosis = verification.get("repair_path", {})
+                if (verification.get("repair_prediction", {}).get("status")
+                        == "needs_test_comparison"):
+                    terminal_completion_horizon = {
+                        **(terminal_completion_horizon or {}), "stop_cause": terminal_code.value,
+                        "repair_prediction": verification["repair_prediction"],
+                    }
+                    terminal_code = DevTerminal.VERIFICATION_INCOMPLETE
+                elif diagnosis.get("blocked"):
+                    terminal_completion_horizon = {
+                        **(terminal_completion_horizon or {}), "stop_cause": terminal_code.value,
+                        "repair_path_diagnosis": diagnosis,
+                    }
+                    terminal_code = DevTerminal.VERIFICATION_INCOMPLETE
+                elif verification.get("helper_correction", {}).get("blocked"):
+                    terminal_completion_horizon = {
+                        **(terminal_completion_horizon or {}), "stop_cause": terminal_code.value,
+                        "helper_correction": verification["helper_correction"],
+                    }
+                    terminal_code = DevTerminal.VERIFICATION_INCOMPLETE
+        gaps = _required_public_check_gaps(gateway)
+        if gaps:
+            terminal_completion_horizon = {
+                **(terminal_completion_horizon or {}), "required_public_checks": gaps,
+            }
         terminal = _terminal(
             journal=journal,
             terminal=terminal_code or DevTerminal.TASK_FAILED,
@@ -5340,7 +7234,7 @@ def _run_one_active(
         }
         terminal_code = DevTerminal.LIMIT_REACHED
         terminal_message = "active deadline exhausted during isolated evaluation"
-    except GitExecutionUncertain as exc:
+    except (GitExecutionUncertain, FileTransactionUncertain) as exc:
         evaluator_summary = {
             "task_acceptance": "ERROR", "safety_state": "ERROR",
             "failure_class": (

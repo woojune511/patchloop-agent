@@ -6,13 +6,14 @@ from types import SimpleNamespace
 
 import httpx
 import pytest
-from openai import APITimeoutError, OpenAI
+from openai import APITimeoutError, AsyncOpenAI, OpenAI
 from test_dev_conversation_v22 import _provider_smoke
 from test_dev_runner import _crash_journal_once, _enveloped_run_id, _SimulatedCrash
 
 import patchloop.dev.runner as runner
 from patchloop.agent.model import OpenAIResponsesAdapter
-from patchloop.agent.usage_diagnostics import provider_usage_evidence
+from patchloop.agent.request_transport import BoundedResponsesClient
+from patchloop.agent.usage_diagnostics import provider_usage_evidence, response_diagnostics
 from patchloop.contracts import ModelConfig
 from patchloop.dev.state import DevJournal
 from patchloop.errors import RecoveryError
@@ -23,6 +24,8 @@ _PRIVATE = "private-spec/hidden-test/reference-patch/raw-reasoning-sentinel"
 _CIPHER = "encrypted-test-state"
 _COUNT = 79_749
 _MODEL = "gpt-5.4-mini-2026-03-17"
+_REQUEST_ID = "req_" + "a" * 32
+_RESPONSE_ID = "resp_" + "b" * 48
 
 
 def _usage(input_tokens=_COUNT, output_tokens=10):
@@ -36,7 +39,7 @@ def _usage(input_tokens=_COUNT, output_tokens=10):
 
 def _response(usage=_ABSENT):
     return {
-        "id": "resp_usage_test", "model": _MODEL, "status": "incomplete",
+        "id": _RESPONSE_ID, "model": _MODEL, "status": "incomplete",
         "incomplete_details": {"reason": "max_output_tokens"},
         "output": [{
             "type": "reasoning", "id": "rs_usage_test", "status": "incomplete",
@@ -57,24 +60,31 @@ def _config():
     )
 
 
-def _sdk_turn(usage):
+def _sdk_turn(usage, *, count=_COUNT, empty_output=False):
     seen = []
 
     def respond(request):
         seen.append(request)
-        return httpx.Response(200, json=_response(usage))
+        body = _response(usage)
+        if empty_output:
+            body["output"] = []
+        return httpx.Response(200, json=body, headers={
+            "x-request-id": _REQUEST_ID, "untrusted-header": _PRIVATE,
+        })
 
     with OpenAI(api_key="unused", max_retries=0, http_client=httpx.Client(
         transport=httpx.MockTransport(respond), trust_env=False,
     )) as client:
         adapter = OpenAIResponsesAdapter(_config(), api_key="unused", client=client)
         request = adapter.request_payload("public task", [], system_prompt="test")
-        turn = adapter.execute_request(request, requested_input_tokens=_COUNT)
+        turn = adapter.execute_request(request, requested_input_tokens=count)
     assert len(seen) == 1
     assert json.loads(seen[0].content) == request  # No diagnostic fields added to requests.
     assert _PRIVATE not in repr(turn)
     assert _CIPHER not in repr(turn)
-    assert len(canonical_json(turn.usage_evidence)) < 2_000
+    assert len(canonical_json({k: v for k, v in turn.usage_evidence.items()
+                               if k != "response_diagnostics"})) < 2_000
+    assert len(canonical_json(turn.usage_evidence["response_diagnostics"])) < 3_000
     return turn
 
 
@@ -103,6 +113,111 @@ def test_sdk_usage_absence_null_zero_and_real_mismatch_are_distinct(
     assert turn.response_incomplete_reason == "max_output_tokens"
     assert turn.output_item_types == ("reasoning",) and turn.tool_calls == []
     assert turn.provider_continuation[0].encrypted_content == _CIPHER
+    diagnostic = evidence["response_diagnostics"]
+    assert diagnostic["http_status"] == 200
+    assert diagnostic["request_id"] == {"state": "value", "value": _REQUEST_ID}
+    assert diagnostic["raw_metadata"]["response_id"]["value"] == _RESPONSE_ID
+    assert diagnostic["raw_usage"]["usage_state"] == state
+    assert diagnostic["raw_usage"]["observation_layer"] == "http_json"
+    assert diagnostic["comparison"] == "matched_selected_fields"
+    assert diagnostic["changed_fields"] == []
+
+
+def test_empty_incomplete_response_with_zero_usage_keeps_the_original_stop():
+    # Reproduce the observed shape locally; this is not the lost HTTP response.
+    turn = _sdk_turn(_usage(0, 0), count=13_885, empty_output=True)
+    assert turn.error.code == "input_token_count_mismatch"
+    assert turn.output_item_count == 0 and not turn.tool_calls and not turn.provider_continuation
+    assert turn.usage_evidence["input_token_delta"] == -13_885
+    diagnostic = turn.usage_evidence["response_diagnostics"]
+    assert diagnostic["comparison"] == "matched_selected_fields"
+    assert diagnostic["raw_usage"]["fields"]["input_tokens"]["value"] == 0
+
+
+def test_numeric_string_is_not_misreported_as_a_verified_integer():
+    usage = _usage()
+    usage["input_tokens"] = str(_COUNT)
+    turn = _sdk_turn(usage)
+    evidence = turn.usage_evidence
+    assert evidence["fields"]["input_tokens"] == {"state": "invalid_type"}
+    diagnostic = evidence["response_diagnostics"]
+    assert diagnostic["raw_usage"]["fields"]["input_tokens"] == {"state": "invalid_type"}
+    assert diagnostic["comparison"] == "unverifiable_selected_fields"
+    assert turn.error.code == "input_token_count_mismatch"
+
+
+def test_changed_sdk_value_is_distinguished_from_a_raw_zero():
+    # Inject a changed decoded value; this does not claim the real SDK changes it.
+    diagnostic = response_diagnostics(
+        httpx.Response(200, json=_response(_usage(0, 0))),
+        _response({**_usage(0, 0), "input_tokens": _COUNT}), _COUNT,
+    )
+    assert diagnostic["raw_usage"]["fields"]["input_tokens"] == {"state": "integer", "value": 0}
+    assert diagnostic["comparison"] == "different"
+    assert diagnostic["changed_fields"] == ["usage.input_tokens"]
+
+
+def test_unknown_labels_are_redacted_and_cannot_certify_sdk_agreement():
+    body = _response(_usage())
+    body.update(id=_PRIVATE, status=_PRIVATE, incomplete_details={"reason": _PRIVATE})
+    body["usage"]["output_tokens"] = _PRIVATE
+    result = response_diagnostics(httpx.Response(200, json=body, headers={
+        "x-request-id": _PRIVATE, "authorization": _PRIVATE,
+    }), body, _COUNT)
+    assert result["request_id"] == {"state": "redacted"}
+    assert result["comparison"] == "unverifiable_selected_fields"
+    assert _PRIVATE not in canonical_json(result) and _CIPHER not in canonical_json(result)
+
+
+def test_unavailable_or_oversized_body_does_not_read_or_claim_agreement():
+    def forbidden_stream():
+        pytest.fail("diagnostics must not consume a response stream")
+        yield b""
+
+    for response, state in (
+        (None, "unavailable"),
+        (httpx.Response(200, content=b"x" * 1_048_577), "over_limit"),
+        (httpx.Response(200, content=b"not JSON"), "invalid_json"),
+        (httpx.Response(200, json=[]), "invalid_object"),
+        (httpx.Response(200, content=forbidden_stream()), "not_buffered"),
+    ):
+        diagnostic = response_diagnostics(response, _response(_usage(0, 0)), _COUNT)
+        assert diagnostic["body_state"] == state
+        assert diagnostic["comparison"] == "unavailable" and "raw_usage" not in diagnostic
+
+
+def test_bounded_sdk_uses_same_diagnostics_and_clears_previous_http_response():
+    visits = []
+
+    async def handler(request):
+        visits.append(request)
+        if request.url.path.endswith("/input_tokens"):
+            return httpx.Response(200, json={"input_tokens": _COUNT})
+        body = _response(_usage(0, 0) if len(visits) == 1 else _usage())
+        if len(visits) > 1:
+            body.update(status="completed", incomplete_details=None)
+        return httpx.Response(200, json=body, headers={"x-request-id": _REQUEST_ID})
+
+    client = BoundedResponsesClient(api_key="unused", client=AsyncOpenAI(
+        api_key="unused", max_retries=0, http_client=httpx.AsyncClient(
+            transport=httpx.MockTransport(handler), trust_env=False)))
+    adapter = OpenAIResponsesAdapter(_config(), api_key="unused", client=client)
+    payload = adapter.request_payload("public task", [], system_prompt="test")
+    try:
+        turn = adapter.execute_request(payload, requested_input_tokens=_COUNT, timeout_seconds=5)
+        diagnostic = turn.usage_evidence["response_diagnostics"]
+        assert diagnostic["comparison"] == "matched_selected_fields"
+        assert diagnostic["raw_usage"]["fields"]["input_tokens"]["value"] == 0
+        assert turn.error.code == "input_token_count_mismatch"
+        assert len(visits) == 1 and json.loads(visits[0].content) == payload
+        assert adapter.count_input_tokens_v2(payload, timeout_seconds=5) == _COUNT
+        assert client.received_http_response is None
+        turn = adapter.execute_request(payload, requested_input_tokens=_COUNT, timeout_seconds=5)
+        assert turn.error is None and "response_diagnostics" not in turn.usage_evidence
+        assert len(visits) == 3 and json.loads(visits[2].content) == payload
+    finally:
+        client.close()
+    assert client.received_http_response is None
 
 
 @pytest.mark.parametrize("value", [_ABSENT, None, 0])
@@ -171,10 +286,11 @@ def _uncertain_provider(monkeypatch, tmp_path, policy, *, first_valid=False):
         if first_valid and len(inputs) == 1:
             return raw
         response = _response(None)
+        http_response = httpx.Response(200, json=response, headers={"x-request-id": _REQUEST_ID})
         response["output"] = [SimpleNamespace(**item) for item in response["output"]]
-        client = SimpleNamespace(max_retries=0, responses=SimpleNamespace(
-            create=lambda **payload: SimpleNamespace(**response),
-        ))
+        client = SimpleNamespace(max_retries=0, received_http_response=http_response,
+                                 responses=SimpleNamespace(
+                                     create=lambda **payload: SimpleNamespace(**response)))
         adapter = OpenAIResponsesAdapter(_config(), api_key="unused", client=client)
         return adapter.execute_request(request, **kwargs)
 
@@ -212,12 +328,17 @@ def test_usage_failure_survives_crash_and_terminal_resume_without_execution(
     assert failure["incomplete_reason"] == "max_output_tokens"
     assert failure["usage_evidence"]["failure_kind"] == "usage_null"
     assert failure["usage_evidence"]["input_count_relation"] == "unavailable"
+    diagnostic = failure["usage_evidence"]["response_diagnostics"]
+    assert diagnostic["comparison"] == "matched_selected_fields"
+    assert diagnostic["request_id"]["value"] == _REQUEST_ID
+    assert diagnostic["raw_usage"]["usage_state"] == "null"
     assert journal.terminal()["payload"]["message"] == "provider usage is null; billing is unknown"
     assert len(inputs) == len(counted) == 1
     assert run["call_counts"] == {"model": 1, "input_count": 1, "tool": 0}
     events = journal.events()
     assert not any(e["event_type"] in {"protocol_correction", "action_started"} for e in events)
     assert _PRIVATE not in canonical_json(events)
+    assert all("response_diagnostics" not in canonical_json(items) for items in inputs)
     for event in events:
         if event["event_type"] in {"provider_call_finished", "turn_decision_recorded"}:
             assert event["payload"]["usage_evidence"] == failure["usage_evidence"]

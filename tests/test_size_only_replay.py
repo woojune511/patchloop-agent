@@ -32,11 +32,17 @@ def no_network(monkeypatch):
 
 @pytest.fixture(scope="module")
 def saved(tmp_path_factory):
+    from frozen_stage_support import pin_pre_stage_prompt
+
     root = tmp_path_factory.mktemp("sizeonly")
-    result = runner.run_dev(DevRunRequest(
-        provider="mock", model="mock", state_root=root,
-        task=repository_root() / "tasks/smoke/csv-quoted-newline/public.yaml",
-        context_policy="segmented-v1", planning_policy="brief-v1", repair_recheck=True))
+    # The offline study isolates the result/size boundary in its pre-stage
+    # baseline. Current mandatory stage transitions have separate runner tests.
+    with pytest.MonkeyPatch.context() as patcher:
+        pin_pre_stage_prompt(patcher)
+        result = runner.run_dev(DevRunRequest(
+            provider="mock", model="mock", state_root=root,
+            task=repository_root() / "tasks/smoke/csv-quoted-newline/public.yaml",
+            context_policy="segmented-v1", planning_policy="brief-v1", repair_recheck=True))
     assert result["runs"][0]["terminal"] == "EVALUATOR_PASS"
     journal = DevJournal(root, result["runs"][0]["run_id"])
     events, store = journal.events(), ArtifactStore(root / "artifacts")

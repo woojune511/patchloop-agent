@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
+from repair_mechanism_expectations import FROZEN_ARM
 
 from patchloop.agent.model import RequestedTool as ProviderCall
 from patchloop.dev.contracts import (
@@ -14,7 +15,7 @@ from patchloop.dev.contracts import (
     dev_tool_surface_hash,
 )
 from patchloop.dev.model import MOCK_MUTATIONS
-from patchloop.dev.runner import _requested_tool_from_openai
+from patchloop.dev.runner import _provider_tool_arguments, _requested_tool_from_openai
 from patchloop.dev.tools import DevToolGateway, dev_tool_schemas, validate_tool_batch
 from patchloop.errors import ActionConflict, ContractError
 from patchloop.sandbox.runner import SandboxResult
@@ -80,15 +81,38 @@ def test_default_serialization_and_schema_identities_remain_exact():
     )
     assert "memory_update" not in RequestedTool(name="read_file", action_id="x").model_dump()
     assert dev_tool_surface_hash() == (
+        "sha256:1f27a4da3107fcd8e82d3bd2e11a5e30c5025cd2ba0021b52c1d88c73c00a99d"
+        if FROZEN_ARM is None else
         "sha256:57193859890419b79cb7f4927c37796d044bc4bf7159c51ddf17723849529e26"
     )
     schemas = dev_tool_schemas(
         finish_enabled=True, check_ids=["public-check"], test_suite_ids=["public-tests"],
         allowed_tools=list(MODES),
     )
+    # Current literal-search, comparable-input and mutation-intent descriptions.
     assert sha256_json(schemas) == (
-        "sha256:5f4c0ae390b9fddd0f7e13ab4811c50bd86d795431df72e20c3f029a2c3ca27e"
+        "sha256:21dadc680e0114c768ddbd8a30e017a6549b86d4a0ebc2a903a52b72bf576ba8"
+        if FROZEN_ARM is None else
+        "sha256:9757e80d1590c5274966a80011a24ed12e08340d23d2e202f0f099ea1be47955"
     )
+    if FROZEN_ARM is None:
+        # Range-only retains the earlier read shape with current shared helper API guidance.
+        legacy = dev_tool_schemas(
+            finish_enabled=True, check_ids=["public-check"], test_suite_ids=["public-tests"],
+            allowed_tools=list(MODES), read_range_only=True,
+        )
+        assert sha256_json(legacy) == (
+            "sha256:8dcfa6a2a1ca08b85efefc0c5d6fbf6654026e5fa9722a14fce99d7e89a62395"
+        )
+        minimal = {schema["name"]: schema["parameters"] for schema in schemas
+                   if schema["name"] in {"replace_text", "stop_task"}}
+        assert list(minimal["replace_text"]["properties"]) == [
+            "path", "old_text", "new_text", "occurrence", "hypothesis", "expected_behavior",
+        ]
+        assert list(minimal["stop_task"]["properties"]) == ["reason_code", "summary"]
+        for parameters in minimal.values():
+            assert parameters["required"] == list(parameters["properties"])
+            assert parameters["additionalProperties"] is False
     request = DevRunRequest(provider="mock", task=Path("public.yaml"), model="mock-dev")
     assert "agent_policy" not in request.model_dump(mode="json")
     thin = request.model_copy(update={"agent_policy": "thin"})
@@ -111,6 +135,9 @@ def test_thin_changes_only_annotation_schema(probe_policy):
     thin = dev_tool_schemas(**options, agent_policy="thin")
     assert [entry["name"] for entry in thin] == [entry["name"] for entry in current]
     for a, b in zip(current, thin, strict=True):
+        if FROZEN_ARM is None and a["name"] in {"replace_text", "stop_task"}:
+            assert a == b
+            continue
         decision = a["parameters"]["properties"].pop("turn_decision")
         a["parameters"]["required"].remove("turn_decision")
         annotation = b["parameters"]["properties"].pop("memory_update")
@@ -137,7 +164,7 @@ def test_thin_wire_round_trip_preserves_absence_and_explicit_null():
         validate_tool_batch([call("current").model_copy(update={"memory_update": None})])
 
 
-def test_current_provider_stray_root_memory_stays_an_operational_argument(gateway_factory):
+def test_current_provider_stray_root_memory_is_rejected_before_mutation(gateway_factory):
     proposed = mutation("current")
     wire = {
         **proposed.arguments,
@@ -147,18 +174,32 @@ def test_current_provider_stray_root_memory_stays_an_operational_argument(gatewa
     parsed = _requested_tool_from_openai(
         ProviderCall(proposed.name, proposed.action_id, wire), agent_policy="current",
     )
-    assert "memory_update" in parsed.arguments
-    assert parsed.arguments["memory_update"] is None
-    assert "memory_update" not in parsed.model_fields_set
-    assert validate_tool_batch([parsed]) == "single_action"
+    if FROZEN_ARM is None:
+        # Small actions preserve actual annotation presence at the transport
+        # boundary; current-policy validation rejects the stray root field.
+        assert "memory_update" not in parsed.arguments
+        assert "memory_update" in parsed.model_fields_set and parsed.memory_update is None
+        restored = RequestedTool.model_validate(parsed.model_dump(mode="json"))
+        assert _provider_tool_arguments(restored) == wire
+        with pytest.raises(ContractError, match="does not accept top-level memory_update"):
+            validate_tool_batch([restored])
+    else:
+        assert "memory_update" in parsed.arguments
+        assert parsed.arguments["memory_update"] is None
+        assert "memory_update" not in parsed.model_fields_set
+        assert validate_tool_batch([parsed]) == "single_action"
     gateway, _, workspace = gateway_factory()
     assert gateway.execute_batch([call("current")])[0].status == "succeeded"
     before = (workspace / PATH).read_bytes()
     diff_before = gateway.current_diff_hash
-    result, = gateway.execute_batch([parsed])
-    assert result.status == "failed"
-    assert "memory_update" in result.message
-    assert "Extra inputs are not permitted" in result.message
+    if FROZEN_ARM is None:
+        with pytest.raises(ContractError, match="does not accept top-level memory_update"):
+            gateway.execute_batch([parsed])
+    else:
+        result, = gateway.execute_batch([parsed])
+        assert result.status == "failed"
+        assert "memory_update" in result.message
+        assert "Extra inputs are not permitted" in result.message
     assert gateway.accepted_mutations == 0
     assert (workspace / PATH).read_bytes() == before
     assert gateway.current_diff_hash == diff_before

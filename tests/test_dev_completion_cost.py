@@ -133,7 +133,7 @@ def test_current_failure_still_requires_repair_and_does_not_release_finish_money
     gateway = PolicyGateway()
     gateway.statuses["first"] = "FAIL"
     policy = funded_policy(gateway, ledger_for_slots(4))
-    assert policy.allowed_tools == {"replace_text", "stop_task"}
+    assert policy.allowed_tools == {"replace_text", "edit_files", "stop_task"}
     assert policy.completion_cost["future_calls_reserved"] == 3
     impossible = funded_policy(gateway, ledger_for_slots(3))
     assert not impossible.completion_possible

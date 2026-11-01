@@ -1,0 +1,156 @@
+# Current failure and finalization
+
+With `verification_policy=public-checks-v1`, original-call and diagnostic feedback
+below remains evidence for model judgment, not a submission prerequisite. The
+runner starts no new automatic original replay and does not force correction or
+repair from that evidence. Required current-diff public checks, their failure
+feedback and execution-uncertainty handling remain unchanged. The default
+`reproduction-gated-v1` retains the mandatory diagnostic behavior described below.
+The CLI default stays strict for compatibility and the comparison control.
+Request/envelope/model identity binds the explicit policy; resume cannot switch it.
+Delivery labels remain evidence labels, separate from unchanged evaluator acceptance.
+The new option is locally validated, without live comparative improvement evidence.
+
+`completion_guidance.edit_availability` is a compact capability fact computed from
+the final admitted tools. It records whether `replace_text` is offered and, when
+absent, distinguishes mutation exhaustion, invalid workspace scope, workflow or
+completion-budget constraints, and missing current editable source. Only a source
+gap with an offered read/search tool includes that acquisition prerequisite. A
+read reevaluates availability against the remaining budgets; it never promises
+permission to edit. Exact anchors and source coverage remain gateway checks.
+Thin projection and compact repair/correction/completion views retain this card
+even when they omit advisory `next_action` and `message`. No forced read, new
+tool admission, stop restriction or extra reserve is introduced.
+
+`reproduction_review.probe_followup` retains one completed helper from before the
+latest accepted edit, its question/action/program/diff identities, and up to 1,000
+characters from each output channel with explicit omitted counts. Selection is by
+recency, not inferred relevance or correctness. The current candidate separately
+records no same-program execution, observed output, partial output or unresolved
+execution. Required checks do not answer this helper's question. Conditions and
+completeness remain visible; no preview equality or semantic verdict is inferred.
+The card is rebuilt from the journal and survives thin, repair, diagnosis and
+completion projections. It uses the existing action-ID replay resolver. Only an
+offered general probe route receives replay tool arguments, including the fields
+for its selected case policy; ordinary turn/memory annotations still follow the
+offered schema. Specialized diagnostic stages and uncertain references receive no
+replay suggestion. This card starts no execution, changes no admission or reserve,
+and creates no required check or finish gate. Model choice and live repair gains
+remain separate from local delivery validation.
+
+`target_outcome` projects bounded per-call outcome/capture/exception/exit-code
+summaries. An unexpected raised exception can be a positive current failure even
+when whole-case comparison is UNKNOWN. Qualification requires an acquired healthy
+unchanged-base failure, identical frozen binding/program, current candidate diff,
+one unique call ID, valid complete selected-call capture, and canonical equality
+of that call's normalized inputs and execution environment. Expected exceptions,
+SystemExit, changed conditions, failed setup and uncertain cleanup/timeout/output
+are excluded. Other missing calls do not erase this positive selected-call evidence.
+
+The surrounding helper may exit zero or nonzero: its settled receipt must have
+consistent passed/zero or failed/nonzero status and an integer exit code. A helper
+failure after a complete target exception preserves that negative evidence. Failure
+before a target call, or after a normal target return, is not a target exception.
+Unknown execution, incomplete selected capture and changed identity remain excluded.
+
+The packet retains global incomplete and the original comparison; it supplies no
+whole-case equality, verification or task-correctness credit. The original outer
+status, exit code and helper error remain in the receipt. Existing observer
+bytes, `_healthy()` and automatic replay identities remain unchanged. A later PASS
+on the same candidate cannot erase the exception. A new diff requires new evidence.
+`target_failure_count` blocks finish in both runner and gateway and exposes the
+exception through `current_public_failure`. It uses the existing per-candidate
+preparation/probe opportunity, without renewed retries on replay or restart.
+
+Fresh invocation v5 also calls a trusted public exception collector. Frozen v1-v4
+observer programs remain byte-identical. Details travel on a separate bounded
+report channel, so a malformed, missing or oversized diagnostic cannot consume
+the core output allowance or erase a captured exception. The sandbox profile
+binds the collector and wrapper; changing it does not rebind old case baselines.
+
+The selected negative failure may carry `exception_diagnostics`: up to three
+exceptions and 16 public frames with origin, relative path, function, line and
+file hash. The source scope is the exported workspace plus verified prepared
+dependency members. Cause takes precedence over unsuppressed context; excluded,
+limited or unsupported information is explicit. No locals or source text are
+captured. An escaped exception may be secondary to an earlier context exception.
+The host binds the report to action, execution source, snapshot and selected call.
+Malformed diagnostic metadata cannot invalidate otherwise valid negative evidence.
+Frames grant no original-case equality, success, check or submission credit.
+
+Core owner validation: `uv run --locked pytest @tests/exception-frames.txt -n 4
+--dist loadfile --max-worker-restart 0 --basetemp C:/pt/tmp/<unique>`.
+Quick retains the cheap collector, legacy-byte and model-packet checks.
+
+`completion_context` activates at host `ready_to_submit`. Segmented requests start
+a compact segment on entry and after a no-action completion correction. Keep the
+public task, actual current patch, required checks, original verification/outcomes,
+unresolved notes/plan and budgets. While any mutation tool is offered, retain the
+gateway's already selected current `source_spans`, `observed_source_index` and
+`context_projection`. This preserves the existing currency/retention bounds and
+omission metadata without reading more source or reopening tools. Otherwise omit
+older source bodies; always omit old probe bulk. Retain source lookup identities
+and existing retrieval tools. Latest successful `read_file`/`search_files`
+results bound to the current diff retain their exact bounded output, including
+repository/dependency spans and provenance, even when a fresh compact segment
+omits the native exchange. Existing native-result deduplication avoids a second
+delivery when that exchange remains. The latest current-diff `run_probe` also keeps
+bounded stdout/stderr, the existing host observation, setup/exception/path diagnostics,
+reproduction observations and completeness flags. Failed or partial probe output is
+still evidence: retain failure, timeout, truncation and unknown comparison without
+granting success or verification credit. Failed reads and stale/unbound results stay
+summaries; unselected source bodies and full execution policies
+remain omitted. No retrieval permission, verdict or budget changes.
+The existing last-three `recent_probes` summaries also survive intervening reads,
+tests and fresh completion segments when their diff matches the current candidate
+and they are not historical. Keep question, bounded output tails and unassessed
+observations for failures as well as completed executions. Each output tail stays
+at 2,000 characters; omitted-character counts and execution-limit flags distinguish
+a summary from complete output. Existing native-result deduplication removes
+duplicate bodies. The same three records now retain each exact executed helper
+program (at most 8,000 characters), including inputs, caller and assertions.
+Action/input/diff/question/source hashes must match its public admission and result;
+saved/replayed programs use the admission's resolved request. Native arguments replace
+inline code only when the actual source and question match; a null-source replay
+call does not deliver its original program. Historical rows retain only identity,
+question and program in finalization, not old output or verdicts as current evidence.
+Bulk call traces remain omitted. Diff changes do not restore old evidence as current.
+This adds no check credit, tool, action, state store or finish gate.
+The journal is unchanged. Other context policies compact current state
+but do not acquire segmented history-reset behavior.
+
+`last_rejected_test_proposal` retains the latest rolled-back test proposal from
+declared additive roots through source-only recovery, plan changes and stage handoffs.
+At most four edits and 8,000 old/new text characters are quoted with omission counts,
+the original action/input/baseline identities, hypothesis and expected behavior.
+This is historical model-authored text, not applied source, an authoritative oracle,
+an executed test or a new obligation. Later tests/PASS do not resolve it by inference;
+a newer qualifying rejection replaces it. The ordinary last-failed-mutation recovery
+state still clears on a successful edit. No model summary or private input is used.
+
+`completion-recovery-v1` reserves role-specific output within the existing cap:
+required source repair uses the ordinary output ceiling; preparation, checks and
+finalization use an 8,192-token floor clipped to that ceiling. Successor inputs use
+60K uncached tokens. The current required repair also keeps its full allowance;
+optional exploration cannot reduce that response to the minimum accounting unit.
+One physically available public-failure revision can retain read, repair, new
+checks and finish funding. Immediate required completion may release speculative
+recovery; per-action reservations expose that release. A closing finish has no
+successor reserve and uses exact counting. The first protocol correction keeps
+its independent ceiling and is never renewed. See [resources](completion-resources.md)
+for time admission. These are bounded engineering allowances, not evidence that
+xhigh will complete or repair. Count/transport/billing uncertainty still stops execution.
+
+`inspection_focus` is advisory after a complete current first observation. It
+connects the observation to delivered current source ranges, up to three recent
+zero-new-coverage inspections, and the actual last inspection question or existing
+open question. These questions remain model-authored/unverified. Zero coverage
+does not mean zero information; no inspection ban, new mandatory note or extra
+action budget is introduced. Stale/unknown observations do not activate it.
+
+Core validation: `uv run --locked pytest @tests/completion-feedback.txt -n 4
+--dist loadfile --max-worker-restart 0 --basetemp C:/pt/tmp/<unique>`.
+Quick includes the cheap projection/budget checks and real local target-exception
+fixtures with zero/nonzero helper exits, plus isolated mock evaluation. The focused
+`tests/test_target_outcome.py` suite also covers helper-only failures and rejected
+receipts. No provider or Docker execution is required.

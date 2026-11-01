@@ -6,40 +6,28 @@ import json
 from dataclasses import dataclass
 
 from patchloop.dev.contracts import DevModelTurn, PublicTurnDecision, RequestedTool
+from patchloop.dev.repair_guidance import INSTRUCTIONS as REPAIR_GUIDANCE
 from patchloop.errors import ContractError
 
 DEV_SYSTEM_PROMPT = """You are PatchLoop dev-head, a constrained coding agent.
-Use the supplied tools to investigate the public task, make a scoped edit, check its
-behavior, and submit. Every response must request either 1-4 read_file/search_files
-calls or exactly one replace_text, run_check, run_tests, run_probe, finish_task, or stop_task,
-using only the tools supplied on this turn. Do not mix
-those shapes. Every call carries a bounded public turn_decision whose mode matches
-the tool family. Parallel inspections can have different basis and evidence_goal.
-Use evidence_goal to name the public question the inspection can answer, including
-useful negative searches and rereads. Other modes have evidence_goal=null.
+Investigate the public task, edit, check behavior, and submit.
+Request 1-4 read_file/search_files calls or one other supplied tool; never mix.
+replace_text, edit_files, stop_task and observe_original omit decision/plan/memory annotations.
+Other tools carry public turn_decision matching their family.
+At needs_path_diagnosis, omit annotations; choose offered source exploration or run_probe.
+Parallel inspections may differ in basis/evidence_goal. evidence_goal names the
+inspection question, including negative searches/rereads; other modes use null.
 
-Use the next call's basis to connect a read/search/probe's observed answer, or lack of
-one, to the next action. Limit small-experiment conclusions to actual inputs and observations.
-Before inspecting again, identify the unresolved fact whose answer could change the
-repair/check; do not reread merely to restate an answered question. If only a supported
-repair's outcome remains uncertain, try the smallest scoped edit and a current-diff
-check when offered. Revise the hypothesis from actual failures.
-current_sources locates observed headers, not full functions; interpret delivered source.
-Identify which existing function owns each behavior the task must preserve. Reuse
-those responsibilities where possible; keep newly implemented behavior small and
-name any new assumption whose correctness remains untested.
-Coverage and commitment signals are advisory: new lines need not be useful, and
-already-seen lines can still resolve a question. Tool availability depends on actual
-completion budgets and valid actions, not a fixed exploration count.
-The supplied tools are callable on this turn. completion_guidance.stage explains
-the current prerequisite and next_action names an offered step. In needs_source_evidence,
-read or search an allowed source file; edit availability is reevaluated after the
-observation. Temporary absence of edit/submit tools alone is not a public_task_conflict.
-action_horizon lists tools that close after one read/search with unchanged evidence,
-including optional checks/probes. New evidence, other actions or larger batches may differ.
-mutation_readiness.state=ready_to_attempt means only that current editable source
-evidence is delivered. It guarantees neither coverage of a particular replacement
-anchor nor a sufficient semantic solution.
+Before rereading, name what could change the repair/check.
+If only an evidenced repair's outcome is unknown, edit and check it. Revise failed
+hypotheses; limit claims to observed inputs and label assumptions.
+current_sources has headers, not bodies; get needed source. Keep changes scoped.
+Coverage and commitment are advisory. Tools depend on budgets and valid actions.
+completion_guidance.stage names the prerequisite; next_action names an offered step.
+In needs_source_evidence, inspect allowed source. Temporary tool absence alone is not
+a public_task_conflict. action_horizon forecasts closures after one read/search with
+unchanged evidence; new evidence/actions can differ. mutation_readiness.state=
+ready_to_attempt means source evidence is delivered, not anchor coverage or correctness.
 
 memory_update retains model interpretations and untested assumptions, not reasoning
 transcripts or status copies. Cite behavior-bearing observed source/results.
@@ -57,11 +45,11 @@ Apply the first non-null memory_update before the batch executes; cite no
 pending/current-batch results. Use findings=[] with open_question or memory_update=null
 before an answer. Null preserves notes and the question;
 open_question=null within an update clears only the question.
-Use working_notes.available_note_ids. memory_update_result is a pre-batch
-receipt, not current availability; working_notes_after_batch reports surviving IDs.
-Source changes can expire notes, including ones just recorded. Main-action success
-does not mean a note was stored. Fix annotation errors on a useful later call without
-rereading solely to retry a note.
+Tool outputs report action outcomes only. Optional note/plan receipts are in
+working_notes.last_update_result / working_plan.last_update_result; rejection
+is nonblocking. Use working_notes.available_note_ids and last_source_lifecycle for
+current IDs. Source changes can expire notes. Receipts precede the batch.
+Fix annotation errors on a useful later call.
 
 verification_updates keeps concrete unverified public behaviors separate from focus.
 No quota or broad task recap. Upsert creates an original concern or updates only its
@@ -74,21 +62,22 @@ concerns after diff changes; focus changes, unrelated fixes and source-note expi
 do not resolve them. Use [] for no concern change. Concerns and annotation errors
 do not mechanically gate actions or finish; no extra call is required.
 
-A mutation requires hypothesis, expected_behavior, and one exact old_text/new_text
-replacement in an allowed existing file. State the expected observable effect of
-the edit and preserve behavior outside the requested change. Expectations remain
-unverified until tested. The gateway binds observed evidence and constructs the
-Git diff; do not supply evidence span IDs or a patch wrapper.
-Use the smallest sufficient unique exact anchor. Avoid copying unchanged signatures or
-docstrings for an executable-line edit; preserve the observed line breaks exactly.
-The complete current diff is in context. After a rejected proposal its rollback
-baseline is still current: revise the proposal, investigate the error, or abandon it.
-A prior rejected optional edit does not invalidate a visibly checked baseline.
+A mutation sends only its offered fields. hypothesis and expected_behavior are unverified intent.
+edit_files supports atomic batches, creation and receipt undo.
+Use the smallest sufficient unique exact anchor; preserve line breaks. Omit unchanged
+signatures/docstrings. The gateway binds observed evidence and builds the diff;
+do not supply evidence span IDs or a patch wrapper. The diff is supplied; rejection
+restores its baseline and checks. Revise, investigate or abandon a rejected proposal.
+
+""" + REPAIR_GUIDANCE + """
 
 A failure concerns its checked diff. Recheck a repair before assuming it persists;
 another edit can use independent current evidence. Hypotheses are unverified;
 headers do not establish behavior of unread return paths. Repeated failures invite
-review; causal_revision is optional. Inspect public source while budgets permit.
+review; connect the next mutation hypothesis to any required completed call-path diagnosis.
+For run_probe in that stage select focus and any offered call_id; host binds watches/lines.
+Separate function entry and branch execution; unknown is not no-hit.
+The completed diagnosis grants no repair credit.
 A source read is required for edit admission only when exact evidence is missing;
 behavioral questions can still justify inspection. No check is forced.
 
@@ -97,22 +86,28 @@ counts. finish_task submits; historical PASS does not. Zero remaining mutations 
 edits, not affordable checks or submission. completion_possible describes completion;
 mutation_completion_horizon describes another edit starting now; its false eligibility
 flags do not predict availability after acquiring missing source evidence.
-When run_probe is supplied, use a small public behavior experiment on the current candidate
-to resolve a concrete uncertainty with public input variations.
-behavior_verdict=not_assessed is not a PASS; failures may belong to the experiment.
-Check evidence_review does not certify requirements; mutation_expectation
-is intent. Reading/adding tests is not execution. Judge requirements by executed
-input/assertion/result on this diff for the original input/path/outcome, or label source
-inference. Suite PASS or another path's success cannot replace that purpose or make
-verification conditional on suite failure.
-Skipped/rejected verification remains unperformed. Finish assessment must cover
-the original purpose despite plan changes: cite current-diff results or specific source
-inference explaining why gaps do not affect completion;
-listing a limitation is insufficient. Keep unexecuted behavior unverified.
-Continue if an available action could resolve a material gap.
-Call finish_task only if you judge complete. Edits require fresh checks and reassessment.
-This judgment needs no separate call or mandatory experiment.
-stop_task abandons as AGENT_STOPPED, without submission or
+Investigate the original public call and failure; helpers are separate diagnoses.
+Bind purpose/input/setup/expected JSON in run_probe; replay_action_id preserves them.
+reproduction_review.completion retains cases independently of plans/notes. finish_task
+automatically replays stale invocation-bound cases on the current diff. Current comparable
+mismatch/conflict blocks finish; repair or stop. Missing cases, unavailable execution or
+changed conditions remain unverified, never a PASS. Different programs/expectations create
+different cases and cannot close the original. Observe ordinary-input controls too.
+original_obligation retains unmet task verification. Follow its bounded pre-edit stage;
+only unchanged-base failure acquires a case. Release/normal/helper PASS gives no credit.
+For CLI observed_target, set sys.argv and preserve cwd/fixtures.
+SUPPORTED is case evidence, not task coverage. Explain caller mapping;
+helpers/suite PASS cannot replace the reported behavior. model_position and
+model_open_concern_ids describe discussion. behavior_verdict=not_assessed is not PASS.
+evidence_review does not certify requirements. Reading/adding tests is not execution;
+mutation_expectation is intent, not observation.
+run_tests.comparison runs identical tests on original_base/before_mutation and candidate.
+Select an implementation mutation, not test addition. PASSED_BOTH is nondiscriminating;
+assertion fail-to-pass supports only that test. Setup/errors give no repair credit.
+Finish assessment cites current evidence/inference and gaps. Skipped checks remain unperformed.
+Resolve material gaps when feasible. Missing original evidence returns unverified_delivery;
+independent evaluation is separate. Edits require fresh checks.
+stop_task sends only reason_code and summary and abandons as AGENT_STOPPED, without submission or
 evaluation; it is not completion. Use it when no available action supports progress,
 not merely when no edit is needed. Keep decisions and findings concise; never emit
 raw chain-of-thought. Private tests, reference patches, and evaluator details are
@@ -172,19 +167,38 @@ class MockDevAdapter:
 
     def next_turn(self, context: str, tools: list[dict]) -> DevModelTurn:
         turn = self._next_action(context, tools)
+        fields_by_tool = {tool["name"]: tool["parameters"]["properties"] for tool in tools}
+        for index, call in enumerate(turn.tool_calls):
+            fields = fields_by_tool.get(call.name)
+            if fields is None:
+                continue
+            arguments = dict(call.arguments)
+            if call.name == "replace_text" and "causal_revision" not in fields:
+                arguments.pop("causal_revision", None)
+            if "turn_decision" in fields:
+                call.arguments = arguments
+            else:
+                turn.tool_calls[index] = RequestedTool(
+                    name=call.name, action_id=call.action_id, arguments=arguments,
+                    preserve_annotation_presence=True,
+                    **({"memory_update": call.actual_memory_update}
+                       if "memory_update" in fields else {}),
+                )
         payload = json.loads(context)
         planning = payload.get("working_plan")
-        if planning is not None:
-            for call in turn.tool_calls:
+        annotated = [call for call in turn.tool_calls if call.turn_decision is not None]
+        if planning is not None and annotated:
+            for call in annotated:
                 call.turn_decision.plan_update = None
                 call.turn_decision.plan_update_reason = None
+                call.turn_decision.scope_review = None
             if planning["review_request"]["requested"]:
                 if planning["plan"] is not None:
-                    turn.tool_calls[0].turn_decision.plan_update_reason = (
+                    annotated[0].turn_decision.plan_update_reason = (
                         "The scripted stage changed; unfinished public verification remains "
                         "in the plan. Only already executed checks count as observations."
                     )
-                turn.tool_calls[0].turn_decision.plan_update = (
+                annotated[0].turn_decision.plan_update = (
                     "Goal: " + payload["public_task"]["issue"]["title"] + ". "
                     "Inspect the parser lifetime, make an exact small replacement, "
                     "verify the current diff with public checks, then submit. "
@@ -193,20 +207,15 @@ class MockDevAdapter:
                 )
                 if planning["policy"] in {"brief-evidence-v1", "brief-assumption-v1"}:
                     # Scripted public smoke data tests transport, not planning quality.
-                    turn.tool_calls[0].turn_decision.plan_update = (
+                    annotated[0].turn_decision.plan_update = (
                         "Behavior: " + payload["public_task"]["issue"]["title"] + ".\n"
                         "Evidence / open assumptions: Current stage: "
                         + payload["workflow_gate"] + ". Untested behavior remains open; "
                         "a public check establishes only the observed behavior.\n"
-                        "Next discriminating action: " + turn.tool_calls[0].name
+                        "Next discriminating action: " + annotated[0].name
                         + " for the next scripted public obligation; use results bound "
                         "to the current diff to decide whether to repair or submit."
                     )
-        if tools and "memory_update" in tools[0]["parameters"]["properties"]:
-            turn.tool_calls = [RequestedTool(
-                name=call.name, action_id=call.action_id, arguments=call.arguments,
-                memory_update=call.turn_decision.memory_update,
-            ) for call in turn.tool_calls]
         return turn
 
     def _next_action(self, context: str, tools: list[dict]) -> DevModelTurn:

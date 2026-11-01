@@ -10,13 +10,14 @@ import pytest
 from test_dev_conversation_v23 import _span
 
 from patchloop.artifacts import ArtifactStore
+from patchloop.contracts import PublicTask
 from patchloop.dev import check_review, runner
 from patchloop.dev.contracts import DevRunRequest
 from patchloop.dev.conversation import assemble_model_input, reconstruct_state
 from patchloop.dev.model_state import compact_model_state
 from patchloop.dev.state import DevJournal
 from patchloop.runtime import repository_root
-from patchloop.util import canonical_json, sha256_json
+from patchloop.util import canonical_json, load_unique_yaml, sha256_json
 
 
 def _state(*, command=None, directory="."):
@@ -111,7 +112,8 @@ def test_unresolved_paths_and_bounds_are_reported_without_guessing_or_cutting_se
     assert len(review["declared_targets"]) <= check_review.MAX_TARGETS
     assert len(canonical_json(review)) <= check_review.MAX_REVIEW_CHARS
     assert review["omitted_target_count"] + len(review["declared_targets"]) == len(arguments)
-    source = review["declared_targets"][0]["current_source_view"]
+    source = next(target["current_source_view"] for target in review["declared_targets"]
+                  if target["path"] == "tests/test_0.py")
     assert len(source["ranges"]) == 3 and source["omitted_range_count"] == 7
     assert "/outside" not in canonical_json(review)
 
@@ -227,3 +229,239 @@ def test_actual_mock_inputs_link_registered_check_and_keep_submission_eligible(
     assert first["current_diff"]["patch"] == "" and first["public_task"] == final["public_task"]
     if context_policy == "segmented-v1":
         assert any(event["event_type"] == "context_segment_started" for event in journal.events())
+
+
+def _registered_state(*, check_target="tests/test_old.py", changed="tests/test_new.py"):
+    prefix = ["/env/bin/python", "-B", "-c", "registered_pytest_wrapper()"]
+    state = _state(command=[*prefix, check_target])
+    state["public_task"]["test_suites"] = [{
+        "id": "public-pytest", "runner": "pytest", "test_roots": ["tests"],
+        "command": [*prefix, "-m", "not slow"], "working_directory": ".",
+    }]
+    state["current_diff"]["changed_files"] = [changed]
+    state["recent_tests"] = []
+    return state
+
+
+def test_registered_wrapper_uses_exact_program_and_workdir_without_interpreting_python(monkeypatch):
+    state = _registered_state()
+    before = copy.deepcopy(state)
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("selection review must not read source or execute the registered wrapper")
+
+    monkeypatch.setattr("builtins.open", forbidden)
+    monkeypatch.setattr(httpx.HTTPTransport, "handle_request", forbidden)
+    view = compact_model_state(state, [])
+    review = view["recent_checks"][0]["evidence_review"]
+    assert review["selection_kind"] == "registered_pytest_arguments"
+    assert [(t["path"], t["selection"]) for t in review["declared_targets"]] == [
+        ("tests/test_old.py", "file"),
+    ]
+    changed = view["current_diff"]["test_execution_review"]
+    assert changed["files"][0]["selection_status"] == "not_confirmed"
+    assert changed["files"][0]["optional_run_tests_selection"] == {
+        "suite_id": "public-pytest", "targets": ["tests/test_new.py"],
+    }
+    assert "missing does not mean never executed" in changed["basis"]
+    assert view["available_tool_names"] == state["available_tool_names"]
+    assert state == before
+
+
+@pytest.mark.parametrize("changed_field", ["command", "working_directory", "runner"])
+def test_unmatched_wrapper_contract_does_not_guess_pytest_arguments(changed_field):
+    state = _registered_state()
+    suite = state["public_task"]["test_suites"][0]
+    if changed_field == "command":
+        suite["command"][3] += "different_program()"
+    elif changed_field == "working_directory":
+        suite[changed_field] = "package"
+    else:
+        suite[changed_field] = "unknown"
+    assert _review(state)["selection_kind"] == "unresolved"
+    assert _review(state)["declared_targets"] == []
+
+
+def test_directory_receipt_keeps_collection_unknown_for_changed_file():
+    state = _registered_state(check_target="tests", changed="tests/new_combo.py")
+    view = compact_model_state(state, [])
+    target = view["recent_checks"][0]["evidence_review"]["declared_targets"][0]
+    assert (target["path"], target["selection"]) == ("tests", "discovery")
+    row = view["current_diff"]["test_execution_review"]["files"][0]
+    assert row["selection_status"] == "directory_selected"
+    assert row["collection_status"] == "not_reported"
+    assert row["optional_run_tests_selection"]["targets"] == ["tests/new_combo.py"]
+    assert row["visible_receipts"] == [{
+        "action_id": "checked", "tool": "run_check", "selection": "directory_selected",
+        "node_selector": None, "command_passed": True,
+    }]
+    assert "Missing collection telemetry alone does not require rerunning" in (
+        view["current_diff"]["test_execution_review"]["basis"])
+
+
+@pytest.mark.parametrize("tool", ["run_check", "run_tests"])
+def test_current_passing_file_selection_does_not_recommend_the_same_selection(tool):
+    state = _registered_state(check_target="tests/test_new.py" if tool == "run_check" else "tests")
+    if tool == "run_tests":
+        state["public_task"]["test_suites"][0]["command"] = ["python", "-m", "pytest", "-q"]
+        state["recent_tests"] = [{
+            "action_id": "selected", "suite_id": "public-pytest", "targets": ["tests/test_new.py"],
+            "diff_hash": "candidate", "evidence_currency": "current", "passed": True,
+            "test_status": "PASS",
+        }]
+    row = compact_model_state(state, [])["current_diff"]["test_execution_review"]["files"][0]
+    assert row["selection_status"] == "explicit_file"
+    assert row["collection_status"] == "not_reported"
+    assert "optional_run_tests_selection" not in row
+    assert "run_tests_selection" not in row
+
+
+@pytest.mark.parametrize("tool,options,filters", [
+    ("run_check", ["-k", "existing"], ["-k"]),
+    ("run_check", ["-m", "not slow"], ["-m"]),
+    ("run_check", ["--deselect=tests/test_new.py::test_added"], ["--deselect"]),
+    ("run_tests", ["-m", "not slow"], ["-m"]),
+])
+def test_filtered_file_pass_retains_optional_selection_without_implying_collection(
+    tool, options, filters,
+):
+    state = _registered_state(check_target="tests/test_new.py" if tool == "run_check" else "tests")
+    if tool == "run_check":
+        state["public_task"]["visible_checks"][0]["command"].extend(options)
+    else:
+        state["public_task"]["test_suites"][0]["command"] = ["python", "-m", "pytest", *options]
+        state["recent_tests"] = [{
+            "action_id": "filtered", "suite_id": "public-pytest", "targets": ["tests/test_new.py"],
+            "diff_hash": "candidate", "evidence_currency": "current", "passed": True,
+            "test_status": "PASS",
+        }]
+    row = compact_model_state(state, [])["current_diff"]["test_execution_review"]["files"][0]
+    assert row["selection_status"] == "explicit_file"
+    assert row["optional_run_tests_selection"]["targets"] == ["tests/test_new.py"]
+    assert row["visible_receipts"][-1]["command_filters"] == filters
+    assert row["collection_status"] == "not_reported"
+
+
+@pytest.mark.parametrize("passed", [False, None])
+def test_failed_or_unknown_file_result_retains_optional_selection(passed):
+    state = _registered_state(check_target="tests/test_new.py")
+    state["recent_checks"][0]["passed"] = passed
+    row = compact_model_state(state, [])["current_diff"]["test_execution_review"]["files"][0]
+    assert row["selection_status"] == "explicit_file"
+    assert row["optional_run_tests_selection"]["targets"] == ["tests/test_new.py"]
+
+
+def test_a_passing_file_receipt_does_not_hide_a_conflicting_failure():
+    state = _registered_state(check_target="tests/test_new.py")
+    state["recent_checks"].append({
+        **state["recent_checks"][0], "action_id": "failed", "passed": False,
+    })
+    row = compact_model_state(state, [])["current_diff"]["test_execution_review"]["files"][0]
+    assert row["optional_run_tests_selection"]["targets"] == ["tests/test_new.py"]
+    assert [receipt["command_passed"] for receipt in row["visible_receipts"]] == [True, False]
+
+
+@pytest.mark.parametrize("tool, node, expected", [
+    ("run_check", None, "explicit_file"),
+    ("run_check", "test_existing", "partial_nodes"),
+    ("run_tests", None, "explicit_file"),
+    ("run_tests", "test_existing", "partial_nodes"),
+])
+def test_explicit_file_and_node_receipts_are_separate_from_case_coverage(tool, node, expected):
+    target = "tests/test_new.py" + ("::" + node if node is not None else "")
+    state = _registered_state(check_target=target if tool == "run_check" else "tests/test_old.py")
+    if tool == "run_tests":
+        state["recent_tests"] = [{
+            "action_id": "selected", "suite_id": "public-pytest", "targets": [target],
+            "diff_hash": "candidate", "evidence_currency": "current", "passed": False,
+            "test_status": "FAIL",
+        }]
+    view = compact_model_state(state, [])
+    review = view["current_diff"]["test_execution_review"]
+    row = review["files"][0]
+    assert row["selection_status"] == expected
+    assert row["visible_receipts"][0]["node_selector"] == node
+    assert "do not prove collected test cases" in review["basis"]
+    if tool == "run_tests":
+        assert row["visible_receipts"][0]["test_status"] == "FAIL"
+        assert row["visible_receipts"][0]["command_passed"] is False
+    if node is not None or tool == "run_tests":
+        assert row["optional_run_tests_selection"]["targets"] == ["tests/test_new.py"]
+    assert view["recent_checks"][0]["evidence_review"]["coverage_status"] == "not_assessed"
+
+
+@pytest.mark.parametrize("diff_hash,currency", [("old", "historical"), ("candidate", "unknown")])
+def test_old_or_unknown_receipts_do_not_confirm_current_selection(diff_hash, currency):
+    state = _registered_state(check_target="tests")
+    state["recent_checks"][0].update(diff_hash=diff_hash, evidence_currency=currency)
+    state["recent_tests"] = [{
+        "action_id": "old-selection", "targets": ["tests/test_new.py"],
+        "diff_hash": diff_hash, "evidence_currency": currency, "passed": True,
+    }]
+    row = compact_model_state(state, [])["current_diff"]["test_execution_review"]["files"][0]
+    assert row["selection_status"] == "not_confirmed"
+    assert row["visible_receipts"] == []
+    assert row["optional_run_tests_selection"]["targets"] == ["tests/test_new.py"]
+
+
+def test_changed_test_review_is_bounded_and_ignores_non_test_roots():
+    state = _registered_state()
+    state["current_diff"]["changed_files"] = ["src/feature.py", *[
+        "tests/" + "long" * 30 + str(n) + ".py" for n in range(12)
+    ]]
+    view = compact_model_state(state, [])
+    review = view["current_diff"]["test_execution_review"]
+    assert len(review["files"]) <= check_review.MAX_TARGETS
+    assert len(canonical_json(review)) <= check_review.MAX_REVIEW_CHARS
+    assert len(review["files"]) + review["omitted_file_count"] == 12
+    assert "src/feature.py" not in canonical_json(review)
+
+
+@pytest.mark.parametrize("changed,directory", [
+    ("tests/test_new.py", "package"),
+    ("tests/.hidden.py", "."),
+    ("tests/-option.py", "."),
+])
+def test_changed_test_review_does_not_recommend_invalid_registered_selectors(changed, directory):
+    state = _registered_state(changed=changed)
+    state["public_task"]["test_suites"][0]["working_directory"] = directory
+    assert "test_execution_review" not in compact_model_state(state, [])["current_diff"]
+
+
+def test_changed_test_review_survives_completion_projection():
+    from patchloop.dev import completion_context
+
+    state = _registered_state()
+    state["workflow_gate"] = "ready_to_submit"
+    state["available_tool_names"] = ["finish_task", "stop_task"]
+    compact = compact_model_state(state, [])
+    final = completion_context.project(compact)
+    assert final["current_diff"]["test_execution_review"] == (
+        compact["current_diff"]["test_execution_review"])
+    assert final["available_tool_names"] == state["available_tool_names"]
+
+
+@pytest.mark.parametrize("index, changed, declared, status", [
+    (3, "pvlib/tests/test_irradiance_reindl.py", "pvlib/tests/test_irradiance.py", "not_confirmed"),
+    (13, "tests/unittest_modutils.py", "tests", "directory_selected"),
+    (18, "test/rules/std_L003_L036_combo.py", "test/rules", "directory_selected"),
+])
+def test_current_public_wrappers_expose_the_observed_selection_gaps(
+    index, changed, declared, status,
+):
+    path = repository_root() / "tasks/dev-train/current-dev20" / str(index) / "public.yaml"
+    public = PublicTask.model_validate(load_unique_yaml(path.read_text(encoding="utf-8")))
+    state = _state()
+    state["public_task"] = public.model_dump(mode="json")
+    state["current_diff"]["changed_files"] = [changed]
+    state["recent_checks"][0]["check_id"] = "base-regression"
+    view = compact_model_state(state, [])
+    review = view["recent_checks"][0]["evidence_review"]
+    assert review["selection_kind"] == "registered_pytest_arguments"
+    assert [target["path"] for target in review["declared_targets"]] == [declared]
+    file_review = view["current_diff"]["test_execution_review"]["files"][0]
+    assert file_review["selection_status"] == status
+    assert file_review["collection_status"] == "not_reported"
+    assert file_review["optional_run_tests_selection"] == {
+        "suite_id": "public-pytest", "targets": [changed],
+    }

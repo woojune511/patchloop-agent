@@ -17,7 +17,7 @@ from diagnostics.decision_sampler import require
 from diagnostics.declaration_checkpoint import Source, disjoint
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import Artifact
-from patchloop.dev import probe_replay, runner
+from patchloop.dev import probe_replay, reproduction, runner
 from patchloop.dev.cost import DevCostLedger, pricing_for_model, usd_to_nanos
 from patchloop.dev.state import DevJournal
 from patchloop.dev.tools import DevToolGateway
@@ -35,9 +35,18 @@ def project_tools(schemas, arm):
             if tool["name"] != "run_probe":
                 continue
             tool["description"] = tool["description"].replace(" " + probe_replay.DESCRIPTION, "")
+            tool["description"] = tool["description"].replace(
+                " " + reproduction.REPLAY_DESCRIPTION, "")
             params = tool["parameters"]
             del params["properties"]["replay_action_id"]
             params["required"].remove("replay_action_id")
+            if "call_path" in params["properties"]:
+                # Symbolic call-path diagnosis also replays a host-bound original action.
+                del params["properties"]["call_path"]
+                params["required"].remove("call_path")
+                tool["description"] = tool["description"].partition(
+                    " When repair_path needs diagnosis,")[0].partition(
+                    " call_path is null here.")[0]
             for field in ("question", "python_source"):
                 params["properties"][field]["type"] = "string"
     return result
@@ -50,7 +59,8 @@ def surface(arm):
 
     def admitted(gateway, call):
         require(not (arm == "A" and call.name == "run_probe"
-                     and call.arguments.get("replay_action_id") is not None),
+                     and any(call.arguments.get(key) is not None
+                             for key in ("replay_action_id", "call_path"))),
                 "action replay is not offered by the control")
         return execute(gateway, call)
 

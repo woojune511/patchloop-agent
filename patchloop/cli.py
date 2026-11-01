@@ -13,6 +13,7 @@ from typing import Annotated, Literal
 import typer
 from pydantic import ValidationError
 
+from patchloop.dev.contracts import DEFAULT_ACCEPTED_MUTATIONS, DevLimits
 from patchloop.dev.cost import (
     DEFAULT_OUTPUT_CEILING,
     MAX_OUTPUT_CEILING,
@@ -93,6 +94,16 @@ def dev(
             help="Desired output cap per call, including reasoning; cost admission may lower it.",
         ),
     ] = DEFAULT_OUTPUT_CEILING,
+    max_correction_output_tokens: Annotated[
+        int | None, typer.Option(
+            "--max-correction-output-tokens", min=MINIMUM_OUTPUT_CEILING, max=MAX_OUTPUT_CEILING,
+            help="Independent protocol-correction cap; requires completion-recovery-v1.",
+        ),
+    ] = None,
+    max_accepted_mutations: Annotated[int, typer.Option(
+        "--max-accepted-mutations", min=1,
+        help="Accepted edits allowed; model, action, scope, cost and time limits still apply.",
+    )] = DEFAULT_ACCEPTED_MUTATIONS,
     env_file: Annotated[
         Path | None,
         typer.Option("--env-file", exists=True, dir_okay=False),
@@ -109,9 +120,23 @@ def dev(
         Path | None, typer.Option("--prepared-probe-dependencies",
                                   help="Use immutable public wheel dependencies for probes.")
     ] = None,
+    caller_source: Annotated[list[str] | None, typer.Option(
+        "--caller-source", help="Read pinned caller source: distribution=directory; repeatable.",
+    )] = None,
     enable_probes: Annotated[
         bool, typer.Option("--enable-probes", help="Enable bounded clean-Python diagnostics.")
     ] = False,
+    reproduction_acquisition: Annotated[
+        Literal["none", "bounded-v1"], typer.Option(
+            "--reproduction-acquisition", help="Reserve bounded original-call investigation."
+        ),
+    ] = "none",
+    verification_policy: Annotated[
+        Literal["reproduction-gated-v1", "public-checks-v1"], typer.Option(
+            "--verification-policy",
+            help="Use reproduction gates or advisory diagnostics with required public checks.",
+        ),
+    ] = "reproduction-gated-v1",
     probe_policy: Annotated[
         Literal["none", "cases-v1", "reference-cases-v1"],
         typer.Option("--probe-policy", help="Opt-in reusable reference/candidate experiments."),
@@ -147,7 +172,10 @@ def dev(
         typer.Option("--history-search", help="Search already delivered public run evidence."),
     ] = "none",
     completion_cost_policy: Annotated[
-        Literal["per-call-v1", "completion-reserve-v1"],
+        Literal[
+            "per-call-v1", "completion-reserve-v1", "completion-minimum-v1",
+            "completion-recovery-v1",
+        ],
         typer.Option("--completion-cost-policy",
                      help="Opt-in future-call cost reservation; requires segmented-v1."),
     ] = "per-call-v1",
@@ -177,6 +205,7 @@ def dev(
     """Run the unofficial mutable dev-head lane."""
 
     from patchloop.dev.contracts import DevRunRequest
+    from patchloop.dev.dependency_sources import parse_cli_roots
     from patchloop.dev.runner import run_dev
 
     _guarded(
@@ -187,12 +216,17 @@ def dev(
                 model=model,
                 reasoning_effort=reasoning_effort,
                 max_output_tokens=max_output_tokens,
+                max_correction_output_tokens=max_correction_output_tokens,
+                limits=DevLimits(max_accepted_mutations=max_accepted_mutations),
                 env_file=env_file,
                 max_cost_usd=_parse_cost(max_cost_usd),
                 repeat=repeat,
                 prepared_source=prepared_source,
                 prepared_probe_dependencies=prepared_probe_dependencies,
+                caller_source_roots=parse_cli_roots(caller_source),
                 enable_probes=enable_probes,
+                reproduction_acquisition=reproduction_acquisition,
+                verification_policy=verification_policy,
                 probe_policy=probe_policy,
                 repair_recheck=repair_recheck,
                 probe_recheck=probe_recheck,

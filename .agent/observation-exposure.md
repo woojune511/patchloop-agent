@@ -46,8 +46,21 @@ Synthetic completion, delivery and recovery are plumbing evidence. They cannot
 establish model behavior, task acceptance, Docker safety or a quality improvement.
 Live execution still requires a separate exact invocation and execution path.
 
+The opt-in `after_tool_batch=True` path includes a settled batch instead of
+requiring a following prepared request. It supports an unchanged-base, acquired
+original failure and derives remaining resources from receipts. Nested forks
+resolve exact inherited CAS references without rewriting parent events. The
+[post-reproduction repair](post-reproduction-repair.md) driver uses this path;
+the existing prepared-request cut remains exclusive of that request event.
+
 The opt-in `preserve_parent_configuration` restoration flag retains the parent's
-model/pricing, reasoning/output settings, source retention, evaluation reserve and
-probe replay policy. The [cost-cap continuation](cost-cap-continuation.md) uses it
+model/pricing, reasoning/output settings (including the separate correction ceiling),
+source retention, evaluation reserve, probe replay, reproduction acquisition,
+history-search, agent and rate-limit policy. The [cost-cap continuation](cost-cap-continuation.md) uses it
 with identity projection B. Existing observation comparisons keep their explicit
 full-model intervention; no closed comparison configuration is changed.
+
+Explicit [funded continuation](funded-continuation.md) can increase cumulative wall
+time under a new envelope while retaining full-parent elapsed time and generation
+slots consumed after the clean cut. Its excluded UNKNOWN tail remains provenance,
+not a successful response or authority to retry that historical request.

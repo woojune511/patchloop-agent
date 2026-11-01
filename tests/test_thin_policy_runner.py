@@ -21,8 +21,9 @@ from patchloop.agent.model import FunctionCallContinuationRef as ProviderCallRef
 from patchloop.agent.model import ModelTurn
 from patchloop.agent.model import RequestedTool as ProviderCall
 from patchloop.cli import dev
-from patchloop.dev import runner, segments, thin_policy
+from patchloop.dev import completion_context, repair_context, runner, segments, thin_policy
 from patchloop.dev.contracts import RequestedTool
+from patchloop.dev.conversation import reconstruct_state
 from patchloop.dev.inspection_projection import project_inspection_context
 from patchloop.dev.native_sources import PUBLIC_EVIDENCE_KIND, public_exchanges
 from patchloop.dev.tools import dev_tool_schemas
@@ -106,11 +107,18 @@ def test_thin_mock_reaches_isolated_evaluation_and_rejects_cross_policy_resume(t
     for event in journal.events():
         if event["event_type"] == "turn_started":
             items = runner._load_active_model_input(event["payload"], store, context_policy=context)
-            assert items[0]["content"].startswith(thin_policy.SYSTEM_PROMPT)
+            expected_prompt = thin_policy.SYSTEM_PROMPT
+            if context == "segmented-v1":
+                state = reconstruct_state(items, context_policy=context)
+                if state.get("repair_stage"):
+                    expected_prompt = repair_context.SYSTEM_PROMPT
+                elif state.get("completion_stage"):
+                    expected_prompt = completion_context.SYSTEM_PROMPT
+            assert items[0]["content"].startswith(expected_prompt)
             assert "Reuse current facts, notes, uncertainties and plans" not in items[0]["content"]
         if event["event_type"] == "action_started":
             assert "turn_decision" not in event["payload"]
-            assert event["payload"]["memory_update"] is None
+            assert event["payload"].get("memory_update") is None
     before = journal.path.read_bytes()
     resumed = request.model_copy(update={"resume_run_id": journal.run_id})
     assert runner.run_dev(resumed)["runs"][0] == result
@@ -142,9 +150,11 @@ def test_thin_native_continuation_and_handoff_preserve_real_wire(tmp_path, monke
         for item in public_exchanges(items, archive_kind=PUBLIC_EVIDENCE_KIND):
             if item["type"] == "function_call":
                 wire = json.loads(item["arguments"])
-                assert "memory_update" in wire and "turn_decision" not in wire
+                assert "turn_decision" not in wire
+                assert ("memory_update" in wire) is (item["name"] != "replace_text")
     if incomplete:
-        assert any(i.get("encrypted_content") == "cipher-1" for i in inputs[2])
+        assert not any(i.get("type") == "reasoning" for i in inputs[2])
+        assert views[2]["protocol_correction"]["code"] == "incomplete_response"
     journal, store = records(request)
     before = journal.path.read_bytes()
     assert runner.run_dev(request.model_copy(update={"resume_run_id": journal.run_id}))[
@@ -214,7 +224,7 @@ def test_thin_discloses_staged_tools_without_restoring_advice(
         ))
         projected = thin_policy.project_state(state, "thin")
         guidance = projected["completion_guidance"]
-        assert set(guidance) == {"stage", "diff_hash", "submission_ready"}
+        assert set(guidance) == {"stage", "diff_hash", "submission_ready", "edit_availability"}
         for key in ("mutation_readiness", "current_diff", "visible_check_status",
                     "remaining_budget", "available_tool_names"):
             assert projected[key] == state[key]

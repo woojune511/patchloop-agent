@@ -1,6 +1,7 @@
 # Selected public tests
 
-`run_tests` selects existing public pytest files or node IDs. A task declares
+`run_tests` selects tracked public pytest files or node IDs, including files created
+with `edit_files` in the current run. A task declares
 `test_suites` in its public spec; no new CLI flag is needed. The tool is offered
 only for declared suites and when its action leaves the protected completion
 budget intact. An absent or empty list retains legacy public serialization.
@@ -22,11 +23,11 @@ test_suites:
     command: [python, -m, pytest, -q]
 ```
 
-The model supplies only `suite_id` and 1–8 `targets` (each at most 500 characters),
+The model supplies `suite_id`, 1–8 `targets` (each at most 500 characters), and optional `comparison`,
 plus the ordinary action identity and verify-mode `turn_decision`:
 
 ```json
-{"suite_id":"public-pytest","targets":["tests/test_api.py::TestAPI::test_output"]}
+{"suite_id":"public-pytest","targets":["tests/test_api.py::TestAPI::test_output"],"comparison":null}
 ```
 
 Each target must name a tracked public `.py` file below a declared root and the
@@ -46,6 +47,15 @@ optional suite accepts selections below `test`. The full tree is not a calibrate
 mandatory gate: an existing-reference compatibility control failed it. It carries
 no specific CLI node or evaluator hint. Setup failure exits before pytest with code 2.
 
+For a direct registered Python pytest command, `comparison` can select
+`{"baseline":"original_base","mutation_action_id":null}` or `before_mutation`
+with a completed implementation mutation ID. Two isolated executions use identical
+selected test bytes. Assertion fail-to-pass and `PASSED_BOTH` remain distinct;
+setup, collection and body errors give no original-repair credit. pytest-style
+unittest classes/methods and `unittest_*.py` selections are supported. See the
+[comparison, resource and recovery contract](repair-path.md). Ordinary selection
+retains its existing path when comparison is null/omitted.
+
 ## Additive test cases
 
 An additive-test task can extend a single existing inline parametrization with
@@ -55,6 +65,18 @@ keywords, unpacking, aliases or computed values. Existing cases, including their
 marks and IDs, must remain structurally unchanged and in their original order.
 Existing test bodies, imports, fixtures and decorators stay protected. New imports
 needed by a new test belong inside that test.
+New pytest module names must match readable public `python_files` patterns (or
+pytest defaults). `edit_files` rejects a known mismatch before applying any file
+in the batch; explicit file execution does not establish directory discovery.
+It reports the configuration path/hash and patterns. Ordinary INI settings are
+supported; unresolved commands, overrides, changed/nested configs and native TOML settings
+remain unknown without a guessed rejection. This is filename admission only,
+not proof of test collection or execution. Existing-file selection is unchanged.
+The tool description and rejection feedback expose this option. Every successful
+test insertion or correction still consumes one accepted mutation; completed-action
+replay consumes none. Consider trying a new test's setup and independently grounded
+expectation in an available probe before spending the last edit. Existing required
+FAIL remains blocking; there is no test-edit exemption or new mandatory probe.
 
 Pre-existing duplicate definitions may remain unchanged in their original order.
 An unrelated, uniquely named test or method can still be added. Changing either
@@ -66,7 +88,37 @@ change which addition is compared. The repair comparison runs added cases agains
 base and candidate source; original-test restoration for isolated evaluation still
 applies. Accepting an addition does not establish that its expectation is correct.
 
+For pvlib1154, the required public copy wrapper projects the registered GHI-zero
+expectation only inside the original `test_reindl` function. It pins that function's
+body/signature AST and exact local anchor, not the whole file hash, so admitted test
+additions remain in the copied file and execute. The shared mutation/final-diff policy
+preserves original tests, imports, fixtures and decorators; the wrapper does not
+replace that policy. pvlib's selectable pytest suite uses the same projection.
+Other tasks' ordinary copy wrappers are unchanged.
+
 ## Evidence and recovery
+
+Check `evidence_review` distinguishes explicit file/node selection from directory
+discovery. Direct pytest commands and the exact Python launcher registered by a
+public pytest suite expose their literal arguments; arbitrary Python wrappers are
+not interpreted. A directory selection does not confirm which files pytest collected.
+
+`current_diff.test_execution_review` lists bounded changed Python files under
+registered test roots and visible current-diff selection receipts. `explicit_file`,
+`partial_nodes`, `directory_selected` and `not_confirmed` describe declared selection;
+`collection_status: not_reported` separately preserves unknown testcase collection.
+Literal command filters are reported without interpreting pytest configuration.
+Missing visible receipts do not mean the file was never executed: history is bounded.
+
+`optional_run_tests_selection` is an available selector, not a next-action recommendation.
+It is omitted after a current passing explicit-file receipt with no literal selection
+filter, unresolved command scope or conflicting/unknown current receipt. Directory,
+partial-node, filtered, failed, stale-only and missing selections retain the option.
+This never certifies collection or coverage. Compare the intended input/assertion/scope
+with actual current-diff evidence; missing collection telemetry alone is not a reason
+to rerun. Concrete discovery/filter concerns or new assertions can still justify a
+selection, including a new file omitted by fixed targets or filename discovery.
+These hints add no required-check credit, execution cache, tool restriction or finish gate.
 
 Results preserve suite, targets, action/input identity, current diff, exit code,
 output and execution flags. `test_status` is PASS for exit zero, FAIL for exit one,
@@ -97,6 +149,9 @@ Durable action results replay without test execution for the same
 diff, using the same execution identity and the existing owned-process/container
 cleanup protocol. This is not an exactly-once process guarantee. Normal runtime
 and task identity checks still reject incompatible run resumes.
+Comparison children instead require durable result receipts for reuse: a child
+start with no result stops as uncertain and is not rerun. The parent reserves
+both child executions before dispatch; recovery never charges finished reuse again.
 
 Source: `patchloop/dev/test_selection.py`, `patchloop/dev/tools.py`, and
 `patchloop/dev/runner.py`. Provider-free validation and claim boundaries are in

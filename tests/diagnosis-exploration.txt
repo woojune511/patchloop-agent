@@ -1,0 +1,6 @@
+tests/test_diagnosis_exploration.py
+tests/test_diagnosis_exploration_budget.py
+tests/test_dependency_diagnosis_context.py
+tests/test_repair_path_policy.py
+tests/test_repair_path_reuse.py
+tests/test_ruleless_repair_path.py::test_selection_and_changed_call_attempt_cannot_refill_allowances

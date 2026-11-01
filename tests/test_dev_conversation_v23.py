@@ -238,21 +238,28 @@ def test_large_source_is_not_duplicated_in_current_state_and_append_only_wire_is
     assert sum(item.get("type") == "function_call_output" for item in new) == 12
 
 
-def test_read_range_limit_is_explained_without_changing_argument_names_or_tool_order():
-    schemas = dev_tool_schemas(finish_enabled=False)
+@pytest.mark.parametrize("range_only", [False, True])
+def test_read_range_limit_is_explained_without_changing_argument_names_or_tool_order(range_only):
+    schemas = dev_tool_schemas(finish_enabled=False, read_range_only=range_only)
     read = next(tool for tool in schemas if tool["name"] == "read_file")
     assert "inclusive" in read["description"]
-    assert "end_line - start_line + 1" in read["description"]
-    assert "between 1 and 400" in read["description"]
+    if range_only:
+        assert "end_line - start_line + 1" in read["description"]
+        assert "between 1 and 400" in read["description"]
+    else:
+        assert "24000-character output limit" in read["description"]
+        assert "400" not in read["description"].replace("24000", "")
     assert set(read["parameters"]["properties"]) == {
         "path", "start_line", "end_line", "turn_decision",
     }
 
 
-def test_advertised_read_limit_matches_existing_gateway_boundary(source_gateway):
+def test_fresh_read_allows_larger_ranges_and_legacy_keeps_its_boundary(source_gateway):
     gateway, sources, _ = source_gateway
     sources["src.py"] = ("line\n" * 500).encode()
     assert gateway._read_file("src.py", 1, 400)["spans"][0]["end_line"] == 400
     assert gateway._read_file("src.py", 2, 401)["spans"][0]["end_line"] == 401
+    assert gateway._read_file("src.py", 1, 500)["spans"][0]["end_line"] == 500
+    gateway.read_range_only = True
     with pytest.raises(ContractError, match="1-400 line inclusive range"):
         gateway._read_file("src.py", 1, 401)

@@ -10,7 +10,13 @@ from diagnostics import change_review, independent_candidate
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import Artifact
 from patchloop.dev import runner
-from patchloop.dev.contracts import DevModelTurn, DevRunRequest, PublicTurnDecision, RequestedTool
+from patchloop.dev.contracts import (
+    DevLimits,
+    DevModelTurn,
+    DevRunRequest,
+    PublicTurnDecision,
+    RequestedTool,
+)
 from patchloop.dev.conversation import reconstruct_state
 from patchloop.dev.model import MockDevAdapter
 from patchloop.dev.state import DevJournal
@@ -33,6 +39,7 @@ def request(root, context_policy="segmented-v1"):
         provider="mock", model="mock", state_root=root,
         task=repository_root() / "tasks/smoke/csv-quoted-newline/public.yaml",
         context_policy=context_policy, planning_policy="brief-v1", repair_recheck=True,
+        limits=DevLimits(max_accepted_mutations=4),
     )
 
 

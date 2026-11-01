@@ -1,0 +1,416 @@
+"""Prepare one operator-assisted public-counterexample revision, not a fresh solve."""
+from __future__ import annotations
+
+import argparse
+import copy
+import json
+from contextlib import contextmanager
+from dataclasses import asdict
+from decimal import Decimal
+from pathlib import Path
+from unittest.mock import patch
+
+from diagnostics import counterexample_check as check_api
+from diagnostics import counterexample_packet as packet_api
+from diagnostics import first_reproduction_comparison as original
+from diagnostics import observation_comparison as live
+from diagnostics import observation_exposure as exposure
+from diagnostics import post_reproduction_repair as post
+from diagnostics.checkpoint_continuation import ScriptedClient
+from diagnostics.checkpoint_envelope import read_checkpoint_envelope
+from diagnostics.decision_sampler import require
+from diagnostics.declaration_checkpoint import Source, disjoint
+from patchloop.artifacts import ArtifactStore
+from patchloop.dev import runner
+from patchloop.dev.cost import DevCostLedger, usd_to_nanos
+from patchloop.dev.state import DevJournal
+from patchloop.repository import WorkspaceManager
+from patchloop.runtime import git_commit, repository_root
+from patchloop.util import canonical_json, sha256_bytes, sha256_json
+
+SCHEMA = "public-counterexample-repair-v2"
+FIELD = "operator_public_counterexamples"
+INSTRUCTION = (
+    "An operator supplied additional public counterexamples on the saved candidate. "
+    "Revise the candidate to satisfy these public examples while preserving the original "
+    "caller behavior and existing public checks. Use the available source and test tools. "
+    "The observations apply only to measured_diff; after an edit they are historical, "
+    "not verification of the new diff. The frozen public-path-counterexamples check is "
+    "required before successful finish. Its current result is in visible_check_status; "
+    "after each edit, it must pass again. No implementation is prescribed."
+)
+
+
+def inject(state, packet):
+    result = copy.deepcopy(state)
+    current = result["current_diff"]["patch_hash"]
+    result[FIELD] = {**packet_api.model_visible(packet, current), "request": INSTRUCTION}
+    result[FIELD].pop("program_text", None)
+    result[FIELD]["program_definition_ref"] = {
+        "check_id": check_api.CHECK_ID,
+        "field": "supplemental_required_checks[].check.command[2]",
+        "program_hash": packet["program_hash"],
+    }
+    status = next((row["status"] for row in state.get("visible_check_status", [])
+                   if row.get("check_id") == check_api.CHECK_ID), "NOT_RUN")
+    result[FIELD]["required_check_status"] = status
+    result[FIELD]["new_verification_required"] = status != "PASS"
+    return result
+
+
+@contextmanager
+def public_feedback(packet):
+    """Register one immutable public check while preserving the original task."""
+    packet = copy.deepcopy(packet)
+    entry = check_api.required_check(packet)
+    build_context, build_input = runner._build_context, runner._build_model_input
+    gateway_type = runner.DevToolGateway
+
+    class RequiredCheckGateway(gateway_type):
+        def __init__(self, **kwargs):
+            require(not kwargs.get("supplemental_checks"), "unexpected supplemental check binding")
+            kwargs["supplemental_checks"] = (entry,)
+            kwargs["sandbox"] = check_api.CheckSandbox(
+                kwargs["sandbox"], kwargs.get("probe_sandbox"), kwargs["journal"], packet)
+            super().__init__(**kwargs)
+
+    def context(**kwargs):
+        return canonical_json(inject(json.loads(build_context(**kwargs)), packet))
+
+    def model_input(**kwargs):
+        items = copy.deepcopy(build_input(**kwargs))
+        current = json.loads(items[-1]["content"])
+        require("state" in current, "current public model state missing")
+        current["state"] = inject(current["state"], packet)
+        items[-1]["content"] = canonical_json(current)
+        return items
+
+    with patch.object(runner, "_build_context", context), \
+            patch.object(runner, "_build_model_input", model_input), \
+            patch.object(runner, "DevToolGateway", RequiredCheckGateway):
+        yield
+
+
+def restore(source, cut, output, cap, env_file, *, funded=False):
+    return exposure._fork(source, cut, output, "B", new_cap_usd=cap,
+        mode="funded-observation" if funded else "offline-scripted-only",
+        env_file=env_file, preserve_parent_configuration=True)
+
+
+def _caller_scope_audit(request, roots):
+    """Validate any offered source tools without requiring optional exploration."""
+    source_tools = [tool for tool in request["tools"]
+                    if tool["name"] in {"read_file", "search_files"}]
+    if not source_tools:
+        return {"caller_source_roots": post.normalize_roots(roots),
+                "offered_source_tools": [], "status": "NOT_OFFERED"}
+    return {**post.caller_scope_audit(request, roots), "status": "PASS"}
+
+
+def _initial_source_audit(state):
+    """Record real source bodies in the prepared fresh segment, not just headers."""
+    readiness = state.get("mutation_readiness", {})
+    anchors = set(readiness.get("current_anchor_evidence_paths", []))
+    delivered = [{"path": source["path"], "file_hash": source["file_hash"],
+                  "start_line": span["start_line"], "end_line": span["end_line"],
+                  "content_hash": sha256_bytes(span["content"].encode()),
+                  "content_chars": len(span["content"])}
+                 for source in state.get("current_sources", [])
+                 if source.get("path") in anchors and source.get("edit_permission") == "allowed"
+                 for span in source.get("inline_spans", []) if span.get("content", "").strip()]
+    require(readiness.get("state") == "ready_to_attempt" and delivered,
+            "initial request lacks current delivered editable source")
+    return {"status": "PASS", "spans": delivered, "projection_hash": sha256_json(delivered)}
+
+
+def feedback_audit(branch, request, packet, *, first_response=True):
+    state = json.loads(request["input"][-1]["content"])["state"]
+    # Only the restored boundary discards historical opaque state. Later native
+    # continuations belong to this new run and must retain normal model history.
+    if first_response:
+        require(request["input"] == original.public_input(request["input"]),
+                "historical opaque reasoning remains")
+    require(state["current_diff"]["patch_hash"] == packet["candidate_diff_hash"],
+            "restored candidate differs from measured counterexamples")
+    expected = inject(state, packet)[FIELD]
+    require(state.get(FIELD) == expected, "public counterexample delivery changed")
+    completion = state["reproduction_review"]["completion"]
+    require(completion["status"] == "cases_verified" and completion["cases"],
+            "original public verification missing")
+    require(all(case["current"]["comparison"] == "matched"
+                and case["comparability"]["status"] == "same" for case in completion["cases"]),
+            "original call comparability or successful observation changed")
+    checks = {check["check_id"]: check for check in state["visible_check_status"]}
+    require(checks.get(check_api.CHECK_ID, {}).get("status") == "FAIL"
+            and all(check["status"] == "PASS" for name, check in checks.items()
+                    if name != check_api.CHECK_ID),
+            "prior public checks are not represented accurately")
+    entry = check_api.required_check(packet)
+    registered = state.get("supplemental_required_checks", [])
+    require(len(registered) == 1 and registered[0]["check"] == entry.check.model_dump(mode="json")
+            and registered[0]["binding_hash"] == entry.binding_hash,
+            "required public check missing from actual model input")
+    tools = {tool["name"] for tool in request["tools"]}
+    require("finish_task" not in tools and state["workflow_gate"] != "ready_to_submit",
+            "known required public failure still permits successful finish")
+    require({"replace_text", "stop_task"} <= tools, "revision or stop is unavailable")
+    callers = _caller_scope_audit(request, branch.request.caller_source_roots)
+    source_audit = (_initial_source_audit(state) if first_response else {
+        "status": "NOT_CHECKED", "reason": "initial projection checked separately"})
+    return {"status": "PASS", "packet_hash": sha256_json(packet),
+            "candidate_diff_hash": packet["candidate_diff_hash"],
+            "regressions": packet["regressions"], "original_status": completion["status"],
+            "baseline_failure_case_ids": completion["baseline_failure_case_ids"],
+            "workflow_gate": state["workflow_gate"], "available_tools": sorted(tools),
+            "caller_sources": callers, "context_field": FIELD,
+            "initial_source_projection": source_audit,
+            "original_task_checks_unchanged": True,
+            "completion_adds_required_public_check": True,
+            "required_public_check": check_api.CHECK_ID,
+            "required_check_binding_hash": entry.binding_hash,
+            "confirmed_failure_blocks_finish": True,
+            "provider_calls": 0, "target_executions": 0}
+
+
+def run_branch(branch, packet, group, journal, store, first_hash, *, client=None):
+    with public_feedback(packet):
+        return post.run_branch(branch, group, journal, store, first_hash, client=client)
+
+
+def read_delivery_audit(events, request):
+    require(not any(e["event_type"] == "protocol_correction" for e in events),
+            "offline read required protocol correction")
+    results = [e["payload"]["result"] for e in events
+               if e["event_type"] == "action_finished"
+               and e["payload"]["action_id"] == "public_counterexample_delivery_read"]
+    require(len(results) == 1 and results[0]["status"] == "succeeded"
+            and results[0]["tool"] == "read_file", "offline read did not succeed")
+    expected = results[0]
+    state = json.loads(request["input"][-1]["content"])["state"]
+    delivered = list(state["latest_tool_results"])
+    for exchange in post.public_exchanges(request["input"], archive_kind=post.PUBLIC_EVIDENCE_KIND):
+        if exchange.get("type") == "function_call_output":
+            delivered.append(json.loads(exchange["output"]))
+    require(any(isinstance(item, dict) and all(item.get(key) == expected.get(key)
+                for key in ("action_id", "input_hash", "tool", "status", "workspace_diff_hash"))
+                and item.get("output", {}).get("spans") == expected["output"].get("spans")
+                and bool(expected["output"].get("spans")) for item in delivered),
+            "successful read result missing from following request")
+    return {"status": "PASS", "action_id": expected["action_id"],
+            "result_hash": sha256_json(expected), "protocol_corrections": 0}
+
+
+def rehearse_later_read(source, cut, output, cap, env_file, packet, request):
+    if "read_file" not in {tool["name"] for tool in request["tools"]}:
+        unavailable = {"status": "NOT_EXERCISED", "reason": "read_file_not_offered"}
+        return {"later_read_delivery": unavailable,
+                "later_response_delivery_checked": False}, unavailable
+    later = restore(source, cut, output/"later-response", cap, env_file)
+    later_client = ScriptedClient([[{
+        "name": "read_file", "action_id": "public_counterexample_delivery_read",
+        "arguments": {"path": "astroid/modutils.py", "start_line": 1, "end_line": 12,
+                      "source_scope": "repository", "memory_update": None},
+    }], post.stop_client().steps[0]])
+    with public_feedback(packet), post.public_checkpoint():
+        later_receipt = exposure.rehearse(later, later_client)
+    require(len(later_client.created) == len(later_client.counted) == 2
+            and later_receipt["result"]["terminal"] == "AGENT_STOPPED"
+            and not later_receipt["synthetic_probe_calls"], "later offline delivery not verified")
+    for index, delivered in enumerate(later_client.created):
+        feedback_audit(later, post.normalized_request(delivered), packet,
+                       first_response=index == 0)
+    return {"later_read_delivery": read_delivery_audit(
+        later.journal.events()[later.inherited_events:], later_client.created[1]),
+        "later_response_delivery_checked": True}, later_receipt
+
+
+def prepare(source, cut, packet_root, env_file, output, result_root, cap):
+    require(cap.is_finite() and cap > 0, "positive new cap required")
+    packet = packet_api.build_packet(packet_root)
+    disjoint(output, (repository_root(), source.root, packet_root, result_root))
+    disjoint(result_root, (repository_root(), source.root, packet_root, output))
+    output.mkdir()
+    journal = DevJournal(output, "run_dev_counterexamplepreparation")
+    branch = restore(source, cut, output/"preview", cap, env_file)
+    old = read_checkpoint_envelope(source)
+    require(packet["environment"]["image_digest"] == old.probe_image_digest
+            and packet["environment"]["profile_hash"] == old.probe_profile_hash
+            and packet["environment"]["dependencies"]
+                == old.probe_dependencies.model_dump(mode="json"),
+            "public comparison differs from the restored environment")
+    require(branch.initial_spent_nanos + usd_to_nanos(cap) == old.max_cost_nanos,
+            "retain the original cumulative cap; proposed fresh cap must equal unused capacity")
+    client = post.stop_client()
+    with public_feedback(packet), post.public_checkpoint():
+        preview = exposure.rehearse(branch, client)
+    require(len(client.created) == len(client.counted) == 1
+            and client.created[0]["tools"] == client.counted[0]["tools"]
+            and not preview["synthetic_probe_calls"], "offline preview not isolated")
+    request = post.normalized_request(client.created[0])
+    audit = feedback_audit(branch, request, packet)
+    replay = restore(source, cut, output/"dispatch-rehearsal", cap, env_file)
+    check = run_branch(replay, packet, DevCostLedger(cap, replay.pricing), journal,
+                       ArtifactStore(output/"artifacts"), sha256_json(request),
+                       client=post.stop_client())
+    require(check["input_counts"] == check["dispatches"] == 1
+            and check["result"]["terminal"] == "AGENT_STOPPED",
+            "offline dispatch differs from preparation")
+    audit["fresh_offline_dispatch_match"] = True
+    later_audit, later_receipt = rehearse_later_read(
+        source, cut, output, cap, env_file, packet, request)
+    audit.update(later_audit)
+    plan = {"schema": SCHEMA, "official": False, "paid_execution_authorized": False,
+        "source": source.record(), "cut_sequence": cut, "include_cut": False,
+        "task": str(source.public_path), "split": "dev-train", "repeat": 1,
+        "model": old.model, "reasoning_effort": old.reasoning_effort,
+        "env_file": str(env_file.resolve()), "new_cap_nanos": usd_to_nanos(cap),
+        "historical_spent_nanos": branch.initial_spent_nanos, "historical_funds_reopened": False,
+        "active_elapsed_ms": branch.active_elapsed_ms, "remaining_budget": branch.remaining_budget,
+        "combined_limits": old.limits.model_dump(mode="json"),
+        "limits": branch.request.limits.model_dump(mode="json"),
+        "required_public_check": {
+            "check": check_api.required_check(packet).check.model_dump(mode="json"),
+            "binding": check_api.required_check(packet).binding,
+            "binding_hash": check_api.required_check(packet).binding_hash},
+        "final_public_execution": "none; summarize current registered receipt",
+        "max_output_tokens": old.max_output_tokens,
+        "max_correction_output_tokens": old.max_correction_output_tokens,
+        "max_context_tokens": 60000, "evaluation_reserve_seconds": old.evaluation_reserve_seconds,
+        "caller_source_roots": branch.request.caller_source_roots,
+        "packet_root": str(packet_root.resolve()), "packet_hash": sha256_json(packet),
+        "baseline_failure_case_ids": audit["baseline_failure_case_ids"],
+        "first_request_hash": sha256_json(request),
+        "runtime_hash": runner._runtime_hash(),
+        "implementation_hash": exposure.implementation_hash(),
+        "preparation_commit": git_commit(), "preparation_root": str(output.resolve()),
+        "result_root": str(result_root.resolve()),
+        "executing_probe_identity": {"image_digest": old.probe_image_digest,
+                                     "profile_hash": old.probe_profile_hash},
+        "pricing": {key: str(value) for key, value in asdict(branch.pricing).items()},
+        "sdk_retries": 0, "automatic_resume": False,
+        "intervention": "Frozen public counterexamples registered as a required visible check",
+        "stop_conditions": ["count uncertainty", "transport or billing uncertainty",
+                            "execution or cleanup uncertainty", "normal runner terminal"],
+        "scope": "Assisted checkpoint revision; no clean-start or causal repair-gain claim"}
+    store = ArtifactStore(output)
+    for name, value in (("packet.json", packet), ("first-request.json", request),
+                        ("feedback-audit.json", audit), ("manifest.json", plan)):
+        store.write_text_immutable(output/name, canonical_json(value)+"\n")
+    digest = sha256_bytes((output/"manifest.json").read_bytes())
+    journal.append("counterexample_repair_prepared", {"manifest_hash": digest,
+        "audit": audit, "preview": preview, "offline_dispatch": check,
+        "later_response_rehearsal": later_receipt,
+        "provider_calls": 0, "target_executions": 0})
+    return {"manifest_hash": digest, "audit": audit, "new_cap_nanos": plan["new_cap_nanos"]}
+
+
+def validate(path, digest, cap=None):
+    require(sha256_bytes(path.read_bytes()) == digest, "manifest hash differs")
+    plan = json.loads(path.read_bytes())
+    require(plan["schema"] == SCHEMA and plan["repeat"] == 1, "unsupported manifest")
+    require(plan["runtime_hash"] == runner._runtime_hash()
+            and plan["implementation_hash"] == exposure.implementation_hash(), "runtime drift")
+    if cap is not None:
+        require(usd_to_nanos(cap) == plan["new_cap_nanos"], "approved cap differs")
+    source = Source.from_record(plan["source"])
+    require(original.source_record(source.root, source.run_id, source.public_path) == source,
+            "source checkpoint changed")
+    packet = packet_api.build_packet(Path(plan["packet_root"]))
+    prepared = Path(plan["preparation_root"])
+    require(sha256_json(packet) == plan["packet_hash"]
+            and json.loads((prepared/"packet.json").read_bytes()) == packet, "packet changed")
+    entry = check_api.required_check(packet)
+    require(plan["required_public_check"] == {
+        "check": entry.check.model_dump(mode="json"), "binding": entry.binding,
+        "binding_hash": entry.binding_hash}, "required public check binding changed")
+    request = json.loads((prepared/"first-request.json").read_bytes())
+    require(sha256_json(request) == plan["first_request_hash"], "first request changed")
+    require(not Path(plan["result_root"]).exists(), "single-use allocation already used")
+    return plan, packet
+
+
+def final_public_check(branch, packet, plan, journal, store, result):
+    """Summarize the current required receipt; no post-finish target execution."""
+    del plan, journal, store
+    if branch is None or result.get("stop_remaining") or not result.get("billing_known"):
+        return {"status": "INCOMPLETE", "reason": "continuation did not settle",
+                "additional_final_executions": 0}
+    current = WorkspaceManager.diff_summary(branch.workspace).patch_hash
+    submitted = result.get("result", {}).get("artifact_hashes", {}).get("submitted_patch")
+    require(not submitted or current == submitted, "final workspace differs from submitted patch")
+    return check_api.summary(branch.journal, packet, current)
+
+
+def collect(path, digest, cap):
+    plan, packet = validate(path, digest, cap)
+    original.clean_implementation()
+    root, env_file = Path(plan["result_root"]), Path(plan["env_file"])
+    root.mkdir()
+    journal = DevJournal(root, "run_dev_counterexamplerepair")
+    store = ArtifactStore(root/"artifacts")
+    group = DevCostLedger(cap, runner.pricing_for_model(plan["model"]))
+    branch = None
+    with journal.execution_lock():
+        journal.append("counterexample_repair_authorized", {"manifest_hash": digest, "plan": plan})
+        env = live.check_environment(plan, env_file)
+        journal.append("environment_checked", env)
+        result = {"status": "PREFLIGHT_FAILED", "billing_known": True, "stop_remaining": True}
+        if env["status"] == "READY":
+            try:
+                branch = restore(Source.from_record(plan["source"]), plan["cut_sequence"],
+                                 root/"repair", cap, env_file, funded=True)
+                require(branch.remaining_budget == plan["remaining_budget"]
+                        and branch.request.limits.model_dump(mode="json") == plan["limits"],
+                        "budget changed")
+                result = run_branch(branch, packet, group, journal, store,
+                                    plan["first_request_hash"])
+                result["public_counterexamples"] = final_public_check(
+                    branch, packet, plan, journal, store, result)
+            except Exception as exc:
+                result = {**result, "status": "COLLECTOR_FAILED", "error_type": type(exc).__name__,
+                    "stop_remaining": True,
+                    "billing_known": branch is None
+                        or runner._provider_usage_failure(branch.journal) is None,
+                    "input_count_uncertain": branch is not None
+                        and branch.journal.unresolved_input_count() is not None,
+                    "provider_dispatch_uncertain": branch is not None
+                        and branch.journal.unresolved_provider_call() is not None}
+        result.update(official=False, new_cap_nanos=group.cap_nanos,
+            new_cost_nanos=group.spent_nanos if result["billing_known"] else None,
+            recorded_new_cost_nanos=group.spent_nanos, repair_efficacy="NOT_ESTABLISHED")
+        journal.append("counterexample_repair_finished", result)
+        journal.append("allocation_closed", {"recorded_new_cost_nanos": group.spent_nanos,
+                       "billing_known": result["billing_known"], "automatic_retry": False})
+        ArtifactStore(root).write_text_immutable(root/"result.json", canonical_json(result)+"\n")
+    return result
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    sub = parser.add_subparsers(dest="command", required=True)
+    prep = sub.add_parser("prepare")
+    prep.add_argument("--source", type=Path, required=True)
+    prep.add_argument("--run-id", required=True)
+    prep.add_argument("--task", type=Path, required=True)
+    prep.add_argument("--cut", type=int, required=True)
+    prep.add_argument("--packet-root", type=Path, required=True)
+    prep.add_argument("--env-file", type=Path, required=True)
+    prep.add_argument("--output", type=Path, required=True)
+    prep.add_argument("--result-root", type=Path, required=True)
+    prep.add_argument("--new-cap-usd", type=Decimal, required=True)
+    run = sub.add_parser("collect")
+    run.add_argument("--manifest", type=Path, required=True)
+    run.add_argument("--manifest-hash", required=True)
+    run.add_argument("--new-cap-usd", type=Decimal, required=True)
+    args = parser.parse_args()
+    if args.command == "prepare":
+        result = prepare(original.source_record(args.source, args.run_id, args.task), args.cut,
+                         args.packet_root, args.env_file, args.output, args.result_root,
+                         args.new_cap_usd)
+    else:
+        result = collect(args.manifest, args.manifest_hash, args.new_cap_usd)
+    print(canonical_json(result))
+
+
+if __name__ == "__main__":
+    main()

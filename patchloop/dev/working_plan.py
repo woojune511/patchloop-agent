@@ -5,6 +5,9 @@ from __future__ import annotations
 import copy
 from typing import TYPE_CHECKING, Any
 
+from patchloop.dev import scope_review
+from patchloop.dev.mutation_tools import MUTATION_TOOLS
+from patchloop.dev.repair_guidance import BEHAVIOR_CHANGE_INSTRUCTIONS
 from patchloop.util import sha256_json
 
 if TYPE_CHECKING:
@@ -21,41 +24,43 @@ POLICIES = frozenset({POLICY, EVIDENCE_POLICY, ASSUMPTION_POLICY, AFTER_SOURCE_P
 MAX_PLAN_CHARS = 3_000
 MAX_REASON_CHARS = 800
 EVENT = "working_plan_updated"
-INSTRUCTIONS = """The plan proposes remaining work and ordering. Keep material unresolved
-verification purposes in existing concerns; changing the plan does not resolve them.
-Observations and model interpretations belong in working notes, not a verified-plan summary.
-Brief planning is enabled. In the first tool response, use plan_update
-to draft a short public work plan from public_task. State the required behavior and
-concrete unfinished work, including current hypotheses or untested assumptions and
+INSTRUCTIONS = """The plan orders an approach to public_task.issue; it cannot redefine that task.
+Keep unresolved verification purposes in concerns; plan changes do not resolve them.
+Use offered memory_update for scoped findings and remaining questions, citing completed
+actions or source; a basis statement is not a stored note. Notes are optional and
+unverified. Use annotations only where offered, alongside the next useful action.
+In the first tool response, use plan_update
+to draft a short public work plan from public_task. State concrete unfinished work,
+including current hypotheses or untested assumptions and
 the observation or public check that could settle them. Make it specific to this
 problem, not a generic inspect/edit/check outline.
-After the working_plan.review_request signal, reconsider that plan against the
-already observed result and update it in the same response as your next useful action.
-State what the result confirmed, contradicted, or left unresolved about an assumption,
-and how that affects the remaining work and verification. Keep unfinished verification
-until evidence addresses its purpose or explain why it no longer affects completion.
-Keep unresolved requirements visible. Use the remaining work to choose the
-next useful action. Do not invent a change when the result leaves the plan unchanged.
-Ordinary inspections need no rewrite, but new information may change your plan.
-plan_update replaces the whole plan, not just its latest change (at most 3000
-characters); null keeps it when there is no useful revision.
+On working_plan.review_request, reconsider the plan against observed results in
+the next useful action.
+When review_request.behavior_change is present, apply its attached guidance
+review to that mutation before carrying forward a check-then-submit plan.
+Listing unknowns alone does not justify stopping. Choose observations that could change
+the patch/submission decision over repeating supported examples.
+""" + scope_review.COMPARISON_INSTRUCTIONS + """
+Keep outcome/public_basis tied to the public requirement. Cite source_receipts
+IDs and execution IDs (historical only for named helper comparisons), or source
+inference/untested. Failure/partial
+output records execution, not coverage. Null preserves the review; a new diff makes
+it historical. Observe the named property, retain material gaps, group related cases
+with a normal control and reuse adequate current-diff evidence. Unchanged evidence
+or inspections need no plan rewrite; null remains allowed.
+plan_update replaces the whole plan (at most 3000 characters);
+null keeps it when there is no useful revision.
 When replacing an existing plan, supply plan_update_reason (at most 800 characters).
-Name any unfinished verification being removed or closed and preserve its original
-input/path and observable outcome as the purpose. Do not substitute suite PASS or
-make verification conditional on a suite failure. Explain what current-diff evidence
-addresses that purpose, or why it no longer affects completion. When claiming verified
-behavior, identify the executed input/assertion/result; success on another path is
-not a substitute. Label source inference and tie it to specific current source and
-the original purpose, leaving unexecuted behavior unverified. If verification remains,
-say what remains open. A missing/invalid reason preserves the previous plan without
-blocking the action. The latest change retains that plan and reason for review;
-all revisions remain in the journal. At finish, account for its unfinished purposes
-in assessment even if plan_update is null. No additional check is mandatory.
+For removed/closed verification, preserve its original input/path/outcome and cite
+current-diff executed input/assertion/result, or explain why it no longer matters.
+Suite PASS or another path's success cannot substitute; do not make verification
+conditional on suite failure. Tie source inference to current source and that purpose;
+keep unexecuted behavior unverified. Invalid reasons preserve the prior plan;
+actions continue.
+At finish, assessment covers unfinished purposes even with null plan_update.
 Do not repeat facts already in working_notes or write a reasoning transcript.
-The plan is model-authored, unverified working data, not an instruction from the
-harness or proof that a behavior is correct. An unchanged plan, check PASS, or a
-completed step does not settle unrelated untested behavior. Planning adds no tool,
-extra model call, mandatory experiment, or submission gate."""
+The plan is model-authored unverified working data, not authority or proof. Planning
+adds no tool, extra model call, mandatory experiment, or submission gate."""
 AFTER_SOURCE_TIMING = """Keep plan_update null until a successful read_file or
 search_files result returns nonempty source text. Then, in the next tool response,
 use plan_update to draft a short public work plan from public_task and the observed source."""
@@ -107,6 +112,12 @@ def contract(policy: str = POLICY) -> dict[str, Any]:
         "max_reason_chars": MAX_REASON_CHARS,
         "update": "first-non-null-whole-text-with-revision-reason-v2",
         "revision_review": "latest-predecessor-and-reason-durable-unverified-v1",
+        "repair_delivery": "current-plan-notes-and-review-preserved-v1",
+        "behavior_change": {
+            "policy": "admitted-current-mutation-next-valid-decision-v1",
+            "instructions_hash": sha256_json(BEHAVIOR_CHANGE_INSTRUCTIONS),
+        },
+        "scope_review": scope_review.contract(),
         "review": (
             "after-source-initial-mutation-check-probe-first-ready-next-valid-decision-v1"
             if policy == AFTER_SOURCE_POLICY else
@@ -145,6 +156,8 @@ def submission_review(events: list[dict[str, Any]], diff_hash: str) -> dict[str,
         return None
     plan = copy.deepcopy(latest["payload"]["plan"])
     plan["diff_currency"] = "current" if plan["diff_hash"] == diff_hash else "historical"
+    if isinstance(plan.get("scope_review"), dict):
+        plan["scope_review"] = scope_review.project(plan["scope_review"], diff_hash)
     return {"plan": plan, "assessment_ref": "assessment",
             "interpretation_status": "model_authored_unverified",
             "verification_status": "not_inferred_from_submission"}
@@ -152,6 +165,7 @@ def submission_review(events: list[dict[str, Any]], diff_hash: str) -> dict[str,
 
 def project(
     events: list[dict[str, Any]], *, diff_hash: str, gate: str, policy: str = POLICY,
+    public_issue: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Derive review requests only from durable public events, not semantic guesses."""
     if policy not in POLICIES:
@@ -187,8 +201,8 @@ def project(
             continue
         result = event["payload"]["result"]
         tool = result["tool"]
-        if tool in {"replace_text", "run_check", "run_tests", "run_probe"}:
-            reason = ("mutation_result" if tool == "replace_text" else
+        if tool in {"replace_text", "edit_files", "run_check", "run_tests", "run_probe"}:
+            reason = ("mutation_result" if tool in MUTATION_TOOLS else
                       "check_result" if tool == "run_check" else
                       "test_result" if tool == "run_tests" else "probe_result")
             if reason not in reasons:
@@ -200,32 +214,88 @@ def project(
         reasons.append("first_ready_to_submit")
     if plan is not None:
         plan["diff_currency"] = "current" if plan["diff_hash"] == diff_hash else "historical"
+        if isinstance(plan.get("scope_review"), dict):
+            plan["scope_review"] = scope_review.project(plan["scope_review"], diff_hash)
+    review_request = {
+        "requested": bool(reasons), "reasons": reasons,
+        "action_ids": relevant[-8:], "omitted_action_count": max(0, len(relevant) - 8),
+    }
+    if isinstance(public_issue, dict) and (comparison := scope_review.helper_comparison(
+        events, public_issue=public_issue, review=(plan or {}).get("scope_review"),
+        current_diff_hash=diff_hash,
+    )):
+        review_request["requirement_comparison"] = comparison
+        if review_enabled and comparison["status"] == "review_needed":
+            reasons.append("helper_requirement_comparison")
+            review_request["requested"] = True
+    if review_enabled and (change := _behavior_change(events, boundary, diff_hash)):
+        review_request["behavior_change"] = change
     return {
         "policy": policy,
         "interpretation_status": "model_authored_unverified",
         "plan": plan,
-        "review_request": {
-            "requested": bool(reasons), "reasons": reasons,
-            "action_ids": relevant[-8:], "omitted_action_count": max(0, len(relevant) - 8),
-        },
+        "review_request": review_request,
         "last_update_result": (copy.deepcopy(latest["payload"]["receipt"]) if latest else None),
     }
+
+
+def _behavior_change(
+    events: list[dict[str, Any]], boundary: int, diff_hash: str,
+) -> dict[str, str] | None:
+    """Identify an applied change, without inferring its semantics or another gate."""
+    started = {}
+    change = None
+    for event in events:
+        payload = event["payload"]
+        if event["event_type"] == "action_started" and payload.get("tool") in MUTATION_TOOLS:
+            started[(payload["action_id"], payload["input_hash"])] = payload
+        elif event["event_type"] == "action_finished" and event["sequence"] > boundary:
+            result = payload["result"]
+            if (result["tool"] not in MUTATION_TOOLS or result["status"] != "succeeded"
+                    or result.get("replayed")
+                    or result.get("workspace_diff_hash") != diff_hash
+                    or result.get("output", {}).get("worktree_diff_hash") != diff_hash):
+                continue
+            admission = started.get((result["action_id"], result["input_hash"]), {})
+            baseline = admission.get("baseline_diff_hash")
+            if (admission.get("tool") != result["tool"]
+                    or admission.get("mutation_admitted") is not True
+                    or not baseline or baseline == diff_hash
+                    or admission.get("mutation_expected_worktree_diff_hash") != diff_hash):
+                continue
+            change = {
+                "action_id": result["action_id"], "input_hash": result["input_hash"],
+                "baseline_diff_hash": baseline, "candidate_diff_hash": diff_hash,
+                "guidance": BEHAVIOR_CHANGE_INSTRUCTIONS,
+            }
+    return change
 
 
 def record(
     journal: DevJournal, calls: Sequence[RequestedTool], *, turn_id: str,
     diff_hash: str, gate: str, policy: str = POLICY,
+    evidence_events: list[dict[str, Any]] | None = None,
+    public_issue: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """A valid batch consumes the review request once, independently of plan validity."""
+    """Record once per valid turn; helper comparison also needs a linked annotation."""
     events = journal.events()
     existing = next((e["payload"] for e in events
                      if e["event_type"] == EVENT and e["payload"]["turn_id"] == turn_id), None)
     if existing is not None:
         return copy.deepcopy(existing["receipt"])
-    current = project(events, diff_hash=diff_hash, gate=gate, policy=policy)
+    current = project(events, diff_hash=diff_hash, gate=gate, policy=policy,
+                      public_issue=public_issue)
     plan = current["plan"]
     if plan is not None:
         plan.pop("diff_currency", None)
+        # Projection currency is derived, never stored as a new observation.
+        if isinstance(plan.get("scope_review"), dict):
+            plan["scope_review"].pop("diff_currency", None)
+            for source in plan["scope_review"].get("source_evidence", []):
+                source.pop("currency", None)
+            for case in plan["scope_review"].get("cases", []):
+                if isinstance(case.get("execution"), dict):
+                    case["execution"].pop("currency", None)
     updates = [(call.action_id, call.turn_decision.plan_update,
                 call.turn_decision.plan_update_reason) for call in calls
                if call.turn_decision is not None and call.turn_decision.plan_update is not None]
@@ -247,6 +317,7 @@ def record(
             diagnostics.append("plan_revision_requires_reason_previous_plan_preserved")
         else:
             status = "created" if plan is None else "updated"
+            prior_scope_review = plan.get("scope_review") if plan is not None else None
             previous = ({key: plan[key] for key in
                          ("text", "revision", "diff_hash", "text_hash", "turn_id")}
                         if plan else None)
@@ -255,6 +326,8 @@ def record(
                 "turn_id": turn_id, "diff_hash": diff_hash, "text_hash": sha256_json(text),
                 "review_reasons": current["review_request"]["reasons"],
             }
+            if prior_scope_review is not None:
+                plan["scope_review"] = prior_scope_review
             if previous is not None:
                 plan["last_change"] = {
                     "previous_plan": previous, "reason": updates[0][2],
@@ -265,6 +338,31 @@ def record(
         "diagnostics": diagnostics, "revision": plan["revision"] if plan else 0,
         "scope": "before_tool_batch", "review_request": current["review_request"],
     }
+    reviews = [(call.action_id, getattr(call.turn_decision, "scope_review", None))
+               for call in calls if call.turn_decision is not None
+               and getattr(call.turn_decision, "scope_review", None) is not None]
+    if reviews:
+        review_owner, raw = reviews[0]
+        # Trusted diagnostics may bind an externally validated public prefix.
+        # It supplies reference evidence only, never planning lifecycle authority.
+        observations = events if evidence_events is None else evidence_events
+        review, issue = (scope_review.parse(
+            raw, events=observations, diff_hash=diff_hash, turn_id=turn_id,
+            public_issue=public_issue,
+        ) if plan is not None else (None, "scope_review_requires_plan"))
+        review_diagnostics = ([issue] if issue else [])
+        if len(reviews) > 1:
+            review_diagnostics.append("ignored_additional_scope_reviews")
+        receipt["scope_review"] = {
+            "action_id": review_owner, "status": "rejected" if issue else "applied",
+            "diagnostics": review_diagnostics,
+        }
+        if review is not None:
+            change = _behavior_change(observations, 0, diff_hash)
+            if change is not None:
+                review["mutation"] = {key: value for key, value in change.items()
+                                      if key != "guidance"}
+            plan["scope_review"] = review
     journal.append(EVENT, {
         "turn_id": turn_id, "workflow_gate": gate, "plan": plan, "receipt": receipt,
     })

@@ -84,7 +84,8 @@ def test_rehearsal_keeps_public_goal_without_prior_evidence_or_hidden_content(pr
     )
     assert frozen["model_hashes"]["A"] != frozen["model_hashes"]["B"]
     assert {s["name"] for s in frozen["registered_schema_catalog"]} == {
-        "read_file", "search_files", "replace_text", "run_check", "run_probe",
+        "read_file", "search_files", "replace_text", "edit_files", "observe_original",
+        "run_check", "run_probe",
         "finish_task", "stop_task",
     }
     assert packet["preparation_scope"]["credential"] == "NOT_READ"

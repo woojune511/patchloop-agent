@@ -11,7 +11,7 @@ from pathlib import Path
 from diagnostics import probe_recheck_panel as driver
 from diagnostics.positive_verification_panel import require, save
 from patchloop.dev import runner
-from patchloop.dev.contracts import DevRunRequest
+from patchloop.dev.contracts import DevLimits, DevRunRequest
 from patchloop.dev.cost import pricing_for_model
 from patchloop.dev.state import DevJournal
 from patchloop.runtime import git_commit, repository_root, runtime_content_hash
@@ -43,6 +43,7 @@ def request(case, arm, state_root):
         provider='openai', model=MODELS[arm],
         task=root / f'tasks/dev-train/swebench-lite-dev-{task}/public.yaml',
         state_root=state_root, env_file=root / '.env', max_cost_usd=ROW_CAP, repeat=1,
+        limits=DevLimits(max_accepted_mutations=4),  # Preserve this panel's fixed comparison.
         reasoning_effort='xhigh', max_output_tokens=25000, context_policy='segmented-v1',
         segment_boundary_policy='result-or-size-v1', planning_policy='brief-v1',
         enable_probes=True, probe_policy='none', repair_recheck=True,

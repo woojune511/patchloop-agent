@@ -9,6 +9,7 @@ from types import SimpleNamespace
 
 import pytest
 from native_history_support import input_context
+from repair_mechanism_expectations import FROZEN_ARM
 from test_dev_budget_v16 import PolicyGateway
 from test_dev_feedback_integration_v18 import _completed_batch, _context, _input
 from test_dev_notes_lifecycle_v15 import _gateway, _mutation, _read, _restart
@@ -38,9 +39,16 @@ def _failure(diff_hash):
 
 
 def _focus(failure, *, remaining=0, allowed=frozenset(), current="current"):
+    def completion_verification(*, diff_hash):
+        assert diff_hash == current
+        # These cases isolate public-check currency; original target failures have
+        # their own precedence controls in test_target_outcome.
+        return {"target_failure_count": 0, "target_failures": []}
+
     gateway = SimpleNamespace(
         _active_failed_check={"public_check_failure": failure},
-        limits=DevLimits(), accepted_mutations=4 - remaining,
+        limits=DevLimits(max_accepted_mutations=4), accepted_mutations=4 - remaining,
+        completion_verification=completion_verification,
     )
     return DevToolGateway.current_public_failure(
         gateway, diff_hash=current, allowed_tools=allowed,
@@ -99,7 +107,7 @@ def test_last_mutation_keeps_conditional_check_check_finish_path(order, remainin
     gateway = PolicyGateway()
     gateway.accepted_mutations = 4
     gateway.statuses = {"first": "NOT_RUN", "second": "NOT_RUN"}
-    limits = DevLimits()
+    limits = DevLimits(max_accepted_mutations=4)
     counters = runner._RunCounters(model_calls=40 - remaining_calls, tool_actions=33)
     stop = RequestedTool(
         name="stop_task", action_id="voluntary-stop",
@@ -136,7 +144,8 @@ def test_real_failure_or_insufficient_completion_budget_still_closes_dispatch(
     gateway.accepted_mutations = 4
     gateway.statuses = statuses
     policy = runner._tool_policy(
-        gateway, runner._RunCounters(model_calls=40 - remaining_calls), DevLimits(),
+        gateway, runner._RunCounters(model_calls=40 - remaining_calls),
+        DevLimits(max_accepted_mutations=4),
     )
     assert not policy.completion_possible
     assert policy.allowed_tools == {"stop_task"}
@@ -198,10 +207,12 @@ def test_last_edit_feedback_survives_native_delivery_restart_and_action_replay(t
 def test_feedback_changes_preserve_wire_limits_and_bounded_prompt():
     # V34 compresses memory descriptions only; ordered input shapes and non-memory
     # descriptions are independently pinned in test_dev_memory_guidance_v34.
-    # Include concern/finish guidance and the bounded search-history citation description.
+    # Pin fresh inputs including registered file batches; frozen arms stay exact.
     assert sha256_json(dev_tool_schemas(
         finish_enabled=True, allowed_tools=ALL_DEV_TOOLS, check_ids=["first", "second"],
-    )) == "sha256:97617720b1407fd7c8cea70290161ba918fc0fc9e344c0d764660e037201e0f6"
+    )) == ("sha256:71eb9bf0233eaa35ca2bb462ba43dad13fbc6182ff9ae4bae2b78ee5b274ad77"
+           if FROZEN_ARM is None else
+           "sha256:8b024770ed22b31b84e2e5b8890080e1aaad9f15ba9843f5c3ea3f1c12ee0fe0")
     assert dev_tool_surface_hash() != (
         "sha256:3a114a877f58c774aca0f555b106d7361df7b3087b4c04aa2903cbb9a49853cc"
     )
@@ -211,4 +222,6 @@ def test_feedback_changes_preserve_wire_limits_and_bounded_prompt():
     assert "mutation_completion_horizon describes another edit" in DEV_SYSTEM_PROMPT
     limits = DevLimits()
     assert (limits.max_model_calls, limits.max_tool_actions,
-            limits.max_accepted_mutations, limits.wall_time_seconds) == (40, 100, 4, 1800)
+            limits.max_accepted_mutations, limits.wall_time_seconds) == (
+                40, 100, 4 if FROZEN_ARM is not None else 12, 1800,
+            )

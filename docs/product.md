@@ -58,14 +58,20 @@ from the current workspace and durable public check evidence. It does not requir
 a separate planning phase. Submission requires a non-empty diff, no non-ignored
 untracked files, all required checks passing against that exact diff, and the agent's
 explicit submission assessment. After PASS, the agent reviews the public requirements,
-patch, evidence and remaining uncertainties before judging the task complete.
+patch, evidence and remaining uncertainties before returning the candidate.
 Further edits require fresh checks and reassessment; no extra review call is required.
 
-Mutation performs an exact text replacement in an allowed existing tracked file.
-The gateway validates the anchor against observed current source and enforces the
-complete diff's scope. Read, search, mutation, check, finish, and unsuccessful-stop
+Mutation performs exact observed-text replacement, or a file transaction that
+can create allowed files and change multiple files together. Receipt-based undo
+restores exact saved images when the targets are unchanged. The gateway validates
+existing anchors and enforces the complete diff's scope. Each accepted batch or
+undo consumes one edit; arbitrary shell/delete/rename is not exposed.
+Read, search, mutation, check, finish, and unsuccessful-stop
 operations are constrained by the tool contract and remaining resources. Optional
-public probes provide diagnostic observations and confer no submission credit.
+public probes provide observations and do not replace required checks.
+An optional bounded acquisition stage preserves an unmet public-task obligation
+before edits. Returned patches explicitly distinguish `unverified_delivery` from
+verified selected cases; independent acceptance remains separate.
 Tasks can also register a pytest suite for bounded selection of existing public
 test files or node IDs. This lets the agent reuse repository regression tests;
 these optional results do not replace required checks or establish full coverage.
@@ -75,6 +81,7 @@ these optional results do not replace required checks or establish full coverage
 | `patchloop/dev/runner.py` | Compose the loop, current state, and resource admission. |
 | `patchloop/dev/completion_budget.py` | Forecast completion and bounded failure call counts from an immutable snapshot, without I/O. |
 | `patchloop/dev/tools.py` | Enforce registered actions and current-diff evidence. |
+| `patchloop/dev/file_edits.py`, `file_transaction.py` | Admit file batches and reconcile saved before/after bytes after interruption. |
 | `patchloop/dev/model_state.py` | Present compact public state to the model. |
 | `patchloop/dev/state.py` | Journal events and recover action/provider state. |
 | `patchloop/dev/cost.py` | Admit provider cost immediately before dispatch. |
@@ -87,7 +94,7 @@ these optional results do not replace required checks or establish full coverage
 
 | Choice | Prevents or makes observable | Tradeoff and executable evidence |
 | --- | --- | --- |
-| Exact replacement of observed tracked text | Edits against unobserved or stale anchors | Restricts file creation and large changes; [mutation tests](../tests/test_dev_mutation_identity_v31.py) |
+| Exact observed edits and receipt-based file transactions | Edits against stale anchors or unknown recovery bytes | Per-text, task-scope and original-test constraints remain; [file tests](../tests/test_file_edits.py) |
 | Checks bound to the complete diff | Reusing an earlier candidate's PASS | Rechecking consumes actions/time; [completion tests](../tests/test_dev_completion_v27.py) |
 | Conservative pre-dispatch cost admission | Sending calls without admitted budget | May shorten output before completion; [cost tests](../tests/test_dev_completion_cost.py) |
 | Durable action identity and strict recovery | Reapplying a completed mutation/check | Uncertain external state stops progress; [journal tests](../tests/test_dev_state.py) |

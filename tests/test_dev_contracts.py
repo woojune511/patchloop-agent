@@ -158,6 +158,8 @@ def test_mutation_contract_requires_exact_replacement_and_typed_alternative() ->
         "causal_revision": None,
     }
     assert TextReplacementIntent.model_validate(base).causal_revision is None
+    fresh = {key: value for key, value in base.items() if key != "causal_revision"}
+    assert TextReplacementIntent.model_validate(fresh).causal_revision is None
     with pytest.raises(ValidationError):
         TextReplacementIntent.model_validate({**base, "new_text": "old"})
     with pytest.raises(ValidationError):

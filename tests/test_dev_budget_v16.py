@@ -64,7 +64,7 @@ def _probe_result(status="failed"):
 @pytest.mark.parametrize("probe_status", ["passed", "failed"])
 def test_diagnostic_probe_leaves_minimum_edit_path_available(probe_status):
     gateway = PolicyGateway()
-    limits = DevLimits()
+    limits = DevLimits(max_accepted_mutations=4)
     counters = _counters(limits, 9)
     before = runner._tool_policy(gateway, counters, limits)
     assert {"replace_text", "run_probe", "finish_task"} <= before.allowed_tools
@@ -109,7 +109,7 @@ def test_optional_edit_uses_minimum_and_preserves_capacity_evidence_boundaries(
     gateway.accepted_mutations = accepted
     gateway.anchor = anchor
     gateway.current_diff.untracked_files = ["new.py"] if untracked else []
-    limits = DevLimits()
+    limits = DevLimits(max_accepted_mutations=4)
     policy = runner._tool_policy(
         gateway, _counters(limits, model_remaining, tool_remaining), limits,
     )
@@ -122,7 +122,7 @@ def test_optional_edit_uses_minimum_and_preserves_capacity_evidence_boundaries(
 
 @pytest.mark.parametrize("remaining, protected", [(11, False), (12, True)])
 def test_edit_recovery_protection_is_separate_from_current_baseline(remaining, protected):
-    limits = DevLimits()
+    limits = DevLimits(max_accepted_mutations=4)
     policy = runner._tool_policy(PolicyGateway(), _counters(limits, remaining), limits)
     assert policy.protected_completion_possible is True  # Existing checked diff can finish.
     assert policy.mutation_completion_possible is True
@@ -133,11 +133,11 @@ def test_edit_recovery_protection_is_separate_from_current_baseline(remaining, p
 def test_optional_inspection_and_probe_still_preserve_protected_check_path():
     gateway = PolicyGateway()
     gateway.statuses = {"first": "NOT_RUN", "second": "NOT_RUN"}
-    limits = DevLimits()
+    limits = DevLimits(max_accepted_mutations=4)
     floor = runner._tool_policy(gateway, _counters(limits, 11), limits)
     assert floor.minimum_completion_calls == 3
     assert floor.completion_budget_calls == 11
-    assert floor.allowed_tools == {"replace_text", "run_check", "stop_task"}
+    assert floor.allowed_tools == {"replace_text", "edit_files", "run_check", "stop_task"}
     spare = runner._tool_policy(gateway, _counters(limits, 12), limits)
     assert {"read_file", "search_files", "run_probe"} <= spare.allowed_tools
     assert spare.exploration_state == "last_opportunity"
@@ -156,7 +156,9 @@ def test_anchor_attempt_feedback_does_not_require_one_targeted_read(failure_clas
     assert "targeted" not in card["next_question"]
     assert "one " not in card["next_question"]
     gateway.last_failed_mutation = failure.output
-    policy = runner._tool_policy(gateway, runner._RunCounters(), DevLimits())
+    policy = runner._tool_policy(
+        gateway, runner._RunCounters(), DevLimits(max_accepted_mutations=4),
+    )
     assert {"replace_text", "read_file", "search_files", "finish_task"} <= policy.allowed_tools
 
 

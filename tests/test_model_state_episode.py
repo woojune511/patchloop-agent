@@ -23,7 +23,7 @@ from patchloop.agent.model import EncryptedReasoningContinuationItem, ModelTurnE
 from patchloop.artifacts import ArtifactStore
 from patchloop.deadline import ExecutionDeadline
 from patchloop.dev import runner as loop
-from patchloop.dev.contracts import PublicTurnDecision, RequestedTool
+from patchloop.dev.contracts import DevLimits, PublicTurnDecision, RequestedTool
 from patchloop.dev.conversation import assemble_model_input, reconstruct_state
 from patchloop.dev.tools import dev_tool_schemas
 from patchloop.errors import ContractError
@@ -44,6 +44,8 @@ def episodes(gateway_factory, monkeypatch):
     result = []
     for arm in "ACBD":
         gateway, journal, _ = gateway_factory()
+        # Preserve the historical episode budget before constructing its initial input.
+        gateway.limits.max_accepted_mutations = 4
         active = engine.ActiveClock(lambda: 0)
         gateway.deadline = ExecutionDeadline.from_remaining(1800, clock=active)
         branch = episode.Episode(
@@ -290,7 +292,8 @@ def test_checkpoint_hydration_restores_counters_without_old_reasoning(factorial,
     payload = json.loads(request["input"][1]["content"])
     payload["remaining_budget"].update(model_calls=40 - counters.model_calls,
                                        tool_actions=100 - counters.tool_actions,
-                                       accepted_mutations=4, active_wall_time_seconds=1800)
+                                       accepted_mutations=DevLimits().max_accepted_mutations,
+                                       active_wall_time_seconds=1800)
     request["input"][1]["content"] = canonical_json(payload)
     cell = replace(cell, request_json=canonical_json(request), request_hash=sha256_json(request))
     plan = replace(plan, cells=(cell,))

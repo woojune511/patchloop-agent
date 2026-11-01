@@ -42,7 +42,10 @@ or proof of understanding. Preserve old events and their meanings on old runs.
 
 At each existing boundary:
 
-1. Complete/reconcile the current batch using existing recovery rules.
+1. Complete/reconcile every admitted batch using existing recovery rules. A batch
+   rejected before execution may carry its pending correction across a size boundary;
+   it neither completes any action nor advances the completed-review cursor. Keep
+   the existing correction limit, including across crash recovery.
 2. Resolve declared evidence against public observations; compute currentness.
 3. Select evidence within the existing source budget and compose an immutable
    candidate input. Record its exact payload and any count receipt before dispatch.

@@ -242,7 +242,7 @@ def replay(boundary, events, inputs, root):
         "protected_lines_preserved": len(protected),
         "note_projection": note_projection,
         "closed_by_model_count": sum(
-            c["status"] == "closed_by_model"
+            c["model_position"] == "closed_by_model"
             for c in view["working_notes"].get("verification", {}).get("items", [])),
         "new_input_bytes": len(canonical_json(model_input).encode()),
         "exact_token_count": "NOT_RUN", "behavior_effect": "NOT_ASSESSED",

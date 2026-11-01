@@ -335,14 +335,29 @@ def test_feedback_is_durable_native_and_advisory_without_source_admission(tmp_pa
     })["patch_hash"] == gateway.current_diff_hash
     items = _input(gateway, results, tmp_path)
     assert _outputs(items)["check"]["output"]["public_execution"] == output
-    summary = input_context(items)["public_execution_summary"]
-    assert summary == json.loads(_context(gateway, results))["public_execution_summary"]
+    # Completion projects the current view; the exact advisory body is delivered
+    # in native history and linked to this candidate by the current check record.
+    current = input_context(items)
+    assert current["workflow_gate"] == "ready_to_submit"
+    assert current["current_diff"]["patch_hash"] == output["diff_hash"]
+    assert current["latest_tool_results_delivery"] == {
+        "format": "preceding_function_call_output_items", "action_ids": ["check"],
+    }
+    check = current["recent_checks"][0]
+    assert check["action_id"] == "check" and check["check_id"] == "public"
+    assert check["diff_hash"] == output["diff_hash"] and check["passed"]
+    assert check["delivery"] == "preceding_function_call_output"
+    assert output["diagnostic_only"] is True
+    assert "source-read evidence" in output["interpretation"]
+    assert gateway.spans == {} and gateway._coverage_by_diff == before_coverage
+    summary = json.loads(_context(gateway, results))["public_execution_summary"]
     assert summary["interpretation"] == output["interpretation"]
     assert summary["files"][0]["not_observed_changed_ranges"] == [[53, 53]]
     before = gateway.journal.path.read_bytes()
     monkeypatch.setattr(gateway.sandbox, "run_check", lambda *a, **k: pytest.fail("reexecuted"))
     restored = _restart(gateway)
-    assert restored.execute(check_call()).replayed
+    replay = restored.execute(check_call())
+    assert replay.replayed and replay.output["public_execution"] == output
     assert restored.public_execution_summary(diff_hash=restored.current_diff_hash) == summary
     assert gateway.journal.path.read_bytes() == before
     # Further edits cannot inherit executed-line evidence or current PASS.

@@ -23,10 +23,14 @@ def _guidance(mutation, offered, *, ready=True):
     snapshot = SimpleNamespace(
         diff=SimpleNamespace(patch_hash="current"), ready_to_submit=ready,
         visible_check_status=({"check_id": "public", "status": "PASS" if ready else "NOT_RUN"},),
+        completion_verification=None,
     )
     policy = SimpleNamespace(
         workflow_gate="ready_to_submit" if ready else "needs_visible_checks",
         allowed_tools=frozenset(offered), check_ids=("public",),
+        verification_policy="public-checks-v1",
+        helper_correction=None, repair_path_diagnosis=None, repair_prediction=None,
+        edit_availability=None,
     )
     before = copy.deepcopy((snapshot, policy, mutation))
     result = runner._completion_guidance(snapshot, policy)

@@ -7,12 +7,13 @@ from types import SimpleNamespace
 
 import httpx
 import pytest
+from repair_mechanism_expectations import FROZEN_ARM
 from test_dev_feedback_integration_v18 import _context
 from test_dev_mutation_attempt_budget import _state
 from test_dev_notes_lifecycle_v15 import _gateway, _mutation, _read, _restart
 
 from patchloop.artifacts import ArtifactStore
-from patchloop.dev import runner
+from patchloop.dev import completion_context, repair_context, runner
 from patchloop.dev.contracts import (
     DevLimits,
     DevModelTurn,
@@ -67,9 +68,10 @@ def test_actual_inputs_explain_source_edit_check_submit_transitions(
             turn = super().next_turn(context, tools)
             for call in turn.tool_calls:
                 # Scripted public statements exercise transport, not model judgment quality.
-                call.turn_decision.plan_update = (
-                    unfinished_plan if call.name == "run_check" else None
-                )
+                if call.turn_decision is not None:
+                    call.turn_decision.plan_update = (
+                        unfinished_plan if call.name == "run_check" else None
+                    )
                 if call.name == "finish_task":
                     call.arguments["assessment"] = assessment
             return turn
@@ -96,7 +98,12 @@ def test_actual_inputs_explain_source_edit_check_submit_transitions(
     assert [g["stage"] for g in captured] == [
         "needs_source_evidence", "needs_mutation", "needs_visible_checks", "ready_to_submit",
     ]
-    assert all(i[0]["content"].startswith(DEV_SYSTEM_PROMPT) for i in inputs)
+    expected_prompts = [DEV_SYSTEM_PROMPT] * len(inputs)
+    if context_policy == "segmented-v1":
+        expected_prompts[1] = repair_context.system_prompt(states[1])
+        expected_prompts[-1] = completion_context.SYSTEM_PROMPT
+    assert all(item[0]["content"].startswith(prompt)
+               for item, prompt in zip(inputs, expected_prompts, strict=True))
     initial = states[0]
     assert initial["mutation_readiness"]["state"] == "needs_anchor_evidence"
     assert initial["action_horizon"]["completion_possible"]
@@ -120,10 +127,24 @@ def test_actual_inputs_explain_source_edit_check_submit_transitions(
     assert "check_result" in final["working_plan"]["review_request"]["reasons"]
     assert "unfinished verification" in final["completion_guidance"]["message"]
     system = inputs[-1][0]["content"]
-    assert "Skipped/rejected verification remains unperformed." in system
-    assert "listing a limitation is insufficient" in system
-    assert "Keep unfinished verification" in system
-    assert "This judgment needs no separate call or mandatory experiment." in system
+    if context_policy == "segmented-v1":
+        assert "Use the retained bounded plan for its requested review." in system
+        assert "Missing original verification can yield unverified_delivery." in system
+        assert "public verification is not independent acceptance." in system
+    elif FROZEN_ARM is None:
+        normalized = " ".join(system.split())
+        assert "Skipped checks remain unperformed." in normalized
+        assert "Finish assessment cites current evidence/inference and gaps." in normalized
+        assert "original_obligation retains unmet task verification." in normalized
+        assert "Missing original evidence returns unverified_delivery" in normalized
+        assert "independent evaluation is separate." in normalized
+        assert "finish_task automatically replays stale invocation-bound cases" in normalized
+    else:
+        assert "Skipped/rejected verification remains unperformed." in system
+        assert "listing a limitation is insufficient" in system
+        assert "This judgment needs no separate call or mandatory experiment." in system
+    if context_policy != "segmented-v1":
+        assert "Keep unresolved verification purposes in concerns" in system
     results = [e["payload"]["result"] for e in journal.events()
                if e["event_type"] == "action_finished"]
     assert {result["tool"] for result in results[:2]} == {"search_files", "read_file"}
@@ -168,7 +189,7 @@ def test_edit_stays_rejected_until_current_editable_source_is_observed(tmp_path)
 ])
 def test_actual_completion_barriers_do_not_promise_source_unlock(limits):
     gateway, counters = _state(("FAIL", "NOT_RUN"), anchor=False, **limits)
-    policy = runner._tool_policy(gateway, counters, DevLimits())
+    policy = runner._tool_policy(gateway, counters, DevLimits(max_accepted_mutations=4))
     assert policy.allowed_tools == {"stop_task"}
     snapshot = SimpleNamespace(
         diff=gateway.current_diff, ready_to_submit=gateway.ready_to_submit(),

@@ -65,9 +65,8 @@ def source_request(proposal_path: Path, proposal_hash: str) -> tuple[dict, dict]
             and sha256_bytes(path.read_bytes()) == source["journal_hash"], "source journal changed")
     require(path.name == source["run_id"] + ".jsonl" and path.parent.name == "runs",
             "source journal path mismatch")
-    # Do not construct a writable store/journal under the immutable source root.
-    journal = object.__new__(DevJournal)
-    journal.path, journal.run_id = path, source["run_id"]
+    # Initialize the reader without creating directories under the immutable source root.
+    journal = DevJournal(path.parent.parent, source["run_id"], create_dirs=False)
     events = journal.events()
     require(events and events[-1]["event_type"] == "terminal"
             and events[-1]["payload"]["terminal"] == "COUNT_TIMEOUT_OR_UNKNOWN",

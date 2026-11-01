@@ -78,9 +78,13 @@ def test_unsupported_stage_rejected():
     ([], "needs_visible_checks", False, "NOT_RUN"),
 ])
 def test_all_runtime_guidance_shapes(tools, gate, ready, status):
-    snapshot = SimpleNamespace(ready_to_submit=ready,
+    snapshot = SimpleNamespace(ready_to_submit=ready, completion_verification=None,
         visible_check_status=[{"status": status}], diff=SimpleNamespace(patch_hash="same"))
-    policy = SimpleNamespace(allowed_tools=tools, workflow_gate=gate, check_ids=[])
+    policy = SimpleNamespace(
+        allowed_tools=tools, workflow_gate=gate, check_ids=[],
+        verification_policy="reproduction-gated-v1", helper_correction=None,
+        repair_path_diagnosis=None, repair_prediction=None, edit_availability=None,
+    )
     guidance = _completion_guidance(snapshot, policy)
     request = {"tools": [{"name": t} for t in tools], "input": [
         {"content": canonical_json({"state": {"completion_guidance": guidance}})}]}

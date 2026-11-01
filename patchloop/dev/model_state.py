@@ -12,8 +12,17 @@ from typing import Any
 
 from patchloop.dev.check_review import link_check_evidence
 from patchloop.dev.evidence_focus import project_interpretations
+from patchloop.dev.mutation_tools import MUTATION_TOOLS
 from patchloop.dev.native_sources import public_exchanges
 from patchloop.dev.path_policy import mutation_path_allowed
+
+PUBLIC_DIAGNOSTIC_FIELDS = (
+    "candidate_reconsideration", "operator_public_feedback", "independent_candidate",
+    "change_review_request", "paired_observation", "followup_state_contract",
+    "operator_caller_observation", "verification_scope_cue", "expectation_review",
+    "operator_current_candidate_feedback", "supplied_public_case", "public_case_status",
+    "verification_phase",
+)
 
 # Inputs from the public context builder and native/segment delivery adapters.
 # New audit fields require an explicit projection decision before model delivery.
@@ -24,22 +33,45 @@ _MODEL_INPUT_FIELDS = frozenset({
     "current_public_failure", "mutation_readiness", "mutation_scope_budget",
     "observed_source_index", "evidence_ledger", "working_notes", "context_projection",
     "commitment_signal", "available_tool_names", "last_failed_mutation",
+    "last_rejected_test_proposal",
     "last_successful_mutation", "current_diff", "recent_checks", "public_execution_summary",
-    "latest_tool_results", "source_spans", "recent_attempt_result_next_question", "public_task",
+    "latest_tool_results", "source_spans", "dependency_sources",
+    "recent_attempt_result_next_question", "public_task", "supplemental_required_checks",
     "working_plan", "probe_cases", "repair_recheck", "probe_recheck",
-    "recent_probes", "recent_tests",
+    "recent_probes", "recent_tests", "reproduction_review",
     "latest_tool_results_delivery", "segment_handoff", "protocol_correction",
     # Existing public diagnostic overlays also pass through this projection when
     # constructed or replayed. Preserving them does not enable their producers.
-    "candidate_reconsideration", "operator_public_feedback", "independent_candidate",
-    "change_review_request", "paired_observation", "followup_state_contract",
-    "operator_caller_observation", "verification_scope_cue", "expectation_review",
-    "operator_current_candidate_feedback", "supplied_public_case", "public_case_status",
+    *PUBLIC_DIAGNOSTIC_FIELDS,
+    "diagnosis_stage", "repair_stage", "repair_intent", "completion_stage",
+    "inspection_focus",
 })
 
 
 def _select(value: dict[str, Any], keys: tuple[str, ...]) -> dict[str, Any]:
     return {key: value[key] for key in keys if key in value}
+
+
+def _completion_reserve(horizon: dict[str, Any]) -> dict[str, Any]:
+    """Label forecast requirements separately from the remaining run resources."""
+    reserve = {}
+    for label, calls, actions in (
+        ("minimum", "minimum_completion_calls", "minimum_completion_tool_actions"),
+        ("with_bounded_recovery", "completion_budget_calls", "completion_budget_tool_actions"),
+    ):
+        values = {name: horizon[key] for name, key in (
+            ("model_calls", calls), ("tool_actions", actions),
+        ) if key in horizon}
+        if values:
+            reserve[label] = values
+    if reserve:
+        reserve["interpretation"] = (
+            "Capacity needed for current completion obligations, not remaining-call or "
+            "action caps. A reserve of 1 does not mean only one call remains. "
+            "remaining_budget gives remaining totals; exploration_state and "
+            "available_tool_names describe further offered work."
+        )
+    return reserve
 
 
 def _check_followup(view: dict[str, Any], results: dict[str, dict[str, Any]]) -> None:
@@ -157,15 +189,18 @@ def compact_model_state(
     if "evidence_ledger" in view:
         view["evidence_ledger"] = _select(view["evidence_ledger"], ("search_summary",))
     if "action_horizon" in view:
+        reserve = _completion_reserve(view["action_horizon"])
         view["action_horizon"] = _select(view["action_horizon"], (
-            "minimum_completion_calls", "completion_budget_calls", "completion_possible",
-            "minimum_completion_tool_actions", "completion_budget_tool_actions",
+            "completion_reserve", "completion_possible",
             "protected_completion_possible", "mutation_completion_horizon", "exploration_state",
-            "repair_inspection",
+            "repair_inspection", "original_failure_diagnostic", "observation_correction",
+            "repair_path_diagnosis", "helper_correction", "first_observation",
             "model_turns_available_for_exploration", "tool_actions_available_for_exploration",
             "closure_reason", "tools_closing_after_this_turn", "tool_closure_prediction_basis",
-            "tool_policy_transition", "max_parallel_reads_this_turn",
+            "tool_policy_transition", "max_parallel_reads_this_turn", "action_budget",
         ))
+        if reserve:
+            view["action_horizon"]["completion_reserve"] = reserve
     if "mutation_readiness" in view:
         view["mutation_readiness"] = _select(view["mutation_readiness"], (
             "state", "current_anchor_evidence_paths",
@@ -180,6 +215,9 @@ def compact_model_state(
     if isinstance(notes, dict):
         # These constant explanations already appear in the fixed system prompt.
         notes.pop("interpretation", None)
+        if isinstance(notes.get("last_update_result"), dict):
+            # The complete optional receipt already carries its diagnostics.
+            notes.pop("last_update_diagnostics", None)
         verification = notes.get("verification", {})
         verification.pop("interpretation", None)
         for item in verification.get("items", []):
@@ -187,7 +225,10 @@ def compact_model_state(
             item.pop("updated_turn_id", None)
 
     results: dict[str, dict[str, Any]] = {}
+    probe_calls = {}
     for item in public_exchanges(history, archive_kind=archive_kind):
+        if item.get("type") == "function_call" and item.get("name") == "run_probe":
+            probe_calls[item["call_id"]] = json.loads(item["arguments"])
         if item.get("type") != "function_call_output":
             continue
         result = json.loads(item["output"])
@@ -196,6 +237,17 @@ def compact_model_state(
             results[item["call_id"]] = result
 
     _check_followup(view, results)
+
+    for record in view.get("recent_probes", []):
+        program = record.get("program")
+        call = probe_calls.get(record.get("action_id"), {})
+        if (isinstance(program, dict) and isinstance(program.get("python_source"), str)
+                and call.get("python_source") == program["python_source"]
+                and call.get("question") == record.get("question")):
+            # A replay call with null source does not deliver the original program.
+            # Deduplicate only against exact visible arguments, including archives.
+            program.pop("python_source")
+            program["delivery"] = "preceding_function_call_arguments"
 
     plan = view.get("working_plan")
     if isinstance(plan, dict):
@@ -230,7 +282,8 @@ def compact_model_state(
                     or (tool == "run_check"
                         and result["output"].get("check_id") != record.get("check_id"))):
                 continue
-            for field in ("stdout", "stderr", "execution_policy", "public_check_failure"):
+            for field in ("stdout", "stderr", "execution_policy", "public_check_failure",
+                          "call_path"):
                 record.pop(field, None)
             record["delivery"] = "preceding_function_call_output"
             if (tool == "run_probe" and isinstance(record.get("observation"), dict)
@@ -245,7 +298,7 @@ def compact_model_state(
     failed = view.get("last_failed_mutation")
     if isinstance(failed, dict):
         result = results.get(failed.get("action_id"), {})
-        if result.get("tool") == "replace_text" and result.get("status") == "failed":
+        if result.get("tool") in MUTATION_TOOLS and result.get("status") == "failed":
             view["last_failed_mutation"] = {
                 **_select(failed, (
                     "action_id", "baseline_diff_hash", "error_code", "error_location",
@@ -258,7 +311,7 @@ def compact_model_state(
     successful = view.get("last_successful_mutation")
     if isinstance(successful, dict) and "diff_hash" in successful:
         result = next((r for r in reversed(list(results.values()))
-                       if r.get("tool") == "replace_text" and r.get("status") == "succeeded"
+                       if r.get("tool") in MUTATION_TOOLS and r.get("status") == "succeeded"
                        and r["output"].get("worktree_diff_hash") == successful["diff_hash"]), None)
         if result is not None:
             view["last_successful_mutation"] = {

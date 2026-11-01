@@ -6,21 +6,35 @@ from datetime import datetime
 from decimal import Decimal
 from enum import StrEnum
 from pathlib import Path
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_serializer, model_validator
 
 from patchloop.contracts import Artifact, ProbeDependencyIdentity
-from patchloop.dev import check_review, cost, history_search, probe_cases, segments
+from patchloop.dev import (
+    check_review,
+    cost,
+    dependency_sources,
+    history_search,
+    probe_cases,
+    probe_comparison,
+    segments,
+)
 from patchloop.dev.context import RETAINED_SOURCE_CHARS, RetainedSourceChars
+from patchloop.dev.mutation_tools import MUTATION_TOOLS
+from patchloop.dev.repair_guidance import EXPECTED_BEHAVIOR_DESCRIPTION, HYPOTHESIS_DESCRIPTION
+from patchloop.errors import ContractError
 from patchloop.util import sha256_json
 
 DEV_RUN_SCHEMA = "dev-run-v1"
 DEV_RUNTIME_ID = "dev-head"
+VerificationPolicy = Literal["reproduction-gated-v1", "public-checks-v1"]
 DEV_READ_TOOLS = frozenset({"search_files", "read_file"})
-DEV_SINGLE_ACTION_TOOLS = frozenset({
-    "replace_text", "run_check", "run_tests", "run_probe", "finish_task", "stop_task",
+DEV_SINGLE_ACTION_TOOLS = MUTATION_TOOLS | frozenset({
+    "run_check", "run_tests", "run_probe", "observe_original",
+    "finish_task", "stop_task",
 })
+ANNOTATION_OPTIONAL_TOOLS = MUTATION_TOOLS | frozenset({"stop_task", "observe_original"})
 
 
 def dev_tool_surface_hash(
@@ -58,11 +72,23 @@ def dev_tool_surface_hash(
                 planning_policy=planning_policy, probe_policy=probe_policy),
             "probe_recheck": contract(),
         })
+    from patchloop.dev import completion_context, correction_drafts, inspection_focus
+
     base = sha256_json(
         {
-            "schema_version": "dev-tool-surface-v48",
+            "schema_version": "dev-tool-surface-v68",
+            "first_original_description": "stage-only-call-and-observation-v1",
+            "observed_target_exceptions": "system-exit-automatic-or-declared-v1",
+            "rejected_drafts": correction_drafts.contract(),
+            "parallel_generation": "only-when-current-gate-permits-read-batch-v1",
+            "fresh_probe_schema": "state-valid-original-acquisition-or-pending-diagnosis-v1",
+            "completion_context": completion_context.contract(),
+            "inspection_focus": inspection_focus.contract(),
+            "original_target_failure": "same-selected-call-exception-no-equality-credit-v1",
             "submission_assessment": "required-nonblank-current-diff-plan-review-v2",
-            "selected_public_tests": "registered-pytest-tracked-targets-optional-v1",
+            "selected_public_tests": "registered-pytest-same-test-before-after-optional-v2",
+            "selected_test_comparison": "two-isolated-children-cas-no-uncertain-reexecution-v1",
+            "selected_test_launcher": "direct-or-exact-public-copy-wrapper-v1",
             "segmented_context": segments.contract(),
             "native_context_policy": "opt-in-full-compaction-seed-public-reentry-prepared-count-v2",
             "repair_recheck": "opt-in-current-failure-child-check-before-inference-v1",
@@ -81,7 +107,7 @@ def dev_tool_surface_hash(
             "native_mutation_output": "admitted-position-prior-body-references-v1",
             "mutation_rebind_reference_limit": 16,
             "mutation_projection": "no-obsolete-alternative-requirement-v1",
-            "stop_wire": "reason-and-summary-no-model-source-ids-v1",
+            "stop_wire": "reason-and-summary-no-annotations-v2",
             "public_execution_feedback": "current-diff-changed-python-launch-thread-lines-v1",
             "public_execution_feedback_bounds": [8, 256, 12_000],
             "public_execution_report_limit_bytes": 16_000,
@@ -91,23 +117,27 @@ def dev_tool_surface_hash(
             "current_source_catalog": "file-hash-delivery-groups-with-mutation-path-permission-v2",
             "native_source_delivery": "exact-path-hash-line-union-references-v1",
             "native_source_reference_limit": 16,
-            "public_read_range": "inclusive-1-to-400-lines-advertised-v1",
+            "public_read_range": "character-bounded-inclusive-ranges-v3",
+            "replacement_occurrence": "integer-or-all-observed-matches-v1",
             "reasoning_context_evidence": "provider-reported-mode-or-null-v1",
             "reads": sorted(DEV_READ_TOOLS),
             "single_actions": sorted(DEV_SINGLE_ACTION_TOOLS),
             "max_parallel_reads": 4,
             "mixed_batches": False,
             "unrestricted_shell": False,
-            "new_files": False,
+            "file_transactions": "exact-batch-create-and-receipt-undo-v1",
+            "new_files": True,
             "turn_decision": [
                 "mode",
                 "basis",
                 "evidence_goal",
                 "memory_update",
             ],
+            "annotation_optional_tools": sorted(ANNOTATION_OPTIONAL_TOOLS),
+            "annotation_presence": "core-absent-null-and-legacy-value-preserved-v1",
             "parallel_read_decisions": "shared_inspect_mode_with_call_specific_rationale",
             "dynamic_workflow_tools": True,
-            "mutation_wire": "gateway-bound-exact-anchor-replacement-v2",
+            "mutation_wire": "six-fields-gateway-bound-exact-anchor-no-annotations-v3",
             "requirement_reference": "legacy-admission-and-replay-only-v3",
             "requirement_excerpt_limit": 600,
             "behavior_cases": "legacy-admission-and-replay-only-v2",
@@ -119,15 +149,47 @@ def dev_tool_surface_hash(
             "observation_to_action_guidance": "answer-implication-next-action-advisory-v1",
             "source_search": "rooted-component-glob-double-star-zero-depth-v1",
             "search_feedback": "eligible-decoded-file-count-v1",
+            "search_spans": "same-source-overlap-after-bounded-selection-v1",
             "mutation_failure": "typed-scope-preview-explicit-path-allowance-v3",
             "completion_horizon": "pre-dispatch-best-path-v2",
             "optional_mutation_admission": "minimum-attempt-initial-rejection-protection-v2",
             "mutation_anchor_guidance": "smallest-sufficient-exact-observed-text-v1",
             "public_check_failure_focus": "public-location-with-unknown-execution-boundary-v2",
             "public_failure_guidance": "diff-currency-and-actual-action-space-v1",
-            "completion_guidance": "current-diff-tool-prerequisites-v6",
+            "completion_guidance": "original-signature-correction-before-target-v11",
+            "edit_availability": "final-admission-source-prerequisite-v1",
+            "completion_reproduction": "acquired-original-after-edit-shared-finish-replay-v2",
+            "completion_reproduction_feedback": "bounded-current-observation-comparability-v1",
+            "original_obligation": "task-bound-base-failure-and-current-replay-v1",
+            "original_acquisition": "fresh-six-preparation-then-request-legacy-shared-six-v2",
+            "public_invocation": "python-call-signature-capture-v9-legacy-v1-v8-replay",
+            "public_call_signature": "bounded-actual-callable-signature-before-bind-v1",
+            "original_argument_correction": "one-linked-pretarget-bind-shared-reserve-v1",
+            "public_invocation_capture_bounds": [4096, 10000],
+            "public_exception_diagnostics": "bounded-public-frames-chain-side-report-v1",
+            "public_exception_diagnostic_bounds": [3, 16, 12, 6144, 32768],
+            "reproduction_comparison_feedback": "v3-healthy-frozen-json-field-differences-v1",
+            "reproduction_comparison_feedback_bounds": [
+                probe_comparison.MAX_DIFFERENCES, probe_comparison.MAX_PATH_CHARS,
+                probe_comparison.MAX_FEEDBACK_BYTES,
+            ],
+            "original_request_source": "host-full-public-task-and-issue-hash-v1",
+            "probe_request_correction": "field-diagnostics-actual-arguments-preflight-receipt-v1",
+            "probe_judgment": "same-call-failure-and-processing-v3-legacy-v1-v2-replay",
+            "probe_input_scope": "fixture-and-generated-sibling-roots-v1",
+            "probe_request_attempts": "v7-v9-explicit-pretarget-excluded-from-case-obligations-v1",
+            "repair_call_path": "original-refuted-unobserved-branch-bounded-diagnosis-v1",
+            "repair_prediction": "host-refutation-small-observable-source-or-test-v1",
+            "repair_diagnosis_reuse": "same-implementation-additive-test-historical-provenance-v1",
+            "call_path_collection": "separate-entry-coverage-coalesced-first-and-recent-details-v2",
+            "call_path_scope": "fresh-selected-call-saved-focus-scope-preserved-v2",
+            "repair_call_path_bounds": [4, 32, 6, 1, 2],
+            "repair_call_path_budget": "one-execution-preparation-and-request-correction-v1",
+            "observation_correction": "one-fresh-baseline-same-conditions-supersession-v1",
+            "observation_correction_budget": "one-model-one-probe-plus-minimum-completion-v1",
+            "probe_source_budget": "authored-8000-observer-8000-repr-transport-v1",
             "public_failure_recurrence": "semantic-site-with-raw-fallback-v1",
-            "causal_revision_guidance": "advisory-hypothesis-review-v2",
+            "causal_revision_guidance": "diagnosed-original-path-bound-revision-v3",
             "failed_check_repair_action_space": "budget-only-public-inspection-v2",
             "evidence_plateau_transition": "advisory-only-v2",
             "check_recovery_reserve": "order-independent-distinct-failure-bound-v2",
@@ -135,6 +197,7 @@ def dev_tool_surface_hash(
             "observed_source_index": "delivered-lexical-headers-16-entries-4000-chars-v1",
             "tool_closure_warning": "actual-single-inspection-successor-conditional-v1",
             "working_notes": "stable-notes-diff-scoped-question-evidence-v5",
+            "judgment_note_currency": "conflicted-or-superseded-requires-revalidation-v1",
             "question_evidence": "two-role-refs-current-diff-countercheck-first-v2",
             "source_note_normalization": "shared-observation-lf-not-mutation-format-v1",
             "working_note_feedback": "action-bound-expiry-independent-of-annotation-v3",
@@ -145,7 +208,8 @@ def dev_tool_surface_hash(
             "working_note_guidance": "compact-reusable-facts-and-lifecycle-guidance-v2",
             "verification_concerns": "original-question-progress-note-exact-noop-v2",
             "check_evidence_identity": "retained-action-check-diff-explicit-completion-currency-v2",
-            "check_definition_review": "registered-selection-requirement-scope-unassessed-v2",
+            "check_definition_review": "registered-pytest-selection-and-changed-test-receipts-v3",
+            "new_test_discovery": "new-pytest-module-public-filename-v1",
             "check_definition_review_bounds": [
                 check_review.MAX_TARGETS, check_review.MAX_RANGES,
                 check_review.MAX_TARGET_CHARS, check_review.MAX_REVIEW_CHARS,
@@ -165,7 +229,7 @@ def dev_tool_surface_hash(
             "public_probe_design_guidance": "public-input-variation-expected-observation-v1",
             "public_probe_usage_guidance": "injected-helper-direct-call-progressive-output-v1",
             "mutation_recovery": "atomic-complete-candidate-diff-v2",
-            "correction_recovery": "journal-derived-unconsumed-v2",
+            "correction_recovery": "journal-derived-unexecuted-drafts-same-diff-v3",
             "execution_deadline": "shared-active-deadline-owned-cleanup-v1",
             "provider_tool_validation": "schema-exact-null-bounded-diagnostic-v1",
         }
@@ -194,6 +258,7 @@ class DevTerminal(StrEnum):
     COST_CAP_REACHED = "COST_CAP_REACHED"
     PROTOCOL_VIOLATION = "PROTOCOL_VIOLATION"
     INCOMPLETE_RESPONSE = "INCOMPLETE_RESPONSE"
+    VERIFICATION_INCOMPLETE = "VERIFICATION_INCOMPLETE"
     PROVIDER_CONTINUATION_ERROR = "PROVIDER_CONTINUATION_ERROR"
     PROVIDER_TIMEOUT_OR_UNKNOWN = "PROVIDER_TIMEOUT_OR_UNKNOWN"
     COUNT_TIMEOUT_OR_UNKNOWN = "COUNT_TIMEOUT_OR_UNKNOWN"
@@ -203,10 +268,13 @@ class DevTerminal(StrEnum):
     AGENT_STOPPED = "AGENT_STOPPED"
 
 
+DEFAULT_ACCEPTED_MUTATIONS = 12
+
+
 class DevLimits(StrictModel):
     max_model_calls: int = Field(default=40, ge=1)
     max_tool_actions: int = Field(default=100, ge=1)
-    max_accepted_mutations: int = Field(default=4, ge=1)
+    max_accepted_mutations: int = Field(default=DEFAULT_ACCEPTED_MUTATIONS, ge=1)
     wall_time_seconds: int = Field(default=1_800, ge=1)
     max_protocol_recoveries: int = Field(default=1, ge=0, le=1)
     max_parallel_reads: int = Field(default=4, ge=1, le=4)
@@ -223,19 +291,24 @@ class TextReplacementIntent(StrictModel):
     path: str = Field(min_length=1, max_length=1_000)
     old_text: str = Field(min_length=1, max_length=20_000)
     new_text: str = Field(max_length=20_000)
-    occurrence: int = Field(default=1, ge=1, le=100)
-    hypothesis: str = Field(min_length=1, max_length=1_500)
-    expected_behavior: str = Field(min_length=1, max_length=1_500)
-    causal_revision: CausalRevision | None = None
+    occurrence: Annotated[int, Field(ge=1, le=100)] | Literal["all"] = 1
+    hypothesis: str = Field(
+        min_length=1, max_length=1_500, description=HYPOTHESIS_DESCRIPTION,
+    )
+    expected_behavior: str = Field(
+        min_length=1, max_length=1_500, description=EXPECTED_BEHAVIOR_DESCRIPTION,
+    )
+    repair_prediction: dict[str, Any] | None = None
     # Retained for old action/intent hashes and journal recovery. These annotations
     # are not advertised by the current provider schema; legacy parsing is nonblocking.
+    causal_revision: CausalRevision | None = None
     requirement_ref: Any = None
     behavior_cases: Any = None
 
     @model_serializer(mode="wrap")
     def preserve_optional_reference_wire(self, handler: Any) -> dict[str, Any]:
         result = handler(self)
-        for field in ("requirement_ref", "behavior_cases"):
+        for field in ("causal_revision", "requirement_ref", "behavior_cases", "repair_prediction"):
             if field not in self.model_fields_set:
                 result.pop(field, None)
         return result
@@ -244,6 +317,33 @@ class TextReplacementIntent(StrictModel):
     def replacement_changes_source(self) -> TextReplacementIntent:
         if self.old_text == self.new_text:
             raise ValueError("old_text and new_text must differ")
+        return self
+
+
+class FileEdit(StrictModel):
+    path: str = Field(min_length=1, max_length=1_000)
+    old_text: str | None = Field(min_length=1, max_length=20_000)
+    new_text: str = Field(max_length=20_000)
+    occurrence: Annotated[int, Field(ge=1, le=100)] | Literal["all"] = 1
+
+
+class FileEditIntent(StrictModel):
+    edits: list[FileEdit] | None = Field(default=None, min_length=1, max_length=16)
+    undo_action_id: str | None = Field(default=None, min_length=1, max_length=500)
+    hypothesis: str = Field(
+        min_length=1, max_length=1_500, description=HYPOTHESIS_DESCRIPTION,
+    )
+    expected_behavior: str = Field(
+        min_length=1, max_length=1_500, description=EXPECTED_BEHAVIOR_DESCRIPTION,
+    )
+    repair_prediction: dict[str, Any] | None = None
+
+    @model_validator(mode="after")
+    def one_operation(self) -> FileEditIntent:
+        if (self.edits is None) == (self.undo_action_id is None):
+            raise ValueError("provide edits or undo_action_id, with the other set to null")
+        if self.edits and len({edit.path for edit in self.edits}) != len(self.edits):
+            raise ValueError("each file appears once in an atomic edit")
         return self
 
 
@@ -279,11 +379,12 @@ class PublicTurnDecision(StrictModel):
     # Independent annotation parsing must not turn a bad plan into a tool failure.
     plan_update: Any = None
     plan_update_reason: Any = None
+    scope_review: Any = None
 
     @model_serializer(mode="wrap")
     def preserve_optional_plan_wire(self, handler: Any) -> dict[str, Any]:
         result = handler(self)
-        for field in ("plan_update", "plan_update_reason"):
+        for field in ("plan_update", "plan_update_reason", "scope_review"):
             if field not in self.model_fields_set:
                 result.pop(field, None)
         return result
@@ -320,7 +421,8 @@ class RequestedTool(StrictModel):
         if "rejected_turn_decision" not in self.model_fields_set:
             result.pop("rejected_turn_decision", None)
         has_wire_presence = (self.preserve_annotation_presence
-                             or "memory_update" in self.model_fields_set)
+                             or "memory_update" in self.model_fields_set
+                             or self.name in ANNOTATION_OPTIONAL_TOOLS)
         if "turn_decision" not in self.model_fields_set and has_wire_presence:
             result.pop("turn_decision", None)
         return result
@@ -432,6 +534,9 @@ class DevToolResult(StrictModel):
 
 class RunRequest(StrictModel):
     provider: Literal["mock", "openai"]
+    rate_limit_policy: Literal["none", "bounded-429-v1"] = Field(
+        default="none", exclude_if=lambda value: value == "none",
+    )
     task: Path
     model: str
     reasoning_effort: Literal["none", "low", "medium", "high", "xhigh"] = "medium"
@@ -439,6 +544,11 @@ class RunRequest(StrictModel):
         default=cost.DEFAULT_OUTPUT_CEILING,
         ge=cost.MINIMUM_OUTPUT_CEILING, le=cost.MAX_OUTPUT_CEILING, strict=True,
         exclude_if=lambda value: value == cost.DEFAULT_OUTPUT_CEILING,
+    )
+    max_correction_output_tokens: int | None = Field(
+        default=None,
+        ge=cost.MINIMUM_OUTPUT_CEILING, le=cost.MAX_OUTPUT_CEILING, strict=True,
+        exclude_if=lambda value: value is None,
     )
     env_file: Path | None = None
     max_cost_usd: Decimal | None = None
@@ -450,7 +560,17 @@ class RunRequest(StrictModel):
     state_root: Path | None = None
     prepared_source: Path | None = None
     prepared_probe_dependencies: Path | None = None
+    caller_source_roots: dict[str, str] = Field(
+        default_factory=dict, exclude_if=lambda value: not value,
+    )
     enable_probes: bool = False
+    verification_policy: VerificationPolicy = Field(
+        default="reproduction-gated-v1",
+        exclude_if=lambda value: value == "reproduction-gated-v1",
+    )
+    reproduction_acquisition: Literal["none", "bounded-v1"] = Field(
+        default="none", exclude_if=lambda value: value == "none",
+    )
     probe_policy: Literal["none", "cases-v1", "reference-cases-v1"] = "none"
     probe_recheck: Literal["none", "saved-program-v1"] = Field(
         default="none", exclude_if=lambda value: value == "none",
@@ -480,20 +600,40 @@ class RunRequest(StrictModel):
 
     @model_validator(mode="after")
     def provider_options_match(self) -> RunRequest:
+        if self.rate_limit_policy != "none" and self.provider != "openai":
+            raise ValueError("rate-limit retry policy requires OpenAI")
         if self.history_search_policy != "none" and (
             self.context_policy != segments.POLICY or self.agent_policy != "current"
         ):
             raise ValueError("--history-search public-v1 requires segmented-v1 and current policy")
         if self.agent_policy == "thin" and self.planning_policy != "none":
             raise ValueError("--agent-policy thin requires --planning-policy none")
+        if (self.max_correction_output_tokens is not None
+                and self.completion_cost_policy != cost.COMPLETION_RECOVERY_POLICY):
+            raise ValueError(
+                "--max-correction-output-tokens requires --completion-cost-policy "
+                "completion-recovery-v1"
+            )
         if (self.completion_cost_policy != cost.DEFAULT_COMPLETION_COST_POLICY
                 and self.context_policy != segments.POLICY):
-            raise ValueError("--completion-cost-policy completion-reserve-v1 requires segmented-v1")
+            raise ValueError("--completion-cost-policy reservation requires segmented-v1")
         if (self.segment_boundary_policy != segments.DEFAULT_BOUNDARY_POLICY
                 and self.context_policy != segments.POLICY):
             raise ValueError("--segment-boundary-policy size-only-v1 requires segmented-v1")
         if self.prepared_probe_dependencies is not None and not self.enable_probes:
             raise ValueError("--prepared-probe-dependencies requires --enable-probes")
+        try:
+            self.caller_source_roots = dependency_sources.normalize_roots(self.caller_source_roots)
+        except ContractError as exc:
+            raise ValueError(str(exc)) from exc
+        if self.caller_source_roots and (
+            self.prepared_probe_dependencies is None or not self.enable_probes
+        ):
+            raise ValueError(
+                "--caller-source requires prepared probe dependencies and enabled probes"
+            )
+        if self.reproduction_acquisition != "none" and not self.enable_probes:
+            raise ValueError("--reproduction-acquisition requires --enable-probes")
         if self.probe_policy != "none" and not self.enable_probes:
             raise ValueError("--probe-policy cases-v1 requires --enable-probes")
         if self.probe_recheck != "none" and (
@@ -551,6 +691,13 @@ class RunEnvelope(StrictModel):
     runtime_id: Literal["dev-head"] = "dev-head"
     run_id: str = Field(pattern=r"^run_dev_[a-zA-Z0-9_-]+$")
     provider: Literal["mock", "openai"]
+    rate_limit_policy: Literal["none", "bounded-429-v1"] = Field(
+        default="none", exclude_if=lambda value: value == "none",
+    )
+    verification_policy: VerificationPolicy = Field(
+        default="reproduction-gated-v1",
+        exclude_if=lambda value: value == "reproduction-gated-v1",
+    )
     task_path: str
     task_id: str
     task_version: int = Field(ge=1)
@@ -562,6 +709,9 @@ class RunEnvelope(StrictModel):
     )
     probe_dependencies: ProbeDependencyIdentity | None = Field(
         default=None, exclude_if=lambda value: value is None,
+    )
+    caller_source_roots: dict[str, str] = Field(
+        default_factory=dict, exclude_if=lambda value: not value,
     )
     public_spec_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     task_content_hash: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
@@ -604,6 +754,9 @@ class RunEnvelope(StrictModel):
     )
     probe_policy: Literal["none", "cases-v1", "reference-cases-v1"] = "none"
     compaction_contract: dict[str, Any] | None = None
+    reproduction_acquisition: Literal["none", "bounded-v1"] = Field(
+        default="none", exclude_if=lambda value: value == "none",
+    )
     probe_image_digest: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
     probe_profile_hash: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
     model: str
@@ -612,6 +765,11 @@ class RunEnvelope(StrictModel):
         default=cost.DEFAULT_OUTPUT_CEILING,
         ge=cost.MINIMUM_OUTPUT_CEILING, le=cost.MAX_OUTPUT_CEILING, strict=True,
         exclude_if=lambda value: value == cost.DEFAULT_OUTPUT_CEILING,
+    )
+    max_correction_output_tokens: int | None = Field(
+        default=None,
+        ge=cost.MINIMUM_OUTPUT_CEILING, le=cost.MAX_OUTPUT_CEILING, strict=True,
+        exclude_if=lambda value: value is None,
     )
     credential_file_path_hash: str | None = Field(
         default=None,
@@ -625,15 +783,23 @@ class RunEnvelope(StrictModel):
 
     @model_validator(mode="after")
     def provider_boundary_is_exact(self) -> RunEnvelope:
+        if self.rate_limit_policy != "none" and self.provider != "openai":
+            raise ValueError("rate-limit retry policy requires OpenAI")
         if self.history_search_policy != "none" and (
             self.context_policy != segments.POLICY or self.agent_policy != "current"
         ):
             raise ValueError("history search requires segmented-v1 and current policy")
         if self.agent_policy == "thin" and self.planning_policy != "none":
             raise ValueError("thin policy forbids planning state")
-        if self.completion_cost_policy == cost.COMPLETION_RESERVE_POLICY:
+        if (self.max_correction_output_tokens is not None
+                and self.completion_cost_policy != cost.COMPLETION_RECOVERY_POLICY):
+            raise ValueError("correction output allowance requires completion-recovery-v1")
+        if self.completion_cost_policy != cost.DEFAULT_COMPLETION_COST_POLICY:
             if (self.context_policy != segments.POLICY
-                    or self.completion_cost_contract != cost.completion_cost_contract()):
+                    or self.completion_cost_contract != cost.completion_cost_contract(
+                        self.completion_cost_policy,
+                        max_correction_output_tokens=self.max_correction_output_tokens,
+                    )):
                 raise ValueError("completion reserve requires segmented-v1 and its exact contract")
         elif self.completion_cost_contract is not None:
             raise ValueError("per-call cost policy has no completion reserve contract")
@@ -644,6 +810,8 @@ class RunEnvelope(StrictModel):
             raise ValueError("probe recheck requires cases-v1")
         if self.probe_policy != "none" and self.probe_image_digest is None:
             raise ValueError("probe cases require enabled probe identities")
+        if self.reproduction_acquisition != "none" and self.probe_image_digest is None:
+            raise ValueError("reproduction acquisition requires enabled probes")
         if self.planning_policy != "none" and self.context_policy not in {
             "append-v1", "segmented-v1",
         }:
@@ -661,6 +829,14 @@ class RunEnvelope(StrictModel):
             raise ValueError("prepared dependencies require enabled probes")
         if self.probe_dependencies is not None and self.prepared_probe_dependencies_path is None:
             raise ValueError("prepared dependency identity requires its source descriptor")
+        try:
+            self.caller_source_roots = dependency_sources.normalize_roots(self.caller_source_roots)
+        except ContractError as exc:
+            raise ValueError(str(exc)) from exc
+        if self.caller_source_roots and (
+            self.prepared_probe_dependencies_path is None or self.probe_dependencies is None
+        ):
+            raise ValueError("caller source roots require the prepared dependency snapshot")
         if self.cost_start_nanos > self.max_cost_nanos:
             raise ValueError("run envelope cost start exceeds its invocation cap")
         if self.provider == "openai":

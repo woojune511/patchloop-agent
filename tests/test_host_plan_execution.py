@@ -9,7 +9,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 import pytest
-from test_mutation_advice_checkpoint import source as source  # noqa: F401
+from test_mutation_advice_checkpoint import source as source_fixture
 
 from diagnostics import host_plan_checkpoint as checkpoint
 from diagnostics import host_plan_collection as collection
@@ -26,6 +26,22 @@ from patchloop.dev.cost import pricing_for_model
 from patchloop.dev.state import DevJournal
 from patchloop.errors import ContractError
 from patchloop.util import canonical_json, sha256_bytes
+
+
+@pytest.fixture(scope="module")
+def source(tmp_path_factory):
+    # This closed comparison binds the pre-stage common prompt. Keep that
+    # synthetic baseline explicit; current stage behavior is tested separately.
+    with pytest.MonkeyPatch.context() as patcher:
+        patcher.setattr(runner.repair_context, "pending", lambda _: False)
+        patcher.setattr(runner.completion_context, "active", lambda _: False)
+        return source_fixture.__wrapped__(tmp_path_factory)
+
+
+@pytest.fixture(autouse=True)
+def historical_stages(monkeypatch):
+    monkeypatch.setattr(runner.repair_context, "pending", lambda _: False)
+    monkeypatch.setattr(runner.completion_context, "active", lambda _: False)
 
 PRIMARY = {
     "helper_clean": "ACCEPT",
@@ -183,7 +199,7 @@ def fixture_plan(source, tmp_path_factory):
     a = bundle["request"]["input"][0]["content"]
     # Vary current synthetic plan guidance; no historical comparison bytes are rewritten.
     b = a.replace(
-        "Keep unresolved requirements visible.",
+        "The plan orders an approach to public_task.issue; it cannot redefine that task.",
         "When replacing the plan, compare it with the original public_task.issue.\n"
         "Carry forward each explicit requirement unless already observed public evidence\n"
         "supports treating it as satisfied or inapplicable; briefly cite that evidence.\n"

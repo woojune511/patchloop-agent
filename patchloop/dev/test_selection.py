@@ -4,9 +4,9 @@ from __future__ import annotations
 import stat
 from collections.abc import Callable
 from pathlib import Path, PurePosixPath
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from patchloop.contracts import PublicTestSuite, RegisteredCheck, StrictModel
 from patchloop.dev.check_feedback import output_tail
@@ -17,11 +17,24 @@ MAX_TARGETS = 8
 MAX_TARGET_CHARS = 500
 
 
+class TestComparison(StrictModel):
+    baseline: Literal["original_base", "before_mutation"]
+    mutation_action_id: str | None = Field(default=None, min_length=1, max_length=500)
+
+    @model_validator(mode="after")
+    def baseline_identity(self):
+        if (self.baseline == "before_mutation") != bool(self.mutation_action_id):
+            raise ValueError("before_mutation requires an implementation mutation action ID; "
+                             "original_base requires null")
+        return self
+
+
 class SelectedTests(StrictModel):
     suite_id: str = Field(min_length=1)
     targets: list[Annotated[str, Field(min_length=1, max_length=MAX_TARGET_CHARS)]] = Field(
         min_length=1, max_length=MAX_TARGETS,
     )
+    comparison: TestComparison | None = Field(default=None, exclude_if=lambda value: value is None)
 
 
 def selected_check(
@@ -95,5 +108,6 @@ def recent_tests(events: list[dict[str, Any]], diff_hash: str) -> list[dict[str,
             "counts_toward_completion": False,
             "stdout": stdout, "stderr": stderr,
             "truncated": bool(output.get("truncated")) or clipped_out or clipped_err,
+            **({"comparison": output["comparison"]} if "comparison" in output else {}),
         })
     return rows[-3:]

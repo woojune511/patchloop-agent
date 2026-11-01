@@ -12,19 +12,37 @@ missing internal planning caused the behavior; this is a new intervention.
 `--planning-policy` accepts `none`, `brief-v1`, `brief-evidence-v1`,
 `brief-assumption-v1`, and `brief-after-source-v1`; it defaults OFF. All brief
 variants support append-v1 and segmented-v1, not native-window-v1.
-Only ON adds nullable `plan_update` and `plan_update_reason` to `turn_decision` and adds
+Only ON adds nullable `plan_update`, `plan_update_reason` and `scope_review` to
+`turn_decision` and adds
 brief instructions. There is no planning tool, separate response, API call or
 planner model. OFF keeps the old system prompt, tool schema/order and absent
 decision-field serialization. The planning contract binds its instruction hash
 to model/envelope/tool identity and the evaluator manifest. No historical migration.
 
-A nonempty plan up to 3,000 characters replaces the whole plan. It should state
-the public task goal, remaining work/current hypotheses, verification and untested
+A nonempty plan up to 3,000 characters replaces the whole plan. It orders an
+approach to `public_task.issue`, not a replacement requirement. State remaining
+work/current hypotheses, verification and untested
 assumptions, not raw reasoning. Content guidance now asks for concrete unfinished
 work and the observation/check that could settle an assumption, not a generic
-inspect/edit/check outline. After a review signal, describe what the observed result
-confirmed, contradicted or left unresolved and the resulting remaining work and
-verification. Do not keep a completed-action log or invent changes to raise revision
+inspect/edit/check outline. Current guidance separates required public/caller/test
+contracts from behavior chosen by the repair; preserve existing success/failure
+meaning when sufficient. At the existing mutation review, connect important changes
+to refuting inputs and expected observations, including sibling failures and bypassed
+guards; required state preservation and success eligibility are distinct.
+Choose to test a material new assumption, narrow/remove an unnecessary change, or
+explain why its uncertainty cannot affect required behavior. Listing unknowns alone
+does not justify stopping. Prefer observations that could change the patch/submission
+decision over repeating supported examples. Existing edits/receipt undo support narrowing;
+these instructions do not create a new tool, review round or automatic semantic gate.
+The probe program must observe the property named by its question. After results, keep
+other material untested contracts open; setup/check completion alone does not settle them.
+Group related cases with a normal control. Before another check/probe, compare its
+input, setup and assertion with current-diff observations. Use the existing public
+`basis`, when offered, to name useful new information; reuse an adequately observed equivalent case.
+Changed inputs/conditions/assertions, incomplete evidence and post-edit rechecks may
+still justify execution. Renaming a program is not a new case. Host `not_assessed`
+means no automatic semantic judgment; it does not make an observed case unfinished.
+Do not keep a completed-action log or invent changes to raise revision
 counts. This is task-independent guidance, not a required section schema or semantic
 validator. Null keeps the existing plan when there is no useful revision. Identical text is
 recorded as unchanged, not counted as a new substantive review. The first non-null
@@ -40,8 +58,160 @@ first transition to ready-to-submit receives a review request. Ordinary reads do
 not demand rewriting; if no plan exists, the initial-plan request persists.
 Null is allowed even when review is requested and is not proof of reconsideration.
 Only a valid decision consumes an event-based request, never `turn_started` alone.
+The helper/requirement comparison below persists independently of that boundary.
 `working_plan_updated` records one idempotent receipt per valid turn before tools,
 including null/unchanged/rejected outcomes. Recovery uses those durable records.
+
+Compact repair delivers the same bounded `working_plan` and `working_notes` fields
+as ordinary decisions, including review requests, note IDs and update receipts.
+Its enabled prompt reuses these planning instructions; a fresh segment reprojects
+the review after the handoff event. When an observation changes the next decision,
+use an offered `memory_update` to retain its scoped finding and remaining question,
+with prior public evidence. An action's `basis` is not automatically a stored note.
+Annotations remain optional and appear only on tools whose schema offers them;
+edit, original-observation and stop calls do not gain planning fields. Null updates,
+source-change expiry, recent-probe bounds and finish eligibility remain unchanged.
+This repairs delivery, not the model's semantic judgment or willingness to use notes.
+
+### Review the applied change on the next useful decision
+
+For an admitted successful mutation still matching the current diff,
+`review_request.behavior_change` identifies `action_id`, `input_hash`,
+`baseline_diff_hash` and `candidate_diff_hash`, plus bounded host-authored `guidance`.
+Its guidance hash binds the planning contract. It is derived from the existing
+start/result receipts after the latest `working_plan_updated`; failed, no-op,
+stale or replay-only mutations do not create it. An applied undo is another
+mutation. Turn start, request correction or segment rollover alone cannot consume
+it; the next valid tool decision does, even with a null or rejected plan annotation.
+There is no new durable state, tool, review call or semantic completion gate.
+
+The attached guidance uses that existing decision to compare changed success/failure
+meaning with public requirements, callers and pre-existing tests. Mutation intent,
+plan conclusions and new test expectations remain claims to review; old code is a
+comparison, not an automatic oracle. For type/option branches, dispatch tables or
+exception lists, derive the affected family from public definitions, registries,
+callers or existing parameterized tests. Compare that scope with edited members
+and adequate current-diff observations; the edited list alone cannot establish
+completeness. Use existing read/search when missing scope evidence could change
+the repair. For small finite families, group unverified members relevant to the
+changed rule in a parameterized probe/test; for large families, choose uncovered
+branch representatives. Preserve the publicly grounded caller, input construction
+and outcome assertion while varying the member, keep a normal control and disclose
+missing setup assumptions. Reuse adequate current-diff results.
+
+Connect a material success/failure or guard change to a refuting input and an
+assertion of the required outcome; state preservation alone does not establish
+success eligibility.
+Choose an existing useful action. A discovered violation should lead to an
+executed regression, repair or undo, and checks of the resulting diff. Existing
+plan, concerns and observations remain intact; this projection does not extract or
+certify semantic requirements or enumerate families automatically. There is no
+new tool, review round, probe quota or submission gate. The execution-linked
+annotation below replaces the prior free-text-only scope comparison.
+The compact completion view preserves it. Planning OFF/thin have no such projection.
+
+### Link scope claims to executed public evidence
+
+At the existing review, `scope_review` records a bounded scope statement, up to four
+public read/search action IDs and one to four grouped case rows. Each row states
+`input`, `expected_observation`, `disposition`, `evidence_action_id` and
+`interpretation`. Fresh `input` is an object with `public_conditions` and
+`case_conditions`: a literal quote from `public_task.issue.title` or `.description`
+versus the caller/input/setup actually exercised or planned. Each string is at most
+500 characters. With the public issue supplied, the host matches the quote (CRLF/LF
+normalized) and binds its source, issue hash and quote hash. A paraphrase rejects
+only the annotation and preserves the prior review; the action can proceed.
+`public_conditions` may be null when no original condition is available or the
+case is a separate control; explain this
+in `interpretation` rather than inventing original conditions from the helper.
+Use `interpretation` to compare substitutions/missing setup and the evidence that
+makes them material or irrelevant. Assess a plan's finish condition against the
+public requirement; completing its helper does not establish the entire task.
+The host validates the quotation and execution/source references, not whether the
+chosen quote is sufficient, the case description is accurate or the conditions are
+equivalent. Legacy string inputs remain
+accepted and unchanged in stored/projected reviews and exact replay; no automatic
+conversion fills in their missing public-condition comparison.
+Fresh `expected_observation` separates `outcome` (up to 300 characters) from
+`public_basis` (up to 200, nullable): a public clause or observed pre-existing
+contract justifying the expected value. The total text allowance remains 500.
+Do not infer an oracle from the candidate/new test or its PASS; null preserves
+unspecified expectations. Relevant compatibility controls distinguish a narrow
+repair from an overbroad change. Old string expectations remain unchanged on replay.
+These statements remain model-authored; the host does not certify their meaning.
+The dispositions are `executed`, `source_inferred` and `untested`. This replaces
+the informal contract/case/evidence mapping in the brief-plan instructions; it is
+not another completed-action log or an automatic enumeration of the affected family.
+
+`executed` must refer to an already returned public `run_check`, `run_tests` or
+`run_probe` result on the current diff. The narrow exception is a quoted, identity-bound
+helper named by the current requirement comparison, including its direct replay parent:
+it may be cited as historical comparison evidence after editing. Other stale results
+remain rejected. The host binds the actual execution's action/input/diff identity,
+never the new candidate's diff, and its reported outcome. Failed checks and partial/timeout observations remain
+valid execution facts, with their limits retained; executed never means verified.
+Source references resolve only to completed public reads/searches and retain their
+original diff identity. `source_inferred` needs a source reference; inference and
+untested rows have no execution ID. A real receipt cannot certify the named caller,
+assertion, complete family or the model's interpretation: those remain unverified
+claims, even when a suite passed.
+
+The annotation lives inside the existing working plan and `working_plan_updated`
+event. Null preserves it; replacing the prose plan also preserves it. A new candidate
+marks its prior evidence historical, without rebinding it. Completion and submission
+retain it beside the assessment. An invalid reference/shape rejects only the review;
+the plan/tool action can still proceed. Missing review adds no correction call or
+finish gate. At most the first non-null review in a parallel batch is applied.
+Old absent-field serialization is preserved; explicit null remains distinct.
+Enabled identities bind the schema and guidance. Planning OFF gains no annotation
+or comparison projection; the shared completion retention contract has a new hash.
+
+`review_request.requirement_comparison` names the latest identity-bound helper,
+the immutable public issue hash and its `recent_probes` evidence location. It stays
+`review_needed` through null annotations and plan changes until a stored case binds
+both a literal issue quote and that execution's action/input identity. A new helper
+needs its own comparison. Later unrelated scope reviews do not erase the recorded
+comparison: the projection searches existing journal annotations for the newest
+matching issue/action/input/diff/tool. If that case is absent from the latest scope
+review, `recorded_review` retains just that one bounded case and its authoring turn
+and diff; execution currency is still relative to the current candidate.
+`review_recorded` means only that this annotation exists;
+interpretation remains model-authored and requirement fit is `not_certified`.
+Compare actual inputs/callers and outcomes, including distinguishing controls, then
+connect a material gap to an offered action or concrete blocker. Source evidence may
+justify proceeding without another execution. No new tool, call, quota or finish
+gate is added; annotations remain optional.
+
+Completion uses the same short comparison guidance whenever planning is enabled,
+including before the first helper. The prompt therefore stays stable if a helper
+appears inside an existing completion segment. It does not add initial planning
+instructions or a separate response. Planning OFF keeps the prior completion prompt.
+Actual append/segmented input, correction and resumed completion paths are tested.
+
+An exact helper replay on another diff also retains its referenced prior result.
+Those at most two observations use the existing three-probe recent-result limit;
+the remaining slot takes the newest result. Completion retains their bounded program
+and output, including a historical base observation, without making it current
+verification evidence. Other old results keep existing omission rules. This is a
+bounded comparison of the latest helper, not an exhaustive semantic obligation ledger.
+
+`working_plan.source_receipts` supplies discoverable read/search IDs for repository
+`source_spans` already selected in the current view, including inline source after a
+segment reset. Matching uses source scope, path, exact file hash and range overlap;
+the index shows only intersecting ranges, never new source text or edit authority.
+It retains up to eight receipts with eight ranges each and explicit omission counts.
+Stage projection recomputes it from the remaining source selection. Old source diff
+identity stays visible; this catalogue grants no execution or coverage credit.
+The separately selected `dependency_sources` pool is not indexed by this projection.
+
+An internal `evidence_events` argument supports a diagnostic's already hash-validated
+public checkpoint prefix. It resolves references and mutation identity only; it
+does not import old execution events as new actions or control plan lifecycle,
+counters, review triggers or idempotency. Normal runs use their own journal.
+Diagnostic re-projections also pass the actual public issue. Verification-role
+phase boundaries still exclude the other phase's plan interpretation while retaining
+public action evidence. History-search replay uses a read-only view of that prefix
+when constructing its action card; it does not manufacture a new gateway or action.
 
 ### Revision and submission evidence
 

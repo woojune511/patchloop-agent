@@ -35,10 +35,16 @@ class Reporter:
                 if self.working_directory == "."
                 else self.working_directory + "/" + relative
             )
-            for selector in self.selectors:
+            # None is used only by a registered selected-test comparison: pytest
+            # already received the exact selected node IDs, including unittest methods.
+            function = getattr(item, "originalname", None) or item.name.split("[", 1)[0]
+            selectors = self.selectors
+            if selectors is None:
+                selectors = [{"path": path, "function": function, "indices": None}]
+            for selector in selectors:
                 if (
                     path != selector["path"]
-                    or getattr(item, "originalname", None) != selector["function"]
+                    or function != selector["function"]
                 ):
                     continue
                 indices = selector["indices"]

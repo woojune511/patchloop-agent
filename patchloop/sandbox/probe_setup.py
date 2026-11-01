@@ -10,14 +10,20 @@ from __future__ import annotations
 import json
 import math
 import os
+import runpy
 import threading
 from contextlib import suppress
+from functools import wraps
+from pathlib import Path
 
-MAX_CHECKS = 16
-MAX_LABEL_CHARS = 120
-MAX_VALUE_CHARS = 256
+# Load the exact adjacent trusted copy before candidate imports become available.
+_API = runpy.run_path(str(Path(__file__).with_name("probe_api.py")))
+
+MAX_CHECKS = _API["MAX_SETUP_CHECKS"]
+MAX_LABEL_CHARS = _API["MAX_SETUP_LABEL_CHARS"]
+MAX_VALUE_CHARS = _API["MAX_SETUP_VALUE_CHARS"]
 MAX_REPORT_BYTES = 8_000
-ERRORS = {"invalid_label", "unsupported_value", "check_limit", "report_limit"}
+ERRORS = {"invalid_label", "unsupported_value", "check_limit", "report_limit", "api_usage"}
 
 
 def marker(request: dict) -> bytes:
@@ -29,7 +35,7 @@ def _scalar(value: object) -> bool:
     kind = type(value)
     return (value is None or kind is bool
             or (kind is str and len(value) <= MAX_VALUE_CHARS)
-            or (kind is int and value.bit_length() <= 256)
+            or (kind is int and value.bit_length() <= _API["MAX_SETUP_INTEGER_BITS"])
             or (kind is float and math.isfinite(value)))
 
 
@@ -46,11 +52,33 @@ class SetupChecks:
         self.request = request
         self.checks: list[dict] = []
         self.error: str | None = None
+        self.api_error: dict | None = None
         self.lock = threading.Lock()
         self.write = os.write
 
+        @wraps(self.check)
+        def invoke(*args, **kwargs):
+            try:
+                values = _API["bind_setup"](args, kwargs)
+            except _API["HelperAPIError"] as error:
+                with self.lock:
+                    self.api_error = dict(error.details)
+                    self.error = "api_usage"
+                raise
+            return self.check(**values)
+
+        self.invoke = invoke
+
+    validate_observer_settings = staticmethod(_API["validate_observer_settings"])
+
     def _report(self, checks: list[dict]) -> dict:
-        return {"request_hash": self.request["request_hash"], "checks": checks, "error": self.error}
+        report = {"request_hash": self.request["request_hash"],
+                  "checks": checks, "error": self.error}
+        if self.api_error is not None:
+            report["api_error"] = self.api_error
+            if len(_encode(report)) > MAX_REPORT_BYTES:
+                report.update(checks=[], error="report_limit")
+        return report
 
     def check(self, label: str, actual: object, expected: object) -> None:
         """Record type-strict scalar equality; raise on mismatch or invalid usage."""
@@ -93,12 +121,18 @@ def public_feedback(request: dict, report: object) -> dict:
             "in-process report can be interfered with; it is not an attestation."
         ),
     }
-    if not isinstance(report, dict) or set(report) != {"request_hash", "checks", "error"}:
+    fields = {"request_hash", "checks", "error"}
+    if not isinstance(report, dict) or set(report) not in (fields, fields | {"api_error"}):
         return {**feedback, "reason": "missing_or_invalid_report"}
     checks, error = report["checks"], report["error"]
     if (report["request_hash"] != request["request_hash"] or not isinstance(checks, list)
             or len(checks) > MAX_CHECKS or (error is not None and
                                          (not isinstance(error, str) or error not in ERRORS))):
+        return {**feedback, "reason": "missing_or_invalid_report"}
+    if "api_error" in report and (
+            not _API["valid_error"](report["api_error"])
+            or report["api_error"]["api"] != "check_setup"
+            or error not in {"api_usage", "report_limit"}):
         return {**feedback, "reason": "missing_or_invalid_report"}
     for row in checks:
         if (not isinstance(row, dict) or set(row) != {"label", "actual", "expected"}
@@ -107,6 +141,8 @@ def public_feedback(request: dict, report: object) -> dict:
             return {**feedback, "reason": "missing_or_invalid_report"}
     if len(_encode(report)) > MAX_REPORT_BYTES:
         return {**feedback, "reason": "missing_or_invalid_report"}
+    if "api_error" in report:
+        feedback["api_error"] = dict(report["api_error"])
     rows = [{**row, "matched": type(row["actual"]) is type(row["expected"])
              and row["actual"] == row["expected"]} for row in checks]
     if error is not None:

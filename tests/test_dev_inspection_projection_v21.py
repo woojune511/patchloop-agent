@@ -6,6 +6,7 @@ import json
 
 import pytest
 from native_history_support import input_context
+from repair_mechanism_expectations import FROZEN_ARM
 from test_dev_context_v12 import note_call, source_note
 from test_dev_feedback_integration_v18 import _context, _input, _outputs
 from test_dev_notes_lifecycle_v15 import _gateway, _read, _restart
@@ -206,8 +207,8 @@ def test_parallel_native_receipt_cache_and_restart_preserve_originals(tmp_path):
         assert json.loads(native["arguments"]) == runner._provider_tool_arguments(call)
         assert json.dumps(items).count(call.turn_decision.basis) == 1
         assert json.dumps(items).count(call.turn_decision.evidence_goal) == 1
-    assert outputs["owner"]["memory_update_result"] == update["receipt"]
-    assert "memory_update_result" not in outputs["second"]
+    assert all("memory_update_result" not in output for output in outputs.values())
+    assert input_context(items)["working_notes"]["last_update_result"] == update["receipt"]
     for result in results:
         assert outputs[result.action_id]["output"]["spans"] == result.output["spans"]
         assert outputs[result.action_id]["output"]["evidence_gain"] == (
@@ -247,9 +248,11 @@ def test_projection_preserves_current_ordered_tool_inputs_and_limits():
             return [structure(item) for item in value]
         return value
 
-    # The current ordered inputs include the required finish assessment.
+    # Ordered fresh inputs include atomic file batches and optional original observation.
     encoded = json.dumps(structure(schemas), separators=(",", ":"), ensure_ascii=False).encode()
     assert hashlib.sha256(encoded).hexdigest() == (
+        "e96198c7dd7d8f66a138c374746754104de8f5967cff0329c50937ec0d4ad652"
+        if FROZEN_ARM is None else
         "acdcc28623f92006faaa95a0c58015095e28b851093d0eb983e8d59bcd303222"
     )
     assert dev_tool_surface_hash() != (
@@ -259,4 +262,6 @@ def test_projection_preserves_current_ordered_tool_inputs_and_limits():
     assert DEV_RUN_SCHEMA == "dev-run-v1"
     limits = DevLimits()
     assert (limits.max_model_calls, limits.max_tool_actions, limits.max_accepted_mutations,
-            limits.wall_time_seconds) == (40, 100, 4, 1800)
+            limits.wall_time_seconds) == (
+                40, 100, 4 if FROZEN_ARM is not None else 12, 1800,
+            )

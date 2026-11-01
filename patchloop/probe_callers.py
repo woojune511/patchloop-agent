@@ -2,11 +2,70 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from packaging.requirements import InvalidRequirement, Requirement
 from packaging.utils import canonicalize_name, parse_wheel_filename
 from packaging.version import InvalidVersion, Version
 
 from patchloop.errors import ContractError
+from patchloop.util import safe_relative_path
+
+if TYPE_CHECKING:
+    from patchloop.contracts import PublicTask
+
+
+def source_root(value: str) -> str:
+    """Validate a declared public caller directory without guessing an import name."""
+    if not isinstance(value, str) or any(char in value for char in (":", "\x00")):
+        raise ContractError("caller source root must be a safe relative path")
+    root = safe_relative_path(value, field_name="caller source root")
+    if (root == "." or len(root) > 256 or any(char in root for char in "*?[]")
+            or any(part.casefold() in {".git", ".patchloop-hidden"}
+                   or part.casefold().startswith(".env") for part in root.split("/"))):
+        raise ContractError("caller source root must be a bounded public literal directory")
+    return root
+
+
+def task_requirements(public: PublicTask, values: list[str] | None) -> list[str] | None:
+    """Include task-owned pins in every preparation, preserving legacy omission."""
+    if not public.caller_requirements:
+        return values
+    selected = dict(pin.split("==") for pin in requirements(values or [], project_name=""))
+    for caller in public.caller_requirements:
+        name, version = caller.requirement.split("==")
+        if name in selected and Version(selected[name]) != Version(version):
+            raise ContractError(f"task requires public caller {caller.requirement}")
+        selected[name] = version
+    return requirements([f"{name}=={version}" for name, version in selected.items()],
+                        project_name="")
+
+
+def task_source_roots(public: PublicTask, roots: dict[str, str]) -> dict[str, str]:
+    """Task-declared directories are explicit registrations, just like request roots."""
+    merged = dict(roots)
+    for caller in public.caller_requirements:
+        name = caller.requirement.split("==")[0]
+        if name in merged and merged[name] != caller.source_root:
+            raise ContractError(f"task requires caller source {name}={caller.source_root}")
+        merged[name] = caller.source_root
+    return merged
+
+
+def verify_task_snapshot(public: PublicTask, descriptor: dict) -> None:
+    """Fail before publication or dispatch if a declared caller capability is absent."""
+    if not public.caller_requirements:
+        return
+    pins = dict(pin.split("==") for pin in from_descriptor(descriptor))
+    for caller in public.caller_requirements:
+        name, version = caller.requirement.split("==")
+        if name not in pins or Version(pins[name]) != Version(version):
+            raise ContractError(f"task requires prepared public caller {caller.requirement}")
+        if not any(path.startswith(caller.source_root + "/") and path.endswith(".py")
+                   for path in descriptor["files"]):
+            raise ContractError(
+                f"task requires indexed caller source {name}={caller.source_root}"
+            )
 
 
 def requirements(values: list[str], *, project_name: str) -> list[str]:

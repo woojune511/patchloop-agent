@@ -135,14 +135,18 @@ def test_failure_read_repair_preserves_native_history_and_current_public_state(
     )
     assert views[-1]["visible_check_status"][0]["status"] == "PASS"
     if policy == segments.SIZE_ONLY_BOUNDARY_POLICY:
-        assert result["context_management"]["transition_reasons"] == ["initial"]
-        assert all(not view["segment_handoff"]["review_requested"] for view in views[1:])
+        assert result["context_management"]["transition_reasons"] == [
+            "initial", "repair_stage_entered", "repair_stage_returned", "completion_stage_entered",
+        ]
+        assert not views[after]["segment_handoff"]["review_requested"]
         assert "check_result" in views[before]["working_plan"]["review_request"]["reasons"]
         assert "context_handoff" not in views[before]["working_plan"]["review_request"]["reasons"]
         old_native = [item for item in inputs[before] if "type" in item]
         new_native = [item for item in inputs[after] if "type" in item]
         assert old_native and new_native[:len(old_native)] == old_native
-        assert sum(item.get("type") == "reasoning" for item in new_native) == before + 1
+        assert sum(item.get("type") == "reasoning" for item in new_native) == (
+            sum(item.get("type") == "reasoning" for item in old_native) + 1
+        )
     else:
         assert views[after]["segment_handoff"]["review_requested"]
         assert not any(item.get("type") == "reasoning" for item in inputs[after])
@@ -199,15 +203,15 @@ def test_real_mock_failure_read_repair_reaches_isolated_acceptance(tmp_path, mon
 @pytest.mark.parametrize("limit", ["tokens", "request_bytes", "encrypted_item_bytes"])
 def test_size_only_still_rolls_over_at_size_and_preserves_correction(tmp_path, monkeypatch, limit):
     request, inputs, counted, views = configured(
-        monkeypatch, tmp_path, boundary_policy="size-only-v1", incomplete_at=(1,),
-        oversized_at=() if limit == "tokens" else (1,),
+        monkeypatch, tmp_path, boundary_policy="size-only-v1", incomplete_at=(0,),
+        oversized_at=() if limit == "tokens" else (0,),
     )
     if limit == "tokens":
         count = runner.OpenAIResponsesAdapter.count_input_tokens_v2
 
         def tokens(self, payload, **kwargs):
             normal = count(self, payload, **kwargs)
-            return 60_001 if len(counted) == 3 else normal
+            return 60_001 if len(counted) == 2 else normal
         monkeypatch.setattr(runner.OpenAIResponsesAdapter, "count_input_tokens_v2", tokens)
     elif limit == "request_bytes":
         monkeypatch.setattr(segments, "MAX_ENCRYPTED_ITEM_BYTES", 2_000_000)
@@ -218,11 +222,14 @@ def test_size_only_still_rolls_over_at_size_and_preserves_correction(tmp_path, m
     assert result["call_counts"]["model"] == len(inputs) == 5
     assert len(counted) == 5 + (limit == "tokens")
     reason = "input_tokens" if limit == "tokens" else limit
-    assert result["context_management"]["transition_reasons"] == ["initial", reason]
-    assert not any(item.get("type") == "reasoning" for item in inputs[2])
-    assert "max_output_tokens" in canonical_json(views[2]["recent_attempt_result_next_question"])
-    assert views[2]["remaining_budget"]["consecutive_protocol_corrections"] == 0
-    assert views[2]["current_diff"] == views[1]["current_diff"]
+    assert result["context_management"]["transition_reasons"] == [
+        "initial", reason, "repair_stage_entered", "repair_stage_returned",
+        "completion_stage_entered",
+    ]
+    assert not any(item.get("type") == "reasoning" for item in inputs[1])
+    assert "max_output_tokens" in canonical_json(views[1]["recent_attempt_result_next_question"])
+    assert views[1]["remaining_budget"]["consecutive_protocol_corrections"] == 0
+    assert views[1]["current_diff"] == views[0]["current_diff"]
 
 
 @pytest.mark.parametrize("resource", ["bytes", "tokens"])
@@ -253,7 +260,7 @@ def test_size_only_resume_keeps_mutation_and_handoff_idempotent(tmp_path, monkey
     assert_submitted(result)
     assert result["accepted_mutations"] == 1
     assert len(inputs) == len(counted) == 4
-    assert len([e for e in journal.events() if e["event_type"] == segments.EVENT]) == 2
+    assert len([e for e in journal.events() if e["event_type"] == segments.EVENT]) == 4
     segments.active(journal, store, boundary_policy="size-only-v1")
 
 

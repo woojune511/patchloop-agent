@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import subprocess
 
+from repair_mechanism_expectations import FROZEN_ARM
+
 from patchloop.contracts import RegisteredCheck
 from patchloop.dev.contracts import PublicTurnDecision, RequestedTool
 from patchloop.dev.model import DEV_SYSTEM_PROMPT, MOCK_MUTATIONS
@@ -145,7 +147,23 @@ def test_mutation_tool_contract_is_one_exact_gateway_generated_replacement() -> 
     assert "never provide diff syntax" in mutation["description"]
     assert "bounded post-image" in mutation["description"]
     assert "evidence_span_ids" not in mutation["parameters"]["properties"]
+    if FROZEN_ARM is None:
+        assert set(mutation["parameters"]["properties"]) == {
+            "path", "old_text", "new_text", "occurrence", "hypothesis", "expected_behavior",
+        }
+        file_mutation = next(schema for schema in schemas if schema["name"] == "edit_files")
+        assert set(file_mutation["parameters"]["properties"]) == {
+            "edits", "undo_action_id", "hypothesis", "expected_behavior",
+        }
+        assert set(file_mutation["parameters"]["required"]) == set(
+            file_mutation["parameters"]["properties"])
+        assert file_mutation["parameters"]["additionalProperties"] is False
+        assert set(stop["parameters"]["properties"]) == {"reason_code", "summary"}
     for schema in schemas:
+        if FROZEN_ARM is None and schema["name"] in {"replace_text", "edit_files", "stop_task"}:
+            assert not {"turn_decision", "memory_update", "causal_revision"} & set(
+                schema["parameters"]["properties"])
+            continue
         decision = schema["parameters"]["properties"]["turn_decision"]
         assert "turn_decision" in schema["parameters"]["required"]
         assert set(decision["required"]) == set(decision["properties"])
@@ -168,11 +186,24 @@ def test_mutation_tool_contract_is_one_exact_gateway_generated_replacement() -> 
             assert evidence_goal["type"] == "null"
     assert "binds observed evidence" in DEV_SYSTEM_PROMPT
     assert "do not supply evidence span IDs or a patch wrapper" in DEV_SYSTEM_PROMPT
-    assert "Every response must request either" in DEV_SYSTEM_PROMPT
-    assert "Every call carries a bounded public turn_decision" in DEV_SYSTEM_PROMPT
+    assert (
+        "Request 1-4 read_file/search_files calls or one other supplied tool; never mix."
+        if FROZEN_ARM is None else "Every response must request either"
+    ) in DEV_SYSTEM_PROMPT
+    assert (
+        "Other tools carry public turn_decision matching their family."
+        if FROZEN_ARM is None else "Every call carries a bounded public turn_decision"
+    ) in DEV_SYSTEM_PROMPT
     assert "memory_update" in DEV_SYSTEM_PROMPT
-    assert "Coverage and commitment signals are advisory" in DEV_SYSTEM_PROMPT
-    assert "causal_revision is optional" in DEV_SYSTEM_PROMPT
+    assert (
+        "Coverage and commitment are advisory"
+        if FROZEN_ARM is None else "Coverage and commitment signals are advisory"
+    ) in DEV_SYSTEM_PROMPT
+    if FROZEN_ARM is None:
+        assert "causal_revision" not in DEV_SYSTEM_PROMPT
+        assert "connect the next mutation hypothesis" in DEV_SYSTEM_PROMPT
+    else:
+        assert "causal_revision is optional" in DEV_SYSTEM_PROMPT
     assert (
         "source read is required for edit admission only when exact evidence is missing"
         in DEV_SYSTEM_PROMPT
@@ -1195,7 +1226,7 @@ def test_inline_public_failure_is_mapped_and_survives_read_and_restart(
     assert projected["public_location"]["statement"] == "assert value == 1"
     assert projected["mutation_pressure"] == {
         "same_public_failure_site": False,
-        "accepted_mutations_remaining": 4,
+        "accepted_mutations_remaining": 12,
         "guidance": "This check failed on the current diff.",
     }
 

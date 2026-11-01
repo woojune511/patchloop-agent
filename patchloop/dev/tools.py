@@ -4,27 +4,43 @@ from __future__ import annotations
 
 import copy
 import difflib
+import inspect
 import re
 import threading
+from bisect import bisect_left
 from collections.abc import Sequence
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
+from itertools import groupby
 from pathlib import Path
 from typing import Any
 
 from pydantic import ValidationError
 
-from patchloop import probe_callers
+from patchloop import probe_callers, probe_limits
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import PublicTask, RegisteredCheck
 from patchloop.deadline import ExecutionDeadline, ExecutionDeadlineExceeded
 from patchloop.dev import (
     behavior_cases,
+    diagnosis_request,
     evidence_focus,
+    first_observation,
+    first_reproduction,
+    helper_program,
+    helper_recovery,
     history_search,
+    observation_correction,
+    original_obligation,
     probe_cases,
+    probe_followup,
     probe_replay,
+    probe_requests,
+    repair_path,
+    repair_prediction,
+    reproduction,
     requirement_reference,
+    test_comparison,
 )
 from patchloop.dev.check_feedback import check_failure_diagnostics, output_tail
 from patchloop.dev.context import (
@@ -48,7 +64,10 @@ from patchloop.dev.contracts import (
     StopIntent,
     TextReplacementIntent,
 )
+from patchloop.dev.dependency_sources import DependencySources
+from patchloop.dev.mutation_tools import MUTATION_TOOLS
 from patchloop.dev.path_policy import mutation_path_allowed
+from patchloop.dev.required_checks import RequiredPublicCheck, bind_checks, public_context
 from patchloop.dev.source_glob import matches_source_glob
 from patchloop.dev.source_rebinding import SourceReplacement
 from patchloop.dev.state import DevJournal
@@ -75,6 +94,7 @@ from patchloop.dev.working_notes import (
 from patchloop.errors import ContractError, PatchLoopError, RecoveryError
 from patchloop.git_execution import GitExecutionUncertain, run_git
 from patchloop.repository import DiffSummary, WorkspaceManager
+from patchloop.sandbox import call_path_trace, probe_api
 from patchloop.sandbox.execution_feedback import (
     MAX_FILES,
     MAX_LINES,
@@ -100,7 +120,18 @@ _INLINE_PYTHON = re.compile(r"python(?:\d+(?:\.\d+)*)?(?:\.exe)?", re.IGNORECASE
 _INLINE_PYTHON_FRAME = re.compile(
     r'File "<string>", line (?P<line>\d+)(?:, in (?P<scope>[^\r\n]+))?'
 )
-_MUTATION_TOOLS = frozenset({"replace_text", "apply_git_diff"})
+_MUTATION_TOOLS = MUTATION_TOOLS | {"apply_git_diff"}
+
+
+def _requested_source_scope(tool: str, arguments: dict[str, Any]) -> str:
+    scope = arguments.get("source_scope", "repository")
+    if "source_scope" in arguments and tool not in {"read_file", "search_files"}:
+        raise ContractError("source_scope is available only for read_file and search_files")
+    if not isinstance(scope, str) or not (
+        scope == "repository" or re.fullmatch(r"dependency:[A-Za-z0-9][A-Za-z0-9._-]*", scope)
+    ):
+        raise ContractError("source_scope must be repository or a registered dependency scope")
+    return scope
 
 
 @dataclass(frozen=True)
@@ -116,6 +147,19 @@ class _ValidatedReplacement:
     postimage_start_line: int
     anchor_evidence_span_id: str
     anchor_evidence_span_ids: tuple[str, ...] = ()
+    anchor_offsets: tuple[int, ...] = ()
+
+    def source_replacement(self) -> SourceReplacement:
+        before = self.before_bytes.decode("utf-8").replace("\r\n", "\n")
+        after = self.after_bytes.decode("utf-8").replace("\r\n", "\n")
+        end = self.anchor_offsets[-1] + len(self.intent.old_text)
+        after_end = end + len(self.anchor_offsets) * (
+            len(self.intent.new_text) - len(self.intent.old_text)
+        )
+        return SourceReplacement(
+            self.before_bytes, self.after_bytes, self.anchor_offset,
+            before[self.anchor_offset:end], after[self.anchor_offset:after_end],
+        )
 
 
 @dataclass(frozen=True)
@@ -129,6 +173,7 @@ class DevGatewayStateSnapshot:
     remaining_visible_check_ids: tuple[str, ...]
     unrun_visible_check_ids: tuple[str, ...]
     ready_to_submit: bool
+    completion_verification: dict[str, Any] | None = None
 
 
 def _public_turn_decision_schema(mode: str) -> dict[str, Any]:
@@ -141,7 +186,17 @@ def _public_turn_decision_schema(mode: str) -> dict[str, Any]:
         ),
         "properties": {
             "mode": {"type": "string", "enum": [mode]},
-            "basis": {"type": "string", "minLength": 1, "maxLength": 800},
+            "basis": {
+                "type": "string", "minLength": 1, "maxLength": 800,
+                "description": (
+                    "For verification choices, connect a remaining public requirement and "
+                    "known input/caller conditions to this offered action and the observation "
+                    "that could change the repair or review decision. For a terminal choice, "
+                    "explain why no useful feasible observation remains; narrowing the "
+                    "reported claim alone is not a reason to stop. Use the currently offered "
+                    "tools and environment, not capabilities implied by historical policy."
+                ),
+            },
             "evidence_goal": (
                 {"type": "string", "minLength": 1, "maxLength": 500}
                 if mode == "inspect"
@@ -160,8 +215,8 @@ def _public_turn_decision_schema(mode: str) -> dict[str, Any]:
 def _replacement_parameters() -> dict[str, Any]:
     """Project shared validation constraints without exposing recovery-only fields.
 
-    The provider requires every public field, including explicit null for an absent
-    causal revision. Internal defaults remain available for old journal recovery.
+    Fresh edits carry only execution and repair intent. Legacy causal revisions
+    remain accepted internally for exact journal recovery.
     Titles/defaults are Pydantic annotations, not part of the existing tool wire.
     """
     schema = TextReplacementIntent.model_json_schema()
@@ -195,21 +250,6 @@ def _replacement_parameters() -> dict[str, Any]:
         "only executable lines change. Copy the observed normalized text, "
         "including its line breaks; do not reconstruct the text."
     )
-    revision = schema["$defs"]["CausalRevision"]
-    revision_properties = {
-        name: public_field(revision["properties"][name])
-        for name in ("falsified_prior_hypothesis", "alternative_mechanism")
-    }
-    properties["causal_revision"] = {
-        "type": ["object", "null"],
-        "description": (
-            "Optional concise revision of the public hypothesis after "
-            "observed failure; it is never required for mutation admission."
-        ),
-        "properties": revision_properties,
-        "required": list(revision_properties),
-        "additionalProperties": revision["additionalProperties"],
-    }
     return {
         "type": schema["type"],
         "properties": properties,
@@ -218,22 +258,51 @@ def _replacement_parameters() -> dict[str, Any]:
     }
 
 
+def _read_line_bounds(start_line=None, end_line=None, *, range_only=False):
+    """Keep explicit ranges bounded; a missing end selects a complete-line page."""
+    if end_line is None and not range_only:
+        if start_line is None:
+            return 1, None
+        if type(start_line) is not int or start_line < 1:
+            raise ContractError("read_file page start_line must be a positive integer")
+        return start_line, None
+    if type(start_line) is not int or type(end_line) is not int:
+        raise ContractError("read_file line bounds must be integers")
+    if start_line < 1 or end_line < start_line:
+        raise ContractError("read_file requires a positive, ordered inclusive line range")
+    if range_only and end_line - start_line + 1 > 400:
+        raise ContractError("legacy read_file accepts a 1-400 line inclusive range")
+    return start_line, end_line
+
+
 def dev_tool_schemas(
     *,
     finish_enabled: bool,
     check_ids: Sequence[str] = (),
     test_suite_ids: Sequence[str] = (),
+    test_comparison_enabled: bool = True,
     allowed_tools: Sequence[str] | None = None,
     read_paths: Sequence[str] = (),
     planning_policy: str = "none",
     probe_policy: str = "none",
     probe_recheck_policy: str = "none",
     probe_environment: dict[str, Any] | None = None,
+    path_diagnosis_pending: bool = False,
+    original_acquisition_pending: bool = False,
+    repair_test_comparison_pending: bool = False,
+    repair_revision: dict[str, Any] | None = None,
+    first_original_observation: dict[str, Any] | None = None,
+    repair_test_edit_enabled: bool = False,
     agent_policy: str = "current",
+    verification_policy: str = "reproduction-gated-v1",
     history_search_policy: history_search.Policy = "none",
+    read_range_only: bool = False,
+    dependency_sources: Sequence[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     if agent_policy not in {"current", "thin"}:
         raise ContractError("unknown agent policy")
+    if verification_policy not in {"reproduction-gated-v1", "public-checks-v1"}:
+        raise ContractError("unknown verification policy")
     if agent_policy == "thin" and planning_policy != "none":
         raise ContractError("thin policy forbids planning state")
     if probe_policy not in {"none", *probe_cases.POLICIES}:
@@ -251,12 +320,22 @@ def dev_tool_schemas(
             "name": "search_files",
             "description": (
                 "Search tracked public repository text and return bounded evidence spans."
+                + (" Matching earlier reads missing from the current input may be restored "
+                   "at same-version hits within the same source limit. Omitted bodies carry "
+                   "read ranges and history record IDs."
+                   if history_search_policy == history_search.POLICY else "")
             ),
             "strict": True,
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "query": {"type": "string", "minLength": 1},
+                    "query": {
+                        "type": "string", "minLength": 1,
+                        "description": (
+                            "Literal text, not regex or boolean syntax. "
+                            "Use separate searches for alternatives; OR is literal."
+                        ),
+                    },
                     "path_glob": {
                         "type": "string", "default": "**/*",
                         "description": (
@@ -277,6 +356,13 @@ def dev_tool_schemas(
                 "Read one inclusive line range from a tracked public source file. "
                 "Request at most 400 lines: end_line - start_line + 1 must be between 1 and 400. "
                 "The existing output bound may return fewer complete lines."
+                if read_range_only else
+                "Read a selected tracked public source file. Set both line bounds to null "
+                "to read from the beginning; the 24000-character output limit returns only "
+                "complete lines. If truncated, continue with next_start_line and end_line null. "
+                "For an explicit inclusive range, supply both positive ordered integers. "
+                "The character limit paginates large ranges. "
+                "Returned spans cover only the lines actually delivered."
             ),
             "strict": True,
             "parameters": {
@@ -287,8 +373,14 @@ def dev_tool_schemas(
                         "minLength": 1,
                         **({"enum": list(read_paths)} if read_paths else {}),
                     },
-                    "start_line": {"type": "integer", "minimum": 1},
-                    "end_line": {"type": "integer", "minimum": 1},
+                    "start_line": {
+                        "type": "integer" if read_range_only else ["integer", "null"],
+                        "minimum": 1,
+                    },
+                    "end_line": {
+                        "type": "integer" if read_range_only else ["integer", "null"],
+                        "minimum": 1,
+                    },
                 },
                 "required": ["path", "start_line", "end_line"],
                 "additionalProperties": False,
@@ -310,13 +402,21 @@ def dev_tool_schemas(
             "type": "function",
             "name": "replace_text",
             "description": (
-                "Replace one exact occurrence in one tracked, allowed public file. The "
+                "Replace an exact occurrence in one tracked, allowed public file, or set "
+                "occurrence='all' to replace every non-overlapping match in that file in "
+                "one atomic edit. Every selected match must have current observed source. The "
                 "gateway validates the current anchor and constructs the canonical Git "
                 "diff; never provide diff syntax or patch wrappers. The minimal plan, "
                 "hypothesis, and exact current source anchor are part of this mutation. "
                 "The gateway binds the anchor to the contiguous union of current observed "
                 "public source. An accepted mutation's bounded post-image is current evidence "
-                "for a same-file repair; there is no separate planning tool."
+                "for a same-file repair; there is no separate planning tool. "
+                "Ground expected_behavior in the public issue or existing API/caller/test "
+                "conventions; label a new assumption rather than treating your own test as "
+                "independent confirmation. For additive-only tests, preserve existing imports, "
+                "fixtures and tests; put new imports inside the new test function. "
+                "Consider checking its setup and expected result with an offered probe before "
+                "insertion. Every accepted edit, including test fixes, uses a mutation slot."
             ),
             "strict": True,
             "parameters": _replacement_parameters(),
@@ -349,6 +449,17 @@ def dev_tool_schemas(
             },
         },
     ]
+    from patchloop.dev.file_edits import schema as file_edit_schema
+
+    schemas.append(file_edit_schema())
+    if repair_revision and repair_revision.get("status") == "diagnosed":
+        for schema in schemas:
+            if schema["name"] in MUTATION_TOOLS:
+                parameters = schema["parameters"]
+                parameters["properties"]["repair_prediction"] = repair_prediction.schema(
+                    repair_revision, test_enabled=repair_test_edit_enabled,
+                    suite_ids=test_suite_ids)
+                parameters["required"].append("repair_prediction")
     if finish_enabled:
         schemas.append(
             {
@@ -357,10 +468,19 @@ def dev_tool_schemas(
                 "description": (
                     "After all required visible checks pass on the current diff, review the "
                     "public requirements, patch, evidence and remaining uncertainties. Submit "
-                    "only if you judge the task complete, with a concise public assessment "
-                    "connecting requirements to observed evidence and explaining why unfinished "
-                    "verification does not block completion. Regression PASS alone does not "
-                    "prove the reported problem is fixed. This submits for independent evaluation."
+                    "with a concise public assessment connecting requirements to observed "
+                    "evidence and listing unfinished verification. Missing original evidence "
+                    "returns unverified_delivery. Regression PASS alone does not "
+                    "prove the reported problem is fixed. "
+                    + (
+                        "Original observations are optional diagnostics, not submission "
+                        "prerequisites. No original replay is automatically started at submission. "
+                        if verification_policy == "public-checks-v1" else
+                        "The host replays stale original-case invocations before submission; "
+                        "current mismatch/conflict returns to repair. "
+                    )
+                    + "Missing/incomplete evidence is labelled unverified. Public case support "
+                    "does not certify requirements. This submits for independent evaluation."
                 ),
                 "strict": True,
                 "parameters": {
@@ -431,17 +551,16 @@ def dev_tool_schemas(
                 "subprocess, multiprocessing process workers, fork, exec and shell commands "
                 "are unavailable. Import and call a Python entry point in this process when "
                 "its dependencies are available. "
-                "Choose a public input variation that could falsify an implementation assumption, "
-                "not just repeat a registered example. State the expected observation in the "
-                "question and print or assert it in the experiment. Execution completed means "
-                "normal exit, not behavior verified. Before exercising behavior, use the available "
-                "check_setup(label, actual, expected) helper on actual constructed settings. "
-                "It is already injected into the probe's global namespace: call it directly, "
-                "without importing or redefining it, e.g. "
-                "check_setup('mode', settings.mode, expected_mode). "
-                "It records up to 16 type-strict scalar comparisons (None/bool/int/finite float/"
-                "str; label <=120 chars, str <=256 chars, int <=256 bits; bounded report), "
-                "raising AssertionError on mismatch. Correct a setup mismatch before attributing "
+                "After an edit, replay a relevant prior public example to test the repair's "
+                "effect; for a new question, choose an input that could falsify an assumption. "
+                "Keep caller, input representation and setup comparable. A changed-input "
+                "failure is a separate diagnosis even when the error text matches. "
+                "For helper probes, state the expected "
+                "observation in the question and print or assert it in the experiment. "
+                "Execution completed means "
+                "normal exit, not behavior verified. "
+                + helper_program.DESCRIPTION +
+                "Setup mismatch raises AssertionError. Correct it before attributing "
                 "it to candidate behavior. Passing setup checks do not verify behavior. "
                 "Print short observations as relevant steps complete and before a potentially "
                 "blocking call, e.g. print({'stage': 'before_call', 'value': actual_value}, "
@@ -450,7 +569,10 @@ def dev_tool_schemas(
                 "Compare actual input/output and relevant "
                 "line-entry ranges; missing observations are not proof of failure. "
                 "Results are diagnostics, not required visible-check verdicts. "
-                + probe_replay.DESCRIPTION
+                + probe_replay.DESCRIPTION + " " + probe_api.OBSERVER_DESCRIPTION
+                + reproduction.DESCRIPTION
+                + " call_path is null here. A pending original-call diagnosis offers its own "
+                "small focus schema."
             ),
             "strict": True,
             "parameters": {
@@ -458,13 +580,17 @@ def dev_tool_schemas(
                 "properties": {
                     "question": {"type": ["string", "null"], "minLength": 1, "maxLength": 500},
                     "python_source": {
-                        "type": ["string", "null"], "minLength": 1, "maxLength": 8_000,
+                        "type": ["string", "null"], "minLength": 1,
+                        "maxLength": probe_limits.SOURCE_LIMIT_CHARS,
                     },
                     "replay_action_id": {
                         "type": ["string", "null"], "minLength": 1, "maxLength": 500,
                     },
+                    "purpose": reproduction.purpose_schema(),
+                    "call_path": {"type": "null"},
                 },
-                "required": ["question", "python_source", "replay_action_id"],
+                "required": ["question", "python_source", "replay_action_id", "purpose",
+                             "call_path"],
                 "additionalProperties": False,
             },
         })
@@ -474,7 +600,36 @@ def dev_tool_schemas(
                 schemas[-1]["description"] = schemas[-1]["description"].replace(
                     "cases never block finish or trigger automatic execution.", TOOL_DESCRIPTION,
                 )
+        if path_diagnosis_pending:
+            schemas[-1] = diagnosis_request.tool_schema(repair_revision)
+        elif original_acquisition_pending:
+            schema = schemas[-1]
+            schema["description"] = first_reproduction.description(environment_description)
+            properties = schema["parameters"]["properties"]
+            properties["question"]["type"] = "string"
+            properties["python_source"]["type"] = "string"
+            properties["replay_action_id"] = {"type": "null"}
+            properties["purpose"] = reproduction.purpose_schema()["anyOf"][1]
+            properties["purpose"]["properties"]["corrects_action_id"] = {"type": "null"}
+            for name in ("case_id", "reference_action_id"):
+                if name in properties:
+                    properties[name] = {"type": "null"}
+            if "save_program" in properties:
+                properties["save_program"] = {"type": "boolean", "enum": [False]}
+        if verification_policy == "public-checks-v1":
+            schemas[-1]["description"] = schemas[-1]["description"].replace(
+                "At finish the host replays stale invocation-bound "
+                "cases; current comparable mismatch/conflict blocks submission. "
+                "Unknown remains unverified.",
+                "Original observations and their correction are optional diagnostics. "
+                "No original replay is automatic; required public checks determine submission "
+                "eligibility. Unknown or failed observations remain evidence, not verification.",
+            )
+    if allowed_tools is not None and "observe_original" in allowed_tools:
+        schemas.append(first_observation.schema(first_original_observation))
     if test_suite_ids:
+        from patchloop.dev import test_comparison
+
         schemas.append({
             "type": "function", "name": "run_tests", "strict": True,
             "description": (
@@ -483,7 +638,11 @@ def dev_tool_schemas(
                 "suite's test_roots, e.g. test/test_api.py::test_case. "
                 "The task supplies the command, environment and limits; command flags and "
                 "directories are not targets. Results apply only to the selected tests on "
-                "this diff and never replace required run_check results."
+                "this diff and never replace required run_check results. Set comparison to "
+                "null for one execution, or compare identical selected test bytes against "
+                "original_base or the pre-state of a completed implementation mutation. "
+                "Comparison costs two isolated executions; PASS/PASS is non-discriminating "
+                "and even FAIL/PASS does not certify original-requirement coverage."
             ),
             "parameters": {
                 "type": "object", "additionalProperties": False,
@@ -492,8 +651,12 @@ def dev_tool_schemas(
                     "targets": {"type": "array", "minItems": 1, "maxItems": MAX_TARGETS,
                                 "items": {"type": "string", "minLength": 1,
                                           "maxLength": MAX_TARGET_CHARS}},
+                    "comparison": test_comparison.schema() if test_comparison_enabled else {
+                        "type": "null", "description": "Only a single selected-test execution "
+                        "fits the current completion reserve; set comparison to null.",
+                    },
                 },
-                "required": ["suite_id", "targets"],
+                "required": ["suite_id", "targets", "comparison"],
             },
         })
     if history_search_policy != "none":
@@ -508,6 +671,7 @@ def dev_tool_schemas(
         "run_tests": "verify",
         "run_probe": "verify",
         "replace_text": "mutate",
+        "edit_files": "mutate",
         "finish_task": "finish",
         "stop_task": "stop",
     }
@@ -523,6 +687,30 @@ def dev_tool_schemas(
         if name not in enabled:
             continue
         parameters = schema["parameters"]
+        if dependency_sources is not None and name in {"read_file", "search_files"}:
+            scopes = ["repository", *[source["scope"] for source in dependency_sources]]
+            parameters["properties"]["source_scope"] = {
+                "type": "string", "enum": scopes,
+                "description": "Repository source or a registered read-only dependency.",
+            }
+            parameters["required"].append("source_scope")
+            schema["description"] += (
+                " Select source_scope. Dependency paths are site-packages-relative, e.g. "
+                "<registered-root>/module.py; searches use the same rooted glob syntax. "
+                "Dependency results use dependency_spans with pinned provenance and cannot "
+                "authorize workspace edits. Registered sources: "
+                + "; ".join(f"{source['scope']} {source['version']} root={source['root']}"
+                            for source in dependency_sources)
+                + "."
+            )
+            if name == "read_file":
+                # Targeted repository paths are checked by the batch validator. A single
+                # path enum cannot also represent registered dependency paths.
+                parameters["properties"]["path"].pop("enum", None)
+        if (path_diagnosis_pending or repair_test_comparison_pending
+                or name in {"replace_text", "edit_files", "stop_task", "observe_original"}):
+            projected.append(schema)
+            continue
         if agent_policy == "thin":
             parameters["properties"]["memory_update"] = memory_update_schema()
             parameters["required"].append("memory_update")
@@ -532,6 +720,7 @@ def dev_tool_schemas(
             decision_modes[name]
         )
         if planning_policy != "none":
+            from patchloop.dev.scope_review import schema as scope_review_schema
             from patchloop.dev.working_plan import POLICIES, reason_schema, update_schema
 
             if planning_policy not in POLICIES:
@@ -539,7 +728,8 @@ def dev_tool_schemas(
             decision = parameters["properties"]["turn_decision"]
             decision["properties"]["plan_update"] = update_schema()
             decision["properties"]["plan_update_reason"] = reason_schema()
-            decision["required"].extend(["plan_update", "plan_update_reason"])
+            decision["properties"]["scope_review"] = scope_review_schema()
+            decision["required"].extend(["plan_update", "plan_update_reason", "scope_review"])
         parameters["required"].append("turn_decision")
         projected.append(schema)
     return projected
@@ -552,6 +742,10 @@ def validate_tool_batch(
     allowed_tools: set[str] | frozenset[str] | None = None,
     allowed_read_paths: Sequence[str] = (),
     agent_policy: str = "current",
+    path_diagnosis_pending: bool = False,
+    original_acquisition_pending: bool = False,
+    repair_test_comparison_pending: bool = False,
+    read_range_only: bool = False,
 ) -> str:
     """Return ``parallel_read`` or ``single_action``; reject every mixed shape."""
 
@@ -567,16 +761,28 @@ def validate_tool_batch(
         raise ContractError("model response requested a tool unavailable at the current gate")
     if agent_policy not in {"current", "thin"}:
         raise ContractError("unknown agent policy")
-    if agent_policy == "thin":
+    if path_diagnosis_pending or repair_test_comparison_pending:
+        if any({"turn_decision", "rejected_turn_decision", "memory_update"}
+               & call.model_fields_set for call in calls):
+            raise ContractError("diagnosis tools and pending comparisons do not accept annotations")
+        for call in calls:
+            if call.name == "run_probe":
+                diagnosis_request.validate_selection(call.arguments)
+    elif agent_policy == "thin":
         if any({"turn_decision", "rejected_turn_decision"} & call.model_fields_set
+               and call.name not in {"replace_text", "edit_files", "stop_task", "observe_original"}
                for call in calls):
             raise ContractError("thin policy does not accept turn_decision")
-        if any("memory_update" not in call.model_fields_set for call in calls):
+        if any("memory_update" not in call.model_fields_set
+               and call.name not in {"replace_text", "edit_files", "stop_task", "observe_original"}
+               for call in calls):
             raise ContractError("thin policy requires nullable top-level memory_update")
     else:
         if any("memory_update" in call.model_fields_set for call in calls):
             raise ContractError("current policy does not accept top-level memory_update")
-        if any(call.turn_decision is None for call in calls):
+        if any(call.turn_decision is None
+               and call.name not in {"replace_text", "edit_files", "stop_task", "observe_original"}
+               for call in calls):
             raise ContractError("every tool call requires one bounded public turn_decision")
     expected_modes = {
         history_search.TOOL: "inspect",
@@ -585,18 +791,43 @@ def validate_tool_batch(
         "run_check": "verify",
         "run_tests": "verify",
         "run_probe": "verify",
+        "observe_original": "verify",
         "replace_text": "mutate",
+        "edit_files": "mutate",
         "finish_task": "finish",
         "stop_task": "stop",
     }
-    if agent_policy == "current" and any(
-        call.turn_decision.mode != expected_modes[call.name] for call in calls
+    if not (path_diagnosis_pending or repair_test_comparison_pending) and any(
+        call.turn_decision is not None and call.turn_decision.mode != expected_modes[call.name]
+        for call in calls
     ):
         raise ContractError("turn_decision mode must match the requested tool family")
+    for call in calls:
+        _requested_source_scope(call.name, call.arguments)
+        if read_range_only and call.name == "read_file":
+            _read_line_bounds(call.arguments.get("start_line"),
+                              call.arguments.get("end_line"), range_only=True)
+        if original_acquisition_pending and call.name == "run_probe":
+            purpose = call.arguments.get("purpose")
+            if (not isinstance(purpose, dict) or purpose.get("kind") != "original_requirement"
+                    or call.arguments.get("replay_action_id") is not None
+                    or call.arguments.get("call_path") is not None
+                    or purpose.get("corrects_action_id") is not None
+                    or call.arguments.get("case_id") is not None
+                    or call.arguments.get("reference_action_id") is not None
+                    or call.arguments.get("save_program", False) is not False):
+                raise ContractError(
+                    "original acquisition requires a new original_requirement probe; "
+                    "replay, call_path, correction and helper-case fields must be null, "
+                    "with save_program false")
+        if call.name == "observe_original":
+            first_observation.validate_selection(call.arguments)
     if allowed_read_paths:
         allowed_paths = set(allowed_read_paths)
         if any(
-            call.name == "read_file" and call.arguments.get("path") not in allowed_paths
+            call.name == "read_file"
+            and call.arguments.get("source_scope", "repository") == "repository"
+            and call.arguments.get("path") not in allowed_paths
             for call in calls
         ):
             raise ContractError("read_file path is unavailable in the targeted repair window")
@@ -623,22 +854,36 @@ class DevToolGateway:
         deadline: ExecutionDeadline | None = None,
         probe_sandbox: DockerProbeSandbox | None = None,
         probe_policy: str = "none",
+        reproduction_acquisition: str = "none",
+        verification_policy: str = "reproduction-gated-v1",
         retained_source_chars: RetainedSourceChars = RETAINED_SOURCE_CHARS,
         agent_policy: str = "current",
         history_search_policy: history_search.Policy = "none",
+        read_range_only: bool = False,
+        dependency_sources: DependencySources | None = None,
+        supplemental_checks: tuple[RequiredPublicCheck, ...] = (),
     ) -> None:
         self.workspace = workspace.resolve()
         self.public_task = public_task
+        self.supplemental_checks = copy.deepcopy(tuple(supplemental_checks))
         self.sandbox = sandbox
         self.journal = journal
         self.limits = limits
         self.retained_source_chars = retained_source_chars
+        self.dependency_sources = dependency_sources
+        self._dependency_source_identity = (
+            dependency_sources.identity if dependency_sources is not None else None
+        )
+        self._dependency_spans: dict[str, dict[str, Any]] = {}
+        self._dependency_observation_seq = 0
+        self._observed_dependency_actions: set[str] = set()
         if agent_policy not in {"current", "thin"}:
             raise ContractError("unknown agent policy")
         self.agent_policy = agent_policy
         if history_search_policy not in {"none", history_search.POLICY}:
             raise ContractError("unknown history search policy")
         self.history_search_policy = history_search_policy
+        self.read_range_only = read_range_only
         from patchloop.dev.history_evidence import EvidenceHistory
 
         self._public_history = EvidenceHistory()
@@ -647,6 +892,12 @@ class DevToolGateway:
         if probe_policy not in {"none", *probe_cases.POLICIES}:
             raise ContractError("unknown probe policy")
         self.probe_policy = probe_policy
+        if reproduction_acquisition not in {"none", original_obligation.ACQUISITION}:
+            raise ContractError("unknown reproduction acquisition policy")
+        self.reproduction_acquisition = reproduction_acquisition
+        if verification_policy not in {"reproduction-gated-v1", "public-checks-v1"}:
+            raise ContractError("unknown verification policy")
+        self.verification_policy = verification_policy
         self._lock = threading.RLock()
         self.spans: dict[str, dict[str, Any]] = {}
         self._observation_seq = 0
@@ -678,11 +929,50 @@ class DevToolGateway:
         self._working_notes_turns: dict[str, dict[str, Any]] = {}
         self._next_working_note_id = 1
         self._legacy_working_note_ids: dict[str, str] = {}
+        bind_checks(
+            journal, self.supplemental_checks,
+            task_check_ids={check.id for check in public_task.visible_checks},
+            current_diff_hash=lambda: self.current_diff_hash,
+        )
+        self._import_public_failures()
         self._hydrate()
+        if reproduction_acquisition != "none":
+            original_obligation.ensure(journal, public_task, reproduction_acquisition)
+            if probe_sandbox is None:
+                original_obligation.release(journal, public_task, "probe_unavailable")
+
+    @property
+    def registered_checks(self) -> tuple[RegisteredCheck, ...]:
+        return (*self.public_task.visible_checks,
+                *(entry.check for entry in self.supplemental_checks))
+
+    def required_check_context(self) -> list[dict[str, Any]]:
+        return public_context(self.supplemental_checks)
+
+    def _import_public_failures(self) -> None:
+        imported = {event["payload"]["observation_id"] for event in self.journal.events()
+                    if event["event_type"] == "public_check_imported"}
+        for entry in self.supplemental_checks:
+            if entry.observation is None or entry.observation_id in imported:
+                continue
+            output = copy.deepcopy(entry.observation)
+            output.update(origin="imported_public_observation", binding_hash=entry.binding_hash)
+            signature = output.get("failure_signature") or sha256_json(output)
+            output["failure_signature"] = signature
+            output["public_check_failure"] = self._public_check_failure(
+                check=entry.check, diff_hash=output["diff_hash"], failure_signature=signature,
+                stdout=output.get("stdout", ""), stderr=output.get("stderr", ""),
+            )
+            self.journal.append("public_check_imported", {
+                "observation_id": entry.observation_id, "output": output,
+            })
 
     def _hydrate(self) -> None:
         action_starts: dict[str, dict[str, Any]] = {}
         for event in self.journal.events():
+            if event["event_type"] == "public_check_imported":
+                self._remember_check(event["payload"]["output"])
+                continue
             if event["event_type"] == "working_notes_updated":
                 self._restore_working_notes(event["payload"])
                 continue
@@ -944,7 +1234,8 @@ class DevToolGateway:
         occurrence_value = arguments.get("occurrence")
         occurrence = (
             occurrence_value
-            if type(occurrence_value) is int and 1 <= occurrence_value <= 100
+            if occurrence_value == "all" or (
+                type(occurrence_value) is int and 1 <= occurrence_value <= 100)
             else None
         )
         causal_revision = arguments.get("causal_revision")
@@ -974,7 +1265,7 @@ class DevToolGateway:
                 "Repair or explicitly replace this failed mutation using the preserved exact "
                 "replacement and typed feedback. Available inspection remains budget-governed."
             )
-        return {
+        context = {
             "action_id": action_id,
             "input_hash": input_hash,
             "baseline_diff_hash": (
@@ -1005,6 +1296,22 @@ class DevToolGateway:
             ),
             "next_action": next_action,
         }
+        if result.tool == "edit_files":
+            raw = {key: arguments.get(key) for key in ("edits", "undo_action_id")}
+            # Preserve the operation identity without repeating up to 16 file bodies.
+            edits = arguments.get("edits")
+            context.update(
+                replacement={"undo_action_id": cls._bounded_string(
+                    arguments.get("undo_action_id"), 500), "edits": [
+                        {"path": cls._bounded_string(edit.get("path"), 1_000),
+                         "operation": "create" if edit.get("old_text") is None else "replace"}
+                        for edit in edits[:16] if isinstance(edit, dict)
+                    ] if isinstance(edits, list) else None},
+                replacement_hash=sha256_json(raw), replacement_truncated=True,
+                next_action="Use the typed feedback to correct the failed file transaction; "
+                            "reinspect current source when an exact anchor is missing.",
+            )
+        return context
 
     @staticmethod
     def _cache_key(input_hash: str, workspace_diff_hash: str) -> tuple[str, str]:
@@ -1254,7 +1561,57 @@ class DevToolGateway:
             "marginal_evidence_gain_units": gain_units,
         }
 
+    def _dependency_catalog(self) -> list[dict[str, Any]]:
+        if self.dependency_sources is None:
+            raise ContractError("dependency source access is not enabled")
+        if self.dependency_sources.identity != self._dependency_source_identity:
+            raise RecoveryError("registered dependency source identity changed")
+        return self.dependency_sources.catalog()
+
+    def _validate_dependency_output(self, output: dict[str, Any]) -> None:
+        """Never replay source bodies whose registered identity or bytes changed."""
+        catalog = self._dependency_catalog()
+        if (output.get("dependency_source_identity") != self._dependency_source_identity
+                or output.get("source_scope") not in {entry["scope"] for entry in catalog}):
+            raise RecoveryError("dependency evidence belongs to a different source registry")
+        assert self.dependency_sources is not None
+        sources: dict[str, tuple[str, dict[str, Any]]] = {}
+        spans = output.get("dependency_spans", [])
+        try:
+            provenances = [span["provenance"] for span in spans]
+            if "provenance" in output:
+                provenances.append(output["provenance"])
+            for provenance in provenances:
+                path = provenance["path"]
+                if path not in sources:
+                    sources[path] = self.dependency_sources.read(output["source_scope"], path)
+                if provenance != sources[path][1]:
+                    raise RecoveryError("dependency evidence provenance changed")
+            for span in spans:
+                text, provenance = sources[span["path"]]
+                if (not valid_observed_span(span, source_lines(text), provenance["file_hash"])
+                        or span.get("source_scope") != output["source_scope"]
+                        or span.get("file_hash") != provenance["file_hash"]):
+                    raise RecoveryError("dependency evidence no longer matches registered source")
+        except (KeyError, TypeError, ContractError, OSError) as exc:
+            raise RecoveryError("cannot validate registered dependency evidence") from exc
+
+    def _remember_dependency_output(self, output: dict[str, Any], *, action_id: str) -> None:
+        self._validate_dependency_output(output)
+        with self._lock:
+            if action_id in self._observed_dependency_actions:
+                return
+            for span in output.get("dependency_spans", []):
+                self._dependency_observation_seq += 1
+                restored = copy.deepcopy(span)
+                restored["last_observed_seq"] = self._dependency_observation_seq
+                self._dependency_spans[restored["span_id"]] = restored
+            self._observed_dependency_actions.add(action_id)
+
     def _restore_read_result(self, result: DevToolResult) -> None:
+        if result.output.get("source_scope", "repository") != "repository":
+            self._remember_dependency_output(result.output, action_id=result.action_id)
+            return
         spans = result.output.get("spans", [])
         with self._lock:
             if result.action_id in self._observed_read_actions:
@@ -1282,7 +1639,7 @@ class DevToolGateway:
                 )
             if result.workspace_diff_hash is not None:
                 read_request_hash = result.output.get("read_request_hash", result.input_hash)
-                if isinstance(read_request_hash, str):
+                if isinstance(read_request_hash, str) and not result.output.get("source_recovery"):
                     self._read_cache[
                         self._cache_key(read_request_hash, result.workspace_diff_hash)
                     ] = self._cacheable_read_output(result.output)
@@ -1491,6 +1848,7 @@ class DevToolGateway:
 
         with self._lock:
             candidates = [dict(span) for span in self.spans.values()]
+        tracked_paths = self._tracked_paths() if candidates else set()
         sources: dict[str, tuple[list[str], str] | None] = {}
         valid: list[dict[str, Any]] = []
         for span in candidates:
@@ -1499,7 +1857,7 @@ class DevToolGateway:
                 continue
             if path not in sources:
                 try:
-                    _, current = self._tracked_path(path)
+                    _, current = self._tracked_path(path, tracked_paths=tracked_paths)
                     raw = current.read_bytes()
                     sources[path] = (source_lines(raw.decode("utf-8")), sha256_bytes(raw))
                 except (ExecutionDeadlineExceeded, GitExecutionUncertain):
@@ -1717,7 +2075,7 @@ class DevToolGateway:
                 continue
             result = event["payload"].get("result", {})
             if result.get("status") != "succeeded" or result.get("tool") not in {
-                *READ_TOOLS, "replace_text",
+                *READ_TOOLS, *MUTATION_TOOLS,
             }:
                 continue
             output = result.get("output", {})
@@ -2097,9 +2455,13 @@ class DevToolGateway:
         """Project advisory concerns without refreshing/expiring source observations."""
 
         current_hash = diff_hash if diff_hash is not None else self.current_diff_hash
+        judgment_updates = observation_correction.note_updates(
+            observation_correction.review(self.journal.events(), current_hash),
+        )
         view = project_verification_concerns(
             self._verification_state,
             diff_hash=current_hash,
+            judgment_updates=judgment_updates,
         )
         view["observations"] = project_verification_observations(
             [e["payload"]["result"] for e in self.journal.events()
@@ -2111,6 +2473,8 @@ class DevToolGateway:
         self._refresh_working_source_notes()
         current_hash = diff_hash if diff_hash is not None else self.current_diff_hash
         findings = copy.deepcopy(self._working_findings)
+        correction = observation_correction.review(self.journal.events(), current_hash)
+        judgment_updates = observation_correction.note_updates(correction)
         source_hashes: dict[str, str | None] = {}
         for finding in findings:
             current = True
@@ -2136,9 +2500,16 @@ class DevToolGateway:
                         )
             finding["status"] = "current" if current else "historical"
             finding["interpretation_status"] = "model_authored_unverified"
+            affected = [judgment_updates[e["action_id"]] for e in finding["evidence"]
+                        if e["kind"] == "tool_result" and e["action_id"] in judgment_updates]
+            if affected:
+                finding["status"] = "requires_revalidation"
+                finding["judgment_update"] = affected
         question = copy.deepcopy(self._working_open_question)
         if isinstance(question, dict):
             question["priority_status"] = evidence_focus.priority_status(question, current_hash)
+            if any(e.get("action_id") in judgment_updates for e in question.get("evidence", [])):
+                question["judgment_status"] = "requires_revalidation"
         return {
             "findings": findings,
             "available_note_ids": [finding["note_id"] for finding in findings],
@@ -2178,6 +2549,33 @@ class DevToolGateway:
             max_chars=self.retained_source_chars,
             focus_references=self.focus_source_references(),
         ).source_spans)
+
+    def dependency_context_spans(self) -> list[dict[str, Any]]:
+        """Retain only previously delivered dependency lines, outside edit evidence."""
+        with self._lock:
+            candidates = sorted(copy.deepcopy(list(self._dependency_spans.values())),
+                                key=lambda span: span["last_observed_seq"], reverse=True)
+        retained: list[dict[str, Any]] = []
+        remaining = self.retained_source_chars
+        for span in candidates:
+            self._validate_dependency_output({
+                "source_scope": span["source_scope"],
+                "dependency_source_identity": self._dependency_source_identity,
+                "dependency_spans": [span],
+            })
+            content, end, _ = bounded_lines(source_lines(span["content"]), 1,
+                                           span["end_line"] - span["start_line"] + 1,
+                                           max_chars=remaining)
+            if end < 1:
+                continue
+            selected = self._dependency_span(span["provenance"], span["start_line"],
+                                             span["start_line"] + end - 1, content)
+            selected["last_observed_seq"] = span["last_observed_seq"]
+            retained.append(selected)
+            remaining -= len(content)
+            if remaining <= 0:
+                break
+        return retained
 
     def evidence_ledger(self, *, diff_hash: str | None = None) -> dict[str, Any]:
         """Project bounded, public, deterministic facts about observed evidence."""
@@ -2247,7 +2645,7 @@ class DevToolGateway:
             "state": "ready_to_attempt" if paths else "needs_anchor_evidence",
             "readiness_basis": "current_delivered_editable_source_evidence",
             "current_anchor_evidence_paths": paths,
-            "visible_check_contract_available": bool(self.public_task.visible_checks),
+            "visible_check_contract_available": bool(self.registered_checks),
             "rule": (
                 "ready_to_attempt means this input delivers non-empty current editable source. "
                 "The exact proposed replacement still requires contiguous evidence validation "
@@ -2370,7 +2768,7 @@ class DevToolGateway:
         return self.current_diff.patch_hash
 
     def visible_checks_pass(self, *, diff_hash: str | None = None) -> bool:
-        expected = {check.id for check in self.public_task.visible_checks}
+        expected = {check.id for check in self.registered_checks}
         if not expected:
             return bool(self.current_diff.patch)
         current_hash = diff_hash if diff_hash is not None else self.current_diff_hash
@@ -2381,7 +2779,7 @@ class DevToolGateway:
         current_hash = diff_hash if diff_hash is not None else self.current_diff_hash
         rows = self.checks_by_diff.get(current_hash, {})
         status: list[dict[str, Any]] = []
-        for check in self.public_task.visible_checks:
+        for check in self.registered_checks:
             row = rows.get(check.id)
             if row is None:
                 status.append(
@@ -2411,6 +2809,17 @@ class DevToolGateway:
     ) -> dict[str, Any] | None:
         """Qualify the latest counterexample by diff currency and current action space."""
 
+        current_hash = diff_hash if diff_hash is not None else self.current_diff_hash
+        original = self.completion_verification(diff_hash=current_hash)
+        if original.get("target_failure_count"):
+            return {
+                **copy.deepcopy(original["target_failures"][0]),
+                "current_diff_hash": current_hash, "evidence_currency": "current",
+                "phase": "repair_current_diff", "failure_count": original["target_failure_count"],
+                "guidance": "The original selected call raised this unexpected exception. "
+                "Repair this observed failure; UNKNOWN is not evidence that the call was absent. "
+                "Regression PASS cannot resolve it.",
+            }
         if self._active_failed_check is None:
             return None
         stored = self._active_failed_check.get("public_check_failure")
@@ -2517,12 +2926,18 @@ class DevToolGateway:
             remaining_visible_check_ids=remaining,
             unrun_visible_check_ids=unrun,
             ready_to_submit=ready,
+            completion_verification=self.completion_verification(diff_hash=summary.patch_hash),
         )
 
-    def execute_batch(self, calls: list[RequestedTool]) -> list[DevToolResult]:
+    def execute_batch(self, calls: list[RequestedTool], *,
+                      path_diagnosis_pending=False,
+                      repair_test_comparison_pending=False) -> list[DevToolResult]:
         shape = validate_tool_batch(
             calls, max_parallel_reads=self.limits.max_parallel_reads,
             agent_policy=self.agent_policy,
+            path_diagnosis_pending=path_diagnosis_pending,
+            repair_test_comparison_pending=repair_test_comparison_pending,
+            read_range_only=self.read_range_only,
         )
         if shape == "single_action":
             return [self.execute(calls[0])]
@@ -2531,10 +2946,17 @@ class DevToolGateway:
             return [future.result() for future in futures]
 
     def execute(self, call: RequestedTool) -> DevToolResult:
+        from patchloop.dev import file_edits, file_transaction
+
+        source_scope = _requested_source_scope(call.name, call.arguments)
+        is_probe = call.name in {"run_probe", "observe_original"}
         turn_decision = (
             call.turn_decision.model_dump(mode="json") if call.turn_decision is not None else None
         )
         executable_input = {"tool": call.name, "arguments": call.arguments}
+        if self.dependency_sources is not None and call.name in {"read_file", "search_files"}:
+            self._dependency_catalog()
+            executable_input["dependency_source_identity"] = self._dependency_source_identity
         action_input = dict(executable_input)
         if turn_decision is not None:
             action_input["turn_decision"] = turn_decision
@@ -2553,29 +2975,164 @@ class DevToolGateway:
             self.deadline.check()
         action_read_deadline = (
             self._recovery_read_deadline()
-            if pending is not None and call.name == "replace_text" else self.deadline
+            if pending is not None and call.name in MUTATION_TOOLS else self.deadline
         )
         baseline_summary = WorkspaceManager.diff_summary(
             self.workspace, deadline=action_read_deadline,
         )
         baseline = (
             str(pending["baseline_diff_hash"])
-            if pending is not None and call.name == "replace_text"
+            if pending is not None and call.name in MUTATION_TOOLS
             else baseline_summary.patch_hash
         )
         preflight_error: Exception | None = None
         mutation_admitted: bool | None = None
         mutation_anchor_evidence_span_id: str | None = None
         candidate_summary: DiffSummary | None = None
+        prepared_edit = None
+        file_packet = pending.get("file_transaction") if pending else None
         prepared_probe: dict[str, Any] | None = None
-        probe_arguments = {key: value for key, value in call.arguments.items()
-                           if key != "replay_action_id"}
+        reproduction_binding: dict[str, Any] | None = None
+        request_validation: dict[str, Any] | None = None
+        probe_arguments = {key: value for key, value in call.arguments.items() if key not in {
+            "replay_action_id", "reproduction", "purpose", "call_path",
+        }}
+        path_request = call.arguments.get("call_path") if is_probe else None
+        path_link = copy.deepcopy(pending.get("repair_path_link")) if pending is not None else None
+        path_admission = copy.deepcopy(pending.get("diagnosis_request")) if pending else None
+        first_admission = copy.deepcopy(pending.get("first_observation")) if pending else None
+        first_link = copy.deepcopy(pending.get("first_observation_link")) if pending else None
+        repair_intent = copy.deepcopy(pending.get("repair_prediction")) if pending else None
+        prediction_observation = (
+            copy.deepcopy(pending.get("repair_prediction_observation")) if pending else None)
+        repair_test_link = copy.deepcopy(pending.get("repair_test_link")) if pending else None
+        probe_call_arguments = call.arguments
+        if prediction_observation is not None:
+            path_request = prediction_observation.get("call_path")
+            if prediction_observation["candidate_diff_hash"] != baseline:
+                preflight_error = RecoveryError("pending prediction observation changed diff")
+        if first_admission is not None and call.name == "observe_original":
+            probe_call_arguments = first_observation.arguments(call.arguments, first_admission)
+            path_request = probe_call_arguments["call_path"]
+            if first_admission["candidate_diff_hash"] != baseline:
+                preflight_error = RecoveryError("pending original observation changed diff")
+        if pending and pending.get("first_observation_error"):
+            error = pending["first_observation_error"]
+            preflight_error = ContractError(
+                error["message"], details=copy.deepcopy(error["details"]))
+        if path_admission is not None:
+            probe_call_arguments = diagnosis_request.arguments(call.arguments, path_admission)
+            path_request = probe_call_arguments["call_path"]
+            if path_admission["candidate_diff_hash"] != baseline:
+                preflight_error = RecoveryError("pending diagnosis no longer matches admitted diff")
+        if pending and path_link and pending.get("probe_request", {}).get("status") == "rejected":
+            error = pending.get("repair_path_error", {
+                "message": "previously rejected call-path request cannot dispatch during recovery",
+                "details": {},
+            })
+            preflight_error = ContractError(error["message"],
+                                            details=copy.deepcopy(error["details"]))
+        helper_link = copy.deepcopy(pending.get("helper_recovery_link")) if pending else None
+        if pending and pending.get("helper_recovery_error"):
+            recorded_error = pending["helper_recovery_error"]
+            preflight_error = ContractError(recorded_error["message"],
+                                            details=copy.deepcopy(recorded_error["details"]))
+        if pending is None:
+            verification = self.completion_verification(diff_hash=baseline)
+            gate_diagnostics = self.verification_policy == "reproduction-gated-v1"
+            first_state = verification["first_observation"]
+            if call.name == "observe_original":
+                if first_state.get("available"):
+                    first_link = first_observation.link(first_state)
+                try:
+                    first_admission = first_observation.prepare(
+                        call.arguments, first_state, self.workspace,
+                        getattr(self.probe_sandbox, "validate_call_path", None),
+                        deadline=self.deadline,
+                    )
+                    first_link = first_observation.link(first_admission)
+                    probe_call_arguments = first_observation.arguments(
+                        call.arguments, first_admission)
+                    path_request = probe_call_arguments["call_path"]
+                except (PatchLoopError, ValueError, OSError, SyntaxError) as exc:
+                    preflight_error = exc
+            elif call.name in MUTATION_TOOLS and first_state.get("observation"):
+                first_link = {**first_observation.link(first_state),
+                              "observation_action_id": first_state["observation"]["action_id"],
+                              "observation_status": first_state["observation"]["status"]}
+            path_state = verification["repair_path"]
+            prediction_state = verification["repair_prediction"]
+            pending_comparison = (gate_diagnostics
+                                  and prediction_state["status"] == "needs_test_comparison")
+            if pending_comparison and call.name not in {"run_tests", "stop_task"} and not (
+                call.name == "run_probe" and call.action_id.startswith("completion-reproduction-")
+            ):
+                preflight_error = ContractError(
+                    "Compare the added test on before/after source before another edit")
+            if gate_diagnostics and path_state.get("blocked") and call.name != "stop_task":
+                # Record rejected requests too, without treating them as executions.
+                path_link = repair_path.link(path_state)
+            try:
+                if call.name == "run_probe" and (
+                    "focus" in call.arguments or diagnosis_request.symbolic(path_request)
+                    or (gate_diagnostics and path_state.get("status") == "needs_path_diagnosis"
+                        and path_request is None)
+                ):
+                    path_admission = diagnosis_request.prepare(
+                        call.arguments, path_state, self.workspace,
+                        getattr(self.probe_sandbox, "validate_call_path", None),
+                        deadline=self.deadline,
+                        read_source=lambda path: self._tracked_path(path)[1].read_bytes(),
+                    )
+                    probe_call_arguments = diagnosis_request.arguments(
+                        call.arguments, path_admission)
+                    path_request = probe_call_arguments["call_path"]
+                if (gate_diagnostics and not (pending_comparison and call.name == "run_tests")
+                        or path_admission is not None):
+                    path_link = repair_path.validate(
+                        path_state, call.name,
+                        call.arguments if call.name == "observe_original" else probe_call_arguments,
+                    )
+                if gate_diagnostics and call.name in MUTATION_TOOLS:
+                    repair_intent = repair_prediction.admit(
+                        path_state, prediction_state,
+                        file_edits.prediction_arguments(call.arguments)
+                        if call.name == "edit_files" else call.arguments,
+                        public_task=self.public_task)
+                elif gate_diagnostics and call.name == "run_tests":
+                    repair_test_link = repair_prediction.validate_test(
+                        prediction_state, path_state, call.arguments)
+            except (PatchLoopError, ValueError, OSError, SyntaxError) as exc:
+                preflight_error = exc
+            helper_state = verification["helper_correction"]
+            if gate_diagnostics and helper_state.get("blocked") and call.name != "stop_task":
+                helper_link = helper_recovery.link(helper_state)
+            try:
+                if gate_diagnostics:
+                    helper_recovery.validate(helper_state, call.name, call.arguments,
+                                             original_obligation=verification["original_obligation"])
+            except ContractError as exc:
+                preflight_error = exc
+            if call.name == "run_probe" and preflight_error is None:
+                prediction_observation = repair_prediction.prepare_replay(
+                    self.journal.events(), call, baseline, self.journal.run_id, self.workspace,
+                    getattr(self.probe_sandbox, "validate_call_path", None), deadline=self.deadline)
+                if prediction_observation is not None:
+                    path_request = prediction_observation.get("call_path")
         replay_probe = (
-            call.name == "run_probe" and call.arguments.get("replay_action_id") is not None
+            is_probe and probe_call_arguments.get("replay_action_id") is not None
         )
         probe_binding_key = "probe_replay_request" if replay_probe else "probe_case_request"
         mutation_requirement_reference = None
         mutation_behavior_cases = None
+        correction = observation_correction.review(self.journal.events(), baseline)
+        if (self.verification_policy == "reproduction-gated-v1"
+                and correction["blocked"] and call.name not in {
+                "run_probe", "observe_original", "stop_task"}):
+            preflight_error = ContractError(
+                "Correct the contradictory observation before exploration, repair or finish.",
+                details={"observation_correction": correction},
+            )
         if call.name == "replace_text":
             mutation_behavior_cases = (
                 pending.get("mutation_behavior_cases") if pending is not None
@@ -2588,13 +3145,15 @@ class DevToolGateway:
                     call.arguments.get("requirement_ref"), self.public_task,
                 ) if "requirement_ref" in call.arguments else None
             )
-        if call.name == "run_probe" and (replay_probe or self.probe_policy in probe_cases.POLICIES):
+        if (is_probe and preflight_error is None
+                and (replay_probe or self.probe_policy in probe_cases.POLICIES)):
             try:
                 if (self.probe_policy == probe_cases.REFERENCE_POLICY
                         and "save_program" in call.arguments):
                     raise ContractError("reference-cases-v1 does not expose save_program")
                 prepared_probe = (
-                    probe_replay.prepare(call.arguments, self.journal.events()) if replay_probe
+                    probe_replay.prepare(probe_call_arguments, self.journal.events())
+                    if replay_probe
                     else probe_cases.prepare(
                         probe_arguments, self.journal.events(), self.probe_policy,
                     )
@@ -2603,10 +3162,106 @@ class DevToolGateway:
                     raise RecoveryError("pending probe differs from its admitted program")
             except (PatchLoopError, ValidationError, ValueError) as exc:
                 preflight_error = exc
+        if is_probe and preflight_error is None:
+            try:
+                if path_request is not None:
+                    path_request = call_path_trace.validate_request(path_request)
+                    source_preflight = getattr(self.probe_sandbox, "validate_call_path", None)
+                    if callable(source_preflight):
+                        source_preflight(self.workspace, path_request, deadline=self.deadline)
+                legacy_binding = (pending or {}).get("reproduction_binding")
+                selected, observation_channel = (
+                    reproduction.selection(probe_call_arguments, allow_legacy=True)
+                    if (legacy_binding is not None
+                        and "requirement_quote" in legacy_binding["definition"])
+                    else reproduction.selection(probe_call_arguments)
+                )
+                if selected is not None and any(
+                    call.arguments.get(k)
+                    for k in ("case_id", "reference_action_id", "save_program")
+                ):
+                    raise ContractError(
+                        "reproduction uses action replay, not a saved/reference case")
+                reproduction_binding = reproduction.bind(
+                    selected, self.public_task,
+                    (prepared_probe or probe_arguments).get("python_source"), call.action_id,
+                    replay=probe_call_arguments.get("replay_action_id"),
+                    events=self.journal.events(),
+                    observation_channel=observation_channel,
+                )
+                if (pending is not None
+                        and pending.get("reproduction_binding") != reproduction_binding):
+                    raise RecoveryError("pending reproduction differs from its admitted purpose")
+                observation_correction.validate(
+                    reproduction_binding, (prepared_probe or probe_arguments).get("python_source"),
+                    self.journal.events(), current_diff=baseline, action_id=call.action_id,
+                    replay=replay_probe,
+                    require_correction=self.verification_policy == "reproduction-gated-v1",
+                )
+                execution_arguments = (
+                    {key: prepared_probe[key] for key in ("question", "python_source")}
+                    if prepared_probe is not None else probe_arguments
+                )
+                try:
+                    inspect.signature(self._run_probe).bind(
+                        **execution_arguments,
+                        **({"call_path": path_request} if path_request is not None else {}),
+                        execution_identity={"run_id": self.journal.run_id,
+                                            "action_id": call.action_id},
+                        reproduction_binding=reproduction_binding, input_hash=input_hash,
+                        legacy_pending=pending is not None and "probe_request" not in pending,
+                    )
+                except TypeError as exc:
+                    raise ContractError(f"invalid probe arguments: {exc}") from exc
+                self._probe_execution_source(
+                    question=execution_arguments["question"],
+                    python_source=execution_arguments["python_source"],
+                    reproduction_binding=reproduction_binding,
+                    call_path=path_request,
+                )
+                program_kind = (call.arguments["purpose"].get("kind")
+                                if isinstance(call.arguments.get("purpose"), dict) else None)
+                if (program_kind in {"helper", "original_requirement"}
+                        and not replay_probe and not call.arguments.get("case_id")
+                        and (pending is None or "helper_program_error" in pending)):
+                    helper_program.validate(
+                        execution_arguments["python_source"],
+                        mode="original" if program_kind == "original_requirement" else "helper",
+                    )
+            except (PatchLoopError, ValidationError, ValueError) as exc:
+                preflight_error = exc
+        if is_probe and ("purpose" in call.arguments
+                                         or "focus" in call.arguments):
+            request_validation = (
+                copy.deepcopy(pending.get("probe_request", {}).get("validation"))
+                if pending is not None else probe_requests.review(
+                    call.arguments, preflight_error, self.journal.events(),
+                    public_task_hash=sha256_json(self.public_task.model_dump(mode="json")),
+                    kind=original_obligation.request_kind(call.arguments, reproduction_binding),
+                )
+            )
         if pending is None:
             if call.name == "replace_text":
                 try:
+                    if preflight_error is not None:
+                        raise preflight_error
+                    self._require_acquisition_released(baseline)
                     validated = self._validate_replacement_intent(call.arguments)
+                    test_only = self._validated_test_only(validated.path)
+                    if repair_intent is not None and (repair_intent["kind"] == "test") != test_only:
+                        raise ContractError(
+                            "repair_prediction.kind must distinguish additive tests "
+                            "from source repair")
+                    if repair_intent is not None and repair_intent["kind"] == "test":
+                        selection = SelectedTests.model_validate(repair_intent["selection"])
+                        suite = next(s for s in self.public_task.test_suites
+                                     if s.id == selection.suite_id)
+                        check, _ = selected_check(
+                            suite, selection, self.workspace, self._tracked_path)
+                        test_comparison._python_command(check, "", "")
+                        repair_prediction.validate_addition(
+                            validated.path, validated.before_bytes, validated.after_bytes,
+                            repair_intent["selection"])
                     mutation_anchor_evidence_span_id = validated.anchor_evidence_span_id
                     candidate_summary = WorkspaceManager.preview_text_replacement(
                         self.workspace,
@@ -2615,6 +3270,34 @@ class DevToolGateway:
                         baseline_diff_hash=baseline,
                         deadline=self.deadline,
                     )
+                    file_packet = file_transaction.save_changes(
+                        ArtifactStore(self.journal.root / "artifacts"),
+                        [file_transaction.FileChange(validated.path, validated.before_bytes,
+                                                     validated.after_bytes)],
+                        workspace=self.workspace,
+                    )
+                    mutation_admitted = True
+                except (PatchLoopError, ValidationError, ValueError, OSError) as exc:
+                    preflight_error = exc
+                    mutation_admitted = False
+            elif call.name == "edit_files":
+                try:
+                    if preflight_error is not None:
+                        raise preflight_error
+                    self._require_acquisition_released(baseline)
+                    prepared_edit = file_edits.prepare(self, call.arguments, baseline)
+                    if (repair_intent is not None
+                            and (repair_intent["kind"] == "test") != prepared_edit.test_only):
+                        raise ContractError("repair_prediction.kind must match the transaction")
+                    if repair_intent is not None and repair_intent["kind"] == "test":
+                        if len(prepared_edit.changes) != 1:
+                            raise ContractError("a diagnosed test addition edits one selected file")
+                        change = prepared_edit.changes[0]
+                        repair_prediction.validate_addition(
+                            change.path, change.before or b"", change.after or b"",
+                            repair_intent["selection"], new_file=change.before is None)
+                    candidate_summary = prepared_edit.candidate
+                    file_packet = prepared_edit.packet
                     mutation_admitted = True
                 except (PatchLoopError, ValidationError, ValueError, OSError) as exc:
                     preflight_error = exc
@@ -2627,14 +3310,57 @@ class DevToolGateway:
                     "tool": call.name,
                     "arguments": call.arguments,
                     **({"turn_decision": turn_decision}
-                       if "memory_update" not in call.model_fields_set
-                       or "turn_decision" in call.model_fields_set else {}),
+                       if "turn_decision" in call.model_fields_set
+                       or (not call.preserve_annotation_presence
+                           and "memory_update" not in call.model_fields_set
+                           and call.name not in MUTATION_TOOLS | {"stop_task", "observe_original"})
+                       else {}),
                     **({"memory_update": call.memory_update}
                        if "memory_update" in call.model_fields_set else {}),
                     "baseline_diff_hash": baseline,
                     "baseline_changed_files": baseline_summary.changed_files,
+                    **({"dependency_source_identity": self._dependency_source_identity}
+                       if self.dependency_sources is not None
+                       and call.name in {"read_file", "search_files"} else {}),
+                    **({"repair_path_link": path_link} if path_link is not None else {}),
+                    **({"repair_prediction": repair_intent} if repair_intent is not None else {}),
+                    **({"repair_prediction_observation": prediction_observation}
+                       if prediction_observation is not None else {}),
+                    **({"repair_test_link": repair_test_link}
+                       if repair_test_link is not None else {}),
+                    **({"diagnosis_request": path_admission} if path_admission is not None else {}),
+                    **({"first_observation": first_admission}
+                       if first_admission is not None else {}),
+                    **({"first_observation_link": first_link} if first_link is not None else {}),
+                    **({"first_observation_error": {
+                        "message": str(preflight_error),
+                        "details": copy.deepcopy(getattr(preflight_error, "details", {})),
+                    }} if call.name == "observe_original" and preflight_error is not None else {}),
+                    **({"repair_path_error": {
+                        "message": str(preflight_error),
+                        "details": copy.deepcopy(getattr(preflight_error, "details", {})),
+                    }} if path_link is not None and preflight_error is not None else {}),
+                    **({"helper_recovery_link": helper_link} if helper_link is not None else {}),
+                    **({"helper_recovery_error": {
+                        "message": str(preflight_error),
+                        "details": copy.deepcopy(preflight_error.details),
+                    }} if helper_link is not None and isinstance(preflight_error, ContractError)
+                       else {}),
+                    **({"helper_program_error": copy.deepcopy(
+                        preflight_error.details["helper_program_error"])}
+                       if isinstance(preflight_error, ContractError)
+                       and "helper_program_error" in preflight_error.details else {}),
+                    **({"probe_request": {
+                        "policy": original_obligation.PROBE_STAGES,
+                        "status": "rejected" if preflight_error is not None else "accepted",
+                        "kind": original_obligation.request_kind(
+                            call.arguments, reproduction_binding),
+                        **({"validation": request_validation} if request_validation else {}),
+                    }} if is_probe else {}),
+                    **({"reproduction_binding": reproduction_binding}
+                       if reproduction_binding is not None else {}),
                     **({probe_binding_key: prepared_probe}
-                       if call.name == "run_probe" and (
+                       if is_probe and (
                            replay_probe or self.probe_policy in probe_cases.POLICIES)
                        else {}),
                     "mutation_expected_worktree_diff_hash": (
@@ -2652,11 +3378,17 @@ class DevToolGateway:
                         validated.anchor_offset
                         if call.name == "replace_text" and mutation_admitted is True else None
                     ),
+                    **({"mutation_anchor_offsets": list(validated.anchor_offsets)}
+                       if call.name == "replace_text" and mutation_admitted is True
+                       and validated.intent.occurrence == "all" else {}),
                     "execution_identity": (
                         {"run_id": self.journal.run_id, "action_id": call.action_id}
-                        if call.name in {"run_check", "run_tests", "run_probe"} else None
+                        if call.name in {"run_check", "run_tests", "run_probe", "observe_original"}
+                        else None
                     ),
                     "mutation_admitted": mutation_admitted,
+                    **({"mutation_test_only": self._validated_test_only(validated.path)}
+                       if call.name == "replace_text" and mutation_admitted is True else {}),
                     **({"mutation_requirement_reference": mutation_requirement_reference}
                        if call.name == "replace_text" else {}),
                     **({"mutation_behavior_cases": mutation_behavior_cases}
@@ -2696,12 +3428,23 @@ class DevToolGateway:
                         if call.name == "replace_text" and mutation_admitted is True
                         else None
                     ),
+                    **({"file_transaction": file_packet} if file_packet is not None else {}),
+                    **(file_edits.admission(prepared_edit)
+                       if call.name == "edit_files" and mutation_admitted is True else {}),
                 },
             )
         try:
             if preflight_error is not None:
                 raise preflight_error
-            if pending is not None and call.name == "replace_text":
+            if call.name == "edit_files":
+                admitted = pending or self.journal.pending_action(call.action_id, input_hash)
+                output = file_edits.apply(
+                    self, call.arguments, admitted, deadline=action_read_deadline,
+                    recovering=pending is not None)
+                if pending is not None:
+                    output["recovered_after_crash"] = True
+                evidence_cache_hit = False
+            elif pending is not None and call.name == "replace_text":
                 output = self._reconcile_or_apply(
                     call.arguments, pending, deadline=action_read_deadline,
                 )
@@ -2728,13 +3471,17 @@ class DevToolGateway:
                     execution_identity={"run_id": self.journal.run_id, "action_id": call.action_id},
                 )
                 evidence_cache_hit = False
-            elif call.name == "run_probe":
+            elif is_probe:
                 if pending is not None and pending["baseline_diff_hash"] != baseline:
                     raise RecoveryError("pending probe workspace no longer matches admitted diff")
                 output = self._run_probe(
                     **({key: prepared_probe[key] for key in ("question", "python_source")}
                        if prepared_probe is not None else probe_arguments),
+                    **({"call_path": path_request} if path_request is not None else {}),
                     execution_identity={"run_id": self.journal.run_id, "action_id": call.action_id},
+                    reproduction_binding=reproduction_binding,
+                    input_hash=input_hash,
+                    legacy_pending=pending is not None and "probe_request" not in pending,
                 )
                 if prepared_probe is not None and prepared_probe["case"] is not None:
                     output["case_comparison"] = probe_cases.compare(prepared_probe["case"], output)
@@ -2744,6 +3491,14 @@ class DevToolGateway:
                         raise RecoveryError("replayed probe source differs from its bound program",
                                             details=output)
                     output["replayed_from"] = prepared_probe["replayed_from"]
+                if path_admission is not None:
+                    output["diagnosis_request"] = copy.deepcopy(path_admission)
+                if first_admission is not None:
+                    output["first_observation"] = copy.deepcopy(first_admission)
+                if prediction_observation is not None:
+                    output["repair_prediction"] = repair_prediction.assess(
+                        prediction_observation, output,
+                        {"run_id": self.journal.run_id, "action_id": call.action_id})
                 evidence_cache_hit = False
             elif call.name == history_search.TOOL:
                 if self.history_search_policy != history_search.POLICY:
@@ -2762,29 +3517,28 @@ class DevToolGateway:
                 )
                 evidence_cache_hit = False
             elif call.name in READ_TOOLS:
+                if self.read_range_only and call.name == "read_file":
+                    _read_line_bounds(call.arguments.get("start_line"),
+                                      call.arguments.get("end_line"), range_only=True)
                 if self.deadline is not None:
                     self.deadline.check()
-                cache_key = self._cache_key(read_request_hash, baseline)
-                with self._lock:
-                    cached = copy.deepcopy(self._read_cache.get(cache_key))
-                evidence_cache_hit = cached is not None
-                output = cached if cached is not None else self._perform(call.name, call.arguments)
-                output = self._decorate_read_output(
-                    tool=call.name,
-                    input_hash=read_request_hash,
-                    workspace_diff_hash=baseline,
-                    output=output,
-                    turn_decision=turn_decision,
-                    action_id=call.action_id,
-                )
-                with self._lock:
-                    self._read_cache[cache_key] = self._cacheable_read_output(output)
+                if source_scope != "repository":
+                    # Source identity is pinned in the action hash; foreign evidence is
+                    # separate from the workspace cache, coverage, and editable anchors.
+                    output = self._perform(call.name, call.arguments)
+                    self._remember_dependency_output(output, action_id=call.action_id)
+                    evidence_cache_hit = False
+                else:
+                    output, evidence_cache_hit = self._execute_repository_read(
+                        call, read_request_hash=read_request_hash, baseline=baseline,
+                        turn_decision=turn_decision,
+                    )
             else:
                 if self.deadline is not None:
                     self.deadline.check()
                 output = self._perform(call.name, call.arguments)
                 evidence_cache_hit = False
-            if call.name == "replace_text":
+            if call.name in MUTATION_TOOLS:
                 # Reconciliation uses the original admitted baseline, even if the
                 # candidate was already on disk when this process resumed.
                 output["baseline_diff_hash"] = baseline
@@ -2796,6 +3550,22 @@ class DevToolGateway:
                     output["mutation"]["behavior_cases"] = behavior_cases.project(
                         mutation_behavior_cases, self.public_task,
                     )
+            if request_validation is not None:
+                output["request_validation"] = request_validation
+            if helper_link is not None:
+                output["helper_recovery_link"] = copy.deepcopy(helper_link)
+            if repair_intent is not None:
+                output["mutation"]["repair_prediction"] = copy.deepcopy(repair_intent)
+            if repair_test_link is not None:
+                output["repair_test_link"] = copy.deepcopy(repair_test_link)
+            if path_link is not None:
+                output["repair_path_link"] = copy.deepcopy(path_link)
+                if call.name in MUTATION_TOOLS:
+                    output["mutation"]["repair_path_link"] = copy.deepcopy(path_link)
+            if first_link is not None:
+                output["first_observation_link"] = copy.deepcopy(first_link)
+                if call.name in MUTATION_TOOLS:
+                    output["mutation"]["first_observation_link"] = copy.deepcopy(first_link)
             result = DevToolResult(
                 action_id=call.action_id,
                 input_hash=input_hash,
@@ -2804,24 +3574,37 @@ class DevToolGateway:
                 output=output,
                 evidence_cache_hit=evidence_cache_hit,
                 workspace_diff_hash=(
-                    output["worktree_diff_hash"] if call.name == "replace_text" else baseline
+                    output["worktree_diff_hash"] if call.name in MUTATION_TOOLS else baseline
                 ),
             )
-        except (ExecutionDeadlineExceeded, GitExecutionUncertain):
+        except (ExecutionDeadlineExceeded, GitExecutionUncertain,
+                file_transaction.FileTransactionUncertain):
             raise
-        except (PatchLoopError, ValidationError, ValueError, OSError, RuntimeError) as exc:
+        except (PatchLoopError, ValidationError, ValueError, OSError,
+                RuntimeError, SyntaxError) as exc:
             code = exc.code if isinstance(exc, PatchLoopError) else "TOOL_CONTRACT_ERROR"
             failure_output = (
                 copy.deepcopy(exc.details) if isinstance(exc, PatchLoopError) else {}
             )
+            if helper_link is not None:
+                failure_output["helper_recovery_link"] = copy.deepcopy(helper_link)
+            if is_probe:
+                if request_validation is not None:
+                    failure_output["request_validation"] = request_validation
+                failure_output.setdefault(
+                    "probe_stage", "preflight_rejected" if preflight_error is not None
+                    and (pending is None or pending.get("probe_request", {}).get("status")
+                         == "rejected") else "recovery_rejected" if preflight_error is not None
+                    else "setup_unavailable" if self.probe_sandbox is None else "dispatch_failed",
+                )
             if call.name in READ_TOOLS:
                 failure_output["read_request_hash"] = read_request_hash
-            elif call.name == "replace_text" and "mutation_failure" not in failure_output:
+            elif call.name in MUTATION_TOOLS and "mutation_failure" not in failure_output:
                 failure_output["mutation_failure"] = self._replacement_failure_details(
                     message=str(exc),
                     baseline=baseline_summary,
                 )
-            if call.name == "replace_text":
+            if call.name in MUTATION_TOOLS:
                 mutation_failure = failure_output.get("mutation_failure")
                 if isinstance(mutation_failure, dict):
                     required_anchor = failure_output.get("required_anchor")
@@ -2842,7 +3625,7 @@ class DevToolGateway:
                 workspace_diff_hash=(
                     WorkspaceManager.diff_summary(
                         self.workspace, deadline=action_read_deadline,
-                    ).patch_hash if call.name == "replace_text" else baseline
+                    ).patch_hash if call.name in MUTATION_TOOLS else baseline
                 ),
             )
         finished_payload: dict[str, Any] = {
@@ -2853,7 +3636,7 @@ class DevToolGateway:
         if (result.status == "succeeded" and prepared_probe is not None
                 and prepared_probe["case"] is not None):
             finished_payload["probe_case"] = prepared_probe["case"]
-        if result.status == "succeeded" and result.tool == "replace_text":
+        if result.status == "succeeded" and result.tool in MUTATION_TOOLS:
             finished_payload["working_notes_state"] = self._refreshed_working_notes_state(
                 action_id=call.action_id,
                 deadline=self._recovery_read_deadline(),
@@ -2863,12 +3646,12 @@ class DevToolGateway:
             finished_payload,
         )
         if result.status == "succeeded":
-            if result.tool == "replace_text":
+            if result.tool in MUTATION_TOOLS:
                 self._restore_working_notes_state(finished_payload["working_notes_state"])
                 self._accept_successful_mutation(result.output, refresh_notes=False)
             elif result.tool == "run_check":
                 self._remember_check(result.output)
-        elif result.tool == "replace_text":
+        elif result.tool in MUTATION_TOOLS:
             self.last_failed_mutation = self._failed_mutation_context(
                 arguments=call.arguments,
                 action_id=result.action_id,
@@ -2877,6 +3660,39 @@ class DevToolGateway:
                 result=result,
             )
         return result
+
+    def _execute_repository_read(
+        self, call: RequestedTool, *, read_request_hash: str, baseline: str,
+        turn_decision: dict[str, Any] | None,
+    ) -> tuple[dict[str, Any], bool]:
+        cache_key = self._cache_key(read_request_hash, baseline)
+        with self._lock:
+            cached = copy.deepcopy(self._read_cache.get(cache_key))
+        output = cached if cached is not None else self._perform(call.name, call.arguments)
+        if (call.name == "search_files" and self.history_search_policy == history_search.POLICY):
+            from patchloop.dev.source_recovery import expand
+
+            # Only workspace spans are eligible; dependencies have a separate output field.
+            with self._lock:
+                events = self.journal.events()
+                cutoff = next(e["sequence"] for e in events
+                              if e["event_type"] == "action_started"
+                              and e["payload"]["action_id"] == call.action_id)
+                self._public_history.sync(
+                    events, ArtifactStore(self.journal.root / "artifacts"),
+                    before_sequence=cutoff,
+                    check_deadline=self.deadline.check if self.deadline else lambda: None,
+                )
+                output = expand(output, self._public_history,
+                                self._public_history.visible_source_lines)
+        output = self._decorate_read_output(
+            tool=call.name, input_hash=read_request_hash, workspace_diff_hash=baseline,
+            output=output, turn_decision=turn_decision, action_id=call.action_id,
+        )
+        with self._lock:
+            if not output.get("source_recovery"):
+                self._read_cache[cache_key] = self._cacheable_read_output(output)
+        return output, cached is not None
 
     def _perform(self, name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         if name == "read_file":
@@ -2895,18 +3711,34 @@ class DevToolGateway:
             return self._stop_task(arguments)
         raise ContractError(f"unknown dev-head tool: {name}")
 
+    def _tracked_paths(self) -> set[str]:
+        """Read the current index once; callers retain it only for one inspection."""
+        tracked = run_git(self.workspace, "ls-files", "-z", text=False, deadline=self.deadline)
+        return set(filter(None, tracked.stdout.decode(
+            "utf-8", errors="surrogateescape",
+        ).split("\0")))
+
     def _tracked_path(
         self, relative: str, *, deadline: ExecutionDeadline | None = None,
+        tracked_paths: set[str] | None = None,
     ) -> tuple[str, Path]:
         normalized = safe_relative_path(relative)
         if normalized.startswith(".patchloop-hidden/"):
             raise ContractError("private evaluator paths are never agent-readable")
         path = ensure_within(self.workspace, normalized)
-        tracked = run_git(
-            self.workspace, "--literal-pathspecs", "ls-files", "--error-unmatch", "--", normalized,
-            check=False, deadline=deadline if deadline is not None else self.deadline,
-        )
-        if tracked.returncode != 0 or not path.is_file() or path.is_symlink():
+        if tracked_paths is None:
+            tracked = run_git(
+                self.workspace, "--literal-pathspecs", "ls-files", "--error-unmatch",
+                "--", normalized,
+                check=False, deadline=deadline if deadline is not None else self.deadline,
+            )
+            is_tracked = tracked.returncode == 0
+        else:
+            effective_deadline = deadline if deadline is not None else self.deadline
+            if effective_deadline is not None:
+                effective_deadline.check()
+            is_tracked = normalized in tracked_paths
+        if not is_tracked or not path.is_file() or path.is_symlink():
             raise ContractError(f"path is not a tracked public file: {normalized}")
         return normalized, path
 
@@ -2921,26 +3753,87 @@ class DevToolGateway:
         }
         return {"span_id": f"span_{sha256_json(identity).split(':', 1)[1][:16]}", **identity}
 
-    def _read_file(self, path: str, start_line: int, end_line: int) -> dict[str, Any]:
-        if type(start_line) is not int or type(end_line) is not int:
-            raise ContractError("read_file line bounds must be integers")
-        if start_line < 1 or end_line < start_line or end_line - start_line + 1 > 400:
-            raise ContractError("read_file accepts a 1-400 line inclusive range")
-        normalized, selected = self._tracked_path(path)
-        raw = selected.read_bytes()
-        if len(raw) > 2_000_000:
-            raise ContractError("read_file refuses files larger than 2 MB")
-        lines = source_lines(raw.decode("utf-8"))
+    @staticmethod
+    def _dependency_span(
+        provenance: dict[str, Any], start: int, end: int, content: str,
+    ) -> dict[str, Any]:
+        identity = {
+            "source_scope": provenance["scope"], "path": provenance["path"],
+            "start_line": start, "end_line": end, "content": content,
+            "file_hash": provenance["file_hash"], "provenance": copy.deepcopy(provenance),
+            "read_only": True,
+        }
+        return {"span_id": f"dependency_{sha256_json(identity).split(':', 1)[1][:16]}",
+                **identity}
+
+    @classmethod
+    def _coalesce_search_spans(cls, spans: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Remove overlap after selection, preserving source identity and all selected lines."""
+        def source_identity(span: dict[str, Any]) -> tuple[Any, ...]:
+            return tuple(span.get(key) for key in (
+                "source_scope", "path", "file_hash", "provenance", "read_only",
+            ))
+
+        merged: list[dict[str, Any]] = []
+        for _, group in groupby(spans, key=source_identity):
+            selected: list[dict[str, Any]] = []
+            # Clipped windows can start later than a subsequent full window.
+            for span in sorted(group, key=lambda item: item["start_line"]):
+                if not selected or span["start_line"] > selected[-1]["end_line"]:
+                    selected.append(span)
+                    continue
+                previous = selected[-1]
+                if span["end_line"] <= previous["end_line"]:
+                    continue
+                tail = span["content"].split("\n")[
+                    previous["end_line"] - span["start_line"] + 1:
+                ]
+                content = "\n".join([previous["content"], *tail])
+                start, end = previous["start_line"], span["end_line"]
+                selected[-1] = (
+                    cls._dependency_span(span["provenance"], start, end, content)
+                    if "provenance" in span else
+                    cls._span(span["path"], start, end, content, span["file_hash"])
+                )
+            merged.extend(selected)
+        return merged
+
+    def _read_file(
+        self, path: str, start_line: int | None = None, end_line: int | None = None,
+        source_scope: str = "repository",
+    ) -> dict[str, Any]:
+        start_line, end_line = _read_line_bounds(
+            start_line, end_line, range_only=self.read_range_only,
+        )
+        provenance = None
+        if source_scope != "repository":
+            self._dependency_catalog()
+            assert self.dependency_sources is not None
+            text, provenance = self.dependency_sources.read(source_scope, path)
+            normalized = provenance["path"]
+            lines = source_lines(text)
+            file_hash = provenance["file_hash"]
+        else:
+            normalized, selected = self._tracked_path(path)
+            raw = selected.read_bytes()
+            if len(raw) > 2_000_000:
+                raise ContractError("read_file refuses files larger than 2 MB")
+            lines = source_lines(raw.decode("utf-8"))
+            file_hash = sha256_bytes(raw)
+        if end_line is None:
+            end_line = len(lines)
         content, actual_end, truncated = bounded_lines(lines, start_line, end_line)
         spans = (
-            [self._span(normalized, start_line, actual_end, content, sha256_bytes(raw))]
+            [self._dependency_span(provenance, start_line, actual_end, content)
+             if provenance is not None else
+             self._span(normalized, start_line, actual_end, content, file_hash)]
             if actual_end >= start_line else []
         )
         return {
             "path": normalized,
             "start_line": start_line,
             "end_line": actual_end if spans else None,
-            "spans": spans,
+            "dependency_spans" if provenance is not None else "spans": spans,
             "line_count": len(lines),
             "truncated": truncated,
             "eof": start_line > len(lines),
@@ -2949,41 +3842,56 @@ class DevToolGateway:
                 "requested source line exceeds the 24000-character output limit"
                 if truncated and not spans else None
             ),
+            **({"source_scope": source_scope} if self.dependency_sources is not None else {}),
+            **({"provenance": provenance,
+                "dependency_source_identity": self._dependency_source_identity,
+                "read_only": True} if provenance is not None else {}),
         }
 
-    def _search_files(self, query: str, path_glob: str = "**/*") -> dict[str, Any]:
+    def _search_files(
+        self, query: str, path_glob: str = "**/*", source_scope: str = "repository",
+    ) -> dict[str, Any]:
         if not isinstance(query, str) or not query or len(query) > 500:
             raise ContractError("search query must contain 1-500 characters")
         pattern = safe_relative_path(path_glob, field_name="search path_glob")
-        tracked = run_git(
-            self.workspace, "ls-files", "-z", text=False, deadline=self.deadline,
-        )
-        tracked_paths = set(tracked.stdout.decode("utf-8", errors="surrogateescape").split("\0"))
+        if source_scope != "repository":
+            return self._search_dependency_files(query, pattern, source_scope)
+        tracked_paths = self._tracked_paths()
         spans: list[dict[str, Any]] = []
         content_chars = 0
         searched_file_count = 0
         truncated = False
-        for selected in sorted(self.workspace.rglob("*")):
+        for relative in sorted(tracked_paths, key=Path):
             if self.deadline is not None:
                 self.deadline.check()
             if len(spans) >= 20 or content_chars >= 24_000:
                 truncated = True
                 break
-            if not selected.is_file() or selected.is_symlink():
-                continue
-            relative = selected.relative_to(self.workspace).as_posix()
-            if ".git" in selected.relative_to(self.workspace).parts:
+            parts = Path(relative).parts
+            if ".git" in parts:
                 continue
             if relative.startswith(".patchloop-hidden/") or not matches_source_glob(
                 relative, pattern
             ):
                 continue
-            if relative not in tracked_paths or selected.stat().st_size > 1_000_000:
-                continue
             try:
+                # rglob did not descend through directory symlinks. Direct index
+                # traversal must keep that boundary, including Windows junctions.
+                selected = self.workspace
+                linked = False
+                for part in parts:
+                    selected /= part
+                    if selected.is_symlink() or selected.is_junction():
+                        linked = True
+                        break
+                if linked:
+                    continue
+                selected = ensure_within(self.workspace, relative)
+                if not selected.is_file() or selected.stat().st_size > 1_000_000:
+                    continue
                 raw = selected.read_bytes()
                 text = raw.decode("utf-8")
-            except (OSError, UnicodeDecodeError):
+            except (ContractError, OSError, UnicodeDecodeError):
                 continue
             searched_file_count += 1
             lines = source_lines(text)
@@ -3012,9 +3920,59 @@ class DevToolGateway:
             "query": query,
             "path_glob": pattern,
             "searched_file_count": searched_file_count,
-            "spans": spans,
+            "spans": self._coalesce_search_spans(spans),
             "truncated": truncated,
+            **({"source_scope": "repository"} if self.dependency_sources is not None else {}),
+            **({"available_sources": self._dependency_catalog(),
+                "diagnostic": "No tracked repository files match this glob. To inspect a "
+                "registered caller package, select its dependency source_scope."}
+               if self.dependency_sources is not None and searched_file_count == 0 else {}),
         }
+
+    def _search_dependency_files(
+        self, query: str, pattern: str, source_scope: str,
+    ) -> dict[str, Any]:
+        self._dependency_catalog()
+        assert self.dependency_sources is not None
+        spans: list[dict[str, Any]] = []
+        content_chars = searched_file_count = 0
+        truncated = False
+        for path in self.dependency_sources.paths(source_scope, pattern):
+            if self.deadline is not None:
+                self.deadline.check()
+            if len(spans) >= 20 or content_chars >= 24_000:
+                truncated = True
+                break
+            text, provenance = self.dependency_sources.read(source_scope, path)
+            if len(text.encode("utf-8")) > 1_000_000:
+                continue
+            searched_file_count += 1
+            lines = source_lines(text)
+            for index, line in enumerate(lines, start=1):
+                if query not in line:
+                    continue
+                start, end = max(1, index - 2), min(len(lines), index + 2)
+                content, actual_end, clipped = bounded_lines(
+                    lines, start, end, max_chars=24_000 - content_chars,
+                )
+                if actual_end < index:
+                    start = index
+                    content, actual_end, clipped = bounded_lines(
+                        lines, start, index, max_chars=24_000 - content_chars,
+                    )
+                truncated |= clipped
+                if actual_end < index:
+                    continue
+                spans.append(self._dependency_span(provenance, start, actual_end, content))
+                content_chars += len(content)
+                if len(spans) >= 20:
+                    truncated = True
+                    break
+        return {"query": query, "path_glob": pattern, "source_scope": source_scope,
+                "searched_file_count": searched_file_count,
+                "dependency_spans": self._coalesce_search_spans(spans),
+                "truncated": truncated, "read_only": True,
+                "dependency_source_identity": self._dependency_source_identity}
 
     def _path_allowed(self, path: str) -> bool:
         constraints = self.public_task.constraints
@@ -3131,6 +4089,12 @@ class DevToolGateway:
         newline = "\r\n" if "\r\n" in decoded else "\n"
         return normalize_source_text(decoded), newline
 
+    def _validated_test_only(self, path: str) -> bool:
+        """Called only after additive-test validation, never infer from a suffix alone."""
+        roots = self.public_task.constraints.additive_test_roots
+        return bool(roots and any(path.startswith(root + "/") for root in roots)
+                    and Path(path).name not in {"conftest.py", "__init__.py", "setup.py"})
+
     def _validate_replacement_intent(self, arguments: dict[str, Any]) -> _ValidatedReplacement:
         intent = TextReplacementIntent.model_validate(arguments)
         if self.current_diff.untracked_files:
@@ -3165,16 +4129,23 @@ class DevToolGateway:
         positions = [
             match.start() for match in re.finditer(re.escape(intent.old_text), anchor_text)
         ]
-        if len(positions) < intent.occurrence:
+        if not positions or (intent.occurrence != "all" and len(positions) < intent.occurrence):
             raise ContractError("exact edit anchor is stale or absent from the current source")
-        position = positions[intent.occurrence - 1]
+        selected = positions if intent.occurrence == "all" else [positions[intent.occurrence - 1]]
+        position = selected[0]
         anchor_start_line = anchor_text[:position].count("\n") + 1
-        anchor_end_line = anchor_text[:position + len(intent.old_text) - 1].count("\n") + 1
-        after_text = (
-            anchor_text[:position]
-            + intent.new_text
-            + anchor_text[position + len(intent.old_text) :]
+        anchor_end_line = anchor_text[:selected[-1] + len(intent.old_text) - 1].count("\n") + 1
+        replacement_byte_delta = (
+            len(intent.new_text.replace("\n", newline).encode("utf-8"))
+            - len(intent.old_text.replace("\n", newline).encode("utf-8"))
         )
+        if (intent.occurrence == "all"
+                and len(before_bytes) + len(selected) * replacement_byte_delta > 2_000_000):
+            raise ContractError("all-match replacement exceeds the 2 MB source size bound")
+        after_text = (anchor_text.replace(intent.old_text, intent.new_text)
+                      if intent.occurrence == "all" else
+                      anchor_text[:position] + intent.new_text
+                      + anchor_text[position + len(intent.old_text):])
         after_bytes = after_text.replace("\n", newline).encode("utf-8")
         constraints = self.public_task.constraints
         if constraints.additive_test_roots and (
@@ -3187,6 +4158,7 @@ class DevToolGateway:
             except UnsupportedTestChange as exc:
                 raise ContractError(
                     "Test additions must preserve existing tests, imports, fixtures and helpers. "
+                    "Put new imports inside the new test function, leaving shared imports intact. "
                     "Add a new test_ function/method, test class, or literal parameter cases "
                     "in an existing file. New pytest.param cases allow literal arguments and "
                     "an optional string id, but no marks: "
@@ -3212,17 +4184,17 @@ class DevToolGateway:
                     str(span["span_id"]),
                 ),
             )
-        if not spans_cover_range(covering_spans, anchor_start_line, anchor_end_line):
-            raise ContractError(
-                "current evidence spans do not cover the exact replacement anchor contiguously",
-                details={
-                    "required_anchor": {
-                        "path": anchor_path,
-                        "start_line": anchor_start_line,
-                        "end_line": anchor_end_line,
-                    }
-                },
-            )
+        line_breaks = [match.start() for match in re.finditer("\n", anchor_text)]
+        for offset in selected:
+            start = bisect_left(line_breaks, offset) + 1
+            end = bisect_left(line_breaks, offset + len(intent.old_text) - 1) + 1
+            if not spans_cover_range(covering_spans, start, end):
+                raise ContractError(
+                    "current evidence spans do not cover the exact replacement anchor contiguously",
+                    details={"required_anchor": {
+                        "path": anchor_path, "start_line": start, "end_line": end,
+                    }},
+                )
         return _ValidatedReplacement(
             intent=intent,
             path=anchor_path,
@@ -3235,6 +4207,7 @@ class DevToolGateway:
             postimage_start_line=anchor_start_line,
             anchor_evidence_span_id=str(covering_spans[0]["span_id"]),
             anchor_evidence_span_ids=tuple(str(span["span_id"]) for span in covering_spans),
+            anchor_offsets=tuple(selected),
         )
 
     def _mutation_result_output(
@@ -3254,7 +4227,7 @@ class DevToolGateway:
             self._mutation_postimage_evidence(
                 path=path,
                 focus_start_line=postimage_start_line,
-                focus_line_count=max(1, intent.new_text.count("\n") + 1),
+                focus_line_count=max(1, source_replacement.new_text.count("\n") + 1),
                 diff_hash=summary.patch_hash,
                 deadline=deadline,
             )
@@ -3288,6 +4261,8 @@ class DevToolGateway:
             ),
             "changed_files": summary.changed_files,
             "diff_hash": summary.patch_hash,
+            **({"replacement_count": source_replacement.old_text.count(intent.old_text)}
+               if intent.occurrence == "all" else {}),
         }
         output = {
             "patch_hash": sha256_bytes(generated_patch.encode("utf-8")),
@@ -3358,10 +4333,7 @@ class DevToolGateway:
                 path=validated.path,
                 postimage_start_line=validated.postimage_start_line,
                 summary=summary,
-                source_replacement=SourceReplacement(
-                    validated.before_bytes, validated.after_bytes, validated.anchor_offset,
-                    validated.intent.old_text, validated.intent.new_text,
-                ),
+                source_replacement=validated.source_replacement(),
             )
         except Exception as exc:
             WorkspaceManager.atomic_replace_source(
@@ -3410,6 +4382,10 @@ class DevToolGateway:
     def _mutation_recovery_key(arguments: dict[str, Any], baseline_diff_hash: str) -> str:
         """Identify one failed replacement lineage without storing another raw copy."""
 
+        if "edits" in arguments or "undo_action_id" in arguments:
+            return sha256_json({"baseline_diff_hash": baseline_diff_hash,
+                                "file_edits": arguments.get("edits"),
+                                "undo_action_id": arguments.get("undo_action_id")})
         return sha256_json(
             {
                 "baseline_diff_hash": baseline_diff_hash,
@@ -3463,15 +4439,34 @@ class DevToolGateway:
         if newline not in {"\n", "\r\n"}:
             raise RecoveryError("mutation recovery is missing its original newline style")
         offset = pending.get("mutation_anchor_offset")
-        if (
-            type(offset) is not int or not 0 <= offset <= len(text)
-            or text[offset:offset + len(intent.new_text)] != intent.new_text
-        ):
+        offsets = (pending.get("mutation_anchor_offsets") if intent.occurrence == "all"
+                   else [offset])
+        if (not isinstance(offsets, list) or not offsets or offsets[0] != offset
+                or any(type(value) is not int or value < 0 for value in offsets)
+                or any(b < a + len(intent.old_text)
+                       for a, b in zip(offsets, offsets[1:], strict=False))):
             raise RecoveryError("mutation recovery is missing its admitted replacement offset")
-        before = (text[:offset] + intent.old_text + text[offset + len(intent.new_text):])
+        pieces, cursor = [], 0
+        delta = len(intent.new_text) - len(intent.old_text)
+        for index, original_offset in enumerate(offsets):
+            current_offset = original_offset + index * delta
+            if (not cursor <= current_offset <= len(text)
+                    or text[current_offset:current_offset + len(intent.new_text)]
+                    != intent.new_text):
+                raise RecoveryError("mutation recovery does not match admitted positions")
+            pieces.extend((text[cursor:current_offset], intent.old_text))
+            cursor = current_offset + len(intent.new_text)
+        pieces.append(text[cursor:])
+        before = "".join(pieces)
         before_bytes = before.replace("\n", newline).encode("utf-8")
         if sha256_bytes(before_bytes) != pending.get("mutation_preimage_file_hash"):
             raise RecoveryError("mutation recovery does not match the admitted preimage")
+        if intent.occurrence == "all" and offsets != [
+            match.start() for match in re.finditer(re.escape(intent.old_text), before)
+        ]:
+            raise RecoveryError("mutation recovery does not cover every admitted match")
+        before_end = offsets[-1] + len(intent.old_text)
+        after_end = before_end + len(offsets) * delta
         scope = verify_scope(summary, self.public_task.constraints)
         if not scope.passed:
             # Undo only the exact admitted replacement, never arbitrary workspace drift.
@@ -3505,7 +4500,8 @@ class DevToolGateway:
             postimage_start_line=int(pending.get("mutation_postimage_start_line", 1)),
             summary=summary,
             source_replacement=SourceReplacement(
-                before_bytes, after_bytes, offset, intent.old_text, intent.new_text,
+                before_bytes, after_bytes, offset,
+                before[offset:before_end], text[offset:after_end],
             ),
             recovered_after_crash=True,
             deadline=deadline,
@@ -3514,7 +4510,7 @@ class DevToolGateway:
     def _run_check(
         self, check_id: str, *, execution_identity: dict[str, str] | None = None,
     ) -> dict[str, Any]:
-        checks = {check.id: check for check in self.public_task.visible_checks}
+        checks = {check.id: check for check in self.registered_checks}
         try:
             check = checks[check_id]
         except KeyError as exc:
@@ -3531,6 +4527,10 @@ class DevToolGateway:
         check, targets = selected_check(
             suites[selection.suite_id], selection, self.workspace, self._tracked_path,
         )
+        if selection.comparison is not None:
+            from patchloop.dev import test_comparison
+
+            return test_comparison.run(self, selection, check, targets, execution_identity)
         output = self._execute_check(check, execution_identity=execution_identity)
         error = any(output.get(key) for key in (
             "timed_out", "deadline_exhausted", "cleanup_failed",
@@ -3614,32 +4614,109 @@ class DevToolGateway:
             )
         return output
 
+    @staticmethod
+    def _probe_execution_source(
+        question: str, python_source: str, *,
+        reproduction_binding: dict[str, Any] | None = None,
+        call_path: dict[str, Any] | None = None,
+    ) -> str:
+        if not isinstance(question, str) or not 1 <= len(question) <= 500:
+            raise probe_requests.error("probe question must contain 1-500 characters", "/question")
+        if (not isinstance(python_source, str)
+                or not 1 <= len(python_source) <= probe_limits.SOURCE_LIMIT_CHARS):
+            raise probe_requests.error("probe source must contain 1-8000 characters",
+                                       "/python_source")
+        if call_path is not None and reproduction_binding is None:
+            raise ContractError("call_path must replay an invocation-bound original case")
+        return (reproduction.program(python_source, reproduction_binding,
+                                     call_path=call_path is not None)
+                if reproduction_binding is not None else python_source)
+
     def _run_probe(
-        self, question: str, python_source: str, *, execution_identity: dict[str, str],
+        self, question: str, python_source: str, *,
+        execution_identity: dict[str, str], input_hash: str,
+        reproduction_binding: dict[str, Any] | None = None, legacy_pending: bool = False,
+        call_path: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         if self.probe_sandbox is None:
             raise ContractError("public probes are disabled for this run")
-        if not isinstance(question, str) or not 1 <= len(question) <= 500:
-            raise ContractError("probe question must contain 1-500 characters")
-        if not isinstance(python_source, str) or not 1 <= len(python_source) <= 8_000:
-            raise ContractError("probe source must contain 1-8000 characters")
+        execution_source = self._probe_execution_source(
+            question, python_source, reproduction_binding=reproduction_binding,
+            call_path=call_path,
+        )
         summary = self.current_diff
         baseline = summary.patch_hash
         targets = self._execution_targets(execution_identity, summary=summary)
-        output = self.probe_sandbox.run_probe(
-            self.workspace, question, python_source,
-            deadline=self.deadline, execution_identity=execution_identity,
-            **({"execution_targets": targets}
-               if getattr(self.probe_sandbox, "supports_public_execution", False) else {}),
-        )
+        identity = {
+            "policy": original_obligation.PROBE_STAGES,
+            "action_id": execution_identity["action_id"], "input_hash": input_hash,
+            "execution_source_hash": sha256_bytes(execution_source.encode("utf-8")),
+            "baseline_diff_hash": baseline,
+            **({"call_path_request_hash": sha256_json(call_path)} if call_path is not None else {}),
+        }
+        stages = {kind: [e["payload"] for e in self.journal.events()
+                         if e["event_type"] == kind
+                         and e["payload"].get("action_id") == execution_identity["action_id"]]
+                  for kind in ("probe_execution_started", "probe_execution_finished")}
+        started, returned = (stages[kind] for kind in stages)
+        if (started and started != [identity]) or len(returned) > 1 or (returned and (
+                not started or {k: returned[0].get(k) for k in identity} != identity)):
+            raise RecoveryError("probe execution receipt identity changed")
+        if legacy_pending or (started and not returned):
+            raise RecoveryError(
+                "probe dispatch has no durable result; do not execute this action again",
+                details={"probe_stage": "dispatch_pending", "execution_uncertain": True},
+            )
+        if returned:
+            output = copy.deepcopy(returned[0]["output"])
+        else:
+            self.journal.append("probe_execution_started", identity)
+            try:
+                output = self.probe_sandbox.run_probe(
+                    self.workspace, question, execution_source,
+                    deadline=self.deadline, execution_identity=execution_identity,
+                    **({"call_path_request": call_path} if call_path is not None else {}),
+                    **({"execution_targets": targets}
+                       if getattr(self.probe_sandbox, "supports_public_execution", False) else {}),
+                )
+            except (ExecutionDeadlineExceeded, GitExecutionUncertain):
+                raise
+            except (PatchLoopError, ValueError, OSError, RuntimeError) as exc:
+                # No returned receipt can establish whether execution or cleanup
+                # completed. Stop this run on the first call, not only on resume.
+                details = copy.deepcopy(exc.details) if isinstance(exc, PatchLoopError) else {}
+                raise RecoveryError(
+                    "probe backend did not return a durable execution result",
+                    details={**details, "probe_stage": "dispatch_pending",
+                             "execution_uncertain": True,
+                             "backend_error_type": type(exc).__name__,
+                             "backend_error_code": getattr(exc, "code", "TOOL_CONTRACT_ERROR")},
+                ) from exc
+            self.journal.append("probe_execution_finished", {**identity, "output": output})
         observed_diff_hash = WorkspaceManager.diff_summary(
             self.workspace, deadline=self._recovery_read_deadline(),
         ).patch_hash
-        receipt = {**output, "question": question, "diff_hash": baseline,
+        receipt = {**output, "probe_stage": "execution_returned",
+                   "question": question, "diff_hash": baseline,
                    "workspace_diff_hash": baseline,
                    "public_execution": output.get("public_execution") or public_feedback(
                        targets, reason="backend_or_command_unmeasured",
                    )}
+        if reproduction_binding is not None:
+            if output.get("source_hash") != sha256_bytes(execution_source.encode("utf-8")):
+                raise RecoveryError("reproduction execution program identity mismatch",
+                                    details=receipt)
+            receipt = reproduction.compare(receipt, reproduction_binding)
+        if call_path is not None:
+            receipt["call_path"] = {
+                **receipt.get("call_path", {"status": "unknown", "reason": "report_unavailable"}),
+                "raw_request_hash": sha256_json(call_path),
+                "candidate_diff_hash": baseline,
+            }
+        receipt["verification_scope"] = (
+            "declared_reproduction_mapping_unverified" if reproduction_binding
+            else "helper_or_unbound_diagnostic"
+        )
         if observed_diff_hash != baseline:
             raise RecoveryError(
                 "managed workspace changed during probe execution",
@@ -3726,9 +4803,64 @@ class DevToolGateway:
             if len(diffs) >= 2:
                 self.requires_alternative = True
 
+    def reproduction_review(self, *, diff_hash: str) -> dict[str, Any]:
+        followup = probe_followup.review(self.journal.events(), diff_hash)
+        return {
+            **reproduction.review(self.journal.events(), diff_hash, public_task=self.public_task),
+            "completion": self.completion_verification(diff_hash=diff_hash),
+            **({"probe_followup": followup} if followup is not None else {}),
+        }
+
+    def completion_verification(self, *, diff_hash: str) -> dict[str, Any]:
+        from patchloop.dev import completion_reproduction
+
+        review = completion_reproduction.review(
+            self.journal.events(), diff_hash, public_task=self.public_task,
+            run_id=self.journal.run_id,
+        )
+        path = repair_prediction.decorate(
+            repair_path.review(self.journal.events(), diff_hash, review))
+        return {
+            **{key: value for key, value in review.items() if key != "pending_cases"},
+            **({"verification_policy": self.verification_policy,
+                "blocks_submission": False} if self.verification_policy == "public-checks-v1"
+               else {}),
+            "repair_path": path,
+            "repair_prediction": repair_prediction.review(self.journal.events(), diff_hash, path),
+            "first_observation": first_observation.review(self.journal.events(), diff_hash, review),
+            "helper_correction": helper_recovery.review(self.journal.events(), diff_hash),
+            "original_obligation": original_obligation.review(
+                self.journal.events(), self.public_task, review,
+                acquisition=self.reproduction_acquisition,
+                probe_available=self.probe_sandbox is not None,
+            ),
+        }
+
+    def release_original_acquisition(self, reason: str) -> None:
+        original_obligation.release(self.journal, self.public_task, reason)
+
+    def _require_acquisition_released(self, diff_hash: str) -> None:
+        if self.verification_policy == "public-checks-v1":
+            return
+        verification = self.completion_verification(diff_hash=diff_hash)
+        correction = verification.get("observation_correction", {})
+        if correction.get("blocked"):
+            raise ContractError(
+                "Contradictory observation is unresolved; repair and submission remain unverified.",
+                details={"observation_correction": correction},
+            )
+        obligation = verification["original_obligation"]
+        if obligation["stage"] == "pending":
+            raise ContractError(
+                "Bounded original reproduction acquisition is pending; investigate the public "
+                "caller before editing or returning the patch.",
+                details={"original_verification": obligation},
+            )
+
     def _finish_task(self, arguments: dict[str, Any]) -> dict[str, Any]:
         intent = FinishIntent.model_validate(arguments)
         summary = self.current_diff
+        self._require_acquisition_released(summary.patch_hash)
         if not summary.patch:
             raise ContractError("cannot submit an empty diff")
         if summary.untracked_files:
@@ -3736,12 +4868,30 @@ class DevToolGateway:
                 "cannot submit with untracked files: " + ", ".join(summary.untracked_files)
             )
         if not self.visible_checks_pass(diff_hash=summary.patch_hash):
-            raise ContractError("all visible checks must pass against the current diff")
+            raise ContractError(
+                "all visible checks must pass against the current diff",
+                details={"required_check_status": self.visible_check_status(
+                    diff_hash=summary.patch_hash)},
+            )
+        verification = self.completion_verification(diff_hash=summary.patch_hash)
+        if (self.verification_policy == "reproduction-gated-v1"
+                and (verification["status"] in {"pending", "refuted"}
+                     or verification.get("target_failure_count"))):
+            raise ContractError(
+                "Original-case verification is " + verification["status"]
+                + "; a helper or regression PASS cannot close it.",
+                details={"submission_verification": verification},
+            )
         from patchloop.dev.working_plan import submission_review
 
         plan_review = submission_review(self.journal.events(), summary.patch_hash)
         return {
             "assessment": intent.assessment,
+            "delivery_state": ("cases_verified_delivery" if verification["original_obligation"][
+                "status"] == "verified" else "unverified_delivery"),
+            "original_verification": verification["original_obligation"],
+            "submission_verification": verification,
+            "reproduction_review": self.reproduction_review(diff_hash=summary.patch_hash),
             **({"plan_review": plan_review} if plan_review is not None else {}),
             "patch": summary.patch,
             "patch_hash": summary.patch_hash,

@@ -18,11 +18,12 @@ from diagnostics import discovery_case_plan as case_plan
 from diagnostics import discovery_case_selection as case_selection
 from diagnostics import discovery_construction_links as construction_links
 from diagnostics import discovery_probe_expectation as probe_expectation
+from diagnostics import discovery_review_context
 from patchloop.agent.model import OpenAIResponsesAdapter
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import ModelConfig, PublicTask
 from patchloop.deadline import ExecutionDeadline
-from patchloop.dev import probe_replay
+from patchloop.dev import probe_replay, reproduction
 from patchloop.dev.contracts import DevLimits, PublicTurnDecision, RequestedTool
 from patchloop.dev.state import DevJournal
 from patchloop.dev.tools import DevToolGateway, dev_tool_schemas
@@ -124,7 +125,21 @@ def report_schema() -> dict:
             "counterexample_reported", "no_counterexample_found", "blocked",
         ]},
         "requirement_excerpt": {"type": ["string", "null"], "maxLength": 600},
-        "justification": {"type": "string", "minLength": 1, "maxLength": 2_000},
+        "justification": {
+            "type": "string", "minLength": 1, "maxLength": 2_000,
+            "description": (
+                "Ground the reported expected/observed conclusion in public evidence and "
+                "justify ending now against the original public task and authorized review "
+                "objective. Identify the most consequential remaining uncertainty and the "
+                "smallest allowed observation that could change that conclusion, or explain "
+                "why existing evidence already settles the review objective. Explain why "
+                "further investigation is not useful or feasible using current evidence or "
+                "concrete input, tool, time or cost constraints. Outside scope means outside "
+                "the public task or authorized review, not merely outside your chosen helper "
+                "or plan. Listing an untested path as a limitation alone is not a stopping "
+                "reason. Give a concise public decision rationale, not a reasoning transcript."
+            ),
+        },
         "probe_action_id": {"type": ["string", "null"], "maxLength": 500},
         "expected": {"type": ["string", "null"], "maxLength": 2_000},
         "observed": {"type": ["string", "null"], "maxLength": 2_000},
@@ -132,8 +147,14 @@ def report_schema() -> dict:
     }
     return {
         "type": "function", "name": "report_discovery", "strict": True,
-        "description": "End this fixed-candidate review with a public evidence summary. "
-                       "A reported counterexample remains subject to public evidence review.",
+        "description": (
+            "End this fixed-candidate review with observations, limitations and a justified "
+            "stopping decision. Use another allowed action when a material uncertainty could "
+            "change the public-task conclusion and that action fits remaining resources. "
+            "Completing your chosen helper plan alone does not settle the review objective. "
+            "Reporting remains available without an extra probe or correctness certification; "
+            "reported counterexamples remain subject to public evidence review."
+        ),
         "parameters": {"type": "object", "properties": properties,
                        "required": list(properties), "additionalProperties": False},
     }
@@ -161,6 +182,8 @@ def initial_request(public: PublicTask, patch: str, environment: dict, *,
     probe_schema = next(tool for tool in tools if tool["name"] == "run_probe")
     probe_schema["description"] = probe_schema["description"].replace(
         " " + probe_replay.DESCRIPTION, "",
+    ).replace(
+        " " + reproduction.REPLAY_DESCRIPTION, "",
     )
     parameters = probe_schema["parameters"]
     for name in ("question", "python_source"):
@@ -181,10 +204,11 @@ def initial_request(public: PublicTask, patch: str, environment: dict, *,
                          reasoning_continuation="encrypted-v1", transport_max_retries=0,
                          max_output_tokens=25_000)
     # Pure request construction; never instantiate an SDK client or read credentials.
-    return OpenAIResponsesAdapter.request_payload(
+    request = OpenAIResponsesAdapter.request_payload(
         SimpleNamespace(config=config), canonical_json(context), tools,
         system_prompt=review_prompt(review_guidance),
     )
+    return discovery_review_context.project_request(request)
 
 
 def protocol(review_guidance: str = "original", *, case_design: str | None = None,

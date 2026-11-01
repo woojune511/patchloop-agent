@@ -1,0 +1,7 @@
+tests/test_target_outcome.py
+tests/test_completion_context.py
+tests/test_inspection_focus.py
+tests/test_completion_finalization.py
+tests/test_dev_completion_recovery.py
+tests/test_correction_allowance.py
+tests/test_repair_revision_budget.py

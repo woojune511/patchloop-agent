@@ -8,6 +8,7 @@ from types import SimpleNamespace
 
 import pytest
 from native_history_support import input_context, start_turn
+from repair_mechanism_expectations import FROZEN_ARM
 from test_dev_feedback_integration_v18 import _context, _input
 from test_dev_notes_lifecycle_v15 import _gateway, _mutation, _read, _restart
 
@@ -170,9 +171,12 @@ def test_guidance_is_advisory_and_recommends_only_an_offered_action(
     snapshot = SimpleNamespace(
         diff=SimpleNamespace(patch_hash="current"), ready_to_submit=gate == "ready_to_submit",
         visible_check_status=tuple({"check_id": "contract", "status": s} for s in statuses),
+        completion_verification=None,
     )
     policy = SimpleNamespace(
         workflow_gate=gate, allowed_tools=frozenset(allowed), check_ids=("contract",),
+        verification_policy="reproduction-gated-v1", helper_correction=None,
+        repair_path_diagnosis=None, repair_prediction=None,
     )
     before = copy.deepcopy((snapshot, policy))
     result = runner._completion_guidance(snapshot, policy)
@@ -216,12 +220,15 @@ def test_completion_descriptions_preserve_tool_order_and_current_input_shapes():
         return value
 
     assert sha256_json(without_descriptions(schemas)) == (
+        "sha256:ff0a1586217fe6b94bd3e12de238d7b6e19ac661f4671604e12fa31905260ae5"
+        if FROZEN_ARM is None else
         "sha256:99d8179c31989d8d5caabaed81902ce9d2a8fad60af8caf594f685122e9beeac"
     )
     assert [schema["name"] for schema in schemas] == [
-        "search_files", "read_file", "run_check", "replace_text", "stop_task", "finish_task",
+        "search_files", "read_file", "run_check", "replace_text", "stop_task",
+        *(["edit_files"] if FROZEN_ARM is None else []), "finish_task",
         "run_probe",
-    ]
+    ] + (["observe_original"] if FROZEN_ARM is None else [])
     descriptions = {schema["name"]: schema["description"] for schema in schemas}
     assert "without submission or evaluation" in descriptions["stop_task"]
     assert "not successful completion" in descriptions["stop_task"]

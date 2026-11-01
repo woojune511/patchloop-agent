@@ -224,7 +224,7 @@ def test_environment_matches_executing_profile_not_parent(prepared, tmp_path, mo
             }
         )
     )
-    monkeypatch.setattr(DevJournal, "load_envelope", lambda _: old)
+    monkeypatch.setattr("diagnostics.checkpoint_envelope.read_checkpoint_envelope", lambda _: old)
     monkeypatch.setattr(comparison, "clean_implementation", lambda: None)
     for name in (
         "_live_task_is_admitted",

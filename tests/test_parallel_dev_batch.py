@@ -49,6 +49,43 @@ def successful(req):
     return {"ok": True, "result": str(root), "accounting": batch.usage_snapshot(root)}
 
 
+def eight_at_once(req):
+    """The first wave cannot finish until all eight spawned workers are active."""
+    root = Path(req["state_root"])
+    root.mkdir()
+    (root / "entered").touch()
+    if int(root.name) < 8:
+        deadline = time.monotonic() + 20
+        while time.monotonic() < deadline:
+            if all((root.parent / str(i) / "entered").exists() for i in range(8)):
+                break
+            time.sleep(0.02)
+        assert all((root.parent / str(i) / "entered").exists() for i in range(8))
+    return {"ok": True, "accounting": batch.usage_snapshot(root)}
+
+
+def test_eight_spawned_workers_overlap_then_complete_queued_row(tmp_path):
+    journal = DevJournal(tmp_path / "batch", "run_dev_batch")
+    result = batch.run_parallel_rows(
+        rows(tmp_path, count=9), total_cap=Decimal("9"), workers=8,
+        journal=journal, execute=eight_at_once, after_row=lambda *_: {"ok": True},
+    )
+    assert result["started"] == 9 and result["not_started"] == 0
+    assert not result["stopped"] and all(row["ok"] for row in result["rows"])
+    allocation = journal.events()[0]["payload"]
+    assert allocation == {"reserved_nanos": 9_000_000_000, "workers": 8, "transfer": False}
+    assert [row["index"] for row in result["rows"]] == list(range(9))
+
+
+@pytest.mark.parametrize("workers", [0, 9, True, 1.5])
+def test_invalid_worker_bound_rejected_before_process_launch(tmp_path, workers):
+    with pytest.raises(ContractError, match="workers must be between one and eight"):
+        batch.run_parallel_rows(
+            rows(tmp_path), total_cap=Decimal("3"), workers=workers,
+            journal=None, after_row=None,
+        )
+
+
 def failing_with_inflight_peer(req):
     root = rendezvous(req)
     journal = batch.CoordinatedJournal(root, "run_dev_peer")
@@ -150,6 +187,27 @@ def test_evaluator_cleanup_uncertainty_stops_next_admission(tmp_path, monkeypatc
     journal.append("evaluator_finished", {"stop_remaining": True})
     with pytest.raises(batch.BatchStopped):
         journal.append("provider_call_started", {"call_id": "blocked"})
+
+
+def test_shared_stop_blocks_retry_after_a_settled_429(tmp_path, monkeypatch):
+    ctx = multiprocessing.get_context("spawn")
+    monkeypatch.setattr(batch, "_STOP", ctx.Event())
+    monkeypatch.setattr(batch, "_ADMISSION", ctx.Lock())
+    journal = batch.CoordinatedJournal(tmp_path, "run_dev_retry")
+    attempt = {
+        "transport_request_id": "transport_a", "request_kind": "provider_response",
+        "request_hash": "sha256:unchanged", "attempt_no": 1,
+    }
+    journal.append("provider_transport_attempt_started", attempt)
+    journal.append("provider_transport_rejected429", attempt)
+    journal.append("provider_transport_retry_scheduled", {**attempt, "delay_seconds": 2})
+    batch.stop_workers()
+    with pytest.raises(batch.BatchStopped):
+        journal.append("provider_transport_attempt_started", {**attempt, "attempt_no": 2})
+    events = journal.events()
+    assert sum(e["event_type"] == "provider_transport_attempt_started" for e in events) == 1
+    assert events[-1]["event_type"] == "batch_call_prevented"
+    assert events[-1]["payload"]["operation"] == "provider_transport_attempt_started"
 
 
 def test_worker_preserves_runtime_stop_even_for_accounted_limit(tmp_path, monkeypatch):

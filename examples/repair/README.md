@@ -88,8 +88,11 @@ does not enable probes or prepared-source descriptors; it uses the local source.
 
 ## Verify a returned regression test
 
-When the task requires a regression test, allow the relevant existing test files
-in `allowed_paths` and remove them from `forbidden_paths` before running repair.
+When the task requires a regression test, allow the relevant test paths in
+`allowed_paths`, remove them from `forbidden_paths`, and declare their directory
+in `additive_test_roots` before running repair. The registered `edit_files` action
+can create a regular source or test file within this scope. Existing test bodies
+and setup remain protected; new test modules may declare imports and a docstring.
 After delivery, use the original request and the unmodified returned patch:
 
 ```powershell
@@ -104,15 +107,24 @@ each checkout with the original environment, timeout and output bound. The whole
 comparison uses the request's wall-time limit. Source working-tree changes are
 not copied or modified. Images and dependencies must already exist.
 
-The first version supports Python edits and additions in existing pytest files:
+The command supports edits and additions of regular Python source and test files:
 new top-level `test_*` functions, or literal cases added to one existing
 `pytest.mark.parametrize` list without changing the function or its other
 decorators. Existing cases must remain unchanged and in order. New test decorators
-may be `parametrize`, `skip`, `skipif` or `xfail`. Changed imports, existing test
-bodies, fixtures, helpers, classes, configuration, new files, file modes and
-renames are `UNSUPPORTED`; the command never rewrites them to make them separable.
+may be `parametrize`, `skip`, `skipif` or `xfail`. New test modules may include a
+module docstring and imports; changing imports in an existing test module remains
+unsupported, including an originally empty module. Changed existing test bodies,
+fixtures, helpers, classes, module assignments, configuration, file mode changes,
+links, deletions and renames are `UNSUPPORTED`; the command never rewrites them
+to make them separable. New regular files may use Git mode `100644` or `100755`.
 Parametrization keywords, computed added cases and class methods are unsupported.
 This is structural separation, not proof that arbitrary test code has no side effects.
+
+Only submitted test files are copied to the base-with-tests checkout; newly added
+implementation files remain absent there. If a new test imports a newly added
+module and therefore fails during collection on the base, the comparison is
+`INCONCLUSIVE`, not an observed failing test followed by a passing test. Test
+files are copied byte-for-byte, and the source checkout remains unchanged.
 
 At least one check must directly invoke `python -m pytest` (versioned Python
 executables also work). Its arguments are preserved and a sandbox-side pytest

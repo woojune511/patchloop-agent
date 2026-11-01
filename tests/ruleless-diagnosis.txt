@@ -1,0 +1,4 @@
+tests/test_diagnosis_call_selection.py
+tests/test_ruleless_repair_path.py
+tests/test_repair_prediction.py
+tests/test_repair_path_reuse.py

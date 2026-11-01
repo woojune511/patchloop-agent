@@ -8,6 +8,7 @@ from types import SimpleNamespace
 
 import pytest
 from native_history_support import input_context
+from repair_mechanism_expectations import FROZEN_ARM
 from test_dev_completion_v27 import _batch
 from test_dev_feedback_integration_v18 import _context, _input, _outputs
 from test_dev_notes_lifecycle_v15 import _gateway, _mutation, _read, _restart
@@ -180,9 +181,23 @@ def test_actual_native_projection_restart_and_historical_probe_keep_evidence(tmp
     assert after[:len(items)] == items
     assert _outputs(after)[result.action_id] == native
     view = input_context(after)
-    assert view["recent_probes"][0]["historical"]
-    assert view["recent_probes"][0]["observation"]["behavior_verdict"] == "not_assessed"
-    assert view["public_execution_summary"]["files"] == []
+    historical = json.loads(_context(gateway, [later]))
+    assert historical["recent_probes"][0]["historical"]
+    assert historical["recent_probes"][0]["observation"]["behavior_verdict"] == "not_assessed"
+    assert historical["public_execution_summary"]["files"] == []
+    if FROZEN_ARM is None:
+        # A later edit makes the old probe historical. Its durable native result
+        # remains above. Keep its program for comparison, not its old verdict/output.
+        assert view["workflow_gate"] == "ready_to_submit"
+        retained, = view["recent_probes"]
+        assert retained["historical"] and retained["diff_hash"] == result.workspace_diff_hash
+        assert retained["program"]["source_hash"] == result.output["source_hash"]
+        assert not {"observation", "stdout", "stderr", "passed"}.intersection(retained)
+        assert view["completion_stage"]["omitted_historical_records"]["recent_probes"] == 0
+    else:
+        assert view["recent_probes"][0]["historical"]
+        assert view["recent_probes"][0]["observation"]["behavior_verdict"] == "not_assessed"
+        assert view["public_execution_summary"]["files"] == []
     finish = _batch(gateway, RequestedTool(
         name="finish_task", action_id="finish", arguments={
             "assessment": "Reviewed the public patch and remaining uncertainty.",
@@ -198,25 +213,49 @@ def test_submission_requires_judgment_without_a_separate_probe_or_review_action(
     snapshot = SimpleNamespace(
         diff=SimpleNamespace(patch_hash="current"), ready_to_submit=True,
         visible_check_status=({"check_id": "public", "status": "PASS"},),
+        completion_verification=None,
     )
-    policy = SimpleNamespace(workflow_gate="ready_to_submit", allowed_tools=allowed)
+    policy = SimpleNamespace(
+        workflow_gate="ready_to_submit", allowed_tools=allowed,
+        verification_policy="reproduction-gated-v1", helper_correction=None,
+        repair_path_diagnosis=None, repair_prediction=None, check_ids=(),
+        edit_availability=None,
+    )
     guidance = runner._completion_guidance(snapshot, policy)
     assert guidance["submission_ready"] and guidance["next_action"] is None
     assert "before deciding whether the task is complete" in guidance["message"].lower()
-    assert "finish_task with your assessment" in guidance["message"]
+    if FROZEN_ARM is None:
+        assert "Call finish_task to return the candidate" in guidance["message"]
+        assert "assessment of evidence and remaining gaps" in guidance["message"]
+        assert "Missing original evidence returns unverified_delivery" in guidance["message"]
+    else:
+        assert "finish_task with your assessment" in guidance["message"]
     assert ("run_probe" in guidance["message"]) is probe_available
     assert len(canonical_json(guidance)) < 650
 
 
 def test_experiment_guidance_is_generic_optional_and_uses_existing_inputs():
     schema = dev_tool_schemas(finish_enabled=False, allowed_tools=frozenset({"run_probe"}))[0]
-    assert "public input variation" in schema["description"]
+    if FROZEN_ARM is None:
+        assert "choose an input that could falsify an assumption" in schema["description"]
+        assert "Keep caller, input representation and setup comparable" in schema["description"]
+    else:
+        assert "public input variation" in schema["description"]
     assert "expected observation" in schema["description"]
     assert "normal exit, not behavior verified" in schema["description"]
-    assert set(schema["parameters"]["properties"]) == {
+    expected = {
         "question", "python_source", "replay_action_id", "turn_decision",
     }
-    assert "This judgment needs no separate call or mandatory experiment" in DEV_SYSTEM_PROMPT
+    if FROZEN_ARM is None:
+        expected.update({"purpose", "call_path"})
+        assert "For helper probes, state the expected observation" in schema["description"]
+        assert "record_observation(value) exactly once" in schema["description"]
+    assert set(schema["parameters"]["properties"]) == expected
+    if FROZEN_ARM is None:
+        assert "automatically replays stale invocation-bound cases" in DEV_SYSTEM_PROMPT
+        assert "remain unverified, never a PASS" in DEV_SYSTEM_PROMPT
+    else:
+        assert "This judgment needs no separate call or mandatory experiment" in DEV_SYSTEM_PROMPT
     assert len(DEV_SYSTEM_PROMPT) <= 8007
     for task_specific in ("pyfakefs", "makedirs", "0o700", "ENOTDIR"):
         assert task_specific not in schema["description"] + DEV_SYSTEM_PROMPT

@@ -10,7 +10,7 @@ from repair_mechanism_expectations import EVIDENCE, JUDGMENT
 from test_dev_runner import _crash_journal_once, _SimulatedCrash
 from test_dev_segments import assert_submitted, configured, records
 
-from patchloop.dev import runner, segments
+from patchloop.dev import completion_context, repair_context, runner, segments
 from patchloop.dev.contracts import DevModelTurn, RequestedTool
 from patchloop.dev.model import MockDevAdapter
 from patchloop.dev.native_sources import PUBLIC_EVIDENCE_KIND, public_exchanges
@@ -53,8 +53,18 @@ def has_optional_check(items):
     return "focus-extra-read" in ids and any(i.startswith("mock-visible-check-") for i in ids)
 
 
+@pytest.fixture
+def full_context_handoff(monkeypatch):
+    # Isolate the full-context optional-archive protocol. Compact stages omit
+    # these bodies deliberately; their real retention path is tested below.
+    monkeypatch.setattr(repair_context, "pending", lambda _: False)
+    monkeypatch.setattr(completion_context, "active", lambda _: False)
+
+
 @pytest.mark.parametrize("limit", [None, "tokens", "bytes", "unknown"])
-def test_optional_result_delivery_fallback_and_unknown_stop(tmp_path, monkeypatch, limit):
+def test_optional_result_delivery_fallback_and_unknown_stop(
+    tmp_path, monkeypatch, limit, full_context_handoff,
+):
     request, inputs, counted, views = configured(
         monkeypatch, tmp_path, script=FocusAdapter("csv-quoted-newline"),
     )
@@ -140,7 +150,9 @@ def test_optional_result_delivery_fallback_and_unknown_stop(tmp_path, monkeypatc
     segments.PREPARED_EVENT, "input_count_finished", segments.EVENT,
 ])
 @pytest.mark.parametrize("fallback", [False, True])
-def test_focused_candidate_count_commit_recovery(tmp_path, monkeypatch, boundary, fallback):
+def test_focused_candidate_count_commit_recovery(
+    tmp_path, monkeypatch, boundary, fallback, full_context_handoff,
+):
     request, inputs, counted, views = configured(
         monkeypatch, tmp_path, script=FocusAdapter("csv-quoted-newline"),
     )
@@ -179,3 +191,32 @@ def test_focused_candidate_count_commit_recovery(tmp_path, monkeypatch, boundary
     assert final_binding == binding
     assert views[-1]["working_notes"]["open_question"] == candidate["evidence_manifest"]["question"]
     assert result["accepted_mutations"] == 1
+
+
+def test_compact_completion_retains_question_and_verdict_without_archived_bodies(
+    tmp_path, monkeypatch,
+):
+    request, inputs, counted, views = configured(
+        monkeypatch, tmp_path, script=FocusAdapter("csv-quoted-newline"),
+    )
+    result = runner.run_dev(request)["runs"][0]
+    assert_submitted(result)
+    assert len(inputs) == len(counted) == 5
+    assert result["context_management"]["transition_reasons"] == [
+        "initial", "repair_stage_entered", "repair_stage_returned",
+        "completion_stage_entered", "major_result_followup_completed",
+    ]
+    journal, store = records(request)
+    _, handoff = segments.active(journal, store, committed_only=True)
+    manifest = handoff["evidence_manifest"]
+    assert manifest["optional_action_ids"] == []
+    assert not manifest["optional_bodies_omitted"]
+    question = views[-1]["working_notes"]["open_question"]
+    assert question == manifest["question"]
+    assert question["text"] == "What does this check actually cover?"
+    assert question["evidence"][0]["execution"]["passed"] is True
+    if JUDGMENT:
+        assert question["evidence_delivery"] == "incomplete"
+        assert question["evidence"][0]["behavior_coverage"] == "not_assessed"
+    assert not has_optional_check(inputs[-1])
+    assert views[-1]["latest_tool_results"][0]["action_id"] == "focus-extra-read"

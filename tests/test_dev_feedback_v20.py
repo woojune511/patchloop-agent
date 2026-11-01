@@ -6,7 +6,7 @@ import json
 
 import pytest
 from native_history_support import input_context
-from repair_mechanism_expectations import JUDGMENT
+from repair_mechanism_expectations import FROZEN_ARM, JUDGMENT
 from test_dev_check_identity_v19 import _result
 from test_dev_context_v12 import note_call, source_note
 from test_dev_feedback_integration_v18 import _completed_batch, _context, _input
@@ -96,7 +96,8 @@ def test_row27_cross_diff_false_summary_keeps_each_cited_failure_beside_the_note
     ]
     outputs = [json.loads(item["output"]) for item in items
                if item.get("type") == "function_call_output"]
-    assert sum("memory_update_result" in result for result in outputs) == 1
+    assert not any("memory_update_result" in result for result in outputs)
+    assert public["working_notes"]["last_update_result"] == payload["receipt"]
     assert "stdout" not in json.dumps(finding)
     assert "stderr" not in json.dumps(finding)
     before = gateway.journal.path.read_bytes()
@@ -204,9 +205,11 @@ def test_probe_description_exposes_existing_capability_without_changing_wire_sha
             return [structure(item) for item in value]
         return value
 
-    # Open questions now bind evidence; probe properties/limits and tool order stay fixed.
+    # Pin small-core inputs, registered file batches, question references and tool order.
     encoded = json.dumps(structure(schemas), separators=(",", ":"), ensure_ascii=False).encode()
     assert hashlib.sha256(encoded).hexdigest() == (
+        "e96198c7dd7d8f66a138c374746754104de8f5967cff0329c50937ec0d4ad652"
+        if FROZEN_ARM is None else
         "acdcc28623f92006faaa95a0c58015095e28b851093d0eb983e8d59bcd303222"
     )
     assert dev_tool_surface_hash() != (
@@ -215,7 +218,9 @@ def test_probe_description_exposes_existing_capability_without_changing_wire_sha
     assert DEV_RUN_SCHEMA == "dev-run-v1"
     limits = DevLimits()
     assert (limits.max_model_calls, limits.max_tool_actions,
-            limits.max_accepted_mutations, limits.wall_time_seconds) == (40, 100, 4, 1800)
+            limits.max_accepted_mutations, limits.wall_time_seconds) == (
+                40, 100, 4 if FROZEN_ARM is not None else 12, 1800,
+            )
 
 
 def test_guidance_prioritizes_reusable_facts_without_growing_the_system_prompt():
@@ -226,7 +231,11 @@ def test_guidance_prioritizes_reusable_facts_without_growing_the_system_prompt()
     assert "another edit can use independent current evidence" in DEV_SYSTEM_PROMPT
     assert "headers do not establish behavior of unread return paths" in DEV_SYSTEM_PROMPT
     assert "note_id=null creates a distinct interpretation" in DEV_SYSTEM_PROMPT
-    assert "experiment on the current candidate" in DEV_SYSTEM_PROMPT
+    if FROZEN_ARM is None:
+        assert "Investigate the original public call and failure" in DEV_SYSTEM_PROMPT
+        assert "helpers are separate diagnoses" in DEV_SYSTEM_PROMPT
+    else:
+        assert "experiment on the current candidate" in DEV_SYSTEM_PROMPT
     assert "not confirmation of the note's prose" in DEV_SYSTEM_PROMPT
     note_id = memory_update_schema()["properties"]["findings"]["items"]["properties"]["note_id"]
     assert "refines the same interpretation even if citations change" in note_id["description"]

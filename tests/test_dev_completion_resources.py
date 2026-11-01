@@ -63,7 +63,8 @@ def counters(model=8, tools=58, **kwargs):
 
 def policy(gateway, counts=None, *, auto=True, **kwargs):
     return runner._tool_policy(
-        gateway, counts or counters(), DevLimits(), repair_recheck=auto, **kwargs,
+        gateway, counts or counters(), DevLimits(max_accepted_mutations=4),
+        repair_recheck=auto, **kwargs,
     )
 
 
@@ -78,16 +79,16 @@ def test_eight_model_calls_preserve_seven_model_eight_tool_path_with_one_more_re
     assert {"read_file", "search_files", "run_probe", "run_tests", "run_check"} <= (
         enabled.allowed_tools
     )
-    assert policy(gateway, auto=False).allowed_tools == {"replace_text", "stop_task"}
+    assert policy(gateway, auto=False).allowed_tools == {"replace_text", "edit_files", "stop_task"}
     after = policy(gateway, counters(model=7, tools=57))
-    assert after.allowed_tools == {"replace_text", "stop_task"}
+    assert after.allowed_tools == {"replace_text", "edit_files", "stop_task"}
     assert set(enabled.tools_closing_after_this_turn) == enabled.allowed_tools - after.allowed_tools
 
 
 @pytest.mark.parametrize("tools", [7, 8])
 def test_automatic_recheck_never_releases_tool_reservations(tools):
     selected = policy(Gateway(), counters(tools=tools))
-    assert selected.allowed_tools == {"replace_text", "stop_task"}
+    assert selected.allowed_tools == {"replace_text", "edit_files", "stop_task"}
     assert selected.completion_budget_tool_actions == 8
     assert selected.protected_completion_possible is (tools == 8)
 
@@ -166,7 +167,9 @@ def test_horizon_names_tool_exhaustion_even_when_current_automatic_recheck_saves
     counts = counters(model=2, tools=2, check_recovery_used_ids={"check-0"})
     selected = policy(gateway, counts)
     assert not selected.completion_possible
-    payload = runner._completion_horizon_payload(gateway, counts, DevLimits(), selected)
+    payload = runner._completion_horizon_payload(
+        gateway, counts, DevLimits(max_accepted_mutations=4), selected,
+    )
     assert payload["blocking_resources"] == ["tool_actions"]
     assert payload["minimum_completion_calls"] == 2
     assert payload["minimum_completion_tool_actions"] == 3
@@ -190,7 +193,16 @@ def test_model_projection_preserves_resource_split_and_default_metadata_shape():
     horizon = {"minimum_completion_calls": selected.minimum_completion_calls,
                **runner._completion_resources_payload(selected),
                "mutation_completion_horizon": runner._mutation_completion_horizon(selected)}
-    assert compact_model_state({"action_horizon": horizon}, [])["action_horizon"] == horizon
+    view = compact_model_state({"action_horizon": horizon}, [])["action_horizon"]
+    assert view["completion_reserve"]["minimum"] == {
+        "model_calls": selected.minimum_completion_calls,
+        "tool_actions": selected.minimum_completion_tool_actions,
+    }
+    # This fixture does not supply the protected model-call forecast; do not infer it.
+    assert view["completion_reserve"]["with_bounded_recovery"] == {
+        "tool_actions": selected.completion_budget_tool_actions,
+    }
+    assert view["mutation_completion_horizon"] == horizon["mutation_completion_horizon"]
     assert runner._completion_resources_payload(policy(Gateway(), auto=False)) == {}
     assert "minimum_tool_actions" not in runner._mutation_completion_horizon(
         policy(Gateway(), auto=False),
@@ -209,7 +221,7 @@ def test_completion_cost_reserves_model_successors_without_releasing_tool_slots(
     assert "read_file" in enabled.allowed_tools
     disabled = policy(gateway, counters(model=40), auto=False, cost_ledger=ledger,
                       completion_cost_policy=COMPLETION_RESERVE_POLICY)
-    assert disabled.allowed_tools == {"replace_text", "stop_task"}
+    assert disabled.allowed_tools == {"replace_text", "edit_files", "stop_task"}
     blocked = policy(gateway, counters(model=40, tools=7), cost_ledger=ledger,
                      completion_cost_policy=COMPLETION_RESERVE_POLICY)
     assert "read_file" not in blocked.allowed_tools

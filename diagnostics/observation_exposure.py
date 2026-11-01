@@ -16,6 +16,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from diagnostics.checkpoint_continuation import ScriptedClient, _artifacts, inherited_reads
+from diagnostics.checkpoint_envelope import read_checkpoint_envelope
 from diagnostics.cleanup_information_checkpoint import restore_candidate
 from diagnostics.decision_sampler import require
 from diagnostics.declaration_checkpoint import Source, disjoint
@@ -23,9 +24,11 @@ from patchloop.agent.model import OpenAIResponsesAdapter
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import Artifact
 from patchloop.deadline import ExecutionDeadline
-from patchloop.dev import runner
-from patchloop.dev.contracts import DevRunRequest
+from patchloop.dev import completion_reproduction, file_transaction, original_obligation, runner
+from patchloop.dev.contracts import DevLimits, DevRunRequest
 from patchloop.dev.cost import DevCostLedger, pricing_for_model
+from patchloop.dev.dependency_sources import normalize_roots
+from patchloop.dev.mutation_tools import MUTATION_TOOLS
 from patchloop.dev.state import DevJournal
 from patchloop.errors import ContractError
 from patchloop.repository import WorkspaceManager
@@ -99,7 +102,7 @@ def exposure(arm):
 
 
 def fork(source: Source, cut_sequence: int, output: Path, arm: str, *, synthetic_cap_usd: Decimal,
-         preserve_parent_configuration=False):
+         preserve_parent_configuration=False, after_tool_batch=False, total_wall_time_seconds=None):
     return _fork(
         source,
         cut_sequence,
@@ -109,12 +112,186 @@ def fork(source: Source, cut_sequence: int, output: Path, arm: str, *, synthetic
         mode="offline-scripted-only",
         env_file=output / "NO_CREDENTIAL_FILE",
         preserve_parent_configuration=preserve_parent_configuration,
+        after_tool_batch=after_tool_batch,
+        total_wall_time_seconds=total_wall_time_seconds,
     )
 
 
+def _parent_reader(source, events):
+    """Read exact inherited references from an already-forked parent's local CAS."""
+    require((source.root / "artifacts/objects/sha256").is_dir(), "parent artifact store missing")
+    store = ArtifactStore(source.root / "artifacts")
+    fork_path = source.root / "fork.json"
+    references = {}
+    if fork_path.exists():
+        saved = json.loads(fork_path.read_bytes())
+        require(any(event["event_type"] == "observation_exposure_fork"
+                    and event["payload"] == saved.get("marker") for event in events),
+                "parent artifact lineage is not journal-bound")
+        references = saved["references"]
+
+    def read(ref):
+        replacement = references.get(sha256_json(ref.model_dump(mode="json")))
+        if replacement is not None:
+            require(replacement[0] == ref.model_dump(mode="json")
+                    and all(replacement[1].get(key) == getattr(ref, key)
+                            for key in ("content_hash", "media_type", "size_bytes")),
+                    "parent inherited artifact identity changed")
+            ref = Artifact.model_validate(replacement[1])
+        return store.read_bytes(ref)
+
+    return read
+
+
+def _settled_batch_state(prefix, old, package):
+    """Derive bounded continuation state from durable receipts, not an older input."""
+    view = SimpleNamespace(events=lambda: prefix)
+    for started, finished, key in (
+        ("tool_batch_started", "tool_batch_finished", "turn_id"),
+        ("action_started", "action_finished", "action_id"),
+        ("probe_execution_started", "probe_execution_finished", "action_id"),
+    ):
+        pending = set()
+        for event in prefix:
+            if event["event_type"] == started:
+                pending.add(event["payload"][key])
+            elif event["event_type"] == finished:
+                pending.discard(event["payload"][key])
+        require(not pending, "uncertain parent tool execution")
+    latest = DevJournal.latest_tool_batch_results(view)
+    require(latest and prefix[-1]["payload"].get("result_fingerprints") == [
+        sha256_json(result.model_dump(mode="json")) for result in latest
+    ], "settled batch result identity changed")
+    require(all(result.tool not in {"finish_task", "stop_task"} for result in latest),
+            "completed solver endpoints cannot continue")
+    for event in prefix:
+        if event["event_type"] != "action_finished":
+            continue
+        result = event["payload"]["result"]
+        output = result.get("output", {})
+        require(not any(output.get(key) for key in (
+            "cleanup_failed", "timed_out", "deadline_exhausted",
+        )) and result.get("error_code") not in {"RECOVERY_ERROR", "RESUME_CONTRACT_MISMATCH"}
+                and output.get("probe_stage") != "dispatch_pending",
+                "uncertain parent execution or cleanup")
+    empty = original_obligation.EMPTY_DIFF
+    review = completion_reproduction.review(
+        prefix, empty, public_task=package.public, run_id=old.run_id,
+    )
+    obligation = original_obligation.review(
+        prefix, package.public, review, acquisition=old.reproduction_acquisition,
+        probe_available=old.probe_image_digest is not None,
+    )
+    require(obligation["stage"] == "acquired" and obligation["status"] == "refuted"
+            and len(obligation["baseline_failure_case_ids"]) == 1,
+            "one acquired original failure required")
+    require(all(result.workspace_diff_hash == empty for result in latest)
+            and not any(event["event_type"] == "action_finished"
+                        and event["payload"]["result"]["tool"] == "replace_text"
+                        and event["payload"]["result"]["status"] == "succeeded"
+                        and event["payload"]["result"].get("error_code") is None
+                        for event in prefix), "after-batch continuation requires unchanged base")
+    counters = runner._restore_counters(view)
+    active = DevJournal.latest_active_elapsed_ms(view)
+    require(type(prefix[-1]["payload"].get("active_elapsed_ms")) is int
+            and prefix[-1]["payload"]["active_elapsed_ms"] == active,
+            "settled batch active time is missing or regressed")
+    usage = DevJournal.provider_usage(view)
+    require(all(type(row.get("cost_nanos")) is int and row["cost_nanos"] >= 0
+                and not row.get("error_code") for row in usage), "uncertain parent billing")
+    budget = {
+        "model_calls": old.limits.max_model_calls - counters.model_calls,
+        "tool_actions": old.limits.max_tool_actions - counters.tool_actions,
+        "accepted_mutations": old.limits.max_accepted_mutations,
+        "active_wall_time_seconds": int(old.limits.wall_time_seconds
+                                        - old.evaluation_reserve_seconds - active / 1000),
+        "total_active_wall_time_seconds": int(old.limits.wall_time_seconds - active / 1000),
+        "evaluation_reserve_seconds": old.evaluation_reserve_seconds,
+        "cost": {"settled_usage": old.cost_start_nanos + sum(row["cost_nanos"] for row in usage)},
+    }
+    require(all(budget[key] > 0 for key in (
+        "model_calls", "tool_actions", "accepted_mutations", "active_wall_time_seconds",
+    )), "settled checkpoint has no remaining repair allowance")
+    return budget, active, latest, obligation
+
+
+def _continuation_budget(source, historical, prefix, cut_sequence, old, total_seconds):
+    """Retain resources spent after a clean cut without importing an unknown response."""
+    require(type(total_seconds) is int and old.limits.wall_time_seconds < total_seconds,
+            "continuation total wall time must be an integer above the parent limit")
+    events = historical.events()
+    suffix = [e for e in events if e["sequence"] >= cut_sequence]
+    require(not any(e["event_type"] in {
+        "action_started", "action_finished", "provider_call_finished", "compaction_started",
+    } for e in suffix), "continuation cut discards completed work or admitted actions")
+    require(historical.unresolved_input_count() is None,
+            "whole-parent input counting remains uncertain")
+    excluded = []
+    for event in suffix:
+        if event["event_type"] != "provider_call_started":
+            continue
+        payload = event["payload"]
+        require(type(payload.get("reserved_cost_nanos")) is int
+                and payload["reserved_cost_nanos"] > 0,
+                "excluded provider admission lacks a bounded reservation")
+        excluded.append({
+            "sequence": event["sequence"], "call_id": payload["call_id"],
+            "request_hash": payload["request_hash"],
+            "reserved_cost_nanos": payload["reserved_cost_nanos"],
+            "usage": "UNKNOWN", "replayed": False,
+        })
+    require(len({row["call_id"] for row in excluded}) == len(excluded),
+            "excluded provider admissions have duplicate identities")
+    prefix_view = SimpleNamespace(events=lambda: prefix)
+    before, full = runner._restore_counters(prefix_view), runner._restore_counters(historical)
+    require(full.model_calls - before.model_calls == len(excluded)
+            and full.tool_actions == before.tool_actions,
+            "excluded resource consumption differs from provider admissions")
+    return {
+        "parent_journal_hash": source.journal_hash,
+        "parent_last_sequence": events[-1]["sequence"],
+        "parent_terminal": (historical.terminal()["payload"]["terminal"]
+                            if historical.terminal() else None),
+        "previous_total_wall_time_seconds": old.limits.wall_time_seconds,
+        "total_wall_time_seconds": total_seconds,
+        "prefix_active_elapsed_ms": DevJournal.latest_active_elapsed_ms(prefix_view),
+        "inherited_active_elapsed_ms": historical.latest_active_elapsed_ms(),
+        "original_max_model_calls": old.limits.max_model_calls,
+        "excluded_model_calls": len(excluded),
+        "excluded_input_count_calls": full.input_count_calls - before.input_count_calls,
+        "child_max_model_calls": old.limits.max_model_calls - len(excluded),
+        "excluded_provider_calls": excluded,
+        "excluded_unknown_reservation_nanos": sum(r["reserved_cost_nanos"] for r in excluded),
+        "parent_unknown_usage_resolved": False if excluded else None,
+    }
+
+
 def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
-          preserve_parent_configuration=False):
+          preserve_parent_configuration=False, model_override=None, after_tool_batch=False,
+          caller_source_roots=None, reserved_tool_actions=0, reserved_wall_seconds=0,
+          total_wall_time_seconds=None):
     """Copy a settled prefix; bind current runtime without changing the parent."""
+    require(
+        model_override is None or preserve_parent_configuration,
+        "model override requires preserved parent configuration",
+    )
+    require(caller_source_roots is None or preserve_parent_configuration,
+            "caller source override requires preserved parent configuration")
+    caller_override = (normalize_roots(caller_source_roots)
+                       if caller_source_roots is not None else None)
+    require(all(type(value) is int and value >= 0
+                for value in (reserved_tool_actions, reserved_wall_seconds)),
+            "diagnostic resource reserves must be nonnegative integers")
+    resource_reserve = {"tool_actions": reserved_tool_actions,
+                        "wall_time_seconds": reserved_wall_seconds}
+    has_reserve = any(resource_reserve.values())
+    require(total_wall_time_seconds is None or (
+        preserve_parent_configuration and not after_tool_batch and not has_reserve
+    ), "continued wall budget requires preserved configuration and an unreserved prepared cut")
+    require(not has_reserve or preserve_parent_configuration,
+            "diagnostic resource reservation requires preserved parent configuration")
+    require(not after_tool_batch or preserve_parent_configuration,
+            "after-batch continuation requires preserved parent configuration")
     require(arm in {"A", "B"}, "unknown exposure arm")
     require(mode in {"offline-scripted-only", "funded-observation"}, "unknown fork mode")
     require(
@@ -128,7 +305,9 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
         (source.public_path, source.public_hash),
     ):
         require(sha256_bytes(path.read_bytes()) == digest, "source identity changed")
-    events, old = historical.events(), historical.load_envelope()
+    events, old = historical.events(), read_checkpoint_envelope(source)
+    caller_roots = (caller_override if caller_override is not None else
+                    dict(old.caller_source_roots) if preserve_parent_configuration else {})
     require(
         old.provider == "openai"
         and old.split == "dev-train"
@@ -138,10 +317,12 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
     )
     cut = next((e for e in events if e["sequence"] == cut_sequence), None)
     require(
-        cut is not None and cut["event_type"] == "model_input_prepared",
-        "cut must precede a prepared model request",
+        cut is not None and cut["event_type"] == (
+            "tool_batch_finished" if after_tool_batch else "model_input_prepared"),
+        "cut must be a settled tool batch" if after_tool_batch
+        else "cut must precede a prepared model request",
     )
-    prefix = [e for e in events if e["sequence"] < cut_sequence]
+    prefix = [e for e in events if e["sequence"] < cut_sequence + int(after_tool_batch)]
     require(
         not any(e["event_type"] in {"diagnostic_candidate_seeded", "terminal"} for e in prefix),
         "seeded or terminal prefixes are not ordinary checkpoints",
@@ -156,20 +337,34 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
         any(e["event_type"] == "tool_batch_finished" for e in prefix),
         "completed tool batch required",
     )
-    parent_store = ArtifactStore(source.root / "artifacts")
-    bundle = json.loads(
-        parent_store.read_bytes(Artifact.model_validate(cut["payload"]["artifact"]))
-    )
-    context = json.loads(
-        parent_store.read_bytes(Artifact.model_validate(bundle["turn"]["context_artifact"]))
-    )
-    budget = context["remaining_budget"]
     task_dir, package = runner._resolve_task_file(source.public_path)
     require(
         package.public_spec_hash == old.public_spec_hash
         and package.task_content_hash == old.task_content_hash,
         "task identity changed",
     )
+    latest, obligation = [], None
+    if after_tool_batch:
+        budget, active_elapsed_ms, latest, obligation = _settled_batch_state(prefix, old, package)
+        expected_diff = original_obligation.EMPTY_DIFF
+    else:
+        read_parent = _parent_reader(source, prefix)
+        bundle = json.loads(read_parent(Artifact.model_validate(cut["payload"]["artifact"])))
+        context = json.loads(read_parent(
+            Artifact.model_validate(bundle["turn"]["context_artifact"])))
+        budget = context["remaining_budget"]
+        active_elapsed_ms = int(bundle["turn"]["active_elapsed_ms"])
+        expected_diff = context["current_diff"]["patch_hash"]
+    continuation_budget = None
+    if total_wall_time_seconds is not None:
+        continuation_budget = _continuation_budget(
+            source, historical, prefix, cut_sequence, old, total_wall_time_seconds,
+        )
+        active_elapsed_ms = max(
+            active_elapsed_ms, continuation_budget["inherited_active_elapsed_ms"],
+        )
+        continuation_budget["inherited_active_elapsed_ms"] = active_elapsed_ms
+    read_parent = _parent_reader(source, prefix)
     output = output.resolve()
     disjoint(output, (repository_root(), source.root, task_dir))
     output.mkdir()
@@ -180,7 +375,7 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
         key = sha256_json(ref.model_dump(mode="json"))
         if key in references:
             continue
-        data = parent_store.read_bytes(ref)
+        data = read_parent(ref)
         copied = store.put_bytes(data, ref.media_type)
         references[key] = (ref.model_dump(mode="json"), copied.model_dump(mode="json"))
         if ref.media_type.startswith("application/json"):
@@ -209,16 +404,32 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
         e["payload"]["result"]["action_id"]
         for e in prefix
         if e["event_type"] == "action_finished"
-        and e["payload"]["result"]["tool"] == "replace_text"
+        and e["payload"]["result"]["tool"] in MUTATION_TOOLS
         and e["payload"]["result"]["status"] == "succeeded"
         and e["payload"]["result"].get("error_code") is None
     }
     for event in prefix:
         if event["event_type"] == "action_started" and event["payload"]["action_id"] in accepted:
-            restore_candidate(workspace, event["payload"])
+            mutation = event["payload"]
+            packet = mutation.get("file_transaction")
+            if packet is None:
+                require(mutation["tool"] == "replace_text", "file transaction receipt missing")
+                restore_candidate(workspace, mutation)
+            else:
+                changes = file_transaction.load_changes(
+                    SimpleNamespace(read_bytes=read_parent), packet,
+                )
+                candidate = file_transaction.preview_changes(
+                    workspace, changes, baseline_diff_hash=mutation["baseline_diff_hash"],
+                )
+                require(candidate.patch_hash == mutation["mutation_expected_worktree_diff_hash"],
+                        "file transaction candidate differs from admission")
+                file_transaction.apply_changes(workspace, changes)
+                require(WorkspaceManager.diff_summary(workspace).patch_hash == candidate.patch_hash,
+                        "restored file transaction differs from admission")
     require(
         WorkspaceManager.diff_summary(workspace).patch_hash
-        == context["current_diff"]["patch_hash"],
+        == expected_diff,
         "candidate differs from checkpoint",
     )
     counters = runner._restore_counters(journal)
@@ -228,7 +439,38 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
         and old.limits.max_accepted_mutations - len(accepted) == budget["accepted_mutations"],
         "restored action allowances differ",
     )
-    model = old.model if preserve_parent_configuration else "gpt-5.4-2026-03-05"
+    limits = old.limits
+    if continuation_budget is not None:
+        limits = old.limits.model_copy(update={
+            "wall_time_seconds": total_wall_time_seconds,
+            "max_model_calls": continuation_budget["child_max_model_calls"],
+        })
+        limits = DevLimits.model_validate(limits.model_dump(mode="json"))
+        budget = copy.deepcopy(budget)
+        budget["model_calls"] -= continuation_budget["excluded_model_calls"]
+        budget["active_wall_time_seconds"] = max(0, int(
+            total_wall_time_seconds - old.evaluation_reserve_seconds - active_elapsed_ms / 1000,
+        ))
+        budget["total_active_wall_time_seconds"] = max(0, int(
+            total_wall_time_seconds - active_elapsed_ms / 1000,
+        ))
+    if has_reserve:
+        require(reserved_tool_actions <= budget["tool_actions"]
+                and reserved_wall_seconds <= min(budget["active_wall_time_seconds"],
+                                                 budget["total_active_wall_time_seconds"]),
+                "diagnostic reserve exceeds the checkpoint's remaining resources")
+        limits = DevLimits.model_validate({
+            **old.limits.model_dump(mode="json"),
+            "max_tool_actions": old.limits.max_tool_actions - reserved_tool_actions,
+            "wall_time_seconds": old.limits.wall_time_seconds - reserved_wall_seconds,
+        })
+        budget = copy.deepcopy(budget)
+        budget["tool_actions"] -= reserved_tool_actions
+        budget["active_wall_time_seconds"] -= reserved_wall_seconds
+        budget["total_active_wall_time_seconds"] -= reserved_wall_seconds
+    model = model_override or (
+        old.model if preserve_parent_configuration else "gpt-5.4-2026-03-05"
+    )
     pricing = pricing_for_model(model)
     spent = budget["cost"]["settled_usage"]
     ledger = DevCostLedger(Decimal(spent) / 10**9 + new_cap_usd, pricing)
@@ -244,13 +486,14 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
         max_cost_usd=Decimal(ledger.cap_nanos) / 10**9,
         state_root=output,
         resume_run_id=source.run_id,
-        limits=old.limits,
+        limits=limits,
         prepared_source=manager.prepared_source,
         prepared_probe_dependencies=(
             Path(old.prepared_probe_dependencies_path)
             if old.prepared_probe_dependencies_path
             else None
         ),
+        caller_source_roots=caller_roots,
         enable_probes=old.probe_image_digest is not None,
         probe_policy=old.probe_policy,
         repair_recheck=old.repair_recheck,
@@ -261,6 +504,8 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
         completion_cost_policy=old.completion_cost_policy,
         **({key: getattr(old, key) for key in (
             "retained_source_chars", "evaluation_reserve_seconds", "probe_recheck",
+            "max_correction_output_tokens", "reproduction_acquisition",
+            "history_search_policy", "agent_policy", "verification_policy", "rate_limit_policy",
         )} if preserve_parent_configuration else {}),
     )
     runtime_hash = runner._runtime_hash()
@@ -295,10 +540,22 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
             ref.model_dump(mode="json")
             for ref in runner._probe_evidence(view, store, source.run_id)
         ],
-        "active_elapsed_ms": int(bundle["turn"]["active_elapsed_ms"]),
+        "active_elapsed_ms": active_elapsed_ms,
     }
+    if after_tool_batch:
+        marker["after_tool_batch"] = True
+        marker["remaining_budget"] = budget
+        marker["baseline_failure_case_ids"] = obligation["baseline_failure_case_ids"]
     if preserve_parent_configuration:
         marker["preserve_parent_configuration"] = True
+    if model_override is not None:
+        marker["model_override"] = model_override
+    if caller_override is not None:
+        marker["caller_source_roots_override"] = caller_override
+    if has_reserve:
+        marker["diagnostic_resource_reserve"] = resource_reserve
+    if continuation_budget is not None:
+        marker["continuation_budget"] = continuation_budget
     journal.append("observation_exposure_fork", marker)
     branch = SimpleNamespace(
         root=output,
@@ -317,6 +574,11 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
         inherited_events=len(prefix),
         marker_hash=sha256_json(marker),
         initial_spent_nanos=spent,
+        after_tool_batch=after_tool_batch,
+        remaining_budget=budget,
+        active_elapsed_ms=active_elapsed_ms,
+        latest_results=latest,
+        original_obligation=obligation,
     )
     with inherited_reads(branch):
         runner._validate_recorded_continuations(journal.events(), store)
@@ -427,7 +689,7 @@ def rehearse(branch, client: ScriptedClient, *, probe_outcomes=None):
             require(call["name"] != "finish_task", "offline fork does not evaluate submissions")
             require(
                 branch.package.public.repository.url.startswith("snapshot://")
-                or call["name"] not in {"replace_text", "run_check"},
+                or call["name"] not in MUTATION_TOOLS | {"run_check", "run_tests"},
                 "real-task repair/check execution is outside synthetic rehearsal",
             )
     branch.journal.append("observation_rehearsal_started", {"arm": branch.arm, "provider_calls": 0})
@@ -452,6 +714,10 @@ def rehearse(branch, client: ScriptedClient, *, probe_outcomes=None):
         patch.object(runner, "_live_source_preflight", lambda *a, **k: None),
         patch.object(runner, "_live_sandbox_preflight", lambda *a, **k: LocalSandbox()),
         patch.object(runner, "DockerProbeSandbox", make_probe),
+        # The scripted adapter owns all calls; preserve the runner's managed cleanup
+        # without constructing the opt-in HTTP transport (or its event loop).
+        patch.object(runner, "BoundedResponsesClient",
+                     lambda **_: SimpleNamespace(close=lambda: None)),
         patch.object(runner, "OpenAIResponsesAdapter", offline_adapter),
         branch.journal.execution_lock(),
     ):

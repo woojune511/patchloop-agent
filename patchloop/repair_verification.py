@@ -10,6 +10,7 @@ from pathlib import Path, PurePosixPath
 
 from patchloop.artifacts import ArtifactStore
 from patchloop.deadline import ExecutionDeadline
+from patchloop.dev.file_transaction import checked_target
 from patchloop.dev.state import DevJournal
 from patchloop.errors import ContractError, PatchLoopError
 from patchloop.git_execution import run_git
@@ -133,7 +134,32 @@ def _compare(results: list[dict], selectors: list[dict]) -> dict:
     return {"status": status, "tests": pairs}
 
 
-def _separate(manager, base, patched, paths, deadline):
+def compare_selected_observations(before: dict, after: dict, check_id: str) -> dict:
+    """Reuse phase/collection comparison without claiming original-bug coverage.
+
+    A body exception can be a broken test or invocation. Only an observed
+    assertion transition is positive test evidence here; original-call evidence
+    remains the responsibility of the independently bound reproduction contract.
+    """
+    rows = [{"phase": phase, "pytest": True, "check_id": check_id,
+             "observation": observation}
+            for phase, observation in (("base_with_tests", before), ("patched", after))]
+    result = _compare(rows, [])
+    exceptions = [phase.get("exception_type")
+                  for observation in (before, after)
+                  for test in observation.get("tests", [])
+                  for phase in test.get("phases", [])
+                  if phase.get("when") == "call" and phase.get("outcome") == "failed"]
+    if result["status"] == "OBSERVED_FAIL_THEN_PASS" and any(
+        exception != "builtins.AssertionError" for exception in exceptions
+    ):
+        result.update(status="INCONCLUSIVE", reason="unexpected_test_body_exception")
+    elif any(observation.get("status") == "NOT_COLLECTED" for observation in (before, after)):
+        result.update(status="NOT_COLLECTED", reason="selected tests were not fully collected")
+    return {**result, "requirement_fit": "UNVERIFIED", "original_requirement_credit": False}
+
+
+def _separate(manager, base, patched, paths, deadline, *, new_paths=()):
     selectors, test_paths, implementation_paths = [], [], []
     for path in paths:
         name = PurePosixPath(path).name
@@ -142,9 +168,10 @@ def _separate(manager, base, patched, paths, deadline):
         if _is_test_path(path):
             if not (name.startswith("test_") or name.endswith("_test.py")):
                 raise UnsupportedTestChange(f"test helper/fixture change: {path}")
-            before = manager.read_base_file(base, path, deadline=deadline)
+            before = (b"" if path in new_paths else
+                      manager.read_base_file(base, path, deadline=deadline))
             after = (patched / path).read_bytes()
-            additions = added_tests(before, after, path)
+            additions = added_tests(before, after, path, new_file=path in new_paths)
             if not additions:
                 raise UnsupportedTestChange(f"changed test file has no supported additions: {path}")
             selectors.extend(additions)
@@ -152,7 +179,7 @@ def _separate(manager, base, patched, paths, deadline):
         else:
             implementation_paths.append(path)
     if not selectors:
-        raise UnsupportedTestChange("no additions to existing test files")
+        raise UnsupportedTestChange("no supported test additions")
     return selectors, test_paths, implementation_paths
 
 
@@ -212,7 +239,8 @@ def verify_repair(request_path: Path, patch_path: Path, *, state_root: Path | No
                 package.public.repository.base_commit,
                 deadline=deadline,
             )
-            # Only existing regular files; no renames, binary diffs, modes or new files.
+            # New regular Python files are supported; existing tests remain additive.
+            # Never follow a base link or accept a new link, rename, mode change or deletion.
             tree = run_git(base, "ls-tree", "-r", "-z", "HEAD", text=False,
                            deadline=deadline).stdout.decode("utf-8")
             regular = {
@@ -220,15 +248,21 @@ def verify_repair(request_path: Path, patch_path: Path, *, state_root: Path | No
                 for line in tree.split("\0") if line
                 if line.startswith(("100644 ", "100755 "))
             }
-            if any(path not in regular for path in paths) or re.search(
-                rb"^(?:new file|deleted file|old mode|new mode|rename |copy |"
+            entries = {line.split("\t", 1)[1] for line in tree.split("\0") if line}
+            if any(path in entries and path not in regular for path in paths) or re.search(
+                rb"^(?:deleted file|old mode|new mode|rename |copy |"
                 rb"GIT binary patch|Binary files)",
                 patch,
                 re.MULTILINE,
-            ):
+            ) or any(mode not in {b"100644", b"100755"} for mode in re.findall(
+                rb"^new file mode (\S+)", patch, re.MULTILINE,
+            )):
                 raise UnsupportedTestChange(
-                    "only edits to existing regular Python files are supported"
+                    "only edits and additions of regular Python files are supported"
                 )
+            for path in paths:
+                checked_target(base, path)
+            new_paths = set(paths) - regular
             patched = manager.create(
                 run_id + "_patched",
                 package.public.repository.url,
@@ -241,7 +275,7 @@ def verify_repair(request_path: Path, patch_path: Path, *, state_root: Path | No
             if summary.changed_files != paths or not result["scope"]["passed"]:
                 raise UnsupportedTestChange("patch paths or original request scope do not match")
             selectors, test_paths, implementation_paths = _separate(
-                manager, base, patched, paths, deadline
+                manager, base, patched, paths, deadline, new_paths=new_paths,
             )
             result.update(
                 test_additions=selectors,
@@ -258,7 +292,11 @@ def verify_repair(request_path: Path, patch_path: Path, *, state_root: Path | No
             )
             for path in test_paths:
                 # Copy exact submitted bytes, never regenerate or correct a test.
-                (before / path).write_bytes((patched / path).read_bytes())
+                _, target = checked_target(before, path)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes((patched / path).read_bytes())
+                if path in new_paths:
+                    run_git(before, "add", "--intent-to-add", "--", path, deadline=deadline)
             result["test_file_hashes"] = {
                 p: sha256_bytes((before / p).read_bytes()) for p in test_paths
             }

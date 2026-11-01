@@ -1,0 +1,8 @@
+tests/test_probe_signature_contract.py
+tests/test_binding_recovery.py
+tests/test_original_argument_correction.py
+tests/test_helper_correction.py
+tests/test_pre_target_obligations.py
+tests/test_probe_exit_contract.py
+tests/test_processing_observer.py
+tests/test_canonical_diagnostic.py::test_fresh_wire_declares_codes_instead_of_message_substrings

@@ -6,6 +6,8 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
+from test_caller_uptake import CALLER_EXECUTION_COMMIT
+from test_verification_state_comparison import frozen_prompt
 
 from diagnostics import caller_uptake as panel
 from diagnostics import caller_uptake_execution as execution
@@ -13,6 +15,7 @@ from diagnostics import caller_uptake_followup as followup
 from diagnostics.positive_verification_panel import save
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import TaskConstraints
+from patchloop.dev.contracts import DevLimits
 from patchloop.dev.state import DevJournal
 from patchloop.errors import ContractError, RecoveryError
 from patchloop.git_execution import run_git
@@ -39,7 +42,7 @@ def saved_fixture(tmp_path, monkeypatch, *, tests_only=False, stop=None):
         base_test + b"\n\ndef test_addition():\n    assert 2 == 2\n")
     submitted = WorkspaceManager.diff_summary(workspace).patch_hash
     request = panel.request(tmp_path / "deps", state.parent, panel.ORDER[0]).model_copy(
-        update={"state_root": state})
+        update={"state_root": state, "limits": DevLimits(max_accepted_mutations=4)})
     public = SimpleNamespace(
         repository=SimpleNamespace(url="snapshot://fixture", base_commit=revision),
         constraints=TaskConstraints(allowed_paths=["**"], additive_test_roots=["tests"]))
@@ -92,7 +95,10 @@ def saved_fixture(tmp_path, monkeypatch, *, tests_only=False, stop=None):
         path = source / (case + ".py")
         path.write_text(case)
         programs[case] = panel.file_ref(path)
-    packet = {"live_root": str(state), "head": "original-head", "invariants": panel.invariants(),
+    with frozen_prompt(CALLER_EXECUTION_COMMIT), monkeypatch.context() as historical:
+        historical.setattr(panel, "DevLimits", lambda: DevLimits(max_accepted_mutations=4))
+        invariants = panel.invariants()
+    packet = {"live_root": str(state), "head": "original-head", "invariants": invariants,
         "native_input": {"instance_id": "fixture", "rows": programs["missing"]},
         "programs": programs, "environments": {"B": {"dependencies": {"path": "deps"}}},
         "rows": [{"row_id": label, "request": request.model_dump(mode="json")}

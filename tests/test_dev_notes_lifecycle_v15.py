@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import json
 import subprocess
-from types import SimpleNamespace
 
 import pytest
 from test_dev_context_v12 import note_call, observe, source_note
 from test_dev_context_v12 import source_gateway as source_gateway
 
+from patchloop.contracts import PublicTask
 from patchloop.dev.contracts import DevLimits, PublicTurnDecision, RequestedTool
 from patchloop.dev.state import DevJournal
 from patchloop.dev.tools import DevToolGateway
@@ -32,11 +32,15 @@ def _gateway(tmp_path, *, newline="\n"):
         ["-c", "user.name=Test", "-c", "user.email=test@example.invalid", "commit", "-qm", "base"],
     ]:
         subprocess.run(["git", *args], cwd=workspace, check=True, capture_output=True)
-    public = SimpleNamespace(
-        constraints=SimpleNamespace(
-            additive_test_roots=[],
-            allowed_paths=["src.py"], forbidden_paths=[], max_diff_lines=50, max_changed_files=1,
-        ),
+    public = PublicTask(
+        task_id="notes-fixture", split="smoke",
+        repository={"url": str(workspace), "base_commit": "HEAD"},
+        issue={"title": "Editable value", "description": "Set the editable value to one."},
+        constraints={
+            "additive_test_roots": [],
+            "allowed_paths": ["src.py"], "forbidden_paths": [],
+            "max_diff_lines": 50, "max_changed_files": 1,
+        },
         visible_checks=[], test_suites=[],
     )
     return DevToolGateway(

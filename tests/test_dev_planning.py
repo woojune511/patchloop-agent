@@ -5,6 +5,7 @@ import json
 import pytest
 from native_history_support import input_context
 from pydantic import ValidationError
+from repair_mechanism_expectations import FROZEN_ARM
 from typer.testing import CliRunner
 
 import patchloop.dev.runner as runner
@@ -54,28 +55,43 @@ def view(journal, diff="d1", gate="needs_mutation"):
 
 def test_off_wire_and_prompt_are_unchanged():
     assert dev_tool_surface_hash() == (
+        "sha256:1f27a4da3107fcd8e82d3bd2e11a5e30c5025cd2ba0021b52c1d88c73c00a99d"
+        if FROZEN_ARM is None else
         "sha256:57193859890419b79cb7f4927c37796d044bc4bf7159c51ddf17723849529e26"
     )
     assert sha256_json(dev_tool_schemas(finish_enabled=True, check_ids=["check"])) == (
-        "sha256:8308e96a9765a4aad652e50e2851d737d60f0093bc3ab1e11084c1b271ad827a"
+        "sha256:c7396a12d9e8ddadc707e17dc079d03b83d64f5c4356f871169140dfc145da66"
+        if FROZEN_ARM is None else
+        "sha256:e8ac4db103389896d6df2061340f328e1c400ee83cb439a4c4f1ed4529f50036"
     )
     decision = PublicTurnDecision(mode="verify", basis="baseline")
     assert "plan_update" not in decision.model_dump(mode="json")
     assert "plan_update_reason" not in decision.model_dump(mode="json")
+    assert "scope_review" not in decision.model_dump(mode="json")
     restored = PublicTurnDecision.model_validate(decision.model_dump(mode="json"))
     assert restored.model_dump() == decision.model_dump()
     assert "Brief planning is enabled" not in DEV_SYSTEM_PROMPT
     explicit = decision.model_copy(update={"plan_update": None})
     assert "plan_update" in explicit.model_dump(mode="json")
+    explicit_review = decision.model_copy(update={"scope_review": None})
+    assert explicit_review.model_dump(mode="json")["scope_review"] is None
 
 
 def test_enabled_schema_only_adds_annotation():
+    from patchloop.dev.scope_review import schema as scope_review_schema
+
     before = dev_tool_schemas(finish_enabled=True, check_ids=["c"])
     after = dev_tool_schemas(finish_enabled=True, check_ids=["c"], planning_policy=plans.POLICY)
     for tool in after:
-        decision = tool["parameters"]["properties"]["turn_decision"]
+        properties = tool["parameters"]["properties"]
+        if FROZEN_ARM is None and "turn_decision" not in properties:
+            assert "plan_update" not in properties and "plan_update_reason" not in properties
+            continue
+        decision = properties["turn_decision"]
         assert decision["properties"].pop("plan_update") == plans.update_schema()
         assert decision["properties"].pop("plan_update_reason") == plans.reason_schema()
+        assert decision["properties"].pop("scope_review") == scope_review_schema()
+        assert decision["required"].pop() == "scope_review"
         assert decision["required"].pop() == "plan_update_reason"
         assert decision["required"].pop() == "plan_update"
     assert after == before
@@ -83,13 +99,29 @@ def test_enabled_schema_only_adds_annotation():
 
 
 def test_plan_guidance_connects_public_results_to_remaining_work():
-    assert "current hypotheses or untested assumptions" in plans.INSTRUCTIONS
-    assert "observation or public check that could settle them" in plans.INSTRUCTIONS
-    assert "confirmed, contradicted, or left unresolved" in plans.INSTRUCTIONS
-    assert "remaining work and verification" in plans.INSTRUCTIONS
-    assert "Do not invent a change" in plans.INSTRUCTIONS
-    assert "null keeps it when there is no useful revision" in plans.INSTRUCTIONS
-    assert "not a generic inspect/edit/check outline" in plans.INSTRUCTIONS
+    guidance = " ".join(plans.INSTRUCTIONS.split())
+    assert "current hypotheses or untested assumptions" in guidance
+    assert "observation or public check that could settle them" in guidance
+    if FROZEN_ARM is None:
+        assert "review_request.requirement_comparison" in guidance
+        assert "it cannot redefine that task" in guidance
+        assert ("public_conditions quotes the original input/caller and distinguishing condition"
+                in guidance)
+        assert "supports, contradicts or leaves the proposed cause untested" in guidance
+        assert "Observe the named property, retain material gaps" in guidance
+    else:
+        assert "Use scope_review for a bounded affected-scope -> case/setup" in guidance
+        assert "check must observe its named property" in guidance
+        assert "support, contradict or leave open" in guidance
+        assert "Retain material gaps" in guidance
+    assert ("historical only for named helper comparisons" if FROZEN_ARM is None
+            else "current-diff execution IDs") in guidance
+    assert "review_request.behavior_change" in guidance
+    assert "before carrying forward a check-then-submit plan" in guidance
+    assert "Listing unknowns alone does not justify stopping" in guidance
+    assert "patch/submission decision over repeating supported examples" in guidance
+    assert "null keeps it when there is no useful revision" in guidance
+    assert "not a generic inspect/edit/check outline" in guidance
     # Guidance is task-independent; it must not import repairs from diagnostic runs.
     for hint in ("pyfakefs", "loguru", "hf-hub", "parent-traversal", "0o700"):
         assert hint not in plans.INSTRUCTIONS
@@ -238,6 +270,8 @@ def test_native_plan_delivery_and_mock_end_to_end(tmp_path, policy):
     store = ArtifactStore(tmp_path / "artifacts")
     previous = None
     plans_seen = []
+    receipts_seen = []
+    repair_turns = 0
     for event in events:
         if event["event_type"] != "turn_started":
             continue
@@ -245,24 +279,38 @@ def test_native_plan_delivery_and_mock_end_to_end(tmp_path, policy):
         context = input_context(items)
         assert "hidden-multiline-csv" not in json.dumps(context)
         assert "reference_patch" not in json.dumps(context)
+        repairing = (FROZEN_ARM is None and context.get("repair_stage", {}).get("policy")
+                     == "small-repair-context-v1")
+        repair_turns += repairing
         assert ("working_plan" in context) == (policy != "none")
         assert (plans.INSTRUCTIONS in items[0]["content"]) == (policy != "none")
         if policy != "none":
             assert context["working_plan"]["policy"] == policy
             plans_seen.append(context["working_plan"]["plan"])
+            receipts_seen.append(context["working_plan"]["last_update_result"])
         if previous:
             assert items[:len(previous)] == previous
         previous = items
         # The public plan has no private task input even though evaluation runs later.
         assert "reference_patch" not in json.dumps(context.get("working_plan"))
     if policy != "none":
+        assert len(plans_seen) == 4
         assert plans_seen[0] is None
         assert all(p is not None for p in plans_seen[1:])
         outputs = [json.loads(i["output"]) for i in previous
                    if i.get("type") == "function_call_output"]
-        assert sum("plan_update_result" in r for r in outputs) == 3
+        assert not any("plan_update_result" in r for r in outputs)
+        durable = [event["payload"]["receipt"] for event in events
+                   if event["event_type"] == plans.EVENT]
+        assert len(durable) == 4
+        if FROZEN_ARM is None:
+            # Compact repair retains the plan; the edit still has no annotation.
+            assert durable[1]["status"] == "not_requested"
+            assert durable[1]["revision"] == durable[0]["revision"]
+        assert receipts_seen == [None, *durable[:3]]
     else:
         assert not any(e["event_type"] == plans.EVENT for e in events)
+    assert repair_turns == (1 if FROZEN_ARM is None else 0)
 
 
 def test_bad_annotation_does_not_add_model_correction(tmp_path, monkeypatch):
@@ -270,7 +318,8 @@ def test_bad_annotation_does_not_add_model_correction(tmp_path, monkeypatch):
 
     def bad(self, context, tools):
         turn = original(self, context, tools)
-        turn.tool_calls[0].turn_decision.plan_update = {"wrong": True}
+        if turn.tool_calls[0].turn_decision is not None:
+            turn.tool_calls[0].turn_decision.plan_update = {"wrong": True}
         return turn
 
     monkeypatch.setattr(MockDevAdapter, "next_turn", bad)
@@ -279,8 +328,10 @@ def test_bad_annotation_does_not_add_model_correction(tmp_path, monkeypatch):
     assert result["call_counts"]["model"] == 4
     events = DevJournal(tmp_path, result["run_id"]).events()
     assert not any(e["event_type"] == "protocol_correction" for e in events)
-    assert all(e["payload"]["receipt"]["status"] == "rejected"
-               for e in events if e["event_type"] == plans.EVENT)
+    statuses = [e["payload"]["receipt"]["status"] for e in events
+                if e["event_type"] == plans.EVENT]
+    assert statuses == (["rejected", "not_requested", "rejected", "rejected"]
+                        if FROZEN_ARM is None else ["rejected"] * 4)
 
 
 def test_evaluator_rejects_planning_identity_mismatch_before_workspace(tmp_path, monkeypatch):

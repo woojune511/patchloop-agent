@@ -13,6 +13,7 @@ from test_dev_probes import FakeProbe, context
 from test_dev_runner import _crash_journal_once, _enveloped_run_id, _SimulatedCrash
 from test_dev_segments import assert_submitted, configured
 from test_dev_tools import mutation_call, read_calls
+from test_probe_invocation import inject_api
 from typer.testing import CliRunner
 
 from patchloop.cli import app
@@ -73,7 +74,7 @@ class ExecutingProbe(FakeProbe):
                                     execution_identity=execution_identity)
         self.sources.append(python_source)
         output = LocalSandbox().run_check(workspace, RegisteredCheck(
-            id="trusted-test-probe", command=[sys.executable, "-c", python_source],
+            id="trusted-test-probe", command=[sys.executable, "-c", inject_api(python_source)],
             timeout_seconds=10, environment={"PYTHONPATH": str(workspace)},
         ), deadline=deadline, execution_identity=execution_identity)
         return {**receipt, "status": "passed" if output.passed else "failed",
@@ -109,26 +110,33 @@ def seed(gateway):
 
 
 def test_case_policy_extends_current_probe_schema_without_changing_prompt():
-    from repair_mechanism_expectations import ARM
+    from repair_mechanism_expectations import ARM, FROZEN_ARM
     options = {"finish_enabled": True, "allowed_tools": [
         "read_file", "search_files", "replace_text", "run_check", "run_probe",
         "finish_task", "stop_task",
     ]}
     before = dev_tool_schemas(**options)
-    # Current ordinary schema includes explicit action-ID replay in every probe policy.
+    # Current purpose binding is separate from the immutable removal-arm snapshots.
     assert sha256_json(before) == (
-        "sha256:6da3a1eaff70006cf62f16fe99af773c82be5a1c532f0de3623332a199e704c0"
+        "sha256:c46bfafc2925b1e80eb76a3331aa8bcfbd11e2074e3d76faffb9f17466db86c6"
+        if FROZEN_ARM is None else
+        "sha256:be1012933d3448903e70edb181c229547f0f8c5e9f285f159e50e7582b825a2e"
     )
     assert dev_tool_surface_hash() == (
+        "sha256:1f27a4da3107fcd8e82d3bd2e11a5e30c5025cd2ba0021b52c1d88c73c00a99d"
+        if FROZEN_ARM is None else
         "sha256:57193859890419b79cb7f4927c37796d044bc4bf7159c51ddf17723849529e26"
     )
     # Probe policy cannot change the exact prompt of the selected frozen arm.
-    assert sha256_bytes(DEV_SYSTEM_PROMPT.encode()) == {
+    assert sha256_bytes(DEV_SYSTEM_PROMPT.encode()) == (
+        "sha256:dab18de16a2da04657cbe2002a0886bb87ee62f2098f9c6744917a7d8f047134"
+        if FROZEN_ARM is None else {
         "E0J0": "sha256:84a795485c40cbc9024d938335a6b1b349231d6a20c069590527be606122ef72",
         "E1J0": "sha256:64c42360807cdf8c13e75c39fc7395fa077c6d71f8970eb05ae74398c4dcbfe4",
         "E0J1": "sha256:629c618311ead9949adcef0f35db84016cde23ecc57266016ecb1f0487837954",
         "E1J1": "sha256:9c6c70ddc419c0c7bcc6118476b369dbfa87e452939036f75d28951774dc0016",
-    }[ARM]
+        }[ARM]
+    )
     after = dev_tool_schemas(**options, probe_policy=cases.POLICY)
     assert [t for t in before if t["name"] != "run_probe"] == [
         t for t in after if t["name"] != "run_probe"]

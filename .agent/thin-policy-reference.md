@@ -120,8 +120,10 @@ hashes when implemented. No automatic rewriting or token-count target is allowed
 Apply a named, explicit projection to the already public compact model state;
 do not rebuild source selection, synthesize findings or inspect the repository.
 
-1. In `completion_guidance`, retain `diff_hash`, `stage` and `submission_ready`;
-   omit `next_action` and `message`.
+1. In `completion_guidance`, retain `diff_hash`, `stage`, `submission_ready` and
+   `edit_availability` (current capability and source prerequisite); omit
+   advisory `next_action` and `message`. The capability card must survive compact
+   stage prompts and fresh corrections as well as the ordinary thin prompt.
 2. In `commitment_signal`, retain the measured state, reason, count, activation
    threshold and `hard_gate` flag; omit only `message`.
 3. Omit `working_plan` and its review requests. This is removal of unverified

@@ -23,7 +23,9 @@ def test_working_notes_are_nonblocking_in_actual_model_input(
         def next_turn(self, context, tools):
             turn = super().next_turn(context, tools)
             call = turn.tool_calls[0]
-            if call.name == "replace_text":
+            if call.name == "run_check":
+                # Fresh edits are annotation-free; retain the optional note on
+                # the following check, referencing the already observed read.
                 call.turn_decision.memory_update = {
                     "findings": [{
                         "statement": "The observed parser splits the input into physical lines.",
@@ -55,15 +57,15 @@ def test_working_notes_are_nonblocking_in_actual_model_input(
     inputs = [json.loads(Path(turn["model_input_artifact"]["path"]).read_text(encoding="utf-8"))
               for turn in turns]
     contexts = [input_context(items) for items in inputs]
-    assert all("canonical_searches" not in item["evidence_ledger"] for item in contexts)
-    assert all(set(item["evidence_ledger"]) == {"search_summary"} for item in contexts)
+    ledgers = [item["evidence_ledger"] for item in contexts if "evidence_ledger" in item]
+    assert ledgers and all(set(ledger) == {"search_summary"} for ledger in ledgers)
     assert contexts[2]["last_successful_mutation"]["delivery"] == (
         "preceding_function_call_output"
     )
     assert contexts[2]["latest_tool_results"] == []
-    assert bool(contexts[2]["working_notes"]["findings"]) is valid_note
+    assert bool(contexts[3]["working_notes"]["findings"]) is valid_note
     if valid_note:
-        finding = contexts[2]["working_notes"]["findings"][0]
+        finding = contexts[3]["working_notes"]["findings"][0]
         currency_key = "evidence_currency" if JUDGMENT else "status"
         assert finding[currency_key] == "historical"
         assert finding["model_authored"] is True

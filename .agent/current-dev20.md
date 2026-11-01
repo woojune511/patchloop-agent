@@ -57,6 +57,28 @@ the submitted test bytes. Native SWE-bench evaluation uses a separately hashed
 source-only patch; the full submitted patch is preserved alongside it. Neither
 private results nor original/reference test patches enter solver context.
 
+Private oracle receipts retain each test stream's final 24,000 bytes, encoded as
+base64 with its full-stream hash, original length and omitted-prefix count. Patch
+application errors, timeouts and grading errors retain available output as well;
+exit 0/1/2 grading semantics remain unchanged. These operator artifacts use the
+existing evaluator CAS, never public tool feedback or model requests. Outer check
+capture limits still apply and remain explicit. Native SWE-bench runs preserve
+full test output, reports and runner logs in the external output directory, with
+an exclusive `operator-artifacts.json` hash manifest even after failure. Current
+dev20 adapters and declared adapter hashes are refreshed together; historical
+packages, original test patches and reference patches are not changed.
+The package test loads all twenty current packages, checking declared artifact
+hashes as well as byte equality with the adapter template. Failure capture adds
+up to eight assertion blocks and 12KB per stream to the existing tail, with
+omission/coverage metadata; it never feeds the solver or changes grading.
+Recognition v2 accepts short pytest separators used by long parameterized names
+and ignores ANSI SGR color only when identifying headings. Saved sections retain
+original bytes, offsets and hashes, including pytest's rendered assertion and
+actual/expected diff. A normalized summary marker closes the failure section even
+when colored. Values not printed by the test runner cannot be reconstructed;
+the existing byte/block limits and explicit omissions still apply. Task identities
+change with refreshed adapters; prepare new inputs rather than reusing old manifests.
+
 ## Parallel stop and accounting
 
 Every worker has its own source checkout, journal, provider client, model context,

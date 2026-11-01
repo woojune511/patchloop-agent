@@ -40,24 +40,43 @@ visible_checks:
     \ tempfile.TemporaryDirectory(prefix=\"lite-public-\") as temporary:\n    checkout\
     \ = Path(temporary) / \"repo\"\n    shutil.copytree(Path.cwd(), checkout,\n  \
     \                 ignore=shutil.ignore_patterns(\".git\", \".patchloop-hidden\"\
-    , \"__pycache__\"))\n    import hashlib\n    projection = {'test_path': 'pvlib/tests/test_irradiance.py',\
-    \ 'source_sha256': '7022ca01497b0f673c378af728779ca5b136067f14900ebd98d34cbd6f4f9ee3',\
-    \ 'old': '    assert_allclose(result, [np.nan, 27.9412, 104.1317, 34.1663], atol=1e-4)',\
+    , \"__pycache__\"))\n    import ast, hashlib, json\n    projection = {'test_path':\
+    \ 'pvlib/tests/test_irradiance.py', 'target_name': 'test_reindl', 'target_ast_sha256':\
+    \ 'c0f2626dfe1dde3244bf735e585f8fb88d6209ad6100fc4a5dceaa830f0c7f16', 'old': '\
+    \    assert_allclose(result, [np.nan, 27.9412, 104.1317, 34.1663], atol=1e-4)',\
     \ 'new': \"    # GHI == 0 is the requested behavior change, not a base regression.\\\
     n    unchanged = irrad_data['ghi'].to_numpy() != 0\\n    assert_allclose(np.asarray(result)[unchanged],\\\
     n                    np.array([np.nan, 27.9412, 104.1317, 34.1663])[unchanged],\\\
-    n                    atol=1e-4)\"}\n    public_test = checkout / projection['test_path']\n\
-    \    test_bytes = public_test.read_bytes()\n    if hashlib.sha256(test_bytes).hexdigest()\
-    \ != projection['source_sha256']:\n        print('public regression input drift:\
-    \ ' + projection['test_path'], flush=True)\n        raise SystemExit(2)\n    test_text\
-    \ = test_bytes.decode('utf-8')\n    if test_text.count(projection['old']) != 1:\n\
-    \        print('public regression anchor mismatch', flush=True)\n        raise\
-    \ SystemExit(2)\n    public_test.write_text(test_text.replace(projection['old'],\
-    \ projection['new']), encoding='utf-8')\n    print('public regression projection:\
-    \ isolate issue-conflicting expectation in ' + projection['test_path'], flush=True)\n\
-    \    env = dict(os.environ)\n    env[\"PYTHONPATH\"] = os.pathsep.join([str(checkout\
-    \ / \"src\"), str(checkout)])\n    env[\"PATH\"] = str(Path(sys.executable).parent)\
-    \ + os.pathsep + env[\"PATH\"]\n    env[\"HOME\"] = temporary\n    result = subprocess.run([sys.executable,\
+    n                    atol=1e-4)\"}\n    def fail_projection(reason):\n       \
+    \ print('public regression ' + reason + ': ' + projection['test_path'], flush=True)\n\
+    \        raise SystemExit(2)\n    def canonical_ast(node):\n        if isinstance(node,\
+    \ ast.AST):\n            return [type(node).__name__, {key: canonical_ast(value)\n\
+    \                    for key, value in ast.iter_fields(node) if value is not None\
+    \ and value != []}]\n        if isinstance(node, list):\n            return [canonical_ast(value)\
+    \ for value in node]\n        return node\n    public_test = checkout / projection['test_path']\n\
+    \    test_text = public_test.read_text(encoding='utf-8')\n    try:\n        module\
+    \ = ast.parse(test_text)\n    except SyntaxError:\n        fail_projection('input\
+    \ syntax drift')\n    def target_definitions(node):\n        if isinstance(node,\
+    \ (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):\n            return\
+    \ [node] if node.name == projection['target_name'] else []\n        return [found\
+    \ for child in ast.iter_child_nodes(node)\n                for found in target_definitions(child)]\n\
+    \    targets = target_definitions(module)\n    if (len(targets) != 1 or not isinstance(targets[0],\
+    \ ast.FunctionDef)\n            or targets[0] not in module.body):\n        fail_projection('target\
+    \ mismatch')\n    target = targets[0]\n    # Literal parameter additions are validated\
+    \ by the shared admission policy.\n    target.decorator_list = []\n    target_bytes\
+    \ = json.dumps(canonical_ast(target), sort_keys=True,\n                      \
+    \       separators=(',', ':')).encode('utf-8')\n    if hashlib.sha256(target_bytes).hexdigest()\
+    \ != projection['target_ast_sha256']:\n        fail_projection('target drift')\n\
+    \    lines = test_text.splitlines(keepends=True)\n    target_text = ''.join(lines[target.lineno\
+    \ - 1:target.end_lineno])\n    if target_text.count(projection['old']) != 1:\n\
+    \        fail_projection('anchor mismatch')\n    lines[target.lineno - 1:target.end_lineno]\
+    \ = [\n        target_text.replace(projection['old'], projection['new'], 1)]\n\
+    \    public_test.write_text(''.join(lines), encoding='utf-8')\n    print('public\
+    \ regression projection: isolate issue-conflicting expectation in '\n        \
+    \  + projection['test_path'], flush=True)\n    env = dict(os.environ)\n    env[\"\
+    PYTHONPATH\"] = os.pathsep.join([str(checkout / \"src\"), str(checkout)])\n  \
+    \  env[\"PATH\"] = str(Path(sys.executable).parent) + os.pathsep + env[\"PATH\"\
+    ]\n    env[\"HOME\"] = temporary\n    result = subprocess.run([sys.executable,\
     \ \"-m\", \"pytest\", \"-q\", *sys.argv[1:]],\n                            cwd=checkout,\
     \ env=env)\n    raise SystemExit(result.returncode)\n"
   - pvlib/tests/test_irradiance.py

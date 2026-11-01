@@ -144,6 +144,7 @@ def test_failed_candidate_retains_rollback_identity_and_read_cache(tmp_path):
 
 def test_final_unchecked_edit_keeps_consistent_identity_and_available_check_or_stop(tmp_path):
     gateway = _gateway(tmp_path)
+    gateway.limits.max_accepted_mutations = 4
     gateway.sandbox = CheckSandbox()
     gateway.public_task.visible_checks = [
         RegisteredCheck(id=name, command=["python", "-c", "pass"])

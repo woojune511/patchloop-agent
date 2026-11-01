@@ -80,12 +80,17 @@ def test_all_rendered_guidance_keeps_existing_size_and_common_contract(arm):
 
 def test_runtime_prompt_and_limits_match_selected_contract():
     assert len(DEV_SYSTEM_PROMPT) <= 8000
-    assert len(system_prompt("current", "brief-v1")) <= 10809
+    # Current continuity guidance adds 355 characters; frozen arms retain their cap.
+    assert len(system_prompt("current", "brief-v1")) <= (
+        10809 if FROZEN_ARM is not None else 11164
+    )
     assert ("closed_by_model" in DEV_SYSTEM_PROMPT) == JUDGMENT
     assert (ablation.E1_HELP in DEV_SYSTEM_PROMPT) == EVIDENCE
     limits = DevLimits()
     assert (limits.max_model_calls, limits.max_tool_actions,
-            limits.max_accepted_mutations, limits.wall_time_seconds) == (40, 100, 4, 1800)
+            limits.max_accepted_mutations, limits.wall_time_seconds) == (
+                40, 100, 4 if FROZEN_ARM is not None else 12, 1800,
+            )
     assert (segments.MAX_INPUT_TOKENS, segments.MAX_REQUEST_BYTES,
             segments.MAX_ENCRYPTED_ITEM_BYTES) == (60000, 1048576, 262144)
     schema = memory_update_schema()["properties"]["open_question"]
@@ -132,7 +137,8 @@ def test_judgment_factor_preserves_data_but_changes_public_authority_labels():
     if JUDGMENT:
         assert finding["model_interpretation"] == note["statement"]
         assert finding["evidence_delivery"] == "not_requested"
-        assert view["working_notes"]["verification"]["items"][0]["status"] == "closed_by_model"
+        field = "model_position" if FROZEN_ARM is None else "status"
+        assert view["working_notes"]["verification"]["items"][0][field] == "closed_by_model"
     else:
         assert finding == note
         assert "role" not in view["working_plan"]

@@ -1,0 +1,58 @@
+"""Shared repair guidance; no new tool, verification gate or execution authority."""
+
+HYPOTHESIS_DESCRIPTION = (
+    "Give a brief causal contrast: public caller/input/setup -> cause precondition -> "
+    "wrong result. Name the observed source/results connecting these steps, mark missing "
+    "links, and explain how this edit or undo changes the link. Keep changed-input helper "
+    "evidence separate; inferred conditions are not observed facts."
+)
+
+EXPECTED_BEHAVIOR_DESCRIPTION = (
+    "State the required outcome and the source-supported condition that distinguishes "
+    "a discriminating case from a relevant normal control, preserving the public input "
+    "representation and caller. Reuse adequate evidence; label predictions, missing setup "
+    "and helper-only outcomes rather than claiming unexecuted success."
+)
+
+INSTRUCTIONS = (
+    "Ground behavior in public contracts, not repair assumptions. Test material "
+    "assumptions or narrow edits; check sibling failures and success guards. Use observed "
+    "APIs; probes must observe their named outcome with a normal control. Before verifying, "
+    "compare inputs/setup/assertions with current-diff results. Reuse equivalent success; "
+    "renaming adds no case. Explain new cases, incomplete observations or post-edit rechecks "
+    "in basis if offered. not_assessed is no host judgment, not an unfinished case.\n"
+)
+
+BEHAVIOR_CHANGE_INSTRUCTIONS = (
+    "Apply only as the current working_plan.review_request.behavior_change; "
+    "receipt/history copies are not new requests. "
+    "Review this applied before/current diff on the next useful decision. Ground expected "
+    "behavior in public requirements, callers and pre-existing tests. In scope_review, "
+    "separate the required outcome from its public_basis; mark unspecified values with "
+    "null rather than deriving an oracle from the patch or its new test. Compare the "
+    "report's literal inputs/setup with the actual case before reducing it: a similar "
+    "exception under changed conditions does not connect the causes. The baseline is a "
+    "comparison, not an automatic oracle. Preserve unresolved verification purposes. "
+    "For type/option branches, dispatch tables or exception lists, derive the affected "
+    "input family from public definitions, registries, callers or existing parameterized "
+    "tests. Use scope_review to compare that scope, input/caller construction and required "
+    "observable with actual execution IDs, source inference or untested cases. Its linked "
+    "results certify execution identity, not semantic coverage; interpret what each "
+    "program actually observes. The edited list alone does not establish completeness. "
+    "Read/search for missing scope "
+    "evidence when it could change the repair. For a small finite family, group unverified "
+    "members relevant to the changed rule in a parameterized probe/test; for larger "
+    "families, select uncovered branch representatives. Vary the member while preserving "
+    "the publicly grounded caller, input construction and outcome assertion, with a "
+    "normal control; disclose missing setup assumptions. Reuse adequate results. "
+    "Connect changed success/failure meaning or a bypassed guard to a refuting input and "
+    "an assertion of the required outcome; state preservation alone does not establish "
+    "success eligibility. For changed shared behavior, select a normal/control case "
+    "that would distinguish a narrow repair from an overbroad one, including a public "
+    "option or explicit caller whose behavior must remain available. Cite the existing "
+    "case if already covered; a suite PASS alone does not identify that contract. "
+    "Choose a useful read, search, probe, test or narrower edit in this same response. "
+    "A found violation should lead to an "
+    "executed regression, repair or undo, and checks of the resulting diff. If no material "
+    "gap remains, continue from the evidence. No extra review call, probe quota or finish gate."
+)

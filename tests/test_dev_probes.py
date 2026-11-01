@@ -143,6 +143,35 @@ def test_probe_is_diagnostic_replayed_and_historical_after_edit(gateway_factory,
     assert projected["remaining_visible_check_ids"]
 
 
+def test_retained_probe_tail_discloses_omissions_and_execution_limits(
+    gateway_factory, smoke_package,
+):
+    from patchloop.dev import completion_context
+
+    class LongProbe(FakeProbe):
+        def run_probe(self, *args, **kwargs):
+            result = super().run_probe(*args, **kwargs)
+            return {**result, "stdout": "prefix" * 500 + "observed-tail",
+                    "stderr": "warning" * 400, "truncated": True}
+
+    gateway, _, _ = gateway_factory()
+    gateway.probe_sandbox = LongProbe(status="failed")
+    result = gateway.execute(probe_call())
+    gateway.execute_batch(read_calls())
+    public = context(gateway, smoke_package)
+    public["workflow_gate"] = "ready_to_submit"
+    view = completion_context.project(public)
+    recent, = view["recent_probes"]
+    for stream in ("stdout", "stderr"):
+        assert recent[stream] == result.output[stream][-2_000:]
+        assert recent[f"{stream}_omitted_chars"] == len(result.output[stream]) - 2_000
+    for flag in ("timed_out", "deadline_exhausted", "cleanup_failed", "truncated"):
+        assert recent[flag] == result.output[flag]
+    assert recent["observation"]["execution_status"] == "failed"
+    assert recent["observation"]["behavior_verdict"] == "not_assessed"
+    assert gateway.checks_by_diff == {}
+
+
 def test_probe_drift_preserves_execution_receipt(gateway_factory):
     gateway, _, _ = gateway_factory()
     baseline = gateway.current_diff_hash
