@@ -56,6 +56,11 @@ the existing prepared-request cut remains exclusive of that request event.
 The opt-in `preserve_parent_configuration` restoration flag retains the parent's
 model/pricing, reasoning/output settings (including the separate correction ceiling),
 source retention, evaluation reserve, probe replay, reproduction acquisition,
-history-search and agent policy. The [cost-cap continuation](cost-cap-continuation.md) uses it
+history-search, agent and rate-limit policy. The [cost-cap continuation](cost-cap-continuation.md) uses it
 with identity projection B. Existing observation comparisons keep their explicit
 full-model intervention; no closed comparison configuration is changed.
+
+Explicit [funded continuation](funded-continuation.md) can increase cumulative wall
+time under a new envelope while retaining full-parent elapsed time and generation
+slots consumed after the clean cut. Its excluded UNKNOWN tail remains provenance,
+not a successful response or authority to retry that historical request.

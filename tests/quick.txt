@@ -1,4 +1,7 @@
 tests/test_dev_contracts.py
+tests/test_continuation_wall_budget.py
+tests/test_funded_continuation.py
+tests/test_funded_continuation_worker.py
 tests/test_first_reproduction_description.py
 tests/test_probe_signature_contract.py
 tests/test_binding_recovery.py

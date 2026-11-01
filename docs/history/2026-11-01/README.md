@@ -1,5 +1,7 @@
 # 2026-11-01 investigations
 
+- [Confirmed-state continuation with separately funded time and cost limits](../2026-11-01-funded-continuation-preparation.md)
+- [Eight-worker dev20: fourteen evaluations, deadline-related shared stop and one unknown response](../2026-11-01-parallel429-dev20-results.md)
 - [Eight-worker dev20 preparation and bounded temporary-429 handling](../2026-11-01-parallel429-preparation.md)
 - [Review lifecycle and delivery: preserve prior conclusions, historical comparison and completion guidance](../2026-11-01-review-lifecycle-and-delivery-fixes.md)
 - [Requirement comparison: literal public conditions and persistent helper review](../2026-11-01-requirement-comparison-continuity.md)

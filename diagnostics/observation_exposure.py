@@ -24,10 +24,11 @@ from patchloop.agent.model import OpenAIResponsesAdapter
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import Artifact
 from patchloop.deadline import ExecutionDeadline
-from patchloop.dev import completion_reproduction, original_obligation, runner
+from patchloop.dev import completion_reproduction, file_transaction, original_obligation, runner
 from patchloop.dev.contracts import DevLimits, DevRunRequest
 from patchloop.dev.cost import DevCostLedger, pricing_for_model
 from patchloop.dev.dependency_sources import normalize_roots
+from patchloop.dev.mutation_tools import MUTATION_TOOLS
 from patchloop.dev.state import DevJournal
 from patchloop.errors import ContractError
 from patchloop.repository import WorkspaceManager
@@ -101,7 +102,7 @@ def exposure(arm):
 
 
 def fork(source: Source, cut_sequence: int, output: Path, arm: str, *, synthetic_cap_usd: Decimal,
-         preserve_parent_configuration=False, after_tool_batch=False):
+         preserve_parent_configuration=False, after_tool_batch=False, total_wall_time_seconds=None):
     return _fork(
         source,
         cut_sequence,
@@ -112,6 +113,7 @@ def fork(source: Source, cut_sequence: int, output: Path, arm: str, *, synthetic
         env_file=output / "NO_CREDENTIAL_FILE",
         preserve_parent_configuration=preserve_parent_configuration,
         after_tool_batch=after_tool_batch,
+        total_wall_time_seconds=total_wall_time_seconds,
     )
 
 
@@ -213,9 +215,61 @@ def _settled_batch_state(prefix, old, package):
     return budget, active, latest, obligation
 
 
+def _continuation_budget(source, historical, prefix, cut_sequence, old, total_seconds):
+    """Retain resources spent after a clean cut without importing an unknown response."""
+    require(type(total_seconds) is int and old.limits.wall_time_seconds < total_seconds,
+            "continuation total wall time must be an integer above the parent limit")
+    events = historical.events()
+    suffix = [e for e in events if e["sequence"] >= cut_sequence]
+    require(not any(e["event_type"] in {
+        "action_started", "action_finished", "provider_call_finished", "compaction_started",
+    } for e in suffix), "continuation cut discards completed work or admitted actions")
+    require(historical.unresolved_input_count() is None,
+            "whole-parent input counting remains uncertain")
+    excluded = []
+    for event in suffix:
+        if event["event_type"] != "provider_call_started":
+            continue
+        payload = event["payload"]
+        require(type(payload.get("reserved_cost_nanos")) is int
+                and payload["reserved_cost_nanos"] > 0,
+                "excluded provider admission lacks a bounded reservation")
+        excluded.append({
+            "sequence": event["sequence"], "call_id": payload["call_id"],
+            "request_hash": payload["request_hash"],
+            "reserved_cost_nanos": payload["reserved_cost_nanos"],
+            "usage": "UNKNOWN", "replayed": False,
+        })
+    require(len({row["call_id"] for row in excluded}) == len(excluded),
+            "excluded provider admissions have duplicate identities")
+    prefix_view = SimpleNamespace(events=lambda: prefix)
+    before, full = runner._restore_counters(prefix_view), runner._restore_counters(historical)
+    require(full.model_calls - before.model_calls == len(excluded)
+            and full.tool_actions == before.tool_actions,
+            "excluded resource consumption differs from provider admissions")
+    return {
+        "parent_journal_hash": source.journal_hash,
+        "parent_last_sequence": events[-1]["sequence"],
+        "parent_terminal": (historical.terminal()["payload"]["terminal"]
+                            if historical.terminal() else None),
+        "previous_total_wall_time_seconds": old.limits.wall_time_seconds,
+        "total_wall_time_seconds": total_seconds,
+        "prefix_active_elapsed_ms": DevJournal.latest_active_elapsed_ms(prefix_view),
+        "inherited_active_elapsed_ms": historical.latest_active_elapsed_ms(),
+        "original_max_model_calls": old.limits.max_model_calls,
+        "excluded_model_calls": len(excluded),
+        "excluded_input_count_calls": full.input_count_calls - before.input_count_calls,
+        "child_max_model_calls": old.limits.max_model_calls - len(excluded),
+        "excluded_provider_calls": excluded,
+        "excluded_unknown_reservation_nanos": sum(r["reserved_cost_nanos"] for r in excluded),
+        "parent_unknown_usage_resolved": False if excluded else None,
+    }
+
+
 def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
           preserve_parent_configuration=False, model_override=None, after_tool_batch=False,
-          caller_source_roots=None, reserved_tool_actions=0, reserved_wall_seconds=0):
+          caller_source_roots=None, reserved_tool_actions=0, reserved_wall_seconds=0,
+          total_wall_time_seconds=None):
     """Copy a settled prefix; bind current runtime without changing the parent."""
     require(
         model_override is None or preserve_parent_configuration,
@@ -231,6 +285,9 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
     resource_reserve = {"tool_actions": reserved_tool_actions,
                         "wall_time_seconds": reserved_wall_seconds}
     has_reserve = any(resource_reserve.values())
+    require(total_wall_time_seconds is None or (
+        preserve_parent_configuration and not after_tool_batch and not has_reserve
+    ), "continued wall budget requires preserved configuration and an unreserved prepared cut")
     require(not has_reserve or preserve_parent_configuration,
             "diagnostic resource reservation requires preserved parent configuration")
     require(not after_tool_batch or preserve_parent_configuration,
@@ -298,6 +355,15 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
         budget = context["remaining_budget"]
         active_elapsed_ms = int(bundle["turn"]["active_elapsed_ms"])
         expected_diff = context["current_diff"]["patch_hash"]
+    continuation_budget = None
+    if total_wall_time_seconds is not None:
+        continuation_budget = _continuation_budget(
+            source, historical, prefix, cut_sequence, old, total_wall_time_seconds,
+        )
+        active_elapsed_ms = max(
+            active_elapsed_ms, continuation_budget["inherited_active_elapsed_ms"],
+        )
+        continuation_budget["inherited_active_elapsed_ms"] = active_elapsed_ms
     read_parent = _parent_reader(source, prefix)
     output = output.resolve()
     disjoint(output, (repository_root(), source.root, task_dir))
@@ -338,13 +404,29 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
         e["payload"]["result"]["action_id"]
         for e in prefix
         if e["event_type"] == "action_finished"
-        and e["payload"]["result"]["tool"] == "replace_text"
+        and e["payload"]["result"]["tool"] in MUTATION_TOOLS
         and e["payload"]["result"]["status"] == "succeeded"
         and e["payload"]["result"].get("error_code") is None
     }
     for event in prefix:
         if event["event_type"] == "action_started" and event["payload"]["action_id"] in accepted:
-            restore_candidate(workspace, event["payload"])
+            mutation = event["payload"]
+            packet = mutation.get("file_transaction")
+            if packet is None:
+                require(mutation["tool"] == "replace_text", "file transaction receipt missing")
+                restore_candidate(workspace, mutation)
+            else:
+                changes = file_transaction.load_changes(
+                    SimpleNamespace(read_bytes=read_parent), packet,
+                )
+                candidate = file_transaction.preview_changes(
+                    workspace, changes, baseline_diff_hash=mutation["baseline_diff_hash"],
+                )
+                require(candidate.patch_hash == mutation["mutation_expected_worktree_diff_hash"],
+                        "file transaction candidate differs from admission")
+                file_transaction.apply_changes(workspace, changes)
+                require(WorkspaceManager.diff_summary(workspace).patch_hash == candidate.patch_hash,
+                        "restored file transaction differs from admission")
     require(
         WorkspaceManager.diff_summary(workspace).patch_hash
         == expected_diff,
@@ -358,6 +440,20 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
         "restored action allowances differ",
     )
     limits = old.limits
+    if continuation_budget is not None:
+        limits = old.limits.model_copy(update={
+            "wall_time_seconds": total_wall_time_seconds,
+            "max_model_calls": continuation_budget["child_max_model_calls"],
+        })
+        limits = DevLimits.model_validate(limits.model_dump(mode="json"))
+        budget = copy.deepcopy(budget)
+        budget["model_calls"] -= continuation_budget["excluded_model_calls"]
+        budget["active_wall_time_seconds"] = max(0, int(
+            total_wall_time_seconds - old.evaluation_reserve_seconds - active_elapsed_ms / 1000,
+        ))
+        budget["total_active_wall_time_seconds"] = max(0, int(
+            total_wall_time_seconds - active_elapsed_ms / 1000,
+        ))
     if has_reserve:
         require(reserved_tool_actions <= budget["tool_actions"]
                 and reserved_wall_seconds <= min(budget["active_wall_time_seconds"],
@@ -409,7 +505,7 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
         **({key: getattr(old, key) for key in (
             "retained_source_chars", "evaluation_reserve_seconds", "probe_recheck",
             "max_correction_output_tokens", "reproduction_acquisition",
-            "history_search_policy", "agent_policy", "verification_policy",
+            "history_search_policy", "agent_policy", "verification_policy", "rate_limit_policy",
         )} if preserve_parent_configuration else {}),
     )
     runtime_hash = runner._runtime_hash()
@@ -458,6 +554,8 @@ def _fork(source, cut_sequence, output, arm, *, new_cap_usd, mode, env_file,
         marker["caller_source_roots_override"] = caller_override
     if has_reserve:
         marker["diagnostic_resource_reserve"] = resource_reserve
+    if continuation_budget is not None:
+        marker["continuation_budget"] = continuation_budget
     journal.append("observation_exposure_fork", marker)
     branch = SimpleNamespace(
         root=output,
@@ -591,7 +689,7 @@ def rehearse(branch, client: ScriptedClient, *, probe_outcomes=None):
             require(call["name"] != "finish_task", "offline fork does not evaluate submissions")
             require(
                 branch.package.public.repository.url.startswith("snapshot://")
-                or call["name"] not in {"replace_text", "run_check"},
+                or call["name"] not in MUTATION_TOOLS | {"run_check", "run_tests"},
                 "real-task repair/check execution is outside synthetic rehearsal",
             )
     branch.journal.append("observation_rehearsal_started", {"arm": branch.arm, "provider_calls": 0})
@@ -616,6 +714,10 @@ def rehearse(branch, client: ScriptedClient, *, probe_outcomes=None):
         patch.object(runner, "_live_source_preflight", lambda *a, **k: None),
         patch.object(runner, "_live_sandbox_preflight", lambda *a, **k: LocalSandbox()),
         patch.object(runner, "DockerProbeSandbox", make_probe),
+        # The scripted adapter owns all calls; preserve the runner's managed cleanup
+        # without constructing the opt-in HTTP transport (or its event loop).
+        patch.object(runner, "BoundedResponsesClient",
+                     lambda **_: SimpleNamespace(close=lambda: None)),
         patch.object(runner, "OpenAIResponsesAdapter", offline_adapter),
         branch.journal.execution_lock(),
     ):

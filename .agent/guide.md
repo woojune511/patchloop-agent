@@ -145,8 +145,8 @@ fsync before returning; I/O errors propagate. LF alone separates records. Preser
 Unicode data; torn tails, including missing final LF, block replay/append unchanged.
 Resume requires repeat=1, exact envelope-bound settings/identities, and the run lock.
 Pre-envelope runs cannot resume. Preserve settled usage, counters, and active deadlines.
-The offline [observation-exposure fork](observation-exposure.md) retains parent
-provenance under a new current-runtime envelope; it does not relax ordinary resume.
+Explicit [funded continuation](funded-continuation.md) retains parent provenance
+under a new envelope; it does not relax ordinary resume.
 
 Use `store=false` and ordered encrypted continuation. No plaintext reasoning/summaries.
 Missing/corrupt continuation fails closed. Unmatched dispatch/unknown usage forbids retry.
