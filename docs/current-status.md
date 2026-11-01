@@ -84,25 +84,32 @@ replay. The final submission at 25 calls left cited low expected information val
 and the missing original reproduction, not a one-call cap. The baseline already
 used one probe before its mistaken final explanation; more work alone is not gain.
 
-The base OL-bytes approximation already wrote successfully. Later checks addressed
-array/bytearray inputs; the original failure-to-repair transition remains unverified.
+The base OL-bytes approximation already wrote successfully. That run's later checks
+addressed array/bytearray inputs without establishing original-input coverage.
 Public checks rose from 212 to 213 PASS, with the writer file explicitly selected;
 the original broad-check stdout lacked exact node telemetry. The new USD4 allocation
 and unused USD2.202753 are closed; no further paid work is scheduled.
 
 The [provider-free paired test](history/2026-11-01-task8-public-test-comparison.md)
-uses the unchanged submitted regression on base and candidate. Each collects one
-node: **base assertion FAIL, candidate PASS**, with setup/teardown PASS, complete
-output and identical test bytes. Base stops at the first bytearray input's bytes-type
-assertion; later base writer/array outcomes were not observed. The 20.171s comparison
-confirms that case's patch effect, not its mapping to the reported bytes failure or
-the public basis for its expectation. Prior bytes evidence was reused. There were
-zero model calls or independent evaluations, and runtime/source remained unchanged.
-The next question is repair selection after the base approximation succeeds and
-the judgment that further original-case discrimination is unhelpful. Keep the
-clarification and existing comparison tool; no cap increase or new finish gate.
-Autonomous comparison uptake, field causality and the private FAIL's exact cause
-remain unestablished.
+observed **base assertion FAIL, candidate PASS** on the unchanged buffer regression.
+Base stops at the first bytearray type assertion; that case's patch effect does not
+establish original-input coverage.
+
+The [bytes/caller follow-up](history/2026-11-01-task8-bytes-call-path.md) now reproduces
+the public error while preserving H-array-serialized bytes, sequence-item `add_new`
+and parent `save_as`. Changing one payload byte to **0x5c** causes **OL FAIL on both
+base and submitted patch**, with `MultiValue` stored and the reported TypeError.
+Ordinary OL and the OB/OF controls pass, including exact byte roundtrip. The setter
+splits OL bytes before the patched conversion; the patch receives a list too late.
+The submitted patch therefore leaves this original-path counterexample unfixed.
+The operator ran six cases per phase in 20.475s, with zero model calls/API cost or
+independent evaluations. Runtime, saved patch and prior records remain unchanged.
+
+Next: repair selection should locate the first incorrect transformation while
+preserving public inputs/callers. Keep the existing tools and budget clarification;
+no cap increase or new finish gate follows. The reporter's complete data/setup are
+unavailable; this is a public reconstruction on the benchmark source. Autonomous
+discovery, a corrected patch and the exact private FAIL attribution remain untested.
 
 Keep [repair-plan delivery](history/2026-11-01-repair-planning-continuity.md),
 [input correspondence](history/2026-11-01-pre-edit-task-correspondence.md), and

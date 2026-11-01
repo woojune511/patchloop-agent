@@ -1,5 +1,6 @@
 # 2026-11-01 investigations
 
+- [Task8 bytes and original callers: 0x5c reproduces failure on base and submitted patch](../2026-11-01-task8-bytes-call-path.md)
 - [Task8 unchanged public test: base assertion FAIL, candidate PASS, original link unverified](../2026-11-01-task8-public-test-comparison.md)
 - [Task8 reserve clarification: further checks, independent FAIL](../2026-11-01-completion-reserve-task8-results.md)
 - [Completion reserve is required capacity, not remaining calls](../2026-11-01-completion-reserve-clarity.md)
