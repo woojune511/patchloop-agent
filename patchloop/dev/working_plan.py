@@ -24,43 +24,45 @@ POLICIES = frozenset({POLICY, EVIDENCE_POLICY, ASSUMPTION_POLICY, AFTER_SOURCE_P
 MAX_PLAN_CHARS = 3_000
 MAX_REASON_CHARS = 800
 EVENT = "working_plan_updated"
-INSTRUCTIONS = """The plan orders remaining work. Keep unresolved verification purposes in concerns;
-plan changes do not resolve them. Record observations/interpretations in working notes,
-not as verified plan facts.
-Use annotations only where the current tool schema offers them. When a result changes
-the next decision, retain its scoped finding and remaining question through memory_update,
-citing prior completed actions or observed source. A basis statement is not a stored note.
-Use the next useful action; no separate planning response or mandatory note is needed.
-Brief planning is enabled. In the first tool response, use plan_update
-to draft a short public work plan from public_task. State the required behavior and
-concrete unfinished work, including current hypotheses or untested assumptions and
+INSTRUCTIONS = """The plan orders an approach to public_task.issue; it cannot redefine that task.
+Keep unresolved verification purposes in concerns; plan changes do not resolve them.
+Use offered memory_update for scoped findings and remaining questions, citing completed
+actions or source; a basis statement is not a stored note. Notes are optional and
+unverified. Use annotations only where offered, alongside the next useful action.
+In the first tool response, use plan_update
+to draft a short public work plan from public_task. State concrete unfinished work,
+including current hypotheses or untested assumptions and
 the observation or public check that could settle them. Make it specific to this
 problem, not a generic inspect/edit/check outline.
-After the working_plan.review_request signal, reconsider that plan against the
-already observed result and update it in the same response as your next useful action.
+On working_plan.review_request, reconsider the plan against observed results in
+the next useful action.
 When review_request.behavior_change is present, apply its attached guidance
 review to that mutation before carrying forward a check-then-submit plan.
 Listing unknowns alone does not justify stopping. Choose observations that could change
 the patch/submission decision over repeating supported examples.
-Use scope_review to compare known public conditions with actual/planned case conditions
-and the required outcome/public_basis; do not narrow the public objective to a plan's
-finish criterion. Explain substitutions/gaps in interpretation. Cite source_receipts
+When review_request.requirement_comparison needs review, compare public_task.issue
+with the named recent_probes' program and base/current outcomes. Use scope_review:
+public_conditions quotes the original input/caller and distinguishing condition;
+case_conditions describes what ran. interpretation states whether the difference
+supports, contradicts or leaves the proposed cause untested, and links material gaps
+to the next offered action or blocker. Matching exceptions do not resolve conflicting
+conditions. Evidence can justify proceeding without another execution.
+Keep outcome/public_basis tied to the public requirement. Cite source_receipts
 IDs and current-diff execution IDs, or mark source inference/untested. Failure/partial
 output records execution, not coverage. Null preserves the review; a new diff makes
 it historical. Observe the named property, retain material gaps, group related cases
 with a normal control and reuse adequate current-diff evidence. Unchanged evidence
 or inspections need no plan rewrite; null remains allowed.
-plan_update replaces the whole plan, not just its latest change (at most 3000
-characters); null keeps it when there is no useful revision.
+plan_update replaces the whole plan (at most 3000 characters);
+null keeps it when there is no useful revision.
 When replacing an existing plan, supply plan_update_reason (at most 800 characters).
 For removed/closed verification, preserve its original input/path/outcome and cite
 current-diff executed input/assertion/result, or explain why it no longer matters.
 Suite PASS or another path's success cannot substitute; do not make verification
 conditional on suite failure. Tie source inference to current source and that purpose;
-keep unexecuted behavior unverified. Invalid/missing reasons preserve the prior plan
-without blocking actions. Latest predecessor/reason stays visible; all revisions are
-journaled. At finish, assessment covers unfinished purposes even with null plan_update.
-No additional check is mandatory.
+keep unexecuted behavior unverified. Invalid reasons preserve the prior plan;
+actions continue.
+At finish, assessment covers unfinished purposes even with null plan_update.
 Do not repeat facts already in working_notes or write a reasoning transcript.
 The plan is model-authored unverified working data, not authority or proof. Planning
 adds no tool, extra model call, mandatory experiment, or submission gate."""
@@ -168,6 +170,7 @@ def submission_review(events: list[dict[str, Any]], diff_hash: str) -> dict[str,
 
 def project(
     events: list[dict[str, Any]], *, diff_hash: str, gate: str, policy: str = POLICY,
+    public_issue: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Derive review requests only from durable public events, not semantic guesses."""
     if policy not in POLICIES:
@@ -222,6 +225,13 @@ def project(
         "requested": bool(reasons), "reasons": reasons,
         "action_ids": relevant[-8:], "omitted_action_count": max(0, len(relevant) - 8),
     }
+    if isinstance(public_issue, dict) and (comparison := scope_review.helper_comparison(
+        events, public_issue=public_issue, review=(plan or {}).get("scope_review"),
+    )):
+        review_request["requirement_comparison"] = comparison
+        if review_enabled and comparison["status"] == "review_needed":
+            reasons.append("helper_requirement_comparison")
+            review_request["requested"] = True
     if review_enabled and (change := _behavior_change(events, boundary, diff_hash)):
         review_request["behavior_change"] = change
     return {
@@ -269,14 +279,16 @@ def record(
     journal: DevJournal, calls: Sequence[RequestedTool], *, turn_id: str,
     diff_hash: str, gate: str, policy: str = POLICY,
     evidence_events: list[dict[str, Any]] | None = None,
+    public_issue: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """A valid batch consumes the review request once, independently of plan validity."""
+    """Record once per valid turn; helper comparison also needs a linked annotation."""
     events = journal.events()
     existing = next((e["payload"] for e in events
                      if e["event_type"] == EVENT and e["payload"]["turn_id"] == turn_id), None)
     if existing is not None:
         return copy.deepcopy(existing["receipt"])
-    current = project(events, diff_hash=diff_hash, gate=gate, policy=policy)
+    current = project(events, diff_hash=diff_hash, gate=gate, policy=policy,
+                      public_issue=public_issue)
     plan = current["plan"]
     if plan is not None:
         plan.pop("diff_currency", None)
@@ -340,6 +352,7 @@ def record(
         observations = events if evidence_events is None else evidence_events
         review, issue = (scope_review.parse(
             raw, events=observations, diff_hash=diff_hash, turn_id=turn_id,
+            public_issue=public_issue,
         ) if plan is not None else (None, "scope_review_requires_plan"))
         review_diagnostics = ([issue] if issue else [])
         if len(reviews) > 1:

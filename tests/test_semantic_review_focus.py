@@ -40,7 +40,7 @@ def test_scope_review_reaches_real_completion_and_finish_without_extra_calls(
                 "scope": "Public CSV record boundaries; other dialects are unassessed.",
                 "source_action_ids": [],
                 "cases": [{
-                    "input": {"public_conditions": "Quoted multiline CSV through parse_rows.",
+                    "input": {"public_conditions": state["public_task"]["issue"]["title"],
                               "case_conditions": "Quoted multiline CSV through parse_rows."},
                     "expected_observation": {
                         "outcome": "The quoted newline remains within one record.",

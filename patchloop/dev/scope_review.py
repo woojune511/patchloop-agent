@@ -7,6 +7,9 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
+from patchloop.dev.probe_observation import bound_probe_program
+from patchloop.util import sha256_json
+
 MAX_TEXT_CHARS = 500
 MAX_SOURCE_ACTIONS = 4
 MAX_CASES = 4
@@ -109,8 +112,9 @@ def schema() -> dict[str, Any]:
                 "properties": {
                     "public_conditions": {
                         **text, "type": ["string", "null"], "description": (
-                            "Retain relevant literal public caller/input/setup, including "
-                            "representation and configuration; do not rewrite it from the helper. "
+                            "Quote relevant text exactly from public_task.issue, including "
+                            "input/caller or distinguishing conditions; do not paraphrase "
+                            "from a helper. "
                             "Null if unavailable or an additional control."
                         ),
                     },
@@ -182,7 +186,7 @@ def schema() -> dict[str, Any]:
 
 def contract() -> dict[str, Any]:
     return {
-        "policy": "plan-scope-public-result-binding-v3",
+        "policy": "plan-scope-public-result-binding-v4",
         "max_text_chars": MAX_TEXT_CHARS, "max_source_actions": MAX_SOURCE_ACTIONS,
         "max_cases": MAX_CASES, "max_action_id_chars": MAX_ACTION_ID_CHARS,
         "input": "public-and-case-conditions-legacy-string-preserved",
@@ -191,6 +195,8 @@ def contract() -> dict[str, Any]:
         "execution": "completed-current-diff-public-result-not-semantic-coverage",
         "source": "completed-public-read-search-prior-diff-retained",
         "storage": "existing-working-plan-event-nonblocking-null-preserves",
+        "public_conditions": "literal-issue-quote-bound-to-task-not-plan-v1",
+        "helper_comparison": "latest-bound-helper-review-persists-until-linked-annotation-v1",
         "source_catalog": {
             "policy": "selected-scope-path-file-hash-range-intersection-v1",
             "max_receipts": MAX_SOURCE_RECEIPTS, "max_ranges_per_receipt": MAX_SOURCE_RANGES,
@@ -287,6 +293,7 @@ def _results(events: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
 
 def parse(
     raw: Any, *, events: list[dict[str, Any]], diff_hash: str, turn_id: str,
+    public_issue: dict[str, Any] | None = None,
 ) -> tuple[dict[str, Any] | None, str | None]:
     """Bind a model claim to prior results; never infer that those results cover it."""
     try:
@@ -306,6 +313,21 @@ def parse(
     cases = []
     for case in review.cases:
         value = case.model_dump(mode="json")
+        if isinstance(public_issue, dict) and isinstance(case.input, _Input):
+            quote = case.input.public_conditions
+            if quote is not None:
+                field = next((key for key in ("title", "description")
+                              if isinstance(public_issue.get(key), str)
+                              and quote.replace("\r\n", "\n") in
+                              public_issue[key].replace("\r\n", "\n")), None)
+                if field is None:
+                    return None, "scope_review_public_conditions_must_quote_public_task_issue"
+                value["public_condition_binding"] = {
+                    "source": "public_task.issue." + field,
+                    "issue_hash": sha256_json(public_issue),
+                    "quote_hash": sha256_json(quote),
+                    "authority": "literal_public_text_not_verified_interpretation",
+                }
         value["execution"] = None
         if case.disposition == "executed":
             result = results.get(case.evidence_action_id)
@@ -332,6 +354,58 @@ def parse(
         "turn_id": turn_id, "interpretation_status": "model_authored_unverified",
         "coverage_status": "not_certified",
     }, None
+
+
+def helper_comparison(
+    events: list[dict[str, Any]], *, public_issue: dict[str, Any],
+    review: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    """Keep an unreviewed helper/task comparison visible; never judge semantic fit.
+
+    Reuse the existing bounded recent-probe bodies. One replay may retain its
+    earlier observation too, so a candidate PASS does not erase a base discrepancy.
+    """
+    starts = {e["payload"]["action_id"]: e["payload"] for e in events
+              if e["event_type"] == "action_started"
+              and e["payload"].get("tool") == "run_probe"}
+    helpers = {}
+    for event in events:
+        if event["event_type"] != "action_finished":
+            continue
+        result = event["payload"]["result"]
+        output = result.get("output", {})
+        if result.get("tool") != "run_probe" or output.get("reproduction"):
+            continue
+        start = starts.get(result["action_id"], {})
+        if program := bound_probe_program(result, start):
+            helpers[result["action_id"]] = (result, start, program)
+    if not helpers:
+        return None
+    result, start, program = next(reversed(helpers.values()))
+    issue_hash = sha256_json(public_issue)
+    reviewed = any(
+        case.get("public_condition_binding", {}).get("issue_hash") == issue_hash
+        and case.get("execution", {}).get("action_id") == result["action_id"]
+        and case.get("execution", {}).get("input_hash") == result["input_hash"]
+        for case in (review or {}).get("cases", []) if isinstance(case.get("execution"), dict)
+    )
+    ids = [result["action_id"]]
+    replay = start.get("probe_replay_request") or {}
+    prior_id = replay.get("replayed_from", {}).get("action_id")
+    prior = helpers.get(prior_id)
+    if (prior and prior[2] == program
+            and prior[0]["output"].get("question") == result["output"].get("question")
+            and prior[0]["workspace_diff_hash"] != result["workspace_diff_hash"]):
+        ids.insert(0, prior_id)
+    return {
+        "status": "review_recorded" if reviewed else "review_needed",
+        "task_reference": {"source": "public_task.issue", "issue_hash": issue_hash},
+        "action_id": result["action_id"], "input_hash": result["input_hash"],
+        "diff_hash": result["workspace_diff_hash"], "source_hash": program["source_hash"],
+        "observation_action_ids": ids, "evidence_location": "recent_probes",
+        "interpretation_status": "model_authored_unverified",
+        "requirement_fit": "not_certified",
+    }
 
 
 def project(review: dict[str, Any], diff_hash: str) -> dict[str, Any]:

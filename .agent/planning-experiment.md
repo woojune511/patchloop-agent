@@ -19,8 +19,9 @@ planner model. OFF keeps the old system prompt, tool schema/order and absent
 decision-field serialization. The planning contract binds its instruction hash
 to model/envelope/tool identity and the evaluator manifest. No historical migration.
 
-A nonempty plan up to 3,000 characters replaces the whole plan. It should state
-the public task goal, remaining work/current hypotheses, verification and untested
+A nonempty plan up to 3,000 characters replaces the whole plan. It orders an
+approach to `public_task.issue`, not a replacement requirement. State remaining
+work/current hypotheses, verification and untested
 assumptions, not raw reasoning. Content guidance now asks for concrete unfinished
 work and the observation/check that could settle an assumption, not a generic
 inspect/edit/check outline. Current guidance separates required public/caller/test
@@ -57,6 +58,7 @@ first transition to ready-to-submit receives a review request. Ordinary reads do
 not demand rewriting; if no plan exists, the initial-plan request persists.
 Null is allowed even when review is requested and is not proof of reconsideration.
 Only a valid decision consumes an event-based request, never `turn_started` alone.
+The helper/requirement comparison below persists independently of that boundary.
 `working_plan_updated` records one idempotent receipt per valid turn before tools,
 including null/unchanged/rejected outcomes. Recovery uses those durable records.
 
@@ -114,16 +116,20 @@ At the existing review, `scope_review` records a bounded scope statement, up to 
 public read/search action IDs and one to four grouped case rows. Each row states
 `input`, `expected_observation`, `disposition`, `evidence_action_id` and
 `interpretation`. Fresh `input` is an object with `public_conditions` and
-`case_conditions`: known conditions from the public task versus the caller/input/
-setup actually exercised or planned. Each string is at most 500 characters.
+`case_conditions`: a literal quote from `public_task.issue.title` or `.description`
+versus the caller/input/setup actually exercised or planned. Each string is at most
+500 characters. With the public issue supplied, the host matches the quote (CRLF/LF
+normalized) and binds its source, issue hash and quote hash. A paraphrase rejects
+only the annotation and preserves the prior review; the action can proceed.
 `public_conditions` may be null when no original condition is available or the
 case is a separate control; explain this
 in `interpretation` rather than inventing original conditions from the helper.
 Use `interpretation` to compare substitutions/missing setup and the evidence that
 makes them material or irrelevant. Assess a plan's finish condition against the
 public requirement; completing its helper does not establish the entire task.
-The host validates structure and execution/source references, not the accuracy of
-either condition statement or their equivalence. Legacy string inputs remain
+The host validates the quotation and execution/source references, not whether the
+chosen quote is sufficient, the case description is accurate or the conditions are
+equivalent. Legacy string inputs remain
 accepted and unchanged in stored/projected reviews and exact replay; no automatic
 conversion fills in their missing public-condition comparison.
 Fresh `expected_observation` separates `outcome` (up to 300 characters) from
@@ -154,7 +160,26 @@ retain it beside the assessment. An invalid reference/shape rejects only the rev
 the plan/tool action can still proceed. Missing review adds no correction call or
 finish gate. At most the first non-null review in a parallel batch is applied.
 Old absent-field serialization is preserved; explicit null remains distinct.
-Enabled identities bind the schema and guidance; planning OFF identities stay unchanged.
+Enabled identities bind the schema and guidance. Planning OFF gains no annotation
+or comparison projection; the shared completion retention contract has a new hash.
+
+`review_request.requirement_comparison` names the latest identity-bound helper,
+the immutable public issue hash and its `recent_probes` evidence location. It stays
+`review_needed` through null annotations and plan changes until a stored case binds
+both a literal issue quote and that execution's action/input identity. A new helper
+needs its own comparison. `review_recorded` means only that this annotation exists;
+interpretation remains model-authored and requirement fit is `not_certified`.
+Compare actual inputs/callers and outcomes, including distinguishing controls, then
+connect a material gap to an offered action or concrete blocker. Source evidence may
+justify proceeding without another execution. No new tool, call, quota or finish
+gate is added; annotations remain optional.
+
+An exact helper replay on another diff also retains its referenced prior result.
+Those at most two observations use the existing three-probe recent-result limit;
+the remaining slot takes the newest result. Completion retains their bounded program
+and output, including a historical base observation, without making it current
+verification evidence. Other old results keep existing omission rules. This is a
+bounded comparison of the latest helper, not an exhaustive semantic obligation ledger.
 
 `working_plan.source_receipts` supplies discoverable read/search IDs for repository
 `source_spans` already selected in the current view, including inline source after a

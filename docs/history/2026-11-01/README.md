@@ -1,5 +1,6 @@
 # 2026-11-01 investigations
 
+- [Requirement comparison: literal public conditions and persistent helper review](../2026-11-01-requirement-comparison-continuity.md)
 - [Causal-link task8: helper repair still replaces original-path diagnosis, independent FAIL](../2026-11-01-causal-link-task8-results.md)
 - [Repair selection: connect public inputs, cause preconditions and observed results](../2026-11-01-causal-link-repair-guidance.md)
 - [Task8 bytes and original callers: 0x5c reproduces failure on base and submitted patch](../2026-11-01-task8-bytes-call-path.md)

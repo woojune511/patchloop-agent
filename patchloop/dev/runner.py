@@ -2689,7 +2689,7 @@ def _build_context(
     if planning_policy != "none":
         payload["working_plan"] = working_plan.project(
             journal.events(), diff_hash=summary.patch_hash, gate=active_policy.workflow_gate,
-            policy=planning_policy,
+            policy=planning_policy, public_issue=payload["public_task"]["issue"],
         )
     if gateway.probe_policy != "none":
         from patchloop.dev import probe_cases
@@ -2724,6 +2724,16 @@ def _build_context(
             if event["event_type"] == "action_finished"
             and event["payload"]["result"]["tool"] in {"run_probe", "observe_original"}
         ]
+        comparison_ids = set(payload.get("working_plan", {}).get("review_request", {})
+                             .get("requirement_comparison", {}).get("observation_action_ids", []))
+        # Use the existing three-record bound. Protect the compared helper and its
+        # prior replay result instead of duplicating their programs in the plan.
+        selected_ids = set(comparison_ids)
+        for result in reversed(probes):
+            if len(selected_ids) >= 3:
+                break
+            selected_ids.add(result["action_id"])
+        selected_probes = [row for row in probes if row["action_id"] in selected_ids][-3:]
         payload["recent_probes"] = [
             {
                 "action_id": result["action_id"],
@@ -2749,7 +2759,7 @@ def _build_context(
                        if "call_path" in result["output"] else {}),
                 }),
             }
-            for result in probes[-3:]
+            for result in selected_probes
         ]
     payload["reproduction_review"] = _reproduction_review_resources(
         gateway.reproduction_review(diff_hash=summary.patch_hash), active_policy,
@@ -3455,6 +3465,7 @@ def _build_segmented_model_input(
         state["working_plan"] = working_plan.project(
             journal.events(), diff_hash=state["current_diff"]["patch_hash"],
             gate=state["workflow_gate"], policy=planning_policy,
+            public_issue=state.get("public_task", {}).get("issue"),
         )
     state["segment_handoff"] = {
         "segment_id": binding["segment_id"], "reason": binding["reason"],
@@ -5123,6 +5134,7 @@ def _record_planning_decision(
     working_plan.record(
         journal, calls, turn_id=turn_id, diff_hash=gateway.current_diff_hash,
         gate=started["workflow_gate"], policy=policy,
+        public_issue=gateway.public_task.issue.model_dump(mode="json"),
     )
 
 

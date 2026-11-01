@@ -55,7 +55,7 @@ def view(journal, diff="d1", gate="needs_mutation"):
 
 def test_off_wire_and_prompt_are_unchanged():
     assert dev_tool_surface_hash() == (
-        "sha256:c7ce75b87cb76e8b983e48c761d4935b8b3b0356f74608db0daa85b5e2378e79"
+        "sha256:2915a55575d330cb4855eb70da5a568ddbba923799b776f9a8fcaa0c4339286f"
         if FROZEN_ARM is None else
         "sha256:57193859890419b79cb7f4927c37796d044bc4bf7159c51ddf17723849529e26"
     )
@@ -103,10 +103,11 @@ def test_plan_guidance_connects_public_results_to_remaining_work():
     assert "current hypotheses or untested assumptions" in guidance
     assert "observation or public check that could settle them" in guidance
     if FROZEN_ARM is None:
-        assert "compare known public conditions with actual/planned case conditions" in guidance
-        assert ("do not narrow the public objective to an inherited plan's finish criterion"
+        assert "review_request.requirement_comparison" in guidance
+        assert "it cannot redefine that task" in guidance
+        assert ("public_conditions quotes the original input/caller and distinguishing condition"
                 in guidance)
-        assert "Explain substitutions/gaps in interpretation" in guidance
+        assert "supports, contradicts or leaves the proposed cause untested" in guidance
         assert "Observe the named property, retain material gaps" in guidance
     else:
         assert "Use scope_review for a bounded affected-scope -> case/setup" in guidance

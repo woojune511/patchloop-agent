@@ -45,7 +45,8 @@ def verify_turn(event, events, store, *, actual_input=None):
     if policy != "none" and not (diagnosing or finalizing):
         expected["working_plan"] = working_plan.project(
             prefix, diff_hash=expected["current_diff"]["patch_hash"],
-            gate=expected["workflow_gate"], policy=policy)
+            gate=expected["workflow_gate"], policy=policy,
+            public_issue=expected.get("public_task", {}).get("issue"))
     expected["segment_handoff"] = {
         "segment_id": binding["segment_id"], "reason": binding["reason"],
         "review_requested": segments.is_fresh(journal, binding),

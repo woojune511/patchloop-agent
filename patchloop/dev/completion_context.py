@@ -48,7 +48,8 @@ def contract() -> dict[str, Any]:
                       "latest_successful_current_source_results",
                       "bounded_current_source_when_mutation_offered",
                       "latest_current_probe_observations", "bounded_recent_current_probes",
-                      "bounded_recent_probe_programs", "last_rejected_test_proposal"],
+                      "bounded_recent_probe_programs", "bound_helper_comparison_observations",
+                      "last_rejected_test_proposal"],
         "omitted": ["historical_source_bodies", "historical_bulk_tool_results",
                     "inspection_history"],
         "source_retrieval_policy": "existing-offered-registered-tools-no-new-permission",
@@ -200,6 +201,8 @@ def project(state: dict[str, Any]) -> dict[str, Any]:
     prior_omissions = (old_stage.get("omitted_historical_records", {})
                        if old_stage.get("policy") == POLICY else {})
     omitted = copy.deepcopy(prior_omissions)
+    comparison_ids = set(state.get("working_plan", {}).get("review_request", {})
+                         .get("requirement_comparison", {}).get("observation_action_ids", []))
     for name in ("recent_checks", "recent_tests", "recent_probes"):
         if name not in state:
             continue
@@ -214,7 +217,7 @@ def project(state: dict[str, Any]) -> dict[str, Any]:
             # a test/read and segment reset; native-result deduplication still applies.
             retained = []
             for row in rows:
-                if row in current:
+                if row in current or row.get("action_id") in comparison_ids:
                     retained.append(_select(row, _RECENT_PROBE_FIELDS))
                 elif isinstance(row.get("program"), dict):
                     # Preserve the old experiment's conditions for comparison, not

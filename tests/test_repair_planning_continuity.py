@@ -11,7 +11,7 @@ from diagnostics.segmented_input_audit import verify_turn
 from patchloop.dev import repair_context, runner, working_plan
 from patchloop.dev.contracts import DevModelTurn, RequestedTool
 from patchloop.dev.model import MockDevAdapter
-from patchloop.util import canonical_json
+from patchloop.util import canonical_json, sha256_json
 
 FINDING = "The first public probe supports only the small parser case."
 QUESTION = "Does the complete public input preserve the quoted newline?"
@@ -108,6 +108,11 @@ def test_actual_repair_input_retains_findings_questions_and_plan_after_probe_evi
         else:
             assert state["working_plan"]["plan"]["text"] == PLAN
             assert state["working_plan"]["plan"]["revision"] == 1
+            comparison = state["working_plan"]["review_request"]["requirement_comparison"]
+            assert comparison["status"] == "review_needed"
+            assert comparison["task_reference"]["issue_hash"] == sha256_json(
+                state["public_task"]["issue"])
+            assert comparison["action_id"] in {p["action_id"] for p in state["recent_probes"]}
     if planning != "none":
         review = views[7]["working_plan"]["review_request"]
         assert review["requested"] and "context_handoff" in review["reasons"]
@@ -127,3 +132,44 @@ def test_actual_repair_input_retains_findings_questions_and_plan_after_probe_evi
     assert runner.run_dev(request.model_copy(update={"resume_run_id": journal.run_id}))[
         "runs"][0] == result
     assert journal.path.read_bytes() == before and len(inputs) == 10 and backend.calls == 4
+
+
+def test_replayed_helper_retains_evicted_base_result_in_actual_completion(tmp_path, monkeypatch):
+    class ReplayScript(ContinuityScript):
+        def next_turn(self, context, tools):
+            if self.number == 8:  # Four base helpers, then the implementation edit.
+                self.number += 1
+                call = probe_call("candidate-replay")
+                call.arguments = {"replay_action_id": "probe-1", "question": None,
+                                  "python_source": None}
+                return DevModelTurn(tool_calls=[call])
+            return super().next_turn(context, tools)
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("helper retention verification must not call a real provider")
+
+    monkeypatch.setattr(httpx.HTTPTransport, "handle_request", forbidden)
+    monkeypatch.setattr(httpx.AsyncHTTPTransport, "handle_async_request", forbidden)
+    backend = FakeProbe(status="passed")
+    monkeypatch.setattr(runner, "DockerProbeSandbox", lambda: backend)
+    request, inputs, counted, views = configured(
+        monkeypatch, tmp_path, planning="brief-v1", script=ReplayScript("csv-quoted-newline"),
+    )
+    request = request.model_copy(update={"enable_probes": True, "repair_recheck": True})
+    assert_submitted(runner.run_dev(request)["runs"][0])
+    state = views[-1]
+    comparison = state["working_plan"]["review_request"]["requirement_comparison"]
+    assert comparison["observation_action_ids"] == ["probe-1", "candidate-replay"]
+    assert comparison["status"] == "review_needed"
+    probes = {p["action_id"]: p for p in state["recent_probes"]}
+    assert set(probes) == {"probe-1", "probe-5", "candidate-replay"}
+    assert probes["probe-1"]["historical"] and not probes["candidate-replay"]["historical"]
+    assert probes["probe-1"]["program"] == probes["candidate-replay"]["program"]
+    assert probes["probe-1"]["stdout"] == "PUBLIC_PROBE_OUTPUT"
+    assert probes["candidate-replay"]["stdout"] == "PUBLIC_PROBE_OUTPUT"
+    assert inputs == counted and backend.calls == 5
+    journal, store = records(request)
+    events = journal.events()
+    turns = [e for e in events if e["event_type"] == "turn_started"]
+    for event, actual in zip(turns, inputs, strict=True):
+        assert verify_turn(event, events, store, actual_input=actual)["verified"]
