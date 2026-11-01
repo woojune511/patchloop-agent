@@ -90,13 +90,14 @@ def _delivered_result(items, policy, action_id, *, compact_repair):
 
 
 def _assert_compact_repair_notes(state, notes):
-    assert "working_notes" not in state and "working_plan" not in state
-    assert state["repair_intent"] == {
-        **{key: notes[key] for key in (
-            "open_question", "findings", "hypotheses", "verification",
-        ) if key in notes},
-        "interpretation": "model_authored_unverified",
-    }
+    assert "repair_intent" not in state
+    delivered = state["working_notes"]
+    assert delivered["available_note_ids"] == notes["available_note_ids"]
+    assert delivered["last_update_result"] == notes["last_update_result"]
+    assert delivered["last_source_lifecycle"] == notes["last_source_lifecycle"]
+    assert [(n["note_id"], n.get("statement", n.get("model_interpretation")))
+            for n in delivered["findings"]] == [
+                (n["note_id"], n["statement"]) for n in notes["findings"]]
 
 
 def _bad_note_call(primary):
@@ -235,6 +236,7 @@ def test_optional_plan_rejection_stays_durable_across_compact_repair(tmp_path, p
             gate=state["workflow_gate"], policy=working_plan.POLICY,
         )
         assert plan["last_update_result"] == update
+        assert state["working_plan"]["last_update_result"] == update
         assert plan["last_update_result"]["status"] == "rejected"
         assert plan["plan"] is None
         recorded = result.model_dump(mode="json", exclude={"replayed"})
@@ -255,6 +257,7 @@ def test_optional_plan_rejection_stays_durable_across_compact_repair(tmp_path, p
                                 planning=working_plan.POLICY)
             current = reconstruct_state(handed_off, context_policy=policy)
             _assert_compact_repair_notes(current, gateway.working_notes())
+            assert current["working_plan"]["last_update_result"] == update
             assert _delivered_result(
                 handed_off, policy, call.action_id, compact_repair=True,
             ) == recorded

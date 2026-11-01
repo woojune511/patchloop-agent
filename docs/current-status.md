@@ -56,8 +56,8 @@ expansion or another generic instruction to test more:
 - Task18 passed after fixing a public regression without weakening its tests, but
   took all 40 calls and repeated L036/L003 questions. The
   [actual-input audit](history/2026-11-01-diagnostic-continuity-delivery-audit.md)
-  now distinguishes storage from delivery: compact repair omits working_plan and
-  its review_request, disables the handoff review flag and uses a prompt without
+  distinguishes storage from delivery: that runtime's compact repair omitted working_plan and
+  its review_request, disabled the handoff review flag and used a prompt without
   normal planning guidance. All first34 task18 inputs follow that path; the stored
   revision1 plan was not retained in authoritative current state. Its text survives
   briefly in older arguments, but is absent at the repeated decisions. Across the
@@ -73,19 +73,24 @@ expansion or another generic instruction to test more:
 - Task4 and task18 repaired public-test failures while preserving expectations,
   then independently passed. These are behaviors, not a causal prompt-effect estimate.
 
-Next proposed change: preserve existing bounded plan/review state in compact repair
-and align its advisory update guidance. Test assembled requests across handoffs,
-not just operator context artifacts. Keep task8's public-input mismatch as a
-correctness check. No extra model call, mandatory note, new memory subsystem or
-larger limit is proposed. This is a demonstrated delivery gap; its causal contribution
-to repetition and a fix's repair benefit remain unproven. No runtime change or paid
-experiment was made during the audit.
+The [delivery follow-up](history/2026-11-01-repair-planning-continuity.md) now preserves
+the canonical bounded working_plan and working_notes in compact repair, including
+note IDs/receipts, remaining questions and review requests. It reuses enabled planning
+instructions and reprojects review after a segment handoff. Optional annotations on
+the next useful action can retain findings; an action basis is not a saved note.
+No new tool, recording round, mandatory note, gate or larger limit was added.
+Null updates and source-change expiry retain their existing meaning.
 
-Audit validation: 274 saved inputs verified; selected local tests 23 PASS/5 FAIL.
-The five failures are stale custom mock adapters dereferencing turn_decision on an
-annotation-free mutation, before executing it. Adapt those tests alongside the
-delivery change. They are outside the previous quick selectors; that earlier result
-does not certify this selected suite. The audit is closed; implementation remains open.
+Local validation: focused 12 PASS in 64.46s; original quick selection 1,474 PASS/one
+host skip after three expectation rechecks, plus one added source-note regression
+PASS. Isolated mock acceptance, Ruff and documentation checks pass. The previously
+failing mock adapters now respect annotation-free edits; their regressions join the
+quick selectors. The actual-input
+test covers saved notes/questions/plans surviving result handoffs after an old probe
+leaves the recent tail, plus OFF mode and completed-run replay. Keep task8's
+public-input mismatch as a correctness check. Whether the model writes/uses useful
+notes, repeats fewer investigations or repairs more tasks remains unproven. No new
+paid experiment is part of this follow-up; all prior allocations remain closed.
 
 [Pre-edit task correspondence](history/2026-11-01-pre-edit-task-correspondence.md)
 uses existing hypothesis/expected_behavior fields to connect public input, caller

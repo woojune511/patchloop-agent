@@ -60,6 +60,17 @@ Only a valid decision consumes an event-based request, never `turn_started` alon
 `working_plan_updated` records one idempotent receipt per valid turn before tools,
 including null/unchanged/rejected outcomes. Recovery uses those durable records.
 
+Compact repair delivers the same bounded `working_plan` and `working_notes` fields
+as ordinary decisions, including review requests, note IDs and update receipts.
+Its enabled prompt reuses these planning instructions; a fresh segment reprojects
+the review after the handoff event. When an observation changes the next decision,
+use an offered `memory_update` to retain its scoped finding and remaining question,
+with prior public evidence. An action's `basis` is not automatically a stored note.
+Annotations remain optional and appear only on tools whose schema offers them;
+edit, original-observation and stop calls do not gain planning fields. Null updates,
+source-change expiry, recent-probe bounds and finish eligibility remain unchanged.
+This repairs delivery, not the model's semantic judgment or willingness to use notes.
+
 ### Review the applied change on the next useful decision
 
 For an admitted successful mutation still matching the current diff,

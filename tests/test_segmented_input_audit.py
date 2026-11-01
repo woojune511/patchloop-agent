@@ -154,7 +154,7 @@ def test_fresh_signature_requires_explicit_empty_phase_state(recorded, damage):
     items = runner._load_active_model_input(first, store, context_policy="segmented-v1")
     view = json.loads(items[-1]["content"])
     state = view["state"]
-    notes = state["repair_intent" if repair_context.pending(state) else "working_notes"]
+    notes = state["working_notes"]
     if damage == "missing_findings":
         notes.pop("findings")
     elif damage == "inherited_finding":

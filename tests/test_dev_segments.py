@@ -20,7 +20,7 @@ from patchloop.agent.model import ModelTurnError
 from patchloop.artifacts import ArtifactStore
 from patchloop.contracts import Artifact
 from patchloop.dev import runner, segments
-from patchloop.dev.contracts import DevRunRequest
+from patchloop.dev.contracts import DevModelTurn, DevRunRequest, RequestedTool
 from patchloop.dev.conversation import (
     assemble_model_input,
     history_metadata,
@@ -74,12 +74,20 @@ def configured(monkeypatch, tmp_path, *, planning="none", incomplete_at=(), over
                                  for g in groups for s in g["inline_spans"]]
         turn = script.next_turn(canonical_json(state), payload["tools"])
         if with_notes and number == 1:
+            # Record source-backed notes on an offered inspection before the
+            # annotation-free edit, so the edit really exercises their expiry.
+            turn = DevModelTurn(tool_calls=[RequestedTool(
+                name="read_file", action_id="notes-before-edit",
+                arguments={"path": script.mutation.path, "start_line": 1, "end_line": 40},
+                turn_decision={"mode": "inspect", "basis": "Retain the observed parser premise.",
+                               "evidence_goal": "Compare its source before the planned edit."},
+            )])
             turn.tool_calls[0].turn_decision.memory_update = {
                 "findings": [{"note_id": None, "statement": statement, "evidence": [{
                     "kind": "source", "path": script.mutation.path,
                     "start_line": line, "end_line": line,
-                }]} for line, statement in [(1, "The module imports csv."),
-                                            (8, "The loop splits physical lines.")]],
+                }]} for line, statement in [(3, "The module imports csv."),
+                                            (10, "The loop splits physical lines.")]],
                 "open_question": "Does the new parser preserve quoted newlines?",
             }
         calls = [ProviderCall(c.name, c.action_id, runner._provider_tool_arguments(c))
@@ -382,8 +390,12 @@ def test_major_result_waits_for_next_normal_decision_and_completed_batch(tool, s
 
 def test_notes_are_rebound_or_expired_not_resurrected_in_new_segment(tmp_path, monkeypatch):
     from repair_mechanism_expectations import JUDGMENT
-    request, _, _, views = configured(monkeypatch, tmp_path, with_notes=True)
-    assert_submitted(runner.run_dev(request)["runs"][0])
+    request, inputs, counted, views = configured(monkeypatch, tmp_path, with_notes=True)
+    result = runner.run_dev(request)["runs"][0]
+    assert_submitted(result)
+    assert inputs == counted and len(inputs) == 5
+    assert result["call_counts"] == {"model": 5, "input_count": 5, "tool": 6}
+    assert len(views[2]["working_notes"]["findings"]) == 2
     notes = views[-1]["working_notes"]
     prose_key = "model_interpretation" if JUDGMENT else "statement"
     assert [n[prose_key] for n in notes["findings"]] == ["The module imports csv."]

@@ -42,7 +42,7 @@ def verify_turn(event, events, store, *, actual_input=None):
     repairing = repair_context.pending(expected)
     finalizing = completion_context.active(expected)
     policy = expected.get("working_plan", {}).get("policy", "none")
-    if policy != "none" and not (diagnosing or repairing or finalizing):
+    if policy != "none" and not (diagnosing or finalizing):
         expected["working_plan"] = working_plan.project(
             prefix, diff_hash=expected["current_diff"]["patch_hash"],
             gate=expected["workflow_gate"], policy=policy)
@@ -59,12 +59,14 @@ def verify_turn(event, events, store, *, actual_input=None):
     elif repairing:
         expected = repair_context.project(expected)
         expected["segment_handoff"].update(
-            review_requested=False, interpretation="public repair evidence and explicit hypothesis")
+            review_requested=segments.is_fresh(journal, binding) and policy != "none",
+            interpretation="public repair evidence and unverified notes/plan")
     elif finalizing:
         expected = completion_context.project(expected)
         expected["segment_handoff"].update(
             review_requested=False,
             interpretation="public candidate, checks and unresolved outcomes")
+    runner._scope_source_receipts(expected, prefix, policy)
     expected = thin_policy.project_state(
         runner._segment_current_view(expected, items[3:], latest, agent_policy), agent_policy)
     delivered = reconstruct_state(items, context_policy=segments.POLICY)
@@ -86,7 +88,9 @@ def verify_turn(event, events, store, *, actual_input=None):
 def initial_signature(wire):
     """Compare fresh starts, excluding model and measured/derived run identities."""
     state = reconstruct_state(wire["input"], context_policy=segments.POLICY)
-    notes_key = "repair_intent" if repair_context.pending(state) else "working_notes"
+    # Earlier immutable compact inputs used repair_intent; fresh inputs retain
+    # the shared working_notes contract, including IDs and update receipts.
+    notes_key = "working_notes" if "working_notes" in state else "repair_intent"
     notes = state.get(notes_key)
     if not isinstance(notes, dict) or not isinstance(notes.get("findings"), list):
         raise ValueError("fresh solve is missing its phase's explicit findings")

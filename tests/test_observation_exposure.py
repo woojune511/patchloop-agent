@@ -143,7 +143,7 @@ def test_every_turn_after_new_failed_probe(source, tmp_path, arm):
     for request in client.created[1:]:
         state = json.loads(request["input"][-1]["content"])["state"]
         # Repair context carries the same advisory verification catalog here.
-        verification = state["repair_intent"]["verification"]
+        verification = state["working_notes"]["verification"]
         if arm == "A":
             assert "observations" not in verification
             assert diagnostic.project(request, "A") == request

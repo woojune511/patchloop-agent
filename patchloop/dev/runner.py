@@ -3451,7 +3451,7 @@ def _build_segmented_model_input(
                 added.append(SEGMENT_RULES.archive(exchanges=extra))
     history = [*previous[3:], *added]
     state = json.loads(context)  # Always use current facts, not an old handoff's controls.
-    if planning_policy != "none" and not compact_stage:
+    if planning_policy != "none" and not diagnosing and not finalizing:
         state["working_plan"] = working_plan.project(
             journal.events(), diff_hash=state["current_diff"]["patch_hash"],
             gate=state["workflow_gate"], policy=planning_policy,
@@ -3468,7 +3468,8 @@ def _build_segmented_model_input(
     elif repairing:
         state = repair_context.project(state)
         state["segment_handoff"].update(
-            review_requested=False, interpretation="public repair evidence and explicit hypothesis")
+            review_requested=fresh and planning_policy != "none",
+            interpretation="public repair evidence and unverified notes/plan")
     elif finalizing:
         state = completion_context.project(state)
         state["segment_handoff"].update(

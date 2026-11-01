@@ -80,7 +80,10 @@ def test_all_rendered_guidance_keeps_existing_size_and_common_contract(arm):
 
 def test_runtime_prompt_and_limits_match_selected_contract():
     assert len(DEV_SYSTEM_PROMPT) <= 8000
-    assert len(system_prompt("current", "brief-v1")) <= 10809
+    # Current continuity guidance adds 355 characters; frozen arms retain their cap.
+    assert len(system_prompt("current", "brief-v1")) <= (
+        10809 if FROZEN_ARM is not None else 11164
+    )
     assert ("closed_by_model" in DEV_SYSTEM_PROMPT) == JUDGMENT
     assert (ablation.E1_HELP in DEV_SYSTEM_PROMPT) == EVIDENCE
     limits = DevLimits()

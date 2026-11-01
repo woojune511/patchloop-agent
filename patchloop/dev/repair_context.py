@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from patchloop.dev import working_plan
 from patchloop.dev.repair_guidance import INSTRUCTIONS as REPAIR_GUIDANCE
 
 SYSTEM_PROMPT = """Repair the supplied public task using only offered registered tools.
@@ -41,9 +42,12 @@ If current, reuse a suitable exact draft and correct the request shape; submit o
 
 
 def system_prompt(state):
+    prompt = SYSTEM_PROMPT
+    if plan := state.get("working_plan"):
+        prompt += "\n\n" + working_plan.instructions(plan["policy"])
     if state.get("completion_guidance", {}).get("verification_policy") != "public-checks-v1":
-        return SYSTEM_PROMPT
-    return SYSTEM_PROMPT.replace(
+        return prompt
+    return prompt.replace(
         "After a refuted repair's diagnosis, repair_prediction selects one changed observable\n"
         "or a bounded test addition. The host binds the counterevidence. A test addition leaves\n"
         "the source repair unresolved; use the frozen run_tests comparison when pending.\n"
@@ -100,7 +104,7 @@ def project(state):
         "available_tool_names",
         "remaining_budget", "action_horizon", "current_diff", "repair_stage",
         "protocol_correction", "source_spans", "dependency_sources", "observed_source_index",
-        "segment_handoff",
+        "segment_handoff", "working_plan", "working_notes",
         "last_failed_mutation", "last_successful_mutation", "current_public_failure",
         "last_rejected_test_proposal",
         "visible_check_status", "mutation_readiness", "context_projection",
@@ -110,11 +114,6 @@ def project(state):
     followup = state.get("reproduction_review", {}).get("probe_followup")
     if followup is not None:
         view["reproduction_review"] = {"probe_followup": followup}
-    notes = state.get("working_notes", {})
-    view["repair_intent"] = {key: notes[key] for key in (
-        "open_question", "findings", "hypotheses", "verification",
-    ) if key in notes}
-    view["repair_intent"]["interpretation"] = "model_authored_unverified"
     return view
 
 

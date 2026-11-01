@@ -107,8 +107,10 @@ def test_diagnosis_stage_correction_and_return_preserve_budgets(
         assert views[index]["diagnosis_stage"]["path"]["call_id"] == "call-1"
         assert len(views[index]["diagnosis_stage"]["observations"]) == 2
     assert "repair_stage" in returned and "diagnosis_stage" not in returned
-    assert "working_plan" not in returned  # Ordinary repair now has its own compact view.
     plan_text = "Observe original, diagnose the missed branch, repair and verify."
+    assert returned["working_plan"]["plan"]["text"] == plan_text
+    assert returned["working_plan"]["review_request"]["requested"]
+    assert returned["segment_handoff"]["review_requested"]
     assert plan_text not in canonical_json(inputs[3])
     original_stage = copy.deepcopy(before["diagnosis_stage"])
     corrected_stage = copy.deepcopy(corrected["diagnosis_stage"])

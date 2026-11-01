@@ -280,9 +280,9 @@ def test_native_plan_delivery_and_mock_end_to_end(tmp_path, policy):
         repairing = (FROZEN_ARM is None and context.get("repair_stage", {}).get("policy")
                      == "small-repair-context-v1")
         repair_turns += repairing
-        assert ("working_plan" in context) == (policy != "none" and not repairing)
+        assert ("working_plan" in context) == (policy != "none")
         assert (plans.INSTRUCTIONS in items[0]["content"]) == (policy != "none")
-        if policy != "none" and not repairing:
+        if policy != "none":
             assert context["working_plan"]["policy"] == policy
             plans_seen.append(context["working_plan"]["plan"])
             receipts_seen.append(context["working_plan"]["last_update_result"])
@@ -292,7 +292,7 @@ def test_native_plan_delivery_and_mock_end_to_end(tmp_path, policy):
         # The public plan has no private task input even though evaluation runs later.
         assert "reference_patch" not in json.dumps(context.get("working_plan"))
     if policy != "none":
-        assert len(plans_seen) == (3 if FROZEN_ARM is None else 4)
+        assert len(plans_seen) == 4
         assert plans_seen[0] is None
         assert all(p is not None for p in plans_seen[1:])
         outputs = [json.loads(i["output"]) for i in previous
@@ -302,13 +302,10 @@ def test_native_plan_delivery_and_mock_end_to_end(tmp_path, policy):
                    if event["event_type"] == plans.EVENT]
         assert len(durable) == 4
         if FROZEN_ARM is None:
-            # The compact repair turn omits the plan and the edit has no annotation.
-            # Its unchanged receipt is delivered when normal post-edit planning returns.
+            # Compact repair retains the plan; the edit still has no annotation.
             assert durable[1]["status"] == "not_requested"
             assert durable[1]["revision"] == durable[0]["revision"]
-            assert receipts_seen == [None, *durable[1:3]]
-        else:
-            assert receipts_seen == [None, *durable[:3]]
+        assert receipts_seen == [None, *durable[:3]]
     else:
         assert not any(e["event_type"] == plans.EVENT for e in events)
     assert repair_turns == (1 if FROZEN_ARM is None else 0)

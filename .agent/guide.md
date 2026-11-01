@@ -128,12 +128,12 @@ requirement mapping stays unverified.
 Plans/concerns cannot close it or gate finish. See [scope](evidence-recovery.md).
 Completion retains all obligations beyond its bounded display.
 
-Deliver latest observations. `--retained-source-chars`: 24,000 (default) or 48,000
-observed characters, complete lines without unseen gaps; binds model/envelope/resume.
-Native history and the 60,000-token segmented limit are unchanged; result handoffs
-may discard older history sooner. Notes are run-local. Fresh native outputs contain
-only primary results; note/plan receipts have separate state fields. Annotation
-failures cannot change action outcomes. Preserve legacy outputs/replay bytes.
+Deliver latest observations. `--retained-source-chars`: 24,000 (default) or 48,000;
+retain complete observed lines, no unseen gaps. Binds model/envelope/resume.
+Keep native history and the 60,000-token segmented limit; handoffs can drop older
+history. Notes are run-local. Native outputs carry primary results; state carries
+note/plan receipts. Annotation failures cannot change actions. Preserve replay bytes.
+Compact repair retains bounded plans/notes and enabled reviews; delivery is not use.
 
 External state is append-only, hash-chained `dev-run-v1` JSONL with immutable envelopes.
 Journal reads reuse decoded events only for a byte-identical validated prefix;

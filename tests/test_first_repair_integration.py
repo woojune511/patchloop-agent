@@ -134,7 +134,9 @@ def test_no_action_correction_keeps_observation_in_small_fresh_context(
     before, corrected = views[3:5]
     assert before["repair_stage"]["first_observation"]["status"] == "observed"
     assert before["repair_stage"] == corrected["repair_stage"]
-    assert not {"working_plan", "working_notes"} & set(corrected)
+    assert corrected["working_plan"]["plan"] == before["working_plan"]["plan"]
+    assert corrected["working_notes"] == before["working_notes"]
+    assert corrected["segment_handoff"]["review_requested"]
     assert corrected["protocol_correction"]["repair_correction"]["kind"] == "no_action"
     assert corrected["segment_handoff"]["reason"] == "repair_no_action"
     assert corrected["remaining_budget"]["model_calls"] == before["remaining_budget"][
@@ -162,7 +164,7 @@ def test_rejected_first_edit_cannot_spend_observation_on_other_diagnostics(bound
                                  snapshot=state, **options)
     assert policy.minimum_completion_calls == policy.completion_budget_calls == 3
     assert policy.minimum_completion_tool_actions == 4
-    assert policy.allowed_tools == {"replace_text", "observe_original", "stop_task"}
+    assert policy.allowed_tools == {"replace_text", "edit_files", "observe_original", "stop_task"}
 
 
 @pytest.mark.parametrize("tools,comparison", [(6, False), (7, True)])

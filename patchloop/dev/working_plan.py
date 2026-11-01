@@ -27,6 +27,10 @@ EVENT = "working_plan_updated"
 INSTRUCTIONS = """The plan orders remaining work. Keep unresolved verification purposes in concerns;
 plan changes do not resolve them. Record observations/interpretations in working notes,
 not as verified plan facts.
+Use annotations only where the current tool schema offers them. When a result changes
+the next decision, retain its scoped finding and remaining question through memory_update,
+citing prior completed actions or observed source. A basis statement is not a stored note.
+Use the next useful action; no separate planning response or mandatory note is needed.
 Brief planning is enabled. In the first tool response, use plan_update
 to draft a short public work plan from public_task. State the required behavior and
 concrete unfinished work, including current hypotheses or untested assumptions and
@@ -111,6 +115,7 @@ def contract(policy: str = POLICY) -> dict[str, Any]:
         "max_reason_chars": MAX_REASON_CHARS,
         "update": "first-non-null-whole-text-with-revision-reason-v2",
         "revision_review": "latest-predecessor-and-reason-durable-unverified-v1",
+        "repair_delivery": "current-plan-notes-and-review-preserved-v1",
         "behavior_change": {
             "policy": "admitted-current-mutation-next-valid-decision-v1",
             "instructions_hash": sha256_json(BEHAVIOR_CHANGE_INSTRUCTIONS),

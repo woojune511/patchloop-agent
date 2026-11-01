@@ -110,6 +110,9 @@ def test_original_purpose_reaches_finish_without_forcing_another_check(
         state = json.loads(context)
         seen.append(state)
         decision = turn.tool_calls[0].turn_decision
+        if decision is None:
+            assert turn.tool_calls[0].name == "replace_text"
+            return turn
         decision.plan_update_reason = None
         decision.plan_update = OPEN if state["working_plan"]["plan"] is None else None
         if turn.tool_calls[0].name == "run_check":
@@ -143,25 +146,34 @@ def test_original_purpose_reaches_finish_without_forcing_another_check(
     system = " ".join(items[0]["content"].split())
     from repair_mechanism_expectations import FROZEN_ARM, JUDGMENT
     if JUDGMENT:
-        if FROZEN_ARM is None:
+        if FROZEN_ARM is None and context_policy == "segmented-v1":
+            assert "A required-check PASS does not establish" in system
+            assert "Missing original verification can yield unverified_delivery" in system
+            assert "known failure does not become verified through submission" in system
+            assert "report the candidate's evidence and remaining gaps truthfully" in system
+        elif FROZEN_ARM is None:
             assert "Investigate the original public call and failure" in system
             assert "helpers/suite PASS cannot replace the reported behavior" in system
             assert "completion retains cases independently of plans/notes" in system
             assert "Finish assessment cites current evidence/inference and gaps" in system
             assert "Skipped checks remain unperformed" in system
             assert "Missing original evidence returns unverified_delivery" in system
+            assert "do not make verification conditional on suite failure" in system
+            assert "Tie source inference to current source and that purpose" in system
+            assert "keep unexecuted behavior unverified" in system
         else:
             assert "Suite PASS or another path's success cannot replace that purpose" in system
             assert "the original purpose despite plan changes: cite current-diff results" in system
-        assert "make verification conditional on a suite failure" in system
-        assert "Label source inference and tie it to specific current source" in system
-        assert "leaving unexecuted behavior unverified" in system
+            assert "make verification conditional on a suite failure" in system
+            assert "Label source inference and tie it to specific current source" in system
+            assert "leaving unexecuted behavior unverified" in system
     else:
         assert "Suite PASS or another path's success cannot replace that purpose" not in system
         assert "source inspection is an inference, not an executed check" in system
         assert "regression PASS alone does not prove a fix" in system
         assert "its purpose, and the already observed evidence that meets that purpose" in system
-    assert "No additional check is mandatory" in system
+    if FROZEN_ARM is not None or context_policy == "append-v1":
+        assert "No additional check is mandatory" in system
     assert delivered["current_diff"]["patch"] and "finish_task" in delivered["available_tool_names"]
     assert not any(e["event_type"] == "protocol_correction" for e in events)
     actions = [e["payload"]["result"]["tool"] for e in events

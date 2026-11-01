@@ -240,12 +240,13 @@ def test_mock_row_recovers_notes_via_state_receipts_without_extra_model_or_tool_
             # The stock mock shares its decision instance across its first two reads.
             for call in turn.tool_calls:
                 call.turn_decision = copy.deepcopy(call.turn_decision)
-                call.turn_decision.memory_update = None
+                if call.turn_decision is not None:
+                    call.turn_decision.memory_update = None
             owner = turn.tool_calls[0]
             if owner.name == "search_files":
                 owner.turn_decision.memory_update = tool_note("pending")
             elif owner.name == "replace_text":
-                owner.turn_decision.memory_update = tool_note("mock-read-source", note_id="n1")
+                assert owner.turn_decision is None
             elif owner.name == "run_check":
                 owner.turn_decision.memory_update = tool_note("mock-apply-mutation")
             return turn
@@ -262,15 +263,16 @@ def test_mock_row_recovers_notes_via_state_receipts_without_extra_model_or_tool_
     events = DevJournal(tmp_path, run["run_id"]).events()
     payloads = [event["payload"] for event in events
                 if event["event_type"] == "working_notes_updated"]
-    assert len(payloads) == 3
+    assert len(payloads) == 2
     assert [payload["receipt"]["findings"][0]["status"] for payload in payloads] == [
-        "rejected", "rejected", "created",
+        "rejected", "created",
     ]
     turns = [event["payload"] for event in events if event["event_type"] == "turn_started"]
     inputs = [json.loads(Path(turn["model_input_artifact"]["path"]).read_text(encoding="utf-8"))
               for turn in turns]
     assert len(inputs) == 4
-    for items, payload in zip(inputs[1:], payloads, strict=True):
+    # The annotation-free edit preserves the first receipt without adding an update.
+    for items, payload in zip(inputs[1:], [payloads[0], *payloads], strict=True):
         outputs = [json.loads(item["output"]) for item in items
                    if item.get("type") == "function_call_output"]
         assert not any("memory_update_result" in output for output in outputs)
