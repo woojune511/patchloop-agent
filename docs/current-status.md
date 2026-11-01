@@ -29,73 +29,60 @@ Keep the integrated development loop: fix observed correctness, reliability and
 completion failures, validate locally, then exercise a frozen configuration.
 A separate one-factor study is not required for every routine change.
 
-The [latest frozen full dev20](history/2026-11-01-pre-edit-dev20-results.md) is CLOSED:
-**12 independent PASS, 8 FAIL, 20 safety PASS**, all 20 submitted once. Execution
-HEAD f994a2b6 retains runtime implementation e6374d6f. Recorded generation cost is
-USD20.972777 under a new USD80 cap; batch wall is 4,916.317 seconds (81m56s), excluding
-preparation. All 274 model calls and 276 input counts settled. No retry, extra
-evaluation or mid-batch runtime change occurred. USD59.027223 remains closed.
+The [latest failed-eight rerun](history/2026-11-01-failed8-rerun-results.md) is CLOSED.
+Code 062dde2e ran tasks 7/8/10/12/13/16/17/19 once each: **task13 independent PASS,
+seven FAIL, eight safety PASS**, all submitted. Against the same failed rows from
+the [previous full20](history/2026-11-01-pre-edit-dev20-results.md), only task13
+changed to PASS. Recorded generation cost is **USD10.8253535**, batch wall
+**2,277.183 seconds (37m57s)**, 121 model calls and 124 input counts, all settled.
+Actual dispatched public inputs, costs and artifact/journal hashes were verified.
+The new USD32 allocation and unused USD21.1746465 are closed. There was no retry,
+extra evaluation, runtime edit or operator hint during the run.
 
-Against the [previous full20](history/2026-10-31-verification-reuse-dev20-results.md),
-task18 changed from unsubmitted/NOT_RUN to PASS; the other 19 acceptance verdicts
-are unchanged. Previous totals were 11 PASS/8 FAIL/1 NOT_RUN, USD20.2818755 and
-5,513.593 seconds. Requests differ only in fresh state roots, but multiple runtime
-changes and one attempt per task prevent attributing the difference to one feature.
+Task13 preserved the reported parent initializer and relative search path, reproduced
+F0010 through pylint, then repaired path normalization. Its first edit exposed an
+existing symlink regression; the second repaired production code while preserving
+the new test. Public recheck reached 1,232 PASS, the caller probe stopped emitting
+F0010, and independent evaluation passed. This supports that repair trajectory.
+The eight baseline rows cost USD10.2215815 with 122 calls; the new panel does not
+establish efficiency gains or a one-feature causal effect. Twelve prior passes
+were omitted, so it is not a full20 regression/generalization result.
 
-The current [failed-eight/discovery follow-up](history/2026-11-01-failed8-and-test-discovery.md)
-implements two bounded corrections before another paid panel:
+The [filename and expectation corrections](history/2026-11-01-failed8-and-test-discovery.md)
+remain implemented. Known mismatched new pytest names reject the atomic edit before
+writing, with public config/hash/patterns; unknown configuration is not guessed.
+Scope review separates required `outcome` and `public_basis`, while post-edit guidance
+compares original conditions and relevant controls. No extra model step, mandatory
+probe or finish gate was added. Local validation remains 88 focused PASS in 20.65s,
+1,494 quick PASS/one host skip across corrected runs, Ruff/docs and isolated mock PASS.
 
-- New pytest modules must match confirmed public filename patterns. A known
-  mismatch rejects the atomic edit before any file changes, with the config/hash
-  and naming rules. Explicit selection does not ensure ordinary directory discovery.
-  Unresolved configuration remains unknown; matching a filename is not collection
-  or assertion coverage. Original tests and existing-file selection are preserved.
-- Existing scope review separates the required `outcome` from its `public_basis`,
-  within the previous 500-character expectation budget. Unknown values use null;
-  legacy strings remain readable. Post-edit guidance compares literal public
-  conditions and selects relevant compatibility controls. A new test's expected
-  value or suite PASS cannot supply its own oracle. Receipt validity is not semantic
-  validation. No extra model call, mandatory probe or finish gate was added.
+Live uptake is narrower than correctness: 37 scope-case occurrences used the new
+structured expectation, but seven tasks still failed. Tasks10/19 created correctly
+named new modules and explicitly executed them; no bad-name rejection occurred.
+Naming/selection do not prove ordinary directory collection. Task17 recovered from
+YAML and duplicate-file edit rejections; task19 corrected a failing test setup.
+No identical same-diff AST/selection repeat was found, which does not exclude
+semantic repetition or overlapping test coverage. Private failing assertions were
+not inspected in this rerun analysis.
 
-All eight failed tasks (7/8/10/12/13/16/17/19) were audited from saved public inputs,
-source/actions/checks and submitted patches. The immutable evidence is under
-`C:/pt/failed8-public-20261101-v1/`, with per-task event/hash references. No private
-bodies were read. Public specs were checked against actual dispatched requests.
-The audit found condition substitutions (8/13), insufficiently grounded exact
-expectations (12/16), and compatibility claims lacking specific evidence (10/17/19).
-Task7's public example and task19's minimum preservation requirement have supporting
-executions; a universal explanation for all eight FAILs is not established. Exact
-private failing assertions remain uninspected. The implementation is locally tested,
-not live evidence that these tasks now pass or cost/time improved.
-Final focused validation is 88 PASS in 20.65s. Quick resolves to 1,494 PASS/one
-host skip across the initial run and corrected contract-expectation rechecks;
-isolated mock evaluation, Ruff and documentation checks pass. Details and limits
-are in the follow-up record; prior private grading and frozen identities are unchanged.
+The next question is **resource communication at an otherwise eligible finish**.
+Task8 cited a one-call completion stage despite 32 calls, 31 exploration calls,
+1,209 solver seconds and USD3.504356 remaining, with probes and edits offered.
+The delivered `completion_budget_calls=1` represents a completion reservation,
+not a remaining-call cap. Its mistaken explanation is observed; field causality
+and the reason for the private FAIL are not established. Prefer clarifying or
+removing redundant reservation terminology before raising limits or adding gates.
+No subsequent paid diagnostic is scheduled or funded by the closed remainder.
 
-Retain the [planning delivery correction](history/2026-11-01-repair-planning-continuity.md):
-compact repair now carries canonical plans, notes and review requests. The
-[fresh task18 run](history/2026-11-01-repair-continuity-task18-results.md) at 21793a4b
-is CLOSED: **independent PASS, safety PASS**, 34 calls, 45 actions, two edits,
-13 probes, USD3.568309 and 1,473.436 seconds. Its USD4 allocation and remainder are
-closed. All actual inputs and costs settled. The model stored and reused the finding
-that L039 undid correct indentation, reverted an ineffective L003 edit and repaired
-L039 while preserving the new test's input/assertions. One unchanged-base probe
-still repeated; that earlier finding was never stored. Residual semantic probe
-repetition is not addressed by the current discovery/oracle change.
-
-Task18's final 506 required tests and one explicitly selected test passed, but the
-new test filename missed ordinary collection; that concrete omission motivates the
-new filename admission. Calls fell from 40 to 34 versus the preceding run while
-cost and time rose, so no efficiency effect is claimed. No paid run is scheduled.
-A future authorized integrated failed-task panel with passing controls can assess
-repair decisions, independent acceptance and regressions together.
-
-Earlier [input correspondence](history/2026-11-01-pre-edit-task-correspondence.md),
-[condition comparison](history/2026-11-01-public-input-comparison.md) and
-[capability-aligned diagnostic](history/2026-11-01-capability-aligned-verification-review.md)
-mechanisms remain selected. Task12's oracle ambiguity and stronger private versus
-public expectations remain separate questions. Earlier saved-patch attribution
-cannot establish the exact failure cause for a fresh submission.
+Keep [repair-plan delivery](history/2026-11-01-repair-planning-continuity.md),
+[input correspondence](history/2026-11-01-pre-edit-task-correspondence.md), and
+[capability-aligned review](history/2026-11-01-capability-aligned-verification-review.md).
+The [task18 continuity run](history/2026-11-01-repair-continuity-task18-results.md)
+remains separate closed evidence: independent/safety PASS, retained L039 finding,
+one repeated base probe and a misnamed new test that motivated filename admission.
+Do not equate missing registered original replay with failure: task13 independently
+passed while the separate `unverified_delivery` label remained. Public PASS,
+independent acceptance, valid receipts and semantic correctness stay distinct.
 
 ## Selected mechanisms and evidence limits
 
@@ -119,9 +106,10 @@ and [older full 20 run](history/2026-10-29-repair-dev20-results.md) remain close
 historical context. Different task paths/settings and single attempts do not
 establish a causal quality or speed gain.
 
-The latest SQLFluff16 candidate passed 167 public tests and broader self-authored
-branch checks, then failed independent evaluation. The public report alone does
-not settle every parser contract. Do not import private expectations into public
+The latest SQLFluff16 candidate passed its public subset and observed non-crashing
+`;;` plus a single-semicolon control, then failed independent evaluation. Broader
+grammar behavior remains unresolved by those observations. The public report alone
+does not settle every parser contract. Do not import private expectations into public
 requirements. The [earlier operator assertion replay](history/2026-10-31-sqlfluff-assertion-log-replay.md)
 concerns a different saved patch and unchanged grading, not this candidate.
 
