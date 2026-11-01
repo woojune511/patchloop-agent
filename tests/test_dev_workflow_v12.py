@@ -142,14 +142,14 @@ class _Gateway:
 def test_late_failure_cannot_claim_a_cheaper_passed_check_reserve() -> None:
     gateway = _Gateway({"A": "PASS", "B": "PASS", "C": "NOT_RUN"}, accepted=3)
     counters = runner._RunCounters(model_calls=35, mutation_recovery_used=True)
-    policy = runner._tool_policy(gateway, counters, DevLimits())
+    policy = runner._tool_policy(gateway, counters, DevLimits(max_accepted_mutations=4))
     assert policy.minimum_completion_calls == 2
     assert policy.completion_budget_calls == 7
     assert policy.future_check_failure_slots == 1
     assert policy.protected_completion_possible is False
     assert policy.check_recovery_reserve_ids == ("A", "B", "C")
     gateway.states = {"A": "NOT_RUN", "B": "PASS", "C": "PASS"}
-    reversed_order = runner._tool_policy(gateway, counters, DevLimits())
+    reversed_order = runner._tool_policy(gateway, counters, DevLimits(max_accepted_mutations=4))
     assert reversed_order.completion_budget_calls == 7
 
 
@@ -162,7 +162,7 @@ def test_repair_credit_keeps_other_check_protection_continuous() -> None:
         check_recovery_used_ids={"B"},
         failed_check_pending=True,
     )
-    before = runner._tool_policy(gateway, counters, DevLimits())
+    before = runner._tool_policy(gateway, counters, DevLimits(max_accepted_mutations=4))
     assert before.completion_budget_calls == 9
     assert before.check_recovery_reserve_ids == ("A",)
     assert before.inspection_uses_repair_credit
@@ -170,14 +170,14 @@ def test_repair_credit_keeps_other_check_protection_continuous() -> None:
     assert before.targeted_read_paths == ()
     counters.model_calls += 1
     counters.failed_check_repair_read_used = True
-    after_read = runner._tool_policy(gateway, counters, DevLimits())
+    after_read = runner._tool_policy(gateway, counters, DevLimits(max_accepted_mutations=4))
     assert after_read.completion_budget_calls == 8
     assert after_read.protected_completion_possible
     counters.model_calls += 1
     counters.failed_check_pending = False
     gateway.accepted_mutations += 1
     gateway.states = {"A": "NOT_RUN", "B": "NOT_RUN"}
-    after_repair = runner._tool_policy(gateway, counters, DevLimits())
+    after_repair = runner._tool_policy(gateway, counters, DevLimits(max_accepted_mutations=4))
     assert after_repair.completion_budget_calls == 7
     assert after_repair.protected_completion_possible
 
@@ -191,7 +191,7 @@ def test_coverage_plateau_and_mutation_failure_do_not_mask_inspection() -> None:
         failed_mutation_pending=True,
         failed_mutation_repair_turns=50,
     )
-    policy = runner._tool_policy(gateway, counters, DevLimits())
+    policy = runner._tool_policy(gateway, counters, DevLimits(max_accepted_mutations=4))
     assert {"read_file", "search_files", "replace_text"} <= policy.allowed_tools
     assert policy.commitment_action_state == "advisory"
     assert policy.targeted_read_paths == ()
@@ -202,7 +202,7 @@ def test_rejected_optional_mutation_does_not_erase_checked_baseline() -> None:
     gateway = _Gateway({"A": "PASS", "B": "PASS"})
     gateway.last_failed_mutation = {"mutation_failure": {"class": "anchor_invalid"}}
     counters = runner._RunCounters(model_calls=39, failed_mutation_pending=True)
-    policy = runner._tool_policy(gateway, counters, DevLimits())
+    policy = runner._tool_policy(gateway, counters, DevLimits(max_accepted_mutations=4))
     assert policy.workflow_gate == "ready_to_submit"
     assert policy.minimum_completion_calls == 1
     assert policy.allowed_tools == {"finish_task", "stop_task"}
@@ -211,21 +211,21 @@ def test_rejected_optional_mutation_does_not_erase_checked_baseline() -> None:
 def test_optional_edit_reserves_rechecks_but_missing_anchor_read_is_completion_work() -> None:
     gateway = _Gateway({"A": "PASS", "B": "NOT_RUN"})
     policy = runner._tool_policy(
-        gateway, runner._RunCounters(model_calls=38), DevLimits()
+        gateway, runner._RunCounters(model_calls=38), DevLimits(max_accepted_mutations=4)
     )
     assert policy.allowed_tools == {"run_check", "stop_task"}
     assert policy.optional_mutation_completion_calls > 2
     gateway = _Gateway({"A": "NOT_RUN", "B": "NOT_RUN"}, accepted=0, anchor=False, patch="")
     counters = runner._RunCounters(model_calls=35)
-    required = runner._tool_policy(gateway, counters, DevLimits())
+    required = runner._tool_policy(gateway, counters, DevLimits(max_accepted_mutations=4))
     assert required.minimum_completion_calls == 5
     assert required.required_inspection_for_completion
     assert required.max_parallel_reads == 1
     assert {"read_file", "search_files"} <= required.allowed_tools
     counters.model_calls += 1
     gateway.anchor = True
-    repair = runner._tool_policy(gateway, counters, DevLimits())
-    assert repair.allowed_tools == {"replace_text", "stop_task"}
+    repair = runner._tool_policy(gateway, counters, DevLimits(max_accepted_mutations=4))
+    assert repair.allowed_tools == {"replace_text", "edit_files", "stop_task"}
 
 
 def test_tool_execution_error_does_not_consume_semantic_check_allowance() -> None:
@@ -244,12 +244,12 @@ def test_tool_execution_error_does_not_consume_semantic_check_allowance() -> Non
 def test_correction_only_names_available_actions() -> None:
     gateway = _Gateway({"A": "FAIL"})
     counters = runner._RunCounters(model_calls=37, mutation_recovery_used=True)
-    policy = runner._tool_policy(gateway, counters, DevLimits())
+    policy = runner._tool_policy(gateway, counters, DevLimits(max_accepted_mutations=4))
     correction = runner._protocol_correction(
         turn_id="turn", code="INVALID_BATCH", issue="invalid batch", gateway=gateway,
         policy=policy,
     )
-    assert policy.allowed_tools == {"replace_text", "stop_task"}
+    assert policy.allowed_tools == {"replace_text", "edit_files", "stop_task"}
     assert "read_file" not in correction["message"]
     assert "search_files" not in correction["message"]
     assert "run_check" not in correction["message"]

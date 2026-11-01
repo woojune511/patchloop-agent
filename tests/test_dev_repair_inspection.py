@@ -28,7 +28,7 @@ POLICY = "current-failure-v1"
 
 def _policy(gateway, counters, policy=POLICY):
     return runner._tool_policy(
-        gateway, counters, DevLimits(), repair_inspection_policy=policy,
+        gateway, counters, DevLimits(max_accepted_mutations=4), repair_inspection_policy=policy,
     )
 
 
@@ -36,7 +36,7 @@ def test_only_future_check_recovery_is_released_at_the_ten_call_boundary():
     gateway, counters = _state(("FAIL", "NOT_RUN"), model=10, mutations=3)
     default = _policy(gateway, counters, "protected-v1")
     selected = _policy(gateway, counters)
-    assert default.allowed_tools == {"replace_text", "stop_task"}
+    assert default.allowed_tools == {"replace_text", "edit_files", "stop_task"}
     assert default.model_turns_available_for_exploration == 0
     assert selected.allowed_tools == default.allowed_tools | {"read_file", "search_files"}
     assert selected.model_turns_available_for_exploration == 4
@@ -74,7 +74,7 @@ def test_last_read_warning_uses_the_selected_policy_without_mutating_counters(mo
     assert selected.max_parallel_reads == (1 if tools == 7 else 4)
     assert set(selected.tools_closing_after_this_turn) == {"read_file", "search_files"}
     _consume(counters, "read_file")
-    assert _policy(gateway, counters).allowed_tools == {"replace_text", "stop_task"}
+    assert _policy(gateway, counters).allowed_tools == {"replace_text", "edit_files", "stop_task"}
 
 
 @pytest.mark.parametrize("statuses", [("PASS", "PASS"), ("NOT_RUN", "NOT_RUN")])
@@ -126,7 +126,7 @@ def test_spent_inspections_still_allow_rejection_read_repair_checks_and_finish()
     for remaining in (4, 3, 2, 1):
         assert _policy(gateway, counters).model_turns_available_for_exploration == remaining
         _consume(counters, "read_file")
-    assert _policy(gateway, counters).allowed_tools == {"replace_text", "stop_task"}
+    assert _policy(gateway, counters).allowed_tools == {"replace_text", "edit_files", "stop_task"}
     _consume(counters, "replace_text", succeeded=False)
     gateway.anchor = False
     assert "read_file" in _policy(gateway, counters).allowed_tools

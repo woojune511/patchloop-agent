@@ -150,9 +150,11 @@ def test_thin_native_continuation_and_handoff_preserve_real_wire(tmp_path, monke
         for item in public_exchanges(items, archive_kind=PUBLIC_EVIDENCE_KIND):
             if item["type"] == "function_call":
                 wire = json.loads(item["arguments"])
-                assert "memory_update" in wire and "turn_decision" not in wire
+                assert "turn_decision" not in wire
+                assert ("memory_update" in wire) is (item["name"] != "replace_text")
     if incomplete:
-        assert any(i.get("encrypted_content") == "cipher-1" for i in inputs[2])
+        assert not any(i.get("type") == "reasoning" for i in inputs[2])
+        assert views[2]["protocol_correction"]["code"] == "incomplete_response"
     journal, store = records(request)
     before = journal.path.read_bytes()
     assert runner.run_dev(request.model_copy(update={"resume_run_id": journal.run_id}))[

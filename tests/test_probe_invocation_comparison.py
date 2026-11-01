@@ -6,6 +6,7 @@ import json
 import subprocess
 
 import pytest
+from frozen_stage_support import pin_pre_stage_prompt
 from test_dev_probe_action_replay import restore
 from test_dev_probe_cases import TEXT, ExecutingProbe, mock_request
 from test_dev_tools import mutation_call, read_calls
@@ -37,6 +38,7 @@ ON_REVIEW_COMMIT = "1b7d53c713bb956234834779324c533cfd5a74e1"
 
 @pytest.fixture(autouse=True)
 def offline(monkeypatch):
+    pin_pre_stage_prompt(monkeypatch)
     monkeypatch.setattr("socket.socket.connect", lambda *a, **k: pytest.fail("offline only"))
     # Retain the closed treatment's review prose while current completion is tested separately.
     monkeypatch.setattr(control, "_REVIEW", legacy_function(
@@ -90,6 +92,7 @@ def test_off_old_pending_purpose_preserves_channel_binding_and_once_execution(ga
     backend = gateway.probe_sandbox = ExecutingProbe()
     call = probe(gateway.public_task, source=OFF_SOURCE)
     call.arguments["purpose"].pop("reported_failure_json")
+    call.arguments["purpose"]["requirement_quote"] = gateway.public_task.issue.description
     with control.assigned("A"):
         with pytest.raises(ContractError, match="reported_failure_json"):
             reproduction.selection(call.arguments)
@@ -185,13 +188,16 @@ def test_shared_phase_before_after_and_two_reference_return(
             "context_policy": "segmented-v1",
             "planning_policy": "brief-v1",
             "history_search_policy": "public-v1",
-            "limits": DevLimits(),
+            "limits": DevLimits(max_accepted_mutations=4),
         }
     )
     with control.assigned(arm):
         result = runner.run_dev(request)["runs"][0]
     assert result["terminal"] == "EVALUATOR_PASS", result
-    assert backend.calls == 2 and backend.sources[0] == backend.sources[1]
+    # The current original-reproduction policy also replays the invocation-bound
+    # case after editing in B. It is a registered host action, not a model call.
+    assert backend.calls == (3 if arm == "B" else 2)
+    assert all(source == backend.sources[0] for source in backend.sources)
     (path,) = (request.state_root / "runs").glob("*.jsonl")
     journal, store = (
         DevJournal(request.state_root, path.stem),
@@ -206,10 +212,10 @@ def test_shared_phase_before_after_and_two_reference_return(
         for e in events
         if e["event_type"] == "action_finished" and e["payload"]["result"]["tool"] == "run_probe"
     ]
-    assert [r["output"]["reproduction"]["comparison"] for r in receipts] == [
-        "mismatched",
-        "matched",
-    ]
+    assert [r["output"]["reproduction"]["comparison"] for r in receipts] == (
+        ["mismatched", "matched", "matched"] if arm == "B" else ["mismatched", "matched"])
+    assert [r["action_id"] for r in receipts if not r["action_id"].startswith(
+        "completion-reproduction-")] == ["original", "after"]
     rows = []
     for event, phase, _ in role.phased_events(events):
         if event["event_type"] != "turn_started":

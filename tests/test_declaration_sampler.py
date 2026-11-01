@@ -43,8 +43,11 @@ def prepared(tmp_path_factory):
     fixtures = root / "fixtures"
     snapshot = fixtures / "mini-data-utils"
     shutil.copytree(repository_root() / "fixtures/repositories/mini-data-utils", snapshot)
-    target = snapshot / "mini_data_utils/csvlite.py"
-    target.write_bytes(FIELD.encode() + b"\n" + target.read_bytes())
+    # This sampler compares a continuing post-search segment. A declaration in
+    # editable source now enters the dedicated repair stage and starts a fresh
+    # segment, so use public read-only source for this continuation fixture.
+    target = snapshot / "tests/declaration.py"
+    target.write_bytes(FIELD.encode())
     task = root / "task"
     shutil.copytree(repository_root() / "tasks/smoke/csv-quoted-newline", task)
     public = yaml.safe_load((task / "public.yaml").read_text(encoding="utf-8"))

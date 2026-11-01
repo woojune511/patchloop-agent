@@ -4,6 +4,7 @@ import copy
 import json
 
 import pytest
+from test_positive_verification_panel import pin_panel_baseline
 
 from diagnostics import probe_recheck_panel as panel
 from diagnostics import probe_recheck_public as public
@@ -12,6 +13,11 @@ from patchloop.dev.state import DevJournal
 from patchloop.errors import ContractError
 from patchloop.task_loader import load_task_package
 from patchloop.util import sha256_json
+
+
+@pytest.fixture(autouse=True)
+def historical_instructions(monkeypatch):
+    pin_panel_baseline(monkeypatch)
 
 
 def test_roster_limits_and_only_intended_arm_differences(tmp_path):

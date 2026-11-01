@@ -56,11 +56,11 @@ def test_instruction_only_contrast_preserves_old_identities_and_schemas(tmp_path
     }
     if FROZEN_ARM is None:
         old_hashes = {
-            "none": "sha256:b79cec16c8f4244550ba465788425e2977abcab15373316be8efad1e1270d885",
+            "none": "sha256:1f27a4da3107fcd8e82d3bd2e11a5e30c5025cd2ba0021b52c1d88c73c00a99d",
             plans.POLICY:
-                "sha256:7e0df4ef4bbe2bd2e93948ce3b2bf7c0f7b0daddda371f0f206029b1ffb4abce",
+                "sha256:cbef9a476b7c4395ea3bc533aa176c3cd9d3305f3288272298a24d9ef7d46363",
             plans.EVIDENCE_POLICY:
-                "sha256:4a01ec036f4a329595fde75829de47a4f5fb95a30e16ac1c1f9a840611be7624",
+                "sha256:23e686ed338674047cfeaf4d41b2a7a7c6974a692c0a3fa1aaf72dfc11999cff",
         }
     assert {p: dev_tool_surface_hash(planning_policy=p) for p in old_hashes} == old_hashes
     old = plans.instructions(plans.EVIDENCE_POLICY)
@@ -166,7 +166,7 @@ def test_post_edit_plan_delivery_exact_resume_and_no_new_gate(tmp_path, monkeypa
     def authored(self, context, tools):
         turn = original(self, context, tools)
         state = json.loads(context)
-        if FROZEN_ARM is None and "working_plan" not in state:
+        if turn.tool_calls[0].turn_decision is None:
             assert state["repair_stage"]["policy"] == "small-repair-context-v1"
             assert [call.name for call in turn.tool_calls] == ["replace_text"]
             assert turn.tool_calls[0].turn_decision is None
@@ -219,7 +219,7 @@ def test_post_edit_plan_delivery_exact_resume_and_no_new_gate(tmp_path, monkeypa
         if FROZEN_ARM is None and "repair_stage" in state:
             from patchloop.dev import repair_context
             assert items[0]["content"].startswith(repair_context.system_prompt(state))
-            assert "working_plan" not in state
+            assert state["working_plan"]["policy"] == POLICY
         elif FROZEN_ARM is None and state["workflow_gate"] == "ready_to_submit":
             from patchloop.dev import completion_context
             assert items[0]["content"].startswith(completion_context.SYSTEM_PROMPT)

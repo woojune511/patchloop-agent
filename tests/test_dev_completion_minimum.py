@@ -54,7 +54,7 @@ def test_minimum_money_keeps_investigation_without_buying_speculative_recovery()
     selected = select(gateway, ledger, auto=True)
     protected = select(gateway, ledger, policy=cost.COMPLETION_RESERVE_POLICY, auto=True)
     assert {"read_file", "search_files", "run_probe", "run_check"} <= selected.allowed_tools
-    assert protected.allowed_tools == {"replace_text", "stop_task"}
+    assert protected.allowed_tools == {"replace_text", "edit_files", "stop_task"}
     assert selected.protected_completion_possible  # Physical call/action slots still fit.
     assert selected.completion_budget_calls == 7
     assert selected.completion_cost["funded_calls"] == 4
@@ -66,7 +66,7 @@ def test_minimum_money_keeps_investigation_without_buying_speculative_recovery()
     assert set(selected.tools_closing_after_this_turn) == (
         selected.allowed_tools - next_policy.allowed_tools
     )
-    assert next_policy.allowed_tools == {"replace_text", "stop_task"}
+    assert next_policy.allowed_tools == {"replace_text", "edit_files", "stop_task"}
     assert not next_policy.exploration_allowed
     assert next_policy.exploration_state == "closed"
     assert next_policy.max_parallel_reads == 0

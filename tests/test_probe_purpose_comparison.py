@@ -142,6 +142,7 @@ def selected_probe(task, arm, *, replay=False):
             {k: v for k, v in purpose.items() if k not in {"kind", "reported_failure_json"}}
             if purpose else None)
         if not replay:
+            call.arguments["reproduction"]["requirement_quote"] = task.issue.description
             call.arguments["python_source"] = (
                 "import json\nfrom mini_data_utils.csvlite import parse_rows\n"
                 f"print(json.dumps(parse_rows({TEXT!r})))")

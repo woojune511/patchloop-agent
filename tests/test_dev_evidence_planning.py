@@ -195,8 +195,8 @@ def test_segmented_crash_exact_resume_and_actual_plan_delivery(tmp_path, monkeyp
         finalizing = view.get("completion_stage", {}).get("active", False)
         if repairing:
             assert repair_context.system_prompt(view) in items[0]["content"]
-            assert plans.instructions(POLICY) not in items[0]["content"]
-            assert "working_plan" not in view
+            assert plans.instructions(POLICY) in items[0]["content"]
+            assert view["working_plan"]["policy"] == POLICY
         else:
             assert (plans.instructions(POLICY) in items[0]["content"]) == (not finalizing)
             if finalizing:

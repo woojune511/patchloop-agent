@@ -52,12 +52,16 @@ def diagnosed(*, status="available", mutations=3, path="diagnosed", replay_pendi
 def select(gateway, state, *, model=20, tools=50, money=20, recovery=False):
     ledger = ledger_for_slots(money)
     if recovery:
-        ledger.cap_nanos += (ledger.future_call_reservation_nanos(output_ceiling=25_000)
-                             + ledger.future_call_reservation_nanos(output_ceiling=8_192)
-                             - ledger.future_call_reservation_nanos())
+        # Price the actual roles: test edit and later source repair at the normal
+        # ceiling, other continuations at the bounded floor, plus one correction.
+        floor = ledger.future_call_reservation_nanos(output_ceiling=8_192)
+        ledger.cap_nanos = (money * floor
+                            + 2 * (ledger.future_call_reservation_nanos(
+                                output_ceiling=40_000) - floor)
+                            + ledger.future_call_reservation_nanos(output_ceiling=25_000))
     counts = counters(model=model, tools=tools, mutation_recovery_used=True)
     policy = runner._tool_policy(
-        gateway, counts, DevLimits(), snapshot=state, cost_ledger=ledger,
+        gateway, counts, DevLimits(max_accepted_mutations=4), snapshot=state, cost_ledger=ledger,
         completion_cost_policy=(cost.COMPLETION_RECOVERY_POLICY if recovery
                                 else cost.COMPLETION_MINIMUM_POLICY),
         desired_output_ceiling=40_000, max_correction_output_tokens=25_000 if recovery else None,
@@ -91,7 +95,9 @@ def test_test_edit_offer_keeps_source_slot_and_unchanged_protocol_correction_res
         tools=7 if short == "tool" else 8, money=4 if short == "money" else 5, recovery=True,
     )
     assert policy.repair_test_edit_enabled is (short is None)
-    assert "replace_text" in policy.allowed_tools
+    assert ("replace_text" in policy.allowed_tools) is (short != "money")
+    if short == "money":
+        assert policy.completion_cost["resource_rejections"]["replace_text"] == "cost"
     assert policy.completion_cost["correction_cost_reserved_nanos"] == 157_500_000
     if short is None:
         assert policy.completion_cost["future_calls_reserved"] >= 4
@@ -105,7 +111,7 @@ def test_test_edit_offer_keeps_source_slot_and_unchanged_protocol_correction_res
         "repair_prediction": {"kind": "test", "suite_id": SELECTION["suite_id"],
                               "targets": SELECTION["targets"]}})
     assert runner._batch_fits_tool_budget(
-        [test_edit], counts, DevLimits(), policy,
+        [test_edit], counts, DevLimits(max_accepted_mutations=4), policy,
     ) is (short is None)
 
 
@@ -123,14 +129,18 @@ def test_pending_comparison_is_one_model_two_actions_and_retains_source_completi
     else:
         assert policy.allowed_tools == {"run_tests", "stop_task"}
         assert policy.workflow_gate == "needs_test_comparison"
-        assert runner._test_comparison_enabled(policy, counts, DevLimits())
+        assert runner._test_comparison_enabled(policy, counts, DevLimits(max_accepted_mutations=4))
         assert policy.completion_cost["future_calls_reserved"] == 3
         assert runner._completion_guidance(state, policy)["next_action"] == {
             "tool": "run_tests", **SELECTION}
         pair = RequestedTool(name="run_tests", action_id="pair", arguments=SELECTION)
-        assert runner._batch_fits_tool_budget([pair], counts, DevLimits(), policy)
+        assert runner._batch_fits_tool_budget(
+            [pair], counts, DevLimits(max_accepted_mutations=4), policy,
+        )
         single = pair.model_copy(update={"arguments": {**SELECTION, "comparison": None}})
-        assert not runner._batch_fits_tool_budget([single], counts, DevLimits(), policy)
+        assert not runner._batch_fits_tool_budget(
+            [single], counts, DevLimits(max_accepted_mutations=4), policy,
+        )
 
 
 def test_pending_original_replay_and_path_diagnosis_are_not_removed_from_forecast():
@@ -148,7 +158,7 @@ def test_available_pair_can_use_minimum_path_once_but_spent_comparison_does_not_
     assert "run_tests" in policy.allowed_tools
     assert not policy.repair_test_edit_enabled
     assert policy.completion_budget_calls > 4
-    assert runner._test_comparison_enabled(policy, counts, DevLimits())
+    assert runner._test_comparison_enabled(policy, counts, DevLimits(max_accepted_mutations=4))
     one_short, _, _ = select(gateway, state, model=4, tools=5, money=4)
     assert "run_tests" not in one_short.allowed_tools
     state.completion_verification["repair_prediction"].update(
@@ -177,7 +187,9 @@ def test_resolved_source_restores_ordinary_selected_tests():
     assert not policy.selected_test_comparison_required
     single = RequestedTool(name="run_tests", action_id="regression", arguments={
         **SELECTION, "comparison": None})
-    assert runner._batch_fits_tool_budget([single], counts, DevLimits(), policy)
+    assert runner._batch_fits_tool_budget(
+        [single], counts, DevLimits(max_accepted_mutations=4), policy,
+    )
 
 
 def test_pending_comparison_does_not_discard_a_verified_original_result():

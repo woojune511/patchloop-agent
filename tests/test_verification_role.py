@@ -5,6 +5,7 @@ import json
 from decimal import Decimal
 
 import pytest
+from frozen_stage_support import pin_pre_stage_prompt
 from test_dev_probe_cases import ExecutingProbe, mock_request
 from test_dev_segments import assert_submitted, configured, records
 from test_dev_tools import mutation_call, read_calls
@@ -24,6 +25,7 @@ from patchloop.util import canonical_json
 
 @pytest.fixture(autouse=True)
 def no_network(monkeypatch):
+    pin_pre_stage_prompt(monkeypatch)
     def forbidden(*args, **kwargs):
         pytest.fail("verification-role tests cannot contact a provider")
     monkeypatch.setattr("socket.socket.connect", forbidden)
@@ -55,7 +57,7 @@ def run_phases(tmp_path, monkeypatch, smoke_package, arm, *, adapter=None):
     monkeypatch.setattr(runner, "MockDevAdapter", adapter or Phases)
     request = mock_request(tmp_path, policy="none").model_copy(update={
         "enable_probes": True, "context_policy": "segmented-v1", "planning_policy": "brief-v1",
-        "history_search_policy": "public-v1", "limits": DevLimits(),
+        "history_search_policy": "public-v1", "limits": DevLimits(max_accepted_mutations=4),
     })
     with role.assigned(arm):
         result = runner.run_dev(request)["runs"][0]
@@ -112,7 +114,8 @@ def bound(gateway_factory, tmp_path, *, arm="B"):
     ledger = DevCostLedger(Decimal("0.88"), pricing_for_model("gpt-5.4-mini-2026-03-17"))
     counters = runner._RunCounters()
     request = mock_request(tmp_path, policy="none").model_copy(update={
-        "limits": DevLimits(), "context_policy": "segmented-v1", "planning_policy": "brief-v1"})
+        "limits": DevLimits(max_accepted_mutations=4), "context_policy": "segmented-v1",
+        "planning_policy": "brief-v1"})
     controller.bind(request=request, counters=counters, ledger=ledger,
                     store=ArtifactStore(journal.root / "artifacts"), resuming=False)
     return controller, gateway, journal, counters, ledger
@@ -210,13 +213,14 @@ def test_counted_wire_and_native_reasoning_follow_one_ledger(tmp_path, monkeypat
             turn = super().next_turn(context, tools)
             if phase == "initial":
                 for call in turn.tool_calls:
-                    call.turn_decision.basis = "REPAIR_AUTHORED_SENTINEL"
+                    if call.turn_decision is not None:
+                        call.turn_decision.basis = "REPAIR_AUTHORED_SENTINEL"
             return turn
 
     request, inputs, counted, states = configured(
         monkeypatch, tmp_path, planning="brief-v1", script=Phases("csv-quoted-newline"))
     request = request.model_copy(update={"max_cost_usd": Decimal("0.88"),
-        "limits": DevLimits(), "completion_cost_policy": "per-call-v1"})
+        "limits": DevLimits(max_accepted_mutations=4), "completion_cost_policy": "per-call-v1"})
     with role.assigned(arm):
         result = runner.run_dev(request)["runs"][0]
     assert_submitted(result)
@@ -254,7 +258,7 @@ def test_verification_rejects_mutation_and_persists_report_once(
     gateway, journal, _ = gateway_factory()
     controller = gateway.run_extension
     controller.bind(request=mock_request(tmp_path, policy="none").model_copy(update={
-        "limits": DevLimits(), "context_policy": "segmented-v1"}),
+        "limits": DevLimits(max_accepted_mutations=4), "context_policy": "segmented-v1"}),
         counters=runner._RunCounters(), ledger=None,
         store=ArtifactStore(journal.root / "artifacts"), resuming=False)
     controller._start("verify", "fixture")
@@ -336,7 +340,7 @@ def test_b_rejected_batch_crosses_existing_size_boundary_without_new_correction(
     request, inputs, counted, states = configured(
         monkeypatch, tmp_path, planning="brief-v1", script=Phases())
     request = request.model_copy(update={"max_cost_usd": Decimal("0.88"),
-        "limits": DevLimits(), "completion_cost_policy": "per-call-v1"})
+        "limits": DevLimits(max_accepted_mutations=4), "completion_cost_policy": "per-call-v1"})
     count = runner.OpenAIResponsesAdapter.count_input_tokens_v2
 
     def size(self, payload, **kwargs):

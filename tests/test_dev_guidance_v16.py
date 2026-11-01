@@ -62,11 +62,13 @@ def test_guidance_preserves_exact_edit_and_optional_note_wire_contracts():
     assert "smallest sufficient unique anchor" in old_text["description"]
     assert "line breaks" in old_text["description"]
     assert old_text["maxLength"] == 20_000
-    assert set(edit["parameters"]["required"]) == {
+    expected = {
         "path", "old_text", "new_text", "occurrence", "hypothesis",
-        "expected_behavior", "causal_revision",
-        "turn_decision",
+        "expected_behavior",
     }
+    if FROZEN_ARM is not None:
+        expected.update({"causal_revision", "turn_decision"})
+    assert set(edit["parameters"]["required"]) == expected
     notes = memory_update_schema()
     assert notes["type"] == ["object", "null"]
     assert set(notes["required"]) == {

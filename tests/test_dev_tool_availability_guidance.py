@@ -144,7 +144,7 @@ def test_actual_inputs_explain_source_edit_check_submit_transitions(
         assert "listing a limitation is insufficient" in system
         assert "This judgment needs no separate call or mandatory experiment." in system
     if context_policy != "segmented-v1":
-        assert "Keep unfinished verification" in system
+        assert "Keep unresolved verification purposes in concerns" in system
     results = [e["payload"]["result"] for e in journal.events()
                if e["event_type"] == "action_finished"]
     assert {result["tool"] for result in results[:2]} == {"search_files", "read_file"}
@@ -189,7 +189,7 @@ def test_edit_stays_rejected_until_current_editable_source_is_observed(tmp_path)
 ])
 def test_actual_completion_barriers_do_not_promise_source_unlock(limits):
     gateway, counters = _state(("FAIL", "NOT_RUN"), anchor=False, **limits)
-    policy = runner._tool_policy(gateway, counters, DevLimits())
+    policy = runner._tool_policy(gateway, counters, DevLimits(max_accepted_mutations=4))
     assert policy.allowed_tools == {"stop_task"}
     snapshot = SimpleNamespace(
         diff=gateway.current_diff, ready_to_submit=gateway.ready_to_submit(),

@@ -268,6 +268,8 @@ def test_mock_verification_annotations_keep_call_counts_and_native_delivery(tmp_
             payload = json.loads(context)
             turn = super().next_turn(context, tools)
             for call in turn.tool_calls:
+                if call.turn_decision is None:
+                    continue  # Fresh edits carry no optional note annotations.
                 call.turn_decision = copy.deepcopy(call.turn_decision)
                 call.turn_decision.memory_update = None
             owner = turn.tool_calls[0]
@@ -275,7 +277,7 @@ def test_mock_verification_annotations_keep_call_counts_and_native_delivery(tmp_
                 update = _update([_operation(statement="The public parser behavior needs review.")])
             elif owner.name == "replace_text":
                 assert payload["working_notes"]["verification"]["unresolved_ids"] == ["v1"]
-                update = _update(question="Does the public comparison accept the candidate?")
+                return turn
             elif owner.name == "run_check":
                 update = _update([_operation(
                     "resolve", concern_id="v1", evidence=owner.action_id,
@@ -306,13 +308,12 @@ def test_mock_verification_annotations_keep_call_counts_and_native_delivery(tmp_
     events = DevJournal(tmp_path, run["run_id"]).events()
     updates = [event["payload"] for event in events
                if event["event_type"] == "working_notes_updated"]
-    assert len(updates) == 4
+    assert len(updates) == 3
     assert updates[0]["receipt"]["verification"]["status"] == "applied"
-    assert "verification" not in updates[1]["receipt"]
-    assert updates[2]["receipt"]["verification"]["status"] == "rejected"
-    assert updates[3]["verification_state"]["items"][0]["decision"]["outcome"] == "resolved"
+    assert updates[1]["receipt"]["verification"]["status"] == "rejected"
+    assert updates[2]["verification_state"]["items"][0]["decision"]["outcome"] == "resolved"
     turns = [event["payload"] for event in events if event["event_type"] == "turn_started"]
-    for turn, update in zip(turns[1:], updates[:3], strict=True):
+    for turn, update in zip(turns[1:], [updates[0], updates[0], updates[1]], strict=True):
         items = json.loads(Path(turn["model_input_artifact"]["path"]).read_text(encoding="utf-8"))
         outputs = [json.loads(item["output"]) for item in items
                    if item.get("type") == "function_call_output"]

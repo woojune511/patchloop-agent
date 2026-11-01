@@ -163,13 +163,16 @@ def test_helper_and_missing_call_stay_unverified_and_output_limits_stay_in_force
         # Reattach the channel as it arrived from the sandbox, before host stripping.
         prefix = reproduction.marker(valid.output["reproduction"]["binding"])
         observed = valid.output["reproduction"]["call_observation"]
-        trace = {key: observed[key] for key in ("calls", "incomplete")}
+        trace = {key: observed[key] for key in ("calls", "incomplete", "request_phase")
+                 if key in observed}
         trace["observation"] = {
             "count": 1, "json": valid.output["reproduction"]["observed_json"], "error": None,
             "call_count": len(observed["calls"])}
         damaged["stderr"] = prefix + json.dumps(trace)
         damaged[flag] = True
-        judged = reproduction.compare(damaged, valid.output["reproduction"]["binding"])
+        judged = reproduction.compare(
+            copy.deepcopy(damaged), valid.output["reproduction"]["binding"],
+        )
         assert judged["reproduction"]["comparison"] == "not_compared"
     damaged["deadline_exhausted"] = False
     damaged["setup_checks"] = {"status": "failed"}

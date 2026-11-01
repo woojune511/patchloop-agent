@@ -71,7 +71,8 @@ def test_two_request_errors_release_without_execution_or_original_evidence(gatew
     assert state["status"] == "unverified" and state["baseline_failure_case_ids"] == []
     assert state["request_errors"] == 2 and state["original_attempts"] == 0
     assert state["investigation_actions"] == 2
-    assert state["max_original_attempts"] == 2 and state["max_investigation_actions"] == 6
+    assert state["max_original_attempts"] == 2 and state["max_investigation_actions"] == 10
+    assert state["max_preparation_actions"] == 6
     before = gateway.journal.path.read_bytes()
     restored = restore(gateway)
     for call in calls:

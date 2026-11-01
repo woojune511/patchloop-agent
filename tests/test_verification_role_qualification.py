@@ -5,6 +5,7 @@ import json
 from decimal import Decimal
 
 import pytest
+from frozen_stage_support import pin_pre_stage_prompt
 from test_dev_probe_cases import ExecutingProbe
 from test_dev_segments import assert_submitted, configured, records
 from test_probe_purpose import probe
@@ -25,6 +26,7 @@ from patchloop.util import canonical_json, sha256_json
 
 @pytest.fixture(autouse=True)
 def no_network(monkeypatch):
+    pin_pre_stage_prompt(monkeypatch)
     def forbidden(*args, **kwargs):
         pytest.fail("return qualification must not contact a provider")
     monkeypatch.setattr("socket.socket.connect", forbidden)
@@ -140,7 +142,7 @@ def test_return_evidence_obeys_existing_size_and_uncertainty_stops(
     monkeypatch.setattr(runner, "DockerProbeSandbox", lambda: backend)
     request = request.model_copy(update={
         "enable_probes": True, "history_search_policy": "public-v1",
-        "max_cost_usd": Decimal("0.88"), "limits": DevLimits(),
+        "max_cost_usd": Decimal("0.88"), "limits": DevLimits(max_accepted_mutations=4),
         "completion_cost_policy": "per-call-v1"})
     count = runner.OpenAIResponsesAdapter.count_input_tokens_v2
     sizes = segments.request_sizes

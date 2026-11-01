@@ -418,7 +418,10 @@ def test_fake_provider_counts_search_and_preserves_segment_rules(monkeypatch, tm
     journal, _ = records(req)
     assert sum(e["event_type"] == "action_started" for e in journal.events()) == 6
     boundaries = [e["payload"] for e in journal.events() if e["event_type"] == segments.EVENT]
-    assert len(boundaries) == 2  # Initial segment, normal mutation-result follow-up.
+    assert [row["reason"] for row in boundaries] == [
+        "initial", "repair_stage_entered", "repair_stage_returned",
+        "major_result_followup_completed", "completion_stage_entered",
+    ]
     search_result = next(e["payload"]["result"] for e in journal.events()
                          if e["event_type"] == "action_finished"
                          and e["payload"]["result"]["tool"] == search.TOOL)

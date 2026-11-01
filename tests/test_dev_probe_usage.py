@@ -124,8 +124,8 @@ def test_timeout_keeps_emitted_observation_in_actual_inputs_and_closed_replay(
         def next_turn(self, context, tools):
             if not processes:
                 description = next(t["description"] for t in tools if t["name"] == "run_probe")
-                assert "without importing or redefining it" in description
-                assert "check_setup('mode', settings.mode, expected_mode)" in description
+                assert "automatically supplies only check_setup" in description
+                assert "Setup mismatch raises AssertionError" in description
                 assert "print({'stage': 'before_call', 'value': actual_value}, flush=True)" in (
                     description)
                 call = probe_call()

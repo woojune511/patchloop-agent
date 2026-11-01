@@ -247,7 +247,7 @@ def test_default_selected_test_schema_and_description_keep_pre_restriction_bytes
     options = dict(finish_enabled=False, test_suite_ids=["suite"], allowed_tools=["run_tests"])
     default = dev_tool_schemas(**options)
     assert sha256_json(default) == (
-        "sha256:de37564bb51728110c58d10b68af4badc04cd0a68eb6119439e0c754a09175dc"
+        "sha256:cd6ea8df931113bbca97032d74d6e551f80d61bbe1ddc2b59dba952a75736059"
     )
     assert default == dev_tool_schemas(**options, test_comparison_enabled=True)
     restricted = dev_tool_schemas(**options, test_comparison_enabled=False)

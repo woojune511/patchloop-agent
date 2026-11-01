@@ -149,9 +149,13 @@ def test_actual_mock_inputs_deliver_check_time_intent_without_an_extra_step(
         runner._load_active_model_input(turn, store, context_policy=context_policy)
         for turn in turns
     ]
-    # The concise common prompt survives normal segment transitions.
-    assert all(items[0]["content"].startswith(DEV_SYSTEM_PROMPT) for items in inputs)
-    assert "preserve behavior outside the requested change" in inputs[0][0]["content"]
+    # Every stage receives the shared behavior/preservation guidance; dedicated
+    # repair/completion prompts replace the general prompt in fresh segments.
+    from patchloop.dev.repair_guidance import INSTRUCTIONS
+
+    assert inputs[0][0]["content"].startswith(DEV_SYSTEM_PROMPT)
+    assert all(INSTRUCTIONS in items[0]["content"] for items in inputs)
+    assert "normal control" in inputs[0][0]["content"]
     assert "same trigger outside that scope" not in inputs[0][0]["content"]
     states = [reconstruct_state(items, context_policy=context_policy) for items in inputs]
     assert states[0]["current_diff"]["patch"] == ""

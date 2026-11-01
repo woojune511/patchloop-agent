@@ -65,7 +65,7 @@ def factorial(tmp_path, monkeypatch, gateway_factory, smoke_package):
         update={"public": public, "task_content_hash": sha256_json(public.model_dump(mode="json"))}
     )
     gateway.public_task = public
-    names = ["search_files", "read_file", "replace_text", "run_check", "stop_task"]
+    names = ["search_files", "read_file", "replace_text", "edit_files", "run_check", "stop_task"]
     state = {
         "public_task": public.model_dump(mode="json"),
         "workflow_gate": "needs_mutation",

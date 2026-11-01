@@ -52,7 +52,8 @@ def test_row25_forecast_names_every_tool_closing_after_one_more_inspection():
     gateway, limits, counters = _row25_policy_state()
     policy = runner._tool_policy(gateway, counters, limits)
     assert policy.allowed_tools == {
-        "read_file", "search_files", "run_probe", "run_check", "replace_text", "stop_task",
+        "read_file", "search_files", "run_probe", "run_check", "replace_text", "edit_files",
+        "stop_task",
     }
     assert policy.completion_budget_calls == 10
     assert policy.exploration_state == "last_opportunity"
@@ -60,7 +61,7 @@ def test_row25_forecast_names_every_tool_closing_after_one_more_inspection():
         "read_file", "run_check", "run_probe", "search_files",
     )
     after = runner._tool_policy(gateway, _complete_read(counters), limits)
-    assert after.allowed_tools == {"replace_text", "stop_task"}
+    assert after.allowed_tools == {"replace_text", "edit_files", "stop_task"}
     assert set(policy.tools_closing_after_this_turn) == policy.allowed_tools - after.allowed_tools
 
 

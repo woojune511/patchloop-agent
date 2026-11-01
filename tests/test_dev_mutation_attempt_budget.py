@@ -200,14 +200,15 @@ def test_immediate_mutation_does_not_reserve_the_optional_read_before_it():
 
 
 @pytest.mark.parametrize("overrides,expected", [
-    ({"model": 4}, {"finish_task", "replace_text", "read_file", "search_files", "run_probe"}),
+    ({"model": 4}, {"finish_task", "replace_text", "edit_files", "read_file",
+                    "search_files", "run_probe"}),
     ({"model": 3}, {"finish_task", "read_file", "search_files", "run_probe"}),
-    ({"statuses": ("FAIL", "NOT_RUN"), "model": 4}, {"replace_text"}),
-    ({"statuses": ("FAIL", "NOT_RUN"), "model": 6}, {"replace_text"}),
-    ({"statuses": ("NOT_RUN", "NOT_RUN"), "model": 4}, {"replace_text", "run_check"}),
-    ({"statuses": ("NOT_RUN", "NOT_RUN"), "model": 6}, {"replace_text", "run_check"}),
+    ({"statuses": ("FAIL", "NOT_RUN"), "model": 4}, {"replace_text", "edit_files"}),
+    ({"statuses": ("FAIL", "NOT_RUN"), "model": 6}, {"replace_text", "edit_files"}),
+    ({"statuses": ("NOT_RUN", "NOT_RUN"), "model": 4}, {"replace_text", "edit_files", "run_check"}),
+    ({"statuses": ("NOT_RUN", "NOT_RUN"), "model": 6}, {"replace_text", "edit_files", "run_check"}),
     ({"statuses": ("NOT_RUN", "NOT_RUN"), "model": 10}, {
-        "replace_text", "run_check", "read_file", "search_files", "run_probe",
+        "replace_text", "edit_files", "run_check", "read_file", "search_files", "run_probe",
     }),
     ({"mutations": 0}, {"finish_task", "read_file", "search_files", "run_probe"}),
     ({"anchor": False}, {"finish_task", "read_file", "search_files", "run_probe"}),
