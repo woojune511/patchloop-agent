@@ -1,5 +1,6 @@
 # 2026-11-01 investigations
 
+- [Task18 continuity run: retained findings, independent PASS, one redundant probe](../2026-11-01-repair-continuity-task18-results.md)
 - [Compact repair: retain existing plans, notes and review requests](../2026-11-01-repair-planning-continuity.md)
 - [Diagnostic continuity: actual repair inputs omit the stored plan](../2026-11-01-diagnostic-continuity-delivery-audit.md)
 - [Frozen full dev20: 12 independent PASS, 8 FAIL](../2026-11-01-pre-edit-dev20-results.md)

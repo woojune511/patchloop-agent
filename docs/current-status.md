@@ -53,19 +53,12 @@ expansion or another generic instruction to test more:
   with resources remaining and acknowledged missing original-case evidence.
   Instruction delivery and gap disclosure did not ensure correct target selection.
   The exact independent failing assertion was not inspected in this batch.
-- Task18 passed after fixing a public regression without weakening its tests, but
-  took all 40 calls and repeated L036/L003 questions. The
+- Task18 passed but took all 40 calls and repeated L036/L003 questions. The
   [actual-input audit](history/2026-11-01-diagnostic-continuity-delivery-audit.md)
-  distinguishes storage from delivery: that runtime's compact repair omitted working_plan and
-  its review_request, disabled the handoff review flag and used a prompt without
-  normal planning guidance. All first34 task18 inputs follow that path; the stored
-  revision1 plan was not retained in authoritative current state. Its text survives
-  briefly in older arguments, but is absent at the repeated decisions. Across the
-  batch, 174/274 requests use this view. Optional annotation fields remain offered.
-  No pre-edit note was submitted. A diagnostic conclusion appeared in an action
-  basis, then its supporting probe output left the bounded input before the question
-  was reopened. The later regression note/question was stored and delivered normally;
-  its subsequent source-change expiry was explicit, not accidental handoff loss.
+  found that compact repair omitted the stored plan, review request and planning
+  guidance. No pre-edit note was authored. Supporting probe output left the bounded
+  input before old questions were reopened. This motivated the delivery correction
+  and fresh run below; storage, delivery and model use remain separate claims.
 - Task16 executed broader parser cases, including whitespace and invalid-middle
   branches, yet failed independent evaluation. Two earlier probes failed before
   target execution because test fixtures were absent from the probe snapshot.
@@ -81,24 +74,40 @@ the next useful action can retain findings; an action basis is not a saved note.
 No new tool, recording round, mandatory note, gate or larger limit was added.
 Null updates and source-change expiry retain their existing meaning.
 
-Local validation: focused 12 PASS in 64.46s; original quick selection 1,474 PASS/one
-host skip after three expectation rechecks, plus one added source-note regression
-PASS. Isolated mock acceptance, Ruff and documentation checks pass. The previously
-failing mock adapters now respect annotation-free edits; their regressions join the
-quick selectors. The actual-input
-test covers saved notes/questions/plans surviving result handoffs after an old probe
-leaves the recent tail, plus OFF mode and completed-run replay. Keep task8's
-public-input mismatch as a correctness check. Whether the model writes/uses useful
-notes, repeats fewer investigations or repairs more tasks remains unproven. No new
-paid experiment is part of this follow-up; all prior allocations remain closed.
+Its local validation remains in the implementation record: focused 12 PASS in
+64.46s, corrected quick selection plus the added source-note case, isolated mock,
+Ruff and docs PASS. Actual-input controls cover handoffs, old-probe eviction, OFF
+mode and completed-run replay. These local checks are distinct from live outcomes.
+
+The [fresh task18 run](history/2026-11-01-repair-continuity-task18-results.md), frozen
+at 21793a4b, is CLOSED: **independent PASS, safety PASS**, 34 calls, 45 actions,
+two edits, 13 probes, USD3.568309 and 1,473.436 seconds (24m33s). All 34 generations
+and input counts settled; the new USD4 allocation and USD0.431691 remainder are
+closed. Final evidence is 506 required tests PASS, one selected regression PASS
+and a current-patch helper result; registered delivery remains unverified_delivery.
+
+All 34 actual inputs verify. The model authored evidence-linked findings/questions;
+the plan and note survived handoffs, and later action bases reused their conclusions.
+After a first L003 patch still failed, it traced L039 changing correct indentation,
+stored that finding, restored L003 and repaired L039. The failed test's input and
+assertions remained unchanged. After current-diff evidence passed, it submitted.
+
+Keep the delivery correction, while separating two unresolved issues. An unchanged-
+base default-fixer confirmation still repeated after its output left the recent
+tail; that reproduction finding had not been saved, and no note eviction occurred.
+Also, the submitted new test filename still misses normal pytest discovery despite
+explicit selected execution. Next work should target observation selection/update
+and test discovery, grounded in these concrete gaps. Calls fell from 40 to 34, but
+cost rose from USD3.259526 and time from 1,402.869 seconds. This single trajectory
+does not establish an efficiency or general repair gain. No further paid run is
+scheduled; task8's public-input mismatch remains a separate correctness question.
 
 [Pre-edit task correspondence](history/2026-11-01-pre-edit-task-correspondence.md)
 uses existing hypothesis/expected_behavior fields to connect public input, caller
 and setup to a repair. Changed helpers need source or comparable execution support;
 unexplained transformations remain questions. Source evidence can support repair
-without exact reproduction. No new fields, gate, mandatory probe or call. Local
-validation: focused 133 PASS; quick 1,457 PASS/one host skip after six fingerprint
-rechecks; isolated mock PASS. The full20 used that unchanged tested runtime.
+without exact reproduction. Its local validation belongs to the linked record;
+the full20 used that tested runtime.
 
 [Public-condition comparison](history/2026-11-01-public-input-comparison.md)
 separates known public_conditions from actual case_conditions. Interpretation
