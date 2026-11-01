@@ -21,6 +21,11 @@ and Python `.py` files; rejection distinguishes those two restrictions. New addi
 test modules are removed temporarily for original-test isolated grading.
 No arbitrary delete/rename or unrestricted shell is exposed.
 
+Candidate previews use a separate Git index with the original index timestamp.
+Preserving that timestamp keeps Git's racy-clean detection active for same-size
+edits; previewing must neither trust stale cached file bytes nor reject them as
+unrelated workspace drift. The real index and source stay untouched during preview.
+
 After a transaction, exact admitted before/after images define a conservative
 changed interval per file. Previously observed unchanged prefix/suffix lines are
 rebound to the current file hash; a bounded post-image targets the changed interval.

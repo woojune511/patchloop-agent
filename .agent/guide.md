@@ -2,11 +2,6 @@
 
 See [AGENTS.md](../AGENTS.md) and [status](../docs/current-status.md).
 
-## Choosing the next improvement
-
-Integrate fixes; isolate unresolved design decisions. Keep evidence in history,
-active decisions in current status.
-
 ## Source map
 
 | Concern | Current source |
@@ -25,8 +20,6 @@ active decisions in current status.
 | Registered checks and public probes | `patchloop/sandbox/`, `patchloop/dev/probe_replay.py`, `patchloop/dev/probe_cases.py` |
 | Patch/test comparison | `patchloop/repair_verification.py` |
 | Task/manifest contracts and isolated evaluation | `patchloop/contracts.py`, `patchloop/task_loader.py`, `patchloop/verifier/` |
-
-Never expose private task/evaluator material through context, diagnostics or hints.
 
 Forecasts are pure; runner admits tools, `dev/cost.py` admits provider work.
 Preserve exact-envelope runtime identity.
@@ -122,9 +115,8 @@ The six retained unsuccessful executions keep identities, flags and omission cou
 PASS cannot erase them; edits make them historical. Null concern ID creates; an ID
 updates. Bound evidence requires an unsuccessful observation; null means hypothesis.
 Operator feedback is never an observation; delivery does not imply use.
-Model positions describe discussion. `reproduction_review` computes case evidence;
-requirement mapping stays unverified.
-Plans/concerns cannot close it or gate finish. See [scope](evidence-recovery.md).
+Model claims stay unverified; `reproduction_review` computes case evidence.
+Plans/concerns neither close it nor gate finish; see [scope](evidence-recovery.md).
 Completion retains all obligations beyond its bounded display.
 
 Deliver latest observations. `--retained-source-chars`: 24,000 (default) or 48,000;
@@ -132,11 +124,14 @@ retain complete observed lines, no unseen gaps. Binds model/envelope/resume.
 Keep native history and the 60,000-token segmented limit; handoffs can drop older
 history. Notes are run-local. Native outputs carry primary results; state carries
 note/plan receipts. Annotation failures cannot change actions. Preserve replay bytes.
-Compact repair retains bounded plans/notes and enabled reviews; delivery is not use.
+Compact stages retain bounded plans/notes, registered public overlays, test/probe
+receipts and candidate-bound reviews. Completion keeps mutation claims, rejection
+feedback and harness rechecks, omits replacement/postimage bodies, and adds no review on resume.
 
 External state is append-only, hash-chained `dev-run-v1` JSONL with immutable envelopes.
-Journal reads reuse decoded events only for a byte-identical validated prefix;
-all bytes are still read, changed prefixes are revalidated, and callers receive copies.
+Journal reads cache only byte-identical validated prefixes; reread all bytes,
+revalidate changed prefixes and return copies. Immutable readers require normal
+initialization with `create_dirs=False`, never constructor bypass or mkdir.
 Preserve `action_id + input_hash`: replay completed mutations/checks, reject conflicting
 reuse, and reconcile admitted mutations after crashes without applying them twice.
 Never rewrite journals, old envelopes or native outputs. Reads/appends share the

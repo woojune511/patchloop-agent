@@ -386,7 +386,6 @@ def prepare_dependencies(*, public: PublicTask, prepared_source: Path, output: P
     from patchloop.probe_runtime import runtime
     from patchloop.runtime import repository_root
 
-    caller_requirements = probe_callers.task_requirements(public, caller_requirements)
     python, image = runtime(runtime_profile)
     if generated_wheel_receipt is not None and runtime_profile != "python312-v1":
         raise ContractError("generated wheel receipt targets the default probe runtime only")
@@ -402,6 +401,7 @@ def prepare_dependencies(*, public: PublicTask, prepared_source: Path, output: P
         raise ContractError("generated wheel admission requires --resolve")
     if resolve == (wheel_lock is not None):
         raise ContractError("choose exactly one of --wheel-lock or --resolve")
+    caller_requirements = probe_callers.task_requirements(public, caller_requirements)
     if not resolve and (groups or extras or source_roots or selected_dependencies
                         or caller_requirements):
         raise ContractError("dependency/caller selections and --source-root require --resolve")

@@ -72,7 +72,8 @@ def _exclusive_file_lock(path: Path) -> Iterator[None]:
 class DevJournal:
     """One immutable event stream per run plus content-addressed artifacts."""
 
-    def __init__(self, root: str | Path, run_id: str) -> None:
+    def __init__(self, root: str | Path, run_id: str, *, create_dirs: bool = True) -> None:
+        """Initialize verified reads; immutable-source inspection can disable mkdir."""
         if not run_id.startswith("run_dev_") or not run_id.replace("_", "").isalnum():
             raise RecoveryError("invalid development run ID")
         self.root = Path(root).resolve()
@@ -82,7 +83,8 @@ class DevJournal:
         self.envelope_path = self.run_dir / f"{run_id}.envelope.json"
         self.lock_path = self.run_dir / f".{run_id}.lock"
         self.execution_lock_path = self.run_dir / f".{run_id}.execution.lock"
-        self.run_dir.mkdir(parents=True, exist_ok=True)
+        if create_dirs:
+            self.run_dir.mkdir(parents=True, exist_ok=True)
         self._verified_bytes = b""
         self._verified_events: list[dict[str, Any]] = []
 

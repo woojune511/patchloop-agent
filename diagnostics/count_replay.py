@@ -74,16 +74,14 @@ INTERPRETATION = {
 
 
 def source_events(source_root: Path) -> tuple[list[dict], dict]:
-    """Verify old bytes and their hash chain; never construct a writable source store."""
+    """Verify old bytes and their hash chain without creating source directories."""
     for suffix, digest in SOURCE_HASHES.items():
         path = source_root / "runs" / (SOURCE_ID + suffix)
         shared.require(
             path.is_file() and not path.is_symlink() and sha256_bytes(path.read_bytes()) == digest,
             "frozen source identity mismatch",
         )
-    journal = object.__new__(DevJournal)
-    journal.path = source_root / "runs" / (SOURCE_ID + ".jsonl")
-    journal.run_id = SOURCE_ID
+    journal = DevJournal(source_root, SOURCE_ID, create_dirs=False)
     events = journal.events()
     envelope = json.loads((source_root / "runs" / (SOURCE_ID + ".envelope.json")).read_bytes())
     shared.require(

@@ -59,11 +59,14 @@ def packet(path_state, events, read_source):
 
 def project(state):
     """Project already public audit data, keeping source bodies self-contained."""
+    from patchloop.dev.model_state import PUBLIC_DIAGNOSTIC_FIELDS
+
     view = {key: state[key] for key in (
         "public_task", "supplemental_required_checks", "workflow_gate", "completion_guidance",
         "available_tool_names",
         "remaining_budget", "current_diff", "diagnosis_stage", "protocol_correction",
         "source_spans", "dependency_sources", "observed_source_index", "segment_handoff",
+        *PUBLIC_DIAGNOSTIC_FIELDS,
     ) if key in state}
     followup = state.get("reproduction_review", {}).get("probe_followup")
     if followup is not None:

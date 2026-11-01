@@ -133,7 +133,10 @@ def _preview_transaction(
                                   deadline=deadline).stdout.strip())
         if not real_index.is_absolute():
             real_index = workspace / real_index
-        shutil.copyfile(real_index, index)
+        # Git uses the index timestamp to detect racy-clean worktree entries.
+        # A newer copy timestamp can make a same-size edit look unchanged to
+        # add -u, producing a false baseline mismatch (or a stale candidate).
+        shutil.copy2(real_index, index)
         environment = {**os.environ, "GIT_INDEX_FILE": str(index)}
 
         def git(*arguments: str, content: bytes | None = None) -> str:

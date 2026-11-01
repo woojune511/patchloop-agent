@@ -1,5 +1,7 @@
 """Broader reads and atomic all-match edits keep source, scope and recovery contracts."""
 
+import os
+
 import pytest
 from typer.testing import CliRunner
 
@@ -55,6 +57,33 @@ def test_all_matches_are_one_atomic_edit_and_replay_does_not_repeat(gateway_fact
     projected = project_mutation_result(result.model_dump(mode="json"),
                                         history=[{"type": "unused"}], admission=admission)
     assert projected["output"]["mutation_evidence"] == result.output["mutation_evidence"]
+
+
+def test_transaction_preview_preserves_racy_index_timestamp(gateway_factory):
+    from patchloop.dev.file_transaction import FileChange, preview_transaction
+    from patchloop.repository import WorkspaceManager
+
+    gateway, _, workspace = gateway_factory()
+    target = workspace / PATH
+    original = target.read_bytes()
+    timestamp = target.stat().st_mtime_ns
+    # Keep the cached size/mtime but change bytes; the index timestamp must make
+    # Git re-read this racy entry rather than trust its pre-edit cached blob.
+    before = original.replace(b"physical_line", b"physical_linx")
+    target.write_bytes(before)
+    os.utime(target, ns=(timestamp, timestamp))
+    index = workspace / ".git/index"
+    os.utime(index, ns=(timestamp, timestamp))
+    baseline = WorkspaceManager.diff_summary(workspace)
+    assert baseline.patch
+    os.utime(index, ns=(timestamp, timestamp))
+    after = before.replace(b"physical_linx", b"physical_liny")
+    expected, _ = preview_transaction(
+        workspace, [FileChange(PATH, before, after)], baseline_diff_hash=baseline.patch_hash,
+    )
+    assert target.read_bytes() == before
+    target.write_bytes(after)
+    assert WorkspaceManager.diff_summary(workspace).patch_hash == expected.patch_hash
 
 
 def test_all_matches_require_each_anchor_observed_and_current(gateway_factory):

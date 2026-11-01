@@ -59,10 +59,10 @@ def original_case(task, *, normal=False):
     text, expected = (NORMAL, NORMAL_EXPECTED) if normal else (TEXT, EXPECTED)
     return call("run_probe", "normal" if normal else "original", {
         "question": "Does this fixed public parser input match the declared expected rows?",
-        "python_source": f"record_observation(call_target(args=[{text!r}]))",
+        "python_source": f"record_observation(observed_target()({text!r}).value)",
         "replay_action_id": None,
         "purpose": {
-            "kind": "original_requirement", "requirement_quote": task.issue.description,
+            "kind": "original_requirement",
             "entrypoint": "mini_data_utils.csvlite.parse_rows",
             "input_conditions": "Normal two-column CSV." if normal else "Quoted embedded newline.",
             "environment_conditions": "Current workspace parser with normal import defaults.",

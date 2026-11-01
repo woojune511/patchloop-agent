@@ -5,6 +5,7 @@ import json
 import os
 import threading
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 import pytest
 
@@ -47,6 +48,22 @@ def test_empty_journal_can_start_a_hash_chain(tmp_path) -> None:
     assert journal.events() == []
     first = journal.append("run_started")
     assert journal.events() == [first]
+
+
+def test_inspection_initializes_verified_reads_without_creating_directories(tmp_path, monkeypatch):
+    journal = DevJournal(tmp_path / "saved", "run_dev_inspection")
+    event = journal.append("run_started")
+    retained = journal.path.read_bytes()
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("journal inspection must not create source directories")
+
+    monkeypatch.setattr(Path, "mkdir", forbidden)
+    reader = DevJournal(journal.root, journal.run_id, create_dirs=False)
+    assert reader.events() == reader.events() == [event]
+    missing = DevJournal(tmp_path / "missing", journal.run_id, create_dirs=False)
+    assert missing.events() == [] and not missing.root.exists()
+    assert journal.path.read_bytes() == retained
 
 
 @pytest.mark.parametrize("fail_write", [False, True])

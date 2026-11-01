@@ -16,6 +16,14 @@ from patchloop.dev.mutation_tools import MUTATION_TOOLS
 from patchloop.dev.native_sources import public_exchanges
 from patchloop.dev.path_policy import mutation_path_allowed
 
+PUBLIC_DIAGNOSTIC_FIELDS = (
+    "candidate_reconsideration", "operator_public_feedback", "independent_candidate",
+    "change_review_request", "paired_observation", "followup_state_contract",
+    "operator_caller_observation", "verification_scope_cue", "expectation_review",
+    "operator_current_candidate_feedback", "supplied_public_case", "public_case_status",
+    "verification_phase",
+)
+
 # Inputs from the public context builder and native/segment delivery adapters.
 # New audit fields require an explicit projection decision before model delivery.
 # This is a top-level boundary; nested public values retain their existing rules.
@@ -34,11 +42,8 @@ _MODEL_INPUT_FIELDS = frozenset({
     "latest_tool_results_delivery", "segment_handoff", "protocol_correction",
     # Existing public diagnostic overlays also pass through this projection when
     # constructed or replayed. Preserving them does not enable their producers.
-    "candidate_reconsideration", "operator_public_feedback", "independent_candidate",
-    "change_review_request", "paired_observation", "followup_state_contract",
-    "operator_caller_observation", "verification_scope_cue", "expectation_review",
-    "operator_current_candidate_feedback", "supplied_public_case", "public_case_status",
-    "verification_phase", "diagnosis_stage", "repair_stage", "repair_intent", "completion_stage",
+    *PUBLIC_DIAGNOSTIC_FIELDS,
+    "diagnosis_stage", "repair_stage", "repair_intent", "completion_stage",
     "inspection_focus",
 })
 

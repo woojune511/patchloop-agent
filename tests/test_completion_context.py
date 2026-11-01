@@ -46,7 +46,7 @@ def state():
         },
         "working_notes": {
             "findings": [{"note_id": "n1", "statement": "The original is still unverified."}],
-            "open_question": {"question": "Was the original exception resolved?"},
+            "open_question": {"question": "Was the original exception resolved?", "evidence": []},
             "verification": {"unresolved_ids": ["v1"], "items": [
                 {"concern_id": "v1", "status": "unresolved", "statement": "Retain the exception"},
                 {"concern_id": "v2", "status": "resolved", "statement": "Retain its history"}],
@@ -94,6 +94,64 @@ def test_finalization_preserves_verification_uncertainty_failure_and_unresolved_
     assert original == before
     projected["current_public_failure"]["exception"]["message"] = "changed derived view"
     assert original == before
+
+
+@pytest.mark.parametrize("reasons", [[], ["check_result", "first_ready_to_submit"]])
+def test_prepared_completion_handoff_does_not_change_the_pending_review(reasons):
+    original = state()
+    original["working_plan"]["review_request"] = {
+        "reasons": reasons, "requested": bool(reasons), "action_ids": ["check"],
+    }
+    prepared = copy.deepcopy(original)
+    prepared["working_plan"]["review_request"]["reasons"].insert(0, "context_handoff")
+    prepared["working_plan"]["review_request"]["requested"] = True
+    assert completion_context.project(prepared) == completion_context.project(original)
+    assert prepared["working_plan"]["review_request"]["reasons"][0] == "context_handoff"
+
+
+@pytest.mark.parametrize("field", ["repair_recheck", "probe_recheck"])
+def test_completion_preserves_harness_recheck_origin_and_current_receipt(field):
+    original = state()
+    original[field] = {"last_result": {"origin": "harness", "parent_action_id": "edit",
+                                      "action_id": "recheck", "evidence_currency": "current"}}
+    assert completion_context.project(original)[field] == original[field]
+
+
+@pytest.mark.parametrize("stage", ["completion_context", "repair_context", "diagnosis_context"])
+def test_stage_projection_retains_registered_public_feedback_but_not_unknown_fields(stage):
+    import importlib
+
+    from patchloop.dev.model_state import PUBLIC_DIAGNOSTIC_FIELDS, compact_model_state
+
+    original = state()
+    for field in PUBLIC_DIAGNOSTIC_FIELDS:
+        original[field] = {"observation": "Unresolved public mismatch", "verified": False}
+    projected = compact_model_state(
+        importlib.import_module("patchloop.dev." + stage).project(original), [],
+    )
+    for field in PUBLIC_DIAGNOSTIC_FIELDS:
+        assert projected[field] == original[field]
+    assert "operator_private_material" not in projected
+
+
+def test_completion_retains_mutation_claim_and_current_review_without_postimage_bodies():
+    from patchloop.dev.model_state import compact_model_state
+
+    original = state()
+    original["last_successful_mutation"].update(
+        diff_hash=DIFF, hypothesis="Original bytes reach this branch.",
+        expected_behavior="Preserve the caller and return the required value.",
+    )
+    review = {"attempt": "check", "mutation_expectation": {"diff_hash": DIFF},
+              "next_question": "Does this result test the original bytes?"}
+    original["recent_attempt_result_next_question"] = [review]
+    view = compact_model_state(completion_context.project(original), [])
+    assert view["recent_attempt_result_next_question"] == [review]
+    assert view["last_successful_mutation"] == {
+        key: original["last_successful_mutation"][key]
+        for key in ("diff_hash", "hypothesis", "expected_behavior")
+    }
+    assert SOURCE_BODY not in canonical_json(view)
 
 
 def test_source_and_old_bulk_are_removed_but_current_outcomes_and_retrieval_ids_remain():

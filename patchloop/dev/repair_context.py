@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from patchloop.dev import working_plan
+from patchloop.dev.model_state import PUBLIC_DIAGNOSTIC_FIELDS
 from patchloop.dev.repair_guidance import INSTRUCTIONS as REPAIR_GUIDANCE
 
 SYSTEM_PROMPT = """Repair the supplied public task using only offered registered tools.
@@ -115,8 +116,10 @@ def project(state):
         "last_failed_mutation", "last_successful_mutation", "current_public_failure",
         "last_rejected_test_proposal",
         "visible_check_status", "mutation_readiness", "context_projection",
-        "recent_attempt_result_next_question", "recent_probes", "recent_checks",
+        "recent_attempt_result_next_question", "recent_probes", "recent_checks", "recent_tests",
+        "probe_cases", "public_execution_summary",
         "latest_tool_results", "inspection_focus",
+        "commitment_signal", *PUBLIC_DIAGNOSTIC_FIELDS,
     ) if key in state}
     followup = state.get("reproduction_review", {}).get("probe_followup")
     if followup is not None:

@@ -84,6 +84,8 @@ _PRESERVED = (
     "reproduction_review", "working_notes", "working_plan", "protocol_correction",
     "latest_tool_results_delivery", "segment_handoff",
     "last_rejected_test_proposal",
+    "mutation_readiness", "commitment_signal", "recent_attempt_result_next_question",
+    "probe_cases", "repair_recheck", "probe_recheck",
 )
 _RESULT_FIELDS = (
     "action_id", "input_hash", "tool", "status", "error_code", "message",
@@ -202,7 +204,33 @@ def project(state: dict[str, Any]) -> dict[str, Any]:
     """
     if not active(state):
         return copy.deepcopy(state)
-    view = _select(state, _PRESERVED)
+    from patchloop.dev.model_state import PUBLIC_DIAGNOSTIC_FIELDS
+
+    view = _select(state, (*_PRESERVED, *PUBLIC_DIAGNOSTIC_FIELDS))
+    # Finalization does not request another handoff review. A prepared segment
+    # can appear in the journal before resume; its bookkeeping alone must not
+    # change the frozen first request's plan reasons.
+    review = view.get("working_plan", {}).get("review_request", {})
+    if "context_handoff" in review.get("reasons", []):
+        review["reasons"] = [r for r in review["reasons"] if r != "context_handoff"]
+        review["requested"] = bool(review["reasons"])
+    # Keep the causal claim and rejected-edit feedback across a fresh completion
+    # segment. Source postimages and proposed replacement bodies are not needed
+    # here; exact current anchors still use the bounded source projection below.
+    for name, fields in (
+        ("last_successful_mutation", (
+            "action_id", "diff_hash", "changed_files", "hypothesis", "expected_behavior",
+            "postimage_evidence_available", "requirement_reference", "behavior_cases",
+            "delivery",
+        )),
+        ("last_failed_mutation", (
+            "action_id", "input_hash", "baseline_diff_hash", "error_code", "error_location",
+            "error_message", "mutation_failure", "delivery", "replacement_delivery",
+        )),
+    ):
+        if name in state:
+            value = state[name]
+            view[name] = _select(value, fields) if isinstance(value, dict) else value
     if MUTATION_TOOLS.intersection(state.get("available_tool_names", [])):
         # The gateway already validates currency and selects bounded source before
         # admitting tools. Do not discard that selection while repairs remain offered.
