@@ -87,12 +87,22 @@ used one probe before its mistaken final explanation; more work alone is not gai
 The base OL-bytes approximation already wrote successfully. Later checks addressed
 array/bytearray inputs; the original failure-to-repair transition remains unverified.
 Public checks rose from 212 to 213 PASS, with the writer file explicitly selected;
-truncated stdout and absent node telemetry limit exact collection claims. The next
-question is repair selection after the base example succeeds and the judgment that
-further original-case discrimination is unhelpful. Keep the clarification; no cap
-increase or added finish gate follows from this single attempt. Field causality and
-the private FAIL's exact cause remain unestablished. The new USD4 allocation and
-unused USD2.202753 are closed; no further paid work is scheduled.
+the original broad-check stdout lacked exact node telemetry. The new USD4 allocation
+and unused USD2.202753 are closed; no further paid work is scheduled.
+
+The [provider-free paired test](history/2026-11-01-task8-public-test-comparison.md)
+uses the unchanged submitted regression on base and candidate. Each collects one
+node: **base assertion FAIL, candidate PASS**, with setup/teardown PASS, complete
+output and identical test bytes. Base stops at the first bytearray input's bytes-type
+assertion; later base writer/array outcomes were not observed. The 20.171s comparison
+confirms that case's patch effect, not its mapping to the reported bytes failure or
+the public basis for its expectation. Prior bytes evidence was reused. There were
+zero model calls or independent evaluations, and runtime/source remained unchanged.
+The next question is repair selection after the base approximation succeeds and
+the judgment that further original-case discrimination is unhelpful. Keep the
+clarification and existing comparison tool; no cap increase or new finish gate.
+Autonomous comparison uptake, field causality and the private FAIL's exact cause
+remain unestablished.
 
 Keep [repair-plan delivery](history/2026-11-01-repair-planning-continuity.md),
 [input correspondence](history/2026-11-01-pre-edit-task-correspondence.md), and
