@@ -43,7 +43,7 @@ review to that mutation before carrying forward a check-then-submit plan.
 Listing unknowns alone does not justify stopping. Choose observations that could change
 the patch/submission decision over repeating supported examples.
 Use scope_review to compare known public conditions with actual/planned case conditions
-and the required observation; do not narrow the public objective to an inherited plan's
+and the required outcome/public_basis; do not narrow the public objective to a plan's
 finish criterion. Explain substitutions/gaps in interpretation. Cite source_receipts
 IDs and current-diff execution IDs, or mark source inference/untested. Failure/partial
 output records execution, not coverage. Null preserves the review; a new diff makes

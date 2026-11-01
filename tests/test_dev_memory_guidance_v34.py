@@ -205,7 +205,7 @@ def test_guidance_identity_changes_without_changing_run_schema_or_limits():
     # Registered selection review and verification-content delivery change the surface;
     # argument and description identities remain independently pinned above.
     assert dev_tool_surface_hash() == (
-        "sha256:0ef66556483325c857181c7890c086a2d96822939f1cdc9db14a04222dbded7e"
+        "sha256:c7ce75b87cb76e8b983e48c761d4935b8b3b0356f74608db0daa85b5e2378e79"
         if FROZEN_ARM is None else
         "sha256:57193859890419b79cb7f4927c37796d044bc4bf7159c51ddf17723849529e26"
     )
@@ -224,8 +224,8 @@ def test_current_review_separates_inputs_and_preserves_other_ordered_shapes():
         test_suite_ids=("public-tests",), allowed_tools=ALL_DEV_TOOLS,
         planning_policy="brief-v1",
     )
-    # Only the scope case input changes shape. Prove that shape explicitly, then
-    # restore its former string shape before comparing the preceding ordered wire.
+    # Scope inputs and expectations separate public premises from authored cases.
+    # Prove both shapes, then restore strings to compare the preceding ordered wire.
     # Descriptions are independently part of the current surface identity.
     inputs = []
     for tool in tools:
@@ -248,6 +248,16 @@ def test_current_review_separates_inputs_and_preserves_other_ordered_shapes():
         }
         inputs.append(original)
         case["input"] = {"type": "string", "minLength": 1, "maxLength": 500}
+        expectation = case["expected_observation"]
+        assert _without_descriptions(expectation) == {
+            "type": "object", "additionalProperties": False,
+            "properties": {
+                "outcome": {"type": "string", "minLength": 1, "maxLength": 300},
+                "public_basis": {"type": ["string", "null"], "minLength": 1, "maxLength": 200},
+            },
+            "required": ["outcome", "public_basis"],
+        }
+        case["expected_observation"] = {"type": "string", "minLength": 1, "maxLength": 500}
     assert inputs
     encoded = json.dumps(_without_descriptions(tools), ensure_ascii=False, separators=(",", ":"))
     assert hashlib.sha256(encoded.encode()).hexdigest() == (

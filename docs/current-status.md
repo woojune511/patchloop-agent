@@ -42,87 +42,60 @@ are unchanged. Previous totals were 11 PASS/8 FAIL/1 NOT_RUN, USD20.2818755 and
 5,513.593 seconds. Requests differ only in fresh state roots, but multiple runtime
 changes and one attempt per task prevent attributing the difference to one feature.
 
-The next decision concerns diagnosis quality and continuity, not blanket budget
-expansion or another generic instruction to test more:
+The current [failed-eight/discovery follow-up](history/2026-11-01-failed8-and-test-discovery.md)
+implements two bounded corrections before another paid panel:
 
-- Task8 failed again despite the same runtime's
-  [preceding single-task PASS](history/2026-11-01-pre-edit-normal-task8-results.md).
-  Its actual pre-edit request contained the correspondence guidance. Ordinary bytes
-  samples did not reproduce the issue; it then fixed array/bytearray helper inputs
-  without explaining the report's bytes-to-MultiValue transformation. It submitted
-  with resources remaining and acknowledged missing original-case evidence.
-  Instruction delivery and gap disclosure did not ensure correct target selection.
-  The exact independent failing assertion was not inspected in this batch.
-- Task18 passed but took all 40 calls and repeated L036/L003 questions. The
-  [actual-input audit](history/2026-11-01-diagnostic-continuity-delivery-audit.md)
-  found that compact repair omitted the stored plan, review request and planning
-  guidance. No pre-edit note was authored. Supporting probe output left the bounded
-  input before old questions were reopened. This motivated the delivery correction
-  and fresh run below; storage, delivery and model use remain separate claims.
-- Task16 executed broader parser cases, including whitespace and invalid-middle
-  branches, yet failed independent evaluation. Two earlier probes failed before
-  target execution because test fixtures were absent from the probe snapshot.
-  Scope expansion, valid setup, oracle correctness and acceptance remain distinct.
-- Task4 and task18 repaired public-test failures while preserving expectations,
-  then independently passed. These are behaviors, not a causal prompt-effect estimate.
+- New pytest modules must match confirmed public filename patterns. A known
+  mismatch rejects the atomic edit before any file changes, with the config/hash
+  and naming rules. Explicit selection does not ensure ordinary directory discovery.
+  Unresolved configuration remains unknown; matching a filename is not collection
+  or assertion coverage. Original tests and existing-file selection are preserved.
+- Existing scope review separates the required `outcome` from its `public_basis`,
+  within the previous 500-character expectation budget. Unknown values use null;
+  legacy strings remain readable. Post-edit guidance compares literal public
+  conditions and selects relevant compatibility controls. A new test's expected
+  value or suite PASS cannot supply its own oracle. Receipt validity is not semantic
+  validation. No extra model call, mandatory probe or finish gate was added.
 
-The [delivery follow-up](history/2026-11-01-repair-planning-continuity.md) now preserves
-the canonical bounded working_plan and working_notes in compact repair, including
-note IDs/receipts, remaining questions and review requests. It reuses enabled planning
-instructions and reprojects review after a segment handoff. Optional annotations on
-the next useful action can retain findings; an action basis is not a saved note.
-No new tool, recording round, mandatory note, gate or larger limit was added.
-Null updates and source-change expiry retain their existing meaning.
+All eight failed tasks (7/8/10/12/13/16/17/19) were audited from saved public inputs,
+source/actions/checks and submitted patches. The immutable evidence is under
+`C:/pt/failed8-public-20261101-v1/`, with per-task event/hash references. No private
+bodies were read. Public specs were checked against actual dispatched requests.
+The audit found condition substitutions (8/13), insufficiently grounded exact
+expectations (12/16), and compatibility claims lacking specific evidence (10/17/19).
+Task7's public example and task19's minimum preservation requirement have supporting
+executions; a universal explanation for all eight FAILs is not established. Exact
+private failing assertions remain uninspected. The implementation is locally tested,
+not live evidence that these tasks now pass or cost/time improved.
+Final focused validation is 88 PASS in 20.65s. Quick resolves to 1,494 PASS/one
+host skip across the initial run and corrected contract-expectation rechecks;
+isolated mock evaluation, Ruff and documentation checks pass. Details and limits
+are in the follow-up record; prior private grading and frozen identities are unchanged.
 
-Its local validation remains in the implementation record: focused 12 PASS in
-64.46s, corrected quick selection plus the added source-note case, isolated mock,
-Ruff and docs PASS. Actual-input controls cover handoffs, old-probe eviction, OFF
-mode and completed-run replay. These local checks are distinct from live outcomes.
+Retain the [planning delivery correction](history/2026-11-01-repair-planning-continuity.md):
+compact repair now carries canonical plans, notes and review requests. The
+[fresh task18 run](history/2026-11-01-repair-continuity-task18-results.md) at 21793a4b
+is CLOSED: **independent PASS, safety PASS**, 34 calls, 45 actions, two edits,
+13 probes, USD3.568309 and 1,473.436 seconds. Its USD4 allocation and remainder are
+closed. All actual inputs and costs settled. The model stored and reused the finding
+that L039 undid correct indentation, reverted an ineffective L003 edit and repaired
+L039 while preserving the new test's input/assertions. One unchanged-base probe
+still repeated; that earlier finding was never stored. Residual semantic probe
+repetition is not addressed by the current discovery/oracle change.
 
-The [fresh task18 run](history/2026-11-01-repair-continuity-task18-results.md), frozen
-at 21793a4b, is CLOSED: **independent PASS, safety PASS**, 34 calls, 45 actions,
-two edits, 13 probes, USD3.568309 and 1,473.436 seconds (24m33s). All 34 generations
-and input counts settled; the new USD4 allocation and USD0.431691 remainder are
-closed. Final evidence is 506 required tests PASS, one selected regression PASS
-and a current-patch helper result; registered delivery remains unverified_delivery.
+Task18's final 506 required tests and one explicitly selected test passed, but the
+new test filename missed ordinary collection; that concrete omission motivates the
+new filename admission. Calls fell from 40 to 34 versus the preceding run while
+cost and time rose, so no efficiency effect is claimed. No paid run is scheduled.
+A future authorized integrated failed-task panel with passing controls can assess
+repair decisions, independent acceptance and regressions together.
 
-All 34 actual inputs verify. The model authored evidence-linked findings/questions;
-the plan and note survived handoffs, and later action bases reused their conclusions.
-After a first L003 patch still failed, it traced L039 changing correct indentation,
-stored that finding, restored L003 and repaired L039. The failed test's input and
-assertions remained unchanged. After current-diff evidence passed, it submitted.
-
-Keep the delivery correction, while separating two unresolved issues. An unchanged-
-base default-fixer confirmation still repeated after its output left the recent
-tail; that reproduction finding had not been saved, and no note eviction occurred.
-Also, the submitted new test filename still misses normal pytest discovery despite
-explicit selected execution. Next work should target observation selection/update
-and test discovery, grounded in these concrete gaps. Calls fell from 40 to 34, but
-cost rose from USD3.259526 and time from 1,402.869 seconds. This single trajectory
-does not establish an efficiency or general repair gain. No further paid run is
-scheduled; task8's public-input mismatch remains a separate correctness question.
-
-[Pre-edit task correspondence](history/2026-11-01-pre-edit-task-correspondence.md)
-uses existing hypothesis/expected_behavior fields to connect public input, caller
-and setup to a repair. Changed helpers need source or comparable execution support;
-unexplained transformations remain questions. Source evidence can support repair
-without exact reproduction. Its local validation belongs to the linked record;
-the full20 used that tested runtime.
-
-[Public-condition comparison](history/2026-11-01-public-input-comparison.md)
-separates known public_conditions from actual case_conditions. Interpretation
-explains substitutions, missing setup and materiality. This is model-authored
-comparison, not verified correspondence. Legacy strings remain compatible.
-[Capability-aligned decisions](history/2026-11-01-capability-aligned-verification-review.md)
-keep fixed-candidate diagnostics within offered read/search/probe/report capabilities;
-the pure discovery_review_context projector runs after the last overlay. Closed
-diagnostics cannot be upgraded into new repair/evaluation authority. The normal
-runner's required public-check gate was not diagnosed as broken.
-
-Task12's historical oracle ambiguity and public-versus-stronger-private expectations
-remain separate questions. Earlier saved-patch audits do not establish exact failure
-causes for fresh submissions. The [8/10 operator audit](history/2026-10-31-continuity-0810-failure-attribution.md)
-did not change grading or create new public task requirements.
+Earlier [input correspondence](history/2026-11-01-pre-edit-task-correspondence.md),
+[condition comparison](history/2026-11-01-public-input-comparison.md) and
+[capability-aligned diagnostic](history/2026-11-01-capability-aligned-verification-review.md)
+mechanisms remain selected. Task12's oracle ambiguity and stronger private versus
+public expectations remain separate questions. Earlier saved-patch attribution
+cannot establish the exact failure cause for a fresh submission.
 
 ## Selected mechanisms and evidence limits
 

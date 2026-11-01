@@ -126,6 +126,13 @@ The host validates structure and execution/source references, not the accuracy o
 either condition statement or their equivalence. Legacy string inputs remain
 accepted and unchanged in stored/projected reviews and exact replay; no automatic
 conversion fills in their missing public-condition comparison.
+Fresh `expected_observation` separates `outcome` (up to 300 characters) from
+`public_basis` (up to 200, nullable): a public clause or observed pre-existing
+contract justifying the expected value. The total text allowance remains 500.
+Do not infer an oracle from the candidate/new test or its PASS; null preserves
+unspecified expectations. Relevant compatibility controls distinguish a narrow
+repair from an overbroad change. Old string expectations remain unchanged on replay.
+These statements remain model-authored; the host does not certify their meaning.
 The dispositions are `executed`, `source_inferred` and `untested`. This replaces
 the informal contract/case/evidence mapping in the brief-plan instructions; it is
 not another completed-action log or an automatic enumeration of the affected family.

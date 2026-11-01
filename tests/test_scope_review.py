@@ -359,6 +359,40 @@ def test_absent_and_explicit_null_serialization_remain_distinct_and_add_no_revie
         assert "scope_review" not in view(journal)["plan"]
 
 
+@pytest.mark.parametrize("public_basis", [None, "Public API promises unchanged valid records."])
+def test_expectation_basis_survives_receipt_projection_and_restart(journal, public_basis):
+    observed(journal, "check", tool="run_probe", output={"status": "passed", "exit_code": 0})
+    raw = review()
+    expectation = {"outcome": "Valid records retain their fields.", "public_basis": public_basis}
+    raw["cases"][0]["expected_observation"] = expectation
+    assert record(journal, raw)["scope_review"]["status"] == "applied"
+    restarted = DevJournal(journal.root, journal.run_id)
+    projected = retained(restarted)
+    assert projected["cases"][0]["expected_observation"] == expectation
+    assert projected["cases"][0]["execution"]["observation"]["status"] == "passed"
+    assert projected["coverage_status"] == "not_certified"
+    assert projected["interpretation_status"] == "model_authored_unverified"
+    assert retained(restarted, OTHER)["cases"][0]["expected_observation"] == expectation
+
+
+@pytest.mark.parametrize("bad", [
+    {"outcome": "value", "public_basis": " "},
+    {"outcome": "a" * 301, "public_basis": None},
+    {"outcome": "value", "public_basis": "b" * 201},
+    {"outcome": "value"},
+])
+def test_bad_expectation_preserves_prior_review_and_does_not_block_action(journal, bad):
+    observed(journal, "check", tool="run_probe", output={"status": "passed"})
+    record(journal, review(), turn="legacy-review")
+    original = retained(journal)
+    raw = review()
+    raw["cases"][0]["expected_observation"] = bad
+    call = selected(raw)
+    assert record(journal, calls=[call])["scope_review"]["status"] == "rejected"
+    assert retained(journal) == original
+    assert validate_tool_batch([call]) == "parallel_read"
+
+
 def test_rejected_scope_annotation_does_not_reject_valid_plan_revision(journal):
     record(journal, review(disposition="untested", evidence=None), turn="saved")
     previous = retained(journal)

@@ -150,6 +150,7 @@ def _changed_test_review(
         "basis": (
             "Visible current-diff receipts only; missing does not mean never executed. "
             "File/node selection and command PASS do not prove collected test cases. "
+            "Explicit file execution does not establish future directory discovery. "
             "Reuse matching input/assertion/scope evidence. Missing collection telemetry alone "
             "does not require rerunning. Optional selectors address a concrete scope gap, "
             "filter, or suspected discovery omission; they are not next-action recommendations."

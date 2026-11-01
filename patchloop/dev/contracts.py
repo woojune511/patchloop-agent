@@ -209,6 +209,7 @@ def dev_tool_surface_hash(
             "verification_concerns": "original-question-progress-note-exact-noop-v2",
             "check_evidence_identity": "retained-action-check-diff-explicit-completion-currency-v2",
             "check_definition_review": "registered-pytest-selection-and-changed-test-receipts-v3",
+            "new_test_discovery": "new-pytest-module-public-filename-v1",
             "check_definition_review_bounds": [
                 check_review.MAX_TARGETS, check_review.MAX_RANGES,
                 check_review.MAX_TARGET_CHARS, check_review.MAX_REVIEW_CHARS,

@@ -259,7 +259,10 @@ def test_selected_followup_probe_preserves_authored_conditions_and_returned_evid
             "scope": "The public no-argument caller and its default configuration.",
             "source_action_ids": ["read-original"],
             "cases": [{
-                "input": conditions, "expected_observation": "Returned value is zero.",
+                "input": conditions, "expected_observation": {
+                    "outcome": "Returned value is zero.",
+                    "public_basis": "The public request requires zero from this caller.",
+                },
                 "disposition": "untested", "evidence_action_id": None,
                 "interpretation": (
                     "The caller is preserved, while default module settings are assumed; "

@@ -65,6 +65,13 @@ keywords, unpacking, aliases or computed values. Existing cases, including their
 marks and IDs, must remain structurally unchanged and in their original order.
 Existing test bodies, imports, fixtures and decorators stay protected. New imports
 needed by a new test belong inside that test.
+New pytest module names must match readable public `python_files` patterns (or
+pytest defaults). `edit_files` rejects a known mismatch before applying any file
+in the batch; explicit file execution does not establish directory discovery.
+It reports the configuration path/hash and patterns. Ordinary INI settings are
+supported; unresolved commands, overrides, changed/nested configs and native TOML settings
+remain unknown without a guessed rejection. This is filename admission only,
+not proof of test collection or execution. Existing-file selection is unchanged.
 The tool description and rejection feedback expose this option. Every successful
 test insertion or correction still consumes one accepted mutation; completed-action
 replay consumes none. Consider trying a new test's setup and independently grounded

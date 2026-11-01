@@ -13,6 +13,8 @@ MAX_CASES = 4
 MAX_ACTION_ID_CHARS = 500
 MAX_SOURCE_RECEIPTS = 8
 MAX_SOURCE_RANGES = 8
+MAX_OUTCOME_CHARS = 300
+MAX_BASIS_CHARS = 200
 _EXECUTION_TOOLS = frozenset({"run_check", "run_tests", "run_probe"})
 _SOURCE_TOOLS = frozenset({"read_file", "search_files"})
 _OBSERVATION_FIELDS = (
@@ -35,23 +37,39 @@ class _Input(BaseModel):
         return value
 
 
+class _Expectation(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    outcome: str = Field(min_length=1, max_length=MAX_OUTCOME_CHARS)
+    public_basis: str | None = Field(min_length=1, max_length=MAX_BASIS_CHARS)
+
+    @field_validator("outcome", "public_basis")
+    @classmethod
+    def nonblank(cls, value: str | None) -> str | None:
+        if value is not None and not value.strip():
+            raise ValueError("expectation outcome and public basis must be nonblank")
+        return value
+
+
 class _Case(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
 
     input: Annotated[str, Field(min_length=1, max_length=MAX_TEXT_CHARS)] | _Input
-    expected_observation: str = Field(min_length=1, max_length=MAX_TEXT_CHARS)
+    expected_observation: (
+        Annotated[str, Field(min_length=1, max_length=MAX_TEXT_CHARS)] | _Expectation
+    )
     disposition: Literal["executed", "source_inferred", "untested"]
     evidence_action_id: str | None = Field(min_length=1, max_length=MAX_ACTION_ID_CHARS)
     interpretation: str = Field(min_length=1, max_length=MAX_TEXT_CHARS)
 
-    @field_validator("input")
+    @field_validator("input", "expected_observation")
     @classmethod
-    def nonblank_legacy_input(cls, value: str | _Input) -> str | _Input:
+    def nonblank_legacy_input(cls, value):
         if isinstance(value, str) and not value.strip():
             raise ValueError("scope review text must be nonblank")
         return value
 
-    @field_validator("expected_observation", "interpretation", "evidence_action_id")
+    @field_validator("interpretation", "evidence_action_id")
     @classmethod
     def nonblank(cls, value: str | None) -> str | None:
         if value is not None and not value.strip():
@@ -91,7 +109,8 @@ def schema() -> dict[str, Any]:
                 "properties": {
                     "public_conditions": {
                         **text, "type": ["string", "null"], "description": (
-                            "Known public caller/input/setup; never infer it from the helper. "
+                            "Retain relevant literal public caller/input/setup, including "
+                            "representation and configuration; do not rewrite it from the helper. "
                             "Null if unavailable or an additional control."
                         ),
                     },
@@ -101,7 +120,23 @@ def schema() -> dict[str, Any]:
                 },
                 "required": ["public_conditions", "case_conditions"],
             },
-            "expected_observation": {**text, "description": "Required observable outcome."},
+            "expected_observation": {
+                "type": "object", "additionalProperties": False,
+                "properties": {
+                    "outcome": {"type": "string", "minLength": 1,
+                                "maxLength": MAX_OUTCOME_CHARS, "description": (
+                        "Required behavior assertion, not a command PASS or a restatement "
+                        "of the candidate's return value."
+                    )},
+                    "public_basis": {"type": ["string", "null"], "minLength": 1,
+                                     "maxLength": MAX_BASIS_CHARS, "description": (
+                        "Public issue clause or observed pre-existing API/caller/test "
+                        "contract justifying this expected value. Null if unspecified; "
+                        "the new patch/test and its successful execution are not an oracle."
+                    )},
+                },
+                "required": ["outcome", "public_basis"],
+            },
             "disposition": {"type": "string", "enum": [
                 "executed", "source_inferred", "untested",
             ]},
@@ -147,10 +182,12 @@ def schema() -> dict[str, Any]:
 
 def contract() -> dict[str, Any]:
     return {
-        "policy": "plan-scope-public-result-binding-v2",
+        "policy": "plan-scope-public-result-binding-v3",
         "max_text_chars": MAX_TEXT_CHARS, "max_source_actions": MAX_SOURCE_ACTIONS,
         "max_cases": MAX_CASES, "max_action_id_chars": MAX_ACTION_ID_CHARS,
         "input": "public-and-case-conditions-legacy-string-preserved",
+        "expectation": "outcome-and-public-basis-legacy-string-preserved",
+        "expectation_bounds": [MAX_OUTCOME_CHARS, MAX_BASIS_CHARS],
         "execution": "completed-current-diff-public-result-not-semantic-coverage",
         "source": "completed-public-read-search-prior-diff-retained",
         "storage": "existing-working-plan-event-nonblocking-null-preserves",

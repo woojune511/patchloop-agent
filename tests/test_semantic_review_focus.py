@@ -40,8 +40,14 @@ def test_scope_review_reaches_real_completion_and_finish_without_extra_calls(
                 "scope": "Public CSV record boundaries; other dialects are unassessed.",
                 "source_action_ids": [],
                 "cases": [{
-                    "input": "Quoted multiline CSV input through parse_rows.",
-                    "expected_observation": "The quoted newline remains within one record.",
+                    "input": {"public_conditions": "Quoted multiline CSV through parse_rows.",
+                              "case_conditions": "Quoted multiline CSV through parse_rows."},
+                    "expected_observation": {
+                        "outcome": "The quoted newline remains within one record.",
+                        "public_basis": (
+                            "The public issue requires preserving quoted multiline fields."
+                        ),
+                    },
                     "disposition": "executed" if evidence else "untested",
                     "evidence_action_id": evidence,
                     "interpretation": "Public check receipt, not general parser coverage.",
@@ -69,6 +75,10 @@ def test_scope_review_reaches_real_completion_and_finish_without_extra_calls(
     pending = actual["working_plan"]["plan"]["scope_review"]
     assert pending["diff_currency"] == "current"
     assert pending["cases"][0]["disposition"] == "untested"
+    assert pending["cases"][0]["expected_observation"] == {
+        "outcome": "The quoted newline remains within one record.",
+        "public_basis": "The public issue requires preserving quoted multiline fields.",
+    }
     finished = next(event["payload"]["result"] for event in events
                     if event["event_type"] == "action_finished"
                     and event["payload"]["result"]["tool"] == "finish_task")

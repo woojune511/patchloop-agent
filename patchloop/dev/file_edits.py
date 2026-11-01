@@ -42,6 +42,8 @@ def schema():
                 "old_text is an exact observed anchor; occurrence is an integer or all. "
                 "For a new file, old_text is null, occurrence is 1, and new_text is its "
                 "complete content. Never overwrite an existing file with a create. "
+                "New pytest modules must match the project's python_files naming rules; "
+                "explicit-file execution alone does not ensure directory discovery. "
                 "Undo requires the affected files still match that action's result; "
                 "unrelated later edits remain. Each accepted batch or undo consumes one "
                 "edit slot and invalidates checks for the old diff. Scope and preservation "
@@ -137,6 +139,9 @@ def prepare(gateway, arguments, baseline):
     for change in changes:
         _check_path(gateway, change.path)
         _check_test(gateway, change)
+    from patchloop.dev.test_discovery import validate_new_test_names
+
+    validate_new_test_names(gateway, changes)
     candidate, patch = transaction.preview_transaction(
         gateway.workspace, changes, baseline_diff_hash=baseline, deadline=gateway.deadline)
     scope = verify_scope(candidate, gateway.public_task.constraints)
