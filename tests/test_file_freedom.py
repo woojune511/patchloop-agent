@@ -9,6 +9,7 @@ from patchloop.cli import app
 from patchloop.dev.contracts import DevLimits, PublicTurnDecision, RequestedTool
 from patchloop.dev.native_sources import project_mutation_result
 from patchloop.dev.tools import DevToolGateway
+from patchloop.git_execution import run_git
 from patchloop.runtime import repository_root
 
 PATH = "mini_data_utils/csvlite.py"
@@ -130,7 +131,15 @@ def test_all_matches_crash_reconciles_using_admitted_offsets(gateway_factory, mo
     # Preserve CRLF as well as positions in normalized source.
     before = target.read_bytes().replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")
     target.write_bytes(before)
-    read(gateway)
+    # CRLF is the fixture baseline, not an extra whole-file mutation that can
+    # exceed the task's diff limit on a host whose checkout originally used LF.
+    run_git(workspace, "config", "core.autocrlf", "false")
+    run_git(workspace, "add", "--", PATH)
+    run_git(workspace, "-c", "user.name=PatchLoop Test",
+            "-c", "user.email=patchloop@example.invalid", "commit", "--allow-empty",
+            "-qm", "CRLF recovery fixture baseline")
+    assert gateway.current_diff.patch == ""
+    assert read(gateway).status == "succeeded"
     call = mutation(new=new)
 
     class Crash(BaseException):
