@@ -29,105 +29,71 @@ Keep the integrated development loop: fix observed correctness, reliability and
 completion failures, validate locally, then exercise a frozen configuration.
 A separate one-factor study is not required for every routine change.
 
-[Capability-aligned verification decisions](history/2026-11-01-capability-aligned-verification-review.md)
-aligns fixed-candidate requests with offered read/search/probe/report capabilities,
-preserving public evidence and NOT_RUN facts while separating saved counters from
-new budgets. The pure/idempotent discovery_review_context projector must run after
-the last overlay and before freezing a seed. Annotated reports use finish/null
-evidence_goal; ordinary seven-field reports remain unchanged. Closed requests and
-approvals cannot be upgraded or executed under changed code. The earlier conflicting
-edit/check/submission instructions were a contract defect; their model effect is
-not isolated.
+The [latest frozen full dev20](history/2026-11-01-pre-edit-dev20-results.md) is CLOSED:
+**12 independent PASS, 8 FAIL, 20 safety PASS**, all 20 submitted once. Execution
+HEAD f994a2b6 retains runtime implementation e6374d6f. Recorded generation cost is
+USD20.972777 under a new USD80 cap; batch wall is 4,916.317 seconds (81m56s), excluding
+preparation. All 274 model calls and 276 input counts settled. No retry, extra
+evaluation or mid-batch runtime change occurred. USD59.027223 remains closed.
 
-General tool basis and scope-review input/interpretation descriptions now connect
-a remaining public condition to an actually offered observation and how its result
-could change the decision. Preserve known original conditions and mark missing or
-substituted setup; use concrete blockers or lack of relevance to justify stopping.
-This reuses existing fields, limits and calls. No new semantic gate, required probe,
-check backend, dependency installation, normal finish admission or budget change.
-The normal runner's required public-check gate was not diagnosed as broken.
+Against the [previous full20](history/2026-10-31-verification-reuse-dev20-results.md),
+task18 changed from unsubmitted/NOT_RUN to PASS; the other 19 acceptance verdicts
+are unchanged. Previous totals were 11 PASS/8 FAIL/1 NOT_RUN, USD20.2818755 and
+5,513.593 seconds. Requests differ only in fresh state roots, but multiple runtime
+changes and one attempt per task prevent attributing the difference to one feature.
 
-[Public-condition comparison](history/2026-11-01-public-input-comparison.md) now
-separates fresh scope_review case input into public_conditions and case_conditions.
-The former records known task caller/input/setup; the latter records what is
-actually exercised or planned. Existing interpretation explains substitutions,
-missing setup and evidence making a gap material or irrelevant. A plan's finish
-condition is judged against the public task. Legacy strings remain unchanged;
-null public conditions are allowed for unknown originals or separate controls.
-This is bounded model-authored comparison, not verified correspondence. No new
-tool, review call, mandatory probe, plan reset, semantic gate or paid run is added.
+The next decision concerns diagnosis quality and continuity, not blanket budget
+expansion or another generic instruction to test more:
 
-The [latest fixed-candidate diagnostic](history/2026-11-01-public-input-comparison-results.md)
-is CLOSED on 0dfe7c6d. It used the new condition objects but executed no new probe;
-original-condition equivalence and better verification selection remain unproven.
-Its evidence and capability limits do not justify forced probes or larger limits.
+- Task8 failed again despite the same runtime's
+  [preceding single-task PASS](history/2026-11-01-pre-edit-normal-task8-results.md).
+  Its actual pre-edit request contained the correspondence guidance. Ordinary bytes
+  samples did not reproduce the issue; it then fixed array/bytearray helper inputs
+  without explaining the report's bytes-to-MultiValue transformation. It submitted
+  with resources remaining and acknowledged missing original-case evidence.
+  Instruction delivery and gap disclosure did not ensure correct target selection.
+  The exact independent failing assertion was not inspected in this batch.
+- Task18 passed after fixing a public regression without weakening its tests, but
+  took all 40 calls. It repeated L036-only and L036-then-L003 questions on the unchanged
+  base. Before those repeats, the recent three-probe window no longer held earlier
+  discriminating results; findings/verification notes were empty and the plan
+  remained its generic initial revision. Investigate how existing run-local notes
+  and plan carry conclusions and remaining questions across handoffs. Retention's
+  repair benefit is unproven; this does not justify a new memory subsystem or gate.
+- Task16 executed broader parser cases, including whitespace and invalid-middle
+  branches, yet failed independent evaluation. Two earlier probes failed before
+  target execution because test fixtures were absent from the probe snapshot.
+  Scope expansion, valid setup, oracle correctness and acceptance remain distinct.
+- Task4 and task18 repaired public-test failures while preserving expectations,
+  then independently passed. These are behaviors, not a causal prompt-effect estimate.
 
-The [interrupted task8 attempt](history/2026-11-01-condition-normal-task8-results.md)
-is closed with its fourth response usage UNKNOWN. The [prior normal PASS](history/2026-11-01-condition-normal-task8-retry-results.md)
-at 523e5da6 provides the latest baseline: 10 calls/18 tools, 316.883 seconds and
-USD0.6997885. It repaired the bytes-splitting setter; original H-array/lineSeq replay
-and OD/OV execution remained absent. Acceptance and original-case delivery differ.
-
-The [failure/success comparison](history/2026-11-01-task8-diagnosis-comparison.md)
-locates the main difference before editing: the failed run fixed a direct-array
-helper while the successful run traced reported bytes to the earlier value setter.
-The failed run never acquired that setter; original task and helper results were
-not lost. Both passed 213 tests, but their added tests exercise different inputs.
-The successful diagnosis precedes post-edit review activation, so that review
-cannot directly explain the first repair. Early tool-schema/search presentation
-effects and trajectory variation remain unisolated.
+Prioritize a focused diagnosis of repeated decision questions and missing retained
+conclusions using existing structures; keep task8's public-input mismatch as a
+correctness check on any intervention. No further runtime change or paid experiment
+has been performed or authorized by this closed allocation.
 
 [Pre-edit task correspondence](history/2026-11-01-pre-edit-task-correspondence.md)
-now replaces the compact repair prompt's generic mechanism sentence. It asks the
-existing hypothesis to explain public input/caller/setup, connect helper substitutions
-through source or comparable execution, and investigate a still-unexplained
-transformation. Existing mutation fields receive short matching descriptions.
-Source evidence may support a repair without exact reproduction. No new fields,
-state, gate, mandatory probe or call are added. Local validation: focused 133 PASS;
-quick 1,457 PASS/one host skip after six fingerprint rechecks; isolated mock PASS.
+uses existing hypothesis/expected_behavior fields to connect public input, caller
+and setup to a repair. Changed helpers need source or comparable execution support;
+unexplained transformations remain questions. Source evidence can support repair
+without exact reproduction. No new fields, gate, mandatory probe or call. Local
+validation: focused 133 PASS; quick 1,457 PASS/one host skip after six fingerprint
+rechecks; isolated mock PASS. The full20 used that unchanged tested runtime.
 
-The [fresh pre-edit task8 experiment](history/2026-11-01-pre-edit-normal-task8-results.md)
-on e6374d6f is CLOSED: independent acceptance PASS/safety PASS, one edit, 14 model
-calls, 21 tools, 213 required tests plus three selected tests, three probes,
-494.296 seconds and USD1.1495245 recorded generation usage under a new USD4 cap.
-The solver observed base OL bytes becoming MultiValue, fixed OD/OL/OV exemptions,
-then recognized that its writer helper did not cover add_new/save_as and executed
-that closer caller. Both constructed OL cases saved with payload/tail preservation.
-The first two probes still had a writer setup error; only their value comparison
-was valid. Probes have no asserts; the new pytest asserts full encoded output.
-Selected nodes overlap the required file check, but exact node telemetry was not
-delivered, so this is not demonstrated disregard of identical execution evidence.
-Original H-array/lineSeq and OD/OV runtime coverage remain missing and disclosed;
-delivery is unverified_delivery. One successful initial repair does not demonstrate
-post-patch counterexample-driven revision. Retain the guidance; causal improvement,
-efficiency and generalization remain unproven against the already successful baseline.
+[Public-condition comparison](history/2026-11-01-public-input-comparison.md)
+separates known public_conditions from actual case_conditions. Interpretation
+explains substitutions, missing setup and materiality. This is model-authored
+comparison, not verified correspondence. Legacy strings remain compatible.
+[Capability-aligned decisions](history/2026-11-01-capability-aligned-verification-review.md)
+keep fixed-candidate diagnostics within offered read/search/probe/report capabilities;
+the pure discovery_review_context projector runs after the last overlay. Closed
+diagnostics cannot be upgraded into new repair/evaluation authority. The normal
+runner's required public-check gate was not diagnosed as broken.
 
-The latest USD4 allocation is closed, including unused USD2.8504755. Prior settled
-subtotal USD0.868448 and the earlier UNKNOWN call remain separate, unchanged records;
-invoice/count billing is unverified. No further paid invocation is authorized.
-
-Relevant closed evidence:
-
-- [Full fixed dev20](history/2026-10-31-verification-reuse-dev20-results.md):
-  11 independent PASS, 8 FAIL, 1 unsubmitted/NOT_RUN; 19 safety PASS. USD20.2818755
-  against the closed USD80 allocation. Task 14 demonstrated autonomous
-  counterexample execution and repair, without attribution to a particular rule.
-- [Verification continuity](history/2026-10-31-verification-continuity.md) retains
-  exact recent probes and the latest rejected test proposal across handoffs;
-  historical proposals remain unapplied/unverified. No new tool or gate. YAML
-  rejection distinguishes unsupported type from undeclared test root.
-- [Prior fresh 8/10](history/2026-10-31-verification-continuity-0810-results.md):
-  both independent FAIL / safety PASS at 4559062d, USD1.1940825, 278.086 seconds;
-  closed USD8 allocation. Input retention alone did not establish repair gain.
-- [Saved-failure operator audit](history/2026-10-31-continuity-0810-failure-attribution.md):
-  prior task 8 retained a sibling-class defect; task 10 failed extra concrete
-  initialization/API expectations not explicit in the public issue, before its
-  output assertions. Private specifics stay outside solver hints/tests/guidance.
-  Neither audit changes grading or applies its exact cause to the latest patch.
-
-Task 12's oracle ambiguity, task 18's diagnostic delay and selected-test overlap
-remain open. Public requirements versus stronger benchmark expectations remain a
-separate issue; do not treat undisclosed API expectations as generic reasoning failure.
+Task12's historical oracle ambiguity and public-versus-stronger-private expectations
+remain separate questions. Earlier saved-patch audits do not establish exact failure
+causes for fresh submissions. The [8/10 operator audit](history/2026-10-31-continuity-0810-failure-attribution.md)
+did not change grading or create new public task requirements.
 
 ## Selected mechanisms and evidence limits
 
@@ -139,7 +105,9 @@ Keep the [reuse correction](history/2026-10-31-verification-reuse-decision.md),
 The [test-validation conflicts](history/2026-10-30-test-validation-fixes.md) and
 [file lifecycle](history/2026-10-29-file-lifecycle-followup.md) fixes remain selected:
 multiple/new files, receipt undo, original-byte restoration and bounded recovery.
-The YAML diagnostic correction above preserves those earlier mutation policies.
+The [verification continuity](history/2026-10-31-verification-continuity.md) change
+retains recent probe programs and rejected test proposals; YAML rejection identifies
+unsupported type. Task17 recovered from that contract rejection but still failed grading.
 
 Earlier local validation belongs to the corresponding closed records above.
 Focused delivery controls stayed under two minutes; local mechanism checks remain
@@ -149,25 +117,25 @@ and [older full 20 run](history/2026-10-29-repair-dev20-results.md) remain close
 historical context. Different task paths/settings and single attempts do not
 establish a causal quality or speed gain.
 
-The current SQLFluff 16 candidate restored its first success-guard regression and
-passed 167 public tests, then failed independent evaluation. Its public helper
-returns a whole-file parsing error without crashing; the public report alone does
-not prohibit that behavior. Do not import private expectations into new public
+The latest SQLFluff16 candidate passed 167 public tests and broader self-authored
+branch checks, then failed independent evaluation. The public report alone does
+not settle every parser contract. Do not import private expectations into public
 requirements. The [earlier operator assertion replay](history/2026-10-31-sqlfluff-assertion-log-replay.md)
-concerns a different saved patch and unchanged grading, not the current candidate.
+concerns a different saved patch and unchanged grading, not this candidate.
 
 ## Execution and claim boundaries
 
-All paid allocations are closed. The fresh normal task8 fourth response has
-unresolved usage. Older unresolved billing, including the
+All paid allocations are closed. The earlier
+[interrupted normal task8](history/2026-11-01-condition-normal-task8-results.md) fourth
+response still has UNKNOWN usage. Older unresolved billing, including the
 [interrupted expectation review](history/2026-09-28-expectation-review-results.md)
 and [focused diagnostic history](history/2026-10-30-sqlfluff-deadline-review.md),
-is not reconciled by this batch's settled usage.
+is not reconciled by this batch's known generation usage. Invoice and input-count
+endpoint billing have not been independently verified.
 
 Fresh solves, seeded repairs, saved-patch evaluations, operator public comparisons
-and scripted local tests are distinct evidence. The full20, prior 8/10 and latest
-task 8 submissions remain unverified_delivery for registered original-case proof,
-independently of acceptance.
+and scripted local tests are distinct evidence. All latest full20 submissions remain
+unverified_delivery for registered original-case proof, independently of acceptance.
 Never expose private evaluator bodies, hidden tests or reference patches to the
 solver. Public PASS, successful delivery and safety PASS do not establish correctness.
 The latest public run audit read no private bodies. The earlier user-requested
