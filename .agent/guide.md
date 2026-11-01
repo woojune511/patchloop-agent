@@ -1,7 +1,6 @@
 # Implementation guide
 
 See [AGENTS.md](../AGENTS.md) and [status](../docs/current-status.md).
-Source/tests own behavior; read relevant sections.
 
 ## Choosing the next improvement
 
@@ -171,8 +170,8 @@ without another backend call. A dispatch receipt is not proof of completed execu
 Live work requires the authorized exact checked-in `dev-train` task, model,
 credential file, repeat count, and positive invocation-wide cap.
 Admission rejects missing hidden checks before execution; calibrate coverage separately.
-Runtime/lock inputs and the selected task package must be tracked and HEAD-clean. Keep credentials out
-of repository/evaluator subprocess environments. Inspect existing local images;
+Runtime/lock inputs and task packages must be tracked and HEAD-clean. Keep credentials out
+of repository/evaluator environments. Inspect existing images;
 never start Docker Desktop or pull/build images automatically.
 
 Count actual input immediately before dispatch; reserve conservative reviewed cost.
@@ -188,6 +187,7 @@ are contract-bound. Tool failures/unknown billing are excluded; funding never pr
 Use zero SDK retries; count, transport, billing, or cleanup uncertainty stops all
 remaining repetitions. Reservations are not billed usage; unknown usage is not zero.
 Panel usage restoration includes compaction and adds only the row's delta to shared cost.
+Opt-in temporary-429 handling: [contract](rate-limit-execution.md).
 
 Probes use isolated public snapshots and the approved clean image/profile: no network,
 read-only source/root, bounded resources, and no private files, credentials, Git data,
@@ -208,7 +208,7 @@ execution, distinct from exit 1 for a completed wrong-answer result.
 
 CLI defaults are defined by `DevRunRequest` and differ from the selected baseline
 in current status. The reviewed full GPT-5.4 snapshot requires segmented-v1 and its
-counted input bound. Reading diagnostics never authorizes live work or changes defaults.
+counted input bound. Diagnostics do not authorize live work or change defaults.
 
 Optional details: [native context](plans/native-context-window.md),
 [planning](planning-experiment.md), [probe cases](probe-cases.md),

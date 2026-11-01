@@ -7,6 +7,7 @@ import json
 import os
 import uuid
 from collections.abc import Callable, Sequence
+from contextlib import ExitStack
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 from time import monotonic
@@ -14,6 +15,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from patchloop.agent import rate_limit_retry
 from patchloop.agent.count_diagnostics import (
     input_count_error_metadata,
     input_count_request_metadata,
@@ -321,6 +323,8 @@ def _model_hash(request: RunRequest, pricing: ModelPricing | None) -> str:
     return sha256_json(
         {
             "provider": request.provider,
+            **({"rate_limit_contract": rate_limit_retry.contract()}
+               if request.rate_limit_policy != "none" else {}),
             "model": request.model,
             "reasoning_effort": request.reasoning_effort,
             "context_policy": request.context_policy,
@@ -4318,6 +4322,7 @@ def _run_envelope(
         **boundary,
         run_id=run_id,
         provider=request.provider,
+        rate_limit_policy=request.rate_limit_policy,
         task_path=str(request.task.resolve() if public_only
                       else (task_dir / "public.yaml").resolve()),
         task_id=package.public.task_id,
@@ -5255,6 +5260,9 @@ def _run_one(
                                     if request.prepared_probe_dependencies is not None else None),
             )
             _validate_resume_envelope(envelope, expected)
+            if any(e["event_type"] == "provider_transport_cleanup_failed"
+                   for e in journal.events()):
+                raise RecoveryError("provider transport cleanup remains uncertain")
             if cost_ledger is not None:
                 cost_ledger.restore_settled_usage(
                     journal.provider_usage(),
@@ -5527,14 +5535,15 @@ def _run_one_locked(
                 **identity,
                 "active_elapsed_ms": active_base_ms + int((monotonic() - started) * 1_000),
             })
-        return _run_one_active(
-            request=request, task_dir=task_dir, package=package, state_root=state_root,
-            pricing=pricing, cost_ledger=cost_ledger, runtime_hash=runtime_hash,
-            model_hash=model_hash, run_id=run_id, journal=journal, envelope=envelope,
-            resuming=resuming, deadline=execution_deadline, active_base_ms=active_base_ms,
-            started=started, harness_git_commit=identity["harness_git_commit"],
-            evaluation_deadline=deadline,
-        )
+        with ExitStack() as provider_resources:
+            return _run_one_active(
+                request=request, task_dir=task_dir, package=package, state_root=state_root,
+                pricing=pricing, cost_ledger=cost_ledger, runtime_hash=runtime_hash,
+                model_hash=model_hash, run_id=run_id, journal=journal, envelope=envelope,
+                resuming=resuming, deadline=execution_deadline, active_base_ms=active_base_ms,
+                started=started, harness_git_commit=identity["harness_git_commit"],
+                evaluation_deadline=deadline, provider_resources=provider_resources,
+            )
     except (ExecutionDeadlineExceeded, GitExecutionUncertain, FileTransactionUncertain) as exc:
         exhausted = isinstance(exc, ExecutionDeadlineExceeded) or exc.details.get(
             "deadline_exhausted", False,
@@ -5580,6 +5589,7 @@ def _run_one_active(
     envelope: RunEnvelope, resuming: bool, deadline: ExecutionDeadline,
     active_base_ms: int, started: float, harness_git_commit: str,
     evaluation_deadline: ExecutionDeadline | None = None,
+    provider_resources: ExitStack | None = None,
 ) -> _OneRunResult:
     artifact_store = ArtifactStore(state_root / "artifacts")
     counters = _restore_counters(journal) if resuming else _RunCounters()
@@ -5786,7 +5796,29 @@ def _run_one_active(
         )
         assert api_key is not None
         try:
-            openai_adapter = OpenAIResponsesAdapter(config, api_key=api_key)
+            adapter_options = {}
+            if request.rate_limit_policy != "none":
+                if provider_resources is None:
+                    raise ContractError("retry transport requires managed client cleanup")
+                client = BoundedResponsesClient(
+                    api_key=api_key, retry_policy=request.rate_limit_policy,
+                    record=lambda kind, payload: journal.append(kind, {
+                        **payload, "active_elapsed_ms": active_elapsed_ms(),
+                    }),
+                )
+
+                def close_provider():
+                    try:
+                        client.close()
+                    except BaseException:
+                        journal.append("provider_transport_cleanup_failed", {
+                            "active_elapsed_ms": active_elapsed_ms(),
+                        })
+                        raise
+
+                provider_resources.callback(close_provider)
+                adapter_options["client"] = client
+            openai_adapter = OpenAIResponsesAdapter(config, api_key=api_key, **adapter_options)
         except Exception as exc:
             terminal = _terminal(
                 journal=journal,
@@ -7031,6 +7063,10 @@ def _run_one_active(
         if terminal_code == DevTerminal.TASK_FAILED:
             stop_remaining = True
 
+    # Finalize the owned HTTP client before recording success or starting isolated
+    # evaluation. ExitStack still closes it when an exception leaves the loop.
+    if provider_resources is not None:
+        provider_resources.close()
     probe_evidence = _probe_evidence(journal, artifact_store, run_id)
     probe_artifact_hashes = {
         f"probe_receipt_{index + 1}": artifact.content_hash

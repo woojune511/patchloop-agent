@@ -534,6 +534,9 @@ class DevToolResult(StrictModel):
 
 class RunRequest(StrictModel):
     provider: Literal["mock", "openai"]
+    rate_limit_policy: Literal["none", "bounded-429-v1"] = Field(
+        default="none", exclude_if=lambda value: value == "none",
+    )
     task: Path
     model: str
     reasoning_effort: Literal["none", "low", "medium", "high", "xhigh"] = "medium"
@@ -597,6 +600,8 @@ class RunRequest(StrictModel):
 
     @model_validator(mode="after")
     def provider_options_match(self) -> RunRequest:
+        if self.rate_limit_policy != "none" and self.provider != "openai":
+            raise ValueError("rate-limit retry policy requires OpenAI")
         if self.history_search_policy != "none" and (
             self.context_policy != segments.POLICY or self.agent_policy != "current"
         ):
@@ -686,6 +691,9 @@ class RunEnvelope(StrictModel):
     runtime_id: Literal["dev-head"] = "dev-head"
     run_id: str = Field(pattern=r"^run_dev_[a-zA-Z0-9_-]+$")
     provider: Literal["mock", "openai"]
+    rate_limit_policy: Literal["none", "bounded-429-v1"] = Field(
+        default="none", exclude_if=lambda value: value == "none",
+    )
     verification_policy: VerificationPolicy = Field(
         default="reproduction-gated-v1",
         exclude_if=lambda value: value == "reproduction-gated-v1",
@@ -775,6 +783,8 @@ class RunEnvelope(StrictModel):
 
     @model_validator(mode="after")
     def provider_boundary_is_exact(self) -> RunEnvelope:
+        if self.rate_limit_policy != "none" and self.provider != "openai":
+            raise ValueError("rate-limit retry policy requires OpenAI")
         if self.history_search_policy != "none" and (
             self.context_policy != segments.POLICY or self.agent_policy != "current"
         ):

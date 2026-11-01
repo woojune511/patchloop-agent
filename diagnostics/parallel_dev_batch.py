@@ -20,6 +20,7 @@ from patchloop.dev.state import DevJournal
 
 _STOP = None
 _ADMISSION = None
+MAX_WORKERS = 8
 
 
 class BatchStopped(RuntimeError):
@@ -36,7 +37,9 @@ class CoordinatedJournal(DevJournal):
         payload = payload or {}
         # The durable start and stop transition share one admission boundary.
         # Calls admitted before a peer's failure may finish, and must be accounted.
-        if event_type in {"input_count_started", "provider_call_started"}:
+        if event_type in {
+            "input_count_started", "provider_call_started", "provider_transport_attempt_started",
+        }:
             with _ADMISSION:
                 if _STOP.is_set():
                     super().append("batch_call_prevented", {"operation": event_type})
@@ -206,7 +209,8 @@ def run_parallel_rows(
     execute=solve_row,
     initializer=initialize_worker,
 ):
-    require(type(workers) is int and 1 <= workers <= 4, "workers must be between one and four")
+    require(type(workers) is int and 1 <= workers <= MAX_WORKERS,
+            "workers must be between one and eight")
     requests = [DevRunRequest.model_validate(row["request"]) for row in rows]
     require(len({r.task.resolve() for r in requests}) == len(rows), "distinct tasks required")
     roots = [r.state_root.resolve() for r in requests]

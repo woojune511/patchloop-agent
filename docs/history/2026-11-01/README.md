@@ -1,5 +1,6 @@
 # 2026-11-01 investigations
 
+- [Eight-worker dev20 preparation and bounded temporary-429 handling](../2026-11-01-parallel429-preparation.md)
 - [Review lifecycle and delivery: preserve prior conclusions, historical comparison and completion guidance](../2026-11-01-review-lifecycle-and-delivery-fixes.md)
 - [Requirement comparison: literal public conditions and persistent helper review](../2026-11-01-requirement-comparison-continuity.md)
 - [Causal-link task8: helper repair still replaces original-path diagnosis, independent FAIL](../2026-11-01-causal-link-task8-results.md)

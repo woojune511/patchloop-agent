@@ -29,6 +29,19 @@ Keep the integrated development loop: fix observed correctness, reliability and
 completion failures, validate locally, then exercise a frozen configuration.
 A separate one-factor study is not required for every routine change.
 
+The user requested a fresh full20 with eight workers and temporary-429 handling.
+[Preparation](history/2026-11-01-parallel429-preparation.md) keeps one solve per task,
+the selected model/resources, and previous answers outside solver context. Long-first
+scheduling uses historical elapsed times only. Opt-in `bounded-429-v1` allows at most
+two retries of explicit temporary 429 rejections, with Retry-After/backoff and jitter,
+at most 120 seconds of backoff inside each logical request's original deadline.
+Physical attempts are journaled separately and obey the shared stop boundary. SDK
+retries stay zero; quota, unknown errors and lost responses remain stop conditions.
+Quick validation is 1,573 PASS / one host skip; focused retry/parallel controls and
+isolated mock evaluation pass. These establish local behavior, not live recovery or
+repair improvement. The proposed new allocation is USD4/task and USD80 total; it
+requires exact confirmation after preflight. No new paid call or authorization is recorded.
+
 [Review lifecycle and delivery fixes](history/2026-11-01-review-lifecycle-and-delivery-fixes.md)
 are implemented and locally validated. The pre-experiment audit found that later
 scope reviews reopened already recorded helper comparisons, historical helper reviews
@@ -75,7 +88,7 @@ including the corrected lifecycle and delivery paths above. This does not prove 
 gap caused the model's stopping decision. Next question: does the model use the
 preserved discrepancy to inspect a different cause, execute a discriminating case
 and repair the original behavior? A quote can still be incomplete and an execution
-interpretation wrong. No additional paid run is scheduled.
+interpretation wrong. The proposed full20 is separate from all closed allocations.
 
 The [previous task8 run](history/2026-11-01-completion-reserve-task8-results.md),
 [added-test comparison](history/2026-11-01-task8-public-test-comparison.md) and
