@@ -54,12 +54,18 @@ expansion or another generic instruction to test more:
   Instruction delivery and gap disclosure did not ensure correct target selection.
   The exact independent failing assertion was not inspected in this batch.
 - Task18 passed after fixing a public regression without weakening its tests, but
-  took all 40 calls. It repeated L036-only and L036-then-L003 questions on the unchanged
-  base. Before those repeats, the recent three-probe window no longer held earlier
-  discriminating results; findings/verification notes were empty and the plan
-  remained its generic initial revision. Investigate how existing run-local notes
-  and plan carry conclusions and remaining questions across handoffs. Retention's
-  repair benefit is unproven; this does not justify a new memory subsystem or gate.
+  took all 40 calls and repeated L036/L003 questions. The
+  [actual-input audit](history/2026-11-01-diagnostic-continuity-delivery-audit.md)
+  now distinguishes storage from delivery: compact repair omits working_plan and
+  its review_request, disables the handoff review flag and uses a prompt without
+  normal planning guidance. All first34 task18 inputs follow that path; the stored
+  revision1 plan was not retained in authoritative current state. Its text survives
+  briefly in older arguments, but is absent at the repeated decisions. Across the
+  batch, 174/274 requests use this view. Optional annotation fields remain offered.
+  No pre-edit note was submitted. A diagnostic conclusion appeared in an action
+  basis, then its supporting probe output left the bounded input before the question
+  was reopened. The later regression note/question was stored and delivered normally;
+  its subsequent source-change expiry was explicit, not accidental handoff loss.
 - Task16 executed broader parser cases, including whitespace and invalid-middle
   branches, yet failed independent evaluation. Two earlier probes failed before
   target execution because test fixtures were absent from the probe snapshot.
@@ -67,10 +73,19 @@ expansion or another generic instruction to test more:
 - Task4 and task18 repaired public-test failures while preserving expectations,
   then independently passed. These are behaviors, not a causal prompt-effect estimate.
 
-Prioritize a focused diagnosis of repeated decision questions and missing retained
-conclusions using existing structures; keep task8's public-input mismatch as a
-correctness check on any intervention. No further runtime change or paid experiment
-has been performed or authorized by this closed allocation.
+Next proposed change: preserve existing bounded plan/review state in compact repair
+and align its advisory update guidance. Test assembled requests across handoffs,
+not just operator context artifacts. Keep task8's public-input mismatch as a
+correctness check. No extra model call, mandatory note, new memory subsystem or
+larger limit is proposed. This is a demonstrated delivery gap; its causal contribution
+to repetition and a fix's repair benefit remain unproven. No runtime change or paid
+experiment was made during the audit.
+
+Audit validation: 274 saved inputs verified; selected local tests 23 PASS/5 FAIL.
+The five failures are stale custom mock adapters dereferencing turn_decision on an
+annotation-free mutation, before executing it. Adapt those tests alongside the
+delivery change. They are outside the previous quick selectors; that earlier result
+does not certify this selected suite. The audit is closed; implementation remains open.
 
 [Pre-edit task correspondence](history/2026-11-01-pre-edit-task-correspondence.md)
 uses existing hypothesis/expected_behavior fields to connect public input, caller

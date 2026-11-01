@@ -1,5 +1,6 @@
 # 2026-11-01 investigations
 
+- [Diagnostic continuity: actual repair inputs omit the stored plan](../2026-11-01-diagnostic-continuity-delivery-audit.md)
 - [Frozen full dev20: 12 independent PASS, 8 FAIL](../2026-11-01-pre-edit-dev20-results.md)
 - [Pre-edit normal task 8: independent PASS](../2026-11-01-pre-edit-normal-task8-results.md)
 - [Pre-edit task correspondence guidance](../2026-11-01-pre-edit-task-correspondence.md)
