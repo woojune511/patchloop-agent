@@ -68,7 +68,7 @@ def install(branch, variant="investigate-v1"):
                 "uncommitted fresh completion seed required")
         require(completion_context.active(handoff["state"]), "completion seed required")
         expected = runner.segment_seed(
-            BASELINE_PROMPT, handoff["state"]["public_task"],
+            completion_context.system_prompt(handoff["state"]), handoff["state"]["public_task"],
             agent_policy=branch.request.agent_policy, diagnosis=True,
         )
         require(handoff["base"][:3] == expected, "baseline completion seed prefix changed")

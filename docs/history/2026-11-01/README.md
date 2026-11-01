@@ -1,5 +1,6 @@
 # 2026-11-01 investigations
 
+- [Review lifecycle and delivery: preserve prior conclusions, historical comparison and completion guidance](../2026-11-01-review-lifecycle-and-delivery-fixes.md)
 - [Requirement comparison: literal public conditions and persistent helper review](../2026-11-01-requirement-comparison-continuity.md)
 - [Causal-link task8: helper repair still replaces original-path diagnosis, independent FAIL](../2026-11-01-causal-link-task8-results.md)
 - [Repair selection: connect public inputs, cause preconditions and observed results](../2026-11-01-causal-link-repair-guidance.md)

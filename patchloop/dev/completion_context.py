@@ -5,8 +5,10 @@ from __future__ import annotations
 import copy
 from typing import Any
 
+from patchloop.dev import scope_review
 from patchloop.dev.mutation_tools import MUTATION_TOOLS
 from patchloop.dev.repair_guidance import INSTRUCTIONS as REPAIR_GUIDANCE
+from patchloop.util import sha256_json
 
 POLICY = "small-completion-context-v1"
 
@@ -37,11 +39,22 @@ with concise public statements, not a reasoning transcript.
 """
 
 
+def system_prompt(state: dict[str, Any]) -> str:
+    """Keep enabled review guidance stable as probes change within a completion segment."""
+    if state.get("working_plan"):
+        return SYSTEM_PROMPT + "\n\n" + scope_review.COMPARISON_INSTRUCTIONS
+    return SYSTEM_PROMPT
+
+
 def contract() -> dict[str, Any]:
     return {
         "policy": POLICY,
         "activation": "host-ready_to_submit-including-protocol-correction",
         "authority": "public-context-projection-only",
+        "requirement_comparison_guidance": {
+            "activation": "planning-enabled-through-completion-segment",
+            "instructions_hash": sha256_json(scope_review.COMPARISON_INSTRUCTIONS),
+        },
         "preserved": ["public_task", "current_diff", "required_check_verdicts",
                       "original_verification_and_target_failures", "bounded_notes_and_plan",
                       "current_protocol_correction", "remaining_budgets_and_offered_tools",

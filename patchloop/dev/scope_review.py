@@ -24,6 +24,15 @@ _OBSERVATION_FIELDS = (
     "passed", "status", "test_status", "exit_code", "timed_out", "truncated",
     "deadline_exhausted", "cleanup_failed", "execution_uncertain", "check_id", "suite_id",
 )
+COMPARISON_INSTRUCTIONS = (
+    """When review_request.requirement_comparison needs review, compare public_task.issue
+with the named recent_probes' program and base/current outcomes. Use scope_review:
+public_conditions quotes the original input/caller and distinguishing condition;
+case_conditions describes what ran. interpretation states whether the difference
+supports, contradicts or leaves the proposed cause untested, and links material gaps
+to the next offered action or blocker. Matching exceptions do not resolve conflicting
+conditions. Evidence can justify proceeding without another execution."""
+)
 
 
 class _Input(BaseModel):
@@ -147,7 +156,11 @@ def schema() -> dict[str, Any]:
             "evidence_action_id": {
                 "type": ["string", "null"], "minLength": 1,
                 "maxLength": MAX_ACTION_ID_CHARS,
-                "description": "Executed: completed current-diff check/probe ID; otherwise null.",
+                "description": (
+                    "Executed: completed current-diff check/probe ID, or a named historical "
+                    "requirement_comparison helper with a public quote. Otherwise null. "
+                    "Historical evidence remains comparison only, not current verification."
+                ),
             },
             "interpretation": {**text, "description": (
                 "Explain substituted/missing conditions and evidence that a difference is "
@@ -186,17 +199,17 @@ def schema() -> dict[str, Any]:
 
 def contract() -> dict[str, Any]:
     return {
-        "policy": "plan-scope-public-result-binding-v4",
+        "policy": "plan-scope-public-result-binding-v5",
         "max_text_chars": MAX_TEXT_CHARS, "max_source_actions": MAX_SOURCE_ACTIONS,
         "max_cases": MAX_CASES, "max_action_id_chars": MAX_ACTION_ID_CHARS,
         "input": "public-and-case-conditions-legacy-string-preserved",
         "expectation": "outcome-and-public-basis-legacy-string-preserved",
         "expectation_bounds": [MAX_OUTCOME_CHARS, MAX_BASIS_CHARS],
-        "execution": "completed-current-diff-public-result-not-semantic-coverage",
+        "execution": "current-result-or-quoted-bound-historical-helper-not-semantic-coverage",
         "source": "completed-public-read-search-prior-diff-retained",
         "storage": "existing-working-plan-event-nonblocking-null-preserves",
         "public_conditions": "literal-issue-quote-bound-to-task-not-plan-v1",
-        "helper_comparison": "latest-bound-helper-review-persists-until-linked-annotation-v1",
+        "helper_comparison": "latest-bound-helper-review-recorded-in-journal-v2",
         "source_catalog": {
             "policy": "selected-scope-path-file-hash-range-intersection-v1",
             "max_receipts": MAX_SOURCE_RECEIPTS, "max_ranges_per_receipt": MAX_SOURCE_RANGES,
@@ -336,10 +349,15 @@ def parse(
             output = result["output"]
             if (result.get("workspace_diff_hash") != diff_hash
                     or output.get("diff_hash") != diff_hash):
-                return None, "scope_review_execution_not_current"
+                comparison = (helper_comparison(events, public_issue=public_issue, review=None,
+                                                current_diff_hash=diff_hash)
+                              if "public_condition_binding" in value else None)
+                if (comparison is None or case.evidence_action_id not in
+                        comparison["observation_action_ids"]):
+                    return None, "scope_review_execution_not_current"
             value["execution"] = {
                 "action_id": result["action_id"], "input_hash": result["input_hash"],
-                "tool": result["tool"], "diff_hash": diff_hash,
+                "tool": result["tool"], "diff_hash": result["workspace_diff_hash"],
                 "observation": {key: copy.deepcopy(output[key]) for key in _OBSERVATION_FIELDS
                                 if key in output},
             }
@@ -358,7 +376,7 @@ def parse(
 
 def helper_comparison(
     events: list[dict[str, Any]], *, public_issue: dict[str, Any],
-    review: dict[str, Any] | None,
+    review: dict[str, Any] | None, current_diff_hash: str | None = None,
 ) -> dict[str, Any] | None:
     """Keep an unreviewed helper/task comparison visible; never judge semantic fit.
 
@@ -383,12 +401,18 @@ def helper_comparison(
         return None
     result, start, program = next(reversed(helpers.values()))
     issue_hash = sha256_json(public_issue)
-    reviewed = any(
-        case.get("public_condition_binding", {}).get("issue_hash") == issue_hash
+    reviews = [review, *(e["payload"].get("plan", {}).get("scope_review")
+                         for e in reversed(events) if e["event_type"] == "working_plan_updated"
+                         and e["payload"].get("plan") is not None)]
+    recorded = next(((stored, case)
+        for stored in reviews for case in (stored or {}).get("cases", [])
+        if isinstance(case.get("execution"), dict)
+        and case.get("public_condition_binding", {}).get("issue_hash") == issue_hash
         and case.get("execution", {}).get("action_id") == result["action_id"]
         and case.get("execution", {}).get("input_hash") == result["input_hash"]
-        for case in (review or {}).get("cases", []) if isinstance(case.get("execution"), dict)
-    )
+        and case.get("execution", {}).get("diff_hash") == result["workspace_diff_hash"]
+        and case.get("execution", {}).get("tool") == "run_probe"
+    ), None)
     ids = [result["action_id"]]
     replay = start.get("probe_replay_request") or {}
     prior_id = replay.get("replayed_from", {}).get("action_id")
@@ -397,8 +421,8 @@ def helper_comparison(
             and prior[0]["output"].get("question") == result["output"].get("question")
             and prior[0]["workspace_diff_hash"] != result["workspace_diff_hash"]):
         ids.insert(0, prior_id)
-    return {
-        "status": "review_recorded" if reviewed else "review_needed",
+    comparison = {
+        "status": "review_recorded" if recorded else "review_needed",
         "task_reference": {"source": "public_task.issue", "issue_hash": issue_hash},
         "action_id": result["action_id"], "input_hash": result["input_hash"],
         "diff_hash": result["workspace_diff_hash"], "source_hash": program["source_hash"],
@@ -406,6 +430,17 @@ def helper_comparison(
         "interpretation_status": "model_authored_unverified",
         "requirement_fit": "not_certified",
     }
+    if recorded and recorded[0] is not review:
+        stored, case = recorded
+        retained = copy.deepcopy(case)
+        retained["execution"]["currency"] = (
+            "unknown" if current_diff_hash is None else
+            "current" if retained["execution"]["diff_hash"] == current_diff_hash else "historical"
+        )
+        comparison["recorded_review"] = {
+            "turn_id": stored["turn_id"], "diff_hash": stored["diff_hash"], "case": retained,
+        }
+    return comparison
 
 
 def project(review: dict[str, Any], diff_hash: str) -> dict[str, Any]:

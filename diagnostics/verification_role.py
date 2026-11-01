@@ -313,7 +313,8 @@ class VerificationRun:
         if self.request.planning_policy != "none":
             value["working_plan"] = working_plan.project(
                 self.plan_journal.events(), diff_hash=self.gateway.current_diff_hash,
-                gate=value["workflow_gate"], policy=self.request.planning_policy)
+                gate=value["workflow_gate"], policy=self.request.planning_policy,
+                public_issue=value.get("public_task", {}).get("issue"))
         value["verification_phase"] = {
             "phase": self.phase, "remaining": self.remaining(),
             "instruction": INSTRUCTION if self.phase == "verify" else (

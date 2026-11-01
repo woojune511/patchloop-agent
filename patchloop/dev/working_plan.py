@@ -40,15 +40,10 @@ When review_request.behavior_change is present, apply its attached guidance
 review to that mutation before carrying forward a check-then-submit plan.
 Listing unknowns alone does not justify stopping. Choose observations that could change
 the patch/submission decision over repeating supported examples.
-When review_request.requirement_comparison needs review, compare public_task.issue
-with the named recent_probes' program and base/current outcomes. Use scope_review:
-public_conditions quotes the original input/caller and distinguishing condition;
-case_conditions describes what ran. interpretation states whether the difference
-supports, contradicts or leaves the proposed cause untested, and links material gaps
-to the next offered action or blocker. Matching exceptions do not resolve conflicting
-conditions. Evidence can justify proceeding without another execution.
+""" + scope_review.COMPARISON_INSTRUCTIONS + """
 Keep outcome/public_basis tied to the public requirement. Cite source_receipts
-IDs and current-diff execution IDs, or mark source inference/untested. Failure/partial
+IDs and execution IDs (historical only for named helper comparisons), or source
+inference/untested. Failure/partial
 output records execution, not coverage. Null preserves the review; a new diff makes
 it historical. Observe the named property, retain material gaps, group related cases
 with a normal control and reuse adequate current-diff evidence. Unchanged evidence
@@ -227,6 +222,7 @@ def project(
     }
     if isinstance(public_issue, dict) and (comparison := scope_review.helper_comparison(
         events, public_issue=public_issue, review=(plan or {}).get("scope_review"),
+        current_diff_hash=diff_hash,
     )):
         review_request["requirement_comparison"] = comparison
         if review_enabled and comparison["status"] == "review_needed":

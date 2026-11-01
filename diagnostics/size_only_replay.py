@@ -152,7 +152,8 @@ def compose(turn, previous, handoff, *, base=None, replay_boundary=None):
                             "sequence": replay_boundary, "payload": {}})
     state["working_plan"] = working_plan.project(
         plan_events, diff_hash=state["current_diff"]["patch_hash"],
-        gate=state["workflow_gate"], policy="brief-v1")
+        gate=state["workflow_gate"], policy="brief-v1",
+        public_issue=state.get("public_task", {}).get("issue"))
     state["segment_handoff"] = handoff
     view = runner._segment_current_view(state, [*previous[3:], *added], turn.latest)
     return assemble_model_input(system_prompt=system_prompt("current", "brief-v1"),

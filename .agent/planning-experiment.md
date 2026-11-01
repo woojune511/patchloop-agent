@@ -144,8 +144,11 @@ the informal contract/case/evidence mapping in the brief-plan instructions; it i
 not another completed-action log or an automatic enumeration of the affected family.
 
 `executed` must refer to an already returned public `run_check`, `run_tests` or
-`run_probe` result on the current diff. The host binds its action/input/diff identity
-and reported execution outcome. Failed checks and partial/timeout observations remain
+`run_probe` result on the current diff. The narrow exception is a quoted, identity-bound
+helper named by the current requirement comparison, including its direct replay parent:
+it may be cited as historical comparison evidence after editing. Other stale results
+remain rejected. The host binds the actual execution's action/input/diff identity,
+never the new candidate's diff, and its reported outcome. Failed checks and partial/timeout observations remain
 valid execution facts, with their limits retained; executed never means verified.
 Source references resolve only to completed public reads/searches and retain their
 original diff identity. `source_inferred` needs a source reference; inference and
@@ -167,12 +170,23 @@ or comparison projection; the shared completion retention contract has a new has
 the immutable public issue hash and its `recent_probes` evidence location. It stays
 `review_needed` through null annotations and plan changes until a stored case binds
 both a literal issue quote and that execution's action/input identity. A new helper
-needs its own comparison. `review_recorded` means only that this annotation exists;
+needs its own comparison. Later unrelated scope reviews do not erase the recorded
+comparison: the projection searches existing journal annotations for the newest
+matching issue/action/input/diff/tool. If that case is absent from the latest scope
+review, `recorded_review` retains just that one bounded case and its authoring turn
+and diff; execution currency is still relative to the current candidate.
+`review_recorded` means only that this annotation exists;
 interpretation remains model-authored and requirement fit is `not_certified`.
 Compare actual inputs/callers and outcomes, including distinguishing controls, then
 connect a material gap to an offered action or concrete blocker. Source evidence may
 justify proceeding without another execution. No new tool, call, quota or finish
 gate is added; annotations remain optional.
+
+Completion uses the same short comparison guidance whenever planning is enabled,
+including before the first helper. The prompt therefore stays stable if a helper
+appears inside an existing completion segment. It does not add initial planning
+instructions or a separate response. Planning OFF keeps the prior completion prompt.
+Actual append/segmented input, correction and resumed completion paths are tested.
 
 An exact helper replay on another diff also retains its referenced prior result.
 Those at most two observations use the existing three-probe recent-result limit;
@@ -194,6 +208,10 @@ An internal `evidence_events` argument supports a diagnostic's already hash-vali
 public checkpoint prefix. It resolves references and mutation identity only; it
 does not import old execution events as new actions or control plan lifecycle,
 counters, review triggers or idempotency. Normal runs use their own journal.
+Diagnostic re-projections also pass the actual public issue. Verification-role
+phase boundaries still exclude the other phase's plan interpretation while retaining
+public action evidence. History-search replay uses a read-only view of that prefix
+when constructing its action card; it does not manufacture a new gateway or action.
 
 ### Revision and submission evidence
 

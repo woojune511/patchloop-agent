@@ -4,7 +4,8 @@ from __future__ import annotations
 import copy
 
 import pytest
-from test_scope_review import CURRENT, OTHER, review, selected
+from test_scope_review import CURRENT, OTHER, observed, review, selected
+from test_semantic_review_focus import mutation
 
 from patchloop.dev import completion_context, scope_review, working_plan
 from patchloop.dev.state import DevJournal
@@ -95,6 +96,7 @@ def test_literal_task_quote_and_execution_bind_review_without_certifying_fit(jou
     state = view(journal)
     assert state["review_request"]["requirement_comparison"]["status"] == "review_recorded"
     assert state["review_request"]["requirement_comparison"]["requirement_fit"] == "not_certified"
+    assert "recorded_review" not in state["review_request"]["requirement_comparison"]
     saved = copy.deepcopy(state["plan"]["scope_review"])
     assert saved["cases"][0]["public_condition_binding"]["source"] == (
         "public_task.issue.description")
@@ -187,3 +189,122 @@ def test_missing_or_unbound_helper_never_gets_invented_program(journal):
     bad[-1]["payload"]["result"]["output"]["source_hash"] = "wrong"
     assert scope_review.helper_comparison(bad, public_issue=ISSUE, review=None) is None
     assert scope_review.helper_comparison([], public_issue=ISSUE, review=None) is None
+
+
+@pytest.mark.parametrize("partial", [False, True])
+def test_helper_review_after_edit_keeps_historical_execution_without_replay(journal, partial):
+    if partial:
+        helper(journal, "helper-partial", partial=True)
+    action = "helper-partial" if partial else "helper"
+    mutation(journal, baseline=CURRENT, current=OTHER)
+    assert view(journal, diff=OTHER)["review_request"]["requirement_comparison"][
+        "status"] == "review_needed"
+    result = put(journal, "after-edit", scope=scoped(action), diff=OTHER)
+    assert result["scope_review"]["status"] == "applied"
+    state = view(journal, diff=OTHER)
+    comparison = state["review_request"]["requirement_comparison"]
+    assert comparison["status"] == "review_recorded"
+    assert comparison["diff_hash"] == CURRENT
+    assert comparison["requirement_fit"] == "not_certified"
+    stored = state["plan"]["scope_review"]
+    assert stored["diff_hash"] == OTHER  # The review was written after the edit.
+    assert stored["coverage_status"] == "not_certified"
+    execution = stored["cases"][0]["execution"]
+    assert execution["diff_hash"] == CURRENT and execution["currency"] == "historical"
+    assert execution["observation"]["timed_out"] is partial
+    reopened = DevJournal(journal.root, journal.run_id)
+    assert view(reopened, diff=OTHER) == state
+    assert working_plan.submission_review(reopened.events(), OTHER)["plan"][
+        "scope_review"]["cases"][0]["execution"] == execution
+
+
+def test_replay_comparison_accepts_both_actual_diff_receipts(journal):
+    helper(journal, "candidate", diff=OTHER, replay="helper")
+    raw = scoped("candidate")
+    raw["cases"].insert(0, scoped("helper")["cases"][0])
+    assert put(journal, "compare", scope=raw, diff=OTHER)["scope_review"]["status"] == "applied"
+    state = view(journal, diff=OTHER)
+    assert state["review_request"]["requirement_comparison"]["status"] == "review_recorded"
+    cases = state["plan"]["scope_review"]["cases"]
+    assert [(c["execution"]["diff_hash"], c["execution"]["currency"]) for c in cases] == [
+        (CURRENT, "historical"), (OTHER, "current"),
+    ]
+
+
+@pytest.mark.parametrize("kind", ["unrelated_helper", "run_check", "run_tests", "original"])
+def test_historical_exception_does_not_admit_other_old_results(journal, kind):
+    if kind == "unrelated_helper":
+        helper(journal, "newest", diff=OTHER)
+        events, action = journal.events(), "helper"
+    elif kind == "original":
+        events, action = journal.events(), "helper"
+        events[-1]["payload"]["result"]["output"]["reproduction"] = {"status": "unverified"}
+    else:
+        observed(journal, kind, tool=kind)
+        events, action = journal.events(), kind
+    value, error = scope_review.parse(scoped(action), events=events, diff_hash=OTHER,
+                                     turn_id="historical", public_issue=ISSUE)
+    assert value is None and error == "scope_review_execution_not_current"
+
+
+@pytest.mark.parametrize("kind", ["null_quote", "legacy", "missing_start", "bad_source"])
+def test_historical_helper_requires_quote_and_bound_program(journal, kind):
+    events, raw = journal.events(), scoped()
+    if kind == "null_quote":
+        raw["cases"][0]["input"]["public_conditions"] = None
+    elif kind == "legacy":
+        raw["cases"][0]["input"] = QUOTE
+    elif kind == "missing_start":
+        events = [e for e in events if e["event_type"] != "action_started"]
+    else:
+        events[-1]["payload"]["result"]["output"]["source_hash"] = "wrong"
+    value, error = scope_review.parse(raw, events=events, diff_hash=OTHER, turn_id="historical",
+                                     public_issue=ISSUE)
+    assert value is None and error == "scope_review_execution_not_current"
+
+
+def test_later_unrelated_review_does_not_reopen_recorded_helper(journal):
+    assert put(journal, "helper-review", scope=scoped())["scope_review"]["status"] == "applied"
+    updated = scoped()
+    updated["cases"][0]["interpretation"] = "Revised interpretation: inspect the text caller next."
+    assert put(journal, "revised-helper-review", scope=updated)[
+        "scope_review"]["status"] == "applied"
+    recorded = view(journal)["review_request"]["requirement_comparison"]
+    assert recorded["status"] == "review_recorded"
+    observed(journal, "public-check", tool="run_check", output={"passed": True})
+    assert put(journal, "check-review", scope=scoped("public-check"))[
+        "scope_review"]["status"] == "applied"
+    state = view(journal)
+    assert state["plan"]["scope_review"]["cases"][0]["execution"][
+        "action_id"] == "public-check"
+    comparison = state["review_request"]["requirement_comparison"]
+    assert {k: v for k, v in comparison.items() if k != "recorded_review"} == recorded
+    saved = comparison["recorded_review"]
+    assert saved["turn_id"] == "revised-helper-review"
+    assert saved["case"]["interpretation"] == updated["cases"][0]["interpretation"]
+    assert saved["case"]["execution"]["currency"] == "current"
+    completion = completion_context.project({
+        "workflow_gate": "ready_to_submit", "current_diff": {"patch_hash": CURRENT},
+        "working_plan": state,
+    })
+    assert completion["working_plan"]["review_request"]["requirement_comparison"] == comparison
+    reopened = DevJournal(journal.root, journal.run_id)
+    assert view(reopened) == state
+    historical = view(reopened, diff=OTHER)["review_request"]["requirement_comparison"]
+    assert historical["status"] == "review_recorded"
+    assert historical["recorded_review"]["case"]["execution"]["currency"] == "historical"
+    changed = {**ISSUE, "description": "A different public issue."}
+    assert view(reopened, issue=changed)["review_request"]["requirement_comparison"][
+        "status"] == "review_needed"
+    helper(reopened, "new-helper")
+    assert view(reopened)["review_request"]["requirement_comparison"][
+        "status"] == "review_needed"
+
+
+@pytest.mark.parametrize("field", ["input_hash", "diff_hash"])
+def test_journal_review_cannot_acknowledge_another_execution_identity(journal, field):
+    put(journal, "helper-review", scope=scoped())
+    events = journal.events()
+    events[-1]["payload"]["plan"]["scope_review"]["cases"][0]["execution"][field] = "wrong"
+    comparison = scope_review.helper_comparison(events, public_issue=ISSUE, review=None)
+    assert comparison["status"] == "review_needed"

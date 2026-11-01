@@ -8,7 +8,7 @@ from test_dev_probes import FakeProbe, probe_call
 from test_dev_segments import assert_submitted, configured, records
 
 from diagnostics.segmented_input_audit import verify_turn
-from patchloop.dev import repair_context, runner, working_plan
+from patchloop.dev import repair_context, runner, scope_review, working_plan
 from patchloop.dev.contracts import DevModelTurn, RequestedTool
 from patchloop.dev.model import MockDevAdapter
 from patchloop.util import canonical_json, sha256_json
@@ -161,6 +161,7 @@ def test_replayed_helper_retains_evicted_base_result_in_actual_completion(tmp_pa
     comparison = state["working_plan"]["review_request"]["requirement_comparison"]
     assert comparison["observation_action_ids"] == ["probe-1", "candidate-replay"]
     assert comparison["status"] == "review_needed"
+    assert scope_review.COMPARISON_INSTRUCTIONS in inputs[-1][0]["content"]
     probes = {p["action_id"]: p for p in state["recent_probes"]}
     assert set(probes) == {"probe-1", "probe-5", "candidate-replay"}
     assert probes["probe-1"]["historical"] and not probes["candidate-replay"]["historical"]

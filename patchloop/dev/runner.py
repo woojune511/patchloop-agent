@@ -3263,7 +3263,7 @@ def _build_model_input(
     state = reference_native_sources(state, history, archive_kind=archive_kind)
     state = compact_model_state(state, history, archive_kind=archive_kind)
     return assemble_model_input(
-        system_prompt=(completion_context.SYSTEM_PROMPT
+        system_prompt=(completion_context.system_prompt(raw_context)
                        if completion_context.active(raw_context) else
                        repair_context.system_prompt(raw_context)
                        if repair_context.pending(raw_context)
@@ -3367,7 +3367,7 @@ def _build_segmented_model_input(
     compact_stage = diagnosing or repairing or finalizing
     prompt = (diagnosis_context.SYSTEM_PROMPT if diagnosing else
               repair_context.system_prompt(current)
-              if repairing else completion_context.SYSTEM_PROMPT if finalizing else
+              if repairing else completion_context.system_prompt(current) if finalizing else
               thin_policy.system_prompt(agent_policy, planning_policy, history_search_policy,
                   current.get("completion_guidance", {}).get(
                       "verification_policy", "reproduction-gated-v1")))

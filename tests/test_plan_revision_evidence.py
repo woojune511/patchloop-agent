@@ -172,8 +172,10 @@ def test_original_purpose_reaches_finish_without_forcing_another_check(
         assert "source inspection is an inference, not an executed check" in system
         assert "regression PASS alone does not prove a fix" in system
         assert "its purpose, and the already observed evidence that meets that purpose" in system
-    if FROZEN_ARM is not None or context_policy == "append-v1":
+    if FROZEN_ARM is not None:
         assert "No additional check is mandatory" in system
+    elif context_policy == "append-v1":
+        assert "Evidence can justify proceeding without another execution" in system
     assert delivered["current_diff"]["patch"] and "finish_task" in delivered["available_tool_names"]
     assert not any(e["event_type"] == "protocol_correction" for e in events)
     actions = [e["payload"]["result"]["tool"] for e in events

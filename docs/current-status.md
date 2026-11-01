@@ -29,25 +29,35 @@ Keep the integrated development loop: fix observed correctness, reliability and
 completion failures, validate locally, then exercise a frozen configuration.
 A separate one-factor study is not required for every routine change.
 
-[Requirement comparison continuity](history/2026-11-01-requirement-comparison-continuity.md)
-is implemented and locally validated. A plan orders work toward the immutable public
-issue; it cannot replace that requirement. Existing scope_review.public_conditions
-now quotes the public issue literally and binds the issue/quote hashes. Invalid
-paraphrases reject only the annotation. The latest bound helper remains review_needed
-through null reviews and plan changes until a case links that execution and a public
-quote. review_recorded is an unverified model interpretation, not semantic acceptance.
-An exact replay on another diff retains its base/current results within the existing
-three-probe limit, including bounded historical output in compact completion.
-No new tool, model step, mandatory probe, finish gate or resource increase was added.
-The combined brief prompt stays within its prior 11,164-character bound (11,123).
+[Review lifecycle and delivery fixes](history/2026-11-01-review-lifecycle-and-delivery-fixes.md)
+are implemented and locally validated. The pre-experiment audit found that later
+scope reviews reopened already recorded helper comparisons, historical helper reviews
+were rejected after editing, segmented completion lost the specific comparison guide,
+and three operator diagnostic projections dropped the comparison field.
 
-Local evidence: 96 focused PASS in 48.441s; 1,520 quick-manifest cases PASS and one
-host skip across the full run and corrected focused rerun, including one added
-retention integration case. Ruff and isolated mock EVALUATOR_PASS (safety NOT_RUN)
-passed. Frozen task8 public prefixes keep the pending comparison in calls 7-11,
-including after plan replacement, and the final replay references both observations.
-That diagnostic recomputes state without new model/probe/evaluation execution.
-It proves continuity, not autonomous use or repair improvement. No paid run occurred.
+The existing journal now supplies the newest matching review. If the latest scope
+review no longer contains it, one bounded case retains its conclusion and provenance.
+Quoted identity-bound helpers named by the comparison can be cited after editing,
+with their actual historical diff; this does not grant current verification credit.
+Completion reuses the same short guide whenever planning is enabled, including before
+a helper first appears in that segment. Diagnostic wrappers pass the public issue
+and preserve their phase boundaries. A real history-search replay test also exposed
+and fixed its missing read-only journal adapter. No extra model stage, probe, finish
+gate or resource increase. The brief prompt remains within 11,164 characters (11,152).
+
+Local evidence: 129 focused cases PASS after correcting two native-delivery fixture
+assertions (105.931s across the initial and four-case correction runs);
+quick coverage 1,549 PASS / 1 host skip across the 418.370s
+full run and a corrected owner rerun; Ruff and
+isolated mock EVALUATOR_PASS controls passed (safety NOT_RUN). Actual append/segmented
+inputs, completion corrections, late helper activation, completed-run recovery and
+diagnostic re-projections are covered. These establish local compatibility and
+delivery, not autonomous use or repair improvement. No paid run occurred.
+
+Keep the [underlying comparison design](history/2026-11-01-requirement-comparison-continuity.md):
+public conditions quote the immutable issue; the latest helper and its direct replay
+parent share the existing three-probe retention bound. review_recorded is a recorded
+model interpretation, not semantic acceptance. Invalid annotations remain nonblocking.
 
 The motivating [causal-link task8 run](history/2026-11-01-causal-link-task8-results.md)
 remains CLOSED: code 9b2e2a73, independent FAIL/safety PASS, public 213 PASS, 11 model
@@ -60,15 +70,12 @@ adopted array/bytearray helper failures in both OL and OB. This did not explain 
 report's OL-only failure with OB/OF success. The helper repair passed its replay;
 the original failure condition remained undiscovered despite available resources.
 
-The observed structural gap was that a valid next decision consumed the one-shot
-review request without a recorded original/helper comparison; free paraphrases could
-also describe the helper as the public requirement. The new local control retains
-that comparison. It does not prove this gap caused the model's stopping decision.
-Next unresolved question: does the model use the preserved discrepancy to inspect a
-different cause, execute a discriminating case and repair the original behavior?
-A quoted clause may still be incomplete and an execution interpretation may be wrong.
-Do not add another semantic gate or claim a reasoning ceiling from this one failure.
-No additional paid run is scheduled.
+The observed one-shot review gap now has a persistent, execution-linked comparison,
+including the corrected lifecycle and delivery paths above. This does not prove the
+gap caused the model's stopping decision. Next question: does the model use the
+preserved discrepancy to inspect a different cause, execute a discriminating case
+and repair the original behavior? A quote can still be incomplete and an execution
+interpretation wrong. No additional paid run is scheduled.
 
 The [previous task8 run](history/2026-11-01-completion-reserve-task8-results.md),
 [added-test comparison](history/2026-11-01-task8-public-test-comparison.md) and

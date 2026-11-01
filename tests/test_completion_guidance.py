@@ -8,13 +8,13 @@ import pytest
 
 from diagnostics import completion_guidance as guidance
 from patchloop.artifacts import ArtifactStore
-from patchloop.dev import completion_context, runner, segments
+from patchloop.dev import completion_context, runner, scope_review, segments
 from patchloop.dev.state import DevJournal
 from patchloop.errors import ContractError, RecoveryError
 from patchloop.util import sha256_json
 
 
-def make_branch(root, *, completion=True, pending=True):
+def make_branch(root, *, completion=True, pending=True, planning=False):
     journal, store = DevJournal(root, "run_dev_guidance"), ArtifactStore(root / "artifacts")
     state = {
         "public_task": {"task_id": "public-fixture", "issue": "Repair the public behavior."},
@@ -22,7 +22,11 @@ def make_branch(root, *, completion=True, pending=True):
         "remaining_budget": {"model_calls": 6, "tool_actions": 14, "accepted_mutations": 2},
         "latest_tool_results": [], "current_diff": {"patch_hash": "sha256:candidate"},
     }
-    base = runner.segment_seed(guidance.BASELINE_PROMPT, state["public_task"],
+    if planning:
+        state["working_plan"] = {"policy": "brief-v1", "review_request": {
+            "requirement_comparison": {"status": "review_needed"},
+        }}
+    base = runner.segment_seed(completion_context.system_prompt(state), state["public_task"],
                                agent_policy="thin", diagnosis=True)
     with journal.execution_lock():
         segments.start(journal, store, base=base, state=state, reason="previous",
@@ -43,8 +47,9 @@ def make_branch(root, *, completion=True, pending=True):
     )
 
 
-def test_install_preserves_prefix_state_and_native_binding(tmp_path):
-    branch = make_branch(tmp_path / "branch")
+@pytest.mark.parametrize("planning", [False, True])
+def test_install_preserves_prefix_state_and_native_binding(tmp_path, planning):
+    branch = make_branch(tmp_path / "branch", planning=planning)
     before = branch.journal.path.read_bytes()
     old_binding, old_handoff = segments.active(branch.journal, branch.store)
     receipt = guidance.install(branch)
@@ -58,6 +63,7 @@ def test_install_preserves_prefix_state_and_native_binding(tmp_path):
     assert handoff["base"][1:] == old_handoff["base"][1:]
     suffix = old_handoff["base"][0]["content"][len(guidance.BASELINE_PROMPT):]
     assert handoff["base"][0]["content"] == guidance.INVESTIGATE_PROMPT + suffix
+    assert (scope_review.COMPARISON_INSTRUCTIONS in handoff["base"][0]["content"]) == planning
     assert receipt["new_provider_calls"] == receipt["new_target_executions"] == 0
     items = runner.assemble_model_input(
         system_prompt=guidance.INVESTIGATE_PROMPT, state=handoff["state"], history=[],
