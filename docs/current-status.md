@@ -29,37 +29,57 @@ Keep the integrated development loop: fix observed correctness, reliability and
 completion failures, validate locally, then exercise a frozen configuration.
 A separate one-factor study is not required for every routine change.
 
-The [eight-worker dev20 run](history/2026-11-01-parallel429-dev20-results.md) is CLOSED:
-code c95fdda4, 19 tasks started, one not started, 9 independent PASS/5 FAIL/6 NOT_RUN
-and 14 safety PASS/6 NOT_RUN. Its 1,583.372 seconds (26m23s) is an interrupted-batch
-duration, not completed full20 throughput. The known settled generation cost is
-USD22.435737 plus task18's final UNKNOWN response. Its USD0.524015 reservation is
-not billed usage; actual total and unused allocation remain unknown. All allocations
-are closed. Of 239 logical generations, 238 settled; all 245 input counts settled.
-There were 484 physical attempt admissions and 483 responses, with no observed
-429 or retry. No admission appears after the recorded stop-confirmed witness;
-the actual shared-latch set time and the preceding interval were not recorded.
+The [funded continuation](history/2026-11-02-funded-continuation-results.md) is CLOSED:
+code 508aa696, five confirmed-state branches (7/9/10/14/18) and one fresh task6,
+maximum six workers, new USD4 per task/USD24 total, cumulative 3,600 seconds per
+task including 330 seconds for evaluation. Cumulative 40 model calls/100 actions/
+12 accepted edits and all prior consumed resources were retained. This explicit
+invocation did not change the normal 1,800-second baseline.
 
-Task18 reached local solver-deadline expiry while awaiting a generation, after its
-only accepted patch still failed a new public regression (9 leading spaces versus
-8 expected). Task8 retained the original/helper discrepancy but submitted its
-nearby-input repair and failed independently despite available resources. Task13
-preserved the distinguishing public setup and passed independently. The six missing
-verdicts prevent a new complete20 score or regression claim. See the result record
-for public mechanisms, prior full20 comparison and evidence limits.
+All six submitted and were independently evaluated: **4 PASS (6/9/14/18), 2 FAIL
+(7/10), safety 6 PASS**. New generation cost is USD4.974666 and batch duration is
+1,409.815 seconds (23m30s). All 40 new generations, 44 input counts and 84 physical
+attempts settled; no 429, retry, new UNKNOWN or shared stop occurred. The allocation
+is closed; unused funds grant no further invocation.
 
-The requested [funded continuation](history/2026-11-01-funded-continuation-preparation.md)
-is implemented and locally validated, not paid authorized or executed. The proposed scope is confirmed-state forks for tasks7/9/10/14,
-a new task18 branch from the confirmed checkpoint after seq532 with its original
-UNKNOWN ledger preserved, and a fresh task6 solve. Proposed limits are a cumulative
-60 minutes per task and a new USD4 per task/USD24 total allocation; cumulative
-40 model calls/100 actions/12 edits remain. Post-checkpoint consumption must still
-count rather than reset. Focused coverage is 62 PASS/83.065 seconds; quick is
-1,608 PASS/one host skip, including isolated mock evaluation. Exact provider-free
-checkpoint/first-request binding precedes new paid authorization. This is a new
-invocation proposal, not reopening the closed batch or silently retrying its lost call.
-The task18 public projection retained 28 of 30 top-level fields identically; only
-budget and action-horizon fields changed. Model utilization remains untested.
+The [original interrupted batch](history/2026-11-01-parallel429-dev20-results.md)
+had 9 PASS/5 FAIL/6 NOT_RUN, known settled cost USD22.435737 and one UNKNOWN task18
+response. Its USD0.524015 reservation remains unknown usage, not a billed amount.
+Original and new allocations stay separate; combined actual cost remains unknown.
+Combining the fourteen original verdicts with these six yields **13 PASS/7 FAIL,
+safety 20 PASS**. That is a mixed completion record containing five state branches,
+not a new fresh20 score or evidence of a controlled performance improvement.
+
+All five first live public contexts retained their comparison baseline's patch,
+plans, open questions, checks and source facts; budget/time fields changed as
+expected. Task18 was compared directly with its original public context; the other
+four used the approved reconstruction baseline bound to the immutable prefix.
+This establishes public-state continuity, not complete provider-wire delivery or
+use of every field by the model.
+
+Task18 carried its unresolved public failure through further probing and three
+accepted edits. The final patch preserved the inherited WITH regression input and eight-space
+assertion, changed the regression from 1 FAIL/507 PASS to 508 PASS, then passed
+independently. It used all thirteen new model slots (39 child calls plus the old
+excluded UNKNOWN call = 40 cumulative). It also revisited the exact previously
+failed patch before finding the final L039 line-start-state repair. More available
+time enabled this observed continuation; the run does not isolate a general time
+or memory effect.
+
+Tasks7/10 submitted with acknowledged original-verification gaps and 31/29 model
+calls still available. Their retained plans treated passing visible checks plus
+reporting the gap as sufficient to submit. Resource exhaustion or missing stored
+state does not explain those observed choices; the private failing assertions were
+not inspected. The unresolved questions are how completion judgments use retained
+gaps and how repairs avoid known failed candidates. The completion policy remained
+unchanged during this run.
+
+Preparation and runtime remained frozen during execution. An operator-only
+collector incorrectly required inherited elapsed time to equal the last parent
+event, rejecting the reconstruction's conservative extra 11-505 ms. A separate,
+tested observer corrected this projection without changing the approved runtime
+or parent records. Final scope/accounting/resource audit passed. See the result
+record for preparation failures, local controls and immutable evidence links.
 
 ## Selected mechanisms and evidence limits
 
