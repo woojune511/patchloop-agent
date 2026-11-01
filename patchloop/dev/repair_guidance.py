@@ -1,14 +1,17 @@
 """Shared repair guidance; no new tool, verification gate or execution authority."""
 
 HYPOTHESIS_DESCRIPTION = (
-    "Explain how the proposed cause fits the public caller/input/setup and motivates "
-    "this edit or undo. Distinguish helper-only evidence and label inferred or missing "
-    "conditions."
+    "Give a brief causal contrast: public caller/input/setup -> cause precondition -> "
+    "wrong result. Name the observed source/results connecting these steps, mark missing "
+    "links, and explain how this edit or undo changes the link. Keep changed-input helper "
+    "evidence separate; inferred conditions are not observed facts."
 )
 
 EXPECTED_BEHAVIOR_DESCRIPTION = (
-    "State the required observable under the relevant public conditions; separate "
-    "assumptions and helper-only outcomes from task success."
+    "State the required outcome and the source-supported condition that distinguishes "
+    "a discriminating case from a relevant normal control, preserving the public input "
+    "representation and caller. Reuse adequate evidence; label predictions, missing setup "
+    "and helper-only outcomes rather than claiming unexecuted success."
 )
 
 INSTRUCTIONS = (

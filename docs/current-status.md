@@ -29,97 +29,62 @@ Keep the integrated development loop: fix observed correctness, reliability and
 completion failures, validate locally, then exercise a frozen configuration.
 A separate one-factor study is not required for every routine change.
 
-The [latest failed-eight rerun](history/2026-11-01-failed8-rerun-results.md) is CLOSED.
-Code 062dde2e ran tasks 7/8/10/12/13/16/17/19 once each: **task13 independent PASS,
-seven FAIL, eight safety PASS**, all submitted. Against the same failed rows from
-the [previous full20](history/2026-11-01-pre-edit-dev20-results.md), only task13
-changed to PASS. Recorded generation cost is **USD10.8253535**, batch wall
-**2,277.183 seconds (37m57s)**, 121 model calls and 124 input counts, all settled.
-Actual dispatched public inputs, costs and artifact/journal hashes were verified.
-The new USD32 allocation and unused USD21.1746465 are closed. There was no retry,
-extra evaluation, runtime edit or operator hint during the run.
+The active question is whether a repair explains the original public input path,
+not only a helper with different inputs. The [latest task8 run](history/2026-11-01-completion-reserve-task8-results.md)
+at a1833855 is CLOSED: independent FAIL, safety PASS, USD1.797247, 16 model calls,
+23 actions and 786.524 seconds. It used the clarified remaining budget for further
+checks, but repaired array/bytearray inputs without explaining the reported bytes
+failure. Its USD4 allocation and unused USD2.202753 are closed.
 
-Task13 preserved the reported parent initializer and relative search path, reproduced
-F0010 through pylint, then repaired path normalization. Its first edit exposed an
-existing symlink regression; the second repaired production code while preserving
-the new test. Public recheck reached 1,232 PASS, the caller probe stopped emitting
-F0010, and independent evaluation passed. This supports that repair trajectory.
-The eight baseline rows cost USD10.2215815 with 122 calls; the new panel does not
-establish efficiency gains or a one-feature causal effect. Twelve prior passes
-were omitted, so it is not a full20 regression/generalization result.
+The [unchanged added test](history/2026-11-01-task8-public-test-comparison.md)
+failed on base and passed on the submission, establishing that buffer repair only.
+The [bytes/caller follow-up](history/2026-11-01-task8-bytes-call-path.md) preserved
+serialized bytes and sequence-item add_new -> parent save_as. One payload byte
+changed to 0x5c made OL fail on both base and submission with MultiValue/TypeError;
+ordinary OL and OB/OF controls passed. The setter splits bytes before the patched
+conversion, which receives a list too late. This public reconstruction used no
+provider call or independent evaluation; the reporter's complete setup is missing.
+The exact private failing assertion remains uninspected for this submission.
 
-The [filename and expectation corrections](history/2026-11-01-failed8-and-test-discovery.md)
-remain implemented. Known mismatched new pytest names reject the atomic edit before
-writing, with public config/hash/patterns; unknown configuration is not guessed.
-Scope review separates required `outcome` and `public_basis`, while post-edit guidance
-compares original conditions and relevant controls. No extra model step, mandatory
-probe or finish gate was added. Local validation remains 88 focused PASS in 20.65s,
-1,494 quick PASS/one host skip across corrected runs, Ruff/docs and isolated mock PASS.
+The [causal-link guidance change](history/2026-11-01-causal-link-repair-guidance.md)
+replaces the general correspondence reminder with a brief contrast in the existing
+hypothesis: public caller/input/setup -> cause precondition -> wrong result, backed
+by source/results and explicit gaps. If an intermediate state is unexplained,
+existing reads/searches should locate its producing caller, assignment or conversion
+before adopting a helper as the repair target. expected_behavior distinguishes a
+source-supported discriminating case from a relevant normal control, retaining the
+public representation and caller. There are no new fields, gates, tools, required
+probe, model step or resource increase. Source evidence still permits direct repair.
 
-Live uptake is narrower than correctness: 37 scope-case occurrences used the new
-structured expectation, but seven tasks still failed. Tasks10/19 created correctly
-named new modules and explicitly executed them; no bad-name rejection occurred.
-Naming/selection do not prove ordinary directory collection. Task17 recovered from
-YAML and duplicate-file edit rejections; task19 corrected a failing test setup.
-No identical same-diff AST/selection repeat was found, which does not exclude
-semantic repetition or overlapping test coverage. Private failing assertions were
-not inspected in this rerun analysis.
+Focused request-delivery controls pass: 54 tests in 19.089 seconds, including both
+verification policies, context policies and agent policies. The quick suite reaches
+1,508 PASS/one host skip across the original run and corrected description-pin
+rerun. All seven pinned schemas match the prior bytes when only the two intended
+descriptions are restored. Ruff passes; mock smoke reaches isolated EVALUATOR_PASS
+(safety NOT_RUN). These establish compatibility, not autonomous discovery.
 
-The [completion-reserve clarification](history/2026-11-01-completion-reserve-clarity.md)
-addresses task8's one-call-stage explanation despite 32 calls, 31 exploration calls,
-1,209 solver seconds and USD3.504356 remaining, with probes and edits offered.
-The model view now groups minimum and bounded-recovery requirements under
-`completion_reserve`, explicitly distinct from `remaining_budget` and offered tools.
-Canonical accounting, admission, limits, recovery and finish eligibility are unchanged.
-Local request controls and the saved public budget projection verify the distinction;
-152 focused and 1,504 fast-suite tests pass, with one host symlink skip; Ruff and
-isolated mock evaluation pass.
+Next: freeze the validated code and prepare one fresh task8 solve with the same
+model, policies and limits. No prior patch, helper, diagnostic output, notes or
+counterexample hint enters solver context. Inspect actual source selection,
+causal correspondence, executed discriminating checks, repair and independent result;
+wording compliance or more probes alone is insufficient. A new positive cost cap
+must be authorized after preflight; no new provider call has been made.
 
-The [fresh task8 follow-up](history/2026-11-01-completion-reserve-task8-results.md)
-at a1833855 is CLOSED: **independent FAIL, safety PASS**, USD1.797247, 16 model calls,
-23 actions and 786.524 seconds. All 16 dispatched inputs carry the new reserve and
-match the frozen projection; counts and usage are settled. At reserve one / 30 calls
-left it chose a probe, then further reads, a new writer test, recheck and helper
-replay. The final submission at 25 calls left cited low expected information value
-and the missing original reproduction, not a one-call cap. The baseline already
-used one probe before its mistaken final explanation; more work alone is not gain.
+Keep [completion-reserve clarity](history/2026-11-01-completion-reserve-clarity.md),
+[repair-plan delivery](history/2026-11-01-repair-planning-continuity.md),
+[input correspondence](history/2026-11-01-pre-edit-task-correspondence.md),
+[capability-aligned review](history/2026-11-01-capability-aligned-verification-review.md),
+and [test filename/expectation corrections](history/2026-11-01-failed8-and-test-discovery.md).
+The [failed-eight rerun](history/2026-11-01-failed8-rerun-results.md) remains CLOSED:
+task13 independent PASS, seven FAIL, eight safety PASS, USD10.8253535; only task13
+changed from its prior failure. The omitted twelve passes prevent a full20 regression
+claim. The [task18 continuity run](history/2026-11-01-repair-continuity-task18-results.md)
+remains separate independent/safety PASS evidence with retained findings and one
+repeated base probe. All allocations and unused amounts remain closed.
 
-The base OL-bytes approximation already wrote successfully. That run's later checks
-addressed array/bytearray inputs without establishing original-input coverage.
-Public checks rose from 212 to 213 PASS, with the writer file explicitly selected;
-the original broad-check stdout lacked exact node telemetry. The new USD4 allocation
-and unused USD2.202753 are closed; no further paid work is scheduled.
-
-The [provider-free paired test](history/2026-11-01-task8-public-test-comparison.md)
-observed **base assertion FAIL, candidate PASS** on the unchanged buffer regression.
-Base stops at the first bytearray type assertion; that case's patch effect does not
-establish original-input coverage.
-
-The [bytes/caller follow-up](history/2026-11-01-task8-bytes-call-path.md) now reproduces
-the public error while preserving H-array-serialized bytes, sequence-item `add_new`
-and parent `save_as`. Changing one payload byte to **0x5c** causes **OL FAIL on both
-base and submitted patch**, with `MultiValue` stored and the reported TypeError.
-Ordinary OL and the OB/OF controls pass, including exact byte roundtrip. The setter
-splits OL bytes before the patched conversion; the patch receives a list too late.
-The submitted patch therefore leaves this original-path counterexample unfixed.
-The operator ran six cases per phase in 20.475s, with zero model calls/API cost or
-independent evaluations. Runtime, saved patch and prior records remain unchanged.
-
-Next: repair selection should locate the first incorrect transformation while
-preserving public inputs/callers. Keep the existing tools and budget clarification;
-no cap increase or new finish gate follows. The reporter's complete data/setup are
-unavailable; this is a public reconstruction on the benchmark source. Autonomous
-discovery, a corrected patch and the exact private FAIL attribution remain untested.
-
-Keep [repair-plan delivery](history/2026-11-01-repair-planning-continuity.md),
-[input correspondence](history/2026-11-01-pre-edit-task-correspondence.md), and
-[capability-aligned review](history/2026-11-01-capability-aligned-verification-review.md).
-The [task18 continuity run](history/2026-11-01-repair-continuity-task18-results.md)
-remains separate closed evidence: independent/safety PASS, retained L039 finding,
-one repeated base probe and a misnamed new test that motivated filename admission.
 Do not equate missing registered original replay with failure: task13 independently
-passed while the separate `unverified_delivery` label remained. Public PASS,
-independent acceptance, valid receipts and semantic correctness stay distinct.
+passed while retaining unverified_delivery. Public PASS, independent acceptance,
+valid receipts and semantic correctness stay distinct.
 
 ## Selected mechanisms and evidence limits
 

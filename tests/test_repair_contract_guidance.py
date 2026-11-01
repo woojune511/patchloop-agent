@@ -84,8 +84,9 @@ def test_actual_request_keeps_shared_guidance_and_existing_authority(
 
 @pytest.mark.parametrize("context_policy", ["append-v1", "segmented-v1"])
 @pytest.mark.parametrize("agent_policy", ["current", "thin"])
+@pytest.mark.parametrize("verification_policy", ["public-checks-v1", "reproduction-gated-v1"])
 def test_initial_repair_delivers_correspondence_with_distinct_helper_and_control_evidence(
-    gateway_factory, smoke_package, context_policy, agent_policy,
+    gateway_factory, smoke_package, context_policy, agent_policy, verification_policy,
 ):
     """Test real request transport with canned observations, not CSV/model correctness."""
     helper_source = (
@@ -108,6 +109,7 @@ def test_initial_repair_delivers_correspondence_with_distinct_helper_and_control
             return {**result, "stdout": stdout, "stderr": stderr}
 
     gateway, journal, _ = gateway_factory()
+    gateway.verification_policy = verification_policy
     backend = gateway.probe_sandbox = RecordedProbe()
     gateway.execute_batch(read_calls())
     results = {}
@@ -135,8 +137,20 @@ def test_initial_repair_delivers_correspondence_with_distinct_helper_and_control
     prompt = request[0]["content"]
     assert prompt.startswith(repair_context.system_prompt(state))
     assert prompt.count("Preserve the input representation;") == 1
+    for instruction in (
+        "public caller/input/setup -> cause precondition -> wrong",
+        "read/search its producing caller, assignment or conversion",
+        "derive the condition from observed branches on the same public path",
+        "Source evidence can support a direct edit",
+    ):
+        assert prompt.count(instruction) == 1
     assert prompt.count(INSTRUCTIONS) == 1
     actual = reconstruct_state(request, context_policy=context_policy)
+    # The default reproduction policy is implicit in this gateway-built context.
+    assert state["completion_guidance"].get("verification_policy", "reproduction-gated-v1") == (
+        verification_policy)
+    assert actual["completion_guidance"].get("verification_policy", "reproduction-gated-v1") == (
+        verification_policy)
     assert actual["public_task"] == state["public_task"]
     assert "parse_rows(text)" in actual["public_task"]["issue"]["description"]
     assert actual["current_diff"] == state["current_diff"]

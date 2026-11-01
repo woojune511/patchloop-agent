@@ -35,13 +35,17 @@ after editing the observation is historical and the original must be replayed.
 Ordinary repair has a compact public view containing current source anchors,
 original observations, explicit unverified intent, last mutation/counterevidence,
 checks and real remaining budgets. General plan/note rewriting is not required.
-Before choosing a repair target, its existing prompt connects the proposed cause
-to the known public caller, input representation and setup. A changed-condition
-helper remains separate evidence until source or comparable execution connects it
-to the report; a passing sample covers only its exercised conditions. If a proposed
-cause leaves a reported transformation unexplained, inspect the producing step or
-choose a discriminating observation. Source evidence can support the connection
-without exact reproduction; label inferred conditions and missing setup.
+Before choosing a repair target, the existing hypothesis describes a brief causal
+contrast: public caller/input/setup -> cause precondition -> wrong result, with
+observed source/result links and explicit gaps. A changed-input helper cannot fill
+a missing link. Use delivered source or read/search the producing caller, assignment
+or conversion when the cause requires an unexplained intermediate state; identify
+the first unsupported transition and why the edit changes it. A passing sample
+covers only its exercised conditions. Derive a discriminating case and relevant
+normal control from observed branches, preserving input representation and caller;
+expected_behavior separates those predictions from executed evidence. Reuse adequate
+results. Source evidence can support a direct edit without exact reproduction;
+label inferred conditions and missing setup. No task-specific input is supplied.
 Both edit tools describe this in their existing hypothesis/expected_behavior
 fields. Their 1-1,500 character bounds and validators are unchanged. No new field,
 state, semantic admission check, mandatory probe or extra review call is added.

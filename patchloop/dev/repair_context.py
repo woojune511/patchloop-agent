@@ -16,13 +16,20 @@ inspection_focus reports no new covered lines, reassess the remaining question; 
 read may still be useful for a missing anchor or a specific unresolved decision.
 For a supported edit, replace_text starts with path, old_text, new_text, occurrence,
 hypothesis and expected_behavior. Copy an exact current source anchor. In hypothesis,
-explain the reported behavior using observed source and the known caller/input/setup.
-Preserve the input representation; label inferred conditions and missing setup.
-A helper with changed conditions is separate evidence until source or comparable
-execution connects it to the report. A passing sample covers only its exercised conditions.
-If the proposed cause leaves the reported transformation unexplained, inspect its
-producing step or choose a discriminating observation before adopting the helper as
-the repair target. Source evidence can support the connection without exact reproduction.
+give a brief causal contrast: public caller/input/setup -> cause precondition -> wrong
+result. Name observed source/results linking the steps and mark any missing link.
+Preserve the input representation; a changed-input helper cannot fill that gap.
+If the cause requires an intermediate value/state not supplied by the public caller,
+use delivered source or read/search its producing caller, assignment or conversion.
+Locate the first unsupported transition before adopting the helper as the repair target;
+explain how the edit changes that link, including earlier steps that could make it too late.
+A passing sample covers only its exercised conditions. For a discriminating observation,
+derive the condition from observed branches on the same public path; preserve input
+representation and caller while varying the supported content, option or setup condition.
+In expected_behavior predict the required outcome and a relevant normal control; reuse
+adequate evidence and keep unexecuted predictions distinct from observations.
+Label inferred conditions and missing setup. Source evidence can support a direct edit
+without exact reproduction. This brief evidence argument adds no mandatory probe or review call.
 Use edit_files for one atomic batch, new files (old_text null), or undo_action_id.
 An undo requires unchanged affected files and spends one edit slot; checks become stale.
 After a refuted repair's diagnosis, repair_prediction selects one changed observable

@@ -95,7 +95,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     ),
     pytest.param(
         ("finish_task", "read_file", "replace_text", "run_probe", "search_files", "stop_task"),
-        "7725d24fdfae9a47fa5d6746e8a6b27b5c302db9b14825d24e788bb3d846649f"
+        "89d5d5446bde43157f57bfd916c6aa1f061ee24ca203573e540fe7383b1c07cf"
         if FROZEN_ARM is None else
         "b817201c9d1aa8432575b0c1b55015dc01bc08a2b002e3e2cc09ab13bfa229c6",
         id="names1-de57dc4e83f8b26994c5df5f659cc208bbd3b348233d0ad3640493ffd5b90bd3"
@@ -103,7 +103,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     ),
     pytest.param(
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task"),
-        "69934fce69afd4daedd96a0ab9054f0f55679d0c4feb84701c867ded95764378"
+        "441d706fd62805356e290675712609b3f1ce01c72b1eea5b71c0daf182c4be9b"
         if FROZEN_ARM is None else
         "310f8ec3dd129c93fb10c2a0589decf38eb09ce60e395ef906ac814e399e5139",
         id="names2-923a71312af5fa8d677ce72762b2f045a47ff2ebc4e084caaf1f57a2c11e7032"
@@ -112,7 +112,7 @@ def test_all_tool_wire_values_and_order_match_pre_compression_surface():
     pytest.param(
         ("read_file", "replace_text", "run_check", "run_probe", "search_files", "stop_task",
          "finish_task"),
-        "e5ffb0d6316ef4b0d30b857e07d2fb081c2eaf3a1eb90ecfb9a40a46b25d0536"
+        "a9aa8c20aea0bb7888137ac8d8e1c312b2388c07fbf56d88acf6e2dd1f7909dc"
         if FROZEN_ARM is None else
         "6302bc9d248be03d6e1430f0102a0e5c00ecb7883c25d453945f979f21fd3af7",
         id="names3-53d8c9ffaa20544b633c883b1e40010113b680722f23caebeb0ef991f1738caa"
