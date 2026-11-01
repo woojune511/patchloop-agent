@@ -10,7 +10,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        include:
+          - {os: ubuntu-latest, shard: 0, shards: 1}
+          - {os: windows-latest, shard: 0, shards: 4}
+          - {os: windows-latest, shard: 1, shards: 4}
+          - {os: windows-latest, shard: 2, shards: 4}
+          - {os: windows-latest, shard: 3, shards: 4}
+    name: fast-dev-head (${{ matrix.os }}, ${{ matrix.shard }})
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -25,7 +31,11 @@ jobs:
       - run: uv run --locked ruff check patchloop tests
       - run: uv run --locked python scripts/build_site.py --output "${{ runner.temp }}/patchloop-site-check"
       - run: >-
-          uv run --locked pytest tests
+          uv run --locked python scripts/pytest_shard.py
+          --index ${{ matrix.shard }} --total ${{ matrix.shards }}
+          --output "${{ runner.temp }}/pytest-selection.txt"
+      - run: >-
+          uv run --locked pytest "@${{ runner.temp }}/pytest-selection.txt"
           -n 4 --dist loadfile --max-worker-restart 0
           --durations=20
           --basetemp "${{ runner.temp }}/patchloop-tests"
@@ -42,6 +52,6 @@ jobs:
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: pytest-${{ matrix.os }}
+          name: pytest-${{ matrix.os }}-${{ matrix.shard }}
           path: ${{ runner.temp }}/pytest.xml
           retention-days: 14
